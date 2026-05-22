@@ -2,11 +2,13 @@ import { connectDatabase } from "../config/database.js";
 import { StoreModel } from "../models/store.model.js";
 import { TenantModel } from "../models/tenant.model.js";
 import { PageModel } from "../models/page.model.js";
+import { ProductModel } from "../models/product.model.js";
 
 export type TenantStoreResponse = {
   store: Record<string, unknown> | null;
   tenant: Record<string, unknown> | null;
   page: Record<string, unknown> | null;
+  products: Record<string, unknown>[];
 };
 
 /**
@@ -27,6 +29,7 @@ export async function resolveBySubdomain(slug: string): Promise<{
 
   const tenant = await TenantModel.findById(store.tenantId).lean() as any;
   const page = await PageModel.findOne({ storeId: store._id, slug: "home", status: "published" }).lean() as any;
+  const products = await ProductModel.find({ storeId: store._id, status: "active" }).sort({ createdAt: -1 }).limit(20).lean() as any[];
 
   return {
     ok: true,
@@ -34,6 +37,7 @@ export async function resolveBySubdomain(slug: string): Promise<{
       store: store ?? null,
       tenant: tenant ?? null,
       page: page ?? null,
+      products: products ?? [],
     },
   };
 }

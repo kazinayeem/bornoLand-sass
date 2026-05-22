@@ -2,6 +2,8 @@ import { connectDatabase } from "../config/database.js";
 import { StoreModel } from "../models/store.model.js";
 import { TenantModel } from "../models/tenant.model.js";
 import { TeamMemberModel } from "../models/team-member.model.js";
+import { TemplateModel } from "../models/template.model.js";
+import { PageModel } from "../models/page.model.js";
 import { createStoreSchema, updateStoreSchema, type CreateStoreInput, type UpdateStoreInput } from "../validators/store.validator.js";
 
 export async function createStore(userId: string, payload: unknown) {
@@ -29,6 +31,16 @@ export async function createStore(userId: string, payload: unknown) {
     await TeamMemberModel.create({ tenantId, userId, role: "owner", status: "active", invitedAt: new Date(), acceptedAt: new Date() });
   }
 
+  let themeFromTemplate;
+  let templateId;
+  if (parsed.data.selectedTemplateId) {
+    const template = await TemplateModel.findById(parsed.data.selectedTemplateId).lean() as any;
+    if (template) {
+      themeFromTemplate = template.theme;
+      templateId = template._id;
+    }
+  }
+
   const store = await StoreModel.create({
     tenantId,
     userId,
@@ -38,21 +50,41 @@ export async function createStore(userId: string, payload: unknown) {
     description: parsed.data.description ?? "",
     category: parsed.data.category ?? "general",
     plan: parsed.data.plan ?? "free",
-    status: "active"
+    status: "active",
+    logoUrl: parsed.data.logoUrl ?? "",
+    ...(templateId ? { selectedTemplateId: templateId } : {}),
+    ...(themeFromTemplate ? { theme: themeFromTemplate } : {})
   });
+
+  if (templateId && themeFromTemplate) {
+    await PageModel.deleteMany({ storeId: store._id });
+    await PageModel.create({
+      storeId: store._id,
+      title: "Home",
+      slug: "home",
+      status: "published",
+      sections: [],
+      theme: themeFromTemplate
+    });
+  }
 
   return { ok: true as const, data: { store: store.toObject() } };
 }
 
 export async function getUserStores(userId: string) {
   await connectDatabase();
-  const stores = await StoreModel.find({ userId }).sort({ createdAt: -1 }).lean();
+  const stores = await StoreModel.find({ userId })
+    .populate("selectedTemplateId", "name slug category preview")
+    .sort({ createdAt: -1 })
+    .lean();
   return { ok: true as const, data: { stores } };
 }
 
 export async function getStoreById(storeId: string, userId: string) {
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
+  const store = await StoreModel.findOne({ _id: storeId, userId })
+    .populate("selectedTemplateId", "name slug category preview")
+    .lean();
   if (!store) return { ok: false as const, message: "Store not found" };
   return { ok: true as const, data: { store } };
 }
@@ -76,4 +108,31 @@ export async function deleteStore(storeId: string, userId: string) {
   const store = await StoreModel.findOneAndDelete({ _id: storeId, userId }).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
   return { ok: true as const, message: "Store deleted" };
+}
+
+export async function changeStoreTheme(storeId: string, userId: string, payload: { templateId?: string; theme?: Record<string, unknown> }) {
+  await connectDatabase();
+  const store = await StoreModel.findOne({ _id: storeId, userId });
+  if (!store) return { ok: false as const, message: "Store not found" };
+
+  if (payload.templateId) {
+    const template = await TemplateModel.findById(payload.templateId).lean() as any;
+    if (!template) return { ok: false as const, message: "Template not found" };
+
+    store.selectedTemplateId = template._id;
+    if (template.theme) {
+      store.theme = { ...store.theme.toObject?.() ?? store.theme, ...template.theme };
+    }
+    store.category = template.category ?? store.category;
+  }
+
+  if (payload.theme) {
+    store.theme = { ...store.theme.toObject?.() ?? store.theme, ...payload.theme };
+  }
+
+  await store.save();
+  const updated = await StoreModel.findById(store._id)
+    .populate("selectedTemplateId", "name slug category preview")
+    .lean();
+  return { ok: true as const, data: { store: updated } };
 }

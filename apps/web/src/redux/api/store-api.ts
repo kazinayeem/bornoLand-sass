@@ -1,5 +1,15 @@
 import { baseApi } from "@/redux/api/base-api";
 
+export type ThemeSettings = {
+  primaryColor: string;
+  secondaryColor: string;
+  font: string;
+  buttonStyle: string;
+  layoutWidth: string;
+  darkMode: boolean;
+  navbarStyle: string;
+};
+
 export type Store = {
   _id: string;
   tenantId: string;
@@ -11,6 +21,9 @@ export type Store = {
   category: string;
   plan: string;
   status: string;
+  logoUrl: string;
+  selectedTemplateId?: { _id: string; name: string; slug: string; category: string; preview: string } | string;
+  theme: ThemeSettings;
   createdAt: string;
   updatedAt: string;
 };
@@ -23,9 +36,14 @@ type CreateStoreRequest = {
   description?: string;
   category?: string;
   plan?: string;
+  selectedTemplateId?: string;
+  logoUrl?: string;
 };
 
-type UpdateStoreRequest = Partial<CreateStoreRequest> & { status?: string };
+type UpdateStoreRequest = Partial<CreateStoreRequest> & {
+  status?: string;
+  theme?: Partial<ThemeSettings>;
+};
 
 export const storeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -45,6 +63,10 @@ export const storeApi = baseApi.injectEndpoints({
       query: ({ id, data }) => ({ url: `/stores/${id}`, method: "PUT", body: data }),
       invalidatesTags: (_result, _error, { id }) => ["Stores", { type: "Stores", id }]
     }),
+    changeStoreTheme: builder.mutation<ApiEnvelope<{ store: Store }>, { id: string; data: { templateId?: string; theme?: Partial<ThemeSettings> } }>({
+      query: ({ id, data }) => ({ url: `/stores/${id}/theme`, method: "PUT", body: data }),
+      invalidatesTags: (_result, _error, { id }) => ["Stores", { type: "Stores", id }]
+    }),
     deleteStore: builder.mutation<ApiEnvelope<never>, string>({
       query: (id) => ({ url: `/stores/${id}`, method: "DELETE" }),
       invalidatesTags: ["Stores"]
@@ -57,5 +79,6 @@ export const {
   useGetMyStoresQuery,
   useGetStoreQuery,
   useUpdateStoreMutation,
+  useChangeStoreThemeMutation,
   useDeleteStoreMutation
 } = storeApi;

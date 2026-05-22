@@ -128,6 +128,8 @@ export default async function middleware(request: NextRequest) {
 
   // 3. Detect subdomain
   const subdomain = getSubdomain(hostname);
+  const debugHost = hostname;
+  const debugSubdomain = subdomain;
 
   // 4. Protected routes — redirect to login if not authenticated
   const isProtectedRoute = pathname.startsWith("/dashboard") || pathname.startsWith("/builder");
@@ -155,16 +157,28 @@ export default async function middleware(request: NextRequest) {
       const protocol = request.nextUrl.protocol;
       const port = request.nextUrl.port ? `:${request.nextUrl.port}` : "";
       const url = `${protocol}//${baseDomain}${port}${pathname}${request.nextUrl.search}`;
-      return NextResponse.redirect(url);
+      const redirectRes = NextResponse.redirect(url);
+      redirectRes.headers.set("x-debug-hostname", debugHost);
+      redirectRes.headers.set("x-debug-subdomain", debugSubdomain ?? "(null)");
+      redirectRes.headers.set("x-debug-action", "redirect-to-base");
+      return redirectRes;
     }
 
     // Rewrite to /site/{subdomain}{pathname} for tenant pages
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = `/site/${subdomain}${pathname === "/" ? "" : pathname}`;
-    return NextResponse.rewrite(rewriteUrl);
+    const rewriteRes = NextResponse.rewrite(rewriteUrl);
+    rewriteRes.headers.set("x-debug-hostname", debugHost);
+    rewriteRes.headers.set("x-debug-subdomain", debugSubdomain ?? "(null)");
+    rewriteRes.headers.set("x-debug-action", "rewrite");
+    return rewriteRes;
   }
 
-  return NextResponse.next();
+  const debug = NextResponse.next();
+  debug.headers.set("x-debug-hostname", debugHost);
+  debug.headers.set("x-debug-subdomain", debugSubdomain ?? "(null)");
+  debug.headers.set("x-debug-rewrite", `site/${debugSubdomain}`);
+  return debug;
 }
 
 export const config = {

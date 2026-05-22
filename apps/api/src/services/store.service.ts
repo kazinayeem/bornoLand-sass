@@ -34,7 +34,7 @@ export async function createStore(userId: string, payload: unknown) {
     userId,
     name: parsed.data.name,
     slug: parsed.data.slug,
-    subdomain: `${parsed.data.slug}.bornoland.com`,
+    subdomain: parsed.data.slug,
     description: parsed.data.description ?? "",
     category: parsed.data.category ?? "general",
     plan: parsed.data.plan ?? "free",

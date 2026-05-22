@@ -1,0 +1,58 @@
+import { connectDatabase } from "../config/database.js";
+import { StoreModel } from "../models/store.model.js";
+import { TenantModel } from "../models/tenant.model.js";
+import { PageModel } from "../models/page.model.js";
+
+export type TenantStoreResponse = {
+  store: Record<string, unknown> | null;
+  tenant: Record<string, unknown> | null;
+  page: Record<string, unknown> | null;
+};
+
+/**
+ * Resolves a store + tenant + home page by subdomain slug.
+ * Used by the public-facing site renderer and the Next.js middleware.
+ */
+export async function resolveBySubdomain(slug: string): Promise<{
+  ok: boolean;
+  data?: TenantStoreResponse;
+  message?: string;
+}> {
+  await connectDatabase();
+
+  const store = await StoreModel.findOne({ subdomain: slug, status: "active" }).lean() as any;
+  if (!store) {
+    return { ok: false, message: "Store not found" };
+  }
+
+  const tenant = await TenantModel.findById(store.tenantId).lean() as any;
+  const page = await PageModel.findOne({ storeId: store._id, slug: "home", status: "published" }).lean() as any;
+
+  return {
+    ok: true,
+    data: {
+      store: store ?? null,
+      tenant: tenant ?? null,
+      page: page ?? null,
+    },
+  };
+}
+
+/**
+ * Resolves a store by its ID (for authenticated requests).
+ */
+export async function resolveById(storeId: string) {
+  await connectDatabase();
+
+  const store = await StoreModel.findById(storeId).lean() as any;
+  if (!store) {
+    return { ok: false, message: "Store not found" };
+  }
+
+  const tenant = await TenantModel.findById(store.tenantId).lean() as any;
+
+  return {
+    ok: true,
+    data: { store, tenant: tenant ?? null },
+  };
+}

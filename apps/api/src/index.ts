@@ -12,6 +12,8 @@ import { pageRouter } from "./routes/page.route.js";
 import { storeRouter } from "./routes/store.route.js";
 import { templateRouter } from "./routes/template.route.js";
 import { builderRouter } from "./routes/builder.route.js";
+import { publicRouter } from "./routes/public.route.js";
+import { subdomainDetector } from "./middleware/subdomain.middleware.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -19,17 +21,26 @@ dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
 
 const app = express();
 
+// ── CORS configuration ──────────────────────────────────────────
+
+const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "bornoland.com";
+
 const configuredOrigins = [
   process.env.WEB_URL,
   process.env.APP_URL,
   ...(process.env.CORS_ORIGINS?.split(",").map((origin) => origin.trim()) ?? [])
 ].filter((origin): origin is string => Boolean(origin));
 
+// Allow any subdomain of ROOT_DOMAIN or localhost dev domains
 const localhostRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+const subdomainPatterns = [
+  new RegExp(`^https?://[a-z0-9-]+\\.${ROOT_DOMAIN}(:\\d+)?$`),
+  /^https?:\/\/[a-z0-9-]+\.localhost\.com(:\d+)?$/,
+  /^https?:\/\/[a-z0-9-]+\.lvh\.me(:\d+)?$/,
+];
 
 const corsOptions: CorsOptions = {
   origin(origin, callback) {
-    // Allow non-browser clients and same-origin server-to-server calls.
     if (!origin) {
       callback(null, true);
       return;
@@ -40,6 +51,13 @@ const corsOptions: CorsOptions = {
       return;
     }
 
+    for (const pattern of subdomainPatterns) {
+      if (pattern.test(origin)) {
+        callback(null, true);
+        return;
+      }
+    }
+
     callback(new Error(`CORS origin blocked: ${origin}`));
   },
   credentials: true,
@@ -47,10 +65,14 @@ const corsOptions: CorsOptions = {
   allowedHeaders: ["Content-Type", "Authorization", "x-app-source"]
 };
 
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
 
+// ── Subdomain detection (applied globally) ──────────────────────
+app.use(subdomainDetector);
+
+// ── Health ──────────────────────────────────────────────────────
 app.get("/health", (_request, response) => {
   response.json({ ok: true, service: "bornoland-api" });
 });
@@ -64,6 +86,7 @@ app.get("/health/database", async (_request, response) => {
   }
 });
 
+// ── Routes ──────────────────────────────────────────────────────
 app.use("/auth", authRouter);
 app.use("/tenants", tenantRouter);
 app.use("/pages", pageRouter);
@@ -72,6 +95,7 @@ app.use("/billing", billingRouter);
 app.use("/stores", storeRouter);
 app.use("/templates", templateRouter);
 app.use("/builder", builderRouter);
+app.use("/public", publicRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

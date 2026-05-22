@@ -4,7 +4,7 @@ import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function GoogleButton({ label = "Continue with Google" }: { label?: string }) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
   return (
     <Button

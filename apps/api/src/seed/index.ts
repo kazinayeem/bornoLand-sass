@@ -6,6 +6,7 @@ import { TeamMemberModel } from "../models/team-member.model.js";
 import { SubscriptionModel } from "../models/subscription.model.js";
 import { TenantModel } from "../models/tenant.model.js";
 import { UserModel } from "../models/user.model.js";
+import { seedTemplates } from "./templates.js";
 
 async function upsertUser(email: string, data: Record<string, unknown>) {
   const existing = await UserModel.findOne({ email });
@@ -78,5 +79,7 @@ export async function seedDatabase() {
     { upsert: true }
   );
 
-  console.log("Seed complete: super admin, demo tenant, demo user");
+  await seedTemplates();
+
+  console.log("Seed complete: super admin, demo tenant, demo user, templates");
 }

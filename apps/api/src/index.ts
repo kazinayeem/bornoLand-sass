@@ -9,6 +9,9 @@ import { adminRouter } from "./routes/admin.route.js";
 import { billingRouter } from "./routes/billing.route.js";
 import { tenantRouter } from "./routes/tenant.route.js";
 import { pageRouter } from "./routes/page.route.js";
+import { storeRouter } from "./routes/store.route.js";
+import { templateRouter } from "./routes/template.route.js";
+import { builderRouter } from "./routes/builder.route.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -66,6 +69,9 @@ app.use("/tenants", tenantRouter);
 app.use("/pages", pageRouter);
 app.use("/admin", adminRouter);
 app.use("/billing", billingRouter);
+app.use("/stores", storeRouter);
+app.use("/templates", templateRouter);
+app.use("/builder", builderRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

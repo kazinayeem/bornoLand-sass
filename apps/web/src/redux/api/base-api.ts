@@ -2,8 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_URL ??
-  process.env.API_URL ??
-  "http://localhost:4000";
+  "/api";
 
 export const baseApi = createApi({
   reducerPath: "baseApi",
@@ -11,6 +10,6 @@ export const baseApi = createApi({
     baseUrl: apiBaseUrl,
     credentials: "include"
   }),
-  tagTypes: ["Auth", "User", "Tenant", "Dashboard"],
+  tagTypes: ["Auth", "User", "Tenant", "Dashboard", "Stores"],
   endpoints: () => ({})
 });

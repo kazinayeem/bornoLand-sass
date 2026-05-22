@@ -1,0 +1,39 @@
+import type { Response } from "express";
+import type { AuthRequest } from "../middleware/auth.middleware.js";
+import { createStore, deleteStore, getStoreById, getUserStores, updateStore } from "../services/store.service.js";
+import { sendFailure, sendSuccess } from "../utils/api-response.js";
+
+export async function createStoreController(request: AuthRequest, response: Response) {
+  const userId = request.user?.userId;
+  if (!userId) return sendFailure(response, "Unauthorized", 401);
+  const result = await createStore(userId, request.body);
+  return result.ok ? sendSuccess(response, result.data, "Store created", 201) : sendFailure(response, result.message);
+}
+
+export async function getUserStoresController(request: AuthRequest, response: Response) {
+  const userId = request.user?.userId;
+  if (!userId) return sendFailure(response, "Unauthorized", 401);
+  const result = await getUserStores(userId);
+  return sendSuccess(response, result.data);
+}
+
+export async function getStoreController(request: AuthRequest, response: Response) {
+  const userId = request.user?.userId;
+  if (!userId) return sendFailure(response, "Unauthorized", 401);
+  const result = await getStoreById(request.params.id, userId);
+  return result.ok ? sendSuccess(response, result.data) : sendFailure(response, result.message, 404);
+}
+
+export async function updateStoreController(request: AuthRequest, response: Response) {
+  const userId = request.user?.userId;
+  if (!userId) return sendFailure(response, "Unauthorized", 401);
+  const result = await updateStore(request.params.id, userId, request.body);
+  return result.ok ? sendSuccess(response, result.data, "Store updated") : sendFailure(response, result.message, 404);
+}
+
+export async function deleteStoreController(request: AuthRequest, response: Response) {
+  const userId = request.user?.userId;
+  if (!userId) return sendFailure(response, "Unauthorized", 401);
+  const result = await deleteStore(request.params.id, userId);
+  return result.ok ? sendSuccess(response, undefined, result.message) : sendFailure(response, result.message, 404);
+}

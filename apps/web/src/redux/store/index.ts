@@ -4,6 +4,7 @@ import { authReducer } from "@/redux/slices/auth-slice";
 import { userReducer } from "@/redux/slices/user-slice";
 import { tenantReducer } from "@/redux/slices/tenant-slice";
 import { dashboardReducer } from "@/redux/slices/dashboard-slice";
+import { storesReducer } from "@/redux/slices/stores-slice";
 
 export const store = configureStore({
   reducer: {
@@ -11,7 +12,8 @@ export const store = configureStore({
     auth: authReducer,
     user: userReducer,
     tenant: tenantReducer,
-    dashboard: dashboardReducer
+    dashboard: dashboardReducer,
+    stores: storesReducer
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(baseApi.middleware)
 });

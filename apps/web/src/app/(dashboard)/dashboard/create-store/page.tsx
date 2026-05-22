@@ -63,7 +63,7 @@ export default function CreateStorePage() {
       };
       if (form.selectedTemplateId) payload.selectedTemplateId = form.selectedTemplateId;
 
-      const result = await createStore(payload).unwrap();
+      const result = await createStore(payload as any).unwrap();
       const storeId = result?.data?.store?._id;
       if (storeId) setCreatedStoreId(storeId);
       toast.success("Store created successfully!");

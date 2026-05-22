@@ -15,7 +15,7 @@ export default function TemplatesPage() {
   const templates = data?.data?.templates ?? [];
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Template | null>(null);
-  const [form, setForm] = useState({ name: "", slug: "", category: "", description: "", status: "published" as const });
+  const [form, setForm] = useState<{ name: string; slug: string; category: string; description: string; status: "draft" | "published" }>({ name: "", slug: "", category: "", description: "", status: "published" });
 
   const resetForm = () => setForm({ name: "", slug: "", category: "", description: "", status: "published" });
   const closeForm = () => { setShowForm(false); setEditing(null); resetForm(); };

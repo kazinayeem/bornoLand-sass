@@ -16,7 +16,7 @@ export async function getAdminTemplates() {
 
 export async function getTemplateById(id: string) {
   await connectDatabase();
-  const template = await TemplateModel.findById(id).lean();
+  const template = await TemplateModel.findById(id).lean() as any;
   if (!template) return { ok: false as const, message: "Template not found" };
   return { ok: true as const, data: { template } };
 }
@@ -29,21 +29,21 @@ export async function createTemplate(payload: Record<string, unknown>) {
 
 export async function updateTemplate(id: string, payload: Record<string, unknown>) {
   await connectDatabase();
-  const template = await TemplateModel.findByIdAndUpdate(id, { $set: payload }, { new: true }).lean();
+  const template = await TemplateModel.findByIdAndUpdate(id, { $set: payload }, { new: true }).lean() as any;
   if (!template) return { ok: false as const, message: "Template not found" };
   return { ok: true as const, data: { template } };
 }
 
 export async function deleteTemplate(id: string) {
   await connectDatabase();
-  const template = await TemplateModel.findByIdAndDelete(id).lean();
+  const template = await TemplateModel.findByIdAndDelete(id).lean() as any;
   if (!template) return { ok: false as const, message: "Template not found" };
   return { ok: true as const, message: "Template deleted" };
 }
 
 export async function applyTemplateToStore(storeId: string, templateId: string) {
   await connectDatabase();
-  const template = await TemplateModel.findById(templateId).lean();
+  const template = await TemplateModel.findById(templateId).lean() as any;
   if (!template) return { ok: false as const, message: "Template not found" };
 
   const { StoreModel } = await import("../models/store.model.js");
@@ -57,7 +57,7 @@ export async function applyTemplateToStore(storeId: string, templateId: string) 
       }
     },
     { new: true }
-  ).lean();
+  ).lean() as any;
 
   if (!store) return { ok: false as const, message: "Store not found" };
 

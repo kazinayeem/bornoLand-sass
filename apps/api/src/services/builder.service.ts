@@ -10,7 +10,7 @@ export async function getPages(storeId: string) {
 
 export async function getPage(pageId: string) {
   await connectDatabase();
-  const page = await PageModel.findById(pageId).lean();
+  const page = await PageModel.findById(pageId).lean() as any;
   if (!page) return { ok: false as const, message: "Page not found" };
   return { ok: true as const, data: { page } };
 }
@@ -21,17 +21,17 @@ export async function savePage(pageId: string, payload: { sections?: unknown[]; 
   if (payload.sections) update.sections = payload.sections;
   if (payload.theme) update.theme = payload.theme;
 
-  const page = await PageModel.findByIdAndUpdate(pageId, { $set: update }, { new: true }).lean();
+  const page = await PageModel.findByIdAndUpdate(pageId, { $set: update }, { new: true }).lean() as any;
   if (!page) return { ok: false as const, message: "Page not found" };
   return { ok: true as const, data: { page } };
 }
 
 export async function createPage(storeId: string, payload: { title: string; slug: string }) {
   await connectDatabase();
-  const store = await StoreModel.findById(storeId).lean();
+  const store = await StoreModel.findById(storeId).lean() as any;
   if (!store) return { ok: false as const, message: "Store not found" };
 
-  const existing = await PageModel.findOne({ storeId, slug: payload.slug }).lean();
+  const existing = await PageModel.findOne({ storeId, slug: payload.slug }).lean() as any;
   if (existing) return { ok: false as const, message: "Page slug already exists" };
 
   const page = await PageModel.create({
@@ -46,14 +46,14 @@ export async function createPage(storeId: string, payload: { title: string; slug
 
 export async function deletePage(pageId: string) {
   await connectDatabase();
-  const page = await PageModel.findByIdAndDelete(pageId).lean();
+  const page = await PageModel.findByIdAndDelete(pageId).lean() as any;
   if (!page) return { ok: false as const, message: "Page not found" };
   return { ok: true as const, message: "Page deleted" };
 }
 
 export async function publishPage(pageId: string) {
   await connectDatabase();
-  const page = await PageModel.findByIdAndUpdate(pageId, { $set: { status: "published" } }, { new: true }).lean();
+  const page = await PageModel.findByIdAndUpdate(pageId, { $set: { status: "published" } }, { new: true }).lean() as any;
   if (!page) return { ok: false as const, message: "Page not found" };
   return { ok: true as const, data: { page } };
 }

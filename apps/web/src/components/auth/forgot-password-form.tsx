@@ -20,7 +20,7 @@ export function ForgotPasswordForm() {
         setLoading(false);
         if ("error" in response) {
           const message =
-            ("data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
+            (response.error && "data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
               ? String((response.error.data as { message?: string }).message)
               : "Could not send reset link") || "Could not send reset link";
           toast.error(message);

@@ -19,21 +19,24 @@ export async function getUserStoresController(request: AuthRequest, response: Re
 
 export async function getStoreController(request: AuthRequest, response: Response) {
   const userId = request.user?.userId;
+  const id = request.params.id as string;
   if (!userId) return sendFailure(response, "Unauthorized", 401);
-  const result = await getStoreById(request.params.id, userId);
+  const result = await getStoreById(id, userId);
   return result.ok ? sendSuccess(response, result.data) : sendFailure(response, result.message, 404);
 }
 
 export async function updateStoreController(request: AuthRequest, response: Response) {
   const userId = request.user?.userId;
+  const id = request.params.id as string;
   if (!userId) return sendFailure(response, "Unauthorized", 401);
-  const result = await updateStore(request.params.id, userId, request.body);
+  const result = await updateStore(id, userId, request.body);
   return result.ok ? sendSuccess(response, result.data, "Store updated") : sendFailure(response, result.message, 404);
 }
 
 export async function deleteStoreController(request: AuthRequest, response: Response) {
   const userId = request.user?.userId;
+  const id = request.params.id as string;
   if (!userId) return sendFailure(response, "Unauthorized", 401);
-  const result = await deleteStore(request.params.id, userId);
+  const result = await deleteStore(id, userId);
   return result.ok ? sendSuccess(response, undefined, result.message) : sendFailure(response, result.message, 404);
 }

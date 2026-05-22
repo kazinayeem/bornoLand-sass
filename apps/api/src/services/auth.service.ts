@@ -117,7 +117,7 @@ export async function loginUser(payload: unknown) {
 
   await connectDatabase();
 
-  const user = await UserModel.findOne({ email: parsed.data.email }).lean();
+  const user = await UserModel.findOne({ email: parsed.data.email }).lean() as any;
 
   if (!user || !user.passwordHash) {
     return { ok: false as const, message: "Invalid credentials" };
@@ -193,7 +193,7 @@ export async function forgotPassword(payload: unknown) {
   }
 
   await connectDatabase();
-  const user = await UserModel.findOne({ email: parsed.data.email }).lean();
+  const user = await UserModel.findOne({ email: parsed.data.email }).lean() as any;
 
   if (!user) {
     return { ok: true as const, message: "If the email exists, a reset link has been sent." };
@@ -229,7 +229,7 @@ export async function resetPassword(payload: unknown) {
     token: parsed.data.token,
     purpose: "password-reset",
     expires: { $gt: new Date() }
-  }).lean();
+  }).lean() as any;
 
   if (!tokenRecord) {
     return { ok: false as const, message: "Reset token invalid or expired" };
@@ -244,7 +244,7 @@ export async function resetPassword(payload: unknown) {
 
 export async function getSessionByEmail(email: string, loginType: "user" | "admin" = "user") {
   await connectDatabase();
-  const user = await UserModel.findOne({ email }).lean();
+  const user = await UserModel.findOne({ email }).lean() as any;
 
   if (!user) {
     return null;

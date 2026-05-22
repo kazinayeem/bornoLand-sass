@@ -41,7 +41,7 @@ export function QuickLoginButton({ label, email, password, loginType, callbackUr
 
         if ("error" in response) {
           const message =
-            ("data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
+            (response.error && "data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
               ? String((response.error.data as { message?: string }).message)
               : "Quick login failed") || "Quick login failed";
           toast.error(message);

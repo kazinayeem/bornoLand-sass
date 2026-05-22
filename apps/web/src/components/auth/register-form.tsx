@@ -19,18 +19,18 @@ export function RegisterForm() {
     handleSubmit,
     formState: { errors }
   } = useForm<RegisterInput>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(registerSchema) as any,
     defaultValues: { name: "", email: "", password: "", tenantName: "", rememberMe: true }
   });
 
   const onSubmit = handleSubmit(async (values) => {
     setLoading(true);
-    const response = await registerRequest(values);
+    const response = await registerRequest(values as any);
     setLoading(false);
 
     if ("error" in response) {
       const message =
-        ("data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
+        (response.error && "data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
           ? String((response.error.data as { message?: string }).message)
           : "Registration failed") || "Registration failed";
       toast.error(message);

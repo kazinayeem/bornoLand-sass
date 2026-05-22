@@ -17,22 +17,25 @@ export async function adminListTemplatesController(_request: AuthRequest, respon
 }
 
 export async function getTemplateController(request: AuthRequest, response: Response) {
-  const result = await getTemplateById(request.params.id);
+  const id = request.params.id as string;
+  const result = await getTemplateById(id);
   return result.ok ? sendSuccess(response, result.data) : sendFailure(response, result.message, 404);
 }
 
 export async function createTemplateController(request: AuthRequest, response: Response) {
   const result = await createTemplate({ ...request.body, createdBy: request.user?.userId });
-  return result.ok ? sendSuccess(response, result.data, "Template created", 201) : sendFailure(response, result.message);
+  return sendSuccess(response, result.data, "Template created", 201);
 }
 
 export async function updateTemplateController(request: AuthRequest, response: Response) {
-  const result = await updateTemplate(request.params.id, request.body);
+  const id = request.params.id as string;
+  const result = await updateTemplate(id, request.body);
   return result.ok ? sendSuccess(response, result.data, "Template updated") : sendFailure(response, result.message, 404);
 }
 
 export async function deleteTemplateController(request: AuthRequest, response: Response) {
-  const result = await deleteTemplate(request.params.id);
+  const id = request.params.id as string;
+  const result = await deleteTemplate(id);
   return result.ok ? sendSuccess(response, undefined, result.message) : sendFailure(response, result.message, 404);
 }
 

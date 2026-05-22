@@ -23,7 +23,7 @@ export async function connectWebDatabase() {
     return cached.connection;
   }
 
-  const connection = await cached.connect(MONGODB_URI, {
+  const connection = await cached.connect(MONGODB_URI!, {
     dbName: process.env.MONGODB_DB ?? "bornoland"
   });
 

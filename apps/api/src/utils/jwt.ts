@@ -22,7 +22,7 @@ function getSecret() {
 }
 
 export function signSessionToken(payload: SessionPayload, expiresIn: string) {
-  return jwt.sign(payload, getSecret(), { expiresIn });
+  return jwt.sign(payload, getSecret(), { expiresIn } as jwt.SignOptions);
 }
 
 export function verifySessionToken(token: string) {

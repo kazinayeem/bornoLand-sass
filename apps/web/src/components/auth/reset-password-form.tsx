@@ -21,7 +21,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         setLoading(false);
         if ("error" in response) {
           const message =
-            ("data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
+            (response.error && "data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
               ? String((response.error.data as { message?: string }).message)
               : "Could not reset password") || "Could not reset password";
           toast.error(message);

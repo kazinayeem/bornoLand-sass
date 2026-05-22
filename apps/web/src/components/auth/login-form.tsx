@@ -26,7 +26,7 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
     handleSubmit,
     formState: { errors }
   } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(loginSchema) as any,
     defaultValues: { email: "", password: "", rememberMe: true, loginType }
   });
 
@@ -42,7 +42,7 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
 
     if ("error" in response) {
       const message =
-        ("data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
+        (response.error && "data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
           ? String((response.error.data as { message?: string }).message)
           : "Login failed") || "Login failed";
       toast.error(message);

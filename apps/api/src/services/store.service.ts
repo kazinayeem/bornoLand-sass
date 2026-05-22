@@ -4,6 +4,7 @@ import { TenantModel } from "../models/tenant.model.js";
 import { TeamMemberModel } from "../models/team-member.model.js";
 import { TemplateModel } from "../models/template.model.js";
 import { PageModel } from "../models/page.model.js";
+import { seedDemoProducts } from "./product.service.js";
 import { createStoreSchema, updateStoreSchema, type CreateStoreInput, type UpdateStoreInput } from "../validators/store.validator.js";
 
 export async function createStore(userId: string, payload: unknown) {
@@ -67,6 +68,8 @@ export async function createStore(userId: string, payload: unknown) {
       theme: themeFromTemplate
     });
   }
+
+  await seedDemoProducts(store._id.toString());
 
   return { ok: true as const, data: { store: store.toObject() } };
 }

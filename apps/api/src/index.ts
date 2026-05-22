@@ -13,6 +13,7 @@ import { storeRouter } from "./routes/store.route.js";
 import { templateRouter } from "./routes/template.route.js";
 import { builderRouter } from "./routes/builder.route.js";
 import { publicRouter } from "./routes/public.route.js";
+import { productRouter } from "./routes/product.route.js";
 import { subdomainDetector } from "./middleware/subdomain.middleware.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 
@@ -96,6 +97,7 @@ app.use("/stores", storeRouter);
 app.use("/templates", templateRouter);
 app.use("/builder", builderRouter);
 app.use("/public", publicRouter);
+app.use("/products", productRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

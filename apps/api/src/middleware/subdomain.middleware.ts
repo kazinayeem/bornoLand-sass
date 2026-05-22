@@ -44,15 +44,14 @@ export async function resolveStoreFromSubdomain(request: SubdomainRequest, respo
   if (!slug) return next();
 
   try {
-    const store = await StoreModel.findOne({ subdomain: slug, status: "active" }).lean();
+    const store: any = await StoreModel.findOne({ subdomain: slug, status: "active" }).lean();
     if (store) {
       request.store = {
         _id: store._id,
         slug: store.slug,
         name: store.name,
       };
-      // Also load the parent tenant
-      const tenant = await TenantModel.findById(store.tenantId).lean();
+      const tenant: any = await TenantModel.findById(store.tenantId).lean();
       if (tenant) {
         request.tenant = {
           _id: tenant._id,
@@ -62,7 +61,7 @@ export async function resolveStoreFromSubdomain(request: SubdomainRequest, respo
       }
     }
   } catch {
-    // Silently continue — tenant not found is handled at the route level
+    // Silently continue
   }
 
   next();

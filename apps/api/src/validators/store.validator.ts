@@ -14,7 +14,7 @@ export const createStoreSchema = z.object({
   name: z.string().min(2).max(80),
   slug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
   description: z.string().max(500).optional().default(""),
-  category: z.string().max(50).optional().default("general"),
+  category: z.string().max(50).optional().default("ecommerce"),
   plan: z.enum(["free", "starter", "growth", "enterprise"]).optional().default("free"),
   selectedTemplateId: z.string().optional(),
   logoUrl: z.string().optional()

@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   Store as StoreIcon, Plus, ExternalLink, Trash2, Edit, Globe, Palette,
   Settings, BarChart3, MoreHorizontal, Calendar, LayoutTemplate, Check, AlertTriangle,
-  X, Loader2
+  X, Loader2, Package
 } from "lucide-react";
 
 const planColors: Record<string, string> = {
@@ -328,10 +328,10 @@ export default function MyStoresPage() {
                             onClick={() => setOpenMenuId(null)}>
                             {[
                               { icon: ExternalLink, label: "Visit Store", href: getSubdomainUrl(store), external: true },
-                              { icon: Edit, label: "Edit Store", href: `/dashboard/stores/${store._id}` },
+                              { icon: Edit, label: "Store Dashboard", href: `/dashboard/stores/${store._id}` },
+                              { icon: LayoutTemplate, label: "Storefront Editor", href: `/dashboard/builder/${store._id}` },
                               { icon: Palette, label: "Customize Theme", action: () => setThemeStore(store) },
-                              { icon: Settings, label: "Settings", href: `/dashboard/stores/${store._id}/settings` },
-                              { icon: BarChart3, label: "Analytics", href: `/dashboard/stores/${store._id}/analytics` },
+                              { icon: Package, label: "Manage Products", href: `/dashboard/products` },
                               { icon: Trash2, label: "Delete", action: () => setStoreToDelete(store), danger: true }
                             ].map((item) => (
                               item.href ? (
@@ -378,18 +378,22 @@ export default function MyStoresPage() {
                   </div>
                 </div>
 
-                <div className="flex border-t border-zinc-100 divide-x divide-zinc-100">
+                <div className="grid grid-cols-4 border-t border-zinc-100 divide-x divide-zinc-100">
                   <a href={getSubdomainUrl(store)} target="_blank" rel="noopener noreferrer"
-                    className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-blue-50 hover:text-blue-600">
-                    <ExternalLink className="h-3.5 w-3.5" /> Visit
+                    className="flex items-center justify-center gap-1 py-2.5 text-[10px] font-medium text-zinc-600 transition-colors hover:bg-blue-50 hover:text-blue-600">
+                    <ExternalLink className="h-3 w-3" /> Visit
                   </a>
+                  <Link href={`/dashboard/builder/${store._id}`}
+                    className="flex items-center justify-center gap-1 py-2.5 text-[10px] font-medium text-zinc-600 transition-colors hover:bg-violet-50 hover:text-violet-600">
+                    <LayoutTemplate className="h-3 w-3" /> Editor
+                  </Link>
                   <button onClick={() => setThemeStore(store)}
-                    className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-violet-50 hover:text-violet-600">
-                    <Palette className="h-3.5 w-3.5" /> Theme
+                    className="flex items-center justify-center gap-1 py-2.5 text-[10px] font-medium text-zinc-600 transition-colors hover:bg-amber-50 hover:text-amber-600">
+                    <Palette className="h-3 w-3" /> Theme
                   </button>
-                  <Link href={`/dashboard/stores/${store._id}`}
-                    className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900">
-                    <Edit className="h-3.5 w-3.5" /> Edit
+                  <Link href={`/dashboard/products`}
+                    className="flex items-center justify-center gap-1 py-2.5 text-[10px] font-medium text-zinc-600 transition-colors hover:bg-emerald-50 hover:text-emerald-600">
+                    <Package className="h-3 w-3" /> Products
                   </Link>
                 </div>
               </motion.div>

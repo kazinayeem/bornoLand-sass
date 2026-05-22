@@ -1,16 +1,15 @@
 "use client";
-
 import { Bell, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/hooks/redux";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
-  "/dashboard/stores": "My Stores",
-  "/dashboard/create-store": "Create Store",
-  "/dashboard/billing": "Billing",
-  "/dashboard/settings": "Settings",
-  "/dashboard/profile": "Profile"
+  "/dashboard/stores": "My Store",
+  "/dashboard/products": "Products",
+  "/dashboard/theme": "Theme",
+  "/dashboard/orders": "Orders",
+  "/dashboard/settings": "Settings"
 };
 
 export function UserNavbar() {

@@ -4,6 +4,7 @@ import {
   resolveTenantFromSubdomainController,
   resolveTenantBySlugController,
   resolveTenantByHostController,
+  resolveProductByHostController,
   resolveProductBySlugController,
   paymentMethodsController,
   deliveryZonesController,
@@ -16,6 +17,7 @@ publicRouter.use(subdomainDetector);
 publicRouter.get("/tenant", resolveTenantFromSubdomainController);
 publicRouter.get("/tenant/:subdomain", resolveTenantBySlugController);
 publicRouter.get("/tenant-by-host", resolveTenantByHostController);
+publicRouter.get("/product/:slug", resolveProductByHostController);
 publicRouter.get("/product/:storeSlug/:productSlug", resolveProductBySlugController);
 
 publicRouter.use(resolveStoreFromSubdomain);

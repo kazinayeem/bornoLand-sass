@@ -2,7 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { useDispatch } from "react-redux";
-import { setCartItems } from "@/redux/slices/cart-slice";
+import { hydrateCart, mergeServerCart } from "@/redux/slices/cart-slice";
 import { useGetCartQuery } from "@/redux/api/cart-api";
 
 function CartInitializer() {
@@ -10,14 +10,19 @@ function CartInitializer() {
   const { data } = useGetCartQuery();
 
   useEffect(() => {
+    dispatch(hydrateCart());
+  }, [dispatch]);
+
+  useEffect(() => {
     if (data?.data?.cart?.items) {
-      dispatch(setCartItems(data.data.cart.items.map((item) => ({
+      const serverItems = data.data.cart.items.map((item) => ({
         productId: typeof item.productId === "object" ? (item.productId as any)._id ?? item.productId : item.productId,
         name: item.name,
         price: item.price,
         quantity: item.quantity,
-        image: item.image
-      }))));
+        image: item.image,
+      }));
+      dispatch(mergeServerCart(serverItems));
     }
   }, [data, dispatch]);
 

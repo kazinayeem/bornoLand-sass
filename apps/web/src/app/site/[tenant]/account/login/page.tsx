@@ -51,7 +51,11 @@ function LoginForm() {
         setApiError(result.message ?? "Login failed");
       }
     } catch (err: any) {
-      setApiError(err?.data?.message ?? "Invalid email or password");
+      if (err?.status === "FETCH_ERROR" || err?.code === "ERR_NETWORK") {
+        setApiError("Unable to reach the server. Please check your connection or try again.");
+      } else {
+        setApiError(err?.data?.message ?? "Invalid email or password");
+      }
     }
   };
 

@@ -102,6 +102,10 @@ export default async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
+    if (pathname.startsWith("/products")) {
+      return NextResponse.next();
+    }
+
     if (isAppRoute(pathname)) {
       const baseDomain = getBaseDomain(hostname);
       const protocol = request.nextUrl.protocol;

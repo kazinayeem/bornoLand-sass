@@ -6,7 +6,8 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Store, LayoutTemplate, Package, Settings,
-  ChevronLeft, ChevronRight, LogOut, Sparkles
+  ChevronLeft, ChevronRight, LogOut, Sparkles,
+  ShoppingCart, CreditCard, BarChart3
 } from "lucide-react";
 
 const navItems = [
@@ -15,7 +16,11 @@ const navItems = [
   { href: "/admin/dashboard/stores", label: "Stores", icon: Store },
   { href: "/admin/dashboard/templates", label: "Themes", icon: LayoutTemplate },
   { href: "/admin/dashboard/products", label: "Products", icon: Package },
-  { href: "/admin/dashboard/settings", label: "Settings", icon: Settings }
+  { href: "/admin/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/admin/dashboard/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/dashboard/payments", label: "Payments", icon: CreditCard },
+  { href: "/admin/dashboard/plans", label: "Plans", icon: Sparkles },
+  { href: "/admin/dashboard/analytics", label: "Analytics", icon: BarChart3 }
 ];
 
 export function Sidebar() {

@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ShoppingBag, ArrowLeft, CreditCard, Truck, Shield, CheckCircle, Banknote, Smartphone, Landmark } from "lucide-react";
+import { ShoppingBag, ArrowLeft, CreditCard, Truck, Shield, CheckCircle, Banknote, Smartphone, Landmark, Loader2, AlertCircle } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { clearCart } from "@/redux/slices/cart-slice";
 import { useCreateOrderMutation } from "@/redux/api/order-api";
@@ -33,10 +33,13 @@ const PAYMENT_LABELS: Record<string, string> = {
 export default function CheckoutPage() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { items } = useSelector((state: RootState) => state.cart);
+  const { items, hydrated } = useSelector((state: RootState) => state.cart);
   const { isAuthenticated, restored } = useSelector((state: RootState) => state.customer);
   const [createOrder, { isLoading }] = useCreateOrderMutation();
   const { settings } = useTenant();
+  const [mounted, setMounted] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; orderId: string } | null>(null);
 
   const { data: pmData } = useGetPublicPaymentMethodsQuery();
   const { data: dzData } = useGetPublicDeliveryZonesQuery();
@@ -44,21 +47,13 @@ export default function CheckoutPage() {
   const paymentMethods = pmData?.data?.paymentMethods ?? [];
   const deliveryZones = dzData?.data?.deliveryZones ?? [];
 
-  const [errorMsg, setErrorMsg] = useState("");
-  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; orderId: string } | null>(null);
-
   const [form, setForm] = useState({
-    fullName: "",
-    phone: "",
-    street: "",
-    city: "",
-    state: "",
-    zip: "",
-    notes: "",
+    fullName: "", phone: "", street: "", city: "", state: "", zip: "", notes: "",
   });
-
   const [selectedZoneId, setSelectedZoneId] = useState("");
   const [selectedPayment, setSelectedPayment] = useState("");
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (restored && !isAuthenticated) {
@@ -82,6 +77,7 @@ export default function CheckoutPage() {
   const selectedZone = deliveryZones.find((z) => z._id === selectedZoneId);
   const selectedPm = paymentMethods.find((pm) => pm._id === selectedPayment);
 
+  const hasItems = items.length > 0;
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryCharge = selectedZone?.charge ?? 0;
   const total = subtotal + deliveryCharge;
@@ -100,8 +96,8 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (items.length === 0) {
-      setErrorMsg("Your cart is empty");
+    if (!hasItems) {
+      setErrorMsg("Your cart is empty. Please add items before checking out.");
       return;
     }
 
@@ -127,12 +123,15 @@ export default function CheckoutPage() {
           orderId: result.data.order._id,
         });
       } else {
-        setErrorMsg(result.message ?? "Checkout failed");
+        setErrorMsg(result.message ?? "Checkout failed. Please try again.");
       }
     } catch (err: any) {
-      setErrorMsg(err?.data?.message ?? "Checkout failed");
+      setErrorMsg(err?.data?.message ?? "Checkout failed. Please try again.");
     }
   };
+
+  const isLoadingState = !mounted || !hydrated;
+  const showEmpty = mounted && hydrated && !hasItems;
 
   if (orderSuccess) {
     return (
@@ -180,7 +179,16 @@ export default function CheckoutPage() {
     );
   }
 
-  if (items.length === 0) {
+  if (isLoadingState) {
+    return (
+      <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center gap-4 px-4">
+        <Loader2 className="h-8 w-8 animate-spin text-zinc-300" />
+        <p className="text-sm text-zinc-400">Loading your cart...</p>
+      </div>
+    );
+  }
+
+  if (showEmpty) {
     return (
       <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center gap-4 px-4">
         <ShoppingBag className="h-16 w-16 text-zinc-200" />
@@ -195,12 +203,19 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="mb-8 text-2xl font-bold text-zinc-900">Checkout</h1>
+      <div className="mb-6 flex items-center gap-3">
+        <Link href="/cart" className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900">Checkout</h1>
+          <p className="text-sm text-zinc-500">{items.length} item{items.length !== 1 ? "s" : ""}</p>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit}>
         <div className="grid gap-8 lg:grid-cols-5">
           <div className="space-y-6 lg:col-span-3">
-            {/* Shipping Address */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               className="rounded-xl border border-zinc-100 p-5">
               <div className="mb-4 flex items-center gap-2">
@@ -250,12 +265,11 @@ export default function CheckoutPage() {
               </div>
             </motion.div>
 
-            {/* Delivery Area */}
             {deliveryZones.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
                 className="rounded-xl border border-zinc-100 p-5">
                 <div className="mb-4 flex items-center gap-2">
-                  <MapPinIcon className="h-5 w-5 text-zinc-700" />
+                  <Truck className="h-5 w-5 text-zinc-700" />
                   <h2 className="font-semibold text-zinc-900">Delivery Area</h2>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -284,7 +298,6 @@ export default function CheckoutPage() {
               </motion.div>
             )}
 
-            {/* Payment Method */}
             {paymentMethods.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                 className="rounded-xl border border-zinc-100 p-5">
@@ -339,25 +352,25 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          {/* Order Summary */}
           <div className="lg:col-span-2">
             <div className="rounded-xl border border-zinc-100 p-5">
               <h2 className="mb-4 font-semibold text-zinc-900">Order Summary</h2>
+
               <div className="space-y-3">
                 {items.map((item) => (
                   <div key={item.productId} className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-50">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-50">
                       {item.image ? (
                         <img src={item.image} alt={item.name} className="h-full w-full rounded-lg object-cover" />
                       ) : (
                         <ShoppingBag className="h-4 w-4 text-zinc-300" />
                       )}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-medium text-zinc-900">{item.name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium text-zinc-900">{item.name}</p>
                       <p className="text-xs text-zinc-400">Qty: {item.quantity}</p>
                     </div>
-                    <span className="text-xs font-semibold text-zinc-900">
+                    <span className="shrink-0 text-xs font-semibold text-zinc-900">
                       {formatCurrency(item.price * item.quantity, settings)}
                     </span>
                   </div>
@@ -373,7 +386,7 @@ export default function CheckoutPage() {
                   <span>Delivery ({selectedZone?.name ?? "—"})</span>
                   <span>{deliveryCharge === 0 ? "Free" : formatCurrency(deliveryCharge, settings)}</span>
                 </div>
-                <div className="flex justify-between font-semibold text-zinc-900">
+                <div className="flex justify-between border-t border-zinc-100 pt-2 font-semibold text-zinc-900">
                   <span>Total</span>
                   <span>{formatCurrency(total, settings)}</span>
                 </div>
@@ -390,29 +403,24 @@ export default function CheckoutPage() {
               )}
 
               {errorMsg && (
-                <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{errorMsg}</p>
+                <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2.5">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+                  <p className="text-sm text-red-600">{errorMsg}</p>
+                </div>
               )}
 
               <button type="submit" disabled={isLoading}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
-                style={{ backgroundColor: "#18181b" }}>
-                {isLoading
-                  ? "Placing Order..."
-                  : `Place Order — ${formatCurrency(total, settings)}`}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3 text-sm font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
+                {isLoading ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Placing Order...</>
+                ) : (
+                  `Place Order — ${formatCurrency(total, settings)}`
+                )}
               </button>
             </div>
           </div>
         </div>
       </form>
     </div>
-  );
-}
-
-function MapPinIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
   );
 }

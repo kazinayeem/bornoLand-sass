@@ -16,6 +16,7 @@ export const createStoreSchema = z.object({
   description: z.string().max(500).optional().default(""),
   category: z.string().max(50).optional().default("ecommerce"),
   plan: z.enum(["free", "starter", "growth", "enterprise"]).optional().default("free"),
+  planId: z.string().optional(),
   selectedTemplateId: z.string().optional(),
   logoUrl: z.string().optional()
 });
@@ -25,6 +26,10 @@ export const updateStoreSchema = z.object({
   description: z.string().max(500).optional(),
   category: z.string().max(50).optional(),
   plan: z.enum(["free", "starter", "growth", "enterprise"]).optional(),
+  planId: z.string().optional(),
+  billingStatus: z.enum(["trial", "active", "past_due", "cancelled", "paused"]).optional(),
+  subscriptionStatus: z.enum(["trialing", "active", "past_due", "cancelled", "paused"]).optional(),
+  renewalDate: z.string().datetime().optional(),
   status: z.enum(["active", "suspended", "draft"]).optional(),
   logoUrl: z.string().optional(),
   slug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens").optional(),

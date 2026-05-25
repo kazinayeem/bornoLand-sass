@@ -48,6 +48,42 @@ export async function resolveTenantByHostController(
     : sendFailure(response, result.message ?? "Not found", 404);
 }
 
+export async function resolveProductByHostController(
+  request: SubdomainRequest,
+  response: Response
+) {
+  const slug = request.subdomain;
+  const productSlug = request.params.slug as string;
+
+  if (!slug) return sendFailure(response, "No subdomain found", 404);
+  if (!productSlug) return sendFailure(response, "Product slug required", 400);
+
+  const site = await resolveBySubdomain(slug);
+  if (!site.ok || !site.data?.store) {
+    return sendFailure(response, site.message ?? "Store not found", 404);
+  }
+
+  const productResult = await getProductBySlug(String(site.data.store._id), productSlug);
+  if (!productResult.ok || !productResult.data?.product) {
+    return sendFailure(response, productResult.message ?? "Product not found", 404);
+  }
+
+  const product = productResult.data.product as Record<string, unknown>;
+  const relatedProducts = (site.data.products ?? [])
+    .filter((item) => String(item._id) !== String(product._id) && String((item as any).category ?? "").toLowerCase() === String((product as any).category ?? "").toLowerCase())
+    .slice(0, 8);
+
+  return sendSuccess(response, {
+    store: site.data.store,
+    tenant: site.data.tenant,
+    settings: site.data.settings,
+    sliders: site.data.sliders,
+    products: site.data.products,
+    product,
+    relatedProducts,
+  });
+}
+
 export async function resolveProductBySlugController(
   request: SubdomainRequest,
   response: Response

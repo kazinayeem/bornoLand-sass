@@ -8,7 +8,11 @@ const routeLabels: Record<string, string> = {
   "/admin/dashboard/stores": "Stores",
   "/admin/dashboard/templates": "Themes",
   "/admin/dashboard/products": "Products",
-  "/admin/dashboard/settings": "Settings"
+  "/admin/dashboard/settings": "Settings",
+  "/admin/dashboard/orders": "Orders",
+  "/admin/dashboard/payments": "Payments",
+  "/admin/dashboard/plans": "Plans",
+  "/admin/dashboard/analytics": "Analytics"
 };
 
 export function Navbar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {

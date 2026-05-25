@@ -10,6 +10,20 @@ export type ThemeSettings = {
   navbarStyle: string;
 };
 
+export type Plan = {
+  _id: string;
+  name: string;
+  slug: string;
+  priceBDT: number;
+  trialDays: number;
+  features: string[];
+  limits: { stores: number; products: number; staff: number; bandwidthGB: number };
+  isRecommended: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Store = {
   _id: string;
   tenantId: string;
@@ -20,10 +34,17 @@ export type Store = {
   description: string;
   category: string;
   plan: string;
+  planId?: Plan | string | null;
+  billingStatus?: "trial" | "active" | "past_due" | "cancelled" | "paused";
+  subscriptionStatus?: "trialing" | "active" | "past_due" | "cancelled" | "paused";
+  renewalDate?: string | null;
   status: string;
   logoUrl: string;
   selectedTemplateId?: { _id: string; name: string; slug: string; category: string; preview: string } | string;
   theme: ThemeSettings;
+  productCount?: number;
+  orderCount?: number;
+  revenueBDT?: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -43,6 +64,10 @@ type CreateStoreRequest = {
 type UpdateStoreRequest = Partial<CreateStoreRequest> & {
   status?: string;
   theme?: Partial<ThemeSettings>;
+  planId?: string;
+  billingStatus?: Store["billingStatus"];
+  subscriptionStatus?: Store["subscriptionStatus"];
+  renewalDate?: string;
 };
 
 export const storeApi = baseApi.injectEndpoints({
@@ -70,6 +95,22 @@ export const storeApi = baseApi.injectEndpoints({
     deleteStore: builder.mutation<ApiEnvelope<never>, string>({
       query: (id) => ({ url: `/stores/${id}`, method: "DELETE" }),
       invalidatesTags: ["Stores"]
+    }),
+    getPlans: builder.query<ApiEnvelope<{ plans: Plan[] }>, void>({
+      query: () => ({ url: "/plans" }),
+      providesTags: ["Stores"]
+    }),
+    createPlan: builder.mutation<ApiEnvelope<{ plan: Plan }>, Omit<Plan, "_id" | "createdAt" | "updatedAt">>({
+      query: (body) => ({ url: "/plans", method: "POST", body }),
+      invalidatesTags: ["Stores"]
+    }),
+    updatePlan: builder.mutation<ApiEnvelope<{ plan: Plan }>, { id: string; data: Partial<Omit<Plan, "_id" | "createdAt" | "updatedAt">> }>({
+      query: ({ id, data }) => ({ url: `/plans/${id}`, method: "PUT", body: data }),
+      invalidatesTags: ["Stores"]
+    }),
+    deletePlan: builder.mutation<ApiEnvelope<never>, string>({
+      query: (id) => ({ url: `/plans/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Stores"]
     })
   })
 });
@@ -80,5 +121,9 @@ export const {
   useGetStoreQuery,
   useUpdateStoreMutation,
   useChangeStoreThemeMutation,
-  useDeleteStoreMutation
+  useDeleteStoreMutation,
+  useGetPlansQuery,
+  useCreatePlanMutation,
+  useUpdatePlanMutation,
+  useDeletePlanMutation
 } = storeApi;

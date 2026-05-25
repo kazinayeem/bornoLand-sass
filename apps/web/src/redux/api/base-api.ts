@@ -12,9 +12,13 @@ export const baseApi = createApi({
     prepareHeaders: (headers) => {
       if (typeof window !== "undefined") {
         headers.set("x-forwarded-host", window.location.host);
+        const token = localStorage.getItem("customer_token");
+        if (token) {
+          headers.set("Authorization", `Bearer ${token}`);
+        }
       }
       return headers;
-    }
+    },
   }),
   tagTypes: ["Auth", "User", "Tenant", "Dashboard", "Stores", "Templates", "Products", "Cart", "Orders", "BuilderPages", "BuilderPage", "Customer", "StoreSettings", "HomepageSliders", "PaymentMethods", "DeliveryZones"],
   endpoints: () => ({})

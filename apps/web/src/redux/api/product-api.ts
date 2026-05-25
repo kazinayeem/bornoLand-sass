@@ -23,6 +23,39 @@ export type Product = {
 
 type ApiEnvelope<T> = { success: boolean; data?: T; message?: string };
 
+export type PublicProductPageData = {
+  store: {
+    _id: string;
+    name: string;
+    slug: string;
+    subdomain: string;
+    description: string;
+    theme: {
+      primaryColor: string;
+      secondaryColor: string;
+      font: string;
+      buttonStyle: string;
+      layoutWidth: string;
+      darkMode: boolean;
+      navbarStyle: string;
+    };
+    logoUrl?: string;
+  };
+  tenant: Record<string, unknown> | null;
+  settings: {
+    currencyCode: "USD" | "BDT" | "EUR" | "INR";
+    currencySymbol: string;
+    currencyPosition: "before" | "after";
+    locale: string;
+    decimalPlaces: number;
+    taxRate: number;
+  };
+  sliders: unknown[];
+  products: Product[];
+  product: Product;
+  relatedProducts: Product[];
+};
+
 type CreateProductRequest = {
   name: string;
   slug: string;
@@ -52,6 +85,10 @@ export const productApi = baseApi.injectEndpoints({
       query: (id) => ({ url: `/products/item/${id}` }),
       providesTags: (_result, _error, id) => [{ type: "Products", id }]
     }),
+    getPublicProduct: builder.query<ApiEnvelope<PublicProductPageData>, string>({
+      query: (slug) => ({ url: `/products/${slug}` }),
+      providesTags: (_result, _error, slug) => [{ type: "Products", id: slug }]
+    }),
     createProduct: builder.mutation<ApiEnvelope<{ product: Product }>, { storeId: string; data: CreateProductRequest }>({
       query: ({ storeId, data }) => ({ url: `/products/${storeId}/create`, method: "POST", body: data }),
       invalidatesTags: (_result, _error, { storeId }) => [{ type: "Products", id: storeId }]
@@ -72,6 +109,6 @@ export const productApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGetProductsQuery, useGetProductQuery, useCreateProductMutation,
+  useGetProductsQuery, useGetProductQuery, useGetPublicProductQuery, useCreateProductMutation,
   useUpdateProductMutation, useDeleteProductMutation, useDuplicateProductMutation
 } = productApi;

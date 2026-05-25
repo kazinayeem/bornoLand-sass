@@ -5,6 +5,9 @@ import { userReducer } from "@/redux/slices/user-slice";
 import { tenantReducer } from "@/redux/slices/tenant-slice";
 import { dashboardReducer } from "@/redux/slices/dashboard-slice";
 import { storesReducer } from "@/redux/slices/stores-slice";
+import { storeReducer } from "@/redux/slices/store-slice";
+import { planReducer } from "@/redux/slices/plan-slice";
+import { billingReducer } from "@/redux/slices/billing-slice";
 import { cartReducer } from "@/redux/slices/cart-slice";
 import { customerReducer } from "@/redux/slices/customer-slice";
 import { wishlistReducer } from "@/redux/slices/wishlist-slice";
@@ -21,6 +24,9 @@ export const store = configureStore({
     tenant: tenantReducer,
     dashboard: dashboardReducer,
     stores: storesReducer,
+    store: storeReducer,
+    plan: planReducer,
+    billing: billingReducer,
     cart: cartReducer,
     customer: customerReducer,
     wishlist: wishlistReducer,

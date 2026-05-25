@@ -1,5 +1,6 @@
 import { connectDatabase } from "../config/database.js";
 import { StoreModel } from "../models/store.model.js";
+import { PlanModel } from "../models/plan.model.js";
 import { TenantModel } from "../models/tenant.model.js";
 import { TeamMemberModel } from "../models/team-member.model.js";
 import { TemplateModel } from "../models/template.model.js";
@@ -8,15 +9,91 @@ import { seedDemoProducts } from "./product.service.js";
 import { ensureDefaultStoreSettings } from "./store-settings.service.js";
 import { HomepageSliderModel } from "../models/homepage-slider.model.js";
 import { createStoreSchema, updateStoreSchema, type CreateStoreInput, type UpdateStoreInput } from "../validators/store.validator.js";
+import { ProductModel } from "../models/product.model.js";
+import { OrderModel } from "../models/order.model.js";
+
+const defaultPlans = [
+  {
+    name: "Free",
+    slug: "free",
+    priceBDT: 0,
+    trialDays: 14,
+    features: ["1 store", "50 products", "Basic storefront"],
+    limits: { stores: 1, products: 50, staff: 1, bandwidthGB: 2 },
+    isRecommended: false,
+    isActive: true
+  },
+  {
+    name: "Starter",
+    slug: "starter",
+    priceBDT: 1499,
+    trialDays: 14,
+    features: ["5 stores", "Unlimited products", "Priority support"],
+    limits: { stores: 5, products: 5000, staff: 3, bandwidthGB: 50 },
+    isRecommended: true,
+    isActive: true
+  },
+  {
+    name: "Growth",
+    slug: "growth",
+    priceBDT: 3999,
+    trialDays: 14,
+    features: ["15 stores", "Automation tools", "Advanced reporting"],
+    limits: { stores: 15, products: 25000, staff: 8, bandwidthGB: 200 },
+    isRecommended: false,
+    isActive: true
+  },
+  {
+    name: "Enterprise",
+    slug: "enterprise",
+    priceBDT: 12999,
+    trialDays: 30,
+    features: ["Unlimited stores", "Dedicated success manager", "SLA support"],
+    limits: { stores: 999, products: 0, staff: 0, bandwidthGB: 0 },
+    isRecommended: false,
+    isActive: true
+  }
+] as const;
+
+async function ensurePlans() {
+  const existing = await PlanModel.countDocuments();
+  if (existing > 0) return;
+  await PlanModel.insertMany(defaultPlans);
+}
+
+async function attachStoreMetrics(stores: any[]) {
+  const storeIds = stores.map((store) => store._id.toString());
+  if (storeIds.length === 0) return stores;
+
+  const [productCounts, orderCounts, orderRevenue] = await Promise.all([
+    ProductModel.aggregate([{ $match: { storeId: { $in: stores.map((store) => store._id) } } }, { $group: { _id: "$storeId", count: { $sum: 1 } } }]),
+    OrderModel.aggregate([{ $match: { storeId: { $in: stores.map((store) => store._id) } } }, { $group: { _id: "$storeId", count: { $sum: 1 } } }]),
+    OrderModel.aggregate([{ $match: { storeId: { $in: stores.map((store) => store._id) }, status: { $ne: "cancelled" } } }, { $group: { _id: "$storeId", revenue: { $sum: "$total" } } }])
+  ]);
+
+  const productCountMap = new Map(productCounts.map((entry: any) => [entry._id.toString(), entry.count]));
+  const orderCountMap = new Map(orderCounts.map((entry: any) => [entry._id.toString(), entry.count]));
+  const revenueMap = new Map(orderRevenue.map((entry: any) => [entry._id.toString(), entry.revenue]));
+
+  return stores.map((store) => ({
+    ...store,
+    productCount: productCountMap.get(store._id.toString()) ?? 0,
+    orderCount: orderCountMap.get(store._id.toString()) ?? 0,
+    revenueBDT: revenueMap.get(store._id.toString()) ?? 0
+  }));
+}
 
 export async function createStore(userId: string, payload: unknown) {
   const parsed = createStoreSchema.safeParse(payload);
   if (!parsed.success) return { ok: false as const, message: "Invalid store data" };
 
   await connectDatabase();
+  await ensurePlans();
 
   const existingSlug = await StoreModel.findOne({ slug: parsed.data.slug });
   if (existingSlug) return { ok: false as const, message: "Store slug already taken" };
+
+  const requestedPlan = parsed.data.planId ? await PlanModel.findById(parsed.data.planId).lean() : await PlanModel.findOne({ slug: parsed.data.plan }).lean();
 
   const userTenants = await TeamMemberModel.find({ userId }).distinct("tenantId");
   let tenantId = userTenants[0];
@@ -27,7 +104,7 @@ export async function createStore(userId: string, payload: unknown) {
       name: parsed.data.name,
       slug,
       subdomain: slug,
-      plan: parsed.data.plan ?? "free",
+      plan: requestedPlan?.slug ?? parsed.data.plan ?? "free",
       status: "active"
     });
     tenantId = tenant._id;
@@ -52,7 +129,13 @@ export async function createStore(userId: string, payload: unknown) {
     subdomain: parsed.data.slug,
     description: parsed.data.description ?? "",
     category: parsed.data.category ?? "general",
-    plan: parsed.data.plan ?? "free",
+    plan: requestedPlan?.slug ?? parsed.data.plan ?? "free",
+    ...(requestedPlan ? {
+      planId: requestedPlan._id,
+      billingStatus: requestedPlan.priceBDT > 0 ? "active" : "trial",
+      subscriptionStatus: requestedPlan.priceBDT > 0 ? "active" : "trialing",
+      renewalDate: new Date(Date.now() + (requestedPlan.trialDays ?? 0) * 24 * 60 * 60 * 1000)
+    } : {}),
     status: "active",
     logoUrl: parsed.data.logoUrl ?? "",
     ...(templateId ? { selectedTemplateId: templateId } : {}),
@@ -94,20 +177,24 @@ export async function createStore(userId: string, payload: unknown) {
 
 export async function getUserStores(userId: string) {
   await connectDatabase();
+  await ensurePlans();
   const stores = await StoreModel.find({ userId })
     .populate("selectedTemplateId", "name slug category preview")
+    .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
     .sort({ createdAt: -1 })
     .lean();
-  return { ok: true as const, data: { stores } };
+  return { ok: true as const, data: { stores: await attachStoreMetrics(stores as any[]) } };
 }
 
 export async function getStoreById(storeId: string, userId: string) {
   await connectDatabase();
   const store = await StoreModel.findOne({ _id: storeId, userId })
     .populate("selectedTemplateId", "name slug category preview")
+    .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
     .lean();
   if (!store) return { ok: false as const, message: "Store not found" };
-  return { ok: true as const, data: { store } };
+  const [hydrated] = await attachStoreMetrics([store as any]);
+  return { ok: true as const, data: { store: hydrated } };
 }
 
 export async function updateStore(storeId: string, userId: string, payload: unknown) {

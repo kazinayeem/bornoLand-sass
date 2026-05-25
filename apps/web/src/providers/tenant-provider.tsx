@@ -48,7 +48,7 @@ export type TenantContextType = {
   products: ProductData[];
   settings: StoreSettingsData;
   sliders: HomepageSliderData[];
-  pageSections: { id: string; type: string; visible?: boolean; props?: Record<string, unknown> }[];
+  pageSections: { id: string; type: string; visible?: boolean; props?: Record<string, string | number | boolean | null | undefined> }[];
 };
 
 const TenantContext = createContext<TenantContextType | null>(null);

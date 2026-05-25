@@ -10,7 +10,7 @@ export function StoreFooter({ section }: { section?: StorefrontSectionLike }) {
   const { primaryColor, font, darkMode } = theme;
   const isDark = darkMode;
   const footerSection = section?.props ? section : pageSections.find((entry) => entry.type === "footer") ?? null;
-  const footerProps = footerSection?.props ?? {};
+  const footerProps: Record<string, string | number | boolean | null | undefined> = footerSection?.props ?? {};
 
   return (
     <footer style={{ backgroundColor: isDark ? "#09090b" : "#fafafa", borderTop: `1px solid ${isDark ? "#27272a" : "#e4e4e7"}`, fontFamily: font }}>

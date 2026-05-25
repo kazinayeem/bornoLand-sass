@@ -21,7 +21,9 @@ export async function createOrderController(request: SubdomainRequest, response:
   const customerId = getCustomerId(request);
   if (!customerId) return sendFailure(response, "Not authenticated", 401);
 
-  const result = await createOrder(storeId, customerId, request.body);
+  const sessionId = (request.headers["x-session-id"] as string) ?? `sess-${request.ip}`;
+
+  const result = await createOrder(storeId, customerId, sessionId, request.body);
   return result.ok
     ? sendSuccess(response, result.data, "Order created", 201)
     : sendFailure(response, result.message);

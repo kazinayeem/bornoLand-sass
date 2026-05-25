@@ -23,6 +23,7 @@ import { contactRouter } from "./routes/contact.route.js";
 import { wishlistRouter } from "./routes/wishlist.route.js";
 import { paymentMethodRouter } from "./routes/payment-method.route.js";
 import { deliveryZoneRouter } from "./routes/delivery-zone.route.js";
+import { CartModel } from "./models/cart.model.js";
 import { resolveProductByHostController } from "./controllers/public.controller.js";
 import { subdomainDetector } from "./middleware/subdomain.middleware.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
@@ -149,7 +150,8 @@ const port = Number(process.env.PORT ?? 4000);
 
 async function startServer() {
   try {
-    await connectDatabase();
+     const connection = await connectDatabase();
+    await CartModel.syncIndexes();
     app.listen(port, () => {
       console.log(`BornoLand API listening on port ${port}`);
       console.log("MongoDB connection established");

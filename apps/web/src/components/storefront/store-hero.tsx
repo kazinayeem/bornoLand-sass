@@ -13,7 +13,7 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
   const [showDemo, setShowDemo] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const isDark = darkMode;
-  const heroProps = section?.props ?? {};
+  const heroProps: Record<string, string | number | boolean | null | undefined> = section?.props ?? {};
   const slides = useMemo(() => sliders.length > 0 ? sliders : [{
     _id: "fallback",
     title: heroProps.headline ?? `Welcome to ${store.name}`,

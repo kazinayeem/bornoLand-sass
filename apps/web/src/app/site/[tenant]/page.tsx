@@ -3,7 +3,7 @@ import { StorefrontCanvas } from "@/components/storefront/storefront-canvas";
 
 type SiteData = {
   page: {
-    sections?: { id: string; type: string; visible?: boolean; props?: Record<string, unknown> }[];
+    sections?: { id: string; type: string; visible?: boolean; props?: Record<string, string | number | boolean | null | undefined> }[];
   } | null;
 };
 

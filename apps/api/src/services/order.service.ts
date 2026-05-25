@@ -13,6 +13,7 @@ function generateOrderNumber(): string {
 export async function createOrder(
   storeId: string,
   customerId: string,
+  sessionId: string,
   payload: {
     shippingAddress: {
       fullName: string; phone: string; street: string; city: string;
@@ -25,9 +26,17 @@ export async function createOrder(
 ) {
   await connectDatabase();
 
-  const cart = await CartModel.findOne({ storeId, customerId });
+  let cart = await CartModel.findOne({ storeId, customerId });
+  if (!cart) {
+    cart = await CartModel.findOne({ storeId, sessionId });
+  }
   if (!cart || cart.items.length === 0) {
     return { ok: false as const, message: "Cart is empty" };
+  }
+
+  if (!cart.customerId) {
+    cart.customerId = customerId as any;
+    await cart.save();
   }
 
   const subtotal = cart.items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);

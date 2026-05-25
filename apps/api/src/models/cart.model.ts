@@ -22,7 +22,6 @@ const cartSchema = new Schema(
   { timestamps: true }
 );
 
-cartSchema.index({ storeId: 1, customerId: 1 }, { unique: true, sparse: true });
 cartSchema.index({ storeId: 1, sessionId: 1 }, { unique: true, sparse: true });
 
 export type CartDocument = InferSchemaType<typeof cartSchema>;

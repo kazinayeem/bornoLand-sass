@@ -211,12 +211,12 @@ export function ProductDetailClient({ product }: { product: Product }) {
               </div>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <button onClick={handleAddToCart}
+                <button onClick={() => handleAddToCart()}
                   className="flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold text-white transition-transform hover:scale-[1.01] active:scale-[0.99]"
                   style={{ backgroundColor: primaryColor }}>
                   <ShoppingCart className="h-4 w-4" /> {added ? "Added to Cart" : "Add to Cart"}
                 </button>
-                <button onClick={handleBuyNow}
+                <button onClick={() => handleBuyNow()}
                   className="flex items-center justify-center gap-2 rounded-2xl border border-zinc-950 bg-zinc-950 py-3.5 text-sm font-semibold text-white transition-transform hover:scale-[1.01] active:scale-[0.99]">
                   Buy Now
                 </button>
@@ -355,7 +355,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
               <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">Total</p>
               <p className="truncate text-sm font-semibold text-zinc-950">{formatCurrency(product.price * quantity, settings)}</p>
             </div>
-            <button onClick={handleAddToCart} className="rounded-2xl px-4 py-3 text-sm font-semibold text-white" style={{ backgroundColor: primaryColor }}>
+            <button onClick={() => handleAddToCart()} className="rounded-2xl px-4 py-3 text-sm font-semibold text-white" style={{ backgroundColor: primaryColor }}>
               Add to Cart
             </button>
           </div>

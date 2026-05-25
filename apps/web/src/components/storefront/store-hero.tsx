@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Play, ShoppingBag, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTenant } from "@/providers/tenant-provider";
-import type { StorefrontSectionLike } from "./storefront-canvas";
+import type { StorefrontSectionLike } from "./storefront-types";
 
 export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
   const { store, theme, sliders } = useTenant();

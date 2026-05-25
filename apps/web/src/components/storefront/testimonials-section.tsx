@@ -2,7 +2,7 @@
 
 import { Star } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
-import type { StorefrontSectionLike } from "./storefront-canvas";
+import type { StorefrontSectionLike } from "./storefront-types";
 
 const testimonials = [
   { name: "Sarah Johnson", role: "Verified Buyer", text: "Amazing quality! The product exceeded my expectations. Fast shipping too!", rating: 5 },

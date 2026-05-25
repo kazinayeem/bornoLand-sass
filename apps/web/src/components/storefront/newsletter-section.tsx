@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Send, Check, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useTenant } from "@/providers/tenant-provider";
-import type { StorefrontSectionLike } from "./storefront-canvas";
+import type { StorefrontSectionLike } from "./storefront-types";
 
 export function NewsletterSection({ section }: { section?: StorefrontSectionLike }) {
   const { theme } = useTenant();

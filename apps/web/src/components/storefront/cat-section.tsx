@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTenant } from "@/providers/tenant-provider";
-import type { StorefrontSectionLike } from "./storefront-canvas";
+import type { StorefrontSectionLike } from "./storefront-types";
 
 const CATEGORIES = ["Clothing", "Electronics", "Accessories", "Footwear", "Furniture", "Beauty", "Fitness", "Home"];
 

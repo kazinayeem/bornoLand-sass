@@ -6,7 +6,8 @@ import type { StoreSettingsData, HomepageSliderData, ThemeData, StoreData, Produ
 import { TenantProvider } from "@/providers/tenant-provider";
 import { StoreNavbar } from "@/components/storefront/store-navbar";
 import { StoreFooter } from "@/components/storefront/store-footer";
-import { StorefrontCanvas, type StorefrontSectionLike } from "@/components/storefront/storefront-canvas";
+import { StorefrontCanvas } from "@/components/storefront/storefront-canvas";
+import type { StorefrontSectionLike } from "@/components/storefront/storefront-types";
 
 type StorePreviewProps = {
   store: StoreData;

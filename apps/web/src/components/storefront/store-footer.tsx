@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ShoppingBag, Mail, MapPin, Phone, Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
-import type { StorefrontSectionLike } from "./storefront-canvas";
+import type { StorefrontSectionLike } from "./storefront-types";
 
 export function StoreFooter({ section }: { section?: StorefrontSectionLike }) {
   const { store, theme, pageSections } = useTenant();

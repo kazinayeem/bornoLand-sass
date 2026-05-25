@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ProductCard } from "./product-card";
 import { useTenant } from "@/providers/tenant-provider";
-import type { StorefrontSectionLike } from "./storefront-canvas";
+import type { StorefrontSectionLike } from "./storefront-types";
 
 export function FeaturedProducts({ section }: { section?: StorefrontSectionLike }) {
   const { theme, products } = useTenant();

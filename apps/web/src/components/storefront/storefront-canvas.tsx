@@ -1,17 +1,9 @@
-"use client";
-
 import { StoreHero } from "@/components/storefront/store-hero";
 import { FeaturedProducts } from "@/components/storefront/featured-products";
 import { TestimonialsSection } from "@/components/storefront/testimonials-section";
 import { NewsletterSection } from "@/components/storefront/newsletter-section";
 import { CatSection } from "@/components/storefront/cat-section";
-
-export type StorefrontSectionLike = {
-  id: string;
-  type: string;
-  visible?: boolean;
-  props?: Record<string, string>;
-};
+import type { StorefrontSectionLike } from "./storefront-types";
 
 type StorefrontCanvasProps = {
   sections: StorefrontSectionLike[];

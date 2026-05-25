@@ -28,7 +28,8 @@ export type SubdomainRequest = Request & {
  * is being accessed via subdomain.
  */
 export function subdomainDetector(request: SubdomainRequest, _response: Response, next: NextFunction) {
-  const host = request.headers["host"] ?? "";
+  const forwardedHost = request.headers["x-forwarded-host"];
+  const host = typeof forwardedHost === "string" && forwardedHost.length > 0 ? forwardedHost : (request.headers["host"] ?? "");
   request.subdomain = extractSubdomain(host);
   next();
 }

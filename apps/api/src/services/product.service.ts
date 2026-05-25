@@ -2,6 +2,20 @@ import { connectDatabase } from "../config/database.js";
 import { ProductModel } from "../models/product.model.js";
 import { createProductSchema, updateProductSchema } from "../validators/product.validator.js";
 
+function normalizeProductImages(payload: {
+  imageUrl?: string;
+  thumbnailUrl?: string;
+  galleryImageUrls?: string[];
+  images?: string[];
+}) {
+  const galleryImageUrls = payload.galleryImageUrls ?? payload.images ?? [];
+  const imageUrl = payload.imageUrl ?? galleryImageUrls[0] ?? "";
+  const thumbnailUrl = payload.thumbnailUrl ?? imageUrl;
+  const images = [imageUrl, thumbnailUrl, ...galleryImageUrls].filter((value, index, array) => Boolean(value) && array.indexOf(value) === index);
+
+  return { imageUrl, thumbnailUrl, galleryImageUrls, images };
+}
+
 export async function getProducts(storeId: string) {
   await connectDatabase();
   const products = await ProductModel.find({ storeId }).sort({ createdAt: -1 }).lean();
@@ -31,7 +45,11 @@ export async function createProduct(storeId: string, payload: unknown) {
   const existing = await ProductModel.findOne({ storeId, slug: parsed.data.slug });
   if (existing) return { ok: false as const, message: "Product slug already exists in this store" };
 
-  const product = await ProductModel.create({ storeId, ...parsed.data });
+  const product = await ProductModel.create({
+    storeId,
+    ...parsed.data,
+    ...normalizeProductImages(parsed.data)
+  });
   return { ok: true as const, data: { product: product.toObject() } };
 }
 
@@ -42,7 +60,7 @@ export async function updateProduct(productId: string, storeId: string, payload:
   await connectDatabase();
   const product = await ProductModel.findOneAndUpdate(
     { _id: productId, storeId },
-    { $set: parsed.data },
+    { $set: { ...parsed.data, ...normalizeProductImages(parsed.data) } },
     { new: true }
   ).lean();
   if (!product) return { ok: false as const, message: "Product not found" };
@@ -72,6 +90,9 @@ export async function duplicateProduct(productId: string, storeId: string) {
     stock: original.stock,
     status: "inactive",
     sku: original.sku ? `${original.sku}-COPY` : "",
+    imageUrl: original.imageUrl ?? original.images?.[0] ?? "",
+    thumbnailUrl: original.thumbnailUrl ?? original.imageUrl ?? original.images?.[0] ?? "",
+    galleryImageUrls: original.galleryImageUrls ?? original.images ?? [],
     images: original.images,
     featured: false
   });
@@ -108,7 +129,20 @@ export async function seedDemoProducts(storeId: string) {
     { name: "Wireless Earbuds Pro", slug: "wireless-earbuds-pro", price: 89.99, comparePrice: 129.99, category: "Electronics", stock: 95, sku: "EAR-001", description: "True wireless earbuds with active noise cancellation and 8hr battery life." }
   ];
 
-  const products = demoProducts.map((p) => ({ ...p, storeId, description: p.description ?? "", status: "active" as const, featured: false, images: [] }));
+  const products = demoProducts.map((p, index) => {
+    const imageUrl = `https://placehold.co/1200x1200/png?text=${encodeURIComponent(p.name)}`;
+    return {
+      ...p,
+      storeId,
+      description: p.description ?? "",
+      status: "active" as const,
+      featured: index < 4,
+      imageUrl,
+      thumbnailUrl: imageUrl,
+      galleryImageUrls: [imageUrl],
+      images: [imageUrl]
+    };
+  });
   await ProductModel.insertMany(products);
   console.log(`  ✔ Seeded ${products.length} demo products for store ${storeId}`);
 }

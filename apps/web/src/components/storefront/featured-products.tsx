@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { ProductCard } from "./product-card";
 import { useTenant } from "@/providers/tenant-provider";
+import type { StorefrontSectionLike } from "./storefront-canvas";
 
-export function FeaturedProducts() {
+export function FeaturedProducts({ section }: { section?: StorefrontSectionLike }) {
   const { theme, products } = useTenant();
   const { primaryColor, font, darkMode } = theme;
   const isDark = darkMode;
+  const title = section?.props?.title ?? "Featured Products";
+  const subtitle = section?.props?.subtitle ?? "Handpicked products loved by our customers";
   const displayProducts = products.filter((p) => p.status === "active");
 
   if (displayProducts.length === 0) return null;
@@ -23,10 +26,10 @@ export function FeaturedProducts() {
             </span>
             <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl"
               style={{ color: isDark ? "#fafafa" : "#18181b" }}>
-              Our Bestsellers
+              {title}
             </h2>
             <p className="mt-2 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-              Handpicked products loved by our customers
+              {subtitle}
             </p>
           </div>
           <Link href="/shop" className="hidden items-center gap-1 text-sm font-medium sm:flex" style={{ color: primaryColor }}>

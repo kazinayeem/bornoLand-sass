@@ -44,7 +44,7 @@ export async function addToCart(
     cart = await CartModel.create({ storeId, ...identifier, items: [] });
   }
 
-  const existingIdx = cart.items.findIndex((i) => i.productId.toString() === productId);
+  const existingIdx = cart.items.findIndex((i: any) => i.productId.toString() === productId);
   if (existingIdx >= 0) {
     cart.items[existingIdx].quantity += quantity;
   } else {
@@ -58,12 +58,12 @@ export async function addToCart(
   }
 
   await cart.save();
-  const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cart.items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
 
   return {
     ok: true as const,
     data: {
-      cart: { ...cart.toObject(), subtotal, itemCount: cart.items.reduce((s, item) => s + item.quantity, 0) }
+      cart: { ...cart.toObject(), subtotal, itemCount: cart.items.reduce((s: number, item: any) => s + item.quantity, 0) }
     }
   };
 }
@@ -75,22 +75,22 @@ export async function updateCartItem(storeId: string, productId: string, quantit
   const cart = await CartModel.findOne({ storeId, ...identifier });
   if (!cart) return { ok: false as const, message: "Cart not found" };
 
-  const item = cart.items.find((i) => i.productId.toString() === productId);
+  const item = cart.items.find((i: any) => i.productId.toString() === productId);
   if (!item) return { ok: false as const, message: "Item not in cart" };
 
   if (quantity <= 0) {
-    cart.items = cart.items.filter((i) => i.productId.toString() !== productId);
+    cart.items = cart.items.filter((i: any) => i.productId.toString() !== productId);
   } else {
     item.quantity = quantity;
   }
 
   await cart.save();
-  const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cart.items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
 
   return {
     ok: true as const,
     data: {
-      cart: { ...cart.toObject(), subtotal, itemCount: cart.items.reduce((s, item) => s + item.quantity, 0) }
+      cart: { ...cart.toObject(), subtotal, itemCount: cart.items.reduce((s: number, item: any) => s + item.quantity, 0) }
     }
   };
 }
@@ -102,15 +102,15 @@ export async function removeFromCart(storeId: string, productId: string, custome
   const cart = await CartModel.findOne({ storeId, ...identifier });
   if (!cart) return { ok: false as const, message: "Cart not found" };
 
-  cart.items = cart.items.filter((i) => i.productId.toString() !== productId);
+  cart.items = cart.items.filter((i: any) => i.productId.toString() !== productId);
   await cart.save();
 
-  const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cart.items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
 
   return {
     ok: true as const,
     data: {
-      cart: { ...cart.toObject(), subtotal, itemCount: cart.items.reduce((s, item) => s + item.quantity, 0) }
+      cart: { ...cart.toObject(), subtotal, itemCount: cart.items.reduce((s: number, item: any) => s + item.quantity, 0) }
     }
   };
 }

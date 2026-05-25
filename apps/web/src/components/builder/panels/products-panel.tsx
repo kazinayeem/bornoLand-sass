@@ -4,6 +4,8 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { useGetProductsQuery } from "@/redux/api/product-api";
 import { ShoppingBag, Star } from "lucide-react";
+import { formatCurrency } from "@/lib/format-currency";
+import { getProductImageUrl } from "@/lib/product-media";
 
 type Props = { storeId?: string };
 
@@ -41,15 +43,15 @@ export function ProductsPanel({ storeId }: Props) {
           <div key={product._id}
             className="flex items-center gap-3 rounded-lg border border-zinc-100 p-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-50">
-              {product.images?.[0] ? (
-                <img src={product.images[0]} alt={product.name} className="h-full w-full rounded-lg object-cover" />
+              {getProductImageUrl(product) ? (
+                <img src={getProductImageUrl(product)} alt={product.name} className="h-full w-full rounded-lg object-cover" />
               ) : (
                 <ShoppingBag className="h-4 w-4 text-zinc-300" />
               )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="truncate text-xs font-medium text-zinc-700">{product.name}</p>
-              <p className="text-[11px] text-zinc-400">${product.price.toFixed(2)}</p>
+              <p className="text-[11px] text-zinc-400">{formatCurrency(product.price)}</p>
             </div>
             <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
               product.status === "active" ? "bg-green-50 text-green-600" : "bg-zinc-50 text-zinc-400"

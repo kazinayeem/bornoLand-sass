@@ -7,6 +7,7 @@ import type { RootState } from "@/redux/store";
 import { useGetStoreQuery } from "@/redux/api/store-api";
 import { useGetProductsQuery } from "@/redux/api/product-api";
 import { useGetPagesQuery, useCreatePageMutation } from "@/redux/api/builder-api";
+import { useGetStoreSettingsQuery, useGetHomepageSlidersQuery } from "@/redux/api/store-settings-api";
 import { setTheme } from "@/redux/slices/theme-slice";
 import { loadSections, setPageId, markSaved, setSaving } from "@/redux/slices/builder-slice";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
@@ -35,11 +36,22 @@ export default function BuilderPage() {
   const { data: storeData, isLoading: storeLoading } = useGetStoreQuery(storeId);
   const { data: productsData } = useGetProductsQuery(storeId);
   const { data: pagesData, isLoading: pagesLoading } = useGetPagesQuery(storeId);
+  const { data: settingsData } = useGetStoreSettingsQuery(storeId);
+  const { data: slidersData } = useGetHomepageSlidersQuery(storeId);
   const [createPage] = useCreatePageMutation();
   const [savePage] = useSavePageMutation();
 
   const store = storeData?.data?.store;
   const products = productsData?.data?.products ?? [];
+  const settings = settingsData?.data?.settings ?? {
+    currencyCode: "USD",
+    currencySymbol: "$",
+    currencyPosition: "before",
+    locale: "en-US",
+    decimalPlaces: 2,
+    taxRate: 0,
+  };
+  const sliders = slidersData?.data?.sliders ?? [];
 
   const isDirty = useSelector((s: RootState) => s.builder.isDirty);
   const saving = useSelector((s: RootState) => s.builder.saving);
@@ -136,9 +148,12 @@ export default function BuilderPage() {
         {/* Center - Live Store Preview */}
         <div className="flex-1 overflow-y-auto">
           <StorePreview
-            storeId={storeId}
-            storeName={store.name}
-            storeDescription={store.description}
+            store={store}
+            theme={currentTheme}
+            products={products}
+            settings={settings}
+            sliders={sliders}
+            sections={sections as BuilderSection[]}
           />
         </div>
 

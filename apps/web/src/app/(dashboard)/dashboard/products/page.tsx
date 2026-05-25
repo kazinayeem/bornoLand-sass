@@ -10,6 +10,8 @@ import {
   Package, Plus, Search, Filter, MoreHorizontal, Edit, Trash2, Copy,
   Eye, EyeOff, Loader2, X, Check, AlertTriangle, Store, Grid3X3, List
 } from "lucide-react";
+import { formatCurrency } from "@/lib/format-currency";
+import { getProductImageUrl } from "@/lib/product-media";
 
 const categories = ["All", "Clothing", "Footwear", "Accessories", "Electronics", "Furniture", "Beauty", "General"];
 
@@ -48,7 +50,20 @@ export default function ProductsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
-  const [form, setForm] = useState({ name: "", slug: "", price: 0, comparePrice: 0, category: "general", stock: 0, sku: "", description: "", status: "active" as "active" | "inactive" });
+  const [form, setForm] = useState({
+    name: "",
+    slug: "",
+    price: 0,
+    comparePrice: 0,
+    category: "general",
+    stock: 0,
+    sku: "",
+    description: "",
+    status: "active" as "active" | "inactive",
+    imageUrl: "",
+    thumbnailUrl: "",
+    galleryImageUrls: ""
+  });
 
   const [createProduct, { isLoading: creating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: updating }] = useUpdateProductMutation();
@@ -56,25 +71,41 @@ export default function ProductsPage() {
   const [duplicateProduct, { isLoading: duplicating }] = useDuplicateProductMutation();
 
   const resetForm = () => {
-    setForm({ name: "", slug: "", price: 0, comparePrice: 0, category: "general", stock: 0, sku: "", description: "", status: "active" });
+    setForm({ name: "", slug: "", price: 0, comparePrice: 0, category: "general", stock: 0, sku: "", description: "", status: "active", imageUrl: "", thumbnailUrl: "", galleryImageUrls: "" });
     setEditingProduct(null);
     setShowForm(false);
   };
 
   const openEdit = (p: Product) => {
-    setForm({ name: p.name, slug: p.slug, price: p.price, comparePrice: p.comparePrice ?? 0, category: p.category, stock: p.stock, sku: p.sku, description: p.description, status: p.status });
+    setForm({
+      name: p.name,
+      slug: p.slug,
+      price: p.price,
+      comparePrice: p.comparePrice ?? 0,
+      category: p.category,
+      stock: p.stock,
+      sku: p.sku,
+      description: p.description,
+      status: p.status,
+      imageUrl: p.imageUrl ?? p.images?.[0] ?? "",
+      thumbnailUrl: p.thumbnailUrl ?? p.imageUrl ?? p.images?.[0] ?? "",
+      galleryImageUrls: (p.galleryImageUrls ?? p.images ?? []).join("\n")
+    });
     setEditingProduct(p);
     setShowForm(true);
   };
+
+  const parseImageList = (value: string) =>
+    value.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
 
   const handleSave = async () => {
     if (!selectedStoreId) return;
     try {
       if (editingProduct) {
-        await updateProduct({ storeId: selectedStoreId, id: editingProduct._id, data: form }).unwrap();
+        await updateProduct({ storeId: selectedStoreId, id: editingProduct._id, data: { ...form, galleryImageUrls: parseImageList(form.galleryImageUrls) } }).unwrap();
         toast.success("Product updated");
       } else {
-        await createProduct({ storeId: selectedStoreId, data: { ...form, slug: form.slug || form.name.toLowerCase().replace(/\s+/g, "-") } }).unwrap();
+        await createProduct({ storeId: selectedStoreId, data: { ...form, slug: form.slug || form.name.toLowerCase().replace(/\s+/g, "-"), galleryImageUrls: parseImageList(form.galleryImageUrls) } }).unwrap();
         toast.success("Product created");
       }
       resetForm();
@@ -207,8 +238,12 @@ export default function ProductsPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paginated.map((p) => (
             <div key={p._id} className="group rounded-2xl border border-zinc-200 bg-white transition-all hover:shadow-lg">
-              <div className="flex h-40 items-center justify-center rounded-t-2xl bg-gradient-to-br from-zinc-50 to-zinc-100">
-                <Package className="h-12 w-12 text-zinc-300" />
+              <div className="flex h-40 items-center justify-center overflow-hidden rounded-t-2xl bg-gradient-to-br from-zinc-50 to-zinc-100">
+                {getProductImageUrl(p) ? (
+                  <img src={getProductImageUrl(p)} alt={p.name} className="h-full w-full object-cover" />
+                ) : (
+                  <Package className="h-12 w-12 text-zinc-300" />
+                )}
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between">
@@ -220,9 +255,9 @@ export default function ProductsPage() {
                 </div>
                 <div className="mt-3 flex items-center justify-between">
                   <div>
-                    <span className="text-lg font-bold text-zinc-900">${p.price.toFixed(2)}</span>
+                    <span className="text-lg font-bold text-zinc-900">{formatCurrency(p.price)}</span>
                     {p.comparePrice && p.comparePrice > p.price && (
-                      <span className="ml-1.5 text-xs text-zinc-400 line-through">${p.comparePrice.toFixed(2)}</span>
+                      <span className="ml-1.5 text-xs text-zinc-400 line-through">{formatCurrency(p.comparePrice)}</span>
                     )}
                   </div>
                   <span className="text-xs text-zinc-500">Stock: {p.stock}</span>
@@ -259,7 +294,7 @@ export default function ProductsPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100">
-                        <Package className="h-4 w-4 text-zinc-400" />
+                        {getProductImageUrl(p) ? <img src={getProductImageUrl(p)} alt={p.name} className="h-9 w-9 rounded-lg object-cover" /> : <Package className="h-4 w-4 text-zinc-400" />}
                       </div>
                       <span className="text-sm font-medium text-zinc-900">{p.name}</span>
                     </div>
@@ -267,9 +302,9 @@ export default function ProductsPage() {
                   <td className="px-4 py-3 text-sm text-zinc-500">{p.sku || "—"}</td>
                   <td className="px-4 py-3"><span className="rounded-lg bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">{p.category}</span></td>
                   <td className="px-4 py-3">
-                    <span className="text-sm font-medium text-zinc-900">${p.price.toFixed(2)}</span>
+                    <span className="text-sm font-medium text-zinc-900">{formatCurrency(p.price)}</span>
                     {p.comparePrice && p.comparePrice > p.price && (
-                      <span className="ml-1 text-xs text-zinc-400 line-through">${p.comparePrice.toFixed(2)}</span>
+                      <span className="ml-1 text-xs text-zinc-400 line-through">{formatCurrency(p.comparePrice)}</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-sm text-zinc-500">{p.stock}</td>
@@ -366,6 +401,24 @@ export default function ProductsPage() {
                       className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-zinc-700">Primary Image URL</label>
+                    <input type="text" value={form.imageUrl} onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
+                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-zinc-700">Thumbnail URL</label>
+                    <input type="text" value={form.thumbnailUrl} onChange={(e) => setForm((f) => ({ ...f, thumbnailUrl: e.target.value }))}
+                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-zinc-700">Gallery Image URLs</label>
+                  <textarea value={form.galleryImageUrls} onChange={(e) => setForm((f) => ({ ...f, galleryImageUrls: e.target.value }))} rows={3}
+                    placeholder="One URL per line or comma separated"
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                </div>
               </div>
               <div className="mt-6 flex items-center justify-end gap-3">
                 <button onClick={resetForm} className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">Cancel</button>
@@ -398,7 +451,7 @@ export default function ProductsPage() {
               </div>
               <div className="mt-4 rounded-xl bg-zinc-50 p-3">
                 <p className="text-sm font-medium text-zinc-700">{deleteTarget.name}</p>
-                <p className="text-xs text-zinc-400">${deleteTarget.price.toFixed(2)} &middot; Stock: {deleteTarget.stock}</p>
+                <p className="text-xs text-zinc-400">{formatCurrency(deleteTarget.price)} &middot; Stock: {deleteTarget.stock}</p>
               </div>
               <div className="mt-6 flex items-center justify-end gap-3">
                 <button onClick={() => setDeleteTarget(null)} className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">Cancel</button>

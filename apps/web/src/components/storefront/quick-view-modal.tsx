@@ -9,6 +9,8 @@ import { addToCart, openCart } from "@/redux/slices/cart-slice";
 import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/format-currency";
+import { getProductImageUrl } from "@/lib/product-media";
 
 type ProductData = {
   _id: string; name: string; slug: string;
@@ -22,7 +24,7 @@ type Props = { product: ProductData; onClose: () => void };
 export function QuickViewModal({ product, onClose }: Props) {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { theme } = useTenant();
+  const { theme, settings } = useTenant();
   const { primaryColor, buttonStyle } = theme;
   const [addToCartRemote] = useAddToCartMutation();
   const [quantity, setQuantity] = useState(1);
@@ -33,7 +35,7 @@ export function QuickViewModal({ product, onClose }: Props) {
   const handleAddToCart = () => {
     dispatch(addToCart({
       productId: product._id, name: product.name,
-      price: product.price, quantity, image: product.images?.[0] ?? ""
+      price: product.price, quantity, image: getProductImageUrl(product)
     }));
     addToCartRemote({ productId: product._id, quantity });
     toast.success(`${product.name} added to cart`);
@@ -57,8 +59,8 @@ export function QuickViewModal({ product, onClose }: Props) {
         </button>
 
         <div className="flex aspect-square items-center justify-center bg-zinc-50 p-8">
-          {product.images?.[0] ? (
-            <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" />
+          {getProductImageUrl(product) ? (
+            <img src={getProductImageUrl(product)} alt={product.name} className="h-full w-full object-cover" />
           ) : (
             <ShoppingCart className="h-20 w-20" style={{ color: `${primaryColor}30` }} />
           )}
@@ -69,9 +71,9 @@ export function QuickViewModal({ product, onClose }: Props) {
           <h2 className="mt-1 text-lg font-bold text-zinc-900">{product.name}</h2>
 
           <div className="mt-2 flex items-center gap-3">
-            <span className="text-2xl font-bold text-zinc-900">${product.price.toFixed(2)}</span>
+            <span className="text-2xl font-bold text-zinc-900">{formatCurrency(product.price, settings)}</span>
             {product.comparePrice && product.comparePrice > product.price && (
-              <span className="text-sm text-zinc-400 line-through">${product.comparePrice.toFixed(2)}</span>
+              <span className="text-sm text-zinc-400 line-through">{formatCurrency(product.comparePrice, settings)}</span>
             )}
             {discount > 0 && (
               <span className="rounded-md bg-red-50 px-2 py-0.5 text-xs font-bold text-red-500">-{discount}%</span>

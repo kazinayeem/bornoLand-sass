@@ -8,6 +8,8 @@ import type { RootState } from "@/redux/store";
 import { motion } from "framer-motion";
 import { Package, ShoppingBag, ChevronLeft, Clock, DollarSign, MapPin, CreditCard, CheckCircle } from "lucide-react";
 import { useGetOrderQuery } from "@/redux/api/order-api";
+import { useTenant } from "@/providers/tenant-provider";
+import { formatCurrency } from "@/lib/format-currency";
 
 const statusLabels: Record<string, string> = {
   pending: "Pending",
@@ -46,6 +48,7 @@ export default function OrderDetailPage() {
 
 function OrderDetail({ orderId }: { orderId: string }) {
   const { data, isLoading, error } = useGetOrderQuery(orderId);
+  const { settings } = useTenant();
   const order = data?.data?.order;
 
   if (isLoading) {
@@ -85,7 +88,7 @@ function OrderDetail({ orderId }: { orderId: string }) {
             </span>
             <span className="flex items-center gap-1">
               <DollarSign className="h-4 w-4" />
-              ${order.total.toFixed(2)}
+              {formatCurrency(order.total, settings)}
             </span>
           </div>
         </div>
@@ -113,9 +116,9 @@ function OrderDetail({ orderId }: { orderId: string }) {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-zinc-900">{item.name}</p>
-                  <p className="text-xs text-zinc-400">Qty: {item.quantity} × ${item.price.toFixed(2)}</p>
+                  <p className="text-xs text-zinc-400">Qty: {item.quantity} × {formatCurrency(item.price, settings)}</p>
                 </div>
-                <span className="text-sm font-semibold text-zinc-900">${(item.price * item.quantity).toFixed(2)}</span>
+                <span className="text-sm font-semibold text-zinc-900">{formatCurrency(item.price * item.quantity, settings)}</span>
               </div>
             ))}
           </div>
@@ -144,15 +147,15 @@ function OrderDetail({ orderId }: { orderId: string }) {
             <div className="mt-3 space-y-1.5 text-sm">
               <div className="flex justify-between text-zinc-500">
                 <span>Subtotal</span>
-                <span>${order.subtotal.toFixed(2)}</span>
+                <span>{formatCurrency(order.subtotal, settings)}</span>
               </div>
               <div className="flex justify-between text-zinc-500">
                 <span>Shipping</span>
-                <span>{order.shipping === 0 ? "Free" : `$${order.shipping.toFixed(2)}`}</span>
+                <span>{order.shipping === 0 ? "Free" : formatCurrency(order.shipping, settings)}</span>
               </div>
               <div className="flex justify-between font-semibold text-zinc-900">
                 <span>Total</span>
-                <span>${order.total.toFixed(2)}</span>
+                <span>{formatCurrency(order.total, settings)}</span>
               </div>
             </div>
           </motion.div>

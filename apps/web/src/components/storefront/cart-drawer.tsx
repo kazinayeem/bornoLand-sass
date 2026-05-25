@@ -8,6 +8,8 @@ import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { closeCart, updateQuantity, removeFromCart } from "@/redux/slices/cart-slice";
 import { useUpdateCartItemMutation, useRemoveFromCartMutation } from "@/redux/api/cart-api";
+import { useTenant } from "@/providers/tenant-provider";
+import { formatCurrency } from "@/lib/format-currency";
 
 type CartDrawerProps = {
   primaryColor: string;
@@ -16,6 +18,7 @@ type CartDrawerProps = {
 export function CartDrawer({ primaryColor }: CartDrawerProps) {
   const dispatch = useDispatch();
   const router = useRouter();
+  const { settings } = useTenant();
   const { items, isOpen } = useSelector((state: RootState) => state.cart);
   const [updateRemote] = useUpdateCartItemMutation();
   const [removeRemote] = useRemoveFromCartMutation();
@@ -93,7 +96,7 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                             </button>
                           </div>
                           <p className="text-sm font-semibold" style={{ color: primaryColor }}>
-                            ${(item.price * item.quantity).toFixed(2)}
+                            {formatCurrency(item.price * item.quantity, settings)}
                           </p>
                           <div className="flex items-center gap-2">
                             <button onClick={() => handleQuantity(item.productId, item.quantity - 1)}
@@ -115,7 +118,7 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                 <div className="border-t border-zinc-100 p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <span className="text-sm text-zinc-500">Subtotal</span>
-                    <span className="text-lg font-bold text-zinc-900">${subtotal.toFixed(2)}</span>
+                    <span className="text-lg font-bold text-zinc-900">{formatCurrency(subtotal, settings)}</span>
                   </div>
                   <button onClick={handleViewCart}
                     className="flex w-full items-center justify-center gap-2 py-2.5 text-sm font-medium text-white transition-all hover:opacity-90"

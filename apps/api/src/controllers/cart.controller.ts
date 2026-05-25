@@ -47,7 +47,7 @@ export async function removeFromCartController(request: SubdomainRequest, respon
   const { storeId, customerId, sessionId } = getIds(request);
   if (!storeId) return sendFailure(response, "Store not found", 404);
 
-  const { productId } = request.params;
+  const productId = request.params.productId as string;
   if (!productId) return sendFailure(response, "Product ID required");
 
   const result = await removeFromCart(storeId, productId, customerId, sessionId);

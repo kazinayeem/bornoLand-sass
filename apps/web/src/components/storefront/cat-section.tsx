@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { useTenant } from "@/providers/tenant-provider";
+import type { StorefrontSectionLike } from "./storefront-canvas";
 
 const CATEGORIES = ["Clothing", "Electronics", "Accessories", "Footwear", "Furniture", "Beauty", "Fitness", "Home"];
 
-export function CatSection() {
+export function CatSection({ section }: { section?: StorefrontSectionLike }) {
   const { theme } = useTenant();
   const { primaryColor, layoutWidth, darkMode } = theme;
   const layoutClass = layoutWidth === "100%" ? "" : "max-w-7xl";
   const isDark = darkMode;
+  const title = section?.props?.title ?? "Shop by Category";
 
   return (
     <section className="py-4 sm:py-6" style={{ backgroundColor: isDark ? "#000000" : "#ffffff" }}>

@@ -5,7 +5,7 @@ type ProductData = {
   _id: string; storeId: string; name: string; slug: string;
   description: string; price: number; comparePrice?: number;
   category: string; stock: number; status: "active" | "inactive";
-  sku: string; images: string[]; featured: boolean;
+  sku: string; imageUrl?: string; thumbnailUrl?: string; galleryImageUrls?: string[]; images: string[]; featured: boolean;
   createdAt: string; updatedAt: string;
 };
 

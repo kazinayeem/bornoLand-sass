@@ -2,6 +2,7 @@
 
 import { Star } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
+import type { StorefrontSectionLike } from "./storefront-canvas";
 
 const testimonials = [
   { name: "Sarah Johnson", role: "Verified Buyer", text: "Amazing quality! The product exceeded my expectations. Fast shipping too!", rating: 5 },
@@ -9,10 +10,11 @@ const testimonials = [
   { name: "Emily Davis", role: "Verified Buyer", text: "Love the quality and the price. Best online shopping experience I've had.", rating: 4 },
 ];
 
-export function TestimonialsSection() {
+export function TestimonialsSection({ section }: { section?: StorefrontSectionLike }) {
   const { theme } = useTenant();
   const { primaryColor, font, darkMode } = theme;
   const isDark = darkMode;
+  const title = section?.props?.title ?? "What Our Customers Say";
 
   return (
     <section className="py-16 sm:py-20" style={{ backgroundColor: isDark ? "#09090b" : "#fafafa" }}>
@@ -24,7 +26,7 @@ export function TestimonialsSection() {
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl"
             style={{ color: isDark ? "#fafafa" : "#18181b" }}>
-            What Our Customers Say
+            {title}
           </h2>
         </div>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

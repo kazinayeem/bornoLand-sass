@@ -12,6 +12,9 @@ export type Product = {
   stock: number;
   status: "active" | "inactive";
   sku: string;
+  imageUrl?: string;
+  thumbnailUrl?: string;
+  galleryImageUrls?: string[];
   images: string[];
   featured: boolean;
   createdAt: string;
@@ -30,6 +33,9 @@ type CreateProductRequest = {
   stock?: number;
   status?: "active" | "inactive";
   sku?: string;
+  imageUrl?: string;
+  thumbnailUrl?: string;
+  galleryImageUrls?: string[];
   images?: string[];
   featured?: boolean;
 };

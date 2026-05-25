@@ -8,6 +8,8 @@ import type { RootState } from "@/redux/store";
 import { motion } from "framer-motion";
 import { Package, ArrowRight, Clock, DollarSign } from "lucide-react";
 import { useGetOrdersQuery } from "@/redux/api/order-api";
+import { useTenant } from "@/providers/tenant-provider";
+import { formatCurrency } from "@/lib/format-currency";
 
 const statusStyles: Record<string, string> = {
   pending: "bg-amber-50 text-amber-600",
@@ -36,6 +38,7 @@ export default function OrdersPage() {
 function OrdersList() {
   const router = useRouter();
   const { data, isLoading } = useGetOrdersQuery();
+  const { settings } = useTenant();
   const orders = data?.data?.orders ?? [];
 
   if (isLoading) {
@@ -83,7 +86,7 @@ function OrdersList() {
                   </span>
                   <span className="flex items-center gap-1">
                     <DollarSign className="h-3 w-3" />
-                    ${order.total.toFixed(2)}
+                    {formatCurrency(order.total, settings)}
                   </span>
                 </div>
               </div>

@@ -13,5 +13,8 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   config.headers = config.headers ?? {};
   config.headers["x-app-source"] = "bornoland-web";
+  if (typeof window !== "undefined") {
+    config.headers["x-forwarded-host"] = window.location.host;
+  }
   return config;
 });

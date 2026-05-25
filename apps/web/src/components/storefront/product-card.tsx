@@ -12,6 +12,8 @@ import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { QuickViewModal } from "./quick-view-modal";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/format-currency";
+import { getProductImageUrl } from "@/lib/product-media";
 
 type ProductCardProps = {
   product: {
@@ -26,7 +28,7 @@ type ProductCardProps = {
 export function ProductCard({ product }: ProductCardProps) {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { theme } = useTenant();
+  const { theme, settings } = useTenant();
   const { primaryColor, buttonStyle, font, darkMode } = theme;
   const [addToCartRemote] = useAddToCartMutation();
   const [quickViewOpen, setQuickViewOpen] = useState(false);
@@ -42,7 +44,7 @@ export function ProductCard({ product }: ProductCardProps) {
     if (isOutOfStock) return;
     dispatch(addToCart({
       productId: product._id, name: product.name,
-      price: product.price, quantity: 1, image: product.images?.[0] ?? ""
+      price: product.price, quantity: 1, image: getProductImageUrl(product)
     }));
     addToCartRemote({ productId: product._id, quantity: 1 });
     toast.success(`${product.name} added to cart`);
@@ -59,7 +61,7 @@ export function ProductCard({ product }: ProductCardProps) {
     e.preventDefault();
     dispatch(toggleWishlist({
       productId: product._id, name: product.name,
-      price: product.price, image: product.images?.[0] ?? ""
+      price: product.price, image: getProductImageUrl(product)
     }));
   };
 
@@ -81,8 +83,8 @@ export function ProductCard({ product }: ProductCardProps) {
           backgroundColor: isDark ? "#18181b" : "#ffffff"
         }}>
         <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: isDark ? "#09090b" : "#f4f4f5" }}>
-          {product.images?.[0] ? (
-            <img src={product.images[0]} alt={product.name}
+          {getProductImageUrl(product) ? (
+            <img src={getProductImageUrl(product)} alt={product.name}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
           ) : (
             <div className="flex h-full items-center justify-center">
@@ -135,10 +137,10 @@ export function ProductCard({ product }: ProductCardProps) {
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>
-                ${product.price.toFixed(2)}
+                {formatCurrency(product.price, settings)}
               </span>
               {product.comparePrice && product.comparePrice > product.price && (
-                <span className="text-sm line-through" style={{ color: isDark ? "#52525b" : "#a1a1aa" }}>${product.comparePrice.toFixed(2)}</span>
+                <span className="text-sm line-through" style={{ color: isDark ? "#52525b" : "#a1a1aa" }}>{formatCurrency(product.comparePrice, settings)}</span>
               )}
             </div>
             <span className="text-[11px]" style={{ color: isDark ? "#52525b" : "#a1a1aa" }}>{product.stock} left</span>

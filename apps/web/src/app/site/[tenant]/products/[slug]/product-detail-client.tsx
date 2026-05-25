@@ -11,18 +11,20 @@ import { toggleWishlist } from "@/redux/slices/wishlist-slice";
 import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { ProductCard } from "@/components/storefront/product-card";
 import { useTenant } from "@/providers/tenant-provider";
+import { formatCurrency } from "@/lib/format-currency";
+import { getProductImageUrl } from "@/lib/product-media";
 
 type Product = {
   _id: string; name: string; slug: string;
   description: string; price: number; comparePrice?: number;
   category: string; stock: number; sku: string;
-  images: string[]; featured: boolean;
+  imageUrl?: string; thumbnailUrl?: string; galleryImageUrls?: string[]; images: string[]; featured: boolean;
 };
 
 export function ProductDetailClient({ product }: { product: Product }) {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { theme, products } = useTenant();
+  const { theme, products, settings } = useTenant();
   const { primaryColor, darkMode } = theme;
   const [addToCartRemote] = useAddToCartMutation();
   const [quantity, setQuantity] = useState(1);
@@ -41,7 +43,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const handleAddToCart = async () => {
     dispatch(addToCart({
       productId: product._id, name: product.name,
-      price: product.price, quantity, image: product.images?.[0] ?? ""
+      price: product.price, quantity, image: getProductImageUrl(product)
     }));
     try { await addToCartRemote({ productId: product._id, quantity }).unwrap(); } catch {}
     setAdded(true);
@@ -63,8 +65,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
           className="relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl"
           style={{ backgroundColor: isDark ? "#18181b" : "#f4f4f5" }}>
-          {product.images?.[0] ? (
-            <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" />
+          {getProductImageUrl(product) ? (
+            <img src={getProductImageUrl(product)} alt={product.name} className="h-full w-full object-cover" />
           ) : (
             <ShoppingCart className="h-24 w-24" style={{ color: isDark ? "#27272a" : "#d4d4d8" }} />
           )}
@@ -94,10 +96,10 @@ export function ProductDetailClient({ product }: { product: Product }) {
           </div>
 
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>${product.price.toFixed(2)}</span>
+            <span className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{formatCurrency(product.price, settings)}</span>
             {product.comparePrice && product.comparePrice > product.price && (
               <>
-                <span className="text-lg line-through" style={{ color: isDark ? "#52525b" : "#a1a1aa" }}>${product.comparePrice.toFixed(2)}</span>
+                <span className="text-lg line-through" style={{ color: isDark ? "#52525b" : "#a1a1aa" }}>{formatCurrency(product.comparePrice, settings)}</span>
                 <span className="rounded-lg bg-red-50 px-2 py-0.5 text-xs font-bold text-red-500">-{discount}%</span>
               </>
             )}
@@ -136,7 +138,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
             </button>
             <button onClick={() => dispatch(toggleWishlist({
               productId: product._id, name: product.name,
-              price: product.price, image: product.images?.[0] ?? ""
+              price: product.price, image: getProductImageUrl(product)
             }))}
               className="flex h-11 w-11 items-center justify-center rounded-xl border text-zinc-400 hover:bg-zinc-50 hover:text-red-400"
               style={{ borderColor: isDark ? "#27272a" : "#e4e4e7" }}>
@@ -149,7 +151,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
             <div className="flex items-center gap-3">
               <Truck className="h-5 w-5" style={{ color: isDark ? "#52525b" : "#a1a1aa" }} />
               <div>
-                <p className="text-sm font-medium" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Free shipping on orders over $100</p>
+                <p className="text-sm font-medium" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Free shipping on orders over {formatCurrency(100, settings)}</p>
                 <p className="text-xs" style={{ color: isDark ? "#71717a" : "#a1a1aa" }}>Estimated delivery: 3-5 business days</p>
               </div>
             </div>

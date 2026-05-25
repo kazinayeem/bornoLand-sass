@@ -8,10 +8,11 @@ import type { RootState } from "@/redux/store";
 import { updateQuantity, removeFromCart } from "@/redux/slices/cart-slice";
 import { useUpdateCartItemMutation, useRemoveFromCartMutation } from "@/redux/api/cart-api";
 import { useTenant } from "@/providers/tenant-provider";
+import { formatCurrency } from "@/lib/format-currency";
 
 export default function CartPage() {
   const dispatch = useDispatch();
-  const { theme } = useTenant();
+  const { theme, settings } = useTenant();
   const { primaryColor, darkMode } = theme;
   const isDark = darkMode;
   const { items } = useSelector((state: RootState) => state.cart);
@@ -82,7 +83,7 @@ export default function CartPage() {
                   <div>
                     <h3 className="text-sm font-semibold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{item.name}</h3>
                     <p className="mt-0.5 text-sm font-medium" style={{ color: primaryColor }}>
-                      ${item.price.toFixed(2)}
+                      {formatCurrency(item.price, settings)}
                     </p>
                   </div>
                   <button onClick={() => handleRemove(item.productId)} className="text-zinc-300 hover:text-red-400">
@@ -105,7 +106,7 @@ export default function CartPage() {
                     </button>
                   </div>
                   <span className="text-sm font-semibold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>
-                    ${(item.price * item.quantity).toFixed(2)}
+                    {formatCurrency(item.price * item.quantity, settings)}
                   </span>
                 </div>
               </div>
@@ -124,19 +125,19 @@ export default function CartPage() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between" style={{ color: isDark ? "#a1a1aa" : "#71717a" }}>
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>{formatCurrency(subtotal, settings)}</span>
             </div>
             <div className="flex justify-between" style={{ color: isDark ? "#a1a1aa" : "#71717a" }}>
               <span>Shipping</span>
-              <span>{shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}</span>
+              <span>{shipping === 0 ? "Free" : formatCurrency(shipping, settings)}</span>
             </div>
             {subtotal < 100 && (
-              <p className="text-xs" style={{ color: isDark ? "#52525b" : "#a1a1aa" }}>Free shipping on orders over $100</p>
+              <p className="text-xs" style={{ color: isDark ? "#52525b" : "#a1a1aa" }}>Free shipping on orders over {formatCurrency(100, settings)}</p>
             )}
             <div className="border-t pt-2" style={{ borderColor: isDark ? "#27272a" : "#e4e4e7" }}>
               <div className="flex justify-between font-semibold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span>{formatCurrency(total, settings)}</span>
               </div>
             </div>
           </div>

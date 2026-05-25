@@ -98,6 +98,10 @@ export default async function middleware(request: NextRequest) {
   // Subdomain check runs before auth so app-route subdomain requests
   // redirect to the base domain in a single hop.
   if (subdomain) {
+    if (pathname.startsWith("/api")) {
+      return NextResponse.next();
+    }
+
     if (isAppRoute(pathname)) {
       const baseDomain = getBaseDomain(hostname);
       const protocol = request.nextUrl.protocol;

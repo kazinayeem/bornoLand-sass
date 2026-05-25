@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
 import { useGetProductsQuery } from "@/redux/api/product-api";
 import { Package, Search, Store } from "lucide-react";
+import { formatCurrency } from "@/lib/format-currency";
 
 export default function AdminProductsPage() {
   const { data: storesData } = useGetMyStoresQuery();
@@ -63,7 +64,7 @@ export default function AdminProductsPage() {
                     <span className="text-sm font-medium text-zinc-900">{p.name}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-sm font-medium text-zinc-900">${p.price.toFixed(2)}</td>
+                <td className="px-4 py-3 text-sm font-medium text-zinc-900">{formatCurrency(p.price)}</td>
                 <td className="px-4 py-3 text-sm text-zinc-500">{p.stock}</td>
                 <td className="px-4 py-3"><span className="rounded-lg bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">{p.category}</span></td>
                 <td className="px-4 py-3">

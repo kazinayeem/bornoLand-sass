@@ -26,6 +26,8 @@ type OrderData = {
   items: OrderItemData[];
   subtotal: number;
   shipping: number;
+  deliveryCharge: number;
+  deliveryZone: string;
   total: number;
   status: string;
   shippingAddress: ShippingAddress;
@@ -48,7 +50,7 @@ function getAuthHeaders() {
 
 export const orderApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createOrder: builder.mutation<ApiResponse<{ order: OrderData }>, { shippingAddress: ShippingAddress; paymentMethod?: string; notes?: string }>({
+    createOrder: builder.mutation<ApiResponse<{ order: OrderData }>, { shippingAddress: ShippingAddress; paymentMethod?: string; deliveryZoneId?: string; notes?: string }>({
       query: (body) => ({
         url: "/orders/create",
         method: "POST",

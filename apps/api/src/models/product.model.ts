@@ -14,7 +14,10 @@ const productSchema = new Schema(
     stock: { type: Number, default: 0, min: 0 },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
     sku: { type: String, default: "", trim: true },
-    images: [{ type: String }],
+    imageUrl: { type: String, default: "" },
+    thumbnailUrl: { type: String, default: "" },
+    galleryImageUrls: { type: [String], default: [] },
+    images: { type: [String], default: [] },
     featured: { type: Boolean, default: false }
   },
   { timestamps: true }

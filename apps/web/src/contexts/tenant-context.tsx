@@ -11,8 +11,30 @@ type ProductData = {
   _id: string; storeId: string; name: string; slug: string;
   description: string; price: number; comparePrice?: number;
   category: string; stock: number; status: "active" | "inactive";
-  sku: string; images: string[]; featured: boolean;
+  sku: string; imageUrl?: string; thumbnailUrl?: string; galleryImageUrls?: string[]; images: string[]; featured: boolean;
   createdAt: string; updatedAt: string;
+};
+
+type StoreSettingsData = {
+  currencyCode: "USD" | "BDT" | "EUR" | "INR";
+  currencySymbol: string;
+  currencyPosition: "before" | "after";
+  locale: string;
+  decimalPlaces: number;
+  taxRate: number;
+};
+
+type HomepageSliderData = {
+  _id: string;
+  title: string;
+  subtitle: string;
+  imageUrl: string;
+  buttonText: string;
+  buttonLink: string;
+  sortOrder: number;
+  isActive: boolean;
+  overlayColor: string;
+  textAlignment: "left" | "center" | "right";
 };
 
 type StoreData = {
@@ -25,6 +47,8 @@ type TenantContextType = {
   store: StoreData;
   products: ProductData[];
   theme: ThemeData;
+  settings: StoreSettingsData;
+  sliders: HomepageSliderData[];
 };
 
 const TenantContext = createContext<TenantContextType | null>(null);

@@ -9,8 +9,8 @@ export const productRouter = Router();
 
 productRouter.use(requireAuth);
 
-productRouter.get("/:storeId", listProductsController);
 productRouter.get("/item/:id", getProductController);
+productRouter.get("/:storeId", listProductsController);
 productRouter.post("/:storeId/create", createProductController);
 productRouter.put("/:storeId/:id", updateProductController);
 productRouter.delete("/:storeId/:id", deleteProductController);

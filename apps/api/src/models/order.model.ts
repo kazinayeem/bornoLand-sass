@@ -17,6 +17,8 @@ const orderSchema = new Schema(
     items: [orderItemSchema],
     subtotal: { type: Number, required: true },
     shipping: { type: Number, default: 0 },
+    deliveryCharge: { type: Number, default: 0 },
+    deliveryZone: { type: String, default: "" },
     discount: { type: Number, default: 0 },
     total: { type: Number, required: true },
     status: {

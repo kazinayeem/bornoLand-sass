@@ -20,6 +20,8 @@ import { orderRouter } from "./routes/order.route.js";
 import { newsletterRouter } from "./routes/newsletter.route.js";
 import { contactRouter } from "./routes/contact.route.js";
 import { wishlistRouter } from "./routes/wishlist.route.js";
+import { paymentMethodRouter } from "./routes/payment-method.route.js";
+import { deliveryZoneRouter } from "./routes/delivery-zone.route.js";
 import { subdomainDetector } from "./middleware/subdomain.middleware.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 
@@ -110,6 +112,8 @@ app.use("/orders", orderRouter);
 app.use("/newsletter", newsletterRouter);
 app.use("/contact", contactRouter);
 app.use("/wishlist", wishlistRouter);
+app.use("/payment-methods", paymentMethodRouter);
+app.use("/delivery-zones", deliveryZoneRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

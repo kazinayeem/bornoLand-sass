@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { ShoppingBag, Mail, MapPin, Phone, Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
+import type { StorefrontSectionLike } from "./storefront-canvas";
 
-export function StoreFooter() {
-  const { store, theme } = useTenant();
+export function StoreFooter({ section }: { section?: StorefrontSectionLike }) {
+  const { store, theme, pageSections } = useTenant();
   const { primaryColor, font, darkMode } = theme;
   const isDark = darkMode;
+  const footerSection = section?.props ? section : pageSections.find((entry) => entry.type === "footer") ?? null;
+  const footerProps = footerSection?.props ?? {};
 
   return (
     <footer style={{ backgroundColor: isDark ? "#09090b" : "#fafafa", borderTop: `1px solid ${isDark ? "#27272a" : "#e4e4e7"}`, fontFamily: font }}>
@@ -99,7 +102,7 @@ export function StoreFooter() {
       <div className="border-t py-6" style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", backgroundColor: isDark ? "#000000" : "#ffffff" }}>
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
           <p className="text-xs" style={{ color: isDark ? "#52525b" : "#a1a1aa" }}>
-            &copy; {new Date().getFullYear()} {store.name}. All rights reserved.
+            {footerProps.copyright ?? `© ${new Date().getFullYear()} ${store.name}. All rights reserved.`}
           </p>
           <div className="flex items-center gap-4 text-xs" style={{ color: isDark ? "#52525b" : "#a1a1aa" }}>
             <Link href="/privacy">Privacy Policy</Link>

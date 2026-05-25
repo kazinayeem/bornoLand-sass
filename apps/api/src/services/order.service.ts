@@ -2,6 +2,7 @@ import { connectDatabase } from "../config/database.js";
 import { OrderModel } from "../models/order.model.js";
 import { CartModel } from "../models/cart.model.js";
 import { ProductModel } from "../models/product.model.js";
+import { DeliveryZoneModel } from "../models/delivery-zone.model.js";
 
 function generateOrderNumber(): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -18,6 +19,7 @@ export async function createOrder(
       state?: string; zip?: string; country?: string;
     };
     paymentMethod?: string;
+    deliveryZoneId?: string;
     notes?: string;
   }
 ) {
@@ -28,27 +30,43 @@ export async function createOrder(
     return { ok: false as const, message: "Cart is empty" };
   }
 
-  const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal >= 100 ? 0 : 9.99;
-  const total = subtotal + shipping;
+  const subtotal = cart.items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
+
+  let deliveryCharge = 0;
+  let deliveryZoneName = "";
+  if (payload.deliveryZoneId) {
+    const zone = await DeliveryZoneModel.findOne({
+      _id: payload.deliveryZoneId,
+      storeId,
+      enabled: true,
+    }).lean() as any;
+    if (zone) {
+      deliveryCharge = zone.charge;
+      deliveryZoneName = zone.name;
+    }
+  }
+
+  const total = subtotal + deliveryCharge;
 
   const order = await OrderModel.create({
     storeId,
     customerId,
-    items: cart.items.map((item) => ({
+    items: cart.items.map((item: any) => ({
       productId: item.productId,
       name: item.name,
       price: item.price,
       quantity: item.quantity,
-      image: item.image
+      image: item.image,
     })),
     subtotal,
-    shipping,
+    deliveryCharge,
+    deliveryZone: deliveryZoneName,
+    shipping: deliveryCharge,
     total,
     orderNumber: generateOrderNumber(),
     shippingAddress: payload.shippingAddress,
     paymentMethod: payload.paymentMethod ?? "cod",
-    notes: payload.notes ?? ""
+    notes: payload.notes ?? "",
   });
 
   for (const item of cart.items) {

@@ -5,6 +5,8 @@ import { TeamMemberModel } from "../models/team-member.model.js";
 import { TemplateModel } from "../models/template.model.js";
 import { PageModel } from "../models/page.model.js";
 import { seedDemoProducts } from "./product.service.js";
+import { ensureDefaultStoreSettings } from "./store-settings.service.js";
+import { HomepageSliderModel } from "../models/homepage-slider.model.js";
 import { createStoreSchema, updateStoreSchema, type CreateStoreInput, type UpdateStoreInput } from "../validators/store.validator.js";
 
 export async function createStore(userId: string, payload: unknown) {
@@ -70,6 +72,22 @@ export async function createStore(userId: string, payload: unknown) {
   }
 
   await seedDemoProducts(store._id.toString());
+  await ensureDefaultStoreSettings(store._id.toString());
+  await HomepageSliderModel.deleteMany({ storeId: store._id });
+  await HomepageSliderModel.insertMany([
+    {
+      storeId: store._id,
+      title: `${store.name} essentials`,
+      subtitle: "Fresh arrivals and best-selling picks ready for checkout.",
+      imageUrl: `https://placehold.co/1600x900/png?text=${encodeURIComponent(store.name)}`,
+      buttonText: "Shop Collection",
+      buttonLink: "/shop",
+      sortOrder: 1,
+      isActive: true,
+      overlayColor: "rgba(15, 23, 42, 0.45)",
+      textAlignment: "left"
+    }
+  ]);
 
   return { ok: true as const, data: { store: store.toObject() } };
 }

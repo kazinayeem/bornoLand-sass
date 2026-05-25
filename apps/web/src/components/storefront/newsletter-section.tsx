@@ -4,8 +4,9 @@ import { useState } from "react";
 import { Send, Check, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useTenant } from "@/providers/tenant-provider";
+import type { StorefrontSectionLike } from "./storefront-canvas";
 
-export function NewsletterSection() {
+export function NewsletterSection({ section }: { section?: StorefrontSectionLike }) {
   const { theme } = useTenant();
   const { primaryColor, buttonStyle, font, darkMode } = theme;
   const [email, setEmail] = useState("");
@@ -55,7 +56,7 @@ export function NewsletterSection() {
             </span>
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl"
               style={{ color: isDark ? "#fafafa" : "#18181b" }}>
-              Stay in the Loop
+              {section?.props?.headline ?? "Stay in the Loop"}
             </h2>
             <p className="mt-3 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
               Subscribe to get special offers, free giveaways, and exclusive deals.
@@ -75,7 +76,7 @@ export function NewsletterSection() {
                 <button type="submit" disabled={loading}
                   className="flex h-12 items-center gap-2 px-6 text-sm font-medium text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
                   style={{ borderRadius: buttonStyle, backgroundColor: primaryColor }}>
-                  <Send className="h-4 w-4" /> {loading ? "..." : "Subscribe"}
+                  <Send className="h-4 w-4" /> {loading ? "..." : (section?.props?.buttonText ?? "Subscribe")}
                 </button>
               </form>
             )}

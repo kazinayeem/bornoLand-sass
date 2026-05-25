@@ -1,85 +1,109 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ShoppingBag, Play, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, ShoppingBag, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTenant } from "@/providers/tenant-provider";
+import type { StorefrontSectionLike } from "./storefront-canvas";
 
-export function StoreHero() {
-  const { store, theme } = useTenant();
+export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
+  const { store, theme, sliders } = useTenant();
   const { primaryColor, secondaryColor, buttonStyle, font, darkMode } = theme;
   const [showDemo, setShowDemo] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
   const isDark = darkMode;
-  const bgGradient = isDark
-    ? `linear-gradient(135deg, ${secondaryColor} 0%, #000000 100%)`
-    : `linear-gradient(135deg, ${primaryColor}08 0%, ${secondaryColor}05 100%)`;
+  const heroProps = section?.props ?? {};
+  const slides = useMemo(() => sliders.length > 0 ? sliders : [{
+    _id: "fallback",
+    title: heroProps.headline ?? `Welcome to ${store.name}`,
+    subtitle: heroProps.subheadline ?? "Discover curated products, fast checkout, and a storefront that feels alive.",
+    imageUrl: `https://placehold.co/1600x900/png?text=${encodeURIComponent(store.name)}`,
+    buttonText: heroProps.buttonText ?? "Shop Now",
+    buttonLink: "/shop",
+    sortOrder: 0,
+    isActive: true,
+    overlayColor: "rgba(15, 23, 42, 0.45)",
+    textAlignment: "left" as const
+  }], [sliders, store.name]);
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % slides.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [slides.length]);
+
+  const currentSlide = slides[activeSlide % slides.length];
 
   return (
     <>
-      <section className="relative overflow-hidden" style={{ background: bgGradient, fontFamily: font }}>
-        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8 lg:py-36">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <div className="space-y-8">
-              <div>
-                <span className="inline-block rounded-full px-3 py-1 text-xs font-medium"
-                  style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                  Welcome to {store.name}
-                </span>
-              </div>
-              <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl"
-                style={{ color: isDark ? "#fafafa" : "#18181b" }}>
-                Discover Products{" "}
-                <span style={{ color: primaryColor }}>You&apos;ll Love</span>
-              </h1>
-              <p className="max-w-xl text-lg leading-relaxed"
-                style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-                Shop the latest collection of curated products. Premium quality,
-                fast shipping, and exceptional customer service.
-              </p>
-              <div className="flex flex-wrap items-center gap-4">
-                <Link href="/shop"
-                  className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white transition-all hover:opacity-90 active:scale-95"
-                  style={{ borderRadius: buttonStyle, backgroundColor: primaryColor }}>
-                  <ShoppingBag className="h-4 w-4" /> Shop Now
-                </Link>
-                <button onClick={() => setShowDemo(true)}
-                  className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium transition-all hover:opacity-80 active:scale-95"
-                  style={{ borderRadius: buttonStyle, color: primaryColor, border: `1.5px solid ${primaryColor}` }}>
-                  <Play className="h-4 w-4" /> Watch Demo
+      <section className="relative overflow-hidden" style={{ fontFamily: font }}>
+        <div className="absolute inset-0" style={{ background: isDark ? `linear-gradient(135deg, ${secondaryColor} 0%, #020617 100%)` : `linear-gradient(135deg, ${primaryColor}08 0%, ${secondaryColor}08 100%)` }} />
+        <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl">
+            <div className="relative min-h-[560px]">
+              {slides.map((slide, index) => {
+                const active = index === activeSlide % slides.length;
+                return (
+                  <motion.div key={slide._id}
+                    initial={false}
+                    animate={{ opacity: active ? 1 : 0, scale: active ? 1 : 1.02 }}
+                    transition={{ duration: 0.6 }}
+                    className={`absolute inset-0 ${active ? "pointer-events-auto" : "pointer-events-none"}`}>
+                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${slide.imageUrl})` }} />
+                    <div className="absolute inset-0" style={{ background: slide.overlayColor }} />
+                    <div className="relative flex min-h-[560px] items-end lg:items-center">
+                      <div className="mx-auto flex w-full max-w-7xl justify-start px-4 py-10 sm:px-6 lg:px-8">
+                        <div className={`max-w-2xl rounded-[1.75rem] border border-white/15 bg-white/10 p-8 text-white backdrop-blur-md ${slide.textAlignment === "center" ? "mx-auto text-center" : slide.textAlignment === "right" ? "ml-auto text-right" : ""}`}>
+                          <span className="inline-flex rounded-full border border-white/20 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-white/80">
+                            {heroProps.kicker ?? `Welcome to ${store.name}`}
+                          </span>
+                          <h1 className="mt-5 text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
+                            {slide.title}
+                          </h1>
+                          <p className="mt-4 max-w-xl text-base leading-7 text-white/80 sm:text-lg">
+                            {slide.subtitle}
+                          </p>
+                          <div className={`mt-7 flex flex-wrap gap-3 ${slide.textAlignment === "center" ? "justify-center" : slide.textAlignment === "right" ? "justify-end" : "justify-start"}`}>
+                            <Link href={slide.buttonLink}
+                              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white transition-all hover:scale-[1.01] active:scale-95"
+                              style={{ borderRadius: buttonStyle, backgroundColor: primaryColor }}>
+                              <ShoppingBag className="h-4 w-4" /> {slide.buttonText}
+                            </Link>
+                            <button onClick={() => setShowDemo(true)}
+                              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white/90 transition-all hover:bg-white/10 active:scale-95"
+                              style={{ borderRadius: buttonStyle, border: "1px solid rgba(255,255,255,0.2)" }}>
+                              <Play className="h-4 w-4" /> Watch Demo
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {slides.length > 1 && (
+              <>
+                <button onClick={() => setActiveSlide((current) => (current - 1 + slides.length) % slides.length)}
+                  className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/20 bg-black/20 p-3 text-white backdrop-blur-md transition hover:bg-black/30">
+                  <ChevronLeft className="h-5 w-5" />
                 </button>
-              </div>
-              <div className="flex items-center gap-8 pt-4">
-                <div>
-                  <p className="text-2xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>10K+</p>
-                  <p className="text-xs" style={{ color: isDark ? "#a1a1aa" : "#71717a" }}>Products</p>
+                <button onClick={() => setActiveSlide((current) => (current + 1) % slides.length)}
+                  className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/20 bg-black/20 p-3 text-white backdrop-blur-md transition hover:bg-black/30">
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                <div className="absolute bottom-5 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+                  {slides.map((slide, index) => (
+                    <button key={slide._id} onClick={() => setActiveSlide(index)}
+                      className={`h-2 rounded-full transition-all ${index === activeSlide % slides.length ? "w-8 bg-white" : "w-2 bg-white/40"}`} />
+                  ))}
                 </div>
-                <div>
-                  <p className="text-2xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>5K+</p>
-                  <p className="text-xs" style={{ color: isDark ? "#a1a1aa" : "#71717a" }}>Customers</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>4.9</p>
-                  <p className="text-xs" style={{ color: isDark ? "#a1a1aa" : "#71717a" }}>Rating</p>
-                </div>
-              </div>
-            </div>
-            <div className="relative hidden lg:block">
-              <div className="relative z-10 rounded-2xl border bg-white/50 p-4 shadow-2xl backdrop-blur-sm"
-                style={{ borderColor: `${primaryColor}20` }}>
-                <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200 flex items-center justify-center">
-                  <div className="text-center">
-                    <ShoppingBag className="mx-auto h-16 w-16" style={{ color: `${primaryColor}40` }} />
-                    <p className="mt-4 text-sm font-medium" style={{ color: secondaryColor }}>Featured Collection</p>
-                    <p className="text-xs" style={{ color: secondaryColor }}>Summer 2026</p>
-                  </div>
-                </div>
-              </div>
-              <div className="absolute -bottom-4 -right-4 z-0 h-48 w-48 rounded-full opacity-20 blur-3xl"
-                style={{ backgroundColor: primaryColor }} />
-              <div className="absolute -left-4 -top-4 z-0 h-32 w-32 rounded-full opacity-20 blur-3xl"
-                style={{ backgroundColor: primaryColor }} />
-            </div>
+              </>
+            )}
           </div>
         </div>
       </section>

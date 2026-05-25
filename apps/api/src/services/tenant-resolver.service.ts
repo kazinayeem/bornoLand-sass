@@ -3,12 +3,16 @@ import { StoreModel } from "../models/store.model.js";
 import { TenantModel } from "../models/tenant.model.js";
 import { PageModel } from "../models/page.model.js";
 import { ProductModel } from "../models/product.model.js";
+import { StoreSettingsModel } from "../models/store-settings.model.js";
+import { HomepageSliderModel } from "../models/homepage-slider.model.js";
 
 export type TenantStoreResponse = {
   store: Record<string, unknown> | null;
   tenant: Record<string, unknown> | null;
   page: Record<string, unknown> | null;
   products: Record<string, unknown>[];
+  settings: Record<string, unknown> | null;
+  sliders: Record<string, unknown>[];
 };
 
 /**
@@ -30,6 +34,8 @@ export async function resolveBySubdomain(slug: string): Promise<{
   const tenant = await TenantModel.findById(store.tenantId).lean() as any;
   const page = await PageModel.findOne({ storeId: store._id, slug: "home", status: "published" }).lean() as any;
   const products = await ProductModel.find({ storeId: store._id, status: "active" }).sort({ createdAt: -1 }).limit(20).lean() as any[];
+  const settings = await StoreSettingsModel.findOne({ storeId: store._id }).lean() as any;
+  const sliders = await HomepageSliderModel.find({ storeId: store._id, isActive: true }).sort({ sortOrder: 1, createdAt: 1 }).lean() as any[];
 
   return {
     ok: true,
@@ -38,6 +44,8 @@ export async function resolveBySubdomain(slug: string): Promise<{
       tenant: tenant ?? null,
       page: page ?? null,
       products: products ?? [],
+      settings: settings ?? null,
+      sliders: sliders ?? [],
     },
   };
 }

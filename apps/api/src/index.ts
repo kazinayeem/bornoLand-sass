@@ -14,6 +14,12 @@ import { templateRouter } from "./routes/template.route.js";
 import { builderRouter } from "./routes/builder.route.js";
 import { publicRouter } from "./routes/public.route.js";
 import { productRouter } from "./routes/product.route.js";
+import { customerRouter } from "./routes/customer.route.js";
+import { cartRouter } from "./routes/cart.route.js";
+import { orderRouter } from "./routes/order.route.js";
+import { newsletterRouter } from "./routes/newsletter.route.js";
+import { contactRouter } from "./routes/contact.route.js";
+import { wishlistRouter } from "./routes/wishlist.route.js";
 import { subdomainDetector } from "./middleware/subdomain.middleware.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 
@@ -98,6 +104,12 @@ app.use("/templates", templateRouter);
 app.use("/builder", builderRouter);
 app.use("/public", publicRouter);
 app.use("/products", productRouter);
+app.use("/customer", customerRouter);
+app.use("/cart", cartRouter);
+app.use("/orders", orderRouter);
+app.use("/newsletter", newsletterRouter);
+app.use("/contact", contactRouter);
+app.use("/wishlist", wishlistRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

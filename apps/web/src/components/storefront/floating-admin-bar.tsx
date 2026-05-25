@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Settings, Palette, Package, ExternalLink, X, Sparkles } from "lucide-react";
+import { LayoutTemplate, Palette, Package, ShoppingBag, LayoutDashboard, X } from "lucide-react";
 
 type FloatingAdminBarProps = {
   storeId: string;
@@ -10,54 +10,49 @@ type FloatingAdminBarProps = {
 };
 
 export function FloatingAdminBar({ storeId, primaryColor }: FloatingAdminBarProps) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [isAuthed, setIsAuthed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
-    fetch("/api/auth/me", { credentials: "include" })
-      .then((r) => r.json())
-      .then((res) => setIsLoggedIn(!!res?.data?.session))
-      .catch(() => setIsLoggedIn(false));
+    const check = async () => {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        setIsAuthed(res.ok);
+      } catch { setIsAuthed(false); }
+    };
+    check();
   }, []);
 
-  if (!isLoggedIn) return null;
+  if (!isAuthed) return null;
+
+  const links = [
+    { icon: LayoutDashboard, label: "Dashboard", href: `/dashboard` },
+    { icon: ShoppingBag, label: "Store", href: `/${storeId}` },
+    { icon: LayoutTemplate, label: "Editor", href: `/builder/${storeId}` },
+    { icon: Palette, label: "Theme", href: `/dashboard/theme` },
+    { icon: Package, label: "Products", href: `/dashboard/products` },
+  ];
 
   return (
-    <>
-      <button onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-2xl transition-all hover:scale-105 active:scale-95"
-        style={{ backgroundColor: primaryColor }}>
-        <Sparkles className="h-6 w-6" />
-      </button>
-
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
       <AnimatePresence>
-        {open && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-            <motion.div initial={{ scale: 0.8, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 20 }}
-              className="fixed bottom-24 right-6 z-50 w-56 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl">
-              <div className="border-b border-zinc-100 bg-zinc-50 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Store Management</p>
-              </div>
-              <div className="p-2">
-                {[
-                  { href: `/dashboard/stores/${storeId}`, icon: Settings, label: "Store Dashboard" },
-                  { href: `/dashboard/builder/${storeId}`, icon: ExternalLink, label: "Storefront Editor" },
-                  { href: `/dashboard/theme`, icon: Palette, label: "Customize Theme" },
-                  { href: `/dashboard/products`, icon: Package, label: "Manage Products" }
-                ].map(({ href, icon: Icon, label }) => (
-                  <a key={label} href={href}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900">
-                    <Icon className="h-4 w-4" style={{ color: primaryColor }} />
-                    {label}
-                  </a>
-                ))}
-              </div>
-            </motion.div>
-          </>
+        {expanded && (
+          <motion.div initial={{ opacity: 0, y: 10, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            className="flex flex-col gap-1 rounded-xl border bg-white p-2 shadow-lg">
+            {links.map((link) => (
+              <a key={link.label} href={link.href} onClick={() => setExpanded(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900">
+                <link.icon className="h-3.5 w-3.5" /> {link.label}
+              </a>
+            ))}
+          </motion.div>
         )}
       </AnimatePresence>
-    </>
+      <button onClick={() => setExpanded(!expanded)}
+        className="flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+        style={{ backgroundColor: primaryColor }}>
+        {expanded ? <X className="h-5 w-5" /> : <LayoutDashboard className="h-5 w-5" />}
+      </button>
+    </div>
   );
 }

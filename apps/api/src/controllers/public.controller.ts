@@ -1,7 +1,13 @@
 import type { Response } from "express";
 import type { SubdomainRequest } from "../middleware/subdomain.middleware.js";
 import { resolveBySubdomain } from "../services/tenant-resolver.service.js";
+import { getProductBySlug } from "../services/product.service.js";
 import { sendFailure, sendSuccess } from "../utils/api-response.js";
+
+type LeanStore = {
+  _id: { toString(): string };
+  [key: string]: unknown;
+};
 
 /**
  * GET /public/tenant
@@ -53,6 +59,22 @@ export async function resolveTenantBySlugController(request: SubdomainRequest, r
  * Alternative lookup that reads subdomain from a query param
  * (useful for server-side calls where host header may not be set).
  */
+export async function resolveProductBySlugController(request: SubdomainRequest, response: Response) {
+  const storeSlug = request.params.storeSlug as string;
+  const productSlug = request.params.productSlug as string;
+  if (!storeSlug || !productSlug) return sendFailure(response, "Store slug and product slug required", 400);
+
+  const tenantResult = await resolveBySubdomain(storeSlug);
+  if (!tenantResult.ok || !tenantResult.data?.store) return sendFailure(response, "Store not found", 404);
+
+  const store = tenantResult.data.store as LeanStore;
+  const storeId = store._id.toString();
+  const result = await getProductBySlug(storeId, productSlug);
+  return result.ok
+    ? sendSuccess(response, result.data)
+    : sendFailure(response, result.message, 404);
+}
+
 export async function resolveTenantByHostController(request: SubdomainRequest, response: Response) {
   const slug = (request.query.subdomain as string) ?? request.subdomain;
   if (!slug) {

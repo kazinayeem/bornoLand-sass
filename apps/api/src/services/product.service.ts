@@ -15,6 +15,13 @@ export async function getProduct(productId: string) {
   return { ok: true as const, data: { product } };
 }
 
+export async function getProductBySlug(storeId: string, slug: string) {
+  await connectDatabase();
+  const product = await ProductModel.findOne({ storeId, slug, status: "active" }).lean();
+  if (!product) return { ok: false as const, message: "Product not found" };
+  return { ok: true as const, data: { product } };
+}
+
 export async function createProduct(storeId: string, payload: unknown) {
   const parsed = createProductSchema.safeParse(payload);
   if (!parsed.success) return { ok: false as const, message: "Invalid product data" };

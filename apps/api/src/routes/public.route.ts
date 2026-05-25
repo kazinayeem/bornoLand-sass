@@ -4,6 +4,7 @@ import {
   resolveTenantFromSubdomainController,
   resolveTenantBySlugController,
   resolveTenantByHostController,
+  resolveProductBySlugController,
 } from "../controllers/public.controller.js";
 
 export const publicRouter = Router();
@@ -19,3 +20,6 @@ publicRouter.get("/tenant/:subdomain", resolveTenantBySlugController);
 
 // GET /public/tenant-by-host — resolves from query param ?subdomain=
 publicRouter.get("/tenant-by-host", resolveTenantByHostController);
+
+// GET /public/product/:storeSlug/:productSlug — public product detail
+publicRouter.get("/product/:storeSlug/:productSlug", resolveProductBySlugController);

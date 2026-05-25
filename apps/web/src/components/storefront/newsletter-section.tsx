@@ -3,25 +3,42 @@
 import { useState } from "react";
 import { Send, Check, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { useTenant } from "@/providers/tenant-provider";
 
-type NewsletterSectionProps = {
-  primaryColor: string;
-  buttonStyle: string;
-  font: string;
-  darkMode: boolean;
-};
-
-export function NewsletterSection({ primaryColor, buttonStyle, font, darkMode }: NewsletterSectionProps) {
+export function NewsletterSection() {
+  const { theme } = useTenant();
+  const { primaryColor, buttonStyle, font, darkMode } = theme;
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [loading, setLoading] = useState(false);
   const isDark = darkMode;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
-    setSubscribed(true);
-    toast.success("Subscribed successfully!");
-    setEmail("");
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSubscribed(true);
+        toast.success("Subscribed successfully!");
+        setEmail("");
+      } else {
+        toast.error(data.message || "Subscription failed");
+      }
+    } catch {
+      toast.error("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,10 +72,10 @@ export function NewsletterSection({ primaryColor, buttonStyle, font, darkMode }:
                   style={{ borderColor: `${primaryColor}30` }}
                   onFocus={(e) => e.target.style.borderColor = primaryColor}
                   onBlur={(e) => e.target.style.borderColor = `${primaryColor}30`} />
-                <button type="submit"
-                  className="flex h-12 items-center gap-2 px-6 text-sm font-medium text-white transition-all hover:opacity-90 active:scale-95"
+                <button type="submit" disabled={loading}
+                  className="flex h-12 items-center gap-2 px-6 text-sm font-medium text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
                   style={{ borderRadius: buttonStyle, backgroundColor: primaryColor }}>
-                  <Send className="h-4 w-4" /> Subscribe
+                  <Send className="h-4 w-4" /> {loading ? "..." : "Subscribe"}
                 </button>
               </form>
             )}

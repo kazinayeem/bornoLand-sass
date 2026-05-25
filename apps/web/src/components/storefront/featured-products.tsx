@@ -1,20 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { ProductCard } from "./product-card";
-import type { Product } from "@/redux/api/product-api";
+import { useTenant } from "@/providers/tenant-provider";
 
-type FeaturedProductsProps = {
-  products: Product[];
-  primaryColor: string;
-  buttonStyle: string;
-  font: string;
-  darkMode: boolean;
-};
-
-export function FeaturedProducts({ products, primaryColor, buttonStyle, font, darkMode }: FeaturedProductsProps) {
+export function FeaturedProducts() {
+  const { theme, products } = useTenant();
+  const { primaryColor, font, darkMode } = theme;
   const isDark = darkMode;
+  const displayProducts = products.filter((p) => p.status === "active");
 
-  if (!products || products.length === 0) return null;
+  if (displayProducts.length === 0) return null;
 
   return (
     <section className="py-16 sm:py-20" style={{ backgroundColor: isDark ? "#09090b" : "#ffffff" }}>
@@ -33,29 +29,21 @@ export function FeaturedProducts({ products, primaryColor, buttonStyle, font, da
               Handpicked products loved by our customers
             </p>
           </div>
-          <a href="#" className="hidden items-center gap-1 text-sm font-medium sm:flex"
-            style={{ color: primaryColor }}>
+          <Link href="/shop" className="hidden items-center gap-1 text-sm font-medium sm:flex" style={{ color: primaryColor }}>
             View All &rarr;
-          </a>
+          </Link>
         </div>
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.slice(0, 8).map((product) => (
-            <ProductCard
-              key={product._id}
-              product={product}
-              primaryColor={primaryColor}
-              buttonStyle={buttonStyle}
-              font={font}
-              darkMode={darkMode}
-            />
+          {displayProducts.slice(0, 8).map((product) => (
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
 
         <div className="mt-8 text-center sm:hidden">
-          <a href="#" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: primaryColor }}>
+          <Link href="/shop" className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: primaryColor }}>
             View All Products &rarr;
-          </a>
+          </Link>
         </div>
       </div>
     </section>

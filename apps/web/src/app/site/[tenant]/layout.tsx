@@ -19,7 +19,7 @@ type SiteData = {
 async function fetchTenantSite(slug: string): Promise<SiteData | null> {
   try {
     const apiUrl = process.env.API_URL ?? "http://localhost:4000";
-    const res = await fetch(`${apiUrl}/public/tenant/${slug}`, { cache: "no-store" });
+    const res = await fetch(`${apiUrl}/public/tenant/${slug}`, { next: { revalidate: 30 } });
     if (!res.ok) return null;
     const json = await res.json();
     return json.data ?? null;

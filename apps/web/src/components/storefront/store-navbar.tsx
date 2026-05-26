@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, ShoppingCart, Menu, X, User, LogIn, Package, LogOut, Heart, Home, Grid3X3, Info, Mail, ChevronRight } from "lucide-react";
+import { Search, ShoppingCart, Menu, X, User, LogIn, Package, LogOut, Heart, Home, Grid3X3, Info, Mail, ChevronRight, Settings, ChevronDown } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { clearCustomer } from "@/redux/slices/customer-slice";
 import { openCart } from "@/redux/slices/cart-slice";
@@ -22,7 +22,9 @@ export function StoreNavbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const { primaryColor, font, navbarStyle } = theme;
 
@@ -44,6 +46,14 @@ export function StoreNavbar() {
   useEffect(() => {
     if (searchOpen && searchInputRef.current) searchInputRef.current.focus();
   }, [searchOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const navLinks = [
     { name: "Home", href: "/", icon: Home },
@@ -122,21 +132,62 @@ export function StoreNavbar() {
               )}
             </button>
             {customer.isAuthenticated ? (
-              <div className="hidden items-center gap-1 sm:flex">
-                <Link href="/orders"
-                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100">
-                  <Package className="h-4 w-4" /> Orders
-                </Link>
-                <button onClick={handleLogout}
-                  className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-red-500">
-                  <LogOut className="h-4 w-4" />
+              <div className="relative hidden sm:block" ref={profileRef}>
+                <button onClick={() => setProfileOpen(!profileOpen)}
+                  className="flex items-center gap-2 rounded-xl p-1.5 pr-2 transition-colors hover:bg-zinc-100">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white">
+                    {initials}
+                  </div>
+                  <ChevronDown className={`h-3.5 w-3.5 text-zinc-400 transition-transform ${profileOpen ? "rotate-180" : ""}`} />
                 </button>
+                <AnimatePresence>
+                  {profileOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                      className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl"
+                    >
+                      <div className="border-b border-zinc-100 px-4 py-3">
+                        <p className="text-sm font-semibold text-zinc-900 truncate">{customer.customer?.name}</p>
+                        <p className="text-xs text-zinc-400 truncate">{customer.customer?.email}</p>
+                      </div>
+                      <div className="p-1.5 space-y-0.5">
+                        <button onClick={() => { setProfileOpen(false); router.push("/account"); }}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50">
+                          <User className="h-4 w-4" /> My Account
+                        </button>
+                        <button onClick={() => { setProfileOpen(false); router.push("/orders"); }}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50">
+                          <Package className="h-4 w-4" /> My Orders
+                        </button>
+                        <button onClick={() => { setProfileOpen(false); router.push("/account"); }}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-50">
+                          <Settings className="h-4 w-4" /> Profile Settings
+                        </button>
+                      </div>
+                      <div className="border-t border-zinc-100 p-1.5">
+                        <button onClick={() => { handleLogout(); setProfileOpen(false); }}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50">
+                          <LogOut className="h-4 w-4" /> Sign Out
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
-              <Link href="/account/login"
-                className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 sm:flex">
-                <LogIn className="h-4 w-4" /> Sign In
-              </Link>
+              <>
+                <Link href="/account/register"
+                  className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 sm:flex">
+                  <User className="h-4 w-4" /> Register
+                </Link>
+                <Link href="/account/login"
+                  className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors sm:flex"
+                  style={{ backgroundColor: primaryColor }}>
+                  <LogIn className="h-4 w-4" /> Sign In
+                </Link>
+              </>
             )}
             <button onClick={() => setMobileOpen(true)}
               className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 md:hidden">

@@ -10,6 +10,8 @@ export type BuilderSection = {
   props: SectionProps;
 };
 
+export type SectionCategory = "hero" | "promotion" | "content" | "products" | "social";
+
 type BuilderState = {
   sections: BuilderSection[];
   selectedSectionId: string | null;
@@ -20,6 +22,7 @@ type BuilderState = {
   saving: boolean;
   publishing: boolean;
   pageId: string | null;
+  favoriteSectionTypes: string[];
 };
 
 const initialState: BuilderState = {
@@ -32,6 +35,7 @@ const initialState: BuilderState = {
   saving: false,
   publishing: false,
   pageId: null,
+  favoriteSectionTypes: [],
 };
 
 const builderSlice = createSlice({
@@ -107,6 +111,19 @@ const builderSlice = createSlice({
     setPageId(state, action: PayloadAction<string>) {
       state.pageId = action.payload;
     },
+    renameSection(state, action: PayloadAction<{ id: string; label: string }>) {
+      const s = state.sections.find((s) => s.id === action.payload.id);
+      if (s) { s.label = action.payload.label; state.isDirty = true; }
+    },
+    toggleFavoriteSection(state, action: PayloadAction<string>) {
+      const type = action.payload;
+      const idx = state.favoriteSectionTypes.indexOf(type);
+      if (idx >= 0) {
+        state.favoriteSectionTypes.splice(idx, 1);
+      } else {
+        state.favoriteSectionTypes.push(type);
+      }
+    },
   },
 });
 
@@ -115,5 +132,6 @@ export const {
   updateSectionProps, moveSection, duplicateSection,
   setSelectedSection, setEditingSection, setActiveTab,
   markSaved, setSaving, setPublishing, loadSections, setPageId,
+  renameSection, toggleFavoriteSection,
 } = builderSlice.actions;
 export const builderReducer = builderSlice.reducer;

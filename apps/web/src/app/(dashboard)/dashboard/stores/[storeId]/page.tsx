@@ -23,6 +23,7 @@ import { CheckoutTab } from "@/components/workspace/checkout-tab";
 import { AnalyticsTab } from "@/components/workspace/analytics-tab";
 import { CustomersTab } from "@/components/workspace/customers-tab";
 import { workspaceTabs, type WorkspaceTabId } from "@/components/workspace/types";
+import { getStoreDisplayDomain } from "@/utils/domain";
 
 export default function StoreWorkspacePage() {
   const params = useParams();
@@ -158,7 +159,7 @@ export default function StoreWorkspacePage() {
               </div>
               <div className="mt-4 rounded-xl bg-zinc-50 p-3">
                 <p className="text-sm font-medium text-zinc-700">{store.name}</p>
-                <p className="text-xs text-zinc-400">{store.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
+                <p className="text-xs text-zinc-400">{getStoreDisplayDomain(store.subdomain, store.slug)}</p>
               </div>
               <p className="mt-4 text-sm text-zinc-600">
                 Type <span className="font-semibold text-red-600">{store.name}</span> to confirm:

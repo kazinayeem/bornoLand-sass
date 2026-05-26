@@ -26,19 +26,26 @@ function requiredEnv(name: string, value: string | undefined): string {
   return value;
 }
 
+const appName = requiredEnv("APP_NAME", process.env.APP_NAME ?? process.env.NEXT_PUBLIC_APP_NAME);
+const protocol = requiredEnv("PROTOCOL", process.env.PROTOCOL ?? process.env.NEXT_PUBLIC_PROTOCOL);
+const rootDomain = requiredEnv("ROOT_DOMAIN", process.env.ROOT_DOMAIN);
+const appUrl = requiredEnv("APP_URL", process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL);
+const apiUrl = requiredEnv("API_URL", process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL);
+const frontendUrl = requiredEnv("FRONTEND_URL", process.env.FRONTEND_URL ?? process.env.WEB_URL ?? process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL);
+
 export const serverConfig = {
   NODE_ENV: nodeEnv,
   PORT: Number(process.env.PORT ?? 5000),
 
-  APP_NAME: requiredEnv("APP_NAME", process.env.APP_NAME ?? process.env.NEXT_PUBLIC_APP_NAME),
-  PROTOCOL: requiredEnv("PROTOCOL", process.env.PROTOCOL ?? process.env.NEXT_PUBLIC_PROTOCOL),
+  APP_NAME: appName,
+  PROTOCOL: protocol,
 
-  ROOT_DOMAIN: requiredEnv("ROOT_DOMAIN", process.env.ROOT_DOMAIN ?? process.env.NEXT_PUBLIC_ROOT_DOMAIN),
+  ROOT_DOMAIN: rootDomain,
   WILDCARD_DOMAIN: process.env.WILDCARD_DOMAIN ?? "",
 
-  APP_URL: requiredEnv("APP_URL", process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL),
-  API_URL: requiredEnv("API_URL", process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL),
-  FRONTEND_URL: requiredEnv("FRONTEND_URL", process.env.FRONTEND_URL ?? process.env.WEB_URL ?? process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL),
+  APP_URL: appUrl,
+  API_URL: apiUrl,
+  FRONTEND_URL: frontendUrl,
 
   MONGO_URI: requiredEnv("MONGO_URI", process.env.MONGO_URI ?? process.env.MONGODB_URI),
   MONGODB_DB: process.env.MONGODB_DB ?? "bornoland",
@@ -54,7 +61,7 @@ export const serverConfig = {
 
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? "",
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ?? "",
-  GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI ?? `${process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? ""}/auth/google/callback`,
+  GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI ?? `${apiUrl}/auth/google/callback`,
 
   REDIS_URL: process.env.REDIS_URL ?? "",
   REDIS_TOKEN: process.env.REDIS_TOKEN ?? "",
@@ -64,7 +71,7 @@ export const serverConfig = {
   SMTP_USER: process.env.SMTP_USER ?? "",
   SMTP_PASS: process.env.SMTP_PASS ?? "",
   SMTP_SECURE: process.env.SMTP_SECURE === "true",
-  EMAIL_FROM: process.env.EMAIL_FROM ?? `${process.env.APP_NAME ?? process.env.NEXT_PUBLIC_APP_NAME ?? "BornoSoftNR"} <no-reply@${process.env.ROOT_DOMAIN ?? process.env.NEXT_PUBLIC_ROOT_DOMAIN}>`,
+  EMAIL_FROM: process.env.EMAIL_FROM ?? `${appName} <no-reply@${rootDomain}>`,
 
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY ?? "",
   AWS_SECRET_KEY: process.env.AWS_SECRET_KEY ?? "",

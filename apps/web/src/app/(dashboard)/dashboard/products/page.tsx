@@ -8,6 +8,7 @@ import { useGetProductsQuery, useCreateProductMutation, useUpdateProductMutation
 import type { Product } from "@/redux/api/product-api";
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
 import { toast } from "sonner";
+import { getStoreDisplayDomain } from "@/utils/domain";
 import {
   Package, Plus, Search, Filter, MoreHorizontal, Edit, Trash2, Copy,
   Eye, EyeOff, Loader2, X, Check, AlertTriangle, Store, Grid3X3, List
@@ -174,7 +175,7 @@ export default function ProductsPage() {
                   {s.name[0]}
                 </div>
                 <h3 className="mt-3 font-semibold text-zinc-900">{s.name}</h3>
-                <p className="text-xs text-zinc-400">{s.subdomain || s.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
+                <p className="text-xs text-zinc-400">{getStoreDisplayDomain(s.subdomain, s.slug)}</p>
               </button>
             ))}
           </div>

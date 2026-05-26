@@ -47,17 +47,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   };
 
   return (
-    <TenantProvider store={data.store} products={data.products} categories={[]} settings={data.settings} sliders={data.sliders} theme={theme}>
+    <TenantProvider value={{ store: data.store, products: data.products, categories: [], settings: data.settings, sliders: data.sliders, theme, pageSections: [] }}>
       <CartProvider>
         <AuthInit />
         <div className="flex flex-col min-h-screen" style={{ fontFamily: theme.font }}>
-          <StoreNavbar sections={[]} />
+          <StoreNavbar />
           <main className="flex-1">
             <ProductDetailClient product={data.product} />
           </main>
-          <StoreFooter sections={[]} />
+          <StoreFooter />
         </div>
-        <FloatingAdminBar sections={[]} />
+        <FloatingAdminBar storeId={data.store._id} primaryColor={theme.primaryColor} />
       </CartProvider>
     </TenantProvider>
   );

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
-import { config } from "@/lib/config";
+import { config as appConfig } from "@/lib/config";
 
 const PUBLIC_FILE = /\.(.*)$/;
-const authSecret = config.JWT_SECRET;
-const sessionCookieName = config.sessionCookieName;
-const ROOT_DOMAIN = config.rootDomain;
-const API_PATH = new URL(config.apiUrl).pathname.replace(/\/$/, "") || "/api";
+const authSecret = appConfig.jwtSecret;
+const sessionCookieName = appConfig.sessionCookieName;
+const ROOT_DOMAIN = appConfig.rootDomain;
+const API_PATH = new URL(appConfig.apiUrl).pathname.replace(/\/$/, "") || "/api";
 
 const APP_ROUTES = new Set([
   "/login",

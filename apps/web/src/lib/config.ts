@@ -23,6 +23,7 @@ export const config = {
   apiPort: env.API_PORT,
   isDev: env.isDev,
   isProd: env.isProd,
+  jwtSecret: env.JWT_SECRET,
   smtpHost: env.SMTP_HOST,
   smtpPort: env.SMTP_PORT,
   smtpUser: env.SMTP_USER,

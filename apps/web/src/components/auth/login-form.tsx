@@ -9,6 +9,7 @@ import { getApiUrl } from "@/utils/url";
 
 type LoginFormProps = {
   googleButton?: boolean;
+  loginType?: string;
 };
 
 const SEED_EMAILS = {

@@ -9,6 +9,7 @@ import {
 } from "@/redux/api/category-api";
 import type { Category } from "@/redux/api/category-api";
 import { toast } from "sonner";
+import { getStoreDisplayDomain } from "@/utils/domain";
 import {
   Layers, Plus, GripVertical, Pencil, Trash2, X, Check, Loader2, Store,
   Eye, EyeOff, ArrowUp, ArrowDown, Star, ImageIcon,
@@ -135,7 +136,7 @@ export default function CategoriesPage() {
                   {s.name[0]}
                 </div>
                 <h3 className="mt-3 font-semibold text-zinc-900">{s.name}</h3>
-                <p className="text-xs text-zinc-400">{s.subdomain || s.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
+                <p className="text-xs text-zinc-400">{getStoreDisplayDomain(s.subdomain, s.slug)}</p>
               </button>
             ))}
           </div>

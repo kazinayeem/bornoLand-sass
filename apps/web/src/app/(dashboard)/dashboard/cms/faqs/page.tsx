@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetFaqsQuery, useCreateFaqMutation, useUpdateFaqMutation, useDeleteFaqMutation, useReorderFaqsMutation } from "@/redux/api/cms-api";
 import type { FaqItem } from "@/redux/api/cms-api";
+import { getStoreDisplayDomain } from "@/utils/domain";
 import RichTextEditor from "@/components/cms/rich-text-editor";
 import { Store, Plus, Loader2, GripVertical, Pencil, Trash2, X, Check, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
@@ -130,7 +131,7 @@ export default function FaqsPage() {
                 {s.name[0]}
               </div>
               <h3 className="mt-3 font-semibold text-zinc-900">{s.name}</h3>
-              <p className="text-xs text-zinc-400">{s.subdomain || s.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
+              <p className="text-xs text-zinc-400">{getStoreDisplayDomain(s.subdomain, s.slug)}</p>
             </motion.button>
           ))}
         </motion.div>

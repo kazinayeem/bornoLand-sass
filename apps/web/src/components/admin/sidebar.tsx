@@ -35,11 +35,11 @@ export function AdminSidebar() {
     )}>
       <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
-          {env.APP_NAME.slice(0, 2).toUpperCase()}
+          {config.appName.slice(0, 2).toUpperCase()}
         </div>
-        {!collapsed && (
-          <span className="text-sm font-bold text-zinc-900">{env.APP_NAME}</span>
-        )}
+          {!collapsed && (
+            <span className="text-sm font-bold text-zinc-900">{config.appName}</span>
+          )}
       </div>
 
       <nav className="flex-1 space-y-0.5 p-2">
@@ -66,7 +66,7 @@ export function AdminSidebar() {
         {!collapsed && (
           <div className="mb-3 flex items-center gap-3 rounded-xl bg-zinc-50 p-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
-              {env.APP_NAME.slice(0, 2).toUpperCase()}
+              {config.appName.slice(0, 2).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="truncate text-sm font-medium text-zinc-900">Super Admin</p>
@@ -82,3 +82,5 @@ export function AdminSidebar() {
     </aside>
   );
 }
+
+export { AdminSidebar as Sidebar };

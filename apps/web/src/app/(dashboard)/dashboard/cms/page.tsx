@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
 import { Store, FileText, ArrowRight } from "lucide-react";
 import { HelpCircle, Truck, RotateCcw, Ruler, Mail, Shield, Info } from "lucide-react";
+import { getStoreDisplayDomain } from "@/utils/domain";
 
 const pageIcons: Record<string, typeof HelpCircle> = {
   faq: HelpCircle,
@@ -72,7 +73,7 @@ export default function CmsPage() {
                   {s.name[0]}
                 </div>
                 <h3 className="mt-3 font-semibold text-zinc-900">{s.name}</h3>
-                <p className="text-xs text-zinc-400">{s.subdomain || s.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
+                <p className="text-xs text-zinc-400">{getStoreDisplayDomain(s.subdomain, s.slug)}</p>
               </motion.button>
             ))}
           </motion.div>

@@ -233,8 +233,8 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
                 <h4 className="text-sm font-semibold text-zinc-900 mb-2">Shipping</h4>
                 <div className="rounded-xl border border-zinc-100 p-3 text-sm text-zinc-600">
                   <p>{selectedOrder.shippingAddress.fullName}</p>
-                  <p>{selectedOrder.shippingAddress.addressLine}</p>
-                  <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.postCode}</p>
+                  <p>{selectedOrder.shippingAddress.street}</p>
+                  <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.zip}</p>
                 </div>
               </div>
             )}

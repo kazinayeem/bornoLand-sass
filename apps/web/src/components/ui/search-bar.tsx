@@ -14,7 +14,7 @@ type SearchBarProps = {
 
 export function SearchBar({ value, onChange, placeholder = "Search...", className, debounceMs = 300 }: SearchBarProps) {
   const [local, setLocal] = useState(value);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { setLocal(value); }, [value]);
 

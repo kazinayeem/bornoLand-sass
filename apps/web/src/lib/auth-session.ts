@@ -16,7 +16,7 @@ function getSessionCookieName() {
 }
 
 function getSecret() {
-  const secret = config.JWT_SECRET;
+  const secret = config.jwtSecret;
 
   if (!secret) {
     throw new Error("JWT_SECRET is required");

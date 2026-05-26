@@ -42,15 +42,15 @@ export default async function TenantLayout({ params, children }: { params: Promi
   };
 
   return (
-    <TenantProvider store={store} products={products} categories={categories} settings={settings ?? null} sliders={sliders ?? []} theme={theme}>
+    <TenantProvider value={{ store, products, categories, settings: settings ?? { currencyCode: "USD", currencySymbol: "$", currencyPosition: "before", locale: "en-US", decimalPlaces: 2, taxRate: 0 }, sliders: sliders ?? [], theme, pageSections }}>
       <CartProvider>
         <AuthInit />
         <div className="flex flex-col min-h-screen" style={{ fontFamily: theme.font }}>
-          <StoreNavbar sections={pageSections} />
+          <StoreNavbar />
           <main className="flex-1">{children}</main>
-          <StoreFooter sections={pageSections} />
+          <StoreFooter />
         </div>
-        <FloatingAdminBar sections={pageSections} />
+        <FloatingAdminBar storeId={store._id} primaryColor={theme.primaryColor} />
       </CartProvider>
     </TenantProvider>
   );

@@ -8,6 +8,7 @@ import { useGetStoreSettingsQuery, useUpdateStoreSettingsMutation } from "@/redu
 import type { StoreSettings } from "@/redux/api/store-settings-api";
 import { setStoreSettings } from "@/redux/slices/store-settings-slice";
 import { toast } from "sonner";
+import { getStoreDisplayDomain } from "@/utils/domain";
 import {
   Store, Globe, DollarSign, Calendar, Clock, Languages,
   Save, Loader2, RefreshCw, CheckCircle, ChevronDown, ToggleLeft, ToggleRight
@@ -189,7 +190,7 @@ export default function SettingsPage() {
                   {s.name[0]}
                 </div>
                 <h3 className="mt-3 font-semibold text-zinc-900">{s.name}</h3>
-                <p className="text-xs text-zinc-400">{s.subdomain || s.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
+                <p className="text-xs text-zinc-400">{getStoreDisplayDomain(s.subdomain, s.slug)}</p>
               </motion.button>
             ))}
           </motion.div>

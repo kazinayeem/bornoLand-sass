@@ -38,8 +38,17 @@ const configuredOrigins = [
 ].filter((origin): origin is string => Boolean(origin));
 
 const allowedOriginPatterns: RegExp[] = [
-  new RegExp(`^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.${serverConfig.ROOT_DOMAIN.replace(/\./g, "\\.")}(:\\d+)?$`, "i"),
+  new RegExp(`^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.${serverConfig.ROOT_DOMAIN.replace(/\./g, "\\.")}(:\\d+)?$`, "i"),
 ];
+
+// In development, also accept common local dev host patterns like "anything.localhost:port"
+if (serverConfig.isDev) {
+  allowedOriginPatterns.push(new RegExp(`^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.localhost(:\\d+)?$`, "i"));
+  allowedOriginPatterns.push(/^https?:\/\/localhost(:\d+)?$/i);
+  // lvh.me and 127.0.0.1 variants sometimes used for subdomain testing
+  allowedOriginPatterns.push(/^https?:\/\/127\.0\.0\.1(:\d+)?$/i);
+  allowedOriginPatterns.push(/^https?:\/\/[\w-]+\.lvh\.me(:\d+)?$/i);
+}
 
 const corsOptions: CorsOptions = {
   origin(origin, callback) {

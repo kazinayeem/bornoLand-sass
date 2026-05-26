@@ -29,7 +29,43 @@ type BuilderState = {
 };
 
 const initialState: BuilderState = {
-  sections: [],
+  sections: [
+    {
+      id: "hero-1",
+      type: "hero",
+      label: "Hero Banner",
+      visible: true,
+      props: { title: "Welcome to your store", subtitle: "Start selling with a beautiful storefront.", ctaText: "Shop Now", ctaHref: "/shop" },
+    },
+    {
+      id: "announcement-1",
+      type: "announcement",
+      label: "Top Announcement",
+      visible: true,
+      props: { text: "Free shipping on orders over $50! Use code FREESHIP" },
+    },
+    {
+      id: "featured-products-1",
+      type: "products",
+      label: "Featured Products",
+      visible: true,
+      props: { title: "Featured Products", layout: "carousel" },
+    },
+    {
+      id: "testimonials-1",
+      type: "content",
+      label: "Testimonials",
+      visible: true,
+      props: { title: "What customers say", variant: "cards" },
+    },
+    {
+      id: "footer-1",
+      type: "footer",
+      label: "Store Footer",
+      visible: true,
+      props: { copyright: `© ${new Date().getFullYear()} Your Store` },
+    },
+  ],
   selectedSectionId: null,
   editingSectionId: null,
   activeTab: "sections",

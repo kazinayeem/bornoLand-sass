@@ -7,7 +7,29 @@ const PUBLIC_FILE = /\.(.*)$/;
 const authSecret = appConfig.jwtSecret;
 const sessionCookieName = appConfig.sessionCookieName;
 const ROOT_DOMAIN = appConfig.rootDomain;
-const API_PATH = new URL(appConfig.apiUrl).pathname.replace(/\/$/, "") || "/api";
+
+function getApiPath(): string {
+  const candidates = [appConfig.apiServerUrl, appConfig.apiUrl, "/api"];
+
+  for (const candidate of candidates) {
+    try {
+      if (!candidate) continue;
+
+      if (candidate.startsWith("/")) {
+        return candidate.replace(/\/$/, "") || "/api";
+      }
+
+      const pathname = new URL(candidate).pathname.replace(/\/$/, "");
+      return pathname || "/api";
+    } catch {
+      continue;
+    }
+  }
+
+  return "/api";
+}
+
+const API_PATH = getApiPath();
 
 const APP_ROUTES = new Set([
   "/login",
@@ -37,12 +59,26 @@ async function verifySessionToken(token: string): Promise<SessionToken | null> {
   }
 }
 
+function isLocalhostHost(hostname: string): boolean {
+  return hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".localhost.com");
+}
+
 function getSubdomain(hostname: string): string | null {
   const lower = hostname.toLowerCase();
 
   if (lower.endsWith(`.${ROOT_DOMAIN}`)) {
     const prefix = lower.slice(0, -(ROOT_DOMAIN.length + 1));
     if (prefix && !prefix.includes(".")) return prefix;
+  }
+
+  if (isLocalhostHost(lower)) {
+    const parts = lower.split(".");
+    if (parts.length >= 2) {
+      const prefix = parts[0] ?? "";
+      if (prefix && prefix !== "localhost" && prefix !== "www") {
+        return prefix;
+      }
+    }
   }
 
   return null;
@@ -52,6 +88,8 @@ function getBaseDomain(hostname: string): string {
   const lower = hostname.toLowerCase();
 
   if (lower.endsWith(`.${ROOT_DOMAIN}`)) return ROOT_DOMAIN;
+
+  if (isLocalhostHost(lower)) return "localhost";
 
   return lower;
 }

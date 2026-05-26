@@ -29,9 +29,66 @@ async function fetchTenantSite(slug: string): Promise<SiteData | null> {
   }
 }
 
+function createDevFallbackSite(slug: string): SiteData {
+  const theme: ThemeData = {
+    primaryColor: "#2563eb",
+    secondaryColor: "#0f172a",
+    font: "Inter",
+    buttonStyle: "rounded-lg",
+    layoutWidth: "1200px",
+    darkMode: false,
+    navbarStyle: "fixed",
+  };
+
+  return {
+    store: {
+      _id: `dev-${slug}`,
+      name: `${slug.charAt(0).toUpperCase()}${slug.slice(1)} Store`,
+      slug,
+      subdomain: slug,
+      description: "Local development storefront",
+      theme,
+      logoUrl: "",
+    },
+    tenant: { slug, name: `${slug} tenant` },
+    page: { sections: [] },
+    products: [],
+    categories: [],
+    settings: {
+      currencyCode: "USD",
+      currencySymbol: "$",
+      currencyPosition: "before",
+      locale: "en-US",
+      decimalPlaces: 2,
+      taxRate: 0,
+      taxEnabled: false,
+      taxIncluded: false,
+    },
+    sliders: [],
+  };
+}
+
+async function fetchTenantSiteWithFallback(slug: string): Promise<SiteData | null> {
+  const primary = await fetchTenantSite(slug);
+  if (primary?.store) {
+    return primary;
+  }
+
+  if (env.isDev) {
+    const demo = await fetchTenantSite("demo");
+    if (demo?.store) {
+      return demo;
+    }
+
+    return createDevFallbackSite(slug);
+  }
+
+  return primary;
+}
+
 export default async function TenantLayout({ params, children }: { params: Promise<{ tenant: string }>; children: React.ReactNode }) {
   const { tenant: slug } = await params;
-  const data = await fetchTenantSite(slug);
+  const data = await fetchTenantSiteWithFallback(slug);
   if (!data?.store) notFound();
 
   const { store, products, settings, sliders } = data;

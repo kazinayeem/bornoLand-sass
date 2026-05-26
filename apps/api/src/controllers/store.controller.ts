@@ -5,8 +5,9 @@ import { sendFailure, sendSuccess } from "../utils/api-response.js";
 
 export async function createStoreController(request: AuthRequest, response: Response) {
   const userId = request.user?.userId;
+  const tenantId = request.user?.tenantId;
   if (!userId) return sendFailure(response, "Unauthorized", 401);
-  const result = await createStore(userId, request.body);
+  const result = await createStore(userId, request.body, tenantId);
   return result.ok ? sendSuccess(response, result.data, "Store created", 201) : sendFailure(response, result.message);
 }
 

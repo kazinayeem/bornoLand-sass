@@ -1,4 +1,8 @@
+import { randomBytes } from "crypto";
+import { connectDatabase } from "../config/database.js";
 import { StoreModel } from "../models/store.model.js";
+import { TenantModel } from "../models/tenant.model.js";
+import { UserModel } from "../models/user.model.js";
 
 type ServiceResult<T> =
   | { ok: true; data: T; message?: string }
@@ -16,8 +20,40 @@ const DEFAULT_STORE_DATA = {
   },
 };
 
-export async function createStore(userId: string, data: Record<string, unknown>) {
+async function resolveTenantIdForStoreCreation(userId: string, tenantId?: string | null) {
+  if (tenantId) {
+    return tenantId;
+  }
+
+  await connectDatabase();
+
+  const user = await UserModel.findById(userId).lean() as { tenantId?: unknown; name?: string; email?: string } | null;
+  if (user?.tenantId) {
+    return String(user.tenantId);
+  }
+
+  const tenantName = user?.name ? `${user.name}'s Workspace` : user?.email ? `${user.email.split("@")[0]}'s Workspace` : "My Workspace";
+  const slugBase = tenantName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "workspace";
+  const slug = `${slugBase}-${randomBytes(3).toString("hex")}`;
+
+  const tenant = await TenantModel.create({
+    name: tenantName,
+    slug,
+    subdomain: slug,
+    plan: "free",
+    status: "trialing",
+  });
+
+  await UserModel.updateOne({ _id: userId }, { $set: { tenantId: tenant._id } });
+
+  return String(tenant._id);
+}
+
+export async function createStore(userId: string, data: Record<string, unknown>, tenantId?: string | null) {
+  const resolvedTenantId = await resolveTenantIdForStoreCreation(userId, tenantId);
+
   const store = await StoreModel.create({
+    tenantId: resolvedTenantId,
     userId,
     ...data,
     ...DEFAULT_STORE_DATA,

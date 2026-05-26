@@ -6,6 +6,7 @@ import { useGetMyStoresQuery } from "@/redux/api/store-api";
 import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
 import { useGetProductsQuery, useCreateProductMutation, useUpdateProductMutation, useDeleteProductMutation, useDuplicateProductMutation } from "@/redux/api/product-api";
 import type { Product } from "@/redux/api/product-api";
+import { useGetCategoriesQuery } from "@/redux/api/category-api";
 import { toast } from "sonner";
 import {
   Package, Plus, Search, Filter, MoreHorizontal, Edit, Trash2, Copy,
@@ -13,8 +14,6 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/format-currency";
 import { getProductImageUrl } from "@/lib/product-media";
-
-const categories = ["All", "Clothing", "Footwear", "Accessories", "Electronics", "Furniture", "Beauty", "General"];
 
 const statusColors: Record<string, string> = {
   active: "bg-emerald-100 text-emerald-700",
@@ -37,6 +36,8 @@ export default function ProductsPage() {
   const fmt = (amount: number) => formatCurrency(amount, storeSettings ?? "BDT");
   const { data: productsData, isLoading } = useGetProductsQuery(selectedStoreId, { skip: !selectedStoreId });
   const products = productsData?.data?.products ?? [];
+  const { data: catsData } = useGetCategoriesQuery(selectedStoreId, { skip: !selectedStoreId });
+  const storeCategories = catsData?.data?.categories ?? [];
 
   const filtered = useMemo(() => {
     let result = products;
@@ -44,7 +45,10 @@ export default function ProductsPage() {
       const q = search.toLowerCase();
       result = result.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
     }
-    if (categoryFilter !== "All") result = result.filter((p) => p.category === categoryFilter);
+    if (categoryFilter !== "All") {
+      const cat = storeCategories.find((c) => c.name === categoryFilter);
+      result = result.filter((p) => p.category === categoryFilter || (cat && (p.categoryIds ?? []).includes(cat._id)));
+    }
     return result;
   }, [products, search, categoryFilter]);
 
@@ -60,6 +64,7 @@ export default function ProductsPage() {
     price: 0,
     comparePrice: 0,
     category: "general",
+    categoryIds: [] as string[],
     stock: 0,
     sku: "",
     description: "",
@@ -75,7 +80,7 @@ export default function ProductsPage() {
   const [duplicateProduct, { isLoading: duplicating }] = useDuplicateProductMutation();
 
   const resetForm = () => {
-    setForm({ name: "", slug: "", price: 0, comparePrice: 0, category: "general", stock: 0, sku: "", description: "", status: "active", imageUrl: "", thumbnailUrl: "", galleryImageUrls: "" });
+    setForm({ name: "", slug: "", price: 0, comparePrice: 0, category: "general", categoryIds: [], stock: 0, sku: "", description: "", status: "active", imageUrl: "", thumbnailUrl: "", galleryImageUrls: "" });
     setEditingProduct(null);
     setShowForm(false);
   };
@@ -87,6 +92,7 @@ export default function ProductsPage() {
       price: p.price,
       comparePrice: p.comparePrice ?? 0,
       category: p.category,
+      categoryIds: p.categoryIds ?? [],
       stock: p.stock,
       sku: p.sku,
       description: p.description,
@@ -211,10 +217,14 @@ export default function ProductsPage() {
         </div>
         <div className="flex items-center gap-1 rounded-xl border border-zinc-200 bg-white p-1">
           <Filter className="ml-2 h-3.5 w-3.5 text-zinc-400" />
-          {categories.map((cat) => (
-            <button key={cat} onClick={() => { setCategoryFilter(cat); setPage(1); }}
-              className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${categoryFilter === cat ? "bg-blue-50 text-blue-700" : "text-zinc-500 hover:text-zinc-700"}`}>
-              {cat}
+          <button key="All" onClick={() => { setCategoryFilter("All"); setPage(1); }}
+            className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${categoryFilter === "All" ? "bg-blue-50 text-blue-700" : "text-zinc-500 hover:text-zinc-700"}`}>
+            All
+          </button>
+          {storeCategories.map((cat) => (
+            <button key={cat._id} onClick={() => { setCategoryFilter(cat.name); setPage(1); }}
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${categoryFilter === cat.name ? "bg-blue-50 text-blue-700" : "text-zinc-500 hover:text-zinc-700"}`}>
+              {cat.name}
             </button>
           ))}
         </div>
@@ -393,11 +403,26 @@ export default function ProductsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-700">Category</label>
-                    <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-                      {categories.filter((c) => c !== "All").map((c) => <option key={c} value={c.toLowerCase()}>{c}</option>)}
-                    </select>
+                    <label className="mb-1 block text-sm font-medium text-zinc-700">Categories</label>
+                    <div className="max-h-32 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-2 space-y-1">
+                      {storeCategories.map((cat) => {
+                        const checked = form.categoryIds.includes(cat._id);
+                        return (
+                          <label key={cat._id} className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded-lg hover:bg-zinc-50 text-sm">
+                            <input type="checkbox" checked={checked}
+                              onChange={() => setForm((f) => ({
+                                ...f, categoryIds: checked ? f.categoryIds.filter((id) => id !== cat._id) : [...f.categoryIds, cat._id],
+                                category: checked && f.category === cat.name ? "general" : checked ? f.category : cat.name.toLowerCase()
+                              }))}
+                              className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+                            <span className="text-zinc-700">{cat.name}</span>
+                          </label>
+                        );
+                      })}
+                      {storeCategories.length === 0 && (
+                        <p className="px-2 py-1 text-xs text-zinc-400">No categories. Create one first.</p>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <label className="mb-1 block text-sm font-medium text-zinc-700">SKU</label>

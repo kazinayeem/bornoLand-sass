@@ -19,7 +19,15 @@ export type ProductData = {
   description: string; price: number; comparePrice?: number;
   category: string; stock: number; status: "active" | "inactive";
   sku: string; imageUrl?: string; thumbnailUrl?: string; galleryImageUrls?: string[]; images: string[]; featured: boolean;
+  categoryIds?: string[];
   createdAt: string; updatedAt: string;
+};
+
+export type CategoryData = {
+  _id: string; storeId: string; name: string; slug: string;
+  imageUrl: string; description: string; parentId: string | null;
+  active: boolean; featured: boolean; sortOrder: number;
+  createdAt?: string; updatedAt?: string;
 };
 
 export type StoreSettingsData = {
@@ -51,6 +59,7 @@ export type TenantContextType = {
   store: StoreData;
   theme: ThemeData;
   products: ProductData[];
+  categories: CategoryData[];
   settings: StoreSettingsData;
   sliders: HomepageSliderData[];
   pageSections: { id: string; type: string; visible?: boolean; props?: Record<string, string | number | boolean | null | undefined> }[];
@@ -65,6 +74,7 @@ export function useTenant(): TenantContextType {
       store: { _id: "", name: "Store", slug: "", subdomain: "", description: "", logoUrl: "", theme: { primaryColor: "#2563eb", secondaryColor: "#0f172a", font: "Inter", buttonStyle: "rounded-lg", layoutWidth: "1200px", darkMode: false, navbarStyle: "fixed" } },
       theme: { primaryColor: "#2563eb", secondaryColor: "#0f172a", font: "Inter", buttonStyle: "rounded-lg", layoutWidth: "1200px", darkMode: false, navbarStyle: "fixed" },
       products: [],
+      categories: [],
       settings: { currencyCode: "USD", currencySymbol: "$", currencyPosition: "before", locale: "en-US", decimalPlaces: 2, taxRate: 0 },
       sliders: [],
       pageSections: []

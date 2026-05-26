@@ -9,7 +9,9 @@ const pageTitles: Record<string, string> = {
   "/dashboard/products": "Products",
   "/dashboard/theme": "Theme",
   "/dashboard/orders": "Orders",
-  "/dashboard/settings": "Settings"
+  "/dashboard/settings": "Settings",
+  "/dashboard/cms": "CMS",
+  "/dashboard/categories": "Categories"
 };
 
 export function UserNavbar() {

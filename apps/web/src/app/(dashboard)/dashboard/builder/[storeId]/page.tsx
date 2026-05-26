@@ -8,6 +8,7 @@ import { useGetStoreQuery } from "@/redux/api/store-api";
 import { useGetProductsQuery } from "@/redux/api/product-api";
 import { useGetPagesQuery, useCreatePageMutation } from "@/redux/api/builder-api";
 import { useGetStoreSettingsQuery, useGetHomepageSlidersQuery } from "@/redux/api/store-settings-api";
+import { useGetCategoriesQuery } from "@/redux/api/category-api";
 import { setTheme } from "@/redux/slices/theme-slice";
 import { setStoreSettings } from "@/redux/slices/store-settings-slice";
 import { loadSections, setPageId, markSaved, setSaving } from "@/redux/slices/builder-slice";
@@ -16,16 +17,15 @@ import { useSavePageMutation } from "@/redux/api/builder-api";
 import { BuilderToolbar } from "@/components/builder/builder-toolbar";
 import { BuilderSidebar } from "@/components/builder/builder-sidebar";
 import { StorePreview } from "@/components/builder/store-preview";
-import { SectionEditor } from "@/components/builder/panels/section-editor";
 import { PropertiesPanel } from "@/components/builder/properties-panel";
 
 const defaultSections: BuilderSection[] = [
-  { id: "hero-1", type: "hero", label: "Hero Banner", visible: true, props: { headline: "Welcome to Our Store", subheadline: "Discover amazing products curated just for you", buttonText: "Shop Now" } },
-  { id: "features-1", type: "features", label: "Categories", visible: true, props: { title: "Shop by Category" } },
-  { id: "products-1", type: "products", label: "Products", visible: true, props: { title: "Featured Products" } },
-  { id: "testimonials-1", type: "testimonials", label: "Testimonials", visible: true, props: { title: "What Customers Say" } },
-  { id: "cta-1", type: "cta", label: "Newsletter", visible: true, props: { headline: "Stay in the Loop", buttonText: "Subscribe" } },
-  { id: "footer-1", type: "footer", label: "Footer", visible: true, props: { copyright: `© 2026 Your Store. All rights reserved.` } },
+  { id: "hero-1", type: "hero", label: "Hero Banner", visible: true, props: { headline: "Welcome to Our Store", subheadline: "Discover amazing products curated just for you", buttonText: "Shop Now", buttonLink: "/shop", imageUrl: "", overlayColor: "rgba(15, 23, 42, 0.45)", textAlignment: "left", heroHeight: "md", kicker: "Welcome" } },
+  { id: "features-1", type: "features", label: "Categories", visible: true, props: { title: "Shop by Category", subtitle: "Browse our collections", gridColumns: "4", cardStyle: "default", backgroundColor: "" } },
+  { id: "products-1", type: "products", label: "Products", visible: true, props: { title: "Featured Products", subtitle: "Our best selling items", gridColumns: "4", layout: "grid", showBadges: "true", showRatings: "true", backgroundColor: "" } },
+  { id: "testimonials-1", type: "testimonials", label: "Testimonials", visible: true, props: { title: "What Customers Say", subtitle: "Hear from our happy customers", layout: "grid", cardStyle: "default", backgroundColor: "", avatarStyle: "circle" } },
+  { id: "cta-1", type: "cta", label: "Newsletter", visible: true, props: { headline: "Stay in the Loop", subtitle: "Subscribe to get special offers, free giveaways, and exclusive deals.", buttonText: "Subscribe", inputPlaceholder: "Enter your email", backgroundColor: "", backgroundImage: "" } },
+  { id: "footer-1", type: "footer", label: "Footer", visible: true, props: { copyright: "© 2026 Your Store. All rights reserved.", showSocialLinks: "true", contactEmail: "hello@example.com", contactPhone: "+1 (555) 123-4567", contactAddress: "123 Commerce St, NY 10001" } },
 ];
 
 export default function BuilderPage() {
@@ -39,20 +39,19 @@ export default function BuilderPage() {
   const { data: pagesData, isLoading: pagesLoading } = useGetPagesQuery(storeId);
   const { data: settingsData } = useGetStoreSettingsQuery(storeId);
   const { data: slidersData } = useGetHomepageSlidersQuery(storeId);
+  const { data: categoriesData } = useGetCategoriesQuery(storeId);
   const [createPage] = useCreatePageMutation();
   const [savePage] = useSavePageMutation();
 
   const store = storeData?.data?.store;
   const products = productsData?.data?.products ?? [];
   const settings = settingsData?.data?.settings ?? {
-    currencyCode: "USD",
-    currencySymbol: "$",
-    currencyPosition: "before",
-    locale: "en-US",
-    decimalPlaces: 2,
-    taxRate: 0,
+    currencyCode: "USD", currencySymbol: "$", currencyPosition: "before",
+    locale: "en-US", decimalPlaces: 2, taxRate: 0,
+    dateFormat: "MM/DD/YYYY", timezone: "UTC", language: "en",
   };
   const sliders = slidersData?.data?.sliders ?? [];
+  const categories = categoriesData?.data?.categories ?? [];
 
   const isDirty = useSelector((s: RootState) => s.builder.isDirty);
   const saving = useSelector((s: RootState) => s.builder.saving);
@@ -67,12 +66,9 @@ export default function BuilderPage() {
   useEffect(() => {
     if (store?.theme) {
       dispatch(setTheme({
-        primaryColor: store.theme.primaryColor,
-        secondaryColor: store.theme.secondaryColor,
-        font: store.theme.font,
-        buttonStyle: store.theme.buttonStyle,
-        layoutWidth: store.theme.layoutWidth,
-        darkMode: store.theme.darkMode,
+        primaryColor: store.theme.primaryColor, secondaryColor: store.theme.secondaryColor,
+        font: store.theme.font, buttonStyle: store.theme.buttonStyle,
+        layoutWidth: store.theme.layoutWidth, darkMode: store.theme.darkMode,
         navbarStyle: store.theme.navbarStyle,
       }));
     }
@@ -81,11 +77,10 @@ export default function BuilderPage() {
   useEffect(() => {
     if (settings) {
       dispatch(setStoreSettings({
-        currencyCode: settings.currencyCode,
-        currencySymbol: settings.currencySymbol,
-        currencyPosition: settings.currencyPosition,
-        locale: settings.locale,
+        currencyCode: settings.currencyCode, currencySymbol: settings.currencySymbol,
+        currencyPosition: settings.currencyPosition, locale: settings.locale,
         decimalPlaces: settings.decimalPlaces,
+        dateFormat: settings.dateFormat, timezone: settings.timezone, language: settings.language,
       }));
     }
   }, [settings, dispatch]);
@@ -144,42 +139,27 @@ export default function BuilderPage() {
   return (
     <div className="flex h-screen flex-col bg-zinc-50">
       <BuilderToolbar
-        storeId={storeId}
-        storeName={store.name}
+        storeId={storeId} storeName={store.name}
         onBack={() => router.push("/dashboard/stores")}
-        saving={saving}
-        publishing={publishing}
-        isDirty={isDirty}
+        saving={saving} publishing={publishing} isDirty={isDirty}
       />
-
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
-        <div className="w-72 flex-shrink-0 border-r border-zinc-200 overflow-hidden">
+        <div className="w-72 flex-shrink-0 border-r border-zinc-200 overflow-hidden bg-white">
           <BuilderSidebar storeId={storeId} />
         </div>
-
-        {/* Center - Live Store Preview */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto bg-zinc-100">
           <StorePreview
-            store={store}
-            theme={currentTheme}
-            products={products}
-            settings={settings}
-            sliders={sliders}
-            sections={sections as BuilderSection[]}
+            store={store} theme={currentTheme} products={products} categories={categories}
+            settings={settings} sliders={sliders}
+            sections={sections as any}
           />
         </div>
-
-        {/* Right Panel - Properties */}
         {selectedSectionId && (
-          <div className="w-64 flex-shrink-0 border-l border-zinc-200 bg-white overflow-y-auto">
+          <div className="w-72 flex-shrink-0 border-l border-zinc-200 bg-white overflow-y-auto shadow-sm">
             <PropertiesPanel />
           </div>
         )}
       </div>
-
-      {/* Section Editor Modal */}
-      <SectionEditor />
     </div>
   );
 }

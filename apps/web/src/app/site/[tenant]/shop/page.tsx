@@ -18,12 +18,12 @@ const SORT_OPTIONS = [
 
 export default function ShopPage() {
   const searchParams = useSearchParams();
-  const { theme, products } = useTenant();
+  const { theme, products, categories } = useTenant();
   const { primaryColor, font, darkMode } = theme;
   const isDark = darkMode;
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [sort, setSort] = useState("newest");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
@@ -31,10 +31,7 @@ export default function ShopPage() {
   const [page, setPage] = useState(1);
   const perPage = 12;
 
-  const categories = useMemo(() => {
-    const cats = new Set(products.map((p) => p.category).filter(Boolean));
-    return Array.from(cats).sort();
-  }, [products]);
+  const activeCategories = useMemo(() => categories.filter((c) => c.active), [categories]);
 
   const activeProducts = useMemo(() => products.filter((p) => p.status === "active"), [products]);
 
@@ -48,8 +45,10 @@ export default function ShopPage() {
       );
     }
 
-    if (selectedCategory) {
-      result = result.filter((p) => p.category === selectedCategory);
+    if (selectedCategoryId) {
+      result = result.filter((p) =>
+        (p.categoryIds ?? []).includes(selectedCategoryId) || p.category === activeCategories.find((c) => c._id === selectedCategoryId)?.name
+      );
     }
 
     result = result.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
@@ -63,7 +62,7 @@ export default function ShopPage() {
     }
 
     return result;
-  }, [activeProducts, search, selectedCategory, sort, priceRange]);
+  }, [activeProducts, search, selectedCategoryId, sort, priceRange, activeCategories]);
 
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
@@ -111,16 +110,16 @@ export default function ShopPage() {
               <div>
                 <label className="mb-1.5 block text-xs font-medium" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>Category</label>
                 <div className="flex flex-wrap gap-1.5">
-                  <button onClick={() => { setSelectedCategory(""); setPage(1); }}
+                  <button onClick={() => { setSelectedCategoryId(""); setPage(1); }}
                     className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-                    style={{ backgroundColor: !selectedCategory ? primaryColor : isDark ? "#27272a" : "#e4e4e7", color: !selectedCategory ? "#fff" : isDark ? "#a1a1aa" : "#52525b" }}>
+                    style={{ backgroundColor: !selectedCategoryId ? primaryColor : isDark ? "#27272a" : "#e4e4e7", color: !selectedCategoryId ? "#fff" : isDark ? "#a1a1aa" : "#52525b" }}>
                     All
                   </button>
-                  {categories.map((cat) => (
-                    <button key={cat} onClick={() => { setSelectedCategory(cat); setPage(1); }}
+                  {activeCategories.map((cat) => (
+                    <button key={cat._id} onClick={() => { setSelectedCategoryId(cat._id); setPage(1); }}
                       className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-                      style={{ backgroundColor: selectedCategory === cat ? primaryColor : isDark ? "#27272a" : "#e4e4e7", color: selectedCategory === cat ? "#fff" : isDark ? "#a1a1aa" : "#52525b" }}>
-                      {cat}
+                      style={{ backgroundColor: selectedCategoryId === cat._id ? primaryColor : isDark ? "#27272a" : "#e4e4e7", color: selectedCategoryId === cat._id ? "#fff" : isDark ? "#a1a1aa" : "#52525b" }}>
+                      {cat.name}
                     </button>
                   ))}
                 </div>
@@ -153,7 +152,7 @@ export default function ShopPage() {
         )}
 
         {/* Active filters tags */}
-        {(search || selectedCategory) && (
+        {(search || selectedCategoryId) && (
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {search && (
               <span className="flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
@@ -162,11 +161,11 @@ export default function ShopPage() {
                 <button onClick={() => setSearch("")}><X className="h-3 w-3" /></button>
               </span>
             )}
-            {selectedCategory && (
+            {selectedCategoryId && (
               <span className="flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
                 style={{ backgroundColor: `${primaryColor}12`, color: primaryColor }}>
-                {selectedCategory}
-                <button onClick={() => setSelectedCategory("")}><X className="h-3 w-3" /></button>
+                {activeCategories.find((c) => c._id === selectedCategoryId)?.name ?? "Category"}
+                <button onClick={() => setSelectedCategoryId("")}><X className="h-3 w-3" /></button>
               </span>
             )}
           </div>
@@ -177,7 +176,7 @@ export default function ShopPage() {
           <div className="mt-16 flex flex-col items-center justify-center gap-3">
             <Search className="h-12 w-12 text-zinc-200" />
             <p className="text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>No products found</p>
-            <button onClick={() => { setSearch(""); setSelectedCategory(""); setPriceRange([0, maxPrice]); }}
+            <button onClick={() => { setSearch(""); setSelectedCategoryId(""); setPriceRange([0, maxPrice]); }}
               className="rounded-xl bg-zinc-900 px-4 py-2 text-xs font-medium text-white">Clear Filters</button>
           </div>
         ) : (

@@ -20,7 +20,7 @@ type ProductRouteData = {
 async function fetchProductPage(slug: string, host: string): Promise<ProductRouteData | null> {
   try {
     const apiUrl = process.env.API_URL ?? "http://localhost:4000";
-    const res = await fetch(`${apiUrl}/products/${slug}`, {
+    const res = await fetch(`${apiUrl}/public/product/${slug}`, {
       cache: "no-store",
       headers: { "x-forwarded-host": host }
     });
@@ -54,6 +54,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       store: data.store,
       theme,
       products: data.products ?? [],
+      categories: [],
       settings: data.settings,
       sliders: data.sliders ?? [],
       pageSections: [],

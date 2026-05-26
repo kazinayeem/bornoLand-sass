@@ -21,6 +21,7 @@ type ProductCardProps = {
     description?: string; price: number; comparePrice?: number;
     category: string; stock: number; status?: string;
     sku?: string; images?: string[]; featured?: boolean;
+    categoryIds?: string[];
     createdAt?: string; updatedAt?: string;
   };
 };
@@ -28,8 +29,11 @@ type ProductCardProps = {
 export function ProductCard({ product }: ProductCardProps) {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { theme, settings } = useTenant();
+  const { theme, settings, categories } = useTenant();
   const { primaryColor, buttonStyle, font, darkMode } = theme;
+  const categoryName = product.categoryIds?.length
+    ? categories.find((c) => product.categoryIds!.includes(c._id))?.name ?? product.category
+    : product.category;
   const [addToCartRemote] = useAddToCartMutation();
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const isDark = darkMode;
@@ -123,7 +127,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <div className="p-4">
           <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: primaryColor }}>
-            {product.category}
+            {categoryName}
           </p>
           <h3 className="mt-1 truncate text-sm font-semibold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>
             {product.name}

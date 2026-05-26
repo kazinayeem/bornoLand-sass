@@ -12,8 +12,18 @@ export function StoreFooter({ section }: { section?: StorefrontSectionLike }) {
   const footerSection = section?.props ? section : pageSections.find((entry) => entry.type === "footer") ?? null;
   const footerProps: Record<string, string | number | boolean | null | undefined> = footerSection?.props ?? {};
 
+  const bgColor = (footerProps.backgroundColor as string) || "";
+  const showSocial = footerProps.showSocialLinks !== "false";
+  const contactEmail = (footerProps.contactEmail as string) || "hello@example.com";
+  const contactPhone = (footerProps.contactPhone as string) || "+1 (555) 123-4567";
+  const contactAddress = (footerProps.contactAddress as string) || "123 Commerce St, NY 10001";
+
   return (
-    <footer style={{ backgroundColor: isDark ? "#09090b" : "#fafafa", borderTop: `1px solid ${isDark ? "#27272a" : "#e4e4e7"}`, fontFamily: font }}>
+    <footer style={{
+      backgroundColor: bgColor || (isDark ? "#09090b" : "#fafafa"),
+      borderTop: `1px solid ${isDark ? "#27272a" : "#e4e4e7"}`,
+      fontFamily: font
+    }}>
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
@@ -26,17 +36,19 @@ export function StoreFooter({ section }: { section?: StorefrontSectionLike }) {
             <p className="text-sm leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
               {store.description || "Premium ecommerce store offering curated products with fast shipping and exceptional service."}
             </p>
-            <div className="flex items-center gap-2">
-              {[Facebook, Twitter, Instagram, Youtube].map((Icon, idx) => (
-                <a key={idx} href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
-                  style={{ backgroundColor: isDark ? "#18181b" : "#f4f4f5", color: isDark ? "#a1a1aa" : "#71717a" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor; e.currentTarget.style.color = "#ffffff"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = isDark ? "#18181b" : "#f4f4f5"; e.currentTarget.style.color = isDark ? "#a1a1aa" : "#71717a"; }}>
-                  <Icon className="h-4 w-4" />
-                </a>
-              ))}
-            </div>
+            {showSocial && (
+              <div className="flex items-center gap-2">
+                {[Facebook, Twitter, Instagram, Youtube].map((Icon, idx) => (
+                  <a key={idx} href="#"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
+                    style={{ backgroundColor: isDark ? "#18181b" : "#f4f4f5", color: isDark ? "#a1a1aa" : "#71717a" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor; e.currentTarget.style.color = "#ffffff"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = isDark ? "#18181b" : "#f4f4f5"; e.currentTarget.style.color = isDark ? "#a1a1aa" : "#71717a"; }}>
+                    <Icon className="h-4 w-4" />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -84,16 +96,18 @@ export function StoreFooter({ section }: { section?: StorefrontSectionLike }) {
           <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Contact</h3>
             <ul className="space-y-3">
-              {[
-                { icon: Mail, text: "hello@example.com" },
-                { icon: Phone, text: "+1 (555) 123-4567" },
-                { icon: MapPin, text: "123 Commerce St, NY 10001" }
-              ].map(({ icon: Icon, text }) => (
-                <li key={text} className="flex items-center gap-2.5 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-                  <Icon className="h-4 w-4 shrink-0" style={{ color: primaryColor }} />
-                  <span>{text}</span>
-                </li>
-              ))}
+              <li className="flex items-center gap-2.5 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
+                <Mail className="h-4 w-4 shrink-0" style={{ color: primaryColor }} />
+                <span>{contactEmail}</span>
+              </li>
+              <li className="flex items-center gap-2.5 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
+                <Phone className="h-4 w-4 shrink-0" style={{ color: primaryColor }} />
+                <span>{contactPhone}</span>
+              </li>
+              <li className="flex items-center gap-2.5 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
+                <MapPin className="h-4 w-4 shrink-0" style={{ color: primaryColor }} />
+                <span>{contactAddress}</span>
+              </li>
             </ul>
           </div>
         </div>

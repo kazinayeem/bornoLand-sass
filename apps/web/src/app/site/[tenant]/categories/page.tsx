@@ -1,27 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ImageIcon } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
 
-const CATEGORY_ICONS: Record<string, string> = {
-  clothing: "👕", electronics: "💻", accessories: "⌚", footwear: "👟",
-  furniture: "🪑", beauty: "💄", fitness: "🏋️", home: "🏠",
-};
-
 export default function CategoriesPage() {
-  const { theme, products } = useTenant();
+  const { theme, categories, products } = useTenant();
   const { primaryColor, font, darkMode } = theme;
   const isDark = darkMode;
 
-  const categories = useMemo(() => {
-    const map = new Map<string, number>();
-    products.filter((p) => p.status === "active").forEach((p) => {
-      if (p.category) map.set(p.category, (map.get(p.category) || 0) + 1);
-    });
-    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
-  }, [products]);
+  const displayCategories = categories.filter((c) => c.active);
+
+  const productCount = (catId: string) =>
+    products.filter((p) => p.status === "active" && (p.categoryIds ?? []).includes(catId)).length;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: isDark ? "#000000" : "#ffffff" }}>
@@ -33,26 +24,42 @@ export default function CategoriesPage() {
           </p>
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {categories.map(([category, count], idx) => {
-            const slug = category.toLowerCase();
-            return (
-              <motion.a
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
-                key={category} href={`/category/${slug}`}
-                className="group flex flex-col items-center gap-4 rounded-2xl border p-8 text-center transition-all hover:shadow-lg hover:-translate-y-1"
-                style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", backgroundColor: isDark ? "#18181b" : "#fafafa" }}>
-                <span className="text-5xl">{CATEGORY_ICONS[slug] || "🛍️"}</span>
-                <div>
-                  <h3 className="text-lg font-semibold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{category}</h3>
-                  <p className="mt-1 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>{count} products</p>
-                </div>
-                <span className="flex items-center gap-1 text-xs font-medium transition-colors group-hover:gap-2"
-                  style={{ color: primaryColor }}>
-                  Shop Now <ArrowRight className="h-3 w-3" />
-                </span>
-              </motion.a>
-            );
-          })}
+          {displayCategories.length === 0 ? (
+            <div className="col-span-full text-center py-16">
+              <p className="text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>No categories yet</p>
+            </div>
+          ) : (
+            displayCategories.map((cat, idx) => {
+              const count = productCount(cat._id);
+              return (
+                <motion.a
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
+                  key={cat._id} href={`/category/${cat.slug}`}
+                  className="group flex flex-col items-center gap-4 rounded-2xl border p-8 text-center transition-all hover:shadow-lg hover:-translate-y-1"
+                  style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", backgroundColor: isDark ? "#18181b" : "#fafafa" }}>
+                  <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl"
+                    style={{ backgroundColor: `${primaryColor}12` }}>
+                    {cat.imageUrl ? (
+                      <img src={cat.imageUrl} alt={cat.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <ImageIcon className="h-8 w-8" style={{ color: primaryColor }} />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{cat.name}</h3>
+                    <p className="mt-1 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>{count} {count === 1 ? "product" : "products"}</p>
+                  </div>
+                  {cat.description && (
+                    <p className="text-xs line-clamp-2" style={{ color: isDark ? "#71717a" : "#a1a1aa" }}>{cat.description}</p>
+                  )}
+                  <span className="flex items-center gap-1 text-xs font-medium transition-colors group-hover:gap-2"
+                    style={{ color: primaryColor }}>
+                    Shop Now <ArrowRight className="h-3 w-3" />
+                  </span>
+                </motion.a>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

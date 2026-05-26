@@ -4,7 +4,7 @@ import { Star } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
 import type { StorefrontSectionLike } from "./storefront-types";
 
-const testimonials = [
+const defaultTestimonials = [
   { name: "Sarah Johnson", role: "Verified Buyer", text: "Amazing quality! The product exceeded my expectations. Fast shipping too!", rating: 5 },
   { name: "Mike Chen", role: "Verified Buyer", text: "Great customer service and the product is top-notch. Will definitely order again.", rating: 5 },
   { name: "Emily Davis", role: "Verified Buyer", text: "Love the quality and the price. Best online shopping experience I've had.", rating: 4 },
@@ -14,10 +14,18 @@ export function TestimonialsSection({ section }: { section?: StorefrontSectionLi
   const { theme } = useTenant();
   const { primaryColor, font, darkMode } = theme;
   const isDark = darkMode;
-  const title = section?.props?.title ?? "What Our Customers Say";
+  const p = section?.props ?? {};
+
+  const title = (p.title as string) || "What Our Customers Say";
+  const subtitle = (p.subtitle as string) || "";
+  const bgColor = (p.backgroundColor as string) || "";
+  const avatarStyle = (p.avatarStyle as string) || "circle";
+
+  const avatarClass = avatarStyle === "square" ? "rounded-xl" : avatarStyle === "none" ? "hidden" : "rounded-full";
 
   return (
-    <section className="py-16 sm:py-20" style={{ backgroundColor: isDark ? "#09090b" : "#fafafa" }}>
+    <section className="py-16 sm:py-20"
+      style={{ backgroundColor: bgColor || (isDark ? "#09090b" : "#fafafa"), fontFamily: font }}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <span className="inline-block rounded-full px-3 py-1 text-xs font-medium"
@@ -28,9 +36,12 @@ export function TestimonialsSection({ section }: { section?: StorefrontSectionLi
             style={{ color: isDark ? "#fafafa" : "#18181b" }}>
             {title}
           </h2>
+          {subtitle && (
+            <p className="mt-2 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>{subtitle}</p>
+          )}
         </div>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {testimonials.map((t, i) => (
+          {defaultTestimonials.map((t, i) => (
             <div key={i}
               className="rounded-2xl border p-6 transition-all hover:shadow-md"
               style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", backgroundColor: isDark ? "#18181b" : "#ffffff" }}>
@@ -43,7 +54,7 @@ export function TestimonialsSection({ section }: { section?: StorefrontSectionLi
                 &ldquo;{t.text}&rdquo;
               </p>
               <div className="mt-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
+                <div className={`flex h-10 w-10 items-center justify-center text-sm font-bold text-white ${avatarClass}`}
                   style={{ backgroundColor: primaryColor }}>
                   {t.name[0]}
                 </div>

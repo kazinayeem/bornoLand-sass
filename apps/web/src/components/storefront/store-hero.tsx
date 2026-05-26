@@ -7,25 +7,42 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTenant } from "@/providers/tenant-provider";
 import type { StorefrontSectionLike } from "./storefront-types";
 
+const heroHeightMap: Record<string, string> = {
+  sm: "min-h-[400px]",
+  md: "min-h-[560px]",
+  lg: "min-h-[700px]",
+};
+
 export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
   const { store, theme, sliders } = useTenant();
-  const { primaryColor, secondaryColor, buttonStyle, font, darkMode } = theme;
+  const { primaryColor, buttonStyle, font, darkMode } = theme;
   const [showDemo, setShowDemo] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const isDark = darkMode;
   const heroProps: Record<string, string | number | boolean | null | undefined> = section?.props ?? {};
-  const slides = useMemo(() => sliders.length > 0 ? sliders : [{
-    _id: "fallback",
-    title: heroProps.headline ?? `Welcome to ${store.name}`,
-    subtitle: heroProps.subheadline ?? "Discover curated products, fast checkout, and a storefront that feels alive.",
-    imageUrl: `https://placehold.co/1600x900/png?text=${encodeURIComponent(store.name)}`,
-    buttonText: heroProps.buttonText ?? "Shop Now",
-    buttonLink: "/shop",
-    sortOrder: 0,
-    isActive: true,
-    overlayColor: "rgba(15, 23, 42, 0.45)",
-    textAlignment: "left" as const
-  }], [sliders, store.name]);
+
+  const bgColor = (heroProps.backgroundColor as string) || "";
+  const bgGradient = (heroProps.backgroundGradient as string) || "";
+  const heroHeight = heroHeightMap[(heroProps.heroHeight as string) ?? "md"] ?? heroHeightMap.md;
+  const overlayOpacity = heroProps.overlayOpacity ? `${heroProps.overlayOpacity}%` : "45%";
+
+  const slides = useMemo(() => {
+    if (sliders.length > 0) return sliders;
+    const customImage = heroProps.imageUrl as string;
+    return [{
+      _id: "fallback",
+      title: (heroProps.headline as string) ?? `Welcome to ${store.name}`,
+      subtitle: (heroProps.subheadline as string) ?? "Discover curated products, fast checkout, and a storefront that feels alive.",
+      imageUrl: customImage || `https://placehold.co/1600x900/png?text=${encodeURIComponent(store.name)}`,
+      mobileImageUrl: (heroProps.mobileImageUrl as string) || customImage || "",
+      buttonText: (heroProps.buttonText as string) ?? "Shop Now",
+      buttonLink: (heroProps.buttonLink as string) ?? "/shop",
+      sortOrder: 0,
+      isActive: true,
+      overlayColor: (heroProps.overlayColor as string) ?? "rgba(15, 23, 42, 0.45)",
+      textAlignment: (heroProps.textAlignment as string) ?? "left",
+    }];
+  }, [sliders, heroProps, store.name]);
 
   useEffect(() => {
     if (slides.length <= 1) return;
@@ -37,13 +54,20 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
 
   const currentSlide = slides[activeSlide % slides.length];
 
+  const sectionBg = bgGradient
+    ? `linear-gradient(135deg, ${bgGradient.split(",").map((s: string) => s.trim()).join(", ")})`
+    : bgColor
+    ? bgColor
+    : isDark
+    ? `linear-gradient(135deg, ${theme.secondaryColor} 0%, #020617 100%)`
+    : `linear-gradient(135deg, ${primaryColor}08 0%, ${theme.secondaryColor}08 100%)`;
+
   return (
     <>
-      <section className="relative overflow-hidden" style={{ fontFamily: font }}>
-        <div className="absolute inset-0" style={{ background: isDark ? `linear-gradient(135deg, ${secondaryColor} 0%, #020617 100%)` : `linear-gradient(135deg, ${primaryColor}08 0%, ${secondaryColor}08 100%)` }} />
+      <section className="relative overflow-hidden" style={{ fontFamily: font, background: sectionBg }}>
         <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl">
-            <div className="relative min-h-[560px]">
+            <div className={`relative ${heroHeight}`}>
               {slides.map((slide, index) => {
                 const active = index === activeSlide % slides.length;
                 return (
@@ -52,31 +76,44 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
                     animate={{ opacity: active ? 1 : 0, scale: active ? 1 : 1.02 }}
                     transition={{ duration: 0.6 }}
                     className={`absolute inset-0 ${active ? "pointer-events-auto" : "pointer-events-none"}`}>
-                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${slide.imageUrl})` }} />
-                    <div className="absolute inset-0" style={{ background: slide.overlayColor }} />
-                    <div className="relative flex min-h-[560px] items-end lg:items-center">
+                    <picture>
+                      <source media="(max-width: 768px)" srcSet={(slide as any).mobileImageUrl || slide.imageUrl} />
+                      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${slide.imageUrl})` }} />
+                    </picture>
+                    <div className="absolute inset-0" style={{ background: slide.overlayColor, opacity: overlayOpacity }} />
+                    <div className={`relative flex ${heroHeight} items-end lg:items-center`}>
                       <div className="mx-auto flex w-full max-w-7xl justify-start px-4 py-10 sm:px-6 lg:px-8">
-                        <div className={`max-w-2xl rounded-[1.75rem] border border-white/15 bg-white/10 p-8 text-white backdrop-blur-md ${slide.textAlignment === "center" ? "mx-auto text-center" : slide.textAlignment === "right" ? "ml-auto text-right" : ""}`}>
-                          <span className="inline-flex rounded-full border border-white/20 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-white/80">
-                            {heroProps.kicker ?? `Welcome to ${store.name}`}
-                          </span>
+                        <div className={`max-w-2xl rounded-[1.75rem] border border-white/15 bg-white/10 p-8 text-white backdrop-blur-md ${
+                          (slide.textAlignment as string) === "center" ? "mx-auto text-center" :
+                          (slide.textAlignment as string) === "right" ? "ml-auto text-right" : ""
+                        }`}>
+                          {(heroProps.kicker as string) && (
+                            <span className="inline-flex rounded-full border border-white/20 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-white/80">
+                              {heroProps.kicker as string}
+                            </span>
+                          )}
                           <h1 className="mt-5 text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
                             {slide.title}
                           </h1>
                           <p className="mt-4 max-w-xl text-base leading-7 text-white/80 sm:text-lg">
                             {slide.subtitle}
                           </p>
-                          <div className={`mt-7 flex flex-wrap gap-3 ${slide.textAlignment === "center" ? "justify-center" : slide.textAlignment === "right" ? "justify-end" : "justify-start"}`}>
+                          <div className={`mt-7 flex flex-wrap gap-3 ${
+                            (slide.textAlignment as string) === "center" ? "justify-center" :
+                            (slide.textAlignment as string) === "right" ? "justify-end" : "justify-start"
+                          }`}>
                             <Link href={slide.buttonLink}
                               className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white transition-all hover:scale-[1.01] active:scale-95"
                               style={{ borderRadius: buttonStyle, backgroundColor: primaryColor }}>
                               <ShoppingBag className="h-4 w-4" /> {slide.buttonText}
                             </Link>
-                            <button onClick={() => setShowDemo(true)}
-                              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white/90 transition-all hover:bg-white/10 active:scale-95"
-                              style={{ borderRadius: buttonStyle, border: "1px solid rgba(255,255,255,0.2)" }}>
-                              <Play className="h-4 w-4" /> Watch Demo
-                            </button>
+                            {(heroProps.secondaryButtonText as string) && (
+                              <button onClick={() => setShowDemo(true)}
+                                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white/90 transition-all hover:bg-white/10 active:scale-95"
+                                style={{ borderRadius: buttonStyle, border: "1px solid rgba(255,255,255,0.2)" }}>
+                                <Play className="h-4 w-4" /> {heroProps.secondaryButtonText as string}
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -3,29 +3,28 @@
 import { useMemo, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Search, ImageIcon } from "lucide-react";
 import { ProductCard } from "@/components/storefront/product-card";
 import { useTenant } from "@/providers/tenant-provider";
-
-const CATEGORY_ICONS: Record<string, string> = {
-  clothing: "👕", electronics: "💻", accessories: "⌚", footwear: "👟",
-  furniture: "🪑", beauty: "💄", fitness: "🏋️", home: "🏠",
-};
 
 export default function CategoryPage() {
   const params = useParams();
   const slug = params.slug as string;
-  const { theme, products } = useTenant();
+  const { theme, products, categories } = useTenant();
   const { primaryColor, font, darkMode } = theme;
   const isDark = darkMode;
   const [search, setSearch] = useState("");
 
-  const category = slug.charAt(0).toUpperCase() + slug.slice(1);
+  const category = useMemo(() => categories.find((c) => c.slug === slug), [categories, slug]);
+  const categoryName = category?.name ?? (slug.charAt(0).toUpperCase() + slug.slice(1));
 
   const filtered = useMemo(() => {
-    let result = products.filter((p) =>
-      p.status === "active" && p.category?.toLowerCase() === slug.toLowerCase()
-    );
+    let result = products.filter((p) => p.status === "active");
+    if (category) {
+      result = result.filter((p) => (p.categoryIds ?? []).includes(category._id) || p.category?.toLowerCase() === slug);
+    } else {
+      result = result.filter((p) => p.category?.toLowerCase() === slug);
+    }
     if (search) {
       const q = search.toLowerCase();
       result = result.filter((p) =>
@@ -33,10 +32,11 @@ export default function CategoryPage() {
       );
     }
     return result;
-  }, [products, slug, search]);
+  }, [products, category, slug, search]);
 
-  // Check if category has any products
-  const hasAnyProduct = products.some((p) => p.category?.toLowerCase() === slug.toLowerCase());
+  const hasAnyProduct = products.some((p) =>
+    p.category?.toLowerCase() === slug || (category && (p.categoryIds ?? []).includes(category._id))
+  );
   if (!hasAnyProduct && products.length > 0) notFound();
 
   return (
@@ -48,11 +48,21 @@ export default function CategoryPage() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">{CATEGORY_ICONS[slug] || "🛍️"}</span>
+            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl"
+              style={{ backgroundColor: `${primaryColor}12` }}>
+              {category?.imageUrl ? (
+                <img src={category.imageUrl} alt={categoryName} className="h-full w-full object-cover" />
+              ) : (
+                <ImageIcon className="h-6 w-6" style={{ color: primaryColor }} />
+              )}
+            </div>
             <div>
-              <h1 className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{category}</h1>
-              <p className="mt-1 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-                {filtered.length} products
+              <h1 className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{categoryName}</h1>
+              {category?.description && (
+                <p className="mt-1 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>{category.description}</p>
+              )}
+              <p className="text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
+                {filtered.length} {filtered.length === 1 ? "product" : "products"}
               </p>
             </div>
           </div>

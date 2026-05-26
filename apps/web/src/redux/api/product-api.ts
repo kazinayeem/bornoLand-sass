@@ -17,6 +17,7 @@ export type Product = {
   galleryImageUrls?: string[];
   images: string[];
   featured: boolean;
+  categoryIds?: string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -71,6 +72,7 @@ type CreateProductRequest = {
   galleryImageUrls?: string[];
   images?: string[];
   featured?: boolean;
+  categoryIds?: string[];
 };
 
 type UpdateProductRequest = Partial<CreateProductRequest>;

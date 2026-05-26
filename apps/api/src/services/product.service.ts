@@ -87,6 +87,7 @@ export async function duplicateProduct(productId: string, storeId: string) {
     price: original.price,
     comparePrice: original.comparePrice,
     category: original.category,
+    categoryIds: original.categoryIds ?? [],
     stock: original.stock,
     status: "inactive",
     sku: original.sku ? `${original.sku}-COPY` : "",

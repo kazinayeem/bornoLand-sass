@@ -23,8 +23,10 @@ import { contactRouter } from "./routes/contact.route.js";
 import { wishlistRouter } from "./routes/wishlist.route.js";
 import { paymentMethodRouter } from "./routes/payment-method.route.js";
 import { deliveryZoneRouter } from "./routes/delivery-zone.route.js";
+import { cmsRouter } from "./routes/cms.route.js";
+import { categoryRouter } from "./routes/category.route.js";
 import { CartModel } from "./models/cart.model.js";
-import { resolveProductByHostController } from "./controllers/public.controller.js";
+
 import { subdomainDetector } from "./middleware/subdomain.middleware.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 
@@ -133,7 +135,6 @@ app.use("/templates", templateRouter);
 app.use("/builder", builderRouter);
 app.use("/public", publicRouter);
 app.use("/products", productRouter);
-app.get("/products/:slug", resolveProductByHostController);
 app.use("/customer", customerRouter);
 app.use("/cart", cartRouter);
 app.use("/orders", orderRouter);
@@ -142,6 +143,8 @@ app.use("/contact", contactRouter);
 app.use("/wishlist", wishlistRouter);
 app.use("/payment-methods", paymentMethodRouter);
 app.use("/delivery-zones", deliveryZoneRouter);
+app.use("/cms", cmsRouter);
+app.use("/categories", categoryRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

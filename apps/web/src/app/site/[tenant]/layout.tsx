@@ -4,13 +4,14 @@ import { StoreFooter } from "@/components/storefront/store-footer";
 import { FloatingAdminBar } from "@/components/storefront/floating-admin-bar";
 import { CartProvider } from "@/components/storefront/cart-provider";
 import { AuthInit } from "@/components/auth/auth-init";
-import { TenantProvider, type ThemeData, type ProductData, type StoreData, type StoreSettingsData, type HomepageSliderData } from "@/providers/tenant-provider";
+import { TenantProvider, type ThemeData, type ProductData, type CategoryData, type StoreData, type StoreSettingsData, type HomepageSliderData } from "@/providers/tenant-provider";
 
 type SiteData = {
   store: StoreData | null;
   tenant: Record<string, unknown> | null;
   page: Record<string, unknown> | null;
   products: ProductData[];
+  categories?: CategoryData[];
   settings?: StoreSettingsData | null;
   sliders?: HomepageSliderData[];
 };
@@ -33,6 +34,7 @@ export default async function TenantLayout({ params, children }: { params: Promi
   if (!data?.store) notFound();
 
   const { store, products, settings, sliders } = data;
+  const categories = data.categories ?? [];
   const pageSections = (data.page?.sections as { id: string; type: string; visible?: boolean; props?: Record<string, string> }[] | undefined) ?? [];
   const theme: ThemeData = store.theme ?? {
     primaryColor: "#2563eb", secondaryColor: "#0f172a", font: "Inter",
@@ -52,7 +54,7 @@ export default async function TenantLayout({ params, children }: { params: Promi
 
   return (
     <div style={{ fontFamily: theme.font, backgroundColor: theme.darkMode ? "#000000" : "#ffffff" }}>
-      <TenantProvider value={{ store, theme, products, settings: currencySettings, sliders: sliders ?? [], pageSections }}>
+      <TenantProvider value={{ store, theme, products, categories, settings: currencySettings, sliders: sliders ?? [], pageSections }}>
         <AuthInit />
         <StoreNavbar />
         <CartProvider>

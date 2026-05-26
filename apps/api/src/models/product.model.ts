@@ -11,6 +11,7 @@ const productSchema = new Schema(
     price: { type: Number, required: true, min: 0 },
     comparePrice: { type: Number, min: 0 },
     category: { type: String, default: "general", trim: true },
+    categoryIds: [{ type: Schema.Types.ObjectId, ref: "Category" }],
     stock: { type: Number, default: 0, min: 0 },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
     sku: { type: String, default: "", trim: true },

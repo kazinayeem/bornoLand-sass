@@ -13,6 +13,14 @@ export function NewsletterSection({ section }: { section?: StorefrontSectionLike
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
   const isDark = darkMode;
+  const p = section?.props ?? {};
+
+  const headline = (p.headline as string) || "Stay in the Loop";
+  const subtitle = (p.subtitle as string) || "";
+  const buttonText = (p.buttonText as string) || "Subscribe";
+  const inputPlaceholder = (p.inputPlaceholder as string) || "Enter your email";
+  const bgColor = (p.backgroundColor as string) || "";
+  const bgImage = (p.backgroundImage as string) || "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,8 +50,13 @@ export function NewsletterSection({ section }: { section?: StorefrontSectionLike
     }
   };
 
+  const sectionBg = bgImage
+    ? `${bgColor ? `${bgColor} ` : ""}url(${bgImage})`
+    : bgColor || undefined;
+
   return (
-    <section className="py-16 sm:py-20" style={{ backgroundColor: isDark ? "#09090b" : "#ffffff" }}>
+    <section className="py-16 sm:py-20"
+      style={{ backgroundColor: isDark ? "#09090b" : "#ffffff", background: sectionBg, backgroundSize: "cover", backgroundPosition: "center" }}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-3xl p-8 sm:p-12 lg:p-16"
           style={{ backgroundColor: `${primaryColor}08`, border: `1px solid ${primaryColor}15` }}>
@@ -56,11 +69,13 @@ export function NewsletterSection({ section }: { section?: StorefrontSectionLike
             </span>
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl"
               style={{ color: isDark ? "#fafafa" : "#18181b" }}>
-              {section?.props?.headline ?? "Stay in the Loop"}
+              {headline}
             </h2>
-            <p className="mt-3 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-              Subscribe to get special offers, free giveaways, and exclusive deals.
-            </p>
+            {subtitle && (
+              <p className="mt-3 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
+                {subtitle}
+              </p>
+            )}
             {subscribed ? (
               <div className="mt-8 flex items-center justify-center gap-2 text-sm font-medium" style={{ color: primaryColor }}>
                 <Check className="h-5 w-5" /> You&apos;re subscribed!
@@ -68,7 +83,7 @@ export function NewsletterSection({ section }: { section?: StorefrontSectionLike
             ) : (
               <form onSubmit={handleSubmit} className="mx-auto mt-8 flex max-w-md gap-3">
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder={inputPlaceholder}
                   className="h-12 flex-1 rounded-xl border bg-white px-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   style={{ borderColor: `${primaryColor}30` }}
                   onFocus={(e) => e.target.style.borderColor = primaryColor}
@@ -76,7 +91,7 @@ export function NewsletterSection({ section }: { section?: StorefrontSectionLike
                 <button type="submit" disabled={loading}
                   className="flex h-12 items-center gap-2 px-6 text-sm font-medium text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
                   style={{ borderRadius: buttonStyle, backgroundColor: primaryColor }}>
-                  <Send className="h-4 w-4" /> {loading ? "..." : (section?.props?.buttonText ?? "Subscribe")}
+                  <Send className="h-4 w-4" /> {loading ? "..." : buttonText}
                 </button>
               </form>
             )}

@@ -3,13 +3,15 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAppSelector } from "@/hooks/redux";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Store, Package, Palette, ShoppingCart, Settings, LogOut, Sparkles } from "lucide-react";
+import { LayoutDashboard, Store, Package, Layers, Palette, ShoppingCart, FileText, Settings, LogOut, Sparkles } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/stores", label: "My Store", icon: Store },
   { href: "/dashboard/products", label: "Products", icon: Package },
+  { href: "/dashboard/categories", label: "Categories", icon: Layers },
   { href: "/dashboard/theme", label: "Theme", icon: Palette },
+  { href: "/dashboard/cms", label: "CMS", icon: FileText },
   { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
   { href: "/dashboard/settings", label: "Settings", icon: Settings }
 ];

@@ -8,6 +8,7 @@ import {
   ExternalLink, ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getStoreUrl } from "@/utils/domain";
 import { useUpdateStoreMutation, useChangeStoreThemeMutation, type Store as StoreType, type Plan } from "@/redux/api/store-api";
 
 type DrawerTab = "overview" | "billing" | "theme";
@@ -89,6 +90,8 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
 
   if (!store) return null;
 
+  const storeUrl = getStoreUrl(store.subdomain || store.slug);
+
   const handleSaveStore = async () => {
     if (!store) return;
     try {
@@ -150,7 +153,6 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
           exit={{ opacity: 0, x: 40 }}
           className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col border-l border-zinc-200 bg-white shadow-2xl"
         >
-          {/* Header */}
           <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Manage store</p>
@@ -161,7 +163,6 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
             </button>
           </div>
 
-          {/* Tabs */}
           <div className="flex gap-1 border-b border-zinc-100 px-5 py-3">
             {tabs.map((t) => {
               const Icon = t.icon;
@@ -177,9 +178,7 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
             })}
           </div>
 
-          {/* Content */}
           <div className="flex-1 overflow-y-auto p-5">
-            {/* Overview */}
             {tab === "overview" && (
               <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -216,7 +215,7 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
                 <div className="border-t border-zinc-100 pt-4">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-400">Quick links</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <a href={`http://${store.subdomain || store.slug}.localhost:3000`} target="_blank" rel="noreferrer"
+                    <a href={storeUrl} target="_blank" rel="noreferrer"
                       className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
                       <ExternalLink className="h-3.5 w-3.5" /> Storefront
                     </a>
@@ -241,7 +240,6 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
               </div>
             )}
 
-            {/* Billing */}
             {tab === "billing" && (
               <div className="space-y-4">
                 <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
@@ -326,7 +324,6 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
               </div>
             )}
 
-            {/* Theme */}
             {tab === "theme" && (
               <div className="space-y-4">
                 <div>

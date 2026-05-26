@@ -1,9 +1,10 @@
 import nodemailer from "nodemailer";
+import { config } from "@/lib/config";
 
 function getTransporter() {
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const host = config.smtpHost;
+  const user = config.smtpUser;
+  const pass = config.smtpPass;
 
   if (!host || !user || !pass) {
     return null;
@@ -11,8 +12,8 @@ function getTransporter() {
 
   return nodemailer.createTransport({
     host,
-    port: Number(process.env.SMTP_PORT ?? 587),
-    secure: process.env.SMTP_SECURE === "true",
+    port: Number(config.smtpPort),
+    secure: false,
     auth: { user, pass }
   });
 }
@@ -26,7 +27,7 @@ export async function sendEmail(options: { to: string; subject: string; html: st
   }
 
   await transporter.sendMail({
-    from: process.env.EMAIL_FROM ?? "BornoLand <no-reply@bornoland.com>",
+    from: config.emailFrom,
     ...options
   });
 }

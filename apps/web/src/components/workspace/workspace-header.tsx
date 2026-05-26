@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useUpdateStoreMutation, useChangeStoreThemeMutation } from "@/redux/api/store-api";
 import { useGetTemplatesQuery } from "@/redux/api/template-api";
 import { toast } from "sonner";
+import { getStoreUrl } from "@/utils/domain";
 import type { Store as StoreType } from "@/redux/api/store-api";
 import type { WorkspaceTabId } from "@/components/workspace/types";
 
@@ -28,18 +29,11 @@ const planColors: Record<string, string> = {
   enterprise: "bg-amber-50 text-amber-700",
 };
 
-function getStoreUrl(store: StoreType) {
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornoland.com";
-  const subdomain = store.subdomain || store.slug;
-  if (rootDomain.includes("localhost")) return `http://${subdomain}.localhost:3000`;
-  return `https://${subdomain}.${rootDomain}`;
-}
-
 export function WorkspaceHeader({
   store, activeTab, onTabChange, onDeleteRequest, tabs,
 }: WorkspaceHeaderProps) {
   const router = useRouter();
-  const storeUrl = getStoreUrl(store);
+  const storeUrl = getStoreUrl(store.subdomain || store.slug);
   const [showActions, setShowActions] = useState(false);
   const [updateStore] = useUpdateStoreMutation();
   const [changeTheme] = useChangeStoreThemeMutation();
@@ -58,7 +52,6 @@ export function WorkspaceHeader({
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-      {/* Gradient header */}
       <div className="relative bg-gradient-to-br from-zinc-900 via-zinc-800 to-blue-600 px-6 pt-6 pb-20 text-white">
         <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/5" />
         <div className="absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-white/5" />
@@ -134,7 +127,6 @@ export function WorkspaceHeader({
         </div>
       </div>
 
-      {/* Tab bar */}
       <div className="relative -mt-12 px-6">
         <div className="flex items-center gap-1 overflow-x-auto rounded-xl bg-white/90 backdrop-blur-sm border border-zinc-200/50 shadow-sm p-1">
           {tabs.map((tab) => (
@@ -153,7 +145,6 @@ export function WorkspaceHeader({
         </div>
       </div>
 
-      {/* Quick action buttons */}
       <div className="flex items-center gap-2 px-6 py-3 border-t border-zinc-100">
         <button onClick={() => onTabChange("products")}
           className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">

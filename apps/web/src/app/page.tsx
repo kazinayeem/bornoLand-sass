@@ -476,7 +476,7 @@ export default function HomePage() {
                       <div className="mt-3 flex items-center justify-between">
                         <div>
                           <p className="text-lg font-semibold" style={{ fontFamily: "var(--font-space-grotesk)" }}>Borno Style Co.</p>
-                          <p className="text-sm text-zinc-500">bornostyle.bornoland.com</p>
+                          <p className="text-sm text-zinc-500">bornostyle.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
                         </div>
                         <div className="rounded-2xl bg-zinc-950 px-3 py-2 text-sm text-white">Live</div>
                       </div>
@@ -1059,7 +1059,7 @@ export default function HomePage() {
                 ["x.com", "https://x.com"],
                 ["LinkedIn", "https://www.linkedin.com"],
                 ["Instagram", "https://www.instagram.com"],
-                ["Email", "mailto:hello@bornoland.com"]
+                ["Email", {`mailto:hello@${process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}`}]
               ].map(([label, href]) => (
                 <Link key={label} href={href} className="rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-100">
                   {label}

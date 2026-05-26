@@ -1,129 +1,89 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginInput } from "@/validators/auth";
-import { GoogleButton } from "@/components/auth/google-button";
-import { QuickLoginButton } from "@/components/auth/quick-login-button";
-import { PasswordInput } from "@/components/auth/password-input";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useLoginMutation } from "@/redux/api/auth-api";
-import { useAppDispatch } from "@/hooks/redux";
-import { setAuthState } from "@/redux/slices/auth-slice";
-import { setUserProfile } from "@/redux/slices/user-slice";
-import { setTenantContext } from "@/redux/slices/tenant-slice";
 
-export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin" }) {
+type LoginFormProps = {
+  googleButton?: boolean;
+};
+
+const SEED_EMAILS = {
+  user: process.env.NEXT_PUBLIC_ROOT_DOMAIN === "bornosoftnr.site" ? "admin@bornosoftnr.site" : "admin@bornoland.com",
+  demo: process.env.NEXT_PUBLIC_ROOT_DOMAIN === "bornosoftnr.site" ? "demo@bornosoftnr.site" : "demo@bornoland.com",
+};
+
+export function LoginForm({ googleButton = false }: LoginFormProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("redirect") ?? "/";
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [login] = useLoginMutation();
-  const dispatch = useAppDispatch();
-  const {
-    register,
-    handleSubmit,
-    formState: { errors }
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema) as any,
-    defaultValues: { email: "", password: "", rememberMe: true, loginType }
-  });
 
-  const onSubmit = handleSubmit(async (values) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return toast.error("Email and password required");
     setLoading(true);
-    const response = await login({
-      email: values.email,
-      password: values.password,
-      loginType: loginType ?? values.loginType,
-      rememberMe: values.rememberMe
-    });
-    setLoading(false);
 
-    if ("error" in response) {
-      const message =
-        (response.error && "data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
-          ? String((response.error.data as { message?: string }).message)
-          : "Login failed") || "Login failed";
-      toast.error(message);
-      return;
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const json = await res.json();
+
+      if (json.success) {
+        router.push(callbackUrl);
+      } else {
+        toast.error(json.message ?? "Login failed");
+      }
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setLoading(false);
     }
-
-    const payload = response.data?.data;
-    if (!payload?.user || !payload?.session) {
-      toast.error("Invalid login response");
-      return;
-    }
-
-    dispatch(setAuthState({ session: payload.session, user: payload.user }));
-    dispatch(setUserProfile(payload.user));
-    dispatch(setTenantContext({ tenantId: payload.user.tenantId }));
-
-    window.location.href = loginType === "admin" ? "/admin/dashboard" : "/dashboard";
-  });
+  };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="login-email">Email</Label>
-        <Input
-          id="login-email"
-          type="email"
-          placeholder="you@example.com"
-          {...register("email")}
-        />
-        {errors.email ? <p className="text-xs text-red-500">{errors.email.message}</p> : null}
+    <form onSubmit={handleLogin} className="space-y-4">
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Email</label>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com" required
+          className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100" />
       </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="login-password">Password</Label>
-        <PasswordInput placeholder="••••••••" {...register("password")} />
-        {errors.password ? <p className="text-xs text-red-500">{errors.password.message}</p> : null}
-      </div>
-
-      <div className="flex items-center justify-between gap-4">
-        <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-          <input type="checkbox" {...register("rememberMe")} className="h-4 w-4 rounded border-zinc-300" />
-          Remember me
-        </label>
-        <a href="/forgot-password" className="text-sm font-medium text-zinc-950 dark:text-zinc-50">
-          Forgot password?
-        </a>
-      </div>
-
-      <Button
-        type="submit"
-        disabled={loading}
-        className="w-full"
-      >
-        {loading ? "Signing in..." : loginType === "admin" ? "Admin Sign In" : "Sign in"}
-      </Button>
-
-      <div className="relative py-2">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
-        </div>
-        <div className="relative flex justify-center">
-          <span className="bg-white px-3 text-xs uppercase tracking-[0.35em] text-zinc-500 dark:bg-zinc-950">or</span>
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Password</label>
+        <div className="relative">
+          <input type={showPw ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••" required
+            className="h-10 w-full rounded-xl border border-zinc-200 bg-white pr-10 pl-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100" />
+          <button type="button" onClick={() => setShowPw(!showPw)}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
+            {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
         </div>
       </div>
+      <button type="submit" disabled={loading}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200">
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />} Sign In
+      </button>
 
-      <GoogleButton label="Continue with Google" />
       <div className="grid gap-3 sm:grid-cols-2">
-        <QuickLoginButton
-          label="Quick user login"
-          email="demo@bornoland.com"
-          password="Demo@123"
-          loginType="user"
-          callbackUrl="/dashboard"
-        />
-        <QuickLoginButton
-          label="Quick admin login"
-          email="admin@bornoland.com"
-          password="Admin@123"
-          loginType="admin"
-          callbackUrl="/admin/dashboard"
-        />
+        <button type="button"
+          onClick={() => { setEmail(SEED_EMAILS.user); setPassword("Admin@123"); }}
+          className="rounded-xl border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800">
+          Quick admin login
+        </button>
+        <button type="button"
+          onClick={() => { setEmail(SEED_EMAILS.demo); setPassword("Demo@123"); }}
+          className="rounded-xl border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800">
+          Quick demo login
+        </button>
       </div>
 
       <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">

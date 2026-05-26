@@ -189,7 +189,7 @@ export default function SettingsPage() {
                   {s.name[0]}
                 </div>
                 <h3 className="mt-3 font-semibold text-zinc-900">{s.name}</h3>
-                <p className="text-xs text-zinc-400">{s.subdomain || s.slug}.bornoland.com</p>
+                <p className="text-xs text-zinc-400">{s.subdomain || s.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
               </motion.button>
             ))}
           </motion.div>

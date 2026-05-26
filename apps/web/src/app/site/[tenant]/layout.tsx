@@ -5,6 +5,7 @@ import { FloatingAdminBar } from "@/components/storefront/floating-admin-bar";
 import { CartProvider } from "@/components/storefront/cart-provider";
 import { AuthInit } from "@/components/auth/auth-init";
 import { TenantProvider, type ThemeData, type ProductData, type CategoryData, type StoreData, type StoreSettingsData, type HomepageSliderData } from "@/providers/tenant-provider";
+import { env } from "@/config/env";
 
 type SiteData = {
   store: StoreData | null;
@@ -18,7 +19,7 @@ type SiteData = {
 
 async function fetchTenantSite(slug: string): Promise<SiteData | null> {
   try {
-    const apiUrl = process.env.API_URL ?? "http://localhost:4000";
+    const apiUrl = env.API_SERVER_URL;
     const res = await fetch(`${apiUrl}/public/tenant/${slug}`, { next: { revalidate: 30 } });
     if (!res.ok) return null;
     const json = await res.json();
@@ -38,31 +39,19 @@ export default async function TenantLayout({ params, children }: { params: Promi
   const pageSections = (data.page?.sections as { id: string; type: string; visible?: boolean; props?: Record<string, string> }[] | undefined) ?? [];
   const theme: ThemeData = store.theme ?? {
     primaryColor: "#2563eb", secondaryColor: "#0f172a", font: "Inter",
-    buttonStyle: "rounded-lg", layoutWidth: "1200px", darkMode: false, navbarStyle: "fixed"
-  };
-  const currencySettings = settings ?? {
-    currencyCode: "USD",
-    currencySymbol: "$",
-    currencyPosition: "before",
-    locale: "en-US",
-    decimalPlaces: 2,
-    taxRate: 0,
-    dateFormat: "MM/DD/YYYY",
-    timezone: "UTC",
-    language: "en",
   };
 
   return (
-    <div style={{ fontFamily: theme.font, backgroundColor: theme.darkMode ? "#000000" : "#ffffff" }}>
-      <TenantProvider value={{ store, theme, products, categories, settings: currencySettings, sliders: sliders ?? [], pageSections }}>
+    <TenantProvider store={store} products={products} categories={categories} settings={settings ?? null} sliders={sliders ?? []} theme={theme}>
+      <CartProvider>
         <AuthInit />
-        <StoreNavbar />
-        <CartProvider>
-          {children}
-        </CartProvider>
-        <StoreFooter />
-        <FloatingAdminBar storeId={store._id} primaryColor={theme.primaryColor} />
-      </TenantProvider>
-    </div>
+        <div className="flex flex-col min-h-screen" style={{ fontFamily: theme.font }}>
+          <StoreNavbar sections={pageSections} />
+          <main className="flex-1">{children}</main>
+          <StoreFooter sections={pageSections} />
+        </div>
+        <FloatingAdminBar sections={pageSections} />
+      </CartProvider>
+    </TenantProvider>
   );
 }

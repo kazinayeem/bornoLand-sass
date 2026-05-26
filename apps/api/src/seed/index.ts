@@ -7,6 +7,10 @@ import { SubscriptionModel } from "../models/subscription.model.js";
 import { TenantModel } from "../models/tenant.model.js";
 import { UserModel } from "../models/user.model.js";
 import { seedTemplates } from "./templates.js";
+import { serverConfig } from "../config/server.js";
+
+const SEED_ADMIN_EMAIL = serverConfig.isDev ? "admin@bornoland.com" : `admin@${serverConfig.ROOT_DOMAIN}`;
+const SEED_DEMO_EMAIL = serverConfig.isDev ? "demo@bornoland.com" : `demo@${serverConfig.ROOT_DOMAIN}`;
 
 async function upsertUser(email: string, data: Record<string, unknown>) {
   const existing = await UserModel.findOne({ email });
@@ -24,9 +28,9 @@ export async function seedDatabase() {
   const superAdminPassword = await bcrypt.hash("Admin@123", 12);
   const demoUserPassword = await bcrypt.hash("Demo@123", 12);
 
-  const superAdmin = await upsertUser("admin@bornoland.com", {
+  const superAdmin = await upsertUser(SEED_ADMIN_EMAIL, {
     name: "Super Admin",
-    email: "admin@bornoland.com",
+    email: SEED_ADMIN_EMAIL,
     passwordHash: superAdminPassword,
     role: "super_admin",
     status: "active",
@@ -43,9 +47,9 @@ export async function seedDatabase() {
       status: "active"
     }));
 
-  const demoUser = await upsertUser("demo@bornoland.com", {
+  const demoUser = await upsertUser(SEED_DEMO_EMAIL, {
     name: "Demo User",
-    email: "demo@bornoland.com",
+    email: SEED_DEMO_EMAIL,
     passwordHash: demoUserPassword,
     role: "admin",
     tenantId: demoTenant._id,

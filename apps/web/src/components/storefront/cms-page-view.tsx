@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Loader2, FileText } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
 import type { LucideIcon } from "lucide-react";
+import { config } from "@/lib/config";
 
 type CmsPage = {
   _id: string;
@@ -38,7 +39,7 @@ export default function CmsPageView({ slug, title, description, icon: Icon }: Cm
   useEffect(() => {
     if (!store._id) return;
     setLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+    const apiUrl = config.apiUrl;
     fetch(`${apiUrl}/public/page/${slug}?storeId=${store._id}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((json) => {
@@ -60,50 +61,39 @@ export default function CmsPageView({ slug, title, description, icon: Icon }: Cm
     );
   }
 
-  if (page?.html) {
+  if (!page) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="prose prose-zinc max-w-none"
-          style={{
-            color: isDark ? "#a1a1aa" : "#52525b",
-            "--tw-prose-headings": isDark ? "#fafafa" : "#18181b",
-            "--tw-prose-links": primaryColor,
-            "--tw-prose-bold": isDark ? "#fafafa" : "#18181b",
-            "--tw-prose-quotes": isDark ? "#a1a1aa" : "#52525b",
-            "--tw-prose-code": isDark ? "#fafafa" : "#18181b",
-            "--tw-prose-pre-bg": isDark ? "#27272a" : "#f4f4f5",
-            "--tw-prose-pre-code": isDark ? "#fafafa" : "#18181b",
-          } as React.CSSProperties}
-          dangerouslySetInnerHTML={{ __html: page.html }}
-        />
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-24">
+          <DisplayIcon className="mx-auto h-12 w-12" style={{ color: isDark ? "#3f3f46" : "#d4d4d8" }} />
+          <h2 className="mt-4 text-xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{title}</h2>
+          {description && <p className="mt-2 text-sm" style={{ color: isDark ? "#a1a1aa" : "#71717a" }}>{description}</p>}
+        </motion.div>
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="text-center mb-12">
-        {Icon && (
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl"
-            style={{ backgroundColor: `${primaryColor}12` }}>
-            <DisplayIcon className="h-6 w-6" style={{ color: primaryColor }} />
-          </div>
+      <motion.article initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <span className="inline-block rounded-full px-3 py-1 text-xs font-medium"
+          style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+          {title}
+        </span>
+        {page.seoTitle && (
+          <h1 className="mt-4 text-3xl font-bold sm:text-4xl" style={{ color: isDark ? "#fafafa" : "#18181b" }}>
+            {page.seoTitle}
+          </h1>
         )}
-        <h1 className="text-4xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{title}</h1>
-        {description && (
-          <p className="mt-2 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>{description}</p>
+        {page.seoDescription && (
+          <p className="mt-3 text-lg" style={{ color: isDark ? "#a1a1aa" : "#71717a" }}>
+            {page.seoDescription}
+          </p>
         )}
-      </div>
-      <div className="rounded-2xl border p-8 text-center"
-        style={{ borderColor: isDark ? "#27272a" : "#e4e4e7" }}>
-        <FileText className="mx-auto h-8 w-8" style={{ color: isDark ? "#52525b" : "#a1a1aa" }} />
-        <p className="mt-2 text-sm" style={{ color: isDark ? "#71717a" : "#a1a1aa" }}>
-          No content published yet. Check back soon.
-        </p>
-      </div>
+        <div className="mt-8 prose prose-zinc max-w-none dark:prose-invert"
+          dangerouslySetInnerHTML={{ __html: page.html }}
+          style={{ color: isDark ? "#d4d4d8" : "#52525b" }} />
+      </motion.article>
     </div>
   );
 }

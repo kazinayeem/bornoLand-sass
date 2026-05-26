@@ -8,6 +8,8 @@ import { useGetTemplatesQuery } from "@/redux/api/template-api";
 import type { Template } from "@/redux/api/template-api";
 import { toast } from "sonner";
 import { Sparkles, Check, ArrowLeft, ArrowRight, Store, Globe, Palette, Loader2 } from "lucide-react";
+import { config } from "@/lib/config";
+import { getStoreDisplayDomain } from "@/utils/domain";
 
 const plans = [
   { value: "free", label: "Free", desc: "1 store, basic features", price: "$0" },
@@ -33,8 +35,8 @@ export default function CreateStorePage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [createdStoreId, setCreatedStoreId] = useState<string | null>(null);
 
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornoland.com";
-  const previewUrl = form.slug ? `${form.slug}.localhost:3002` : "...";
+  const rootDomain = config.publicRootDomain;
+  const previewUrl = form.slug ? getStoreDisplayDomain(form.slug) : "...";
 
   const updateSlug = (name: string) => {
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -124,7 +126,7 @@ export default function CreateStorePage() {
                 {errors.slug && <p className="mt-1 text-xs text-red-500">{errors.slug}</p>}
                 {form.slug && (
                   <p className="mt-1.5 flex items-center gap-1 text-xs text-emerald-600">
-                    <Globe className="h-3 w-3" /> Dev: <span className="font-medium">{form.slug}.localhost:3002</span>
+                    <Globe className="h-3 w-3" /> URL: <span className="font-medium">{previewUrl}</span>
                   </p>
                 )}
               </div>

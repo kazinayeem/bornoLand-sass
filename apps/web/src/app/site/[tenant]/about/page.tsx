@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ShoppingBag, Truck, Shield, HeadphonesIcon, RefreshCw, Star } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
+import { config } from "@/lib/config";
 
 type CmsPage = {
   _id: string;
@@ -38,7 +39,7 @@ export default function AboutPage() {
   useEffect(() => {
     if (!store._id) return;
     setLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+    const apiUrl = config.apiUrl;
     fetch(`${apiUrl}/public/page/about-us?storeId=${store._id}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((json) => {
@@ -58,101 +59,7 @@ export default function AboutPage() {
           <h1 className="mt-4 text-4xl font-bold sm:text-5xl" style={{ color: isDark ? "#fafafa" : "#18181b" }}>
             {page?.title || "Our Story"}
           </h1>
-          {!page?.html && (
-            <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-              We&apos;re on a mission to make quality products accessible to everyone.
-            </p>
-          )}
         </motion.div>
-      </section>
-
-      {page?.html && (
-        <section className="mx-auto max-w-3xl px-4 pb-16 sm:px-6 lg:px-8">
-          <div className="prose prose-zinc max-w-none"
-            style={{
-              color: isDark ? "#a1a1aa" : "#52525b",
-              "--tw-prose-headings": isDark ? "#fafafa" : "#18181b",
-              "--tw-prose-links": primaryColor,
-              "--tw-prose-bold": isDark ? "#fafafa" : "#18181b",
-              "--tw-prose-quotes": isDark ? "#a1a1aa" : "#52525b",
-            } as React.CSSProperties}
-            dangerouslySetInnerHTML={{ __html: page.html }}
-          />
-        </section>
-      )}
-
-      {!page?.html && (
-        <section className="mx-auto max-w-4xl px-4 pb-16 sm:px-6 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="space-y-6 text-center">
-            <h2 className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Who We Are</h2>
-            <p className="leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-              Founded with a passion for quality and customer satisfaction, {store.name} has grown from a small
-              startup to a trusted destination for online shopping. We believe in providing our customers with
-              the best products at the best prices, backed by exceptional service.
-            </p>
-            <p className="leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-              Our team works tirelessly to curate a selection of products that combine quality, style, and value.
-              From fashion and electronics to home goods and accessories, every item in our collection is chosen
-              with care.
-            </p>
-          </motion.div>
-        </section>
-      )}
-
-      {!page?.html && (
-        <section className="py-16" style={{ backgroundColor: isDark ? "#09090b" : "#fafafa" }}>
-          <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-              <h2 className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Our Mission</h2>
-              <p className="mt-4 text-lg leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-                To provide a seamless shopping experience with premium products, fast delivery,
-                and exceptional customer service — making quality accessible to everyone.
-              </p>
-            </motion.div>
-          </div>
-        </section>
-      )}
-
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <h2 className="mb-10 text-center text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>
-          Why Choose Us
-        </h2>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f, i) => (
-            <motion.div key={f.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} transition={{ delay: i * 0.05 }}
-              className="rounded-2xl border p-6 text-center transition-all hover:shadow-md"
-              style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", backgroundColor: isDark ? "#18181b" : "#ffffff" }}>
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl"
-                style={{ backgroundColor: `${primaryColor}12` }}>
-                <f.icon className="h-6 w-6" style={{ color: primaryColor }} />
-              </div>
-              <h3 className="mt-4 font-semibold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{f.title}</h3>
-              <p className="mt-2 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>{f.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      <section className="py-16" style={{ backgroundColor: isDark ? "#09090b" : "#fafafa" }}>
-        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Our Team</h2>
-          <p className="mt-2 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>Meet the people behind {store.name}</p>
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {["Alex Johnson", "Sarah Chen", "Mike Rivera", "Emily Kim"].map((name, i) => (
-              <motion.div key={name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full text-3xl font-bold text-white"
-                  style={{ backgroundColor: primaryColor }}>
-                  {name[0]}
-                </div>
-                <h3 className="mt-4 font-semibold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{name}</h3>
-                <p className="text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>Team Member</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
       </section>
     </div>
   );

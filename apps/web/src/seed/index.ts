@@ -7,6 +7,10 @@ import { SubscriptionModel } from "@/models/subscription.model";
 import { TemplateModel } from "@/models/template.model";
 import { TenantModel } from "@/models/tenant.model";
 import { UserModel } from "@/models/user.model";
+import { env } from "@/config/env";
+
+const SEED_ADMIN_EMAIL = env.isDev ? "admin@bornoland.com" : "admin@bornosoftnr.site";
+const SEED_DEMO_EMAIL = env.isDev ? "demo@bornoland.com" : "demo@bornosoftnr.site";
 
 async function upsertUser(email: string, data: Record<string, unknown>) {
   const existing = await UserModel.findOne({ email });
@@ -24,9 +28,9 @@ export async function seedDatabase() {
   const superAdminPassword = await hashPassword("Admin@123");
   const demoUserPassword = await hashPassword("Demo@123");
 
-  const superAdmin = await upsertUser("admin@bornoland.com", {
+  const superAdmin = await upsertUser(SEED_ADMIN_EMAIL, {
     name: "Super Admin",
-    email: "admin@bornoland.com",
+    email: SEED_ADMIN_EMAIL,
     passwordHash: superAdminPassword,
     role: "super_admin",
     status: "active",
@@ -44,9 +48,9 @@ export async function seedDatabase() {
       createdBy: superAdmin._id
     }));
 
-  const demoUser = await upsertUser("demo@bornoland.com", {
+  const demoUser = await upsertUser(SEED_DEMO_EMAIL, {
     name: "Demo User",
-    email: "demo@bornoland.com",
+    email: SEED_DEMO_EMAIL,
     passwordHash: demoUserPassword,
     role: "admin",
     tenantId: demoTenant._id,
@@ -59,44 +63,4 @@ export async function seedDatabase() {
     { $setOnInsert: { role: "admin", status: "active", invitedAt: new Date(), acceptedAt: new Date() } },
     { upsert: true }
   );
-
-  await SubscriptionModel.updateOne(
-    { tenantId: demoTenant._id },
-    { $setOnInsert: { provider: "stripe", plan: "growth", status: "active" } },
-    { upsert: true }
-  );
-
-  await TemplateModel.updateOne(
-    { slug: "hero-startup" },
-    {
-      $setOnInsert: {
-        name: "Hero Startup",
-        slug: "hero-startup",
-        category: "landing-page",
-        isPublic: true,
-        blocks: [
-          { type: "hero", props: { headline: "Launch faster with BornoLand" } },
-          { type: "cta", props: { text: "Start free" } }
-        ],
-        createdBy: superAdmin._id
-      }
-    },
-    { upsert: true }
-  );
-
-  await AdminLogModel.updateOne(
-    { action: "seed_completed", entityType: "System" },
-    {
-      $setOnInsert: {
-        actorId: superAdmin._id,
-        tenantId: demoTenant._id,
-        action: "seed_completed",
-        entityType: "System",
-        metadata: { seedRunId: randomBytes(8).toString("hex") }
-      }
-    },
-    { upsert: true }
-  );
-
-  console.log("Seed complete: super admin, demo tenant, demo user, subscription, template");
 }

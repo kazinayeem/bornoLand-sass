@@ -158,7 +158,7 @@ export default function StoreWorkspacePage() {
               </div>
               <div className="mt-4 rounded-xl bg-zinc-50 p-3">
                 <p className="text-sm font-medium text-zinc-700">{store.name}</p>
-                <p className="text-xs text-zinc-400">{store.subdomain}.bornoland.com</p>
+                <p className="text-xs text-zinc-400">{store.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
               </div>
               <p className="mt-4 text-sm text-zinc-600">
                 Type <span className="font-semibold text-red-600">{store.name}</span> to confirm:

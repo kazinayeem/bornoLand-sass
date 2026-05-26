@@ -1,72 +1,76 @@
 "use client";
+
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Users, Store, LayoutTemplate, Package, Settings,
-  ChevronLeft, ChevronRight, LogOut, Sparkles,
-  ShoppingCart, CreditCard, BarChart3
+  LayoutDashboard, Store, Users, FileText, Settings, LogOut,
+  ChevronLeft, ChevronRight, CreditCard, BarChart3, Shield,
+  Palette, MessageSquare, ShoppingBag, Ticket,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { env } from "@/config/env";
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/dashboard/users", label: "Users", icon: Users },
   { href: "/admin/dashboard/stores", label: "Stores", icon: Store },
-  { href: "/admin/dashboard/templates", label: "Themes", icon: LayoutTemplate },
-  { href: "/admin/dashboard/products", label: "Products", icon: Package },
+  { href: "/admin/dashboard/users", label: "Users", icon: Users },
+  { href: "/admin/dashboard/plans", label: "Plans", icon: CreditCard },
+  { href: "/admin/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/dashboard/templates", label: "Templates", icon: Palette },
+  { href: "/admin/dashboard/feedback", label: "Feedback", icon: MessageSquare },
+  { href: "/admin/dashboard/tickets", label: "Tickets", icon: Ticket },
+  { href: "/admin/dashboard/pages", label: "Pages", icon: FileText },
   { href: "/admin/dashboard/settings", label: "Settings", icon: Settings },
-  { href: "/admin/dashboard/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/admin/dashboard/payments", label: "Payments", icon: CreditCard },
-  { href: "/admin/dashboard/plans", label: "Plans", icon: Sparkles },
-  { href: "/admin/dashboard/analytics", label: "Analytics", icon: BarChart3 }
 ];
 
-export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+export function AdminSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <motion.aside animate={{ width: collapsed ? 72 : 256 }} transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-zinc-200 bg-white shadow-sm">
-      <div className={cn("flex h-16 items-center border-b border-zinc-100 px-4", collapsed ? "justify-center" : "justify-between")}>
-        {!collapsed ? (
-          <Link href="/admin/dashboard" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600"><Sparkles className="h-4 w-4 text-white" /></div>
-            <span className="text-lg font-bold tracking-tight text-zinc-900">BornoLand</span>
-          </Link>
-        ) : (
-          <Link href="/admin/dashboard"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600"><Sparkles className="h-4 w-4 text-white" /></div></Link>
+    <aside className={cn(
+      "flex flex-col border-r border-zinc-200 bg-white transition-all duration-300",
+      collapsed ? "w-16" : "w-60"
+    )}>
+      <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
+          {env.APP_NAME.slice(0, 2).toUpperCase()}
+        </div>
+        {!collapsed && (
+          <span className="text-sm font-bold text-zinc-900">{env.APP_NAME}</span>
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <ul className="space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/admin/dashboard" && pathname.startsWith(item.href));
-            return (
-              <li key={item.href}>
-                <Link href={item.href}
-                  className={cn("group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                    isActive ? "bg-blue-50 text-blue-700" : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900")}>
-                  <item.icon className={cn("h-5 w-5 shrink-0", isActive ? "text-blue-600" : "text-zinc-400 group-hover:text-zinc-600")} />
-                  {!collapsed && <span>{item.label}</span>}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      <nav className="flex-1 space-y-0.5 p-2">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          return (
+            <Link key={item.href} href={item.href}
+              className={cn(
+                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                active
+                  ? "bg-blue-50 text-blue-700"
+                  : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900",
+                collapsed && "justify-center px-2"
+              )}>
+              <Icon className="h-4 w-4 shrink-0" />
+              {!collapsed && item.label}
+            </Link>
+          );
+        })}
       </nav>
 
-      <div className={cn("border-t border-zinc-100 p-3", collapsed && "flex flex-col items-center gap-3")}>
+      <div className="border-t border-zinc-100 p-3">
         {!collapsed && (
           <div className="mb-3 flex items-center gap-3 rounded-xl bg-zinc-50 p-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">SA</div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
+              {env.APP_NAME.slice(0, 2).toUpperCase()}
+            </div>
             <div className="flex-1 min-w-0">
               <p className="truncate text-sm font-medium text-zinc-900">Super Admin</p>
-              <p className="truncate text-xs text-zinc-500">admin@bornoland.com</p>
+              <p className="truncate text-xs text-zinc-500">{env.isDev ? "admin@bornoland.com" : `admin@${env.NEXT_PUBLIC_ROOT_DOMAIN}`}</p>
             </div>
           </div>
         )}
@@ -74,12 +78,7 @@ export function Sidebar() {
           className={cn("flex items-center justify-center rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600", collapsed && "w-full")}>
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
-        <button onClick={() => router.push("/admin/login")}
-          className={cn("flex items-center gap-2 rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600", collapsed ? "justify-center w-full" : "w-full")}>
-          <LogOut className="h-4 w-4" />
-          {!collapsed && <span className="text-sm">Sign out</span>}
-        </button>
       </div>
-    </motion.aside>
+    </aside>
   );
 }

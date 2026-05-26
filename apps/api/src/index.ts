@@ -25,6 +25,7 @@ import { deliveryZoneRouter } from "./routes/delivery-zone.route.js";
 import { cmsRouter } from "./routes/cms.route.js";
 import { categoryRouter } from "./routes/category.route.js";
 import { CartModel } from "./models/cart.model.js";
+import { StoreModel } from "./models/store.model.js";
 
 import { subdomainDetector } from "./middleware/subdomain.middleware.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
@@ -127,8 +128,9 @@ const port = serverConfig.PORT;
 
 async function startServer() {
   try {
-     const connection = await connectDatabase();
+    const connection = await connectDatabase();
     await CartModel.syncIndexes();
+    await StoreModel.syncIndexes();
     app.listen(port, () => {
       console.log(`BornoLand API listening on port ${port}`);
       console.log("MongoDB connection established");

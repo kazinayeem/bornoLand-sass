@@ -62,7 +62,11 @@ export async function meController(request: Request, response: Response) {
 }
 
 export async function logoutController(_request: Request, response: Response) {
-  response.clearCookie(getSessionCookieName(), { path: "/" });
+  response.cookie(getSessionCookieName(), "", {
+    ...getSessionCookieOptions(0),
+    maxAge: 0,
+    expires: new Date(0),
+  });
   return sendSuccess(response, undefined, "Signed out");
 }
 

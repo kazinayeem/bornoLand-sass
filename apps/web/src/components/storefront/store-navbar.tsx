@@ -11,6 +11,7 @@ import { clearCustomer } from "@/redux/slices/customer-slice";
 import { openCart } from "@/redux/slices/cart-slice";
 import { CartDrawer } from "./cart-drawer";
 import { useTenant } from "@/providers/tenant-provider";
+import { signOutCustomer } from "@/lib/sign-out";
 
 export function StoreNavbar() {
   const dispatch = useDispatch();
@@ -65,10 +66,9 @@ export function StoreNavbar() {
 
   const stickyClass = navbarStyle === "fixed" ? "fixed" : navbarStyle === "sticky" ? "sticky" : "static";
 
-  const handleLogout = () => {
-    localStorage.removeItem("customer_token");
+  const handleLogout = async () => {
+    await signOutCustomer();
     dispatch(clearCustomer());
-    window.dispatchEvent(new Event("auth-change"));
     router.push("/");
   };
 
@@ -167,7 +167,7 @@ export function StoreNavbar() {
                         </button>
                       </div>
                       <div className="border-t border-zinc-100 p-1.5">
-                        <button onClick={() => { handleLogout(); setProfileOpen(false); }}
+                        <button onClick={async () => { await handleLogout(); setProfileOpen(false); }}
                           className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50">
                           <LogOut className="h-4 w-4" /> Sign Out
                         </button>
@@ -292,7 +292,7 @@ export function StoreNavbar() {
                         className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50">
                         <Package className="h-4 w-4 text-zinc-400" /> Orders
                       </button>
-                      <button onClick={() => { handleLogout(); setMobileOpen(false); }}
+                      <button onClick={async () => { await handleLogout(); setMobileOpen(false); }}
                         className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50">
                         <LogOut className="h-4 w-4" /> Sign Out
                       </button>

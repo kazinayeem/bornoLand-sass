@@ -23,6 +23,14 @@ type StorefrontCanvasProps = {
 export function StorefrontCanvas({ sections }: StorefrontCanvasProps) {
   const visibleSections = sections.filter((section) => section.visible !== false);
 
+  if (process.env.NODE_ENV === "development") {
+    console.log("[storefront] render sections", {
+      total: sections.length,
+      visible: visibleSections.length,
+      types: visibleSections.map((section) => section.type),
+    });
+  }
+
   if (visibleSections.length === 0) {
     return (
       <main className="flex min-h-[60vh] items-center justify-center">

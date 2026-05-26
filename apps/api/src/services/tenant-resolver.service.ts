@@ -34,7 +34,34 @@ export async function resolveBySubdomain(slug: string): Promise<{
   }
 
   const tenant = await TenantModel.findById(store.tenantId).lean() as any;
-  const page = await PageModel.findOne({ storeId: store._id, slug: "home", status: "published" }).lean() as any;
+  let page = await PageModel.findOne({ storeId: store._id, slug: "home", publishStatus: "published" }).lean() as any;
+  // backward-compat: if no publishStatus set, try legacy status field or any page
+  if (!page) {
+    page = await PageModel.findOne({ storeId: store._id, slug: "home" }).sort({ updatedAt: -1 }).lean() as any;
+  }
+  const storeSections = (store.publishedSections ?? store.homepageSections ?? []) as Record<string, unknown>[];
+  const storeTheme = store.homepageConfig?.theme ?? store.theme ?? {};
+  console.log("[tenant] resolveBySubdomain", {
+    slug,
+    storeId: String(store._id),
+    sectionCount: storeSections.length,
+    hasPage: Boolean(page),
+  });
+  if (!page && storeSections.length > 0) {
+    page = {
+      storeId: store._id,
+      slug: "home",
+      title: "Home",
+      sections: storeSections,
+      theme: storeTheme,
+      publishStatus: "published",
+    } as any;
+  }
+  // normalize to expose live sections/theme to storefront
+  if (page) {
+    page.sections = storeSections.length > 0 ? storeSections : page.publishedSections ?? page.sections ?? page.draftSections ?? [];
+    page.theme = storeTheme ?? page.publishedTheme ?? page.theme ?? page.draftTheme ?? {};
+  }
   const products = await ProductModel.find({ storeId: store._id, status: "active" }).sort({ createdAt: -1 }).limit(20).lean() as any[];
   const categories = await CategoryModel.find({ storeId: store._id, active: true }).sort({ sortOrder: 1, name: 1 }).lean() as any[];
   const settings = await StoreSettingsModel.findOne({ storeId: store._id }).lean() as any;

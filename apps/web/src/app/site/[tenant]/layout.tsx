@@ -20,7 +20,12 @@ type SiteData = {
 async function fetchTenantSite(slug: string): Promise<SiteData | null> {
   try {
     const apiUrl = env.API_SERVER_URL;
-    const res = await fetch(`${apiUrl}/public/tenant/${slug}`, { next: { revalidate: 30 } });
+    const res = await fetch(`${apiUrl}/public/tenant/${slug}`, {
+      next: {
+        revalidate: 30,
+        tags: [`tenant-site:${slug}`, `store-home:${slug}`],
+      },
+    });
     if (!res.ok) return null;
     const json = await res.json();
     return json.data ?? null;

@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import { User, Package, Heart, LogOut, Mail, ChevronRight, Save, Loader2, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { getApiUrl } from "@/utils/url";
+import { signOutCustomer } from "@/lib/sign-out";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -30,10 +31,9 @@ export default function AccountPage() {
     if (customer?.name) setName(customer.name);
   }, [customer]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("customer_token");
+  const handleLogout = async () => {
+    await signOutCustomer();
     dispatch(clearCustomer());
-    window.dispatchEvent(new Event("auth-change"));
     router.push("/");
   };
 
@@ -98,7 +98,7 @@ export default function AccountPage() {
                 <Mail className="h-3.5 w-3.5" /> {customer.email}
               </p>
             </div>
-            <button onClick={handleLogout}
+            <button onClick={async () => { await handleLogout(); }}
               className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 shrink-0">
               <LogOut className="h-4 w-4" /> Sign Out
             </button>

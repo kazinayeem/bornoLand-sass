@@ -102,18 +102,25 @@ export default function BuilderPage() {
     const pages = pagesData.data.pages;
     if (pages.length > 0) {
       const page = pages[0];
-      dispatch(loadSections((page.sections?.length ? page.sections : defaultSections) as BuilderSection[]));
+      const nextSections = (page.sections?.length ? page.sections : defaultSections) as BuilderSection[];
+      dispatch(loadSections(nextSections));
       dispatch(setPageId(page._id));
+      if (!page.sections?.length) {
+        savePage({ pageId: page._id, data: { sections: nextSections, theme: currentTheme } })
+          .unwrap()
+          .catch(() => {});
+      }
     } else {
       createPage({ storeId, data: { title: "Home", slug: "home" } })
         .unwrap()
         .then((res) => {
           dispatch(loadSections(defaultSections));
           dispatch(setPageId(res.data!.page._id));
+          return savePage({ pageId: res.data!.page._id, data: { sections: defaultSections, theme: currentTheme } }).unwrap();
         })
         .catch(() => {});
     }
-  }, [pagesData, dispatch, storeId, createPage]);
+  }, [pagesData, dispatch, storeId, createPage, savePage, currentTheme]);
 
   useEffect(() => {
     if (!isDirty || !pageId) return;

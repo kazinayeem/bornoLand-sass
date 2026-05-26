@@ -14,6 +14,30 @@ function buildPlaceholderImage(label: string) {
   )}`;
 }
 
+function normalizeSubdomainInput(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function deriveStoreSubdomain(data: Record<string, unknown>): string {
+  const candidates = [
+    normalizeSubdomainInput(data.subdomain),
+    normalizeSubdomainInput(data.slug),
+    normalizeSubdomainInput(data.name),
+  ].filter((value): value is string => Boolean(value));
+
+  const base = (candidates[0] ?? "store")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32) || "store";
+
+  return base;
+}
+
 const DEFAULT_STORE_DATA = {
   hero: {
     imageUrl: buildPlaceholderImage("Store"),
@@ -51,11 +75,25 @@ async function resolveTenantIdForStoreCreation(userId: string, tenantId?: string
 
 export async function createStore(userId: string, data: Record<string, unknown>, tenantId?: string | null) {
   const resolvedTenantId = await resolveTenantIdForStoreCreation(userId, tenantId);
+  const requestedSubdomain = normalizeSubdomainInput(data.subdomain);
+  const storeBase = deriveStoreSubdomain(data);
+
+  let subdomain = requestedSubdomain ?? storeBase;
+  let suffix = 0;
+
+  while (await StoreModel.exists({ subdomain })) {
+    suffix += 1;
+    subdomain = `${storeBase}-${suffix}`;
+  }
+
+  const sanitizedData = { ...data };
+  delete sanitizedData.subdomain;
 
   const store = await StoreModel.create({
     tenantId: resolvedTenantId,
     userId,
-    ...data,
+    ...sanitizedData,
+    subdomain,
     ...DEFAULT_STORE_DATA,
   });
   return { ok: true as const, data: { store: store.toObject() } };
@@ -73,7 +111,21 @@ export async function getStoreById(id: string, userId: string): Promise<ServiceR
 }
 
 export async function updateStore(id: string, userId: string, payload: Record<string, unknown>): Promise<ServiceResult<{ store: unknown }>> {
-  const store = await StoreModel.findOneAndUpdate({ _id: id, userId }, { $set: payload }, { new: true }).lean();
+  const updatePayload = { ...payload };
+  if (Object.prototype.hasOwnProperty.call(updatePayload, "subdomain")) {
+    const normalized = normalizeSubdomainInput(updatePayload.subdomain);
+    if (!normalized) {
+      delete updatePayload.subdomain;
+    } else {
+      const existing = await StoreModel.findOne({ subdomain: normalized, _id: { $ne: id } }).lean();
+      if (existing) {
+        return { ok: false as const, message: "Subdomain already in use" };
+      }
+      updatePayload.subdomain = normalized;
+    }
+  }
+
+  const store = await StoreModel.findOneAndUpdate({ _id: id, userId }, { $set: updatePayload }, { new: true }).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
   return { ok: true as const, data: { store } };
 }

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Search, ImageIcon } from "lucide-react";
+import { ArrowLeft, Search, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "@/components/storefront/product-card";
 import { useTenant } from "@/providers/tenant-provider";
 
@@ -14,6 +14,8 @@ export default function CategoryPage() {
   const { primaryColor, font, darkMode } = theme;
   const isDark = darkMode;
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const perPage = 12;
 
   const category = useMemo(() => categories.find((c) => c.slug === slug), [categories, slug]);
   const categoryName = category?.name ?? (slug.charAt(0).toUpperCase() + slug.slice(1));
@@ -33,6 +35,9 @@ export default function CategoryPage() {
     }
     return result;
   }, [products, category, slug, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   const hasAnyProduct = products.some((p) =>
     p.category?.toLowerCase() === slug || (category && (p.categoryIds ?? []).includes(category._id))
@@ -68,7 +73,7 @@ export default function CategoryPage() {
           </div>
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+            <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search in this category..."
               className="h-10 w-full rounded-xl border bg-transparent pl-9 pr-4 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2"
               style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", color: isDark ? "#fafafa" : "#18181b" }} />
@@ -81,13 +86,39 @@ export default function CategoryPage() {
             <p className="text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>No products found</p>
           </div>
         ) : (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((product, idx) => (
-              <motion.div key={product._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
-          </div>
+          <>
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {paginated.map((product, idx) => (
+                <motion.div key={product._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <div className="mt-10 flex items-center justify-center gap-2">
+                <button onClick={() => setPage(page - 1)} disabled={page <= 1}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl transition-all disabled:opacity-30"
+                  style={{ backgroundColor: isDark ? "#18181b" : "#f4f4f5", color: isDark ? "#a1a1aa" : "#52525b" }}>
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button key={p} onClick={() => setPage(p)}
+                    className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-medium transition-all"
+                    style={{
+                      backgroundColor: page === p ? primaryColor : isDark ? "#18181b" : "#f4f4f5",
+                      color: page === p ? "#fff" : isDark ? "#a1a1aa" : "#52525b"
+                    }}>
+                    {p}
+                  </button>
+                ))}
+                <button onClick={() => setPage(page + 1)} disabled={page >= totalPages}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl transition-all disabled:opacity-30"
+                  style={{ backgroundColor: isDark ? "#18181b" : "#f4f4f5", color: isDark ? "#a1a1aa" : "#52525b" }}>
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

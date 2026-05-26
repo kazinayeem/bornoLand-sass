@@ -69,9 +69,12 @@ export async function saveCmsPage(storeId: string, userId: string, slug: string,
   if (payload.published !== undefined) update.published = payload.published;
   if (payload.layout !== undefined) update.layout = payload.layout;
 
+  const onInsert: Record<string, unknown> = { storeId, slug };
+  if (payload.title === undefined) onInsert.title = slug;
+  if (payload.html === undefined) onInsert.html = "";
   const page = await CmsPageModel.findOneAndUpdate(
     { storeId, slug },
-    { $set: update, $setOnInsert: { storeId, slug, title: payload.title ?? slug, html: payload.html ?? "" } },
+    { $set: update, $setOnInsert: onInsert },
     { upsert: true, new: true }
   ).lean();
 

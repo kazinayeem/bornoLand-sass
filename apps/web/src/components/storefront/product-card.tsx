@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ShoppingCart, Star, Heart, Eye } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
@@ -88,8 +89,10 @@ export function ProductCard({ product }: ProductCardProps) {
         }}>
         <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: isDark ? "#09090b" : "#f4f4f5" }}>
           {getProductImageUrl(product) ? (
-            <img src={getProductImageUrl(product)} alt={product.name}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            <Image src={getProductImageUrl(product)} alt={product.name}
+              fill className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              priority={false} />
           ) : (
             <div className="flex h-full items-center justify-center">
               <ShoppingCart className="h-12 w-12" style={{ color: `${primaryColor}30` }} />

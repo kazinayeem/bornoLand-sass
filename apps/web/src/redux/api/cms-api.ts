@@ -66,12 +66,14 @@ export const cmsApi = baseApi.injectEndpoints({
       query: (storeId) => ({ url: `/cms/${storeId}/pages` }),
       providesTags: (_result, _error, storeId) => [{ type: "CmsPages", id: storeId }],
     }),
-    getCmsPage: builder.query<ApiEnvelope<CmsPageResponse>, { storeId: string; slug: string }>({
+    getCmsPage: builder.query<CmsPage, { storeId: string; slug: string }>({
       query: ({ storeId, slug }) => ({ url: `/cms/${storeId}/pages/${slug}` }),
+      transformResponse: (response: ApiEnvelope<CmsPageResponse>) => response.data!.page,
       providesTags: (_result, _error, { storeId, slug }) => [{ type: "CmsPage", id: `${storeId}:${slug}` }],
     }),
-    saveCmsPage: builder.mutation<ApiEnvelope<CmsPageResponse>, { storeId: string; slug: string; data: SavePagePayload }>({
+    saveCmsPage: builder.mutation<CmsPage, { storeId: string; slug: string; data: SavePagePayload }>({
       query: ({ storeId, slug, data }) => ({ url: `/cms/${storeId}/pages/${slug}`, method: "PUT", body: data }),
+      transformResponse: (response: ApiEnvelope<CmsPageResponse>) => response.data!.page,
       invalidatesTags: (_result, _error, { storeId, slug }) => [{ type: "CmsPage", id: `${storeId}:${slug}` }, { type: "CmsPages", id: storeId }],
     }),
     getFaqs: builder.query<ApiEnvelope<FaqsResponse>, string>({

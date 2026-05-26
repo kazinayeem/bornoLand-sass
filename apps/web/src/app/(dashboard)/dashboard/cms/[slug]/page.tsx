@@ -22,6 +22,9 @@ const pageMeta: Record<string, { label: string; icon: typeof HelpCircle; descrip
 };
 
 function CmsPageEditor() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const params = useParams();
   const slug = params.slug as string;
   const meta = pageMeta[slug] ?? { label: slug, icon: FileText, description: "Edit page content." };
@@ -43,16 +46,24 @@ function CmsPageEditor() {
   const [published, setPublished] = useState(false);
 
   useEffect(() => {
-    const page = pageData?.data?.page;
-    if (page) {
-      setTitle(page.title ?? "");
-      setHtmlContent(page.html ?? "");
-      setSeoTitle(page.seoTitle ?? "");
-      setSeoDescription(page.seoDescription ?? "");
-      setOgImage(page.ogImage ?? "");
-      setPublished(page.published ?? false);
+    if (pageData) {
+      setTitle(pageData.title ?? "");
+      setHtmlContent(pageData.html ?? "");
+      setSeoTitle(pageData.seoTitle ?? "");
+      setSeoDescription(pageData.seoDescription ?? "");
+      setOgImage(pageData.ogImage ?? "");
+      setPublished(pageData.published ?? false);
     }
   }, [pageData]);
+
+  if (!mounted) {
+    return (
+      <div className="space-y-6">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-zinc-200" />
+        <div className="h-40 animate-pulse rounded-2xl border border-zinc-200 bg-zinc-50" />
+      </div>
+    );
+  }
 
   if (!currentStoreId) {
     return (

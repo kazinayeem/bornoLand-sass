@@ -1,45 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   useGetStoreOrdersQuery, useUpdateOrderStatusMutation, useUpdatePaymentStatusMutation,
 } from "@/redux/api/store-order-api";
 import type { StoreOrder } from "@/redux/api/store-order-api";
 import {
-  ShoppingCart, Loader2, Search, ChevronDown, Package,
-  Truck, CheckCircle, XCircle, Clock,
+  ShoppingCart, ChevronDown, Package, Truck, CheckCircle, XCircle, Clock,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
+import { DataTable, type Column } from "@/components/ui/data-table";
+import { Badge } from "@/components/ui/badge";
+import { SearchBar } from "@/components/ui/search-bar";
+import { Pagination } from "@/components/ui/pagination";
+import { TableSkeleton, StatCardSkeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Modal } from "@/components/ui/modal";
 
 type OrdersTabProps = { storeId: string };
 
-const statusColors: Record<string, string> = {
-  pending: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-  processing: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
-  shipped: "bg-violet-50 text-violet-700 ring-1 ring-violet-200",
-  delivered: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-  cancelled: "bg-red-50 text-red-700 ring-1 ring-red-200",
-};
-
-const paymentColors: Record<string, string> = {
-  unpaid: "bg-amber-50 text-amber-700",
-  paid: "bg-emerald-50 text-emerald-700",
-  refunded: "bg-red-50 text-red-700",
-  partial: "bg-blue-50 text-blue-700",
-};
+const statusOptions = ["pending", "processing", "shipped", "delivered", "cancelled"];
+const paymentOptions = ["unpaid", "paid", "refunded", "partial"];
 
 function formatBDT(v: number) {
   return new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT", maximumFractionDigits: 0 }).format(v || 0);
 }
 
+function formatDate(d: string) {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(d));
+}
+
+const statusBadgeVariant: Record<string, "warning" | "primary" | "violet" | "success" | "danger"> = {
+  pending: "warning", processing: "primary", shipped: "violet", delivered: "success", cancelled: "danger",
+};
+
+const paymentBadgeVariant: Record<string, "warning" | "success" | "danger" | "primary"> = {
+  unpaid: "warning", paid: "success", refunded: "danger", partial: "primary",
+};
+
 export function OrdersTab({ storeId }: OrdersTabProps) {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState<StoreOrder | null>(null);
 
   const { data, isLoading } = useGetStoreOrdersQuery({
-    storeId, status: statusFilter || undefined, page: String(page), limit: "20", search: search || undefined,
+    storeId, status: statusFilter || undefined, page: String(page), limit: String(pageSize), search: search || undefined,
   });
   const [updateStatus] = useUpdateOrderStatusMutation();
   const [updatePayment] = useUpdatePaymentStatusMutation();
@@ -47,6 +56,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
   const orders = data?.data?.orders ?? [];
   const analytics = data?.data?.analytics;
   const totalPages = data?.data?.totalPages ?? 1;
+  const total = data?.data?.total;
 
   const handleStatusChange = async (orderId: string, status: string) => {
     try {
@@ -62,13 +72,68 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
     } catch { toast.error("Failed to update payment status"); }
   };
 
-  if (isLoading) {
-    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>;
-  }
+  const columns: Column<StoreOrder>[] = [
+    {
+      key: "order", label: "Order",
+      render: (order) => (
+        <div>
+          <p className="text-sm font-semibold text-zinc-900">{order.orderNumber}</p>
+          <p className="text-xs text-zinc-400">{formatDate(order.createdAt)}</p>
+        </div>
+      ),
+    },
+    {
+      key: "customer", label: "Customer", hideOnMobile: true,
+      render: (order) => (
+        <div className="text-sm">
+          <p className="text-zinc-900">{order.customerId?.name || "Guest"}</p>
+          <p className="text-xs text-zinc-400">{order.shippingAddress?.city || "—"}</p>
+        </div>
+      ),
+    },
+    {
+      key: "items", label: "Items", hideOnTablet: true,
+      render: (order) => <span className="text-sm text-zinc-600">{order.items?.length || 0} items</span>,
+    },
+    {
+      key: "total", label: "Total", sortable: true,
+      render: (order) => <span className="text-sm font-bold text-zinc-900">{formatBDT(order.total)}</span>,
+    },
+    {
+      key: "status", label: "Status",
+      render: (order) => (
+        <select
+          value={order.status}
+          onChange={(e) => handleStatusChange(order._id, e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-medium outline-none"
+        >
+          {statusOptions.map((s) => (
+            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+          ))}
+        </select>
+      ),
+    },
+    {
+      key: "payment", label: "Payment",
+      render: (order) => (
+        <select
+          value={order.paymentStatus}
+          onChange={(e) => handlePaymentChange(order._id, e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-medium outline-none"
+        >
+          {paymentOptions.map((s) => (
+            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+          ))}
+        </select>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-4">
-      {/* Analytics Cards */}
+      {/* Analytics */}
       {analytics && (
         <div className="grid gap-3 sm:grid-cols-5">
           {[
@@ -92,89 +157,101 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
           <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search orders..."
-            className="h-9 w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-4 text-sm" />
+            className="h-9 w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
         </div>
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+          className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-blue-400">
           <option value="">All statuses</option>
-          <option value="pending">Pending</option>
-          <option value="processing">Processing</option>
-          <option value="shipped">Shipped</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
+          {statusOptions.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
         </select>
       </div>
 
-      {/* Orders */}
-      {orders.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center">
-          <ShoppingCart className="mx-auto h-10 w-10 text-zinc-300" />
-          <h3 className="mt-3 text-base font-semibold text-zinc-900">No orders yet</h3>
-          <p className="mt-1 text-sm text-zinc-500">Orders will appear here when customers start purchasing.</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {orders.map((order, i) => (
-            <motion.div key={order._id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
-              className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-semibold text-zinc-900">{order.orderNumber}</h4>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusColors[order.status] ?? "bg-zinc-100 text-zinc-600"}`}>
-                      {order.status}
-                    </span>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${paymentColors[order.paymentStatus] ?? "bg-zinc-100 text-zinc-600"}`}>
-                      {order.paymentStatus}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    {order.customerId?.name || "Guest"} &middot; {order.items?.length || 0} items &middot; {new Date(order.createdAt).toLocaleDateString()}
-                  </p>
-                  <p className="mt-1 text-xs text-zinc-400 truncate">
-                    {order.shippingAddress?.fullName}, {order.shippingAddress?.city}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-base font-bold text-zinc-900">{formatBDT(order.total)}</p>
-                  <p className="text-[10px] text-zinc-400">{order.paymentMethod}</p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-2 pt-3 border-t border-zinc-100">
-                <select value={order.status} onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                  className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-xs">
-                  <option value="pending">Pending</option>
-                  <option value="processing">Processing</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-                <select value={order.paymentStatus} onChange={(e) => handlePaymentChange(order._id, e.target.value)}
-                  className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-xs">
-                  <option value="unpaid">Unpaid</option>
-                  <option value="paid">Paid</option>
-                  <option value="refunded">Refunded</option>
-                  <option value="partial">Partial</option>
-                </select>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+      {/* Orders Table */}
+      <DataTable
+        data={orders}
+        columns={columns}
+        keyExtractor={(o) => o._id}
+        isLoading={isLoading}
+        emptyIcon={ShoppingCart}
+        emptyTitle="No orders yet"
+        emptyDescription="Orders will appear here when customers start purchasing."
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        onRowClick={setSelectedOrder}
+        hideSearch
+        hidePagination
+      />
+
+      {totalPages > 1 && (
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} total={total} pageSize={pageSize} onPageSizeChange={setPageSize} />
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button key={p} onClick={() => setPage(p)}
-              className={`h-8 w-8 rounded-lg text-xs font-semibold transition-colors ${
-                p === page ? "bg-zinc-900 text-white" : "bg-white text-zinc-500 hover:bg-zinc-100 border border-zinc-200"
-              }`}>
-              {p}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Order Detail Modal */}
+      <Modal open={!!selectedOrder} onClose={() => setSelectedOrder(null)} title={`Order ${selectedOrder?.orderNumber}`} size="lg">
+        {selectedOrder && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-xl bg-zinc-50 p-3">
+                <p className="text-xs font-medium text-zinc-500">Status</p>
+                <p className="mt-0.5 text-sm font-semibold text-zinc-900 capitalize">{selectedOrder.status}</p>
+              </div>
+              <div className="rounded-xl bg-zinc-50 p-3">
+                <p className="text-xs font-medium text-zinc-500">Payment</p>
+                <p className="mt-0.5 text-sm font-semibold text-zinc-900 capitalize">{selectedOrder.paymentStatus}</p>
+              </div>
+              <div className="rounded-xl bg-zinc-50 p-3">
+                <p className="text-xs font-medium text-zinc-500">Total</p>
+                <p className="mt-0.5 text-sm font-semibold text-zinc-900">{formatBDT(selectedOrder.total)}</p>
+              </div>
+              <div className="rounded-xl bg-zinc-50 p-3">
+                <p className="text-xs font-medium text-zinc-500">Date</p>
+                <p className="mt-0.5 text-sm font-semibold text-zinc-900">{formatDate(selectedOrder.createdAt)}</p>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-zinc-900 mb-2">Items</h4>
+              <div className="space-y-2">
+                {selectedOrder.items?.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between rounded-xl border border-zinc-100 p-3">
+                    <div>
+                      <p className="text-sm font-medium text-zinc-900">{item.name}</p>
+                      <p className="text-xs text-zinc-400">Qty: {item.quantity} × {formatBDT(item.price)}</p>
+                    </div>
+                    <p className="text-sm font-semibold text-zinc-900">{formatBDT(item.price * item.quantity)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {selectedOrder.shippingAddress && (
+              <div>
+                <h4 className="text-sm font-semibold text-zinc-900 mb-2">Shipping</h4>
+                <div className="rounded-xl border border-zinc-100 p-3 text-sm text-zinc-600">
+                  <p>{selectedOrder.shippingAddress.fullName}</p>
+                  <p>{selectedOrder.shippingAddress.addressLine}</p>
+                  <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.postCode}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <select value={selectedOrder.status} onChange={(e) => handleStatusChange(selectedOrder._id, e.target.value)}
+                className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none">
+                {statusOptions.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+              </select>
+              <select value={selectedOrder.paymentStatus} onChange={(e) => handlePaymentChange(selectedOrder._id, e.target.value)}
+                className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none">
+                {paymentOptions.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

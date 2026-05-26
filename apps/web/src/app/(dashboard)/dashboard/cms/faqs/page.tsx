@@ -2,18 +2,16 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGetMyStoresQuery } from "@/redux/api/store-api";
+import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetFaqsQuery, useCreateFaqMutation, useUpdateFaqMutation, useDeleteFaqMutation, useReorderFaqsMutation } from "@/redux/api/cms-api";
 import type { FaqItem } from "@/redux/api/cms-api";
 import { Store, Plus, Loader2, GripVertical, Pencil, Trash2, X, Check, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
 export default function FaqsPage() {
-  const { data: storesData } = useGetMyStoresQuery();
-  const stores = storesData?.data?.stores ?? [];
-  const [selectedStoreId, setSelectedStoreId] = useState<string>("");
+  const { currentStoreId, stores, selectStore, clearStore } = useCurrentStore();
 
-  const { data: faqsData, isLoading: faqsLoading } = useGetFaqsQuery(selectedStoreId, { skip: !selectedStoreId });
+  const { data: faqsData, isLoading: faqsLoading } = useGetFaqsQuery(currentStoreId, { skip: !currentStoreId });
   const faqs = faqsData?.data?.faqs ?? [];
   const [createFaq, { isLoading: creating }] = useCreateFaqMutation();
   const [updateFaq, { isLoading: updating }] = useUpdateFaqMutation();
@@ -40,7 +38,7 @@ export default function FaqsPage() {
       return;
     }
     try {
-      await createFaq({ storeId: selectedStoreId, data: { question, answer, category: category || undefined } }).unwrap();
+      await createFaq({ storeId: currentStoreId, data: { question, answer, category: category || undefined } }).unwrap();
       toast.success("FAQ created");
       resetForm();
     } catch {
@@ -51,7 +49,7 @@ export default function FaqsPage() {
   const handleUpdate = async () => {
     if (!editId || !question.trim() || !answer.trim()) return;
     try {
-      await updateFaq({ storeId: selectedStoreId, faqId: editId, data: { question, answer, category: category || undefined } }).unwrap();
+      await updateFaq({ storeId: currentStoreId, faqId: editId, data: { question, answer, category: category || undefined } }).unwrap();
       toast.success("FAQ updated");
       resetForm();
     } catch {
@@ -70,7 +68,7 @@ export default function FaqsPage() {
   const handleDelete = async (faqId: string) => {
     if (!confirm("Delete this FAQ?")) return;
     try {
-      await deleteFaq({ storeId: selectedStoreId, faqId }).unwrap();
+      await deleteFaq({ storeId: currentStoreId, faqId }).unwrap();
       toast.success("FAQ deleted");
     } catch {
       toast.error("Failed to delete FAQ");
@@ -79,7 +77,7 @@ export default function FaqsPage() {
 
   const handleToggleActive = async (faq: FaqItem) => {
     try {
-      await updateFaq({ storeId: selectedStoreId, faqId: faq._id, data: { active: !faq.active } }).unwrap();
+      await updateFaq({ storeId: currentStoreId, faqId: faq._id, data: { active: !faq.active } }).unwrap();
     } catch {
       toast.error("Failed to update FAQ");
     }
@@ -90,7 +88,7 @@ export default function FaqsPage() {
     const reordered = [...faqs];
     [reordered[index - 1], reordered[index]] = [reordered[index], reordered[index - 1]];
     try {
-      await reorderFaqs({ storeId: selectedStoreId, orderedIds: reordered.map((f) => f._id) }).unwrap();
+      await reorderFaqs({ storeId: currentStoreId, orderedIds: reordered.map((f) => f._id) }).unwrap();
       toast.success("FAQs reordered");
     } catch {
       toast.error("Failed to reorder FAQs");
@@ -102,14 +100,14 @@ export default function FaqsPage() {
     const reordered = [...faqs];
     [reordered[index], reordered[index + 1]] = [reordered[index + 1], reordered[index]];
     try {
-      await reorderFaqs({ storeId: selectedStoreId, orderedIds: reordered.map((f) => f._id) }).unwrap();
+      await reorderFaqs({ storeId: currentStoreId, orderedIds: reordered.map((f) => f._id) }).unwrap();
       toast.success("FAQs reordered");
     } catch {
       toast.error("Failed to reorder FAQs");
     }
   };
 
-  if (!selectedStoreId) {
+  if (!currentStoreId) {
     return (
       <div className="space-y-6">
         <div>
@@ -120,7 +118,7 @@ export default function FaqsPage() {
           {stores.map((s, i) => (
             <motion.button
               key={s._id}
-              onClick={() => setSelectedStoreId(s._id)}
+              onClick={() => selectStore(s)}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
@@ -152,13 +150,13 @@ export default function FaqsPage() {
               <p className="text-sm text-zinc-500">Manage Q&A entries for your store.</p>
             </div>
             <span className="rounded-lg bg-purple-50 px-2.5 py-0.5 text-xs font-medium text-purple-600">
-              {stores.find((s) => s._id === selectedStoreId)?.name}
+              {stores.find((s) => s._id === currentStoreId)?.name}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setSelectedStoreId("")}
+            onClick={() => clearStore()}
             className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50"
           >
             <Store className="h-4 w-4" /> Change Store

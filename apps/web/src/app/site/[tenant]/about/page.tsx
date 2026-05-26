@@ -1,8 +1,22 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ShoppingBag, Truck, Shield, HeadphonesIcon, RefreshCw, Star } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
+
+type CmsPage = {
+  _id: string;
+  storeId: string;
+  slug: string;
+  title: string;
+  html: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  ogImage?: string;
+  published: boolean;
+  layout: string;
+};
 
 const features = [
   { icon: ShoppingBag, title: "Curated Products", desc: "Handpicked items from top brands and artisans worldwide." },
@@ -15,58 +29,91 @@ const features = [
 
 export default function AboutPage() {
   const { store, theme } = useTenant();
-  const { primaryColor, font, darkMode } = theme;
+  const { primaryColor, darkMode } = theme;
   const isDark = darkMode;
+
+  const [page, setPage] = useState<CmsPage | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!store._id) return;
+    setLoading(true);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+    fetch(`${apiUrl}/public/page/about-us?storeId=${store._id}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && json.data?.page) setPage(json.data.page);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [store._id]);
 
   return (
     <div style={{ backgroundColor: isDark ? "#000000" : "#ffffff" }}>
-      {/* Hero */}
       <section className="py-20 sm:py-28 text-center px-4"
         style={{ background: `linear-gradient(135deg, ${primaryColor}08 0%, ${primaryColor}02 100%)` }}>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <span className="inline-block rounded-full px-3 py-1 text-xs font-medium"
             style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>About Us</span>
           <h1 className="mt-4 text-4xl font-bold sm:text-5xl" style={{ color: isDark ? "#fafafa" : "#18181b" }}>
-            Our Story
+            {page?.title || "Our Story"}
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-            We&apos;re on a mission to make quality products accessible to everyone.
-          </p>
+          {!page?.html && (
+            <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
+              We&apos;re on a mission to make quality products accessible to everyone.
+            </p>
+          )}
         </motion.div>
       </section>
 
-      {/* Story */}
-      <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          className="space-y-6 text-center">
-          <h2 className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Who We Are</h2>
-          <p className="leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-            Founded with a passion for quality and customer satisfaction, {store.name} has grown from a small
-            startup to a trusted destination for online shopping. We believe in providing our customers with
-            the best products at the best prices, backed by exceptional service.
-          </p>
-          <p className="leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-            Our team works tirelessly to curate a selection of products that combine quality, style, and value.
-            From fashion and electronics to home goods and accessories, every item in our collection is chosen
-            with care.
-          </p>
-        </motion.div>
-      </section>
+      {page?.html && (
+        <section className="mx-auto max-w-3xl px-4 pb-16 sm:px-6 lg:px-8">
+          <div className="prose prose-zinc max-w-none"
+            style={{
+              color: isDark ? "#a1a1aa" : "#52525b",
+              "--tw-prose-headings": isDark ? "#fafafa" : "#18181b",
+              "--tw-prose-links": primaryColor,
+              "--tw-prose-bold": isDark ? "#fafafa" : "#18181b",
+              "--tw-prose-quotes": isDark ? "#a1a1aa" : "#52525b",
+            } as React.CSSProperties}
+            dangerouslySetInnerHTML={{ __html: page.html }}
+          />
+        </section>
+      )}
 
-      {/* Mission */}
-      <section className="py-16" style={{ backgroundColor: isDark ? "#09090b" : "#fafafa" }}>
-        <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <h2 className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Our Mission</h2>
-            <p className="mt-4 text-lg leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-              To provide a seamless shopping experience with premium products, fast delivery,
-              and exceptional customer service — making quality accessible to everyone.
+      {!page?.html && (
+        <section className="mx-auto max-w-4xl px-4 pb-16 sm:px-6 lg:px-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="space-y-6 text-center">
+            <h2 className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Who We Are</h2>
+            <p className="leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
+              Founded with a passion for quality and customer satisfaction, {store.name} has grown from a small
+              startup to a trusted destination for online shopping. We believe in providing our customers with
+              the best products at the best prices, backed by exceptional service.
+            </p>
+            <p className="leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
+              Our team works tirelessly to curate a selection of products that combine quality, style, and value.
+              From fashion and electronics to home goods and accessories, every item in our collection is chosen
+              with care.
             </p>
           </motion.div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Features */}
+      {!page?.html && (
+        <section className="py-16" style={{ backgroundColor: isDark ? "#09090b" : "#fafafa" }}>
+          <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <h2 className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Our Mission</h2>
+              <p className="mt-4 text-lg leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
+                To provide a seamless shopping experience with premium products, fast delivery,
+                and exceptional customer service — making quality accessible to everyone.
+              </p>
+            </motion.div>
+          </div>
+        </section>
+      )}
+
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <h2 className="mb-10 text-center text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>
           Why Choose Us
@@ -88,7 +135,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Team Placeholder */}
       <section className="py-16" style={{ backgroundColor: isDark ? "#09090b" : "#fafafa" }}>
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Our Team</h2>

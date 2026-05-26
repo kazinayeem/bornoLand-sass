@@ -63,7 +63,7 @@ export async function reorderFaqsController(request: AuthRequest, response: Resp
 }
 
 export async function getPublicPageController(request: SubdomainRequest, response: Response) {
-  const storeId = request.store?._id?.toString();
+  const storeId = request.store?._id?.toString() ?? (request.query.storeId as string | undefined);
   const slug = request.params.slug as string;
   if (!storeId) return sendFailure(response, "Store not found", 404);
 

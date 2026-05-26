@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGetMyStoresQuery } from "@/redux/api/store-api";
+import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetStoreOrdersQuery, useUpdateOrderStatusMutation, useUpdatePaymentStatusMutation } from "@/redux/api/store-order-api";
 import type { StoreOrder } from "@/redux/api/store-order-api";
 import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
@@ -81,10 +81,7 @@ function SkeletonRow() {
 }
 
 export default function OrdersPage() {
-  const { data: storesData, isLoading: storesLoading } = useGetMyStoresQuery();
-  const stores = storesData?.data?.stores ?? [];
-  const [selectedStoreId, setSelectedStoreId] = useState<string>("");
-  const store = stores.find((s) => s._id === selectedStoreId);
+  const { currentStoreId, currentStore, stores, selectStore, clearStore } = useCurrentStore();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -94,13 +91,13 @@ export default function OrdersPage() {
   const [drawerOrder, setDrawerOrder] = useState<StoreOrder | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data: settingsData } = useGetStoreSettingsQuery(selectedStoreId, { skip: !selectedStoreId });
+  const { data: settingsData } = useGetStoreSettingsQuery(currentStoreId, { skip: !currentStoreId });
   const storeSettings = settingsData?.data?.settings;
   const fmt = useCallback((amount: number) => formatCurrency(amount, storeSettings ?? "BDT"), [storeSettings]);
 
   const { data: ordersData, isLoading: ordersLoading, isError, refetch } = useGetStoreOrdersQuery(
-    { storeId: selectedStoreId, status: statusFilter || undefined, paymentStatus: paymentFilter || undefined, search: search || undefined, page: String(page), limit: String(perPage) },
-    { skip: !selectedStoreId }
+    { storeId: currentStoreId, status: statusFilter || undefined, paymentStatus: paymentFilter || undefined, search: search || undefined, page: String(page), limit: String(perPage) },
+    { skip: !currentStoreId }
   );
 
   const [updateStatus, { isLoading: updatingStatus }] = useUpdateOrderStatusMutation();
@@ -113,7 +110,7 @@ export default function OrdersPage() {
 
   const handleStatusChange = async (orderId: string, status: string) => {
     try {
-      await updateStatus({ storeId: selectedStoreId, orderId, status }).unwrap();
+      await updateStatus({ storeId: currentStoreId, orderId, status }).unwrap();
       toast.success(`Order status updated to ${statusConfig[status]?.label ?? status}`);
     } catch {
       toast.error("Failed to update order status");
@@ -122,7 +119,7 @@ export default function OrdersPage() {
 
   const handlePaymentChange = async (orderId: string, paymentStatus: string) => {
     try {
-      await updatePayment({ storeId: selectedStoreId, orderId, paymentStatus }).unwrap();
+      await updatePayment({ storeId: currentStoreId, orderId, paymentStatus }).unwrap();
       toast.success(`Payment status updated to ${paymentConfig[paymentStatus]?.label ?? paymentStatus}`);
     } catch {
       toast.error("Failed to update payment status");
@@ -148,7 +145,7 @@ export default function OrdersPage() {
 
   const hasFilters = search || statusFilter || paymentFilter;
 
-  if (!selectedStoreId) {
+  if (!currentStoreId) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -157,13 +154,7 @@ export default function OrdersPage() {
             <p className="mt-1 text-sm text-zinc-500">View and manage your store orders.</p>
           </div>
         </div>
-        {storesLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 animate-pulse rounded-2xl border border-zinc-200 bg-zinc-50 p-5" />
-            ))}
-          </div>
-        ) : stores.length === 0 ? (
+        {stores.length === 0 ? (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-zinc-200 bg-white p-16 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100">
               <ShoppingCart className="h-8 w-8 text-zinc-400" />
@@ -174,7 +165,7 @@ export default function OrdersPage() {
         ) : (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {stores.map((s, i) => (
-              <motion.button key={s._id} onClick={() => { setSelectedStoreId(s._id); setPage(1); }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+              <motion.button key={s._id} onClick={() => { selectStore(s); setPage(1); }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                 className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 text-left transition-all hover:shadow-lg hover:-translate-y-0.5">
                 <div className="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-gradient-to-br from-blue-500/10 to-transparent" />
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-lg font-bold text-white shadow-sm">
@@ -201,7 +192,7 @@ export default function OrdersPage() {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Orders</h2>
-            <span className="rounded-lg bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">{store?.name}</span>
+            <span className="rounded-lg bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">{currentStore?.name}</span>
           </div>
           <p className="mt-1 text-sm text-zinc-500">Manage your store orders.</p>
         </div>
@@ -209,7 +200,7 @@ export default function OrdersPage() {
           <button onClick={() => refetch()} className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50">
             <RefreshCw className="h-4 w-4" /> Refresh
           </button>
-          <button onClick={() => setSelectedStoreId("")} className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50">
+          <button onClick={() => clearStore()} className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50">
             <Store className="h-4 w-4" /> Change Store
           </button>
         </div>

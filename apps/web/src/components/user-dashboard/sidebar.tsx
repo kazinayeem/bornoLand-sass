@@ -3,18 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAppSelector } from "@/hooks/redux";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Store, Package, Layers, Palette, ShoppingCart, FileText, Settings, LogOut, Sparkles } from "lucide-react";
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/stores", label: "My Store", icon: Store },
-  { href: "/dashboard/products", label: "Products", icon: Package },
-  { href: "/dashboard/categories", label: "Categories", icon: Layers },
-  { href: "/dashboard/theme", label: "Theme", icon: Palette },
-  { href: "/dashboard/cms", label: "CMS", icon: FileText },
-  { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings }
-];
+import { LayoutDashboard, Sparkles, LogOut, Store, Plus } from "lucide-react";
 
 export function UserSidebar() {
   const pathname = usePathname();
@@ -33,21 +22,28 @@ export function UserSidebar() {
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">Menu</p>
         <ul className="space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-            return (
-              <li key={item.href}>
-                <Link href={item.href}
-                  className={cn(
-                    "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                    isActive ? "bg-blue-50 text-blue-700" : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
-                  )}>
-                  <item.icon className={cn("h-5 w-5 shrink-0", isActive ? "text-blue-600" : "text-zinc-400")} />
-                  <span>{item.label}</span>
-                </Link>
-              </li>
-            );
-          })}
+          <li>
+            <Link href="/dashboard"
+              className={cn(
+                "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                pathname === "/dashboard" || pathname.startsWith("/dashboard/stores")
+                  ? "bg-blue-50 text-blue-700" : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
+              )}>
+              <LayoutDashboard className={cn("h-5 w-5 shrink-0", pathname === "/dashboard" || pathname.startsWith("/dashboard/stores") ? "text-blue-600" : "text-zinc-400")} />
+              <span>Dashboard</span>
+            </Link>
+          </li>
+          <li>
+            <Link href="/dashboard/create-store"
+              className={cn(
+                "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                pathname === "/dashboard/create-store"
+                  ? "bg-emerald-50 text-emerald-700" : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
+              )}>
+              <Plus className={cn("h-5 w-5 shrink-0", pathname === "/dashboard/create-store" ? "text-emerald-600" : "text-zinc-400")} />
+              <span>Create Store</span>
+            </Link>
+          </li>
         </ul>
       </nav>
 

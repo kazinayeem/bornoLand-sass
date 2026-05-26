@@ -3,27 +3,30 @@ import { Bell, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/hooks/redux";
 
-const pageTitles: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/dashboard/stores": "My Store",
-  "/dashboard/products": "Products",
-  "/dashboard/theme": "Theme",
-  "/dashboard/orders": "Orders",
-  "/dashboard/settings": "Settings",
-  "/dashboard/cms": "CMS",
-  "/dashboard/categories": "Categories"
-};
-
 export function UserNavbar() {
   const pathname = usePathname();
   const user = useAppSelector((s) => s.user.profile);
-  const title = pageTitles[pathname] ?? "Dashboard";
+
+  const segments = pathname.split("/").filter(Boolean);
+  const crumbs = segments.map((s, i) => ({
+    label: s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    href: "/" + segments.slice(0, i + 1).join("/"),
+  }));
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-200 bg-white/80 px-6 backdrop-blur-xl">
       <div>
-        <h1 className="text-lg font-semibold tracking-tight text-zinc-900">{title}</h1>
-        <p className="text-xs text-zinc-500">Dashboard / {title}</p>
+        <h1 className="text-lg font-semibold tracking-tight text-zinc-900">
+          {crumbs.length > 1 ? crumbs[crumbs.length - 1].label : "Dashboard"}
+        </h1>
+        <p className="text-xs text-zinc-500">
+          {crumbs.map((c, i) => (
+            <span key={c.href}>
+              {i > 0 && <span className="mx-1 text-zinc-300">/</span>}
+              {c.label}
+            </span>
+          ))}
+        </p>
       </div>
       <div className="flex items-center gap-3">
         <div className="relative hidden sm:block">

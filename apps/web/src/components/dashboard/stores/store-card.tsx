@@ -125,11 +125,8 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
                 {[
                   { icon: ExternalLink, label: "Open storefront", action: () => window.open(storeUrl, "_blank") },
                   { icon: Copy, label: "Copy store URL", action: copyUrl },
-                  { icon: LayoutGrid, label: "Manage products", action: () => { setMenuOpen(false); router.push(`/dashboard/products?storeId=${store._id}`); } },
-                  { icon: ShoppingBag, label: "Review orders", action: () => { setMenuOpen(false); router.push(`/dashboard/orders?storeId=${store._id}`); } },
+                  { icon: LayoutGrid, label: "Open workspace", action: () => { setMenuOpen(false); router.push(`/dashboard/stores/${store._id}`); } },
                   { icon: Palette, label: "Open builder", action: () => { setMenuOpen(false); router.push(`/dashboard/builder/${store._id}`); } },
-                  { icon: CreditCard, label: "Upgrade plan", action: () => { setMenuOpen(false); onManage(store, "billing"); } },
-                  { icon: Settings, label: "Settings", action: () => { setMenuOpen(false); onManage(store, "overview"); } },
                   { icon: Trash2, label: "Delete store", action: () => { setMenuOpen(false); onDelete(store); }, danger: true },
                 ].map((item) => (
                   <button key={item.label} onClick={item.action}
@@ -215,16 +212,16 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
             <Wrench className="h-3.5 w-3.5" /> Manage
           </button>
           <button
-            onClick={() => router.push(`/dashboard/stores/${store._id}/products`)}
+            onClick={() => router.push(`/dashboard/stores/${store._id}`)}
             className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-blue-700 transition-all hover:bg-blue-50"
           >
-            <LayoutGrid className="h-3.5 w-3.5" /> View Products
+            <LayoutGrid className="h-3.5 w-3.5" /> Products
           </button>
           <button
-            onClick={() => onManage(store, "billing")}
+            onClick={() => router.push(`/dashboard/stores/${store._id}`)}
             className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-zinc-700 transition-all hover:bg-zinc-50"
           >
-            <CreditCard className="h-3.5 w-3.5" /> Billing
+            <CreditCard className="h-3.5 w-3.5" /> Dashboard
           </button>
         </div>
 

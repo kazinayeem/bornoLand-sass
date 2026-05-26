@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGetMyStoresQuery } from "@/redux/api/store-api";
+import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
 import { useGetProductsQuery, useCreateProductMutation, useUpdateProductMutation, useDeleteProductMutation, useDuplicateProductMutation } from "@/redux/api/product-api";
 import type { Product } from "@/redux/api/product-api";
@@ -21,22 +21,20 @@ const statusColors: Record<string, string> = {
 };
 
 export default function ProductsPage() {
-  const { data: storesData } = useGetMyStoresQuery();
-  const stores = storesData?.data?.stores ?? [];
-  const [selectedStoreId, setSelectedStoreId] = useState<string>("");
+  const { currentStoreId, currentStore, stores, selectStore, clearStore } = useCurrentStore();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [page, setPage] = useState(1);
   const perPage = 12;
 
-  const store = stores.find((s) => s._id === selectedStoreId);
-  const { data: settingsData } = useGetStoreSettingsQuery(selectedStoreId, { skip: !selectedStoreId });
+
+  const { data: settingsData } = useGetStoreSettingsQuery(currentStoreId, { skip: !currentStoreId });
   const storeSettings = settingsData?.data?.settings;
   const fmt = (amount: number) => formatCurrency(amount, storeSettings ?? "BDT");
-  const { data: productsData, isLoading } = useGetProductsQuery(selectedStoreId, { skip: !selectedStoreId });
+  const { data: productsData, isLoading } = useGetProductsQuery(currentStoreId, { skip: !currentStoreId });
   const products = productsData?.data?.products ?? [];
-  const { data: catsData } = useGetCategoriesQuery(selectedStoreId, { skip: !selectedStoreId });
+  const { data: catsData } = useGetCategoriesQuery(currentStoreId, { skip: !currentStoreId });
   const storeCategories = catsData?.data?.categories ?? [];
 
   const filtered = useMemo(() => {
@@ -109,13 +107,13 @@ export default function ProductsPage() {
     value.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
 
   const handleSave = async () => {
-    if (!selectedStoreId) return;
+    if (!currentStoreId) return;
     try {
       if (editingProduct) {
-        await updateProduct({ storeId: selectedStoreId, id: editingProduct._id, data: { ...form, galleryImageUrls: parseImageList(form.galleryImageUrls) } }).unwrap();
+        await updateProduct({ storeId: currentStoreId, id: editingProduct._id, data: { ...form, galleryImageUrls: parseImageList(form.galleryImageUrls) } }).unwrap();
         toast.success("Product updated");
       } else {
-        await createProduct({ storeId: selectedStoreId, data: { ...form, slug: form.slug || form.name.toLowerCase().replace(/\s+/g, "-"), galleryImageUrls: parseImageList(form.galleryImageUrls) } }).unwrap();
+        await createProduct({ storeId: currentStoreId, data: { ...form, slug: form.slug || form.name.toLowerCase().replace(/\s+/g, "-"), galleryImageUrls: parseImageList(form.galleryImageUrls) } }).unwrap();
         toast.success("Product created");
       }
       resetForm();
@@ -125,31 +123,31 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async () => {
-    if (!deleteTarget || !selectedStoreId) return;
+    if (!deleteTarget || !currentStoreId) return;
     try {
-      await deleteProduct({ storeId: selectedStoreId, id: deleteTarget._id }).unwrap();
+      await deleteProduct({ storeId: currentStoreId, id: deleteTarget._id }).unwrap();
       toast.success("Product deleted");
       setDeleteTarget(null);
     } catch { toast.error("Failed to delete"); }
   };
 
   const handleDuplicate = async (p: Product) => {
-    if (!selectedStoreId) return;
+    if (!currentStoreId) return;
     try {
-      await duplicateProduct({ storeId: selectedStoreId, id: p._id }).unwrap();
+      await duplicateProduct({ storeId: currentStoreId, id: p._id }).unwrap();
       toast.success("Product duplicated");
     } catch { toast.error("Failed to duplicate"); }
   };
 
   const handleToggleStatus = async (p: Product) => {
-    if (!selectedStoreId) return;
+    if (!currentStoreId) return;
     try {
-      await updateProduct({ storeId: selectedStoreId, id: p._id, data: { status: p.status === "active" ? "inactive" : "active" } }).unwrap();
+      await updateProduct({ storeId: currentStoreId, id: p._id, data: { status: p.status === "active" ? "inactive" : "active" } }).unwrap();
       toast.success(p.status === "active" ? "Product deactivated" : "Product activated");
     } catch { toast.error("Failed to toggle status"); }
   };
 
-  if (!selectedStoreId) {
+  if (!currentStoreId) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -170,7 +168,7 @@ export default function ProductsPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {stores.map((s) => (
-              <button key={s._id} onClick={() => setSelectedStoreId(s._id)}
+              <button key={s._id} onClick={() => selectStore(s)}
                 className="group rounded-2xl border border-zinc-200 bg-white p-5 text-left transition-all hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-lg font-bold text-white">
                   {s.name[0]}
@@ -191,12 +189,12 @@ export default function ProductsPage() {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Products</h2>
-            {store && <span className="rounded-lg bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">{store.name}</span>}
+            {currentStore && <span className="rounded-lg bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">{currentStore.name}</span>}
           </div>
           <p className="mt-1 text-sm text-zinc-500">{filtered.length} products</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setSelectedStoreId("")} className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-600 hover:bg-zinc-50">Change Store</button>
+          <button onClick={() => clearStore()} className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-600 hover:bg-zinc-50">Change Store</button>
           <div className="flex rounded-xl border border-zinc-200 bg-white p-0.5">
             <button onClick={() => setViewMode("grid")} className={`rounded-lg p-1.5 ${viewMode === "grid" ? "bg-zinc-100 text-zinc-900" : "text-zinc-400"}`}><Grid3X3 className="h-4 w-4" /></button>
             <button onClick={() => setViewMode("list")} className={`rounded-lg p-1.5 ${viewMode === "list" ? "bg-zinc-100 text-zinc-900" : "text-zinc-400"}`}><List className="h-4 w-4" /></button>

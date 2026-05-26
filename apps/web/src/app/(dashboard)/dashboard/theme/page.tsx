@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useGetMyStoresQuery, useChangeStoreThemeMutation } from "@/redux/api/store-api";
+import { useChangeStoreThemeMutation } from "@/redux/api/store-api";
+import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetTemplatesQuery } from "@/redux/api/template-api";
 import type { Store } from "@/redux/api/store-api";
 import { toast } from "sonner";
@@ -18,10 +19,7 @@ const navbarStyles = ["fixed", "static", "sticky"];
 const layoutWidths = ["960px", "1140px", "1200px", "1320px", "100%"];
 
 export default function ThemePage() {
-  const { data: storesData } = useGetMyStoresQuery();
-  const stores = storesData?.data?.stores ?? [];
-  const [selectedStoreId, setSelectedStoreId] = useState<string>("");
-  const store = stores.find((s) => s._id === selectedStoreId);
+  const { currentStoreId, currentStore, stores, selectStore, clearStore } = useCurrentStore();
 
   const [changeTheme, { isLoading }] = useChangeStoreThemeMutation();
   const { data: templatesData } = useGetTemplatesQuery();
@@ -31,21 +29,22 @@ export default function ThemePage() {
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [saved, setSaved] = useState(true);
 
-  const selectStore = (id: string) => {
-    setSelectedStoreId(id);
-    const s = stores.find((st) => st._id === id);
-    if (s) {
-      setTheme(s.theme);
-      setSelectedTemplate(typeof s.selectedTemplateId === "object" ? s.selectedTemplateId._id : "");
+  useEffect(() => {
+    if (currentStoreId) {
+      const s = stores.find((st) => st._id === currentStoreId);
+      if (s) {
+        setTheme(s.theme);
+        setSelectedTemplate(typeof s.selectedTemplateId === "object" ? s.selectedTemplateId._id : "");
+        setSaved(true);
+      }
     }
-    setSaved(true);
-  };
+  }, [currentStoreId, stores]);
 
   const handleSave = async () => {
-    if (!selectedStoreId || !theme) return;
+    if (!currentStoreId || !theme) return;
     try {
       await changeTheme({
-        id: selectedStoreId,
+        id: currentStoreId,
         data: {
           templateId: selectedTemplate || undefined,
           theme
@@ -58,7 +57,7 @@ export default function ThemePage() {
     }
   };
 
-  if (!selectedStoreId) {
+  if (!currentStoreId) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -78,7 +77,7 @@ export default function ThemePage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {stores.map((s) => (
-              <button key={s._id} onClick={() => selectStore(s._id)}
+              <button key={s._id} onClick={() => { selectStore(s); }}
                 className="group rounded-2xl border border-zinc-200 bg-white p-5 text-left transition-all hover:shadow-lg hover:-translate-y-0.5">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-lg font-bold text-white">
                   {s.name[0]}
@@ -99,12 +98,12 @@ export default function ThemePage() {
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Theme</h2>
-            <span className="rounded-lg bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">{store?.name}</span>
+            <span className="rounded-lg bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">{currentStore?.name}</span>
           </div>
           <p className="mt-1 text-sm text-zinc-500">Customize your store appearance.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setSelectedStoreId("")} className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-600 hover:bg-zinc-50">Change Store</button>
+          <button onClick={() => clearStore()} className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-600 hover:bg-zinc-50">Change Store</button>
           <button onClick={handleSave} disabled={isLoading || saved}
             className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}

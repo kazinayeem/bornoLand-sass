@@ -1,18 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useTenant } from "@/providers/tenant-provider";
 
+type CmsPage = {
+  _id: string;
+  storeId: string;
+  slug: string;
+  title: string;
+  html: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  ogImage?: string;
+  published: boolean;
+  layout: string;
+};
+
 export default function ContactPage() {
   const { store, theme } = useTenant();
-  const { primaryColor, font, darkMode } = theme;
+  const { primaryColor, darkMode } = theme;
   const isDark = darkMode;
 
+  const [page, setPage] = useState<CmsPage | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!store._id) return;
+    setLoading(true);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+    fetch(`${apiUrl}/public/page/contact-us?storeId=${store._id}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && json.data?.page) setPage(json.data.page);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [store._id]);
+
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
-  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -25,12 +54,12 @@ export default function ContactPage() {
       toast.error("Please fill in all required fields");
       return;
     }
-    setLoading(true);
+    setSending(true);
     try {
       const res = await fetch("/api/contact/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
+        body: JSON.stringify(form),
       });
       const data = await res.json();
       if (data.success) {
@@ -42,7 +71,7 @@ export default function ContactPage() {
     } catch {
       toast.error("Something went wrong. Try again.");
     } finally {
-      setLoading(false);
+      setSending(false);
     }
   };
 
@@ -54,13 +83,28 @@ export default function ContactPage() {
           <span className="inline-block rounded-full px-3 py-1 text-xs font-medium"
             style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>Contact</span>
           <h1 className="mt-4 text-4xl font-bold sm:text-5xl" style={{ color: isDark ? "#fafafa" : "#18181b" }}>
-            Get in Touch
+            {page?.title || "Get in Touch"}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
             Have a question? We&apos;d love to hear from you.
           </p>
         </motion.div>
       </section>
+
+      {page?.html && (
+        <section className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <div className="prose prose-zinc max-w-none"
+            style={{
+              color: isDark ? "#a1a1aa" : "#52525b",
+              "--tw-prose-headings": isDark ? "#fafafa" : "#18181b",
+              "--tw-prose-links": primaryColor,
+              "--tw-prose-bold": isDark ? "#fafafa" : "#18181b",
+              "--tw-prose-quotes": isDark ? "#a1a1aa" : "#52525b",
+            } as React.CSSProperties}
+            dangerouslySetInnerHTML={{ __html: page.html }}
+          />
+        </section>
+      )}
 
       <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-2">
@@ -107,10 +151,10 @@ export default function ContactPage() {
                     className="w-full rounded-xl border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2"
                     style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", color: isDark ? "#fafafa" : "#18181b" }} />
                 </div>
-                <button type="submit" disabled={loading}
+                <button type="submit" disabled={sending}
                   className="flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
                   style={{ backgroundColor: "#18181b" }}>
-                  <Send className="h-4 w-4" /> {loading ? "Sending..." : "Send Message"}
+                  <Send className="h-4 w-4" /> {sending ? "Sending..." : "Send Message"}
                 </button>
               </form>
             )}

@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { useGetMyStoresQuery } from "@/redux/api/store-api";
 import { useGetCmsPageQuery, useSaveCmsPageMutation } from "@/redux/api/cms-api";
 import { Store, Save, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { HelpCircle, Truck, RotateCcw, Ruler, Mail, Shield, FileText, Info } from "lucide-react";
+import RichTextEditor from "@/components/cms/rich-text-editor";
+import { useCurrentStore } from "@/hooks/use-current-store";
 
 const pageMeta: Record<string, { label: string; icon: typeof HelpCircle; description: string }> = {
   faq: { label: "FAQ", icon: HelpCircle, description: "Frequently asked questions about your store." },
@@ -26,13 +27,11 @@ export default function CmsPageEditor() {
   const meta = pageMeta[slug] ?? { label: slug, icon: FileText, description: "Edit page content." };
   const Icon = meta.icon;
 
-  const { data: storesData } = useGetMyStoresQuery();
-  const stores = storesData?.data?.stores ?? [];
-  const [selectedStoreId, setSelectedStoreId] = useState<string>("");
+  const { currentStoreId, stores, selectStore, clearStore } = useCurrentStore();
 
   const { data: pageData, isLoading: pageLoading } = useGetCmsPageQuery(
-    { storeId: selectedStoreId, slug },
-    { skip: !selectedStoreId }
+    { storeId: currentStoreId, slug },
+    { skip: !currentStoreId }
   );
   const [savePage, { isLoading: saving }] = useSaveCmsPageMutation();
 
@@ -55,7 +54,7 @@ export default function CmsPageEditor() {
     }
   }, [pageData]);
 
-  if (!selectedStoreId) {
+  if (!currentStoreId) {
     return (
       <div className="space-y-6">
         <div>
@@ -66,7 +65,7 @@ export default function CmsPageEditor() {
           {stores.map((s, i) => (
             <motion.button
               key={s._id}
-              onClick={() => setSelectedStoreId(s._id)}
+              onClick={() => selectStore(s)}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
@@ -88,12 +87,13 @@ export default function CmsPageEditor() {
   const handleSave = async () => {
     try {
       await savePage({
-        storeId: selectedStoreId,
+        storeId: currentStoreId,
         slug,
         data: { title, html: htmlContent, seoTitle, seoDescription, ogImage, published },
       }).unwrap();
       toast.success("Page saved successfully");
-    } catch {
+    } catch (err) {
+      console.error("Failed to save CMS page:", err);
       toast.error("Failed to save page");
     }
   };
@@ -110,12 +110,12 @@ export default function CmsPageEditor() {
             <p className="text-sm text-zinc-500">{meta.description}</p>
           </div>
           <span className="rounded-lg bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-600">
-            {stores.find((s) => s._id === selectedStoreId)?.name}
+            {stores.find((s) => s._id === currentStoreId)?.name}
           </span>
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setSelectedStoreId("")}
+            onClick={clearStore}
             className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50"
           >
             <Store className="h-4 w-4" /> Change Store
@@ -166,16 +166,12 @@ export default function CmsPageEditor() {
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-zinc-700">Content (HTML)</label>
-                <span className="text-xs text-zinc-400">Rich text editor coming soon — using HTML for now</span>
-              </div>
-              <textarea
-                value={htmlContent}
-                onChange={(e) => setHtmlContent(e.target.value)}
-                rows={16}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100 font-mono"
-                placeholder="<h2>Page content</h2><p>Write your content here...</p>"
+              <label className="text-sm font-medium text-zinc-700">Content</label>
+              <RichTextEditor
+                key={slug}
+                content={htmlContent}
+                onChange={setHtmlContent}
+                placeholder="Start writing..."
               />
             </div>
           </motion.div>

@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ShoppingBag, ArrowLeft, CreditCard, Truck, Shield, CheckCircle, Banknote, Smartphone, Landmark, Loader2, AlertCircle } from "lucide-react";
+import { ShoppingBag, ArrowLeft, CreditCard, Truck, Shield, CheckCircle, Banknote, Smartphone, Landmark, Loader2, AlertCircle, Check, ChevronRight } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { clearCart } from "@/redux/slices/cart-slice";
 import { useCreateOrderMutation } from "@/redux/api/order-api";
@@ -28,6 +28,17 @@ const PAYMENT_LABELS: Record<string, string> = {
   nagad: "Nagad",
   rocket: "Rocket",
   bank: "Bank Transfer",
+  stripe: "Credit Card (Stripe)",
+  sslcommerz: "SSLCommerz",
+};
+
+const PAYMENT_COLORS: Record<string, string> = {
+  cod: "#10b981",
+  bkash: "#e2136e",
+  nagad: "#ed1c24",
+  rocket: "#981b98",
+  stripe: "#635bff",
+  sslcommerz: "#e61e2a",
 };
 
 export default function CheckoutPage() {
@@ -47,6 +58,7 @@ export default function CheckoutPage() {
   const paymentMethods = pmData?.data?.paymentMethods ?? [];
   const deliveryZones = dzData?.data?.deliveryZones ?? [];
 
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     fullName: "", phone: "", street: "", city: "", state: "", zip: "", notes: "",
   });
@@ -91,6 +103,9 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
+
+    if (step === 1) { setStep(2); return; }
+    if (step === 2) { setStep(3); return; }
 
     const token = localStorage.getItem("customer_token");
     if (!token) {
@@ -215,60 +230,85 @@ export default function CheckoutPage() {
         </div>
       </div>
 
+      <div className="mb-8">
+        <div className="flex items-center justify-center gap-0">
+          {[{ step: 1, label: "Shipping", icon: Truck }, { step: 2, label: "Payment", icon: CreditCard }, { step: 3, label: "Review", icon: ShoppingBag }].map((s, i) => (
+            <div key={s.step} className="flex items-center">
+              <button type="button" onClick={() => s.step < step && setStep(s.step)}
+                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-medium transition ${
+                  step === s.step ? "bg-zinc-900 text-white" :
+                  step > s.step ? "bg-emerald-50 text-emerald-700 cursor-pointer" :
+                  "bg-zinc-50 text-zinc-400"
+                }`}>
+                {step > s.step ? <Check className="h-3.5 w-3.5" /> : <s.icon className="h-3.5 w-3.5" />}
+                {s.label}
+              </button>
+              {i < 2 && <ChevronRight className="mx-2 h-4 w-4 text-zinc-300" />}
+            </div>
+          ))}
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit}>
         <div className="grid gap-8 lg:grid-cols-5">
           <div className="space-y-6 lg:col-span-3">
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              className="rounded-xl border border-zinc-100 p-5">
-              <div className="mb-4 flex items-center gap-2">
-                <Truck className="h-5 w-5 text-zinc-700" />
-                <h2 className="font-semibold text-zinc-900">Shipping Address</h2>
-              </div>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">Full Name *</label>
-                    <input type="text" value={form.fullName} onChange={handleChange("fullName")} required
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+            {step === 1 && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border border-zinc-100 p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <Truck className="h-5 w-5 text-zinc-700" />
+                  <h2 className="font-semibold text-zinc-900">Shipping Address</h2>
+                </div>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-zinc-600">Full Name *</label>
+                      <input type="text" value={form.fullName} onChange={handleChange("fullName")} required
+                        className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-zinc-600">Phone *</label>
+                      <input type="tel" value={form.phone} onChange={handleChange("phone")} required
+                        className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    </div>
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">Phone *</label>
-                    <input type="tel" value={form.phone} onChange={handleChange("phone")} required
+                    <label className="mb-1 block text-xs font-medium text-zinc-600">Street Address *</label>
+                    <input type="text" value={form.street} onChange={handleChange("street")} required
                       className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-zinc-600">City *</label>
+                      <input type="text" value={form.city} onChange={handleChange("city")} required
+                        className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-zinc-600">State</label>
+                      <input type="text" value={form.state} onChange={handleChange("state")}
+                        className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-zinc-600">ZIP</label>
+                      <input type="text" value={form.zip} onChange={handleChange("zip")}
+                        className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-zinc-600">Order Notes</label>
+                    <textarea value={form.notes} onChange={handleChange("notes")} rows={2} placeholder="Optional"
+                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                   </div>
                 </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">Street Address *</label>
-                  <input type="text" value={form.street} onChange={handleChange("street")} required
-                    className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">City *</label>
-                    <input type="text" value={form.city} onChange={handleChange("city")} required
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">State</label>
-                    <input type="text" value={form.state} onChange={handleChange("state")}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">ZIP</label>
-                    <input type="text" value={form.zip} onChange={handleChange("zip")}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">Order Notes</label>
-                  <textarea value={form.notes} onChange={handleChange("notes")} rows={2} placeholder="Optional"
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                </div>
-              </div>
-            </motion.div>
+                <button type="button" onClick={() => setStep(2)}
+                  className="mt-4 w-full rounded-xl bg-zinc-900 py-2.5 text-xs font-medium text-white hover:opacity-90">
+                  Continue to Payment
+                </button>
+              </motion.div>
+            )}
 
-            {deliveryZones.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+            {step === 2 && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 className="rounded-xl border border-zinc-100 p-5">
                 <div className="mb-4 flex items-center gap-2">
                   <Truck className="h-5 w-5 text-zinc-700" />
@@ -300,8 +340,8 @@ export default function CheckoutPage() {
               </motion.div>
             )}
 
-            {paymentMethods.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            {step === 2 && paymentMethods.length > 0 && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
                 className="rounded-xl border border-zinc-100 p-5">
                 <div className="mb-4 flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-zinc-700" />
@@ -327,13 +367,8 @@ export default function CheckoutPage() {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-zinc-900">{pm.label}</p>
-                          {pm.accountNumber && (
-                            <p className="text-xs text-zinc-400">{pm.accountNumber}</p>
-                          )}
+                          {pm.accountNumber && <p className="text-xs text-zinc-400">{pm.accountNumber}</p>}
                         </div>
-                        {!pm.enabled && (
-                          <span className="text-[10px] font-medium text-red-400">Disabled</span>
-                        )}
                       </label>
                     );
                   })}
@@ -346,10 +381,52 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                <div className="mt-3 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2">
+                <div className="mt-4 flex gap-2">
+                  <button type="button" onClick={() => setStep(1)}
+                    className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50">
+                    Back
+                  </button>
+                  <button type="button" onClick={() => setStep(3)}
+                    className="flex-1 rounded-xl bg-zinc-900 py-2.5 text-xs font-medium text-white hover:opacity-90">
+                    Review Order
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 3 && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border border-zinc-100 p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <ShoppingBag className="h-5 w-5 text-zinc-700" />
+                  <h2 className="font-semibold text-zinc-900">Review Order</h2>
+                </div>
+                <div className="space-y-3 text-sm">
+                  <div className="rounded-lg bg-zinc-50 p-3">
+                    <p className="text-[11px] font-medium uppercase text-zinc-400">Shipping To</p>
+                    <p className="mt-1 font-medium text-zinc-900">{form.fullName}</p>
+                    <p className="text-zinc-500">{form.street}, {form.city}</p>
+                    <p className="text-zinc-500">{form.state} {form.zip}</p>
+                    <p className="text-zinc-500">{form.phone}</p>
+                  </div>
+                  <div className="rounded-lg bg-zinc-50 p-3">
+                    <p className="text-[11px] font-medium uppercase text-zinc-400">Delivery</p>
+                    <p className="mt-1 font-medium text-zinc-900">{selectedZone?.name}</p>
+                    <p className="text-zinc-500">{selectedZone?.estimatedDays}</p>
+                  </div>
+                  <div className="rounded-lg bg-zinc-50 p-3">
+                    <p className="text-[11px] font-medium uppercase text-zinc-400">Payment</p>
+                    <p className="mt-1 font-medium text-zinc-900">{selectedPm?.label}</p>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2">
                   <Shield className="h-4 w-4 text-green-500" />
                   <p className="text-xs text-green-600">Your information is secure</p>
                 </div>
+                <button type="button" onClick={() => setStep(2)}
+                  className="mt-3 w-full rounded-xl border border-zinc-200 py-2.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50">
+                  Back to Payment
+                </button>
               </motion.div>
             )}
           </div>
@@ -422,6 +499,8 @@ export default function CheckoutPage() {
                 {isLoading ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Placing Order...</>
                 ) : (
+                  step === 1 ? "Continue to Payment" :
+                  step === 2 ? "Review Order" :
                   `Place Order — ${formatCurrency(total, settings)}`
                 )}
               </button>

@@ -23,6 +23,9 @@ type BuilderState = {
   publishing: boolean;
   pageId: string | null;
   favoriteSectionTypes: string[];
+  isDraft: boolean;
+  past: BuilderSection[][];
+  future: BuilderSection[][];
 };
 
 const initialState: BuilderState = {
@@ -36,35 +39,52 @@ const initialState: BuilderState = {
   publishing: false,
   pageId: null,
   favoriteSectionTypes: [],
+  isDraft: true,
+  past: [],
+  future: [],
 };
+
+const MAX_HISTORY = 50;
+
+function pushHistory(state: BuilderState) {
+  state.past.push(JSON.parse(JSON.stringify(state.sections)));
+  if (state.past.length > MAX_HISTORY) state.past.shift();
+  state.future = [];
+}
 
 const builderSlice = createSlice({
   name: "builder",
   initialState,
   reducers: {
     setSections(state, action: PayloadAction<BuilderSection[]>) {
+      pushHistory(state);
       state.sections = action.payload;
       state.isDirty = true;
     },
     addSection(state, action: PayloadAction<BuilderSection>) {
+      pushHistory(state);
       state.sections.push(action.payload);
       state.isDirty = true;
     },
     removeSection(state, action: PayloadAction<string>) {
+      pushHistory(state);
       state.sections = state.sections.filter((s) => s.id !== action.payload);
       state.isDirty = true;
     },
     toggleSection(state, action: PayloadAction<string>) {
+      pushHistory(state);
       const s = state.sections.find((s) => s.id === action.payload);
       if (s) { s.visible = !s.visible; state.isDirty = true; }
     },
     updateSectionProps(state, action: PayloadAction<{ id: string; props: SectionProps }>) {
+      pushHistory(state);
       const s = state.sections.find((s) => s.id === action.payload.id);
       if (s) { s.props = action.payload.props; state.isDirty = true; }
     },
     moveSection(state, action: PayloadAction<{ from: number; to: number }>) {
       const { from, to } = action.payload;
       if (to < 0 || to >= state.sections.length) return;
+      pushHistory(state);
       const copy = [...state.sections];
       const [item] = copy.splice(from, 1);
       copy.splice(to, 0, item);
@@ -74,6 +94,7 @@ const builderSlice = createSlice({
     duplicateSection(state, action: PayloadAction<string>) {
       const idx = state.sections.findIndex((s) => s.id === action.payload);
       if (idx < 0) return;
+      pushHistory(state);
       const original = state.sections[idx];
       const dup: BuilderSection = {
         ...original,
@@ -107,11 +128,14 @@ const builderSlice = createSlice({
     loadSections(state, action: PayloadAction<BuilderSection[]>) {
       state.sections = action.payload;
       state.isDirty = false;
+      state.past = [];
+      state.future = [];
     },
     setPageId(state, action: PayloadAction<string>) {
       state.pageId = action.payload;
     },
     renameSection(state, action: PayloadAction<{ id: string; label: string }>) {
+      pushHistory(state);
       const s = state.sections.find((s) => s.id === action.payload.id);
       if (s) { s.label = action.payload.label; state.isDirty = true; }
     },
@@ -124,6 +148,26 @@ const builderSlice = createSlice({
         state.favoriteSectionTypes.push(type);
       }
     },
+    undo(state) {
+      if (state.past.length === 0) return;
+      state.future.push(JSON.parse(JSON.stringify(state.sections)));
+      state.sections = state.past.pop()!;
+      state.isDirty = true;
+    },
+    redo(state) {
+      if (state.future.length === 0) return;
+      state.past.push(JSON.parse(JSON.stringify(state.sections)));
+      state.sections = state.future.pop()!;
+      state.isDirty = true;
+    },
+    setDraft(state, action: PayloadAction<boolean>) {
+      state.isDraft = action.payload;
+    },
+    batchUpdateSections(state, action: PayloadAction<{ oldSections: BuilderSection[]; newSections: BuilderSection[] }>) {
+      pushHistory(state);
+      state.sections = action.payload.newSections;
+      state.isDirty = true;
+    },
   },
 });
 
@@ -133,5 +177,6 @@ export const {
   setSelectedSection, setEditingSection, setActiveTab,
   markSaved, setSaving, setPublishing, loadSections, setPageId,
   renameSection, toggleFavoriteSection,
+  undo, redo, setDraft, batchUpdateSections,
 } = builderSlice.actions;
 export const builderReducer = builderSlice.reducer;

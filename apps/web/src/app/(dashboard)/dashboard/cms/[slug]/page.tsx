@@ -92,9 +92,9 @@ function CmsPageEditor() {
         data: { title, html: htmlContent, seoTitle, seoDescription, ogImage, published },
       }).unwrap();
       toast.success("Page saved successfully");
-    } catch (err: any) {
-      console.error("Failed to save CMS page:", err, JSON.stringify(err, Object.keys(err)));
-      const msg = err?.data?.message || err?.message || err?.error || "Failed to save page";
+    } catch (err) {
+      console.error("Failed to save CMS page:", err);
+      const msg = (err as any)?.data?.message || (err as any)?.message || "Failed to save page";
       toast.error(msg);
     }
   };
@@ -258,7 +258,6 @@ function CmsPageEditor() {
           </motion.div>
           </>
         )}
-      </div>
     </div>
   );
 }

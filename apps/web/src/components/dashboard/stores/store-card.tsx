@@ -9,6 +9,7 @@ import {
   Settings, Trash2, Wrench, ShoppingBag, UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getStoreUrl } from "@/utils/domain";
 import type { Store as StoreType, Plan } from "@/redux/api/store-api";
 
 type StoreCardProps = {
@@ -18,15 +19,6 @@ type StoreCardProps = {
   onManage: (store: StoreType, tab: "overview" | "billing" | "theme") => void;
   onDelete: (store: StoreType) => void;
 };
-
-function getStoreUrl(store: StoreType) {
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornoland.com";
-  const subdomain = store.subdomain || store.slug;
-  if (rootDomain.includes("localhost")) {
-    return `http://${subdomain}.localhost:3000`;
-  }
-  return `https://${subdomain}.${rootDomain}`;
-}
 
 function formatBDT(value: number) {
   return new Intl.NumberFormat("en-BD", {
@@ -77,7 +69,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
   }, []);
 
   const planName = getPlanName(store.planId, store.plan);
-  const storeUrl = getStoreUrl(store);
+  const storeUrl = getStoreUrl(store.subdomain || store.slug);
   const isActive = store.status === "active";
   const selectedPlan = plans.find((p) => p._id === (store.planId && typeof store.planId === "object" ? store.planId._id : ""));
   const subsPlan = plans.find((p) => p.slug === store.plan) ?? selectedPlan;
@@ -95,7 +87,6 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
       transition={{ delay: index * 0.03 }}
       className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
     >
-      {/* Gradient header */}
       <div className="relative h-28 overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-800 to-blue-600 p-5 text-white">
         <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/5" />
         <div className="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-white/5" />
@@ -112,7 +103,6 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
             </div>
           </div>
 
-          {/* Three-dot menu */}
           <div ref={menuRef} className="relative">
             <button
               onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
@@ -145,7 +135,6 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
           </div>
         </div>
 
-        {/* Status badges in header */}
         <div className="relative mt-3 flex items-center gap-2">
           <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${isActive ? "bg-emerald-500/30 text-emerald-100" : "bg-white/15 text-white/80"}`}>
             {store.status}
@@ -156,15 +145,12 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
         </div>
       </div>
 
-      {/* Body */}
       <div className="space-y-3.5 p-4">
-        {/* URL */}
         <div className="flex items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
           <Globe className="h-3.5 w-3.5 shrink-0 text-blue-500" />
           <span className="truncate">{storeUrl}</span>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: "Products", value: store.productCount ?? 0, icon: Box },
@@ -179,7 +165,6 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
           ))}
         </div>
 
-        {/* Plan + template badges */}
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
             <CreditCard className="h-3 w-3" /> {subsPlan?.name ?? planName}
@@ -196,14 +181,12 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
           )}
         </div>
 
-        {/* Description */}
         {store.description && (
           <p className="line-clamp-2 text-xs leading-relaxed text-zinc-500">
             {store.description}
           </p>
         )}
 
-        {/* Action buttons */}
         <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => onManage(store, "overview")}
@@ -225,7 +208,6 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
           </button>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-between border-t border-zinc-100 pt-3 text-[11px] text-zinc-400">
           <span>Renewal: {formatDate(store.renewalDate)}</span>
           <div className="flex items-center gap-2">

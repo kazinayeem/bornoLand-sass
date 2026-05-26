@@ -1,10 +1,12 @@
+import { config } from "@/lib/config";
+
 export type TenantResolution = {
   tenantKey: string | null;
   source: "subdomain" | "custom-domain" | "session" | "none";
 };
 
 export function resolveTenant(hostname: string, sessionTenantId?: string): TenantResolution {
-  const rootDomain = process.env.ROOT_DOMAIN ?? "bornoland.com";
+  const rootDomain = config.rootDomain;
 
   if (sessionTenantId) {
     return {

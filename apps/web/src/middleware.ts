@@ -3,9 +3,9 @@ import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 
 const PUBLIC_FILE = /\.(.*)$/;
-const authSecret = process.env.JWT_SECRET ?? "bornoland-dev-secret";
+const authSecret = process.env.JWT_SECRET ?? "";
 const sessionCookieName = process.env.SESSION_COOKIE_NAME ?? "bornoland.session";
-const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "bornoland.com";
+const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site";
 
 const DEV_ROOT_DOMAINS = new Set([
   "localhost.com",
@@ -95,8 +95,6 @@ export default async function middleware(request: NextRequest) {
 
   const subdomain = getSubdomain(hostname);
 
-  // Subdomain check runs before auth so app-route subdomain requests
-  // redirect to the base domain in a single hop.
   if (subdomain) {
     if (pathname.startsWith("/api")) {
       return NextResponse.next();

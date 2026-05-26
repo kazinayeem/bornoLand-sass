@@ -1,9 +1,8 @@
 import express from "express";
 import helmet from "helmet";
 import cors, { type CorsOptions } from "cors";
-import dotenv from "dotenv";
-import path from "path";
 import { connectDatabase } from "./config/database.js";
+import { serverConfig } from "./config/server.js";
 import { authRouter } from "./routes/auth.route.js";
 import { adminRouter } from "./routes/admin.route.js";
 import { billingRouter } from "./routes/billing.route.js";
@@ -30,61 +29,37 @@ import { CartModel } from "./models/cart.model.js";
 import { subdomainDetector } from "./middleware/subdomain.middleware.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
-dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
-
 const app = express();
 
-// ── CORS configuration ──────────────────────────────────────────
-
-const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "bornoland.com";
+const ROOT_DOMAIN = serverConfig.ROOT_DOMAIN;
 
 const configuredOrigins = [
-  process.env.WEB_URL,
-  process.env.APP_URL,
-  ...(process.env.CORS_ORIGINS?.split(",").map((origin) => origin.trim()) ?? [])
+  serverConfig.FRONTEND_URL,
+  serverConfig.APP_URL,
+  ...(serverConfig.CORS_ORIGINS?.split(",").map((origin) => origin.trim()) ?? [])
 ].filter((origin): origin is string => Boolean(origin));
 
-/**
- * Dynamic origin validator that supports:
- *   - Bare localhost / 127.0.0.1  (e.g. http://localhost:3000)
- *   - Subdomain localhost          (e.g. http://nayeem.localhost:3000)
- *   - Subdomain localhost.com      (e.g. http://nayeem.localhost.com:3002)
- *   - Subdomain lvh.me             (e.g. http://nayeem.lvh.me:3000)
- *   - Subdomain 127.0.0.1          (e.g. http://nayeem.127.0.0.1:3000)
- *   - Subdomain of ROOT_DOMAIN     (e.g. https://nayeem.bornoland.com)
- *   - Any origin listed in env vars CORS_ORIGINS, WEB_URL, APP_URL
- */
 const allowedOriginPatterns: RegExp[] = [
-  // Bare localhost / 127.0.0.1 / 0.0.0.0 (no subdomain)
   /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/,
-  // Subdomain of localhost (e.g. http://nayeem.localhost:3000)
   /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.localhost(:\d+)?$/i,
-  // Subdomain of 127.0.0.1
   /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.127\.0\.0\.1(:\d+)?$/i,
-  // Subdomain of localhost.com (for /etc/hosts approach)
   /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.localhost\.com(:\d+)?$/i,
-  // Subdomain of lvh.me
   /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.lvh\.me(:\d+)?$/i,
-  // Production subdomain of ROOT_DOMAIN
   new RegExp(`^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.${ROOT_DOMAIN.replace(/\./g, "\\.")}(:\\d+)?$`, "i"),
 ];
 
 const corsOptions: CorsOptions = {
   origin(origin, callback) {
-    // Allow server-to-server requests (no origin)
     if (!origin) {
       callback(null, true);
       return;
     }
 
-    // Check hardcoded configured origins first
     if (configuredOrigins.includes(origin)) {
       callback(null, true);
       return;
     }
 
-    // Check dynamic patterns
     for (const pattern of allowedOriginPatterns) {
       if (pattern.test(origin)) {
         callback(null, true);
@@ -106,10 +81,8 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
 
-// ── Subdomain detection (applied globally) ──────────────────────
 app.use(subdomainDetector);
 
-// ── Health ──────────────────────────────────────────────────────
 app.get("/health", (_request, response) => {
   response.json({ ok: true, service: "bornoland-api" });
 });
@@ -123,7 +96,6 @@ app.get("/health/database", async (_request, response) => {
   }
 });
 
-// ── Routes ──────────────────────────────────────────────────────
 app.use("/auth", authRouter);
 app.use("/tenants", tenantRouter);
 app.use("/pages", pageRouter);
@@ -149,7 +121,7 @@ app.use("/categories", categoryRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-const port = Number(process.env.PORT ?? 4000);
+const port = serverConfig.PORT;
 
 async function startServer() {
   try {

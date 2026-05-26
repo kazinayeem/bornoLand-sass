@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { serverConfig } from "../config/server.js";
 
 export type SessionPayload = {
   userId: string;
@@ -9,10 +10,10 @@ export type SessionPayload = {
   loginType: "user" | "admin";
 };
 
-const sessionCookieName = process.env.SESSION_COOKIE_NAME ?? "bornoland.session";
+const sessionCookieName = serverConfig.SESSION_COOKIE_NAME;
 
 function getSecret() {
-  const secret = process.env.JWT_SECRET;
+  const secret = serverConfig.JWT_SECRET;
 
   if (!secret) {
     throw new Error("JWT_SECRET is required");
@@ -40,24 +41,16 @@ export function getSessionCookieMaxAge(rememberMe = false) {
 export function getSessionCookieOptions(maxAgeSeconds: number) {
   const options: Record<string, unknown> = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: serverConfig.isProd,
     sameSite: "lax" as const,
     path: "/",
     maxAge: maxAgeSeconds * 1000,
   };
 
-  // Set a wildcard domain so cookies are shared across subdomains.
-  // In production: .bornoland.com  → shared by all *.bornoland.com
-  // In development: only set if WILDCARD_DOMAIN is explicitly configured
-  // (e.g., .localhost.com for *.localhost.com testing).
-  // For lvh.me or bare localhost, omit domain entirely (cookies stay per-origin).
-  if (process.env.NODE_ENV === "production") {
-    options.domain = process.env.WILDCARD_DOMAIN ?? `.${process.env.ROOT_DOMAIN ?? "bornoland.com"}`;
-  } else if (process.env.WILDCARD_DOMAIN) {
-    // In development, only set domain if explicitly configured
-    // (e.g., WILDCARD_DOMAIN=.localhost.com for *.localhost.com).
-    // NOTE: Browsers may reject cookies for .localhost/.lvh.me.
-    options.domain = process.env.WILDCARD_DOMAIN;
+  if (serverConfig.isProd) {
+    options.domain = serverConfig.WILDCARD_DOMAIN || `.${serverConfig.ROOT_DOMAIN}`;
+  } else if (serverConfig.WILDCARD_DOMAIN) {
+    options.domain = serverConfig.WILDCARD_DOMAIN;
   }
 
   return options;

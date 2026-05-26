@@ -7,6 +7,7 @@ import { TeamMemberModel } from "../models/team-member.model.js";
 import { signSessionToken, getSessionCookieName, getSessionCookieMaxAge, getSessionCookieOptions, verifySessionToken } from "../utils/jwt.js";
 import { sendFailure, sendSuccess } from "../utils/api-response.js";
 import { forgotPassword, loginUser, registerUser, resetPassword } from "../services/auth.service.js";
+import { serverConfig } from "../config/server.js";
 
 function extractCookieToken(request: Request) {
   const rawCookie = request.header("cookie") ?? "";
@@ -66,8 +67,8 @@ export async function logoutController(_request: Request, response: Response) {
 }
 
 export async function googleStartController(request: Request, response: Response) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+  const clientId = serverConfig.GOOGLE_CLIENT_ID;
+  const redirectUri = serverConfig.GOOGLE_REDIRECT_URI;
   const callbackUrl = typeof request.query.redirectUrl === "string" ? request.query.redirectUrl : "/dashboard";
 
   if (!clientId || !redirectUri) {
@@ -87,10 +88,10 @@ export async function googleStartController(request: Request, response: Response
 }
 
 export async function googleCallbackController(request: Request, response: Response) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
-  const webUrl = process.env.WEB_URL ?? process.env.APP_URL ?? "http://localhost:3000";
+  const clientId = serverConfig.GOOGLE_CLIENT_ID;
+  const clientSecret = serverConfig.GOOGLE_CLIENT_SECRET;
+  const redirectUri = serverConfig.GOOGLE_REDIRECT_URI;
+  const webUrl = serverConfig.FRONTEND_URL;
 
   const code = typeof request.query.code === "string" ? request.query.code : null;
   const state = typeof request.query.state === "string" ? request.query.state : null;

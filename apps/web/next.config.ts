@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const API_URL = process.env.API_URL ?? "http://localhost:4000";
+
 const nextConfig: NextConfig = {
   experimental: {},
   images: {
@@ -11,6 +13,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "picsum.photos"
+      },
+      {
+        protocol: "https",
+        hostname: "placehold.co"
       }
     ]
   },
@@ -18,7 +24,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: `${process.env.API_URL ?? "http://localhost:4000"}/:path*`
+        destination: `${API_URL}/:path*`
       }
     ];
   }

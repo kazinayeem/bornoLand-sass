@@ -20,7 +20,9 @@ export default function CartPage() {
   const [removeRemote] = useRemoveFromCartMutation();
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal >= 100 ? 0 : 9.99;
+  const freeThreshold = settings.currencyCode === "BDT" ? 5000 : 100;
+  const shippingRate = settings.currencyCode === "BDT" ? 99 : 9.99;
+  const shipping = subtotal >= freeThreshold ? 0 : shippingRate;
   const total = subtotal + shipping;
 
   const handleQuantity = (productId: string, quantity: number) => {

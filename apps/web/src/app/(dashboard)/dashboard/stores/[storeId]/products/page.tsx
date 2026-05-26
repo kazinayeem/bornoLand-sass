@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGetStoreQuery } from "@/redux/api/store-api";
+import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
 import { useGetProductsQuery, useCreateProductMutation, useUpdateProductMutation, useDeleteProductMutation, useDuplicateProductMutation } from "@/redux/api/product-api";
 import type { Product } from "@/redux/api/product-api";
 import { toast } from "sonner";
@@ -28,9 +29,12 @@ export default function StoreProductsPage() {
   const storeId = params.storeId as string;
 
   const { data: storeData, isLoading: storeLoading } = useGetStoreQuery(storeId);
+  const { data: settingsData } = useGetStoreSettingsQuery(storeId);
   const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(storeId);
   const products = productsData?.data?.products ?? [];
   const store = storeData?.data?.store;
+  const storeSettings = settingsData?.data?.settings;
+  const fmt = (amount: number) => formatCurrency(amount, storeSettings ?? "BDT");
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [search, setSearch] = useState("");
@@ -267,9 +271,9 @@ export default function StoreProductsPage() {
                 </div>
                 <div className="mt-3 flex items-center justify-between">
                   <div>
-                    <span className="text-lg font-bold text-zinc-900">{formatCurrency(p.price)}</span>
+                    <span className="text-lg font-bold text-zinc-900">{fmt(p.price)}</span>
                     {p.comparePrice && p.comparePrice > p.price && (
-                      <span className="ml-1.5 text-xs text-zinc-400 line-through">{formatCurrency(p.comparePrice)}</span>
+                      <span className="ml-1.5 text-xs text-zinc-400 line-through">{fmt(p.comparePrice)}</span>
                     )}
                   </div>
                   <span className="text-xs text-zinc-500">Stock: {p.stock}</span>
@@ -314,9 +318,9 @@ export default function StoreProductsPage() {
                   <td className="px-4 py-3 text-sm text-zinc-500">{p.sku || "—"}</td>
                   <td className="px-4 py-3"><span className="rounded-lg bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">{p.category}</span></td>
                   <td className="px-4 py-3">
-                    <span className="text-sm font-medium text-zinc-900">{formatCurrency(p.price)}</span>
+                    <span className="text-sm font-medium text-zinc-900">{fmt(p.price)}</span>
                     {p.comparePrice && p.comparePrice > p.price && (
-                      <span className="ml-1 text-xs text-zinc-400 line-through">{formatCurrency(p.comparePrice)}</span>
+                      <span className="ml-1 text-xs text-zinc-400 line-through">{fmt(p.comparePrice)}</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-sm text-zinc-500">{p.stock}</td>
@@ -465,7 +469,7 @@ export default function StoreProductsPage() {
               </div>
               <div className="mt-4 rounded-xl bg-zinc-50 p-3">
                 <p className="text-sm font-medium text-zinc-700">{deleteTarget.name}</p>
-                <p className="text-xs text-zinc-400">{formatCurrency(deleteTarget.price)} &middot; Stock: {deleteTarget.stock}</p>
+                <p className="text-xs text-zinc-400">{fmt(deleteTarget.price)} &middot; Stock: {deleteTarget.stock}</p>
               </div>
               <div className="mt-6 flex items-center justify-end gap-3">
                 <button onClick={() => setDeleteTarget(null)} className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">Cancel</button>

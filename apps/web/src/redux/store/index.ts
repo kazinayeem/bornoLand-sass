@@ -15,6 +15,7 @@ import { orderReducer } from "@/redux/slices/order-slice";
 import { builderReducer } from "@/redux/slices/builder-slice";
 import { themeReducer } from "@/redux/slices/theme-slice";
 import { previewReducer } from "@/redux/slices/preview-slice";
+import storeSettingsReducer from "@/redux/slices/store-settings-slice";
 
 export const store = configureStore({
   reducer: {
@@ -33,7 +34,8 @@ export const store = configureStore({
     order: orderReducer,
     builder: builderReducer,
     theme: themeReducer,
-    preview: previewReducer
+    preview: previewReducer,
+    storeSettings: storeSettingsReducer
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(baseApi.middleware)
 });

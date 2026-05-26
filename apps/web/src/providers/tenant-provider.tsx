@@ -1,6 +1,8 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { useDispatch } from "react-redux";
+import { setStoreSettings } from "@/redux/slices/store-settings-slice";
 
 export type ThemeData = {
   primaryColor: string; secondaryColor: string; font: string;
@@ -27,6 +29,9 @@ export type StoreSettingsData = {
   locale: string;
   decimalPlaces: number;
   taxRate: number;
+  dateFormat?: string;
+  timezone?: string;
+  language?: string;
 };
 
 export type HomepageSliderData = {
@@ -68,6 +73,28 @@ export function useTenant(): TenantContextType {
   return ctx;
 }
 
+function TenantSync({ settings }: { settings: StoreSettingsData }) {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(setStoreSettings({
+      currencyCode: settings.currencyCode,
+      currencySymbol: settings.currencySymbol,
+      currencyPosition: settings.currencyPosition,
+      locale: settings.locale,
+      decimalPlaces: settings.decimalPlaces,
+      dateFormat: settings.dateFormat,
+      timezone: settings.timezone,
+      language: settings.language,
+    }));
+  }, [dispatch, settings.currencyCode, settings.currencySymbol, settings.currencyPosition, settings.locale, settings.decimalPlaces, settings.dateFormat, settings.timezone, settings.language]);
+  return null;
+}
+
 export function TenantProvider({ value, children }: { value: TenantContextType; children: ReactNode }) {
-  return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>;
+  return (
+    <TenantContext.Provider value={value}>
+      <TenantSync settings={value.settings} />
+      {children}
+    </TenantContext.Provider>
+  );
 }

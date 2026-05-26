@@ -10,6 +10,7 @@ import {
 } from "../controllers/store.controller.js";
 import { getStoreSettingsController, updateStoreSettingsController } from "../controllers/store-settings.controller.js";
 import { createHomepageSliderController, deleteHomepageSliderController, listHomepageSlidersController, updateHomepageSliderController } from "../controllers/homepage-slider.controller.js";
+import { listStoreOrdersController, getStoreOrderController, updateOrderStatusController, updatePaymentStatusController } from "../controllers/store-order.controller.js";
 
 export const storeRouter = Router();
 
@@ -27,3 +28,8 @@ storeRouter.post("/:id/sliders", createHomepageSliderController);
 storeRouter.put("/:id/sliders/:sliderId", updateHomepageSliderController);
 storeRouter.delete("/:id/sliders/:sliderId", deleteHomepageSliderController);
 storeRouter.delete("/:id", deleteStoreController);
+
+storeRouter.get("/:storeId/orders", listStoreOrdersController);
+storeRouter.get("/:storeId/orders/:id", getStoreOrderController);
+storeRouter.put("/:storeId/orders/:id/status", updateOrderStatusController);
+storeRouter.put("/:storeId/orders/:id/payment-status", updatePaymentStatusController);

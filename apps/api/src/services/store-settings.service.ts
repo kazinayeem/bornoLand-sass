@@ -9,7 +9,10 @@ const defaultSettings = {
   currencyPosition: "before",
   locale: "en-US",
   decimalPlaces: 2,
-  taxRate: 0
+  taxRate: 0,
+  dateFormat: "MM/DD/YYYY",
+  timezone: "UTC",
+  language: "en",
 } as const;
 
 export async function ensureDefaultStoreSettings(storeId: string) {

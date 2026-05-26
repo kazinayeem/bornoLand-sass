@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useGetStoreQuery, useUpdateStoreMutation, useDeleteStoreMutation, useChangeStoreThemeMutation } from "@/redux/api/store-api";
 import { useGetTemplatesQuery } from "@/redux/api/template-api";
+import { useGetStoreSettingsQuery, useUpdateStoreSettingsMutation } from "@/redux/api/store-settings-api";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -29,11 +30,16 @@ export default function StoreDetailPage() {
   const { data: templatesData } = useGetTemplatesQuery();
   const templates = templatesData?.data?.templates ?? [];
 
+  const { data: settingsData } = useGetStoreSettingsQuery(storeId);
+  const [updateStoreSettings] = useUpdateStoreSettingsMutation();
+  const currencyCode = settingsData?.data?.settings?.currencyCode ?? "BDT";
+
   const store = data?.data?.store;
   const [showDelete, setShowDelete] = useState(false);
   const [confirmName, setConfirmName] = useState("");
   const [showTheme, setShowTheme] = useState(false);
   const [themeForm, setThemeForm] = useState<Record<string, unknown>>({});
+
 
   if (isLoading) return (
     <div className="flex items-center justify-center py-24">
@@ -159,6 +165,30 @@ export default function StoreDetailPage() {
                   {new Date(store.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 </span>
               </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-zinc-900">Currency</h3>
+            <p className="mt-1 text-xs text-zinc-500">Select the currency for this store.</p>
+            <div className="mt-4 flex items-center gap-3">
+              <select value={currencyCode}
+                onChange={(e) => {
+                  const code = e.target.value as "USD" | "BDT";
+                  const sym = code === "BDT" ? "\u09f3" : "$";
+                  const pos: "before" = "before";
+                  const loc = code === "BDT" ? "bn-BD" : "en-US";
+                  const dec = code === "BDT" ? 0 : 2;
+                  updateStoreSettings({ storeId, data: { currencyCode: code, currencySymbol: sym, currencyPosition: pos, locale: loc, decimalPlaces: dec } });
+                  toast.success(`Currency changed to ${code} (${sym})`);
+                }}
+                className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-900 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                <option value="BDT">BDT (৳)</option>
+                <option value="USD">USD ($)</option>
+              </select>
+              <span className="text-sm text-zinc-400">
+                {currencyCode === "BDT" ? "৳1,000" : "$1,000.00"}
+              </span>
             </div>
           </div>
 

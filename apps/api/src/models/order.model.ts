@@ -36,9 +36,10 @@ const orderSchema = new Schema(
       country: { type: String, default: "US" }
     },
     paymentMethod: { type: String, default: "cod" },
-    paymentStatus: { type: String, enum: ["pending", "paid", "failed"], default: "pending" },
+    paymentStatus: { type: String, enum: ["pending", "paid", "failed", "refunded"], default: "pending" },
     notes: { type: String, default: "" },
-    orderNumber: { type: String, unique: true }
+    orderNumber: { type: String, unique: true },
+    currencyCode: { type: String, enum: ["USD", "BDT", "EUR", "INR"], default: "USD" }
   },
   { timestamps: true }
 );

@@ -13,6 +13,8 @@ export function ProductsPanel({ storeId }: Props) {
   const { data, isLoading } = useGetProductsQuery(storeId ?? "", { skip: !storeId });
   const products = data?.data?.products ?? [];
   const theme = useSelector((s: RootState) => s.theme);
+  const storeSettings = useSelector((s: RootState) => s.storeSettings);
+  const fmt = (amount: number) => formatCurrency(amount, storeSettings);
 
   if (!storeId) {
     return (
@@ -51,7 +53,7 @@ export function ProductsPanel({ storeId }: Props) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="truncate text-xs font-medium text-zinc-700">{product.name}</p>
-              <p className="text-[11px] text-zinc-400">{formatCurrency(product.price)}</p>
+              <p className="text-[11px] text-zinc-400">{fmt(product.price)}</p>
             </div>
             <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
               product.status === "active" ? "bg-green-50 text-green-600" : "bg-zinc-50 text-zinc-400"

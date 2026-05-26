@@ -8,6 +8,7 @@ const homepageSliderSchema = new Schema(
     title: { type: String, required: true, trim: true },
     subtitle: { type: String, default: "", trim: true },
     imageUrl: { type: String, required: true, trim: true },
+    mobileImageUrl: { type: String, default: "", trim: true },
     buttonText: { type: String, default: "Shop Now", trim: true },
     buttonLink: { type: String, default: "/shop", trim: true },
     sortOrder: { type: Number, default: 0 },

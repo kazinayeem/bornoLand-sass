@@ -9,6 +9,9 @@ export type StoreSettings = {
   locale: string;
   decimalPlaces: number;
   taxRate: number;
+  dateFormat: string;
+  timezone: string;
+  language: string;
   createdAt?: string;
   updatedAt?: string;
 };

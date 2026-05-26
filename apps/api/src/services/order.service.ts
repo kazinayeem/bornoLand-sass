@@ -3,6 +3,7 @@ import { OrderModel } from "../models/order.model.js";
 import { CartModel } from "../models/cart.model.js";
 import { ProductModel } from "../models/product.model.js";
 import { DeliveryZoneModel } from "../models/delivery-zone.model.js";
+import { StoreSettingsModel } from "../models/store-settings.model.js";
 
 function generateOrderNumber(): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -57,6 +58,9 @@ export async function createOrder(
 
   const total = subtotal + deliveryCharge;
 
+  const storeSettings = await StoreSettingsModel.findOne({ storeId }).lean() as any;
+  const currencyCode = storeSettings?.currencyCode ?? "USD";
+
   const order = await OrderModel.create({
     storeId,
     customerId,
@@ -76,6 +80,7 @@ export async function createOrder(
     shippingAddress: payload.shippingAddress,
     paymentMethod: payload.paymentMethod ?? "cod",
     notes: payload.notes ?? "",
+    currencyCode,
   });
 
   for (const item of cart.items) {

@@ -44,7 +44,10 @@ export default async function TenantLayout({ params, children }: { params: Promi
     currencyPosition: "before",
     locale: "en-US",
     decimalPlaces: 2,
-    taxRate: 0
+    taxRate: 0,
+    dateFormat: "MM/DD/YYYY",
+    timezone: "UTC",
+    language: "en",
   };
 
   return (

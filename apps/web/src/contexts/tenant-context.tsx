@@ -22,6 +22,9 @@ type StoreSettingsData = {
   locale: string;
   decimalPlaces: number;
   taxRate: number;
+  dateFormat?: string;
+  timezone?: string;
+  language?: string;
 };
 
 type HomepageSliderData = {

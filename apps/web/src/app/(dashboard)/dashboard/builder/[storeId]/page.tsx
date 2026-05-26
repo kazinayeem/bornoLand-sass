@@ -9,6 +9,7 @@ import { useGetProductsQuery } from "@/redux/api/product-api";
 import { useGetPagesQuery, useCreatePageMutation } from "@/redux/api/builder-api";
 import { useGetStoreSettingsQuery, useGetHomepageSlidersQuery } from "@/redux/api/store-settings-api";
 import { setTheme } from "@/redux/slices/theme-slice";
+import { setStoreSettings } from "@/redux/slices/store-settings-slice";
 import { loadSections, setPageId, markSaved, setSaving } from "@/redux/slices/builder-slice";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
 import { useSavePageMutation } from "@/redux/api/builder-api";
@@ -76,6 +77,18 @@ export default function BuilderPage() {
       }));
     }
   }, [store, dispatch]);
+
+  useEffect(() => {
+    if (settings) {
+      dispatch(setStoreSettings({
+        currencyCode: settings.currencyCode,
+        currencySymbol: settings.currencySymbol,
+        currencyPosition: settings.currencyPosition,
+        locale: settings.locale,
+        decimalPlaces: settings.decimalPlaces,
+      }));
+    }
+  }, [settings, dispatch]);
 
   useEffect(() => {
     if (!pagesData?.data?.pages || loadedRef.current) return;

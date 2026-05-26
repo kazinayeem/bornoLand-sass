@@ -6,6 +6,7 @@ import {
   useGetDeliveryZonesQuery, useCreateDeliveryZoneMutation,
   useUpdateDeliveryZoneMutation, useDeleteDeliveryZoneMutation,
 } from "@/redux/api/delivery-api";
+import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
 import {
   Truck, Plus, Loader2, Pencil, Trash2,
   Eye, EyeOff, X, Check, MapPin,
@@ -20,6 +21,9 @@ type FormData = {
 
 export function DeliveryTab({ storeId }: DeliveryTabProps) {
   const { data, isLoading } = useGetDeliveryZonesQuery(storeId);
+  const { data: settingsData } = useGetStoreSettingsQuery(storeId);
+  const curSymbol = settingsData?.data?.settings?.currencySymbol ?? "৳";
+  const curCode = settingsData?.data?.settings?.currencyCode ?? "BDT";
   const [createZone] = useCreateDeliveryZoneMutation();
   const [updateZone] = useUpdateDeliveryZoneMutation();
   const [deleteZone] = useDeleteDeliveryZoneMutation();
@@ -107,7 +111,7 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
                   </div>
                   <div className="min-w-0">
                     <h4 className="text-sm font-semibold text-zinc-900">{z.name}</h4>
-                    <p className="text-lg font-bold text-emerald-600">৳{z.charge}</p>
+                    <p className="text-lg font-bold text-emerald-600">{curSymbol}{z.charge}</p>
                     {z.estimatedDays && <p className="text-xs text-zinc-400">{z.estimatedDays}</p>}
                   </div>
                 </div>
@@ -149,7 +153,7 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
                   className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" placeholder="e.g. Dhaka City" />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Delivery Charge (BDT)</label>
+                <label className="mb-1 block text-xs font-medium text-zinc-600">Delivery Charge ({curCode})</label>
                 <input type="number" min={0} value={form.charge} onChange={(e) => setForm({ ...form, charge: e.target.value })}
                   className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
               </div>

@@ -2,12 +2,15 @@ import { connectDatabase } from "../config/database.js";
 import { CartModel } from "../models/cart.model.js";
 import { ProductModel } from "../models/product.model.js";
 
-export async function getCart(storeId: string, _customerId?: string, sessionId?: string) {
+export async function getCart(storeId: string, customerId?: string, sessionId?: string) {
   await connectDatabase();
 
-  const cart = sessionId
-    ? await CartModel.findOne({ storeId, sessionId }).lean() as any
+  let cart = customerId
+    ? await CartModel.findOne({ storeId, customerId }).lean() as any
     : null;
+  if (!cart && sessionId) {
+    cart = await CartModel.findOne({ storeId, sessionId }).lean() as any;
+  }
 
   if (!cart) {
     return { ok: true as const, data: { cart: { items: [], subtotal: 0, itemCount: 0 } } };
@@ -34,10 +37,17 @@ export async function addToCart(
   const product: any = await ProductModel.findOne({ _id: productId, storeId, status: "active" }).lean();
   if (!product) return { ok: false as const, message: "Product not found" };
 
-  let cart = sessionId ? await CartModel.findOne({ storeId, sessionId }) : null;
+  let cart = customerId
+    ? await CartModel.findOne({ storeId, customerId })
+    : null;
+  if (!cart && sessionId) {
+    cart = await CartModel.findOne({ storeId, sessionId });
+  }
 
   if (!cart) {
-    cart = await CartModel.create({ storeId, sessionId, items: [] });
+    cart = await CartModel.create({ storeId, customerId, sessionId, items: [] });
+  } else if (customerId && !cart.customerId) {
+    cart.customerId = customerId as any;
   }
 
   const existingIdx = cart.items.findIndex((i: any) => i.productId.toString() === productId);
@@ -64,10 +74,15 @@ export async function addToCart(
   };
 }
 
-export async function updateCartItem(storeId: string, productId: string, quantity: number, _customerId?: string, sessionId?: string) {
+export async function updateCartItem(storeId: string, productId: string, quantity: number, customerId?: string, sessionId?: string) {
   await connectDatabase();
 
-  const cart = await CartModel.findOne({ storeId, sessionId });
+  let cart = customerId
+    ? await CartModel.findOne({ storeId, customerId })
+    : null;
+  if (!cart && sessionId) {
+    cart = await CartModel.findOne({ storeId, sessionId });
+  }
   if (!cart) return { ok: false as const, message: "Cart not found" };
 
   const item = cart.items.find((i: any) => i.productId.toString() === productId);
@@ -90,10 +105,15 @@ export async function updateCartItem(storeId: string, productId: string, quantit
   };
 }
 
-export async function removeFromCart(storeId: string, productId: string, _customerId?: string, sessionId?: string) {
+export async function removeFromCart(storeId: string, productId: string, customerId?: string, sessionId?: string) {
   await connectDatabase();
 
-  const cart = await CartModel.findOne({ storeId, sessionId });
+  let cart = customerId
+    ? await CartModel.findOne({ storeId, customerId })
+    : null;
+  if (!cart && sessionId) {
+    cart = await CartModel.findOne({ storeId, sessionId });
+  }
   if (!cart) return { ok: false as const, message: "Cart not found" };
 
   cart.items = cart.items.filter((i: any) => i.productId.toString() !== productId);

@@ -6,12 +6,18 @@ import LinkExtension from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import ImageExtension from "@tiptap/extension-image";
 import Underline from "@tiptap/extension-underline";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableCell } from "@tiptap/extension-table-cell";
+import { TableHeader } from "@tiptap/extension-table-header";
 import { useCallback, useEffect } from "react";
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   Heading1, Heading2, Heading3,
   List, ListOrdered, Quote, Code, Code2,
-  Link2, Image, Minus, AlignLeft, AlignCenter, AlignRight, Undo, Redo,
+  Link2, Image, Minus, Undo, Redo,
+  Table as TableIcon, Rows3, Rows4, Trash2, Columns3, Columns4,
+  ListPlus, SquareSplitVertical,
 } from "lucide-react";
 
 type RichTextEditorProps = {
@@ -59,6 +65,10 @@ export default function RichTextEditor({
       Placeholder.configure({ placeholder }),
       ImageExtension.configure({ inline: false, allowBase64: false }),
       Underline,
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableCell,
+      TableHeader,
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -90,6 +100,46 @@ export default function RichTextEditor({
     if (url && url !== "https://") {
       editor.chain().focus().setImage({ src: url }).run();
     }
+  }, [editor]);
+
+  const insertTable = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  }, [editor]);
+
+  const addRowAfter = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().addRowAfter().run();
+  }, [editor]);
+
+  const deleteRow = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().deleteRow().run();
+  }, [editor]);
+
+  const addColumnAfter = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().addColumnAfter().run();
+  }, [editor]);
+
+  const deleteColumn = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().deleteColumn().run();
+  }, [editor]);
+
+  const toggleHeaderRow = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().toggleHeaderRow().run();
+  }, [editor]);
+
+  const mergeCells = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().mergeCells().run();
+  }, [editor]);
+
+  const splitCell = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().splitCell().run();
   }, [editor]);
 
   useEffect(() => {
@@ -212,6 +262,67 @@ export default function RichTextEditor({
         >
           <Minus className="h-4 w-4" />
         </ToolbarButton>
+        <Divider />
+        <ToolbarButton
+          onClick={insertTable}
+          active={editor.isActive("table")}
+          title="Insert Table"
+        >
+          <TableIcon className="h-4 w-4" />
+        </ToolbarButton>
+        {editor.isActive("table") && (
+          <>
+            <ToolbarButton
+              onClick={addRowAfter}
+              active={false}
+              title="Add Row"
+            >
+              <Rows4 className="h-4 w-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={deleteRow}
+              active={false}
+              title="Delete Row"
+            >
+              <Trash2 className="h-4 w-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={addColumnAfter}
+              active={false}
+              title="Add Column"
+            >
+              <Columns4 className="h-4 w-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={deleteColumn}
+              active={false}
+              title="Delete Column"
+            >
+              <Columns3 className="h-4 w-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={toggleHeaderRow}
+              active={false}
+              title="Toggle Header"
+            >
+              <Rows3 className="h-4 w-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={mergeCells}
+              active={false}
+              title="Merge Cells"
+            >
+              <ListPlus className="h-4 w-4" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={splitCell}
+              active={false}
+              title="Split Cell"
+            >
+              <SquareSplitVertical className="h-4 w-4" />
+            </ToolbarButton>
+          </>
+        )}
         <Divider />
         <ToolbarButton
           onClick={() => editor.chain().focus().undo().run()}

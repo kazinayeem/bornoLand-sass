@@ -21,8 +21,16 @@ export function requireAuth(request: AuthRequest, response: Response, next: Next
   }
 
   try {
-    const token = header?.startsWith("Bearer ") ? header.slice(7) : cookieToken!;
-    const payload = (header?.startsWith("Bearer ") ? jwt.verify(token, process.env.JWT_SECRET ?? "") : verifySessionToken(token)) as AuthRequest["user"];
+    // Prefer session cookie over Bearer token so dashboard users
+    // aren't downgraded to customer-level auth by a stray customer_token.
+    if (cookieToken) {
+      const payload = verifySessionToken(cookieToken);
+      request.user = payload;
+      return next();
+    }
+
+    const token = header!.slice(7);
+    const payload = jwt.verify(token, process.env.JWT_SECRET ?? "") as AuthRequest["user"];
     request.user = payload;
     return next();
   } catch {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useGetCmsPageQuery, useSaveCmsPageMutation } from "@/redux/api/cms-api";
@@ -21,7 +21,7 @@ const pageMeta: Record<string, { label: string; icon: typeof HelpCircle; descrip
   "about-us": { label: "About Us", icon: Info, description: "Your store story, mission, and values." },
 };
 
-export default function CmsPageEditor() {
+function CmsPageEditor() {
   const params = useParams();
   const slug = params.slug as string;
   const meta = pageMeta[slug] ?? { label: slug, icon: FileText, description: "Edit page content." };
@@ -92,9 +92,10 @@ export default function CmsPageEditor() {
         data: { title, html: htmlContent, seoTitle, seoDescription, ogImage, published },
       }).unwrap();
       toast.success("Page saved successfully");
-    } catch (err) {
-      console.error("Failed to save CMS page:", err);
-      toast.error("Failed to save page");
+    } catch (err: any) {
+      console.error("Failed to save CMS page:", err, JSON.stringify(err, Object.keys(err)));
+      const msg = err?.data?.message || err?.message || err?.error || "Failed to save page";
+      toast.error(msg);
     }
   };
 
@@ -255,8 +256,17 @@ export default function CmsPageEditor() {
               />
             </div>
           </motion.div>
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
+  );
+}
+
+export default function CmsPageEditorWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <CmsPageEditor />
+    </Suspense>
   );
 }

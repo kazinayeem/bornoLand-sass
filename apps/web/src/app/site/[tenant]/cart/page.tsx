@@ -23,7 +23,9 @@ export default function CartPage() {
   const freeThreshold = settings.currencyCode === "BDT" ? 5000 : 100;
   const shippingRate = settings.currencyCode === "BDT" ? 99 : 9.99;
   const shipping = subtotal >= freeThreshold ? 0 : shippingRate;
-  const total = subtotal + shipping;
+  const taxRate = settings.taxEnabled ? (settings.taxRate ?? 0) : 0;
+  const taxAmount = taxRate > 0 && !settings.taxIncluded ? subtotal * (taxRate / 100) : 0;
+  const total = subtotal + taxAmount + shipping;
 
   const handleQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) {
@@ -133,6 +135,12 @@ export default function CartPage() {
               <span>Shipping</span>
               <span>{shipping === 0 ? "Free" : formatCurrency(shipping, settings)}</span>
             </div>
+            {taxAmount > 0 && (
+              <div className="flex justify-between" style={{ color: isDark ? "#a1a1aa" : "#71717a" }}>
+                <span>Tax ({taxRate}%)</span>
+                <span>{formatCurrency(taxAmount, settings)}</span>
+              </div>
+            )}
             {subtotal < 100 && (
               <p className="text-xs" style={{ color: isDark ? "#52525b" : "#a1a1aa" }}>Free shipping on orders over {formatCurrency(100, settings)}</p>
             )}

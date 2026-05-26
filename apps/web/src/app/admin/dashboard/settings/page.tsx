@@ -18,7 +18,7 @@ import {
 } from "@/redux/api/store-settings-api";
 
 type CurrencyFormData = {
-  currencyCode: "USD" | "BDT" | "EUR" | "INR";
+  currencyCode: "USD" | "BDT" | "EUR" | "GBP" | "INR";
   currencySymbol: string;
   currencyPosition: "before" | "after";
   locale: string;

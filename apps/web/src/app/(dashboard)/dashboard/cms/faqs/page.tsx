@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetFaqsQuery, useCreateFaqMutation, useUpdateFaqMutation, useDeleteFaqMutation, useReorderFaqsMutation } from "@/redux/api/cms-api";
 import type { FaqItem } from "@/redux/api/cms-api";
+import RichTextEditor from "@/components/cms/rich-text-editor";
 import { Store, Plus, Loader2, GripVertical, Pencil, Trash2, X, Check, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
@@ -198,12 +199,11 @@ export default function FaqsPage() {
 
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-zinc-700">Answer</label>
-              <textarea
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                rows={5}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition-all focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
-                placeholder="Enter the answer"
+              <RichTextEditor
+                key={editId ?? "new"}
+                content={answer}
+                onChange={setAnswer}
+                placeholder="Enter the answer..."
               />
             </div>
 
@@ -290,7 +290,7 @@ export default function FaqsPage() {
                       <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">{faq.category}</span>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-zinc-500 line-clamp-2">{faq.answer}</p>
+                  <p className="mt-1 text-sm text-zinc-500 line-clamp-2">{faq.answer.replace(/<[^>]*>/g, "")}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button

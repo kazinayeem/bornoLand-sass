@@ -80,7 +80,9 @@ export default function CheckoutPage() {
   const hasItems = items.length > 0;
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryCharge = selectedZone?.charge ?? 0;
-  const total = subtotal + deliveryCharge;
+  const taxRate = settings.taxEnabled ? (settings.taxRate ?? 0) : 0;
+  const taxAmount = taxRate > 0 && !settings.taxIncluded ? subtotal * (taxRate / 100) : 0;
+  const total = subtotal + taxAmount + deliveryCharge;
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -386,6 +388,12 @@ export default function CheckoutPage() {
                   <span>Delivery ({selectedZone?.name ?? "—"})</span>
                   <span>{deliveryCharge === 0 ? "Free" : formatCurrency(deliveryCharge, settings)}</span>
                 </div>
+                {taxAmount > 0 && (
+                  <div className="flex justify-between text-zinc-500">
+                    <span>Tax ({taxRate}%)</span>
+                    <span>{formatCurrency(taxAmount, settings)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between border-t border-zinc-100 pt-2 font-semibold text-zinc-900">
                   <span>Total</span>
                   <span>{formatCurrency(total, settings)}</span>

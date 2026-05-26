@@ -179,7 +179,11 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 )}
               </div>
 
-              <p className="mt-5 text-sm leading-7 text-zinc-600">{product.description || "No description available."}</p>
+              {product.description ? (
+                <div className="mt-5 prose prose-sm max-w-none text-sm leading-7 text-zinc-600" dangerouslySetInnerHTML={{ __html: product.description }} />
+              ) : (
+                <p className="mt-5 text-sm leading-7 text-zinc-600">No description available.</p>
+              )}
 
               <div className="mt-6 flex items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div>
@@ -245,9 +249,12 @@ export function ProductDetailClient({ product }: { product: Product }) {
           <div className="grid gap-8 py-8 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
               {activeTab === "description" && (
-                <div className="space-y-4 text-sm leading-7 text-zinc-600">
-                  <p>{product.description || "No description available."}</p>
-                  <p>This product is presented in a premium ecommerce layout with a focus on clarity, confidence, and conversion.</p>
+                <div className="prose prose-sm max-w-none text-sm leading-7 text-zinc-600">
+                  {product.description ? (
+                    <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                  ) : (
+                    <p>No description available.</p>
+                  )}
                 </div>
               )}
 

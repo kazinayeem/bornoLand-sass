@@ -44,16 +44,12 @@ type ApiResponse<T> = {
 };
 
 function getAuthHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {};
   const token = typeof window !== "undefined" ? localStorage.getItem("customer_token") : null;
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    return { Authorization: `Bearer ${token}` };
   }
   const sessionId = typeof window !== "undefined" ? localStorage.getItem("session_id") : null;
-  if (sessionId) {
-    headers["x-session-id"] = sessionId;
-  }
-  return headers;
+  return sessionId ? { "x-session-id": sessionId } : {};
 }
 
 export const orderApi = baseApi.injectEndpoints({

@@ -10,6 +10,8 @@ const defaultSettings = {
   locale: "en-US",
   decimalPlaces: 2,
   taxRate: 0,
+  taxEnabled: false,
+  taxIncluded: false,
   dateFormat: "MM/DD/YYYY",
   timezone: "UTC",
   language: "en",

@@ -51,8 +51,14 @@ export async function saveCmsPage(storeId: string, userId: string, slug: string,
   ogImage?: string; published?: boolean; layout?: string;
 }) {
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
-  if (!store) return { ok: false as const, message: "Store not found" };
+
+  if (userId) {
+    const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
+    if (!store) return { ok: false as const, message: "Store not found" };
+  } else {
+    const store = await StoreModel.findById(storeId).lean();
+    if (!store) return { ok: false as const, message: "Store not found" };
+  }
 
   const update: Record<string, unknown> = {};
   if (payload.title !== undefined) update.title = payload.title;
@@ -80,7 +86,10 @@ export async function getFaqs(storeId: string) {
 
 export async function createFaq(storeId: string, userId: string, payload: { question: string; answer: string; category?: string }) {
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
+
+  const store = userId
+    ? await StoreModel.findOne({ _id: storeId, userId }).lean()
+    : await StoreModel.findById(storeId).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
 
   const count = await FaqModel.countDocuments({ storeId });
@@ -91,7 +100,10 @@ export async function createFaq(storeId: string, userId: string, payload: { ques
 
 export async function updateFaq(faqId: string, storeId: string, userId: string, payload: Partial<{ question: string; answer: string; sortOrder: number; active: boolean; category: string }>) {
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
+
+  const store = userId
+    ? await StoreModel.findOne({ _id: storeId, userId }).lean()
+    : await StoreModel.findById(storeId).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
 
   const faq = await FaqModel.findOneAndUpdate(
@@ -106,7 +118,10 @@ export async function updateFaq(faqId: string, storeId: string, userId: string, 
 
 export async function deleteFaq(faqId: string, storeId: string, userId: string) {
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
+
+  const store = userId
+    ? await StoreModel.findOne({ _id: storeId, userId }).lean()
+    : await StoreModel.findById(storeId).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
 
   const faq = await FaqModel.findOneAndDelete({ _id: faqId, storeId }).lean();
@@ -116,7 +131,10 @@ export async function deleteFaq(faqId: string, storeId: string, userId: string) 
 
 export async function reorderFaqs(storeId: string, userId: string, orderedIds: string[]) {
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
+
+  const store = userId
+    ? await StoreModel.findOne({ _id: storeId, userId }).lean()
+    : await StoreModel.findById(storeId).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
 
   for (let i = 0; i < orderedIds.length; i++) {

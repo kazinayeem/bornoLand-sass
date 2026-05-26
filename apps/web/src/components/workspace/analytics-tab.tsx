@@ -3,6 +3,8 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { useGetStoreOrdersQuery } from "@/redux/api/store-order-api";
+import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
+import { formatCurrency } from "@/lib/format-currency";
 import {
   BarChart3, DollarSign, ShoppingCart, Package, TrendingUp,
   Users, CreditCard, Activity, Loader2, ArrowUp, ArrowDown,
@@ -10,12 +12,10 @@ import {
 
 type AnalyticsTabProps = { storeId: string };
 
-function formatBDT(v: number) {
-  return new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT", maximumFractionDigits: 0 }).format(v || 0);
-}
-
 export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
   const { data, isLoading } = useGetStoreOrdersQuery({ storeId, limit: "200" });
+  const { data: settingsData } = useGetStoreSettingsQuery(storeId);
+  const settings = settingsData?.data?.settings;
 
   const analytics = data?.data?.analytics;
   const orders = data?.data?.orders ?? [];
@@ -57,9 +57,9 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
   }
 
   const kpiCards = [
-    { label: "Total Revenue", value: formatBDT(stats.totalRevenue), icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-100" },
+    { label: "Total Revenue", value: formatCurrency(stats.totalRevenue, settings), icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-100" },
     { label: "Total Orders", value: String(stats.totalOrders), icon: ShoppingCart, color: "text-blue-600", bg: "bg-blue-100" },
-    { label: "Avg Order Value", value: formatBDT(stats.avgOrderValue), icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-100" },
+    { label: "Avg Order Value", value: formatCurrency(stats.avgOrderValue, settings), icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-100" },
     { label: "Customers", value: String(stats.uniqueCustomers), icon: Users, color: "text-purple-600", bg: "bg-purple-100" },
     { label: "Delivered", value: String(stats.deliveredOrders), icon: Package, color: "text-emerald-600", bg: "bg-emerald-100" },
     { label: "Pending", value: String(stats.pendingOrders), icon: Activity, color: "text-amber-600", bg: "bg-amber-100" },
@@ -131,7 +131,7 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
                   </div>
                   <div className="flex items-center gap-4 text-xs">
                     <span className="text-zinc-500">{data.qty} sold</span>
-                    <span className="font-semibold text-zinc-900 w-20 text-right">{formatBDT(data.revenue)}</span>
+                    <span className="font-semibold text-zinc-900 w-20 text-right">{formatCurrency(data.revenue, settings)}</span>
                   </div>
                 </div>
               ))}
@@ -163,7 +163,7 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
                     order.status === "pending" ? "bg-amber-50 text-amber-700" :
                     "bg-blue-50 text-blue-700"
                   }`}>{order.status}</span>
-                  <span className="font-semibold text-zinc-900">{formatBDT(order.total)}</span>
+                  <span className="font-semibold text-zinc-900">{formatCurrency(order.total, settings)}</span>
                 </div>
               </div>
             ))}

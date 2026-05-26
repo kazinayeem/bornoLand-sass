@@ -1,4 +1,4 @@
-export type CurrencyCode = "USD" | "BDT" | "EUR" | "INR";
+export type CurrencyCode = "USD" | "BDT" | "EUR" | "GBP" | "INR";
 
 export type CurrencyFormatSettings = {
   currencyCode?: CurrencyCode;
@@ -12,6 +12,7 @@ const CURRENCY_MAP: Record<CurrencyCode, { symbol: string; position: "before" | 
   USD: { symbol: "$", position: "before", locale: "en-US", decimalPlaces: 2 },
   BDT: { symbol: "\u09f3", position: "before", locale: "bn-BD", decimalPlaces: 0 },
   EUR: { symbol: "\u20ac", position: "before", locale: "de-DE", decimalPlaces: 2 },
+  GBP: { symbol: "\u00a3", position: "before", locale: "en-GB", decimalPlaces: 2 },
   INR: { symbol: "\u20b9", position: "before", locale: "en-IN", decimalPlaces: 2 },
 };
 

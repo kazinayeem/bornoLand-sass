@@ -3,12 +3,14 @@ import { baseApi } from "@/redux/api/base-api";
 export type StoreSettings = {
   _id: string;
   storeId: string;
-  currencyCode: "USD" | "BDT" | "EUR" | "INR";
+  currencyCode: "USD" | "BDT" | "EUR" | "GBP" | "INR";
   currencySymbol: string;
   currencyPosition: "before" | "after";
   locale: string;
   decimalPlaces: number;
   taxRate: number;
+  taxEnabled?: boolean;
+  taxIncluded?: boolean;
   dateFormat: string;
   timezone: string;
   language: string;

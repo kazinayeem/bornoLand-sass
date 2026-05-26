@@ -2,19 +2,22 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
+import { useDispatch } from "react-redux";
 import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetStoreSettingsQuery, useUpdateStoreSettingsMutation } from "@/redux/api/store-settings-api";
 import type { StoreSettings } from "@/redux/api/store-settings-api";
+import { setStoreSettings } from "@/redux/slices/store-settings-slice";
 import { toast } from "sonner";
 import {
   Store, Globe, DollarSign, Calendar, Clock, Languages,
-  Save, Loader2, RefreshCw, CheckCircle, ChevronDown
+  Save, Loader2, RefreshCw, CheckCircle, ChevronDown, ToggleLeft, ToggleRight
 } from "lucide-react";
 
 const currencyOptions = [
   { value: "USD", label: "USD ($)", symbol: "$", locale: "en-US", decimal: 2, position: "before" },
   { value: "BDT", label: "BDT (\u09f3)", symbol: "\u09f3", locale: "bn-BD", decimal: 0, position: "before" },
   { value: "EUR", label: "EUR (\u20ac)", symbol: "\u20ac", locale: "de-DE", decimal: 2, position: "before" },
+  { value: "GBP", label: "GBP (\u00a3)", symbol: "\u00a3", locale: "en-GB", decimal: 2, position: "before" },
   { value: "INR", label: "INR (\u20b9)", symbol: "\u20b9", locale: "en-IN", decimal: 2, position: "before" },
 ];
 
@@ -78,6 +81,7 @@ function Select({ value, onChange, options, label }: {
 }
 
 export default function SettingsPage() {
+  const dispatch = useDispatch();
   const { currentStoreId, currentStore, stores, selectStore, clearStore } = useCurrentStore();
 
   const { data: settingsData, isLoading: settingsLoading, refetch } = useGetStoreSettingsQuery(currentStoreId, { skip: !currentStoreId });
@@ -90,6 +94,8 @@ export default function SettingsPage() {
   const [timezone, setTimezone] = useState("UTC");
   const [language, setLanguage] = useState("en");
   const [taxRate, setTaxRate] = useState(0);
+  const [taxEnabled, setTaxEnabled] = useState(false);
+  const [taxIncluded, setTaxIncluded] = useState(false);
 
   useEffect(() => {
     if (dbSettings) {
@@ -98,6 +104,8 @@ export default function SettingsPage() {
       setTimezone(dbSettings.timezone ?? "UTC");
       setLanguage(dbSettings.language ?? "en");
       setTaxRate(dbSettings.taxRate ?? 0);
+      setTaxEnabled(dbSettings.taxEnabled ?? false);
+      setTaxIncluded(dbSettings.taxIncluded ?? false);
     }
   }, [dbSettings]);
 
@@ -108,9 +116,11 @@ export default function SettingsPage() {
       dateFormat !== (dbSettings.dateFormat ?? "MM/DD/YYYY") ||
       timezone !== (dbSettings.timezone ?? "UTC") ||
       language !== (dbSettings.language ?? "en") ||
-      taxRate !== (dbSettings.taxRate ?? 0)
+      taxRate !== (dbSettings.taxRate ?? 0) ||
+      taxEnabled !== (dbSettings.taxEnabled ?? false) ||
+      taxIncluded !== (dbSettings.taxIncluded ?? false)
     );
-  }, [dbSettings, currencyCode, dateFormat, timezone, language, taxRate]);
+  }, [dbSettings, currencyCode, dateFormat, timezone, language, taxRate, taxEnabled, taxIncluded]);
 
   const handleSave = async () => {
     if (!currentStoreId) return;
@@ -128,8 +138,23 @@ export default function SettingsPage() {
           timezone,
           language,
           taxRate,
+          taxEnabled,
+          taxIncluded,
         },
       }).unwrap();
+      dispatch(setStoreSettings({
+        currencyCode: currencyCode as "USD" | "BDT" | "EUR" | "GBP" | "INR",
+        currencySymbol: cur?.symbol ?? "$",
+        currencyPosition: (cur?.position ?? "before") as "before" | "after",
+        locale: cur?.locale ?? "en-US",
+        decimalPlaces: cur?.decimal ?? 2,
+        taxRate,
+        taxEnabled,
+        taxIncluded,
+        dateFormat,
+        timezone,
+        language,
+      }));
       toast.success("Settings saved successfully");
       refetch();
     } catch {
@@ -302,14 +327,60 @@ export default function SettingsPage() {
                 <p className="text-sm text-zinc-500">Configure tax rate applied to orders.</p>
               </div>
             </div>
-            <div className="max-w-xs space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700">Tax Rate (%)</label>
-              <input type="number" min="0" max="100" step="0.01" value={taxRate}
-                onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-              />
-              <p className="text-xs text-zinc-400">Applied as a percentage to the order subtotal.</p>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setTaxEnabled(!taxEnabled)}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+                  taxEnabled ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-500"
+                }`}
+              >
+                {taxEnabled ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                {taxEnabled ? "Tax Enabled" : "Tax Disabled"}
+              </button>
             </div>
+
+            {taxEnabled && (
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-zinc-700">Tax Rate (%)</label>
+                  <input type="number" min="0" max="100" step="0.01" value={taxRate}
+                    onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  />
+                  <p className="text-xs text-zinc-400">Applied as a percentage to the order subtotal.</p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-zinc-700">Tax Inclusion</label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setTaxIncluded(false)}
+                      className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                        !taxIncluded ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                      }`}
+                    >
+                      Tax Excluded
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTaxIncluded(true)}
+                      className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                        taxIncluded ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                      }`}
+                    >
+                      Tax Included
+                    </button>
+                  </div>
+                  <p className="text-xs text-zinc-400">
+                    {taxIncluded
+                      ? "Prices already include tax. No extra tax added at checkout."
+                      : "Tax is added on top of the subtotal at checkout."}
+                  </p>
+                </div>
+              </div>
+            )}
           </motion.div>
         </>
       )}

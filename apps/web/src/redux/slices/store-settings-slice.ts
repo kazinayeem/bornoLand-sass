@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-export type CurrencyCode = "USD" | "BDT" | "EUR" | "INR";
+export type CurrencyCode = "USD" | "BDT" | "EUR" | "GBP" | "INR";
 
 export type StoreSettingsState = {
   currencyCode: CurrencyCode;
@@ -8,6 +8,9 @@ export type StoreSettingsState = {
   currencyPosition: "before" | "after";
   locale: string;
   decimalPlaces: number;
+  taxRate: number;
+  taxEnabled: boolean;
+  taxIncluded: boolean;
   dateFormat: string;
   timezone: string;
   language: string;
@@ -19,6 +22,9 @@ const initialState: StoreSettingsState = {
   currencyPosition: "before",
   locale: "en-US",
   decimalPlaces: 2,
+  taxRate: 0,
+  taxEnabled: false,
+  taxIncluded: false,
   dateFormat: "MM/DD/YYYY",
   timezone: "UTC",
   language: "en",
@@ -34,6 +40,9 @@ const storeSettingsSlice = createSlice({
       if (action.payload.currencyPosition !== undefined) state.currencyPosition = action.payload.currencyPosition;
       if (action.payload.locale !== undefined) state.locale = action.payload.locale;
       if (action.payload.decimalPlaces !== undefined) state.decimalPlaces = action.payload.decimalPlaces;
+      if (action.payload.taxRate !== undefined) state.taxRate = action.payload.taxRate;
+      if (action.payload.taxEnabled !== undefined) state.taxEnabled = action.payload.taxEnabled;
+      if (action.payload.taxIncluded !== undefined) state.taxIncluded = action.payload.taxIncluded;
       if (action.payload.dateFormat !== undefined) state.dateFormat = action.payload.dateFormat;
       if (action.payload.timezone !== undefined) state.timezone = action.payload.timezone;
       if (action.payload.language !== undefined) state.language = action.payload.language;

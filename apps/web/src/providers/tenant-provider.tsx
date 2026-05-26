@@ -31,12 +31,14 @@ export type CategoryData = {
 };
 
 export type StoreSettingsData = {
-  currencyCode: "USD" | "BDT" | "EUR" | "INR";
+  currencyCode: "USD" | "BDT" | "EUR" | "GBP" | "INR";
   currencySymbol: string;
   currencyPosition: "before" | "after";
   locale: string;
   decimalPlaces: number;
   taxRate: number;
+  taxEnabled?: boolean;
+  taxIncluded?: boolean;
   dateFormat?: string;
   timezone?: string;
   language?: string;
@@ -75,7 +77,7 @@ export function useTenant(): TenantContextType {
       theme: { primaryColor: "#2563eb", secondaryColor: "#0f172a", font: "Inter", buttonStyle: "rounded-lg", layoutWidth: "1200px", darkMode: false, navbarStyle: "fixed" },
       products: [],
       categories: [],
-      settings: { currencyCode: "USD", currencySymbol: "$", currencyPosition: "before", locale: "en-US", decimalPlaces: 2, taxRate: 0 },
+      settings: { currencyCode: "USD", currencySymbol: "$", currencyPosition: "before", locale: "en-US", decimalPlaces: 2, taxRate: 0, taxEnabled: false, taxIncluded: false },
       sliders: [],
       pageSections: []
     } satisfies TenantContextType;
@@ -92,11 +94,14 @@ function TenantSync({ settings }: { settings: StoreSettingsData }) {
       currencyPosition: settings.currencyPosition,
       locale: settings.locale,
       decimalPlaces: settings.decimalPlaces,
+      taxRate: settings.taxRate,
+      taxEnabled: settings.taxEnabled ?? false,
+      taxIncluded: settings.taxIncluded ?? false,
       dateFormat: settings.dateFormat,
       timezone: settings.timezone,
       language: settings.language,
     }));
-  }, [dispatch, settings.currencyCode, settings.currencySymbol, settings.currencyPosition, settings.locale, settings.decimalPlaces, settings.dateFormat, settings.timezone, settings.language]);
+  }, [dispatch, settings.currencyCode, settings.currencySymbol, settings.currencyPosition, settings.locale, settings.decimalPlaces, settings.taxRate, settings.taxEnabled, settings.taxIncluded, settings.dateFormat, settings.timezone, settings.language]);
   return null;
 }
 

@@ -3,9 +3,20 @@ import type { SubdomainRequest } from "../middleware/subdomain.middleware.js";
 import { getCart, addToCart, updateCartItem, removeFromCart } from "../services/cart.service.js";
 import { sendFailure, sendSuccess } from "../utils/api-response.js";
 
+function getCustomerId(request: SubdomainRequest): string | undefined {
+  const header = request.headers.authorization;
+  if (!header?.startsWith("Bearer ")) return undefined;
+  try {
+    const jwt = JSON.parse(atob(header.split(" ")[1].split(".")[1]));
+    return jwt.customerId ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function getIds(request: SubdomainRequest) {
   const storeId = request.store?._id?.toString();
-  const customerId = (request as any).customerId as string | undefined;
+  const customerId = getCustomerId(request);
   const sessionId = (request.headers["x-session-id"] as string) ?? `sess-${request.ip}`;
   return { storeId, customerId, sessionId };
 }

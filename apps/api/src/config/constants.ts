@@ -1,0 +1,1 @@
+export const DEFAULT_SESSION_DURATION = "30d";

@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
+import { config } from "@/lib/config";
 
 export type AppSession = {
   userId: string;
@@ -11,11 +12,11 @@ export type AppSession = {
 };
 
 function getSessionCookieName() {
-  return process.env.SESSION_COOKIE_NAME ?? "bornoland.session";
+  return config.sessionCookieName;
 }
 
 function getSecret() {
-  const secret = process.env.JWT_SECRET;
+  const secret = config.JWT_SECRET;
 
   if (!secret) {
     throw new Error("JWT_SECRET is required");

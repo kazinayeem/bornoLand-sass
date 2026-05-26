@@ -31,8 +31,6 @@ import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js"
 
 const app = express();
 
-const ROOT_DOMAIN = serverConfig.ROOT_DOMAIN;
-
 const configuredOrigins = [
   serverConfig.FRONTEND_URL,
   serverConfig.APP_URL,
@@ -40,12 +38,7 @@ const configuredOrigins = [
 ].filter((origin): origin is string => Boolean(origin));
 
 const allowedOriginPatterns: RegExp[] = [
-  /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/,
-  /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.localhost(:\d+)?$/i,
-  /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.127\.0\.0\.1(:\d+)?$/i,
-  /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.localhost\.com(:\d+)?$/i,
-  /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.lvh\.me(:\d+)?$/i,
-  new RegExp(`^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.${ROOT_DOMAIN.replace(/\./g, "\\.")}(:\\d+)?$`, "i"),
+  new RegExp(`^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.${serverConfig.ROOT_DOMAIN.replace(/\./g, "\\.")}(:\\d+)?$`, "i"),
 ];
 
 const corsOptions: CorsOptions = {

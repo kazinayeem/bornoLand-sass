@@ -4,12 +4,12 @@ import { useTenant } from "@/providers/tenant-provider";
 import type { StorefrontSectionLike } from "./storefront-types";
 
 const placeholderLogos = [
-  "https://placehold.co/160x60/e2e8f0/64748b?text=Brand+A",
-  "https://placehold.co/160x60/e2e8f0/64748b?text=Brand+B",
-  "https://placehold.co/160x60/e2e8f0/64748b?text=Brand+C",
-  "https://placehold.co/160x60/e2e8f0/64748b?text=Brand+D",
-  "https://placehold.co/160x60/e2e8f0/64748b?text=Brand+E",
-  "https://placehold.co/160x60/e2e8f0/64748b?text=Brand+F",
+  "Brand A",
+  "Brand B",
+  "Brand C",
+  "Brand D",
+  "Brand E",
+  "Brand F",
 ];
 
 export function BrandLogos({ section }: { section?: StorefrontSectionLike }) {
@@ -26,9 +26,9 @@ export function BrandLogos({ section }: { section?: StorefrontSectionLike }) {
           {subtitle && <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>}
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-8">
-          {placeholderLogos.map((src, i) => (
+          {placeholderLogos.map((label, i) => (
             <div key={i} className="h-12 w-32 overflow-hidden rounded-lg opacity-60 grayscale transition hover:opacity-100 hover:grayscale-0">
-              <img src={src} alt={`Brand ${i + 1}`} className="h-full w-full object-contain" />
+              <div className="flex h-full w-full items-center justify-center rounded-lg border border-zinc-200 bg-white text-xs font-semibold text-zinc-500">{label}</div>
             </div>
           ))}
         </div>

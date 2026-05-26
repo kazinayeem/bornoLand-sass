@@ -5,7 +5,7 @@ import type { StorefrontSectionLike } from "./storefront-types";
 
 export function ImageBanner({ section }: { section?: StorefrontSectionLike }) {
   const props = section?.props ?? {};
-  const imageUrl = (props.imageUrl as string) || "https://placehold.co/1400x500/e2e8f0/64748b?text=Banner";
+  const imageUrl = (props.imageUrl as string) || `data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 500"><rect width="1400" height="500" fill="#e2e8f0"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="64">Banner</text></svg>')}`;
   const headline = (props.headline as string) || "";
   const subtitle = (props.subtitle as string) || "";
   const buttonText = (props.buttonText as string) || "";

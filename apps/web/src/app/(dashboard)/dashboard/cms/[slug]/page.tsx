@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { HelpCircle, Truck, RotateCcw, Ruler, Mail, Shield, FileText, Info } from "lucide-react";
 import RichTextEditor from "@/components/cms/rich-text-editor";
 import { useCurrentStore } from "@/hooks/use-current-store";
+import { getStoreDisplayDomain } from "@/utils/domain";
 
 const pageMeta: Record<string, { label: string; icon: typeof HelpCircle; description: string }> = {
   faq: { label: "FAQ", icon: HelpCircle, description: "Frequently asked questions about your store." },
@@ -87,7 +88,7 @@ function CmsPageEditor() {
                 {s.name[0]}
               </div>
               <h3 className="mt-3 font-semibold text-zinc-900">{s.name}</h3>
-              <p className="text-xs text-zinc-400">{s.subdomain || s.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
+              <p className="text-xs text-zinc-400">{getStoreDisplayDomain(s.subdomain, s.slug)}</p>
             </motion.button>
           ))}
         </motion.div>

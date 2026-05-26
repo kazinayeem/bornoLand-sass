@@ -19,6 +19,7 @@ import { useGetTemplatesQuery } from "@/redux/api/template-api";
 import { setStores } from "@/redux/slices/stores-slice";
 import { setPlans as setPlansSlice, setSelectedPlan } from "@/redux/slices/plan-slice";
 import { StoreCard } from "@/components/dashboard/stores/store-card";
+import { getStoreDisplayDomain } from "@/utils/domain";
 
 function formatBDT(value: number) {
   return new Intl.NumberFormat("en-BD", {
@@ -177,7 +178,7 @@ export default function DashboardHomePage() {
               </div>
               <div className="mt-3 rounded-xl bg-zinc-50 p-3">
                 <p className="text-sm font-semibold text-zinc-900">{deleteTarget.name}</p>
-                <p className="text-xs text-zinc-500">{deleteTarget.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
+                <p className="text-xs text-zinc-500">{getStoreDisplayDomain(deleteTarget.subdomain, deleteTarget.slug)}</p>
               </div>
               <input value={confirmName} onChange={(e) => setConfirmName(e.target.value)}
                 placeholder={deleteTarget.name}

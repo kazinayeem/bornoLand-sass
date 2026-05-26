@@ -9,6 +9,7 @@ import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/format-currency";
 import { cn } from "@/lib/utils";
+import { getStoreDisplayDomain } from "@/utils/domain";
 import {
   ShoppingCart, Store, Search, Filter, X, ChevronDown, ChevronLeft, ChevronRight,
   Package, DollarSign, Clock, CheckCircle, AlertCircle, Truck,
@@ -172,7 +173,7 @@ export default function OrdersPage() {
                   {s.name[0]}
                 </div>
                 <h3 className="mt-3 font-semibold text-zinc-900">{s.name}</h3>
-                <p className="text-xs text-zinc-400">{s.subdomain || s.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
+                <p className="text-xs text-zinc-400">{getStoreDisplayDomain(s.subdomain, s.slug)}</p>
                 <div className="mt-3 flex items-center gap-3 text-xs text-zinc-500">
                   <span className="flex items-center gap-1"><Package className="h-3 w-3" />{s.productCount ?? 0}</span>
                   <span className="flex items-center gap-1"><ShoppingCart className="h-3 w-3" />{s.orderCount ?? 0}</span>

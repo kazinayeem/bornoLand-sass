@@ -9,8 +9,8 @@ import { UserModel } from "../models/user.model.js";
 import { seedTemplates } from "./templates.js";
 import { serverConfig } from "../config/server.js";
 
-const SEED_ADMIN_EMAIL = serverConfig.isDev ? "admin@bornoland.com" : `admin@${serverConfig.ROOT_DOMAIN}`;
-const SEED_DEMO_EMAIL = serverConfig.isDev ? "demo@bornoland.com" : `demo@${serverConfig.ROOT_DOMAIN}`;
+const SEED_ADMIN_EMAIL = `admin@${serverConfig.ROOT_DOMAIN}`;
+const SEED_DEMO_EMAIL = `demo@${serverConfig.ROOT_DOMAIN}`;
 
 async function upsertUser(email: string, data: Record<string, unknown>) {
   const existing = await UserModel.findOne({ email });

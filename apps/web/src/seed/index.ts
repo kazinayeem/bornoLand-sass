@@ -8,9 +8,10 @@ import { TemplateModel } from "@/models/template.model";
 import { TenantModel } from "@/models/tenant.model";
 import { UserModel } from "@/models/user.model";
 import { env } from "@/config/env";
+import { config } from "@/lib/config";
 
-const SEED_ADMIN_EMAIL = env.isDev ? "admin@bornoland.com" : "admin@bornosoftnr.site";
-const SEED_DEMO_EMAIL = env.isDev ? "demo@bornoland.com" : "demo@bornosoftnr.site";
+const SEED_ADMIN_EMAIL = `admin@${config.rootDomain}`;
+const SEED_DEMO_EMAIL = `demo@${config.rootDomain}`;
 
 async function upsertUser(email: string, data: Record<string, unknown>) {
   const existing = await UserModel.findOne({ email });

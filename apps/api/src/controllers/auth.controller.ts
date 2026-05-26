@@ -91,7 +91,6 @@ export async function googleCallbackController(request: Request, response: Respo
   const clientId = serverConfig.GOOGLE_CLIENT_ID;
   const clientSecret = serverConfig.GOOGLE_CLIENT_SECRET;
   const redirectUri = serverConfig.GOOGLE_REDIRECT_URI;
-  const webUrl = serverConfig.FRONTEND_URL;
 
   const code = typeof request.query.code === "string" ? request.query.code : null;
   const state = typeof request.query.state === "string" ? request.query.state : null;
@@ -173,5 +172,5 @@ export async function googleCallbackController(request: Request, response: Respo
   response.cookie(getSessionCookieName(), token, getSessionCookieOptions(60 * 60 * 24 * 30));
 
   const callbackUrl = state ? JSON.parse(Buffer.from(state, "base64url").toString("utf8")).callbackUrl : "/dashboard";
-  return response.redirect(`${webUrl}${callbackUrl}`);
+  return response.redirect(new URL(callbackUrl, serverConfig.FRONTEND_URL).toString());
 }

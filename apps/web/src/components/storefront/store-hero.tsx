@@ -7,6 +7,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTenant } from "@/providers/tenant-provider";
 import type { StorefrontSectionLike } from "./storefront-types";
 
+function buildPlaceholderImage(label: string) {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><rect width="1600" height="900" fill="#e2e8f0"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" fill="#334155" font-family="Arial, Helvetica, sans-serif" font-size="72">${label}</text></svg>`
+  )}`;
+}
+
 const heroHeightMap: Record<string, string> = {
   sm: "min-h-[400px]",
   md: "min-h-[560px]",
@@ -33,7 +39,7 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
       _id: "fallback",
       title: (heroProps.headline as string) ?? `Welcome to ${store.name}`,
       subtitle: (heroProps.subheadline as string) ?? "Discover curated products, fast checkout, and a storefront that feels alive.",
-      imageUrl: customImage || `https://placehold.co/1600x900/png?text=${encodeURIComponent(store.name)}`,
+      imageUrl: customImage || buildPlaceholderImage(store.name),
       mobileImageUrl: (heroProps.mobileImageUrl as string) || customImage || "",
       buttonText: (heroProps.buttonText as string) ?? "Shop Now",
       buttonLink: (heroProps.buttonLink as string) ?? "/shop",

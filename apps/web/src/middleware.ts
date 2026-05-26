@@ -1,18 +1,13 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
+import { config } from "@/lib/config";
 
 const PUBLIC_FILE = /\.(.*)$/;
-const authSecret = process.env.JWT_SECRET ?? "";
-const sessionCookieName = process.env.SESSION_COOKIE_NAME ?? "bornoland.session";
-const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site";
-
-const DEV_ROOT_DOMAINS = new Set([
-  "localhost.com",
-  "lvh.me",
-  "localhost",
-  "127.0.0.1",
-]);
+const authSecret = config.JWT_SECRET;
+const sessionCookieName = config.sessionCookieName;
+const ROOT_DOMAIN = config.rootDomain;
+const API_PATH = new URL(config.apiUrl).pathname.replace(/\/$/, "") || "/api";
 
 const APP_ROUTES = new Set([
   "/login",
@@ -20,7 +15,6 @@ const APP_ROUTES = new Set([
   "/forgot-password",
   "/reset-password",
   "/unauthorized",
-  "/api",
   "/dashboard",
   "/builder",
   "/admin",
@@ -46,19 +40,6 @@ async function verifySessionToken(token: string): Promise<SessionToken | null> {
 function getSubdomain(hostname: string): string | null {
   const lower = hostname.toLowerCase();
 
-  if (lower === "localhost" || lower === "127.0.0.1" || lower === "0.0.0.0") {
-    return null;
-  }
-
-  for (const dev of DEV_ROOT_DOMAINS) {
-    if (lower === dev) return null;
-    if (lower.endsWith(`.${dev}`)) {
-      const prefix = lower.slice(0, -(dev.length + 1));
-      if (prefix && !prefix.includes(".")) return prefix;
-      return null;
-    }
-  }
-
   if (lower.endsWith(`.${ROOT_DOMAIN}`)) {
     const prefix = lower.slice(0, -(ROOT_DOMAIN.length + 1));
     if (prefix && !prefix.includes(".")) return prefix;
@@ -70,10 +51,6 @@ function getSubdomain(hostname: string): string | null {
 function getBaseDomain(hostname: string): string {
   const lower = hostname.toLowerCase();
 
-  for (const dev of DEV_ROOT_DOMAINS) {
-    if (lower.endsWith(`.${dev}`)) return dev;
-  }
-
   if (lower.endsWith(`.${ROOT_DOMAIN}`)) return ROOT_DOMAIN;
 
   return lower;
@@ -81,7 +58,7 @@ function getBaseDomain(hostname: string): string {
 
 function isAppRoute(pathname: string): boolean {
   const base = pathname.split("/")[1] ?? "";
-  return APP_ROUTES.has(`/${base}`) || base.startsWith("_next") || base.startsWith("api");
+  return APP_ROUTES.has(`/${base}`) || base.startsWith("_next") || pathname.startsWith(API_PATH);
 }
 
 export default async function middleware(request: NextRequest) {
@@ -96,7 +73,7 @@ export default async function middleware(request: NextRequest) {
   const subdomain = getSubdomain(hostname);
 
   if (subdomain) {
-    if (pathname.startsWith("/api")) {
+    if (pathname.startsWith(API_PATH)) {
       return NextResponse.next();
     }
 

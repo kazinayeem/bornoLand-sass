@@ -1,21 +1,13 @@
 import mongoose from "mongoose";
-import dotenv from "dotenv";
-import path from "path";
-
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
-dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
+import { serverConfig } from "./server.js";
 
 export async function connectDatabase() {
-  if (!process.env.MONGODB_URI) {
-    throw new Error("MONGODB_URI is required");
-  }
-
   if (mongoose.connection.readyState === 1) {
     return mongoose.connection;
   }
 
-  await mongoose.connect(process.env.MONGODB_URI, {
-    dbName: process.env.MONGODB_DB ?? "bornoland"
+  await mongoose.connect(serverConfig.MONGO_URI, {
+    dbName: serverConfig.MONGODB_DB
   });
 
   return mongoose.connection;

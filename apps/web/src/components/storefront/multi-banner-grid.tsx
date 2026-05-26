@@ -4,9 +4,9 @@ import Link from "next/link";
 import type { StorefrontSectionLike } from "./storefront-types";
 
 const defaultBanners = [
-  { image: "https://placehold.co/600x400/3b82f6/ffffff?text=New+Arrivals", label: "New Arrivals", link: "/shop" },
-  { image: "https://placehold.co/600x400/8b5cf6/ffffff?text=Sale", label: "Sale", link: "/shop" },
-  { image: "https://placehold.co/600x400/ec4899/ffffff?text=Trending", label: "Trending", link: "/shop" },
+  { image: "New Arrivals", label: "New Arrivals", link: "/shop" },
+  { image: "Sale", label: "Sale", link: "/shop" },
+  { image: "Trending", label: "Trending", link: "/shop" },
 ];
 
 export function MultiBannerGrid({ section }: { section?: StorefrontSectionLike }) {
@@ -25,7 +25,7 @@ export function MultiBannerGrid({ section }: { section?: StorefrontSectionLike }
             <Link key={i} href={banner.link}
               className="group relative block overflow-hidden" style={{ borderRadius: `${borderRadius}px` }}>
               <div className="aspect-[3/2]">
-                <img src={banner.image} alt={banner.label} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-700 to-zinc-500 text-2xl font-semibold text-white transition duration-300 group-hover:scale-105">{banner.image}</div>
               </div>
               <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/40 via-transparent to-transparent p-4 sm:p-6">
                 <span className="text-lg font-bold text-white drop-shadow-sm">{banner.label}</span>

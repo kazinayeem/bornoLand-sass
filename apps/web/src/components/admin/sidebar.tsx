@@ -9,7 +9,7 @@ import {
   Palette, MessageSquare, ShoppingBag, Ticket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { env } from "@/config/env";
+import { config } from "@/lib/config";
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -70,7 +70,7 @@ export function AdminSidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="truncate text-sm font-medium text-zinc-900">Super Admin</p>
-              <p className="truncate text-xs text-zinc-500">{env.isDev ? "admin@bornoland.com" : `admin@${env.NEXT_PUBLIC_ROOT_DOMAIN}`}</p>
+              <p className="truncate text-xs text-zinc-500">admin@{config.rootDomain}</p>
             </div>
           </div>
         )}

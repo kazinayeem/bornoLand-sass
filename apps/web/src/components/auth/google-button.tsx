@@ -2,15 +2,14 @@
 
 import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getApiUrl } from "@/utils/url";
 
 export function GoogleButton({ label = "Continue with Google" }: { label?: string }) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "/api";
-
   return (
     <Button
       type="button"
       onClick={() => {
-        window.location.href = `${baseUrl}/auth/google?redirectUrl=/dashboard`;
+        window.location.href = getApiUrl("/auth/google?redirectUrl=/dashboard");
       }}
       variant="outline"
       className="w-full gap-3"

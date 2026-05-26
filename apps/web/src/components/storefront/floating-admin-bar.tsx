@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutTemplate, Palette, Package, ShoppingBag, LayoutDashboard, X } from "lucide-react";
+import { getApiUrl } from "@/utils/url";
 
 type FloatingAdminBarProps = {
   storeId: string;
@@ -16,7 +17,7 @@ export function FloatingAdminBar({ storeId, primaryColor }: FloatingAdminBarProp
   useEffect(() => {
     const check = async () => {
       try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
+        const res = await fetch(getApiUrl("/auth/me"), { credentials: "include" });
         setIsAuthed(res.ok);
       } catch { setIsAuthed(false); }
     };

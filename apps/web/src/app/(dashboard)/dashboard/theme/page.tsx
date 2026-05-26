@@ -7,6 +7,7 @@ import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetTemplatesQuery } from "@/redux/api/template-api";
 import type { Store } from "@/redux/api/store-api";
 import { toast } from "sonner";
+import { getStoreDisplayDomain } from "@/utils/domain";
 import { Palette, Check, Loader2, X } from "lucide-react";
 
 const fonts = ["Inter", "Roboto", "Open Sans", "Poppins", "Playfair Display", "Space Grotesk"];
@@ -83,7 +84,7 @@ export default function ThemePage() {
                   {s.name[0]}
                 </div>
                 <h3 className="mt-3 font-semibold text-zinc-900">{s.name}</h3>
-                <p className="text-xs text-zinc-400">{s.subdomain || s.slug}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site"}</p>
+                <p className="text-xs text-zinc-400">{getStoreDisplayDomain(s.subdomain, s.slug)}</p>
               </button>
             ))}
           </div>

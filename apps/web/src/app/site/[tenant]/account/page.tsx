@@ -9,6 +9,7 @@ import { clearCustomer } from "@/redux/slices/customer-slice";
 import { motion } from "framer-motion";
 import { User, Package, Heart, LogOut, Mail, ChevronRight, Save, Loader2, X, Check } from "lucide-react";
 import { toast } from "sonner";
+import { getApiUrl } from "@/utils/url";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function AccountPage() {
     setSaving(true);
     try {
       const token = localStorage.getItem("customer_token");
-      const res = await fetch(`/api/customers/${customer?._id}`, {
+      const res = await fetch(getApiUrl(`/customers/${customer?._id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: name.trim() }),

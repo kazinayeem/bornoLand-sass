@@ -4,14 +4,16 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 import { toast } from "sonner";
+import { config } from "@/lib/config";
+import { getApiUrl } from "@/utils/url";
 
 type LoginFormProps = {
   googleButton?: boolean;
 };
 
 const SEED_EMAILS = {
-  user: process.env.NEXT_PUBLIC_ROOT_DOMAIN === "bornosoftnr.site" ? "admin@bornosoftnr.site" : "admin@bornoland.com",
-  demo: process.env.NEXT_PUBLIC_ROOT_DOMAIN === "bornosoftnr.site" ? "demo@bornosoftnr.site" : "demo@bornoland.com",
+  user: `admin@${config.rootDomain}`,
+  demo: `demo@${config.rootDomain}`,
 };
 
 export function LoginForm({ googleButton = false }: LoginFormProps) {
@@ -29,7 +31,7 @@ export function LoginForm({ googleButton = false }: LoginFormProps) {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch(getApiUrl("/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

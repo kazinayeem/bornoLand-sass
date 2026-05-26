@@ -28,4 +28,5 @@ export const config = {
   smtpUser: env.SMTP_USER,
   smtpPass: env.SMTP_PASS,
   emailFrom: env.EMAIL_FROM,
+  nextauthUrl: env.NEXTAUTH_URL,
 } as const;

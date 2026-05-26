@@ -6,6 +6,7 @@ import { Mail, Phone, MapPin, Send, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useTenant } from "@/providers/tenant-provider";
 import { config } from "@/lib/config";
+import { getApiUrl } from "@/utils/url";
 
 type CmsPage = {
   _id: string;
@@ -54,7 +55,7 @@ export default function ContactPage() {
     if (!form.name || !form.email || !form.message) return toast.error("Please fill required fields");
     setSending(true);
     try {
-      const res = await fetch("/api/contact", {
+      const res = await fetch(getApiUrl("/contact"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, storeId: store._id }),

@@ -11,6 +11,7 @@ import {
   Store, Trash2, X, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { StoreDrawer } from "@/components/dashboard/stores/store-drawer";
 import {
   useGetMyStoresQuery, useGetPlansQuery, useDeleteStoreMutation,
   type Store as StoreType,
@@ -41,6 +42,8 @@ export default function DashboardHomePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StoreType | null>(null);
   const [confirmName, setConfirmName] = useState("");
+  const [workspaceStore, setWorkspaceStore] = useState<StoreType | null>(null);
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
 
   useEffect(() => {
     dispatch(setStores(stores));
@@ -63,10 +66,18 @@ export default function DashboardHomePage() {
     );
   }, [stores]);
 
+  const revenueRank = useMemo(() => [...stores].sort((a, b) => (b.revenueBDT ?? 0) - (a.revenueBDT ?? 0)).slice(0, 5), [stores]);
+  const recentActivity = useMemo(() => [...stores].sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt)).slice(0, 6), [stores]);
+
   const requestDelete = (s: StoreType) => {
     setDeleteTarget(s);
     setConfirmName("");
     setShowDeleteConfirm(true);
+  };
+
+  const openWorkspace = (s: StoreType) => {
+    setWorkspaceStore(s);
+    setWorkspaceOpen(true);
   };
 
   const handleDeleteStore = async () => {
@@ -133,6 +144,74 @@ export default function DashboardHomePage() {
         </div>
       </motion.section>
 
+      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-semibold text-zinc-900">Revenue Overview</h2>
+              <p className="mt-1 text-sm text-zinc-500">Your highest performing stores by total revenue.</p>
+            </div>
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              {formatBDT(metrics.revenue)} total
+            </span>
+          </div>
+          <div className="mt-5 space-y-3">
+            {revenueRank.length === 0 ? (
+              <p className="py-8 text-center text-sm text-zinc-400">No store revenue available yet.</p>
+            ) : revenueRank.map((store) => {
+              const highest = revenueRank[0]?.revenueBDT ?? 1;
+              const width = Math.max(8, Math.round(((store.revenueBDT ?? 0) / highest) * 100));
+              return (
+                <div key={store._id} className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-zinc-900">{store.name}</p>
+                      <p className="text-xs text-zinc-500">{store.orderCount ?? 0} orders</p>
+                    </div>
+                    <span className="shrink-0 font-semibold text-zinc-900">{formatBDT(store.revenueBDT ?? 0)}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
+                    <div className="h-full rounded-full bg-gradient-to-r from-zinc-900 via-blue-600 to-emerald-500" style={{ width: `${width}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-semibold text-zinc-900">Activity Feed</h2>
+              <p className="mt-1 text-sm text-zinc-500">Recently updated stores and workspace actions.</p>
+            </div>
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">Live</span>
+          </div>
+          <div className="mt-5 space-y-2.5">
+            {recentActivity.length === 0 ? (
+              <p className="py-8 text-center text-sm text-zinc-400">No activity yet.</p>
+            ) : recentActivity.map((store) => (
+              <button
+                key={store._id}
+                onClick={() => openWorkspace(store)}
+                className="flex w-full items-center justify-between gap-4 rounded-2xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-left transition-colors hover:bg-zinc-100"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-zinc-900">{store.name}</p>
+                  <p className="truncate text-xs text-zinc-500">
+                    Updated {new Date(store.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-zinc-900">{formatBDT(store.revenueBDT ?? 0)}</p>
+                  <p className="text-[11px] uppercase tracking-wider text-zinc-400">{store.status}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+
       {/* ── Store Grid / Empty State ── */}
       {stores.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center shadow-sm">
@@ -151,12 +230,21 @@ export default function DashboardHomePage() {
               store={store}
               plans={plans}
               index={idx}
-              onManage={(s, _tab) => router.push(`/dashboard/stores/${s._id}`)}
+              onManage={(s, _tab) => openWorkspace(s)}
               onDelete={requestDelete}
             />
           ))}
         </div>
       )}
+
+      <StoreDrawer
+        store={workspaceStore}
+        plans={plans}
+        templates={templates}
+        isOpen={workspaceOpen}
+        onClose={() => setWorkspaceOpen(false)}
+        onDelete={requestDelete}
+      />
 
       {/* ── Delete Confirmation ── */}
       <AnimatePresence>

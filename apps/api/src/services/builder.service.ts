@@ -20,6 +20,7 @@ export async function savePage(pageId: string, payload: { sections?: unknown[]; 
   const update: Record<string, unknown> = {};
   if (payload.sections) update.sections = payload.sections;
   if (payload.theme) update.theme = payload.theme;
+  update.status = "published";
 
   const page = await PageModel.findByIdAndUpdate(pageId, { $set: update }, { new: true }).lean() as any;
   if (!page) return { ok: false as const, message: "Page not found" };

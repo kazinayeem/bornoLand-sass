@@ -26,18 +26,18 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleQuantity = (productId: string, quantity: number) => {
+  const handleQuantity = (productId: string, variantId: string | undefined, quantity: number) => {
     if (quantity <= 0) {
-      dispatch(removeFromCart(productId));
+      dispatch(removeFromCart({ productId, variantId }));
       removeRemote(productId);
     } else {
-      dispatch(updateQuantity({ productId, quantity }));
-      updateRemote({ productId, quantity });
+      dispatch(updateQuantity({ productId, variantId, quantity }));
+      updateRemote({ productId, quantity, variantId });
     }
   };
 
-  const handleRemove = (productId: string) => {
-    dispatch(removeFromCart(productId));
+  const handleRemove = (productId: string, variantId: string | undefined) => {
+    dispatch(removeFromCart({ productId, variantId }));
     removeRemote(productId);
   };
 
@@ -84,14 +84,17 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                 <div className="flex-1 overflow-y-auto p-4">
                   <div className="space-y-3">
                     {items.map((item) => (
-                      <div key={item.productId} className="flex gap-3 rounded-xl border border-zinc-100 p-3">
+                      <div key={`${item.productId}-${item.variantId ?? ""}`} className="flex gap-3 rounded-xl border border-zinc-100 p-3">
                         <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-zinc-50">
                           <ShoppingBag className="h-6 w-6" style={{ color: `${primaryColor}30` }} />
                         </div>
                         <div className="flex flex-1 flex-col justify-between">
                           <div className="flex justify-between">
-                            <p className="text-sm font-medium text-zinc-900 truncate max-w-[180px]">{item.name}</p>
-                            <button onClick={() => handleRemove(item.productId)} className="text-zinc-300 hover:text-red-400">
+                            <div>
+                              <p className="text-sm font-medium text-zinc-900 truncate max-w-[180px]">{item.name}</p>
+                              {item.variantTitle && <p className="text-xs text-zinc-500">{item.variantTitle}</p>}
+                            </div>
+                            <button onClick={() => handleRemove(item.productId, item.variantId)} className="text-zinc-300 hover:text-red-400">
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
@@ -99,12 +102,12 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                             {formatCurrency(item.price * item.quantity, settings)}
                           </p>
                           <div className="flex items-center gap-2">
-                            <button onClick={() => handleQuantity(item.productId, item.quantity - 1)}
+                            <button onClick={() => handleQuantity(item.productId, item.variantId, item.quantity - 1)}
                               className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-200 text-zinc-500 hover:bg-zinc-50">
                               <Minus className="h-3 w-3" />
                             </button>
                             <span className="w-6 text-center text-xs font-medium text-zinc-700">{item.quantity}</span>
-                            <button onClick={() => handleQuantity(item.productId, item.quantity + 1)}
+                            <button onClick={() => handleQuantity(item.productId, item.variantId, item.quantity + 1)}
                               className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-200 text-zinc-500 hover:bg-zinc-50">
                               <Plus className="h-3 w-3" />
                             </button>

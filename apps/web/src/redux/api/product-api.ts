@@ -1,5 +1,21 @@
 import { baseApi } from "@/redux/api/base-api";
 
+export type ProductOption = {
+  _id?: string;
+  name: string;
+  values: string[];
+};
+
+export type ProductVariant = {
+  _id?: string;
+  optionValues: Record<string, string>;
+  price?: number;
+  stock: number;
+  sku: string;
+  imageUrl: string;
+  enabled: boolean;
+};
+
 export type Product = {
   _id: string;
   storeId: string;
@@ -18,6 +34,8 @@ export type Product = {
   images: string[];
   featured: boolean;
   categoryIds?: string[];
+  options?: ProductOption[];
+  variants?: ProductVariant[];
   createdAt: string;
   updatedAt: string;
 };
@@ -73,9 +91,22 @@ type CreateProductRequest = {
   images?: string[];
   featured?: boolean;
   categoryIds?: string[];
+  options?: ProductOption[];
+  variants?: ProductVariant[];
 };
 
 type UpdateProductRequest = Partial<CreateProductRequest>;
+
+type CreateVariantRequest = {
+  optionValues: Record<string, string>;
+  price?: number;
+  stock?: number;
+  sku?: string;
+  imageUrl?: string;
+  enabled?: boolean;
+};
+
+type UpdateVariantRequest = Partial<CreateVariantRequest>;
 
 export const productApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -106,11 +137,24 @@ export const productApi = baseApi.injectEndpoints({
     duplicateProduct: builder.mutation<ApiEnvelope<{ product: Product }>, { storeId: string; id: string }>({
       query: ({ storeId, id }) => ({ url: `/products/${storeId}/${id}/duplicate`, method: "POST" }),
       invalidatesTags: (_result, _error, { storeId }) => [{ type: "Products", id: storeId }]
+    }),
+    createVariant: builder.mutation<ApiEnvelope<{ product: Product }>, { storeId: string; id: string; data: CreateVariantRequest }>({
+      query: ({ storeId, id, data }) => ({ url: `/products/${storeId}/${id}/variants`, method: "POST", body: data }),
+      invalidatesTags: (_result, _error, { storeId }) => [{ type: "Products", id: storeId }]
+    }),
+    updateVariant: builder.mutation<ApiEnvelope<{ product: Product }>, { storeId: string; id: string; variantId: string; data: UpdateVariantRequest }>({
+      query: ({ storeId, id, variantId, data }) => ({ url: `/products/${storeId}/${id}/variants/${variantId}`, method: "PUT", body: data }),
+      invalidatesTags: (_result, _error, { storeId }) => [{ type: "Products", id: storeId }]
+    }),
+    deleteVariant: builder.mutation<ApiEnvelope<never>, { storeId: string; id: string; variantId: string }>({
+      query: ({ storeId, id, variantId }) => ({ url: `/products/${storeId}/${id}/variants/${variantId}`, method: "DELETE" }),
+      invalidatesTags: (_result, _error, { storeId }) => [{ type: "Products", id: storeId }]
     })
   })
 });
 
 export const {
   useGetProductsQuery, useGetProductQuery, useGetPublicProductQuery, useCreateProductMutation,
-  useUpdateProductMutation, useDeleteProductMutation, useDuplicateProductMutation
+  useUpdateProductMutation, useDeleteProductMutation, useDuplicateProductMutation,
+  useCreateVariantMutation, useUpdateVariantMutation, useDeleteVariantMutation
 } = productApi;

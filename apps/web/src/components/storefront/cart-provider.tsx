@@ -17,6 +17,8 @@ function CartInitializer() {
     if (data?.data?.cart?.items) {
       const serverItems = data.data.cart.items.map((item) => ({
         productId: typeof item.productId === "object" ? (item.productId as any)._id ?? item.productId : item.productId,
+        variantId: item.variantId,
+        variantTitle: item.variantTitle,
         name: item.name,
         price: item.price,
         quantity: item.quantity,

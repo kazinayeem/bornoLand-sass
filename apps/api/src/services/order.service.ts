@@ -66,6 +66,8 @@ export async function createOrder(
     customerId,
     items: cart.items.map((item: any) => ({
       productId: item.productId,
+      variantId: item.variantId ?? undefined,
+      variantTitle: item.variantTitle ?? "",
       name: item.name,
       price: item.price,
       quantity: item.quantity,

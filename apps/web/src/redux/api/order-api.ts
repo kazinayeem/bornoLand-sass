@@ -2,6 +2,8 @@ import { baseApi } from "@/redux/api/base-api";
 
 type OrderItemData = {
   productId: string;
+  variantId?: string;
+  variantTitle?: string;
   name: string;
   price: number;
   quantity: number;

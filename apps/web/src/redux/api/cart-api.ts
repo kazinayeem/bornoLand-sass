@@ -2,6 +2,8 @@ import { baseApi } from "@/redux/api/base-api";
 
 type CartItemData = {
   productId: string;
+  variantId?: string;
+  variantTitle?: string;
   name: string;
   price: number;
   quantity: number;
@@ -43,7 +45,7 @@ export const cartApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Cart"]
     }),
-    addToCart: builder.mutation<ApiResponse<CartResponse>, { productId: string; quantity?: number }>({
+    addToCart: builder.mutation<ApiResponse<CartResponse>, { productId: string; quantity?: number; variantId?: string }>({
       query: (body) => ({
         url: "/cart/add",
         method: "POST",
@@ -52,7 +54,7 @@ export const cartApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Cart"]
     }),
-    updateCartItem: builder.mutation<ApiResponse<CartResponse>, { productId: string; quantity: number }>({
+    updateCartItem: builder.mutation<ApiResponse<CartResponse>, { productId: string; quantity: number; variantId?: string }>({
       query: (body) => ({
         url: "/cart/update",
         method: "PUT",

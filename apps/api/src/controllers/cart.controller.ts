@@ -32,10 +32,10 @@ export async function addToCartController(request: SubdomainRequest, response: R
   const { storeId, customerId, sessionId } = getIds(request);
   if (!storeId) return sendFailure(response, "Store not found", 404);
 
-  const { productId, quantity } = request.body;
+  const { productId, quantity, variantId } = request.body;
   if (!productId) return sendFailure(response, "Product ID required");
 
-  const result = await addToCart(storeId, productId, quantity ?? 1, customerId, sessionId);
+  const result = await addToCart(storeId, productId, quantity ?? 1, customerId, sessionId, variantId);
   return result.ok
     ? sendSuccess(response, result.data)
     : sendFailure(response, result.message);

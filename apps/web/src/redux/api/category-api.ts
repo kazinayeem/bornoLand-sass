@@ -11,6 +11,8 @@ export type Category = {
   active: boolean;
   featured: boolean;
   sortOrder: number;
+  metaTitle?: string;
+  metaDescription?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -28,6 +30,8 @@ type CreateCategoryPayload = {
   parentId?: string | null;
   active?: boolean;
   featured?: boolean;
+  metaTitle?: string;
+  metaDescription?: string;
 };
 
 type UpdateCategoryPayload = {
@@ -39,6 +43,8 @@ type UpdateCategoryPayload = {
   active?: boolean;
   featured?: boolean;
   sortOrder?: number;
+  metaTitle?: string;
+  metaDescription?: string;
 };
 
 export const categoryApi = baseApi.injectEndpoints({

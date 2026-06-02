@@ -220,6 +220,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
                   <div key={i} className="flex items-center justify-between rounded-xl border border-zinc-100 p-3">
                     <div>
                       <p className="text-sm font-medium text-zinc-900">{item.name}</p>
+                      {item.variantTitle && <p className="text-xs text-zinc-500">{item.variantTitle}</p>}
                       <p className="text-xs text-zinc-400">Qty: {item.quantity} × {formatBDT(item.price)}</p>
                     </div>
                     <p className="text-sm font-semibold text-zinc-900">{formatBDT(item.price * item.quantity)}</p>

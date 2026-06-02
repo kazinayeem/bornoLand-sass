@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/storefront/product-card";
 import { ProductSkeleton } from "@/components/storefront/product-skeleton";
 import { useTenant } from "@/providers/tenant-provider";
 import { useSearchParams } from "next/navigation";
+import { formatCurrency } from "@/lib/format-currency";
 
 const SORT_OPTIONS = [
   { label: "Newest", value: "newest" },
@@ -18,7 +19,7 @@ const SORT_OPTIONS = [
 
 export default function ShopPage() {
   const searchParams = useSearchParams();
-  const { theme, products, categories } = useTenant();
+  const { theme, products, categories, settings } = useTenant();
   const { primaryColor, font, darkMode } = theme;
   const isDark = darkMode;
 
@@ -127,14 +128,14 @@ export default function ShopPage() {
               <div>
                 <label className="mb-1.5 block text-xs font-medium" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>Price Range</label>
                 <div className="flex items-center gap-2 text-xs" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-                  <span>${priceRange[0]}</span>
+                  <span>{formatCurrency(priceRange[0], settings)}</span>
                   <input type="range" min={0} max={maxPrice} value={priceRange[0]}
                     onChange={(e) => setPriceRange([Math.min(Number(e.target.value), priceRange[1]), priceRange[1]])}
                     className="w-24 accent-zinc-900" />
                   <input type="range" min={0} max={maxPrice} value={priceRange[1]}
                     onChange={(e) => setPriceRange([priceRange[0], Math.max(Number(e.target.value), priceRange[0])])}
                     className="w-24 accent-zinc-900" />
-                  <span>${priceRange[1]}</span>
+                  <span>{formatCurrency(priceRange[1], settings)}</span>
                 </div>
               </div>
               <div>

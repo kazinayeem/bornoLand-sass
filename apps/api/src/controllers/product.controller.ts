@@ -1,7 +1,8 @@
 import type { Response } from "express";
 import type { AuthRequest } from "../middleware/auth.middleware.js";
 import {
-  getProducts, getProduct, createProduct, updateProduct, deleteProduct, duplicateProduct
+  getProducts, getProduct, createProduct, updateProduct, deleteProduct, duplicateProduct,
+  createVariant, updateVariant, deleteVariant
 } from "../services/product.service.js";
 import { StoreModel } from "../models/store.model.js";
 import { sendFailure, sendSuccess } from "../utils/api-response.js";
@@ -49,4 +50,27 @@ export async function duplicateProductController(request: AuthRequest, response:
   const storeId = request.params.storeId as string;
   const result = await duplicateProduct(id, storeId);
   return result.ok ? sendSuccess(response, result.data, "Product duplicated") : sendFailure(response, result.message, 404);
+}
+
+export async function createVariantController(request: AuthRequest, response: Response) {
+  const id = request.params.id as string;
+  const storeId = request.params.storeId as string;
+  const result = await createVariant(id, storeId, request.body);
+  return result.ok ? sendSuccess(response, result.data, "Variant created", 201) : sendFailure(response, result.message);
+}
+
+export async function updateVariantController(request: AuthRequest, response: Response) {
+  const id = request.params.id as string;
+  const variantId = request.params.variantId as string;
+  const storeId = request.params.storeId as string;
+  const result = await updateVariant(id, variantId, storeId, request.body);
+  return result.ok ? sendSuccess(response, result.data, "Variant updated") : sendFailure(response, result.message);
+}
+
+export async function deleteVariantController(request: AuthRequest, response: Response) {
+  const id = request.params.id as string;
+  const variantId = request.params.variantId as string;
+  const storeId = request.params.storeId as string;
+  const result = await deleteVariant(id, variantId, storeId);
+  return result.ok ? sendSuccess(response, undefined, result.message) : sendFailure(response, result.message);
 }

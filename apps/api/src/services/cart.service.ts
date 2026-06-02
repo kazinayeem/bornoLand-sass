@@ -30,12 +30,27 @@ export async function addToCart(
   productId: string,
   quantity: number,
   customerId?: string,
-  sessionId?: string
+  sessionId?: string,
+  variantId?: string
 ) {
   await connectDatabase();
 
   const product: any = await ProductModel.findOne({ _id: productId, storeId, status: "active" }).lean();
   if (!product) return { ok: false as const, message: "Product not found" };
+
+  let price = product.price;
+  let image = product.images?.[0] ?? "";
+  let variantTitle = "";
+
+  if (variantId && product.variants?.length > 0) {
+    const variant = product.variants.find(
+      (v: any) => v._id.toString() === variantId && v.enabled !== false
+    );
+    if (!variant) return { ok: false as const, message: "Variant not found" };
+    price = variant.price ?? product.price;
+    image = variant.imageUrl || product.images?.[0] || "";
+    variantTitle = Object.values(variant.optionValues ?? {}).join(" / ");
+  }
 
   let cart = customerId
     ? await CartModel.findOne({ storeId, customerId })
@@ -50,16 +65,21 @@ export async function addToCart(
     cart.customerId = customerId as any;
   }
 
-  const existingIdx = cart.items.findIndex((i: any) => i.productId.toString() === productId);
+  const existingIdx = cart.items.findIndex(
+    (i: any) => i.productId.toString() === productId && (i.variantId?.toString() || "") === (variantId || "")
+  );
   if (existingIdx >= 0) {
     cart.items[existingIdx].quantity += quantity;
+    cart.items[existingIdx].price = price;
   } else {
     cart.items.push({
       productId: product._id,
+      variantId: variantId ?? undefined,
+      variantTitle,
       name: product.name,
-      price: product.price,
+      price,
       quantity,
-      image: product.images?.[0] ?? ""
+      image
     });
   }
 

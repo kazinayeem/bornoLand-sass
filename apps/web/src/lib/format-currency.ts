@@ -29,7 +29,7 @@ export function formatCurrency(amount: number, settings?: CurrencyFormatSettings
 
   if (currencyCode && CURRENCY_MAP[currencyCode]) {
     const map = CURRENCY_MAP[currencyCode];
-    const currencySymbol = overrides?.currencySymbol ?? map.symbol;
+    const currencySymbol = overrides?.currencySymbol?.trim() || map.symbol;
     const currencyPosition: "before" | "after" = overrides?.currencyPosition ?? map.position;
     const locale = overrides?.locale ?? map.locale;
     const decimalPlaces = overrides?.decimalPlaces ?? map.decimalPlaces;
@@ -43,7 +43,7 @@ export function formatCurrency(amount: number, settings?: CurrencyFormatSettings
   }
 
   const s = overrides ?? {};
-  const currencySymbol = s.currencySymbol ?? "$";
+  const currencySymbol = typeof s.currencySymbol === "string" && s.currencySymbol.trim() ? s.currencySymbol.trim() : "$";
   const currencyPosition = s.currencyPosition ?? "before";
   const locale = s.locale ?? "en-US";
   const decimalPlaces = s.decimalPlaces ?? 2;

@@ -34,7 +34,10 @@ export async function resolveBySubdomain(slug: string): Promise<{
   }
 
   const tenant = await TenantModel.findById(store.tenantId).lean() as any;
-  const page = await PageModel.findOne({ storeId: store._id, slug: "home", status: "published" }).lean() as any;
+  let page = await PageModel.findOne({ storeId: store._id, slug: "home", status: "published" }).lean() as any;
+  if (!page) {
+    page = await PageModel.findOne({ storeId: store._id, slug: "home" }).sort({ createdAt: -1 }).lean() as any;
+  }
   const products = await ProductModel.find({ storeId: store._id, status: "active" }).sort({ createdAt: -1 }).limit(20).lean() as any[];
   const categories = await CategoryModel.find({ storeId: store._id, active: true }).sort({ sortOrder: 1, name: 1 }).lean() as any[];
   const settings = await StoreSettingsModel.findOne({ storeId: store._id }).lean() as any;

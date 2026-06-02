@@ -1,52 +1,27 @@
 "use client";
 
+import { Globe, ExternalLink, Palette, Eye, X, Check, ChevronDown, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Store, Globe, ExternalLink, Palette, Plus, ShoppingBag,
-  Eye, Trash2, ChevronDown, Check, X,
-} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useUpdateStoreMutation, useChangeStoreThemeMutation } from "@/redux/api/store-api";
-import { useGetTemplatesQuery } from "@/redux/api/template-api";
+import { useUpdateStoreMutation } from "@/redux/api/store-api";
 import { toast } from "sonner";
+import { getStoreUrl } from "@/utils/domain";
 import type { Store as StoreType } from "@/redux/api/store-api";
 import type { WorkspaceTabId } from "@/components/workspace/types";
 
 type WorkspaceHeaderProps = {
   store: StoreType;
-  activeTab: WorkspaceTabId;
-  onTabChange: (tab: WorkspaceTabId) => void;
-  onDeleteRequest: () => void;
-  tabs: { id: WorkspaceTabId; label: string }[];
+  onSettings: () => void;
+  onBuilder: () => void;
 };
 
-const planColors: Record<string, string> = {
-  free: "bg-zinc-100 text-zinc-700",
-  starter: "bg-blue-50 text-blue-700",
-  growth: "bg-purple-50 text-purple-700",
-  enterprise: "bg-amber-50 text-amber-700",
-};
-
-function getStoreUrl(store: StoreType) {
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornoland.com";
-  const subdomain = store.subdomain || store.slug;
-  if (rootDomain.includes("localhost")) return `http://${subdomain}.localhost:3000`;
-  return `https://${subdomain}.${rootDomain}`;
-}
-
-export function WorkspaceHeader({
-  store, activeTab, onTabChange, onDeleteRequest, tabs,
-}: WorkspaceHeaderProps) {
+export function WorkspaceHeader({ store, onSettings, onBuilder }: WorkspaceHeaderProps) {
   const router = useRouter();
-  const storeUrl = getStoreUrl(store);
-  const [showActions, setShowActions] = useState(false);
+  const storeUrl = getStoreUrl(store.subdomain || store.slug);
   const [updateStore] = useUpdateStoreMutation();
-  const [changeTheme] = useChangeStoreThemeMutation();
-  const { data: templatesData } = useGetTemplatesQuery();
-  const templates = templatesData?.data?.templates ?? [];
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const publishStore = async () => {
+  const toggleStatus = async () => {
     try {
       const newStatus = store.status === "active" ? "draft" : "active";
       await updateStore({ id: store._id, data: { status: newStatus } }).unwrap();
@@ -57,125 +32,72 @@ export function WorkspaceHeader({
   };
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-      {/* Gradient header */}
-      <div className="relative bg-gradient-to-br from-zinc-900 via-zinc-800 to-blue-600 px-6 pt-6 pb-20 text-white">
-        <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/5" />
-        <div className="absolute -bottom-12 -left-12 h-36 w-36 rounded-full bg-white/5" />
-        <div className="relative flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 text-2xl font-black shadow-lg backdrop-blur-sm">
-              {store.name.slice(0, 2).toUpperCase()}
-            </div>
-            <div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold">{store.name}</h2>
-                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-                  store.status === "active" ? "bg-emerald-500/30 text-emerald-100" : "bg-white/15 text-white/80"
-                }`}>
-                  {store.status}
-                </span>
-                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${planColors[store.plan] ?? "bg-white/15 text-white/80"}`}>
-                  {store.plan}
-                </span>
-              </div>
-              <div className="mt-1 flex items-center gap-2 text-sm text-white/70">
-                <Globe className="h-3.5 w-3.5" />
-                <span>{storeUrl}</span>
-              </div>
-            </div>
-          </div>
-
+    <div className="flex h-16 items-center justify-between rounded-2xl border border-zinc-200 bg-white px-5 shadow-sm">
+      <div className="flex items-center gap-4 min-w-0">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-900 via-zinc-800 to-blue-600 text-sm font-bold text-white shadow-sm">
+          {store.name.slice(0, 2).toUpperCase()}
+        </div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <a href={storeUrl} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm hover:bg-white/25 transition-colors">
-              <ExternalLink className="h-3.5 w-3.5" /> Visit
-            </a>
-            <button onClick={publishStore}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold backdrop-blur-sm transition-colors ${
-                store.status === "active"
-                  ? "bg-emerald-500/30 text-emerald-100 hover:bg-emerald-500/40"
-                  : "bg-white/15 text-white hover:bg-white/25"
-              }`}>
-              {store.status === "active" ? <Eye className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
-              {store.status === "active" ? "Published" : "Draft"}
-            </button>
-            <button
-              onClick={() => router.push(`/dashboard/builder/${store._id}`)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm hover:bg-white/25 transition-colors">
-              <Palette className="h-3.5 w-3.5" /> Builder
-            </button>
-            <div className="relative">
-              <button onClick={() => setShowActions(!showActions)}
-                className="inline-flex items-center gap-1 rounded-xl bg-white/15 px-3 py-2 text-xs font-semibold text-white backdrop-blur-sm hover:bg-white/25 transition-colors">
-                <ChevronDown className="h-3.5 w-3.5" />
-              </button>
-              {showActions && (
-                <div className="absolute right-0 top-10 z-50 w-48 rounded-xl border border-zinc-200 bg-white py-1.5 shadow-xl"
-                  onMouseLeave={() => setShowActions(false)}>
-                  {[
-                    { icon: Plus, label: "Add Product", action: () => { onTabChange("products"); setShowActions(false); } },
-                    { icon: ShoppingBag, label: "View Orders", action: () => { onTabChange("orders"); setShowActions(false); } },
-                    { icon: Palette, label: "Customize Theme", action: () => { onTabChange("theme"); setShowActions(false); } },
-                    { icon: Trash2, label: "Delete Store", action: () => { onDeleteRequest(); setShowActions(false); }, danger: true },
-                  ].map((item) => (
-                    <button key={item.label} onClick={item.action}
-                      className={`flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm transition-colors ${
-                        item.danger ? "text-red-600 hover:bg-red-50" : "text-zinc-700 hover:bg-zinc-50"
-                      }`}>
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <h2 className="text-sm font-bold text-zinc-900 truncate">{store.name}</h2>
+            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${store.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-500"}`}>
+              {store.status}
+            </span>
+            <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700">
+              {store.plan}
+            </span>
           </div>
+          <a href={storeUrl} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-blue-600 transition-colors">
+            <Globe className="h-3 w-3" />
+            <span className="truncate max-w-[200px]">{storeUrl}</span>
+            <ExternalLink className="h-3 w-3 shrink-0" />
+          </a>
         </div>
       </div>
 
-      {/* Tab bar */}
-      <div className="relative -mt-12 px-6">
-        <div className="flex items-center gap-1 overflow-x-auto rounded-xl bg-white/90 backdrop-blur-sm border border-zinc-200/50 shadow-sm p-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`whitespace-nowrap rounded-lg px-3.5 py-2 text-xs font-semibold transition-all ${
-                activeTab === tab.id
-                  ? "bg-zinc-900 text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick action buttons */}
-      <div className="flex items-center gap-2 px-6 py-3 border-t border-zinc-100">
-        <button onClick={() => onTabChange("products")}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
-          <Plus className="h-3.5 w-3.5" /> Add Product
-        </button>
-        <button onClick={() => router.push(`/dashboard/builder/${store._id}`)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition-colors">
-          <Palette className="h-3.5 w-3.5" /> Open Builder
-        </button>
+      <div className="flex items-center gap-2">
         <a href={storeUrl} target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
-          <ExternalLink className="h-3.5 w-3.5" /> Visit Store
+          className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors">
+          <ExternalLink className="h-3.5 w-3.5" /> Visit
         </a>
-        <button onClick={publishStore}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors">
+        <button onClick={onBuilder}
+          className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors">
+          <Palette className="h-3.5 w-3.5" /> Builder
+        </button>
+        <button onClick={toggleStatus}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+            store.status === "active"
+              ? "border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+              : "bg-zinc-900 text-white hover:bg-zinc-800"
+          }`}>
           {store.status === "active" ? <Eye className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
           {store.status === "active" ? "Unpublish" : "Publish"}
         </button>
-        <button onClick={() => onTabChange("orders")}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-200 transition-colors">
-          <ShoppingBag className="h-3.5 w-3.5" /> View Orders
-        </button>
+        <div className="relative">
+          <button onClick={() => setMenuOpen(!menuOpen)}
+            className="rounded-lg border border-zinc-200 p-1.5 text-zinc-400 hover:bg-zinc-50 transition-colors">
+            <ChevronDown className="h-4 w-4" />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-9 z-50 w-44 rounded-xl border border-zinc-200 bg-white py-1.5 shadow-xl"
+              onMouseLeave={() => setMenuOpen(false)}>
+              <button onClick={() => { router.push(`/dashboard/stores/${store._id}`); setMenuOpen(false); }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50">
+                <ShoppingBag className="h-3.5 w-3.5" /> View Orders
+              </button>
+              <button onClick={() => { onSettings(); setMenuOpen(false); }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50">
+                <Palette className="h-3.5 w-3.5" /> Settings
+              </button>
+              <div className="border-t border-zinc-100 my-1" />
+              <button onClick={() => setMenuOpen(false)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50">
+                <Trash2 className="h-3.5 w-3.5" /> Delete Store
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

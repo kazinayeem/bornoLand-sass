@@ -26,6 +26,7 @@ export async function getCategoryBySlug(storeId: string, slug: string) {
 export async function createCategory(storeId: string, userId: string, payload: {
   name: string; slug: string; imageUrl?: string; description?: string;
   parentId?: string | null; active?: boolean; featured?: boolean;
+  metaTitle?: string; metaDescription?: string;
 }) {
   await connectDatabase();
   const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
@@ -48,6 +49,7 @@ export async function createCategory(storeId: string, userId: string, payload: {
 export async function updateCategory(categoryId: string, storeId: string, userId: string, payload: Partial<{
   name: string; slug: string; imageUrl: string; description: string;
   parentId: string | null; active: boolean; featured: boolean; sortOrder: number;
+  metaTitle: string; metaDescription: string;
 }>) {
   await connectDatabase();
   const store = await StoreModel.findOne({ _id: storeId, userId }).lean();

@@ -1,10 +1,6 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { AuthInit } from "@/components/auth/auth-init";
-import { CartProvider } from "@/components/storefront/cart-provider";
-import { FloatingAdminBar } from "@/components/storefront/floating-admin-bar";
-import { StoreFooter } from "@/components/storefront/store-footer";
-import { StoreNavbar } from "@/components/storefront/store-navbar";
+import { StorefrontFrame } from "@/components/storefront/storefront-frame";
 import { TenantProvider, type HomepageSliderData, type ProductData, type StoreData, type StoreSettingsData, type ThemeData } from "@/providers/tenant-provider";
 import { ProductDetailClient } from "@/app/site/[tenant]/products/[slug]/product-detail-client";
 
@@ -50,24 +46,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   };
 
   return (
-    <TenantProvider value={{
-      store: data.store,
-      theme,
-      products: data.products ?? [],
-      categories: [],
-      settings: data.settings,
-      sliders: data.sliders ?? [],
-      pageSections: [],
-    }}>
-      <AuthInit />
-      <StoreNavbar />
-      <CartProvider>
-        <main className="pb-24 lg:pb-10">
-          <ProductDetailClient product={data.product} />
-        </main>
-      </CartProvider>
-      <StoreFooter />
-      <FloatingAdminBar storeId={data.store._id} primaryColor={theme.primaryColor} />
-    </TenantProvider>
+    <StorefrontFrame
+      store={data.store}
+      theme={theme}
+      products={data.products ?? []}
+      categories={[]}
+      settings={data.settings}
+      sliders={data.sliders ?? []}
+      pageSections={[]}
+      adminBarStoreId={data.store._id}
+      showAdminBar
+    >
+      <main className="pb-24 lg:pb-10">
+        <ProductDetailClient product={data.product} />
+      </main>
+    </StorefrontFrame>
   );
 }

@@ -48,7 +48,7 @@ export function Modal({ open, onClose, title, description, children, size = "md"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className={cn("relative w-full rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl", sizeClasses[size], className)}
+            className={cn("relative w-full rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-[0_24px_100px_-36px_rgba(15,23,42,0.45)]", sizeClasses[size], className)}
           >
             {showClose && (
               <button onClick={onClose} className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600">

@@ -116,6 +116,7 @@ function OrderDetail({ orderId }: { orderId: string }) {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-zinc-900">{item.name}</p>
+                  {item.variantTitle && <p className="text-xs text-zinc-500">{item.variantTitle}</p>}
                   <p className="text-xs text-zinc-400">Qty: {item.quantity} × {formatCurrency(item.price, settings)}</p>
                 </div>
                 <span className="text-sm font-semibold text-zinc-900">{formatCurrency(item.price * item.quantity, settings)}</span>

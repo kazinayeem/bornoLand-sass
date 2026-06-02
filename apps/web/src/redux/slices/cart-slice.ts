@@ -4,6 +4,8 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export type CartItem = {
   productId: string;
+  variantId?: string;
+  variantTitle?: string;
   name: string;
   price: number;
   quantity: number;
@@ -64,7 +66,9 @@ const cartSlice = createSlice({
       saveCartToStorage(state.items);
     },
     addToCart(state, action: PayloadAction<CartItem>) {
-      const existing = state.items.find((i) => i.productId === action.payload.productId);
+      const existing = state.items.find(
+        (i) => i.productId === action.payload.productId && (i.variantId ?? "") === (action.payload.variantId ?? "")
+      );
       if (existing) {
         existing.quantity += action.payload.quantity;
       } else {
@@ -72,19 +76,30 @@ const cartSlice = createSlice({
       }
       saveCartToStorage(state.items);
     },
-    updateQuantity(state, action: PayloadAction<{ productId: string; quantity: number }>) {
-      const item = state.items.find((i) => i.productId === action.payload.productId);
+    updateQuantity(state, action: PayloadAction<{ productId: string; variantId?: string; quantity: number }>) {
+      const item = state.items.find(
+        (i) => i.productId === action.payload.productId && (i.variantId ?? "") === (action.payload.variantId ?? "")
+      );
       if (item) {
         if (action.payload.quantity <= 0) {
-          state.items = state.items.filter((i) => i.productId !== action.payload.productId);
+          state.items = state.items.filter(
+            (i) => i.productId !== action.payload.productId || (i.variantId ?? "") !== (action.payload.variantId ?? "")
+          );
         } else {
           item.quantity = action.payload.quantity;
         }
       }
       saveCartToStorage(state.items);
     },
-    removeFromCart(state, action: PayloadAction<string>) {
-      state.items = state.items.filter((i) => i.productId !== action.payload);
+    removeFromCart(state, action: PayloadAction<{ productId: string; variantId?: string } | string>) {
+      const payload = action.payload;
+      if (typeof payload === "string") {
+        state.items = state.items.filter((i) => i.productId !== payload);
+      } else {
+        state.items = state.items.filter(
+          (i) => i.productId !== payload.productId || (i.variantId ?? "") !== (payload.variantId ?? "")
+        );
+      }
       saveCartToStorage(state.items);
     },
     clearCart(state) {

@@ -9,7 +9,7 @@ import {
   ShoppingBag, Package, Users, FileText, CreditCard,
   Truck, BarChart3, Palette, Settings, ChevronLeft, Search,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
 
@@ -41,6 +41,8 @@ export function UserSidebar() {
   const stores = storesData?.data?.stores ?? [];
   const [collapsed, setCollapsed] = useState(false);
   const [showStorePicker, setShowStorePicker] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => { setHydrated(true); }, []);
 
   const currentStore = stores.find((s) => s._id === currentStoreId);
 
@@ -129,7 +131,7 @@ export function UserSidebar() {
           })}
         </ul>
 
-        {effectiveStoreId && !collapsed && (
+        {hydrated && effectiveStoreId && !collapsed && (
           <>
             <p className="mb-2 mt-6 px-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">Store</p>
             <ul className="space-y-1">

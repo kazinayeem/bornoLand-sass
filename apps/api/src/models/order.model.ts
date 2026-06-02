@@ -4,6 +4,8 @@ const { Schema, model, models } = mongoose;
 
 const orderItemSchema = new Schema({
   productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+  variantId: { type: Schema.Types.ObjectId },
+  variantTitle: { type: String, default: "" },
   name: { type: String, required: true },
   price: { type: Number, required: true },
   quantity: { type: Number, required: true, min: 1 },

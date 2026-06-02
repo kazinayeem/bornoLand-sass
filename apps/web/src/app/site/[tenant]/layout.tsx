@@ -1,10 +1,6 @@
 import { notFound } from "next/navigation";
-import { StoreNavbar } from "@/components/storefront/store-navbar";
-import { StoreFooter } from "@/components/storefront/store-footer";
-import { FloatingAdminBar } from "@/components/storefront/floating-admin-bar";
-import { CartProvider } from "@/components/storefront/cart-provider";
-import { AuthInit } from "@/components/auth/auth-init";
-import { TenantProvider, type ThemeData, type ProductData, type CategoryData, type StoreData, type StoreSettingsData, type HomepageSliderData } from "@/providers/tenant-provider";
+import { StorefrontFrame } from "@/components/storefront/storefront-frame";
+import { type ThemeData, type ProductData, type CategoryData, type StoreData, type StoreSettingsData, type HomepageSliderData } from "@/providers/tenant-provider";
 
 type SiteData = {
   store: StoreData | null;
@@ -51,18 +47,22 @@ export default async function TenantLayout({ params, children }: { params: Promi
     timezone: "UTC",
     language: "en",
   };
+  const footerSection = pageSections.find((section) => section.type === "footer") ?? null;
 
   return (
-    <div style={{ fontFamily: theme.font, backgroundColor: theme.darkMode ? "#000000" : "#ffffff" }}>
-      <TenantProvider value={{ store, theme, products, categories, settings: currencySettings, sliders: sliders ?? [], pageSections }}>
-        <AuthInit />
-        <StoreNavbar />
-        <CartProvider>
-          {children}
-        </CartProvider>
-        <StoreFooter />
-        <FloatingAdminBar storeId={store._id} primaryColor={theme.primaryColor} />
-      </TenantProvider>
-    </div>
+    <StorefrontFrame
+      store={store}
+      theme={theme}
+      products={products}
+      categories={categories}
+      settings={currencySettings}
+      sliders={sliders ?? []}
+      pageSections={pageSections}
+      footerSection={footerSection}
+      adminBarStoreId={store._id}
+      showAdminBar
+    >
+      {children}
+    </StorefrontFrame>
   );
 }

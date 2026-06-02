@@ -1,6 +1,6 @@
 import { connectDatabase } from "../config/database.js";
 import { ProductModel } from "../models/product.model.js";
-import { createProductSchema, updateProductSchema } from "../validators/product.validator.js";
+import { createProductSchema, updateProductSchema, createVariantSchema, updateVariantSchema } from "../validators/product.validator.js";
 
 function normalizeProductImages(payload: {
   imageUrl?: string;
@@ -74,6 +74,52 @@ export async function deleteProduct(productId: string, storeId: string) {
   return { ok: true as const, message: "Product deleted" };
 }
 
+export async function createVariant(productId: string, storeId: string, payload: unknown) {
+  const parsed = createVariantSchema.safeParse(payload);
+  if (!parsed.success) return { ok: false as const, message: "Invalid variant data" };
+
+  await connectDatabase();
+  const product = await ProductModel.findOne({ _id: productId, storeId });
+  if (!product) return { ok: false as const, message: "Product not found" };
+
+  (product.variants as any[]).push(parsed.data as any);
+  await product.save();
+  return { ok: true as const, data: { product: product.toObject() } };
+}
+
+export async function updateVariant(productId: string, variantId: string, storeId: string, payload: unknown) {
+  const parsed = updateVariantSchema.safeParse(payload);
+  if (!parsed.success) return { ok: false as const, message: "Invalid variant data" };
+
+  await connectDatabase();
+  const product = await ProductModel.findOne({ _id: productId, storeId });
+  if (!product) return { ok: false as const, message: "Product not found" };
+
+  const variant = (product.variants as any[]).find(
+    (v: any) => v._id.toString() === variantId
+  );
+  if (!variant) return { ok: false as const, message: "Variant not found" };
+
+  Object.assign(variant, parsed.data);
+  await product.save();
+  return { ok: true as const, data: { product: product.toObject() } };
+}
+
+export async function deleteVariant(productId: string, variantId: string, storeId: string) {
+  await connectDatabase();
+  const product = await ProductModel.findOne({ _id: productId, storeId });
+  if (!product) return { ok: false as const, message: "Product not found" };
+
+  const idx = (product.variants as any[]).findIndex(
+    (v: any) => v._id.toString() === variantId
+  );
+  if (idx === -1) return { ok: false as const, message: "Variant not found" };
+
+  (product.variants as any[]).splice(idx, 1);
+  await product.save();
+  return { ok: true as const, message: "Variant deleted" };
+}
+
 export async function duplicateProduct(productId: string, storeId: string) {
   await connectDatabase();
   const original: any = await ProductModel.findOne({ _id: productId, storeId }).lean();
@@ -95,7 +141,9 @@ export async function duplicateProduct(productId: string, storeId: string) {
     thumbnailUrl: original.thumbnailUrl ?? original.imageUrl ?? original.images?.[0] ?? "",
     galleryImageUrls: original.galleryImageUrls ?? original.images ?? [],
     images: original.images,
-    featured: false
+    featured: false,
+    options: original.options ?? [],
+    variants: []
   });
 
   return { ok: true as const, data: { product: dup.toObject() } };

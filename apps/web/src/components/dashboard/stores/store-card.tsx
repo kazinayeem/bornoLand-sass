@@ -93,6 +93,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03 }}
+      onClick={() => onManage(store, "overview")}
       className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
     >
       {/* Gradient header */}
@@ -206,19 +207,19 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
         {/* Action buttons */}
         <div className="grid grid-cols-3 gap-2">
           <button
-            onClick={() => onManage(store, "overview")}
+            onClick={(e) => { e.stopPropagation(); onManage(store, "overview"); }}
             className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-3 py-2.5 text-xs font-semibold text-white transition-all hover:bg-zinc-800"
           >
             <Wrench className="h-3.5 w-3.5" /> Manage
           </button>
           <button
-            onClick={() => router.push(`/dashboard/stores/${store._id}`)}
+            onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/stores/${store._id}`); }}
             className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-blue-700 transition-all hover:bg-blue-50"
           >
             <LayoutGrid className="h-3.5 w-3.5" /> Products
           </button>
           <button
-            onClick={() => router.push(`/dashboard/stores/${store._id}`)}
+            onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/stores/${store._id}`); }}
             className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-zinc-700 transition-all hover:bg-zinc-50"
           >
             <CreditCard className="h-3.5 w-3.5" /> Dashboard
@@ -230,7 +231,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
           <span>Renewal: {formatDate(store.renewalDate)}</span>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => router.push(`/dashboard/builder/${store._id}`)}
+              onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/builder/${store._id}`); }}
               className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-1 font-medium text-zinc-600 hover:bg-zinc-200 transition-colors"
             >
               <Palette className="h-3 w-3" /> Builder
@@ -239,6 +240,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
               href={storeUrl}
               target="_blank"
               rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-1 font-medium text-zinc-600 hover:bg-zinc-200 transition-colors"
             >
               <ExternalLink className="h-3 w-3" />

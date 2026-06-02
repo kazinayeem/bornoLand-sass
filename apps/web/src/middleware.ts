@@ -94,6 +94,9 @@ export default async function middleware(request: NextRequest) {
   }
 
   const subdomain = getSubdomain(hostname);
+  if (process.env.NODE_ENV === "development") {
+    console.log(`[mw] host="${host}" hostname="${hostname}" subdomain=${subdomain} path="${pathname}"`);
+  }
 
   // Subdomain check runs before auth so app-route subdomain requests
   // redirect to the base domain in a single hop.

@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ShoppingCart, Heart, Star, Minus, Plus, Truck, Shield, ArrowLeft, ChevronRight, Check, RefreshCcw, MessageSquare, Award, ZoomIn } from "lucide-react";
 import { addToCart, openCart } from "@/redux/slices/cart-slice";
@@ -15,27 +14,57 @@ import { formatCurrency } from "@/lib/format-currency";
 import { getProductGalleryUrls, getProductImageUrl } from "@/lib/product-media";
 import { toast } from "sonner";
 
+type ProductOption = { _id?: string; name: string; values: string[] };
+type ProductVariant = { _id?: string; optionValues: Record<string, string>; price?: number; stock: number; sku: string; imageUrl: string; enabled: boolean };
+
 type Product = {
   _id: string; name: string; slug: string;
   description: string; price: number; comparePrice?: number;
   category: string; stock: number; sku: string;
   imageUrl?: string; thumbnailUrl?: string; galleryImageUrls?: string[]; images: string[]; featured: boolean;
+  options?: ProductOption[]; variants?: ProductVariant[];
 };
+
+function findVariant(product: Product, selected: Record<string, string>): ProductVariant | undefined {
+  if (!product.variants?.length) return undefined;
+  return product.variants.find((v) => {
+    if (!v.enabled) return false;
+    return Object.entries(selected).every(([k, val]) => v.optionValues[k] === val);
+  });
+}
 
 export function ProductDetailClient({ product }: { product: Product }) {
   const dispatch = useDispatch();
-  const router = useRouter();
   const { theme, products, settings } = useTenant();
-  const { primaryColor, darkMode } = theme;
+  const { primaryColor } = theme;
   const [addToCartRemote] = useAddToCartMutation();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [activeTab, setActiveTab] = useState<"description" | "features" | "specs" | "reviews" | "shipping" | "refund">("description");
   const [selectedImage, setSelectedImage] = useState(getProductImageUrl(product));
-  const isDark = darkMode;
+
+  const hasVariants = (product.options?.length ?? 0) > 0 && (product.variants?.length ?? 0) > 0;
+
+  const initialSelections: Record<string, string> = {};
+  if (hasVariants) {
+    for (const opt of product.options ?? []) {
+      initialSelections[opt.name] = opt.values[0] ?? "";
+    }
+  }
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(initialSelections);
+
+  const activeVariant = useMemo(() => {
+    if (!hasVariants) return undefined;
+    return findVariant(product, selectedOptions);
+  }, [product, selectedOptions, hasVariants]);
+
+  const displayPrice = activeVariant?.price ?? product.price;
+  const displayStock = activeVariant?.stock ?? product.stock;
+  const displayImage = activeVariant?.imageUrl || selectedImage;
+  const enableAddToCart = !hasVariants || !!activeVariant;
 
   const discount = product.comparePrice && product.comparePrice > product.price
-    ? Math.round((1 - product.price / product.comparePrice) * 100) : 0;
+    ? Math.round((1 - displayPrice / product.comparePrice) * 100) : 0;
   const gallery = useMemo(() => getProductGalleryUrls(product), [product]);
 
   const relatedProducts = useMemo(() => {
@@ -61,9 +90,9 @@ export function ProductDetailClient({ product }: { product: Product }) {
   ];
 
   const specs = [
-    ["SKU", product.sku],
+    ["SKU", activeVariant?.sku || product.sku],
     ["Category", product.category],
-    ["Stock", `${product.stock} units`],
+    ["Stock", `${displayStock} units`],
     ["Material", "Premium composite"],
     ["Care", "Wipe clean"],
     ["Warranty", "1 year limited"],
@@ -77,10 +106,21 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
   const handleAddToCart = async (showToast = true) => {
     dispatch(addToCart({
-      productId: product._id, name: product.name,
-      price: product.price, quantity, image: getProductImageUrl(product)
+      productId: product._id,
+      variantId: activeVariant?._id,
+      variantTitle: activeVariant ? Object.values(selectedOptions).join(" / ") : undefined,
+      name: product.name,
+      price: displayPrice,
+      quantity,
+      image: displayImage
     }));
-    try { await addToCartRemote({ productId: product._id, quantity }).unwrap(); } catch {}
+    try {
+      await addToCartRemote({
+        productId: product._id,
+        quantity,
+        variantId: activeVariant?._id
+      }).unwrap();
+    } catch {}
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
     if (showToast) {
@@ -94,10 +134,16 @@ export function ProductDetailClient({ product }: { product: Product }) {
     toast.success("Added to cart and ready to checkout");
   };
 
+  const handleOptionSelect = (optName: string, value: string) => {
+    setSelectedOptions((prev) => ({ ...prev, [optName]: value }));
+  };
+
+  const totalPrice = displayPrice * quantity;
+
   return (
-    <div className="bg-white" style={{ backgroundColor: isDark ? "#ffffff" : "#ffffff" }}>
+    <div className="bg-white">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-        <Link href="/shop" className="inline-flex items-center gap-1 text-sm transition-colors hover:opacity-80" style={{ color: isDark ? "#71717a" : "#52525b" }}>
+        <Link href="/shop" className="inline-flex items-center gap-1 text-sm transition-colors hover:opacity-80" style={{ color: "#52525b" }}>
           <ArrowLeft className="h-4 w-4" /> Back to Shop
         </Link>
 
@@ -105,8 +151,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
           <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             <div className="relative overflow-hidden rounded-[2rem] border border-zinc-200 bg-zinc-50 shadow-[0_20px_80px_rgba(0,0,0,0.08)]">
               <div className="group relative aspect-square overflow-hidden bg-white">
-                {selectedImage ? (
-                  <img src={selectedImage} alt={product.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                {displayImage ? (
+                  <img src={displayImage} alt={product.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
                 ) : (
                   <div className="flex h-full items-center justify-center">
                     <ShoppingCart className="h-24 w-24 text-zinc-200" />
@@ -158,7 +204,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
               <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
                 <span>Premium Product</span>
                 <ChevronRight className="h-3.5 w-3.5" />
-                <span>{product.sku}</span>
+                <span>{activeVariant?.sku || product.sku}</span>
               </div>
               <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl">{product.name}</h1>
 
@@ -170,8 +216,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
               </div>
 
               <div className="mt-5 flex items-end gap-3">
-                <span className="text-4xl font-semibold tracking-tight text-zinc-950">{formatCurrency(product.price, settings)}</span>
-                {product.comparePrice && product.comparePrice > product.price && (
+                <span className="text-4xl font-semibold tracking-tight text-zinc-950">{formatCurrency(displayPrice, settings)}</span>
+                {product.comparePrice && product.comparePrice > displayPrice && (
                   <>
                     <span className="pb-1 text-lg text-zinc-400 line-through">{formatCurrency(product.comparePrice, settings)}</span>
                     <span className="mb-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">Save {discount}%</span>
@@ -179,17 +225,48 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 )}
               </div>
 
+              {/* Variant Options */}
+              {hasVariants && product.options?.map((opt) => (
+                <div key={opt.name} className="mt-5">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">{opt.name}: <span className="text-zinc-900">{selectedOptions[opt.name]}</span></p>
+                  <div className="flex flex-wrap gap-2">
+                    {opt.values.map((val) => {
+                      const testSelection = { ...selectedOptions, [opt.name]: val };
+                      const match = findVariant(product, testSelection);
+                      const isAvailable = match?.enabled && match.stock > 0;
+                      const isSelected = selectedOptions[opt.name] === val;
+                      return (
+                        <button
+                          key={val}
+                          onClick={() => handleOptionSelect(opt.name, val)}
+                          disabled={!isAvailable}
+                          className={`rounded-xl border px-4 py-2 text-sm font-medium transition-all ${
+                            isSelected
+                              ? "border-zinc-950 bg-zinc-950 text-white"
+                              : isAvailable
+                                ? "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400"
+                                : "border-zinc-100 bg-zinc-50 text-zinc-300 cursor-not-allowed"
+                          }`}
+                        >
+                          {val}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
               {product.description ? (
                 <div className="mt-5 prose prose-sm max-w-none text-sm leading-7 text-zinc-600" dangerouslySetInnerHTML={{ __html: product.description }} />
-              ) : (
+              ) : !hasVariants ? (
                 <p className="mt-5 text-sm leading-7 text-zinc-600">No description available.</p>
-              )}
+              ) : null}
 
               <div className="mt-6 flex items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Availability</p>
                   <p className="mt-1 flex items-center gap-2 text-sm font-semibold text-zinc-950">
-                    <Check className="h-4 w-4 text-emerald-600" /> {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
+                    <Check className="h-4 w-4 text-emerald-600" /> {displayStock > 0 ? `${displayStock} in stock` : "Out of stock"}
                   </p>
                 </div>
                 <div className="text-right">
@@ -204,24 +281,24 @@ export function ProductDetailClient({ product }: { product: Product }) {
                     <Minus className="h-4 w-4" />
                   </button>
                   <span className="w-12 text-center text-sm font-semibold text-zinc-950">{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} className="flex h-11 w-11 items-center justify-center rounded-xl text-zinc-600 transition-colors hover:bg-zinc-50">
+                  <button onClick={() => setQuantity(Math.min(displayStock || 999, quantity + 1))} className="flex h-11 w-11 items-center justify-center rounded-xl text-zinc-600 transition-colors hover:bg-zinc-50">
                     <Plus className="h-4 w-4" />
                   </button>
                 </div>
-                <button onClick={() => dispatch(toggleWishlist({ productId: product._id, name: product.name, price: product.price, image: getProductImageUrl(product) }))}
+                <button onClick={() => dispatch(toggleWishlist({ productId: product._id, name: product.name, price: displayPrice, image: displayImage }))}
                   className="flex h-12 w-12 items-center justify-center rounded-2xl border border-zinc-200 text-zinc-500 transition-colors hover:border-red-200 hover:text-red-500">
                   <Heart className="h-5 w-5" />
                 </button>
               </div>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <button onClick={() => handleAddToCart()}
-                  className="flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold text-white transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                <button onClick={() => handleAddToCart()} disabled={!enableAddToCart}
+                  className="flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold text-white transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: primaryColor }}>
                   <ShoppingCart className="h-4 w-4" /> {added ? "Added to Cart" : "Add to Cart"}
                 </button>
-                <button onClick={() => handleBuyNow()}
-                  className="flex items-center justify-center gap-2 rounded-2xl border border-zinc-950 bg-zinc-950 py-3.5 text-sm font-semibold text-white transition-transform hover:scale-[1.01] active:scale-[0.99]">
+                <button onClick={() => handleBuyNow()} disabled={!enableAddToCart}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-zinc-950 bg-zinc-950 py-3.5 text-sm font-semibold text-white transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed">
                   Buy Now
                 </button>
               </div>
@@ -360,9 +437,10 @@ export function ProductDetailClient({ product }: { product: Product }) {
           <div className="mx-auto flex max-w-7xl items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">Total</p>
-              <p className="truncate text-sm font-semibold text-zinc-950">{formatCurrency(product.price * quantity, settings)}</p>
+              <p className="truncate text-sm font-semibold text-zinc-950">{formatCurrency(totalPrice, settings)}</p>
             </div>
-            <button onClick={() => handleAddToCart()} className="rounded-2xl px-4 py-3 text-sm font-semibold text-white" style={{ backgroundColor: primaryColor }}>
+            <button onClick={() => handleAddToCart()} disabled={!enableAddToCart}
+              className="rounded-2xl px-4 py-3 text-sm font-semibold text-white disabled:opacity-50" style={{ backgroundColor: primaryColor }}>
               Add to Cart
             </button>
           </div>

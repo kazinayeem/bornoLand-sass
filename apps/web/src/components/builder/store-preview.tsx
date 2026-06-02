@@ -3,11 +3,9 @@
 import { useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import type { StoreSettingsData, HomepageSliderData, ThemeData, StoreData, ProductData, CategoryData } from "@/providers/tenant-provider";
-import { TenantProvider } from "@/providers/tenant-provider";
-import { StoreNavbar } from "@/components/storefront/store-navbar";
-import { StoreFooter } from "@/components/storefront/store-footer";
 import { StorefrontCanvas } from "@/components/storefront/storefront-canvas";
 import type { StorefrontSectionLike } from "@/components/storefront/storefront-types";
+import { StorefrontFrame } from "@/components/storefront/storefront-frame";
 
 type StorePreviewProps = {
   store: StoreData;
@@ -29,19 +27,20 @@ export function StorePreview({ store, theme, products, categories, settings, sli
   return (
     <div className="flex items-start justify-center overflow-y-auto p-4"
       style={{ backgroundColor: theme.darkMode ? "#09090b" : "#f4f4f5", minHeight: "100%" }}>
-      <div className="overflow-hidden rounded-2xl bg-white shadow-xl transition-all duration-300"
-        style={{
-          width: previewWidth,
-          maxWidth: "100%",
-          fontFamily: theme.font,
-          backgroundColor: theme.darkMode ? "#000000" : "#ffffff",
-          color: theme.darkMode ? "#fafafa" : "#18181b"
-        }}>
-        <TenantProvider value={{ store, theme, products, categories, settings, sliders, pageSections: sections }}>
-          <StoreNavbar />
+      <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white shadow-[0_30px_90px_-32px_rgba(0,0,0,0.35)] transition-all duration-300"
+        style={{ width: previewWidth, maxWidth: "100%" }}>
+        <StorefrontFrame
+          store={store}
+          theme={theme}
+          products={products}
+          categories={categories}
+          settings={settings}
+          sliders={sliders}
+          pageSections={sections}
+          footerSection={footerSection}
+        >
           <StorefrontCanvas sections={navSections} />
-          <StoreFooter section={footerSection ?? undefined} />
-        </TenantProvider>
+        </StorefrontFrame>
       </div>
     </div>
   );

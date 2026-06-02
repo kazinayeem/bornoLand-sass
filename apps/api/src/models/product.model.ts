@@ -19,7 +19,19 @@ const productSchema = new Schema(
     thumbnailUrl: { type: String, default: "" },
     galleryImageUrls: { type: [String], default: [] },
     images: { type: [String], default: [] },
-    featured: { type: Boolean, default: false }
+    featured: { type: Boolean, default: false },
+    options: [{
+      name: { type: String, required: true },
+      values: [{ type: String, required: true }]
+    }],
+    variants: [{
+      optionValues: { type: Map, of: String, default: {} },
+      price: { type: Number, min: 0 },
+      stock: { type: Number, default: 0, min: 0 },
+      sku: { type: String, default: "" },
+      imageUrl: { type: String, default: "" },
+      enabled: { type: Boolean, default: true }
+    }]
   },
   { timestamps: true }
 );

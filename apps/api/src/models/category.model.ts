@@ -13,6 +13,8 @@ const categorySchema = new Schema(
     active: { type: Boolean, default: true },
     featured: { type: Boolean, default: false },
     sortOrder: { type: Number, default: 0 },
+    metaTitle: { type: String, default: "" },
+    metaDescription: { type: String, default: "" },
   },
   { timestamps: true }
 );

@@ -1,0 +1,285 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import { sectionRegistryMap, type SectionDef } from "@/lib/section-registry";
+import { motion } from "framer-motion";
+
+export type SectionData = {
+  id: string;
+  type: string;
+  label?: string;
+  visible?: boolean;
+  props: Record<string, string>;
+};
+
+// ─── Section wrapper (common styles) ────────────────────────────
+
+type WrapperProps = {
+  section: SectionData;
+  children: React.ReactNode;
+  className?: string;
+};
+
+function animationStyle(animation: string) {
+  switch (animation) {
+    case "fadeIn": return { initial: { opacity: 0 }, whileInView: { opacity: 1 }, viewport: { once: true }, transition: { duration: 0.6 } };
+    case "slideUp": return { initial: { opacity: 0, y: 40 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true }, transition: { duration: 0.6 } };
+    case "slideInLeft": return { initial: { opacity: 0, x: -40 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true }, transition: { duration: 0.6 } };
+    case "slideInRight": return { initial: { opacity: 0, x: 40 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true }, transition: { duration: 0.6 } };
+    case "zoomIn": return { initial: { opacity: 0, scale: 0.9 }, whileInView: { opacity: 1, scale: 1 }, viewport: { once: true }, transition: { duration: 0.6 } };
+    default: return {};
+  }
+}
+
+export function SectionWrapper({ section, children, className = "" }: WrapperProps) {
+  const p = section.props;
+  const visibility = p.visibility || "all";
+  const bgColor = p.bgColor || "";
+  const bgGradient = p.bgGradient || "";
+  const bgImage = p.bgImage || "";
+  const paddingY = p.paddingY || "48";
+  const paddingX = p.paddingX || "16";
+  const marginTop = p.marginTop || "0";
+  const marginBottom = p.marginBottom || "0";
+  const maxWidth = p.maxWidth || "1200px";
+  const borderRadius = p.borderRadius || "0";
+  const shadow = p.shadow || "none";
+  const borderWidth = p.borderWidth || "0";
+  const borderColor = p.borderColor || "";
+  const animation = p.animation || "none";
+
+  const shadowClass = shadow === "sm" ? "shadow-sm" : shadow === "md" ? "shadow-md" : shadow === "lg" ? "shadow-lg" : "";
+  const hiddenClass = visibility === "desktop-only" ? "hidden lg:block" : visibility === "tablet-only" ? "hidden md:block lg:hidden" : visibility === "mobile-only" ? "block md:hidden" : "";
+
+  const bg = bgGradient
+    ? `linear-gradient(135deg, ${bgGradient.split(",").map((s: string) => s.trim()).join(", ")})`
+    : bgImage
+    ? `url(${bgImage})`
+    : bgColor || "transparent";
+  const isImageBg = bgImage && !bgGradient && !bgColor;
+
+  const animProps = animationStyle(animation);
+
+  return (
+    <motion.section
+      className={`relative ${hiddenClass} ${shadowClass} ${className}`}
+      style={{
+        padding: `${paddingY}px ${paddingX}px`,
+        marginTop: `${marginTop}px`,
+        marginBottom: `${marginBottom}px`,
+        marginLeft: "auto",
+        marginRight: "auto",
+        maxWidth: maxWidth === "100%" ? "100%" : maxWidth,
+        background: isImageBg ? undefined : bg,
+        borderRadius: `${borderRadius}px`,
+        borderWidth: `${borderWidth}px`,
+        borderStyle: borderWidth !== "0" ? "solid" : undefined,
+        borderColor: borderColor || undefined,
+        overflow: "hidden",
+      }}
+      {...animProps}
+    >
+      {isImageBg && (
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: bg, zIndex: 0 }}
+        />
+      )}
+      {p.bgOverlayColor && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: p.bgOverlayColor,
+            opacity: Number(p.bgOverlayOpacity || 40) / 100,
+            zIndex: 1,
+          }}
+        />
+      )}
+      <div className="relative" style={{ zIndex: 2 }}>
+        {children}
+      </div>
+    </motion.section>
+  );
+}
+
+// ─── Section title helper ───────────────────────────────────────
+
+export function SectionTitle({ title, subtitle, textColor, textAlignment }: {
+  title?: string;
+  subtitle?: string;
+  textColor?: string;
+  textAlignment?: string;
+}) {
+  if (!title) return null;
+  return (
+    <div className={`mb-8 sm:mb-10 ${textAlignment === "left" ? "text-left" : textAlignment === "right" ? "text-right" : "text-center"}`}>
+      <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ color: textColor || "#18181b" }}>
+        {title}
+      </h2>
+      {subtitle && (
+        <p className="mt-3 text-sm sm:text-base" style={{ color: textColor ? `${textColor}cc` : "#52525b" }}>
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Column grid helper ──────────────────────────────────────────
+
+export function ColumnGrid({ children, columns = "4", gap = "4", className = "" }: {
+  children: React.ReactNode;
+  columns?: string;
+  gap?: string;
+  className?: string;
+}) {
+  const colMap: Record<string, string> = {
+    "2": "grid-cols-2", "3": "grid-cols-3", "4": "grid-cols-4",
+    "5": "grid-cols-5", "6": "grid-cols-6",
+  };
+  const gapMap: Record<string, string> = {
+    "4": "gap-1", "8": "gap-2", "16": "gap-4", "24": "gap-6", "32": "gap-8",
+  };
+  return (
+    <div className={`grid ${colMap[columns] || "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"} ${gapMap[gap] || "gap-4"} ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+// ─── Lazy-loaded section components ──────────────────────────────
+
+const HeroBanner = dynamic(() => import("./hero-banner").then((m) => ({ default: m.HeroBanner })), { ssr: false });
+const SplitHero = dynamic(() => import("./split-hero").then((m) => ({ default: m.SplitHero })), { ssr: false });
+const VideoHero = dynamic(() => import("./video-hero").then((m) => ({ default: m.VideoHero })), { ssr: false });
+const SliderHero = dynamic(() => import("./slider-hero").then((m) => ({ default: m.SliderHero })), { ssr: false });
+const ImageHero = dynamic(() => import("./image-hero").then((m) => ({ default: m.ImageHero })), { ssr: false });
+const FullscreenHero = dynamic(() => import("./fullscreen-hero").then((m) => ({ default: m.FullscreenHero })), { ssr: false });
+const CountdownHero = dynamic(() => import("./countdown-hero").then((m) => ({ default: m.CountdownHero })), { ssr: false });
+const FlashSaleHero = dynamic(() => import("./flash-sale-hero").then((m) => ({ default: m.FlashSaleHero })), { ssr: false });
+const ProductHero = dynamic(() => import("./product-hero").then((m) => ({ default: m.ProductHero })), { ssr: false });
+const FeaturedProducts = dynamic(() => import("./featured-products").then((m) => ({ default: m.FeaturedProducts })), { ssr: false });
+const NewArrivals = dynamic(() => import("./new-arrivals").then((m) => ({ default: m.NewArrivals })), { ssr: false });
+const BestSellers = dynamic(() => import("./best-sellers").then((m) => ({ default: m.BestSellers })), { ssr: false });
+const TrendingProducts = dynamic(() => import("./trending-products").then((m) => ({ default: m.TrendingProducts })), { ssr: false });
+const FlashSale = dynamic(() => import("./flash-sale").then((m) => ({ default: m.FlashSale })), { ssr: false });
+const ProductGrid = dynamic(() => import("./product-grid").then((m) => ({ default: m.ProductGrid })), { ssr: false });
+const ProductCarousel = dynamic(() => import("./product-carousel").then((m) => ({ default: m.ProductCarousel })), { ssr: false });
+const ProductTabs = dynamic(() => import("./product-tabs").then((m) => ({ default: m.ProductTabs })), { ssr: false });
+const CategoryGrid = dynamic(() => import("./category-grid").then((m) => ({ default: m.CategoryGrid })), { ssr: false });
+const Testimonials = dynamic(() => import("./testimonials").then((m) => ({ default: m.Testimonials })), { ssr: false });
+const Newsletter = dynamic(() => import("./newsletter").then((m) => ({ default: m.Newsletter })), { ssr: false });
+const FAQSection = dynamic(() => import("./faq-section").then((m) => ({ default: m.FAQSection })), { ssr: false });
+const Accordion = dynamic(() => import("./accordion").then((m) => ({ default: m.Accordion })), { ssr: false });
+const RichText = dynamic(() => import("./rich-text").then((m) => ({ default: m.RichText })), { ssr: false });
+const ImageBanner = dynamic(() => import("./image-banner").then((m) => ({ default: m.ImageBanner })), { ssr: false });
+const DiscountBanner = dynamic(() => import("./discount-banner").then((m) => ({ default: m.DiscountBanner })), { ssr: false });
+const TrustBadges = dynamic(() => import("./trust-badges").then((m) => ({ default: m.TrustBadges })), { ssr: false });
+const WhyChooseUs = dynamic(() => import("./why-choose-us").then((m) => ({ default: m.WhyChooseUs })), { ssr: false });
+const TeamMembers = dynamic(() => import("./team-members").then((m) => ({ default: m.TeamMembers })), { ssr: false });
+const AnnouncementBar = dynamic(() => import("./announcement-bar").then((m) => ({ default: m.AnnouncementBar })), { ssr: false });
+const CountdownTimer = dynamic(() => import("./countdown-timer").then((m) => ({ default: m.CountdownTimer })), { ssr: false });
+const InstagramFeed = dynamic(() => import("./instagram-feed").then((m) => ({ default: m.InstagramFeed })), { ssr: false });
+const SimpleFooter = dynamic(() => import("./simple-footer").then((m) => ({ default: m.SimpleFooter })), { ssr: false });
+const EcommerceFooter = dynamic(() => import("./ecommerce-footer").then((m) => ({ default: m.EcommerceFooter })), { ssr: false });
+const CategorySlider = dynamic(() => import("./category-slider").then((m) => ({ default: m.CategorySlider })), { ssr: false });
+const ProductSlider = dynamic(() => import("./product-slider").then((m) => ({ default: m.ProductSlider })), { ssr: false });
+const DealOfDay = dynamic(() => import("./deal-of-day").then((m) => ({ default: m.DealOfDay })), { ssr: false });
+const Gallery = dynamic(() => import("./gallery").then((m) => ({ default: m.Gallery })), { ssr: false });
+const VideoSection = dynamic(() => import("./video-section").then((m) => ({ default: m.VideoSection })), { ssr: false });
+
+// ─── Placeholder for unimplemented sections ──────────────────────
+
+function PlaceholderSection({ section }: { section: SectionData }) {
+  const def = sectionRegistryMap[section.type];
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100 mb-4">
+        <span className="text-2xl text-zinc-400">⊞</span>
+      </div>
+      <h3 className="text-lg font-semibold text-zinc-700">{def?.label || section.type}</h3>
+      <p className="mt-1 text-sm text-zinc-400">{def?.description || "Section placeholder"}</p>
+    </div>
+  );
+}
+
+// ─── Main renderer ──────────────────────────────────────────────
+
+export function SectionRenderer({ section }: { section: SectionData }) {
+  const def = sectionRegistryMap[section.type];
+  if (!def) return null;
+
+  // Hero sections
+  if (section.type === "hero-banner") return <HeroBanner section={section} />;
+  if (section.type === "split-hero") return <SplitHero section={section} />;
+  if (section.type === "video-hero") return <VideoHero section={section} />;
+  if (section.type === "slider-hero") return <SliderHero section={section} />;
+  if (section.type === "image-hero") return <ImageHero section={section} />;
+  if (section.type === "fullscreen-hero") return <FullscreenHero section={section} />;
+  if (section.type === "countdown-hero") return <CountdownHero section={section} />;
+  if (section.type === "flash-sale-hero") return <FlashSaleHero section={section} />;
+  if (section.type === "product-hero") return <ProductHero section={section} />;
+
+  // Products
+  if (section.type === "featured-products") return <FeaturedProducts section={section} />;
+  if (section.type === "new-arrivals") return <NewArrivals section={section} />;
+  if (section.type === "best-sellers") return <BestSellers section={section} />;
+  if (section.type === "trending-products") return <TrendingProducts section={section} />;
+  if (section.type === "flash-sale") return <FlashSale section={section} />;
+  if (section.type === "product-grid") return <ProductGrid section={section} />;
+  if (section.type === "product-carousel") return <ProductCarousel section={section} />;
+  if (section.type === "product-slider") return <ProductSlider section={section} />;
+  if (section.type === "product-tabs") return <ProductTabs section={section} />;
+
+  // Categories
+  if (section.type === "category-grid" || section.type === "featured-categories" || section.type === "mega-category-grid")
+    return <CategoryGrid section={section} />;
+  if (section.type === "category-slider") return <CategorySlider section={section} />;
+
+  // Promotions
+  if (section.type === "discount-banner" || section.type === "offer-banner" || section.type === "bogo")
+    return <DiscountBanner section={section} />;
+  if (section.type === "deal-of-day") return <DealOfDay section={section} />;
+
+  // Trust
+  if (section.type === "testimonials") return <Testimonials section={section} />;
+  if (section.type === "trust-badges" || section.type === "guarantee-section")
+    return <TrustBadges section={section} />;
+  if (section.type === "why-choose-us") return <WhyChooseUs section={section} />;
+
+  // Content
+  if (section.type === "rich-text") return <RichText section={section} />;
+  if (section.type === "faq") return <FAQSection section={section} />;
+  if (section.type === "accordion") return <Accordion section={section} />;
+  if (section.type === "team-members") return <TeamMembers section={section} />;
+
+  // Media
+  if (section.type === "image-banner") return <ImageBanner section={section} />;
+  if (section.type === "gallery" || section.type === "image-grid" || section.type === "masonry-gallery")
+    return <Gallery section={section} />;
+  if (section.type === "video-section" || section.type === "youtube-embed" || section.type === "vimeo-embed")
+    return <VideoSection section={section} />;
+
+  // Social
+  if (section.type === "instagram-feed") return <InstagramFeed section={section} />;
+
+  // Marketing
+  if (section.type === "newsletter" || section.type === "email-capture")
+    return <Newsletter section={section} />;
+  if (section.type === "announcement-bar") return <AnnouncementBar section={section} />;
+
+  // Advanced
+  if (section.type === "countdown-timer") return <CountdownTimer section={section} />;
+
+  // Footer
+  if (section.type === "simple-footer") return <SimpleFooter section={section} />;
+  if (section.type === "ecommerce-footer" || section.type === "mega-footer" || section.type === "multi-column-footer")
+    return <EcommerceFooter section={section} />;
+
+  // Layout sections - render as wrapping divs
+  if (section.type === "full-width" || section.type === "container" || section.type === "one-column" || section.type === "two-column" || section.type === "three-column" || section.type === "four-column" || section.type === "grid-layout" || section.type === "masonry-layout" || section.type === "tabs-layout") {
+    return <PlaceholderSection section={section} />;
+  }
+
+  return <PlaceholderSection section={section} />;
+}

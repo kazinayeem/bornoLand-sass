@@ -1,37 +1,32 @@
-import { StoreHero } from "@/components/storefront/store-hero";
-import { FeaturedProducts } from "@/components/storefront/featured-products";
-import { TestimonialsSection } from "@/components/storefront/testimonials-section";
-import { NewsletterSection } from "@/components/storefront/newsletter-section";
-import { CatSection } from "@/components/storefront/cat-section";
+import { SectionRenderer, type SectionData } from "@/components/sections/section-renderer";
 import type { StorefrontSectionLike } from "./storefront-types";
 
 type StorefrontCanvasProps = {
   sections: StorefrontSectionLike[];
 };
 
+function toSectionData(s: StorefrontSectionLike): SectionData {
+  const props: Record<string, string> = {};
+  if (s.props) {
+    for (const [key, value] of Object.entries(s.props)) {
+      props[key] = value == null ? "" : String(value);
+    }
+  }
+  return { id: s.id, type: s.type, visible: s.visible, props };
+}
+
 export function StorefrontCanvas({ sections }: StorefrontCanvasProps) {
   const visibleSections = sections.filter((section) => section.visible !== false);
 
+  if (visibleSections.length === 0) {
+    return <main />;
+  }
+
   return (
     <main>
-      {visibleSections.map((section) => {
-        switch (section.type) {
-          case "hero":
-            return <StoreHero key={section.id} section={section} />;
-          case "features":
-            return <CatSection key={section.id} section={section} />;
-          case "products":
-            return <FeaturedProducts key={section.id} section={section} />;
-          case "testimonials":
-            return <TestimonialsSection key={section.id} section={section} />;
-          case "cta":
-            return <NewsletterSection key={section.id} section={section} />;
-          case "footer":
-            return null;
-          default:
-            return null;
-        }
-      })}
+      {visibleSections.map((section) => (
+        <SectionRenderer key={section.id} section={toSectionData(section)} />
+      ))}
     </main>
   );
 }

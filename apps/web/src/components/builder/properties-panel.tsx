@@ -3,77 +3,11 @@
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { updateSectionProps, setSelectedSection } from "@/redux/slices/builder-slice";
-import { X, Image, Palette, Type, Layers, AlignLeft, Eye, EyeOff } from "lucide-react";
+import { X, Image, Palette, Type, Layers, AlignLeft, Eye, EyeOff, PaintBucket, Ruler, ChevronDown, Lightbulb } from "lucide-react";
 import { useState } from "react";
+import { sectionRegistryMap, type SectionPropDef } from "@/lib/section-registry";
 
-type PropControl = {
-  key: string;
-  label: string;
-  type: "text" | "textarea" | "select" | "color" | "image" | "number" | "toggle";
-  options?: { value: string; label: string }[];
-  placeholder?: string;
-};
-
-const sectionControls: Record<string, PropControl[]> = {
-  hero: [
-    { key: "imageUrl", label: "Background Image URL", type: "image", placeholder: "https://...desktop.jpg" },
-    { key: "mobileImageUrl", label: "Mobile Image URL", type: "image", placeholder: "https://...mobile.jpg" },
-    { key: "kicker", label: "Kicker / Badge", type: "text", placeholder: "Welcome to Store" },
-    { key: "headline", label: "Headline", type: "text", placeholder: "Your main headline" },
-    { key: "subheadline", label: "Subheadline", type: "textarea", placeholder: "Supporting text" },
-    { key: "buttonText", label: "Button Text", type: "text", placeholder: "Shop Now" },
-    { key: "buttonLink", label: "Button Link", type: "text", placeholder: "/shop" },
-    { key: "secondaryButtonText", label: "Secondary Button Text", type: "text", placeholder: "Learn More" },
-    { key: "secondaryButtonLink", label: "Secondary Button Link", type: "text", placeholder: "/about" },
-    { key: "overlayColor", label: "Overlay Color", type: "color" },
-    { key: "overlayOpacity", label: "Overlay Opacity", type: "number" },
-    { key: "textAlignment", label: "Text Alignment", type: "select", options: [{ value: "left", label: "Left" }, { value: "center", label: "Center" }, { value: "right", label: "Right" }] },
-    { key: "heroHeight", label: "Hero Height", type: "select", options: [{ value: "sm", label: "Small" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }] },
-    { key: "backgroundColor", label: "Background Color", type: "color" },
-    { key: "backgroundGradient", label: "Gradient (e.g. #000→#333)", type: "text", placeholder: "#000000,#333333" },
-  ],
-  features: [
-    { key: "title", label: "Section Title", type: "text", placeholder: "Shop by Category" },
-    { key: "subtitle", label: "Subtitle", type: "text", placeholder: "Browse our collections" },
-    { key: "gridColumns", label: "Grid Columns", type: "select", options: [{ value: "2", label: "2 Columns" }, { value: "3", label: "3 Columns" }, { value: "4", label: "4 Columns" }] },
-    { key: "cardStyle", label: "Card Style", type: "select", options: [{ value: "default", label: "Default" }, { value: "minimal", label: "Minimal" }, { value: "bordered", label: "Bordered" }] },
-    { key: "backgroundColor", label: "Background Color", type: "color" },
-  ],
-  products: [
-    { key: "title", label: "Section Title", type: "text", placeholder: "Featured Products" },
-    { key: "subtitle", label: "Subtitle", type: "text", placeholder: "Our best sellers" },
-    { key: "gridColumns", label: "Grid Columns", type: "select", options: [{ value: "2", label: "2 Columns" }, { value: "3", label: "3 Columns" }, { value: "4", label: "4 Columns" }] },
-    { key: "layout", label: "Layout", type: "select", options: [{ value: "grid", label: "Grid" }, { value: "carousel", label: "Carousel" }] },
-    { key: "showBadges", label: "Show Badges", type: "toggle" },
-    { key: "showRatings", label: "Show Ratings", type: "toggle" },
-    { key: "backgroundColor", label: "Background Color", type: "color" },
-  ],
-  testimonials: [
-    { key: "title", label: "Section Title", type: "text", placeholder: "What Customers Say" },
-    { key: "subtitle", label: "Subtitle", type: "text", placeholder: "Hear from our customers" },
-    { key: "layout", label: "Layout", type: "select", options: [{ value: "grid", label: "Grid" }, { value: "carousel", label: "Carousel / Slider" }] },
-    { key: "cardStyle", label: "Card Style", type: "select", options: [{ value: "default", label: "Default" }, { value: "bordered", label: "Bordered" }, { value: "elevated", label: "Elevated" }] },
-    { key: "backgroundColor", label: "Background Color", type: "color" },
-    { key: "avatarStyle", label: "Avatar Style", type: "select", options: [{ value: "circle", label: "Circle" }, { value: "square", label: "Square" }, { value: "none", label: "None" }] },
-  ],
-  cta: [
-    { key: "headline", label: "Headline", type: "text", placeholder: "Stay in the Loop" },
-    { key: "subtitle", label: "Subtitle", type: "textarea", placeholder: "Subscribe to our newsletter" },
-    { key: "buttonText", label: "Button Text", type: "text", placeholder: "Subscribe" },
-    { key: "buttonLink", label: "Button Link", type: "text", placeholder: "#" },
-    { key: "inputPlaceholder", label: "Input Placeholder", type: "text", placeholder: "Enter your email" },
-    { key: "backgroundColor", label: "Background Color", type: "color" },
-    { key: "backgroundImage", label: "Background Image URL", type: "image", placeholder: "https://..." },
-  ],
-  footer: [
-    { key: "copyright", label: "Copyright Text", type: "text", placeholder: "© 2026 Your Store" },
-    { key: "backgroundColor", label: "Background Color", type: "color" },
-    { key: "showSocialLinks", label: "Show Social Links", type: "toggle" },
-    { key: "contactEmail", label: "Contact Email", type: "text", placeholder: "hello@example.com" },
-    { key: "contactPhone", label: "Contact Phone", type: "text", placeholder: "+1 (555) 123-4567" },
-    { key: "contactAddress", label: "Contact Address", type: "text", placeholder: "123 Commerce St" },
-  ],
-};
+// ─── Control components ──────────────────────────────────────────
 
 function ColorInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
@@ -81,43 +15,161 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
       <input type="color" value={value || "#000000"} onChange={(e) => onChange(e.target.value)}
         className="h-7 w-7 cursor-pointer rounded border border-zinc-200 p-0.5" />
       <input type="text" value={value} onChange={(e) => onChange(e.target.value)}
-        placeholder="#000000"
-        className="h-7 flex-1 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
+        placeholder="#000000" className="h-7 flex-1 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
     </div>
   );
 }
 
-function ImageUrlInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+function ImageInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   const [preview, setPreview] = useState(false);
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-2">
-        <input type="text" value={value} onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
+        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
           className="h-7 flex-1 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
         {value && (
-          <button onClick={() => setPreview(!preview)}
-            className="shrink-0 rounded p-0.5 text-zinc-400 hover:text-zinc-600">
+          <button onClick={() => setPreview(!preview)} className="shrink-0 rounded p-0.5 text-zinc-400 hover:text-zinc-600">
             {preview ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
           </button>
         )}
       </div>
       {preview && value && (
         <div className="overflow-hidden rounded-lg border border-zinc-200">
-          <img src={value} alt="preview" className="h-20 w-full object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          <img src={value} alt="preview" className="h-20 w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
         </div>
       )}
     </div>
   );
 }
 
+function RangeInput({ value, onChange, min, max, step }: { value: string; onChange: (v: string) => void; min?: number; max?: number; step?: number }) {
+  const num = Number(value) || 0;
+  return (
+    <div className="flex items-center gap-2">
+      <input type="range" min={min ?? 0} max={max ?? 100} step={step ?? 1} value={num}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-zinc-200 accent-zinc-900" />
+      <input type="number" value={num} onChange={(e) => onChange(e.target.value)}
+        min={min} max={max} step={step}
+        className="h-7 w-14 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 text-center focus:border-zinc-400 focus:outline-none" />
+    </div>
+  );
+}
+
+function AlignInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const opts = [
+    { value: "left", icon: "≡" },
+    { value: "center", icon: "≡" },
+    { value: "right", icon: "≡" },
+  ];
+  return (
+    <div className="flex gap-1">
+      {opts.map((o) => (
+        <button key={o.value} onClick={() => onChange(o.value)}
+          className={`flex h-7 flex-1 items-center justify-center rounded-lg border text-xs transition-colors ${
+            value === o.value ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 text-zinc-500 hover:bg-zinc-50"
+          }`}
+          style={{ textAlign: o.value as any }}>
+          {o.value === "left" ? "≡" : o.value === "center" ? "≡" : "≡"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ControlRenderer({ propDef, value, onChange }: { propDef: SectionPropDef; value: string; onChange: (v: string) => void }) {
+  switch (propDef.type) {
+    case "color": return <ColorInput value={value} onChange={onChange} />;
+    case "image": return <ImageInput value={value} onChange={onChange} placeholder={propDef.placeholder} />;
+    case "range": return <RangeInput value={value} onChange={onChange} min={propDef.min} max={propDef.max} step={propDef.step} />;
+    case "align": return <AlignInput value={value} onChange={onChange} />;
+    case "toggle": {
+      const isOn = value === "true";
+      return (
+        <button onClick={() => onChange(isOn ? "false" : "true")}
+          className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${isOn ? "bg-zinc-900" : "bg-zinc-200"}`}>
+          <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${isOn ? "translate-x-4" : "translate-x-0"}`} />
+        </button>
+      );
+    }
+    case "select":
+    case "grid-columns": {
+      return (
+        <select value={value || ""} onChange={(e) => onChange(e.target.value)}
+          className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none">
+          {propDef.options?.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      );
+    }
+    case "textarea": {
+      return (
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} placeholder={propDef.placeholder}
+          className="h-auto min-h-[56px] w-full resize-none rounded-lg border border-zinc-200 bg-transparent px-2 py-1.5 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
+      );
+    }
+    case "number": {
+      return (
+        <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder={propDef.placeholder}
+          className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
+      );
+    }
+    case "video":
+    case "url": {
+      return (
+        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={propDef.placeholder}
+          className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
+      );
+    }
+    default: {
+      return (
+        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={propDef.placeholder}
+          className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
+      );
+    }
+  }
+}
+
+function GroupIcon({ group }: { group?: string }) {
+  switch (group) {
+    case "content": return <Type className="h-3 w-3" />;
+    case "layout": return <Layers className="h-3 w-3" />;
+    case "background": return <PaintBucket className="h-3 w-3" />;
+    case "typography": return <AlignLeft className="h-3 w-3" />;
+    case "spacing": return <Ruler className="h-3 w-3" />;
+    case "advanced": return <Lightbulb className="h-3 w-3" />;
+    default: return null;
+  }
+}
+
+const groupLabels: Record<string, string> = {
+  content: "Content",
+  layout: "Layout",
+  background: "Background",
+  typography: "Typography",
+  spacing: "Spacing",
+  advanced: "Advanced",
+};
+
+const groupOrder = ["content", "layout", "background", "typography", "spacing", "advanced"];
+
+// ─── Main Panel ──────────────────────────────────────────────────
+
 export function PropertiesPanel() {
   const dispatch = useDispatch();
   const selectedId = useSelector((s: RootState) => s.builder.selectedSectionId);
-  const section = useSelector((s: RootState) =>
-    s.builder.sections.find((sec) => sec.id === selectedId)
-  );
+  const section = useSelector((s: RootState) => s.builder.sections.find((sec) => sec.id === selectedId));
+
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (g: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(g)) next.delete(g); else next.add(g);
+      return next;
+    });
+  };
 
   if (!section) {
     return (
@@ -133,10 +185,21 @@ export function PropertiesPanel() {
     dispatch(updateSectionProps({ id: section.id, props: { ...section.props, [key]: value } }));
   };
 
-  const controls = sectionControls[section.type] ?? [];
+  const def = sectionRegistryMap[section.type];
+  const allProps = def?.props ?? {};
+  const controls = Object.entries(allProps);
+
+  // Group props
+  const grouped: Record<string, [string, SectionPropDef][]> = {};
+  for (const [key, propDef] of controls) {
+    const group = propDef.group || "content";
+    if (!grouped[group]) grouped[group] = [];
+    grouped[group].push([key, propDef]);
+  }
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Header */}
       <div className="sticky top-0 z-10 border-b border-zinc-100 bg-white px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -150,104 +213,51 @@ export function PropertiesPanel() {
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
+        <p className="mt-1 text-[10px] text-zinc-400">{section.type}</p>
       </div>
 
-      <div className="divide-y divide-zinc-100">
-        {controls.map((control) => {
-          const val = (section.props[control.key] as string) ?? "";
-
-          if (control.type === "image") {
-            return (
-              <div key={control.key} className="px-4 py-3">
-                <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
-                  <Image className="h-3 w-3" /> {control.label}
-                </label>
-                <ImageUrlInput value={val} onChange={(v) => handlePropChange(control.key, v)} placeholder={control.placeholder} />
-              </div>
-            );
-          }
-
-          if (control.type === "color") {
-            return (
-              <div key={control.key} className="px-4 py-3">
-                <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
-                  <Palette className="h-3 w-3" /> {control.label}
-                </label>
-                <ColorInput value={val} onChange={(v) => handlePropChange(control.key, v)} />
-              </div>
-            );
-          }
-
-          if (control.type === "select") {
-            return (
-              <div key={control.key} className="px-4 py-3">
-                <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
-                  <AlignLeft className="h-3 w-3" /> {control.label}
-                </label>
-                <select value={val || (control.options?.[0]?.value ?? "")}
-                  onChange={(e) => handlePropChange(control.key, e.target.value)}
-                  className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none">
-                  {control.options?.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-            );
-          }
-
-          if (control.type === "toggle") {
-            const isOn = val === "true";
-            return (
-              <div key={control.key} className="flex items-center justify-between px-4 py-3">
-                <label className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
-                  {control.label}
-                </label>
-                <button onClick={() => handlePropChange(control.key, isOn ? "false" : "true")}
-                  className={`relative h-5 w-9 rounded-full transition-colors ${isOn ? "bg-zinc-900" : "bg-zinc-200"}`}>
-                  <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${isOn ? "translate-x-4" : "translate-x-0"}`} />
-                </button>
-              </div>
-            );
-          }
-
-          if (control.type === "number") {
-            return (
-              <div key={control.key} className="px-4 py-3">
-                <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
-                  <Type className="h-3 w-3" /> {control.label}
-                </label>
-                <input type="number" value={val} onChange={(e) => handlePropChange(control.key, e.target.value)}
-                  placeholder={control.placeholder}
-                  className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
-              </div>
-            );
-          }
-
+      {/* Properties by group */}
+      <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
+        {groupOrder.filter((g) => grouped[g]?.length).map((group) => {
+          const items = grouped[group];
+          const isCollapsed = collapsedGroups.has(group);
           return (
-            <div key={control.key} className="px-4 py-3">
-              <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
-                {control.key === "headline" || control.key === "subheadline" || control.key === "kicker" ? <Type className="h-3 w-3" /> : null}
-                {control.label}
-              </label>
-              {control.type === "textarea" ? (
-                <textarea value={val} onChange={(e) => handlePropChange(control.key, e.target.value)}
-                  placeholder={control.placeholder} rows={3}
-                  className="h-auto min-h-[56px] w-full resize-none rounded-lg border border-zinc-200 bg-transparent px-2 py-1.5 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
-              ) : (
-                <input type="text" value={val} onChange={(e) => handlePropChange(control.key, e.target.value)}
-                  placeholder={control.placeholder}
-                  className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
+            <div key={group}>
+              <button onClick={() => toggleGroup(group)}
+                className="flex w-full items-center justify-between px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 hover:bg-zinc-50">
+                <span className="flex items-center gap-1.5">
+                  <GroupIcon group={group} />
+                  {groupLabels[group] || group}
+                </span>
+                <span className={`transition-transform ${isCollapsed ? "" : "rotate-180"}`}>
+                  <ChevronDown className="h-3 w-3" />
+                </span>
+              </button>
+              {!isCollapsed && (
+                <div className="px-4 py-2 space-y-3">
+                  {items.map(([key, propDef]) => {
+                    const val = section.props[key] ?? "";
+                    return (
+                      <div key={key}>
+                        <label className="mb-1 flex items-center gap-1 text-[10px] font-medium text-zinc-500">
+                          {propDef.label}
+                          {propDef.responsive && <span className="rounded bg-blue-50 px-1 text-[8px] font-bold text-blue-500">R</span>}
+                        </label>
+                        <ControlRenderer propDef={propDef} value={val} onChange={(v) => handlePropChange(key, v)} />
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           );
         })}
+        {controls.length === 0 && (
+          <div className="p-4 text-center">
+            <p className="text-xs text-zinc-400">No editable properties</p>
+          </div>
+        )}
       </div>
-
-      {controls.length === 0 && (
-        <div className="p-4 text-center">
-          <p className="text-xs text-zinc-400">No editable properties for this section</p>
-        </div>
-      )}
     </div>
   );
 }

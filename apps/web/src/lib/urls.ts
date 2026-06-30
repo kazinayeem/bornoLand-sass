@@ -71,9 +71,17 @@ export function getBaseDomain(): string {
 }
 
 export function getAppOrigin(): string {
+  const fromAppUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (fromAppUrl) return stripTrailingSlash(fromAppUrl);
+
   const { protocol, rootDomain } = readAppUrlConfig();
   if (!rootDomain) return "";
   return `${protocol}://${rootDomain}`;
+}
+
+/** Canonical origin for metadataBase and Open Graph URLs. */
+export function getMetadataBaseUrl(): string {
+  return getAppOrigin() || "http://localhost:3000";
 }
 
 export function joinUrl(origin: string, path = "/"): string {

@@ -5,6 +5,8 @@ import { getServerSession } from "@/lib/auth-session";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
 import { buildPageMetadata } from "@/lib/server/page-metadata";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = buildPageMetadata({
   title: "Dashboard • Workspace",
   description: "Manage your BornoLand workspace.",

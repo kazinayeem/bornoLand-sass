@@ -8,8 +8,9 @@ import type { Metadata } from "next";
  * Store layout — Server Component.
  * Loads store (branding, theme, plan, subscription) once per navigation tree.
  * Child routes share StoreProvider without refetching on client navigations.
- * Dashboard pages under (shell) use SSR via force-dynamic on that layout.
  */
+
+export const dynamic = "force-dynamic";
 
 type StoreLayoutProps = {
   children: ReactNode;

@@ -8,12 +8,8 @@ import { CACHE_REVALIDATE, cacheTags } from "@/lib/server/cache-tags";
 import { buildPageMetadata } from "@/lib/server/page-metadata";
 import { extractSubdomainFromHost, getApiUrl, getTenantCanonicalUrl } from "@/lib/urls";
 
-/** ISR — product detail pages */
-export const revalidate = 60;
-
-export async function generateStaticParams() {
-  return [];
-}
+/** Subdomain product route — host-aware, always dynamic */
+export const dynamic = "force-dynamic";
 
 export const dynamicParams = true;
 

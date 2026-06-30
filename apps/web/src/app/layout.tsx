@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { AppProviders } from "@/providers/app-providers";
+import { getMetadataBaseUrl } from "@/lib/urls";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,6 +16,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getMetadataBaseUrl()),
   title: {
     default: "BornoLand",
     template: "%s | BornoLand",

@@ -23,9 +23,9 @@ export default function StoreReviewsPage() {
         feature={feature}
         billingHref={billingHref}
         currentPlan={accessData?.data?.currentPlan?.name}
-        comingSoon={feature?.comingSoon}
+        comingSoon={feature?.comingSoon ?? true}
       >
-        <p className="text-sm text-zinc-500">Review moderation UI connects to `/stores/:id/reviews` API.</p>
+        {null}
       </EcommerceModuleShell>
     </StorePageCard>
   );

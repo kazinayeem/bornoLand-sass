@@ -1,29 +1,39 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-page";
 import { EcommerceModuleShell } from "@/components/ecommerce/module-shell";
 import { useGetStoreFeatureAccessQuery, getFeatureByKey } from "@/redux/api/feature-api";
-import { Loader2 } from "lucide-react";
 
-export default function StoreReportsPage() {
+type StoreUpcomingPageProps = {
+  title: string;
+  description: string;
+  featureKey?: string;
+};
+
+export function StoreUpcomingPage({ title, description, featureKey }: StoreUpcomingPageProps) {
   const { storeId, store, isLoading } = useStorePage();
   const { data: accessData } = useGetStoreFeatureAccessQuery(storeId ?? "", { skip: !storeId });
-  const feature = getFeatureByKey(accessData?.data?.features ?? [], "reports");
+  const feature = featureKey ? getFeatureByKey(accessData?.data?.features ?? [], featureKey) : undefined;
   const billingHref = store ? `/store/${store.slug}/billing` : "#";
 
   if (isLoading || !storeId) {
-    return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>;
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+      </div>
+    );
   }
 
   return (
     <StorePageCard>
       <EcommerceModuleShell
-        title="Reports"
-        description="Sales, revenue, inventory, tax, coupon, and refund reports."
+        title={title}
+        description={description}
         feature={feature}
         billingHref={billingHref}
         currentPlan={accessData?.data?.currentPlan?.name}
-        comingSoon={feature?.comingSoon ?? true}
+        comingSoon
       >
         {null}
       </EcommerceModuleShell>

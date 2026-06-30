@@ -42,22 +42,22 @@ const mainLinks = [
   { href: "/inventory", label: "Inventory", icon: Boxes, featureKey: "inventory" },
   { href: "/orders", label: "Orders", icon: ShoppingBag },
   { href: "/customers", label: "Customers", icon: Users },
-  { href: "/reviews", label: "Reviews", icon: Star, featureKey: "reviews" },
+  { href: "/reviews", label: "Reviews", icon: Star, featureKey: "reviews", comingSoon: true },
   { href: "/coupons", label: "Coupons", icon: Ticket, featureKey: "coupons" },
   { href: "/cms", label: "CMS", icon: FileText, featureKey: "cms" },
   { href: "/pages", label: "Pages", icon: FileText, featureKey: "cms" },
   { href: "/media", label: "Media", icon: Image, featureKey: "media" },
   { href: "/theme", label: "Theme", icon: Palette },
   { href: "/analytics", label: "Analytics", icon: BarChart3, featureKey: "analytics" },
-  { href: "/reports", label: "Reports", icon: BarChart3, featureKey: "reports" },
-  { href: "/marketing", label: "Marketing", icon: Megaphone, featureKey: "marketing" },
+  { href: "/reports", label: "Reports", icon: BarChart3, featureKey: "reports", comingSoon: true },
+  { href: "/marketing", label: "Marketing", icon: Megaphone, featureKey: "marketing", comingSoon: true },
   { href: "/apps", label: "Apps", icon: Blocks, featureKey: "apps", comingSoon: true },
 ];
 
 const appearanceLinks = [
   { href: "/appearance/branding", label: "Branding", icon: Sparkles },
-  { href: "/appearance/domain", label: "Domain", icon: Globe },
-  { href: "/appearance/seo", label: "SEO", icon: Search },
+  { href: "/appearance/domain", label: "Domain", icon: Globe, comingSoon: true },
+  { href: "/appearance/seo", label: "SEO", icon: Search, comingSoon: true },
 ];
 
 const bottomLinks = [
@@ -183,7 +183,7 @@ export function StoreSidebar({ store }: { store: Store }) {
           <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Appearance</p>
           <ul className="space-y-0.5">
             {appearanceLinks.map((link) => {
-              const meta = resolveLink({ label: link.label });
+              const meta = resolveLink({ label: link.label, comingSoon: link.comingSoon });
               return (
                 <li key={link.href}>
                   <NavItem {...link} basePath={basePath} locked={meta.locked} requiredPlan={meta.requiredPlan} comingSoon={meta.comingSoon} />

@@ -23,9 +23,9 @@ export default function StoreMarketingPage() {
         feature={feature}
         billingHref={billingHref}
         currentPlan={accessData?.data?.currentPlan?.name}
+        comingSoon={feature?.comingSoon ?? true}
       >
-        <p className="text-sm text-zinc-500">Campaign manager uses `/stores/:id/marketing/campaigns`.</p>
-        <p className="mt-2 text-sm text-zinc-400">Email campaigns, abandoned cart, and affiliate — Coming Soon badges in sidebar.</p>
+        {null}
       </EcommerceModuleShell>
     </StorePageCard>
   );

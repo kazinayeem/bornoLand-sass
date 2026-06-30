@@ -45,7 +45,7 @@ export function StorefrontFrame({
         </CartProvider>
         <StoreFooter section={footerSection ?? undefined} />
         {showAdminBar && adminBarStoreId ? (
-          <FloatingAdminBar storeId={adminBarStoreId} primaryColor={theme.primaryColor} />
+          <FloatingAdminBar storeSlug={store.slug} primaryColor={theme.primaryColor} />
         ) : null}
       </TenantProvider>
     </div>

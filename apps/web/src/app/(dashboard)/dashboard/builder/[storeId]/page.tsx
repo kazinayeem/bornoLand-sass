@@ -1,16 +1,13 @@
-"use client";
+import { redirect } from "next/navigation";
+import { getStoreSlugById, getBuilderPageSlugById, isMongoObjectId } from "@/lib/server/store-lookup";
 
-import { useParams } from "next/navigation";
-import { LegacyStoreRouteRedirect } from "@/components/store-dashboard/legacy-store-route-redirect";
+type LegacyBuilderRedirectProps = {
+  params: Promise<{ storeId: string }>;
+};
 
-export default function LegacyBuilderPage() {
-  const params = useParams();
-  const storeId = typeof params.storeId === "string" ? params.storeId : "";
-
-  return (
-    <LegacyStoreRouteRedirect
-      storeId={storeId}
-      resolveTargetPath={(storeSlug) => `/store/${storeSlug}/builder`}
-    />
-  );
+export default async function LegacyBuilderRedirect({ params }: LegacyBuilderRedirectProps) {
+  const { storeId } = await params;
+  const storeSlug = await getStoreSlugById(storeId);
+  if (!storeSlug) redirect("/dashboard/stores");
+  redirect(`/store/${storeSlug}/builder`);
 }

@@ -1,10 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
 import { Loader2, Menu } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { useStoreFromSlug } from "@/hooks/use-store-from-slug";
 import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 import { StoreBrandingSync } from "@/components/store-dashboard/store-branding-sync";
@@ -15,9 +14,7 @@ import { Drawer } from "@/components/ui/drawer";
 
 export function StoreShell({ children }: { children: ReactNode }) {
   const { store, isLoading, isError } = useStoreFromSlug();
-  const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const isBuilderRoute = pathname?.startsWith(`/store/${store?.slug ?? ""}/builder`);
 
   if (isLoading) {
     return (
@@ -44,40 +41,32 @@ export function StoreShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-[#f8f9fb]">
       <StoreBrandingSync store={store} />
-      {!isBuilderRoute && (
-        <div className="hidden lg:block">
-          <StoreSidebar store={store} />
-        </div>
-      )}
+      <div className="hidden lg:block">
+        <StoreSidebar store={store} />
+      </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        {!isBuilderRoute && (
-          <>
-            <div className="flex items-center gap-3 border-b border-zinc-200/80 bg-white/90 px-4 py-3 lg:hidden">
-              <button
-                type="button"
-                onClick={() => setMobileNavOpen(true)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200"
-                aria-label="Open store menu"
-              >
-                <Menu className="h-4 w-4" />
-              </button>
-              <StoreBrandMark store={store} size={32} roundedClassName="rounded-lg" />
-              <p className="truncate text-sm font-semibold text-zinc-900">{store.shortName || store.name}</p>
-            </div>
-            <StoreNavbar store={store} />
-          </>
-        )}
-        <main className={isBuilderRoute ? "flex-1" : "mx-auto w-full max-w-[1600px] flex-1 space-y-6 p-4 sm:p-6 lg:p-8"}>
-          {!isBuilderRoute && <TrialBanner store={store} />}
+        <div className="flex items-center gap-3 border-b border-zinc-200/80 bg-white/90 px-4 py-3 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200"
+            aria-label="Open store menu"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+          <StoreBrandMark store={store} size={32} roundedClassName="rounded-lg" />
+          <p className="truncate text-sm font-semibold text-zinc-900">{store.shortName || store.name}</p>
+        </div>
+        <StoreNavbar store={store} />
+        <main className="mx-auto w-full max-w-[1600px] flex-1 space-y-6 p-4 sm:p-6 lg:p-8">
+          <TrialBanner store={store} />
           {children}
         </main>
       </div>
 
-      {!isBuilderRoute && (
-        <Drawer open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} title={store.shortName || store.name} side="left" size="full">
-          <StoreSidebar store={store} />
-        </Drawer>
-      )}
+      <Drawer open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} title={store.shortName || store.name} side="left" size="full">
+        <StoreSidebar store={store} />
+      </Drawer>
     </div>
   );
 }

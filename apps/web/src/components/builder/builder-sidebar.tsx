@@ -58,7 +58,7 @@ export function BuilderSidebar({ storeId, storeSlug }: { storeId?: string; store
         <div className="flex-1 overflow-y-auto bg-white">
           {activeTab === "layers" && <LayersPanel />}
           {activeTab === "components" && <SectionPanel />}
-        {activeTab === "pages" && <PagesPanel storeId={storeId} />}
+        {activeTab === "pages" && <PagesPanel storeId={storeId} storeSlug={storeSlug} />}
         {activeTab === "templates" && <TemplatesPanel />}
         {activeTab === "media" && <MediaPanel storeId={storeId} billingHref={storeSlug ? `/store/${storeSlug}/billing` : "#"} />}
         </div>

@@ -1,13 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { BuilderEditor } from "@/components/builder/builder-editor";
-import { useStorePage } from "@/components/store-dashboard/store-page";
-import { Loader2 } from "lucide-react";
+type BuilderIndexPageProps = {
+  params: Promise<{ storeSlug: string }>;
+};
 
-export default function StoreBuilderPage() {
-  const { store, isLoading } = useStorePage();
-  if (isLoading || !store) {
-    return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>;
-  }
-  return <BuilderEditor store={store} />;
+export default async function BuilderIndexPage({ params }: BuilderIndexPageProps) {
+  const { storeSlug } = await params;
+  redirect(`/store/${storeSlug}/builder/home`);
 }

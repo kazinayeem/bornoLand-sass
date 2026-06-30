@@ -49,7 +49,7 @@ export function BuilderEditor({ store }: BuilderEditorProps) {
   const params = useParams();
   const router = useRouter();
   const dispatch = useDispatch();
-  const routePageId = typeof params.pageId === "string" ? params.pageId : "";
+  const routePageSlug = typeof params.pageSlug === "string" ? params.pageSlug : "";
   const storeId = store._id;
   const storeSlug = store.slug;
 
@@ -140,23 +140,30 @@ export function BuilderEditor({ store }: BuilderEditorProps) {
 
   useEffect(() => {
     const pages = pagesData?.data?.pages;
-    const loadKey = `${storeId}:${routePageId || "root"}`;
+    const loadKey = `${storeId}:${routePageSlug || "root"}`;
     if (!pages || loadedRef.current === loadKey) return;
 
-    const redirectToPage = (targetSlugOrId: string) => {
-      router.replace(`/store/${storeSlug}/builder/${targetSlugOrId}`);
+    const redirectToPage = (targetSlug: string) => {
+      router.replace(`/store/${storeSlug}/builder/${targetSlug}`);
     };
+
+    const isMongoId = (value: string) => /^[a-f\d]{24}$/i.test(value);
 
     loadedRef.current = loadKey;
 
     if (pages.length > 0) {
-      const matchedPage = pages.find((page) => page._id === routePageId || page.slug === routePageId) ?? pages[0];
+      const matchedPage =
+        pages.find((page) => page.slug === routePageSlug) ??
+        (routePageSlug && isMongoId(routePageSlug) ? pages.find((page) => page._id === routePageSlug) : undefined) ??
+        pages.find((page) => page.slug === "home") ??
+        pages[0];
+
       dispatch(loadSections((matchedPage.sections?.length ? matchedPage.sections : defaultSections) as BuilderSection[]));
       dispatch(setPageId(matchedPage._id));
 
-      const canonicalRouteId = matchedPage.slug || matchedPage._id;
-      if (!routePageId || routePageId !== canonicalRouteId) {
-        redirectToPage(canonicalRouteId);
+      const canonicalSlug = matchedPage.slug;
+      if (!routePageSlug || routePageSlug !== canonicalSlug || isMongoId(routePageSlug)) {
+        redirectToPage(canonicalSlug);
       }
       return;
     }
@@ -165,13 +172,13 @@ export function BuilderEditor({ store }: BuilderEditorProps) {
       .unwrap()
       .then((res) => {
         const createdPage = res.data?.page;
-        if (!createdPage) return;
+        if (!createdPage?.slug) return;
         dispatch(loadSections(defaultSections));
         dispatch(setPageId(createdPage._id));
-        redirectToPage(createdPage.slug || createdPage._id);
+        redirectToPage(createdPage.slug);
       })
       .catch(() => {});
-  }, [pagesData, dispatch, storeId, routePageId, createPage, router, storeSlug]);
+  }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug]);
 
   useEffect(() => {
     if (!isDirty || !pageId) return;
@@ -246,7 +253,7 @@ export function BuilderEditor({ store }: BuilderEditorProps) {
       <BuilderToolbar
         storeId={storeId}
         storeName={store.name}
-        onBack={() => router.push(`/store/${storeSlug}`)}
+        onBack={() => router.push(`/store/${storeSlug}/dashboard`)}
         saving={saving}
         publishing={publishing}
         isDirty={isDirty}

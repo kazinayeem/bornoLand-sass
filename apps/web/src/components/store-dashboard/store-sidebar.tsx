@@ -35,7 +35,7 @@ import { useGetMediaStatsQuery } from "@/redux/api/media-api";
 import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 
 const mainLinks = [
-  { href: "", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/products", label: "Products", icon: Package },
   { href: "/categories", label: "Categories", icon: Tags },
   { href: "/inventory", label: "Inventory", icon: Boxes, featureKey: "inventory" },
@@ -44,7 +44,9 @@ const mainLinks = [
   { href: "/reviews", label: "Reviews", icon: Star, featureKey: "reviews" },
   { href: "/coupons", label: "Coupons", icon: Ticket, featureKey: "coupons" },
   { href: "/cms", label: "CMS", icon: FileText, featureKey: "cms" },
+  { href: "/pages", label: "Pages", icon: FileText, featureKey: "cms" },
   { href: "/media", label: "Media", icon: Image, featureKey: "media" },
+  { href: "/theme", label: "Theme", icon: Palette },
   { href: "/analytics", label: "Analytics", icon: BarChart3, featureKey: "analytics" },
   { href: "/reports", label: "Reports", icon: BarChart3, featureKey: "reports" },
   { href: "/marketing", label: "Marketing", icon: Megaphone, featureKey: "marketing" },
@@ -53,7 +55,6 @@ const mainLinks = [
 
 const appearanceLinks = [
   { href: "/appearance/branding", label: "Branding", icon: Sparkles },
-  { href: "/appearance/theme", label: "Theme", icon: Palette },
   { href: "/appearance/domain", label: "Domain", icon: Globe },
   { href: "/appearance/seo", label: "SEO", icon: Search },
 ];
@@ -85,7 +86,9 @@ function NavItem({
 }) {
   const pathname = usePathname();
   const fullHref = `${basePath}${href}`;
-  const active = exact ? pathname === basePath : pathname === fullHref || pathname.startsWith(`${fullHref}/`);
+  const active = exact
+    ? pathname === fullHref
+    : pathname === fullHref || pathname.startsWith(`${fullHref}/`);
 
   return (
     <Link

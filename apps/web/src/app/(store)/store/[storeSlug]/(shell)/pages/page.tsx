@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
-import { BuilderShell } from "@/components/builder/builder-shell";
 import { generateStorePageMetadata } from "@/lib/server/page-metadata";
+import { StorePagesPanel } from "@/components/store-dashboard/store-pages-panel";
 
 export async function generateMetadata({ params }: { params: Promise<{ storeSlug: string }> }): Promise<Metadata> {
   const { storeSlug } = await params;
   return generateStorePageMetadata({
     storeSlug,
-    pageTitle: "Builder",
-    canonicalPath: `/store/${storeSlug}/builder`,
+    pageTitle: "Pages",
+    canonicalPath: `/store/${storeSlug}/pages`,
   });
 }
 
-export default function BuilderLayout({ children }: { children: ReactNode }) {
-  return <BuilderShell>{children}</BuilderShell>;
+export default function StorePagesPage() {
+  return <StorePagesPanel />;
 }

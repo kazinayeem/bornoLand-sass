@@ -18,27 +18,31 @@ export function StoreNavbar({ store }: { store: Store }) {
   const productId = typeof params.productId === "string" ? params.productId : "";
   const { data: productData } = useGetProductQuery(productId, { skip: !productId });
   const productName = productData?.data?.product?.name;
-  const baseHref = `/store/${store.slug}`;
-  const breadcrumbs = [{ label: "Dashboard", href: baseHref }] as Array<{ label: string; href?: string }>;
+  const storeBase = `/store/${store.slug}`;
+  const dashboardHref = `${storeBase}/dashboard`;
+  const breadcrumbs = [{ label: "Dashboard", href: dashboardHref }] as Array<{ label: string; href?: string }>;
   let pageTitle = "Dashboard";
 
-  if (pathname.startsWith(`${baseHref}/products/new`)) {
+  if (pathname.startsWith(`${storeBase}/products/new`)) {
     pageTitle = "Create Product";
-    breadcrumbs.push({ label: "Products", href: `${baseHref}/products` }, { label: "Create Product" });
-  } else if (pathname.startsWith(`${baseHref}/products/`) && pathname.endsWith("/edit")) {
+    breadcrumbs.push({ label: "Products", href: `${storeBase}/products` }, { label: "Create Product" });
+  } else if (pathname.startsWith(`${storeBase}/products/`) && pathname.endsWith("/edit")) {
     pageTitle = productName || "Edit Product";
-    breadcrumbs.push({ label: "Products", href: `${baseHref}/products` }, { label: pageTitle });
-  } else if (pathname.startsWith(`${baseHref}/products/`) && pathname.endsWith("/duplicate")) {
+    breadcrumbs.push({ label: "Products", href: `${storeBase}/products` }, { label: pageTitle });
+  } else if (pathname.startsWith(`${storeBase}/products/`) && pathname.endsWith("/duplicate")) {
     pageTitle = productName ? `Duplicate ${productName}` : "Duplicate Product";
-    breadcrumbs.push({ label: "Products", href: `${baseHref}/products` }, { label: pageTitle });
-  } else if (pathname !== baseHref && pathname !== `${baseHref}/`) {
-    const segment = pathname.replace(`${baseHref}/`, "").split("/")[0] || "dashboard";
+    breadcrumbs.push({ label: "Products", href: `${storeBase}/products` }, { label: pageTitle });
+  } else if (pathname !== dashboardHref && !pathname.match(new RegExp(`^/store/${store.slug}/?$`))) {
+    const segment = pathname.replace(`${storeBase}/`, "").split("/")[0] || "dashboard";
     const labels: Record<string, string> = {
+      dashboard: "Dashboard",
       products: "Products",
       orders: "Orders",
       customers: "Customers",
       cms: "CMS",
+      pages: "Pages",
       media: "Media Library",
+      theme: "Theme",
       settings: "Settings",
       analytics: "Analytics",
       categories: "Categories",

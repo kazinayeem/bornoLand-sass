@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LayoutTemplate, Palette, Package, ShoppingBag, LayoutDashboard, X } from "lucide-react";
 
 type FloatingAdminBarProps = {
-  storeId: string;
+  storeSlug: string;
   primaryColor: string;
 };
 
-export function FloatingAdminBar({ storeId, primaryColor }: FloatingAdminBarProps) {
+export function FloatingAdminBar({ storeSlug, primaryColor }: FloatingAdminBarProps) {
   const [isAuthed, setIsAuthed] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -26,11 +26,11 @@ export function FloatingAdminBar({ storeId, primaryColor }: FloatingAdminBarProp
   if (!isAuthed) return null;
 
   const links = [
-    { icon: LayoutDashboard, label: "Dashboard", href: `/dashboard` },
-    { icon: ShoppingBag, label: "Store", href: `/${storeId}` },
-    { icon: LayoutTemplate, label: "Editor", href: `/builder/${storeId}` },
-    { icon: Palette, label: "Theme", href: `/dashboard/theme` },
-    { icon: Package, label: "Products", href: `/dashboard/products` },
+    { icon: LayoutDashboard, label: "Dashboard", href: `/store/${storeSlug}/dashboard` },
+    { icon: ShoppingBag, label: "Store", href: `/store/${storeSlug}/dashboard` },
+    { icon: LayoutTemplate, label: "Editor", href: `/store/${storeSlug}/builder` },
+    { icon: Palette, label: "Theme", href: `/store/${storeSlug}/theme` },
+    { icon: Package, label: "Products", href: `/store/${storeSlug}/products` },
   ];
 
   return (

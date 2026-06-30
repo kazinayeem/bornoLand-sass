@@ -27,10 +27,8 @@ export function CmsTab({ storeId, storeSlug }: CmsTabProps) {
   const { data, isLoading } = useGetCmsPagesQuery(storeId);
   const pages = data?.data?.pages ?? [];
   const buildCmsPath = (slug: string) => {
-    if (storeSlug) {
-      return slug === "faq" ? `/store/${storeSlug}/cms/faqs` : `/store/${storeSlug}/cms/${slug}`;
-    }
-    return slug === "faq" ? `/dashboard/cms/faqs?storeId=${storeId}` : `/dashboard/cms/${slug}?storeId=${storeId}`;
+    if (!storeSlug) return "#";
+    return slug === "faq" ? `/store/${storeSlug}/cms/faqs` : `/store/${storeSlug}/cms/${slug}`;
   };
 
   const pageList = useMemo(

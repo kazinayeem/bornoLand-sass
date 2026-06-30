@@ -6,6 +6,7 @@ const PUBLIC_FILE = /\.(.*)$/;
 const authSecret = process.env.JWT_SECRET ?? "bornoland-dev-secret";
 const sessionCookieName = process.env.SESSION_COOKIE_NAME ?? "bornoland.session";
 const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "bornoland.com";
+const API_BASE = (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "");
 
 const DEV_ROOT_DOMAINS = new Set([
   "localhost.com",
@@ -22,7 +23,7 @@ const APP_ROUTES = new Set([
   "/unauthorized",
   "/api",
   "/dashboard",
-  "/builder",
+  "/store",
   "/admin",
 ]);
 
@@ -38,6 +39,38 @@ async function verifySessionToken(token: string): Promise<SessionToken | null> {
   try {
     const result = await jwtVerify(token, secretBytes);
     return result.payload as SessionToken;
+  } catch {
+    return null;
+  }
+}
+
+function isMongoObjectId(value: string): boolean {
+  return /^[a-f\d]{24}$/i.test(value);
+}
+
+async function fetchStoreSlug(storeId: string, cookieHeader: string): Promise<string | null> {
+  try {
+    const response = await fetch(`${API_BASE}/stores/${storeId}`, {
+      headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    const payload = (await response.json()) as { data?: { store?: { slug?: string } } };
+    return payload.data?.store?.slug ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchBuilderPageSlug(pageId: string, cookieHeader: string): Promise<string | null> {
+  try {
+    const response = await fetch(`${API_BASE}/builder/page/${pageId}`, {
+      headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    const payload = (await response.json()) as { data?: { page?: { slug?: string } } };
+    return payload.data?.page?.slug ?? null;
   } catch {
     return null;
   }
@@ -88,6 +121,7 @@ export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get("host") ?? "";
   const hostname = host.split(":")[0] ?? "";
+  const cookieHeader = request.headers.get("cookie") ?? "";
 
   if (PUBLIC_FILE.test(pathname)) {
     return NextResponse.next();
@@ -122,10 +156,42 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.rewrite(rewriteUrl);
   }
 
+  const legacyBuilderMatch = pathname.match(/^\/dashboard\/builder\/([^/]+)(?:\/([^/]+))?$/);
+  if (legacyBuilderMatch) {
+    const storeId = legacyBuilderMatch[1];
+    const pageParam = legacyBuilderMatch[2];
+    const storeSlug = await fetchStoreSlug(storeId, cookieHeader);
+    if (storeSlug) {
+      if (pageParam) {
+        const pageSlug = isMongoObjectId(pageParam)
+          ? (await fetchBuilderPageSlug(pageParam, cookieHeader)) ?? "home"
+          : pageParam;
+        return NextResponse.redirect(new URL(`/store/${storeSlug}/builder/${pageSlug}`, request.url));
+      }
+      return NextResponse.redirect(new URL(`/store/${storeSlug}/builder`, request.url));
+    }
+  }
+
+  const legacyRootBuilderMatch = pathname.match(/^\/builder\/([^/]+)(?:\/([^/]+))?$/);
+  if (legacyRootBuilderMatch) {
+    const storeId = legacyRootBuilderMatch[1];
+    const pageParam = legacyRootBuilderMatch[2];
+    const storeSlug = await fetchStoreSlug(storeId, cookieHeader);
+    if (storeSlug) {
+      if (pageParam) {
+        const pageSlug = isMongoObjectId(pageParam)
+          ? (await fetchBuilderPageSlug(pageParam, cookieHeader)) ?? "home"
+          : pageParam;
+        return NextResponse.redirect(new URL(`/store/${storeSlug}/builder/${pageSlug}`, request.url));
+      }
+      return NextResponse.redirect(new URL(`/store/${storeSlug}/builder`, request.url));
+    }
+  }
+
   const rawSessionToken = request.cookies.get(sessionCookieName)?.value;
   const token = rawSessionToken ? await verifySessionToken(rawSessionToken) : null;
 
-  const isProtectedRoute = pathname.startsWith("/dashboard") || pathname.startsWith("/builder");
+  const isProtectedRoute = pathname.startsWith("/dashboard") || pathname.startsWith("/store");
   const isAdminRoute = pathname.startsWith("/admin");
 
   if (isAdminRoute || isProtectedRoute) {

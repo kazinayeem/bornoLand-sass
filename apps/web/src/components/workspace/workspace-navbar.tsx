@@ -66,7 +66,7 @@ export function WorkspaceNavbar() {
     ...stores.map((s) => ({
       label: s.name,
       sub: s.slug,
-      href: `/store/${s.slug}`,
+      href: `/store/${s.slug}/dashboard`,
       type: "Store",
     })),
     { label: "All Stores", sub: "Workspace", href: "/dashboard/stores", type: "Page" },

@@ -142,7 +142,7 @@ importers:
         specifier: ^3.23.6
         version: 3.23.6(@tiptap/extension-table@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))
       '@tiptap/extension-underline':
-        specifier: ^3.27.1
+        specifier: ^3.23.6
         version: 3.27.1(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))
       '@tiptap/pm':
         specifier: ^3.23.6

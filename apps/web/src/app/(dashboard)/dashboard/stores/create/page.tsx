@@ -6,19 +6,39 @@ import { useRouter } from "next/navigation";
 import { useCreateStoreMutation } from "@/redux/api/store-api";
 import { useGetTemplatesQuery } from "@/redux/api/template-api";
 import { toast } from "sonner";
-import { Sparkles, Check, ArrowLeft, ArrowRight, Store, Globe, Palette, Loader2 } from "lucide-react";
+import {
+  Check,
+  ArrowLeft,
+  ArrowRight,
+  Store,
+  Globe,
+  Palette,
+  Loader2,
+  Lock,
+  ShoppingBag,
+  Briefcase,
+  GraduationCap,
+} from "lucide-react";
 import { PageHeader } from "@/components/workspace/page-header";
+import { STORE_TYPES, STORE_TRIAL_DAYS, type StoreTypeId } from "@/lib/store-types";
+import { Badge } from "@/components/ui/badge";
 
-const plans = [
-  { value: "free", label: "Free", desc: "1 store, basic features", price: "$0" },
-  { value: "starter", label: "Starter", desc: "3 stores, advanced features", price: "$29" },
-  { value: "growth", label: "Growth", desc: "10 stores, premium features", price: "$99" },
-  { value: "enterprise", label: "Enterprise", desc: "Unlimited, everything included", price: "$299" },
-];
+const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  ecommerce: ShoppingBag,
+  portfolio: Briefcase,
+  lms: GraduationCap,
+  agency: Briefcase,
+  restaurant: Store,
+  booking: Store,
+  digital_products: Store,
+  real_estate: Store,
+  blog: Store,
+  hospital: Store,
+  school: GraduationCap,
+  marketplace: ShoppingBag,
+};
 
-const categories = ["general", "ecommerce", "saas", "portfolio", "blog"];
-
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
 export default function CreateStorePage() {
   const router = useRouter();
@@ -28,11 +48,10 @@ export default function CreateStorePage() {
 
   const [step, setStep] = useState<Step>(1);
   const [form, setForm] = useState({
+    storeType: "ecommerce" as StoreTypeId,
     name: "",
     slug: "",
     description: "",
-    category: "ecommerce",
-    plan: "free",
     selectedTemplateId: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,7 +65,7 @@ export default function CreateStorePage() {
     setForm((f) => ({ ...f, name, slug }));
   };
 
-  const validateStep1 = () => {
+  const validateStep2 = () => {
     const errs: Record<string, string> = {};
     if (!form.name || form.name.length < 2) errs.name = "Name must be at least 2 characters";
     if (!form.slug || form.slug.length < 2) errs.slug = "Slug must be at least 2 characters";
@@ -56,26 +75,36 @@ export default function CreateStorePage() {
   };
 
   const handleNext = () => {
-    if (step === 1 && !validateStep1()) return;
-    setStep((step + 1) as Step);
+    if (step === 1) {
+      const selected = STORE_TYPES.find((t) => t.id === form.storeType);
+      if (!selected?.enabled) {
+        toast.error("This store type is not available yet");
+        return;
+      }
+      setStep(2);
+      return;
+    }
+    if (step === 2 && !validateStep2()) return;
+    if (step === 2) setStep(3);
   };
 
   const handleSubmit = async () => {
     try {
-      const payload: Record<string, unknown> = {
+      const payload = {
         name: form.name,
         slug: form.slug,
         description: form.description,
-        category: form.category,
-        plan: form.plan,
+        category: form.storeType,
+        storeType: form.storeType,
+        plan: "free",
+        ...(form.selectedTemplateId ? { selectedTemplateId: form.selectedTemplateId } : {}),
       };
-      if (form.selectedTemplateId) payload.selectedTemplateId = form.selectedTemplateId;
 
-      const result = await createStore(payload as Parameters<typeof createStore>[0]).unwrap();
+      const result = await createStore(payload).unwrap();
       const storeId = result?.data?.store?._id;
       if (storeId) setCreatedStoreId(storeId);
-      toast.success("Store created successfully!");
-      setStep(3);
+      toast.success("Store created with 3-day trial!");
+      setStep(4);
     } catch (err: unknown) {
       const message =
         err && typeof err === "object" && "data" in err
@@ -86,20 +115,24 @@ export default function CreateStorePage() {
   };
 
   const steps = [
-    { num: 1, label: "Details", icon: Store },
-    { num: 2, label: "Template", icon: Palette },
-    { num: 3, label: "Launch", icon: Globe },
+    { num: 1, label: "Type" },
+    { num: 2, label: "Details" },
+    { num: 3, label: "Confirm" },
+    { num: 4, label: "Done" },
   ];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <PageHeader title="Create Store" description="Set up a new store in just a few steps." />
+    <div className="mx-auto max-w-4xl space-y-8">
+      <PageHeader
+        title="Create Store"
+        description={`Choose a store type, configure details, and launch with a ${STORE_TRIAL_DAYS}-day trial.`}
+      />
 
-      <div className="flex items-center justify-center gap-0">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         {steps.map((s, i) => (
           <div key={s.num} className="flex items-center">
             <div
-              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 step === s.num
                   ? "bg-zinc-900 text-white shadow-sm"
                   : step > s.num
@@ -107,11 +140,10 @@ export default function CreateStorePage() {
                     : "bg-zinc-100 text-zinc-400"
               }`}
             >
-              <s.icon className="h-4 w-4" />
               {s.label}
             </div>
             {i < steps.length - 1 && (
-              <div className={`mx-2 h-px w-8 ${step > s.num ? "bg-emerald-400" : "bg-zinc-200"}`} />
+              <div className={`mx-2 h-px w-6 sm:w-10 ${step > s.num ? "bg-emerald-400" : "bg-zinc-200"}`} />
             )}
           </div>
         ))}
@@ -121,173 +153,201 @@ export default function CreateStorePage() {
         {step === 1 && (
           <motion.div
             key="step1"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="space-y-4"
           >
-            <h3 className="text-lg font-semibold text-zinc-900">Store Details</h3>
-            <p className="mt-1 text-sm text-zinc-500">Tell us about your store.</p>
-            <div className="mt-6 space-y-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Store Name</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => updateSlug(e.target.value)}
-                  placeholder="My Shop"
-                  autoFocus
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500/20"
-                />
-                {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Store Slug / Subdomain</label>
-                <div className="flex items-center gap-1 rounded-xl border border-zinc-200 bg-white px-3 focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-500/20">
-                  <input
-                    type="text"
-                    value={form.slug}
-                    onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-                    placeholder="myshop"
-                    className="h-10 flex-1 bg-transparent text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
-                  />
-                  <span className="text-xs text-zinc-400">.{rootDomain}</span>
-                </div>
-                {errors.slug && <p className="mt-1 text-xs text-red-500">{errors.slug}</p>}
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Description</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="Tell us about your store..."
-                  rows={3}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500/20"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Category</label>
-                <select
-                  value={form.category}
-                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-700"
-                >
-                  {categories.map((c) => (
-                    <option key={c} value={c}>
-                      {c.charAt(0).toUpperCase() + c.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Plan</label>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {plans.map((plan) => (
-                    <button
-                      key={plan.value}
-                      type="button"
-                      onClick={() => setForm((f) => ({ ...f, plan: plan.value }))}
-                      className={`relative rounded-xl border-2 p-4 text-left transition-all ${
-                        form.plan === plan.value
-                          ? "border-zinc-900 bg-zinc-50 shadow-sm"
-                          : "border-zinc-200 hover:border-zinc-300"
-                      }`}
-                    >
-                      <p className="text-lg font-bold text-zinc-900">
-                        {plan.price}
-                        <span className="text-sm font-normal text-zinc-400">/mo</span>
-                      </p>
-                      <p className="mt-1 font-medium text-zinc-900">{plan.label}</p>
-                      <p className="mt-0.5 text-xs text-zinc-500">{plan.desc}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-zinc-900">Choose Store Type</h3>
+              <p className="mt-1 text-sm text-zinc-500">Only Ecommerce is available today. More builders are coming soon.</p>
             </div>
-            <div className="mt-6 flex justify-end">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {STORE_TYPES.map((type) => {
+                const Icon = typeIcons[type.id] ?? Store;
+                const selected = form.storeType === type.id;
+                return (
+                  <button
+                    key={type.id}
+                    type="button"
+                    disabled={!type.enabled}
+                    onClick={() => type.enabled && setForm((f) => ({ ...f, storeType: type.id }))}
+                    className={`relative rounded-2xl border-2 p-4 text-left transition-all ${
+                      !type.enabled
+                        ? "cursor-not-allowed border-zinc-100 bg-zinc-50 opacity-70"
+                        : selected
+                          ? "border-zinc-900 bg-zinc-50 shadow-sm"
+                          : "border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm"
+                    }`}
+                  >
+                    {!type.enabled && (
+                      <Badge variant="default" className="absolute right-3 top-3">
+                        Coming Soon
+                      </Badge>
+                    )}
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
+                      {type.enabled ? <Icon className="h-5 w-5 text-zinc-700" /> : <Lock className="h-5 w-5 text-zinc-400" />}
+                    </div>
+                    <h4 className="mt-3 font-semibold text-zinc-900">{type.label}</h4>
+                    <p className="mt-1 text-xs leading-relaxed text-zinc-500">{type.description}</p>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex justify-end">
               <button
                 type="button"
                 onClick={handleNext}
-                className="flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+                className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-zinc-800"
               >
-                Next Step <ArrowRight className="h-4 w-4" />
+                Continue <ArrowRight className="h-4 w-4" />
               </button>
             </div>
           </motion.div>
         )}
 
         {step === 2 && (
-          <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+          <motion.div
+            key="step2"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="space-y-4"
+          >
             <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-zinc-900">Choose a Template</h3>
-              <p className="mt-1 text-sm text-zinc-500">Pick a starting template for your store.</p>
+              <h3 className="text-lg font-semibold text-zinc-900">Store Information</h3>
+              <p className="mt-1 text-sm text-zinc-500">Name your store and choose a subdomain.</p>
+              <div className="mt-6 space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-zinc-700">Store Name</label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => updateSlug(e.target.value)}
+                    placeholder="My Shop"
+                    className="h-10 w-full rounded-xl border border-zinc-200 px-3 text-sm focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500/20"
+                  />
+                  {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-zinc-700">Subdomain</label>
+                  <div className="flex items-center gap-1 rounded-xl border border-zinc-200 px-3 focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-500/20">
+                    <input
+                      type="text"
+                      value={form.slug}
+                      onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+                      placeholder="myshop"
+                      className="h-10 flex-1 bg-transparent text-sm focus:outline-none"
+                    />
+                    <span className="text-xs text-zinc-400">.{rootDomain}</span>
+                  </div>
+                  {errors.slug && <p className="mt-1 text-xs text-red-500">{errors.slug}</p>}
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-zinc-700">Description</label>
+                  <textarea
+                    value={form.description}
+                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                    rows={3}
+                    placeholder="What does your store sell?"
+                    className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500/20"
+                  />
+                </div>
+              </div>
             </div>
 
-            {templatesLoading ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {[1, 2].map((i) => (
-                  <div key={i} className="h-64 animate-pulse rounded-2xl bg-zinc-100" />
-                ))}
-              </div>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, selectedTemplateId: "" }))}
-                  className={`group relative overflow-hidden rounded-2xl border-2 bg-white p-6 text-left transition-all hover:shadow-md ${
-                    !form.selectedTemplateId ? "border-zinc-900 ring-2 ring-zinc-900/10" : "border-zinc-200 hover:border-zinc-300"
-                  }`}
-                >
-                  <div className="flex h-24 items-center justify-center rounded-xl bg-zinc-50">
-                    <Palette className="h-10 w-10 text-zinc-300" />
-                  </div>
-                  <h4 className="mt-4 font-semibold text-zinc-900">Blank Store</h4>
-                  <p className="mt-1 text-xs text-zinc-500">Start from scratch with default theme.</p>
-                </button>
-                {templates.map((tmpl) => {
-                  const isSelected = form.selectedTemplateId === tmpl._id;
-                  return (
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-zinc-900">Theme Template</h3>
+              <p className="mt-1 text-sm text-zinc-500">Optional starting template for your storefront.</p>
+              {templatesLoading ? (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="h-40 animate-pulse rounded-xl bg-zinc-100" />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, selectedTemplateId: "" }))}
+                    className={`rounded-xl border-2 p-4 text-left ${
+                      !form.selectedTemplateId ? "border-zinc-900" : "border-zinc-200"
+                    }`}
+                  >
+                    <Palette className="h-6 w-6 text-zinc-400" />
+                    <p className="mt-2 font-medium text-zinc-900">Blank Store</p>
+                  </button>
+                  {templates.map((tmpl) => (
                     <button
                       key={tmpl._id}
                       type="button"
                       onClick={() => setForm((f) => ({ ...f, selectedTemplateId: tmpl._id }))}
-                      className={`group relative overflow-hidden rounded-2xl border-2 bg-white text-left transition-all hover:shadow-md ${
-                        isSelected ? "border-zinc-900 ring-2 ring-zinc-900/10" : "border-zinc-200 hover:border-zinc-300"
+                      className={`rounded-xl border-2 p-4 text-left ${
+                        form.selectedTemplateId === tmpl._id ? "border-zinc-900" : "border-zinc-200"
                       }`}
                     >
-                      {isSelected && (
-                        <div className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900">
-                          <Check className="h-3.5 w-3.5 text-white" />
-                        </div>
-                      )}
-                      <div className="flex aspect-video items-center justify-center rounded-t-2xl bg-gradient-to-br from-zinc-800 to-zinc-950">
-                        <span className="text-3xl font-bold text-white/70">
-                          {tmpl.name
-                            .split(" ")
-                            .map((w: string) => w[0])
-                            .join("")
-                            .slice(0, 2)}
-                        </span>
-                      </div>
-                      <div className="p-4">
-                        <h4 className="font-semibold text-zinc-900">{tmpl.name}</h4>
-                        <p className="mt-1.5 line-clamp-2 text-xs text-zinc-500">{tmpl.description || "No description"}</p>
-                      </div>
+                      <p className="font-medium text-zinc-900">{tmpl.name}</p>
+                      <p className="mt-1 line-clamp-2 text-xs text-zinc-500">{tmpl.description}</p>
                     </button>
-                  );
-                })}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
 
-            <div className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-              <button type="button" onClick={() => setStep(1)} className="flex items-center gap-1 text-sm text-zinc-600 hover:text-zinc-900">
+            <div className="flex justify-between">
+              <button type="button" onClick={() => setStep(1)} className="inline-flex items-center gap-1 text-sm text-zinc-600">
+                <ArrowLeft className="h-4 w-4" /> Back
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white"
+              >
+                Continue <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 3 && (
+          <motion.div
+            key="step3"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
+          >
+            <h3 className="text-lg font-semibold text-zinc-900">Confirm & Create</h3>
+            <p className="mt-1 text-sm text-zinc-500">Review your store details before launching.</p>
+            <dl className="mt-6 space-y-3 text-sm">
+              <div className="flex justify-between gap-4 border-b border-zinc-100 pb-3">
+                <dt className="text-zinc-500">Store Type</dt>
+                <dd className="font-medium text-zinc-900">
+                  {STORE_TYPES.find((t) => t.id === form.storeType)?.label}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-zinc-100 pb-3">
+                <dt className="text-zinc-500">Name</dt>
+                <dd className="font-medium text-zinc-900">{form.name}</dd>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-zinc-100 pb-3">
+                <dt className="text-zinc-500">Subdomain</dt>
+                <dd className="font-medium text-zinc-900">{form.slug}.{rootDomain}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-zinc-500">Trial</dt>
+                <dd className="font-medium text-emerald-700">{STORE_TRIAL_DAYS}-day free trial</dd>
+              </div>
+            </dl>
+            <div className="mt-6 flex justify-between">
+              <button type="button" onClick={() => setStep(2)} className="inline-flex items-center gap-1 text-sm text-zinc-600">
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white disabled:opacity-50"
               >
                 {isLoading ? (
                   <>
@@ -301,37 +361,37 @@ export default function CreateStorePage() {
           </motion.div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <motion.div
-            key="step3"
-            initial={{ opacity: 0, scale: 0.95 }}
+            key="step4"
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             className="rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm"
           >
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
               <Check className="h-8 w-8 text-emerald-600" />
             </div>
-            <h3 className="mt-4 text-xl font-bold text-zinc-900">Store Created!</h3>
+            <h3 className="mt-4 text-xl font-bold text-zinc-900">Store Created</h3>
             <p className="mt-2 text-sm text-zinc-500">
-              Your store <span className="font-semibold text-zinc-900">{form.name}</span> is ready with a 3-day trial.
+              <span className="font-semibold text-zinc-900">{form.name}</span> is active with a {STORE_TRIAL_DAYS}-day trial.
             </p>
             <div className="mt-4 inline-flex items-center gap-2 rounded-xl bg-zinc-50 px-4 py-2 text-sm text-zinc-600">
               <Globe className="h-4 w-4" /> {previewUrl}
             </div>
-            <div className="mt-8 flex items-center justify-center gap-3">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
                 onClick={() => router.push("/dashboard/stores")}
-                className="rounded-xl border border-zinc-200 bg-white px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                className="rounded-xl border border-zinc-200 px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
               >
-                Go to My Stores
+                All Stores
               </button>
               <button
                 type="button"
                 onClick={() => router.push(`/dashboard/stores/${createdStoreId}`)}
                 className="rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800"
               >
-                Store Dashboard
+                Open Dashboard
               </button>
             </div>
           </motion.div>

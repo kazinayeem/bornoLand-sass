@@ -11,6 +11,7 @@ import { HomepageSliderModel } from "../models/homepage-slider.model.js";
 import { createStoreSchema, updateStoreSchema, type CreateStoreInput, type UpdateStoreInput } from "../validators/store.validator.js";
 import { ProductModel } from "../models/product.model.js";
 import { OrderModel } from "../models/order.model.js";
+import { applyTrialExpiryToStore, buildTrialFields } from "./trial.service.js";
 
 const defaultPlans = [
   {
@@ -128,18 +129,14 @@ export async function createStore(userId: string, payload: unknown) {
     slug: parsed.data.slug,
     subdomain: parsed.data.slug,
     description: parsed.data.description ?? "",
-    category: parsed.data.category ?? "general",
+    category: parsed.data.category ?? "ecommerce",
+    storeType: parsed.data.storeType ?? "ecommerce",
     plan: requestedPlan?.slug ?? parsed.data.plan ?? "free",
-    ...(requestedPlan ? {
-      planId: requestedPlan._id,
-      billingStatus: requestedPlan.priceBDT > 0 ? "active" : "trial",
-      subscriptionStatus: requestedPlan.priceBDT > 0 ? "active" : "trialing",
-      renewalDate: new Date(Date.now() + (requestedPlan.trialDays ?? 0) * 24 * 60 * 60 * 1000)
-    } : {}),
-    status: "active",
+    ...(requestedPlan ? { planId: requestedPlan._id } : {}),
+    ...buildTrialFields(),
     logoUrl: parsed.data.logoUrl ?? "",
     ...(templateId ? { selectedTemplateId: templateId } : {}),
-    ...(themeFromTemplate ? { theme: themeFromTemplate } : {})
+    ...(themeFromTemplate ? { theme: themeFromTemplate } : {}),
   });
 
   if (templateId && themeFromTemplate) {
@@ -181,19 +178,37 @@ export async function getUserStores(userId: string) {
   const stores = await StoreModel.find({ userId })
     .populate("selectedTemplateId", "name slug category preview")
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
-    .sort({ createdAt: -1 })
-    .lean();
-  return { ok: true as const, data: { stores: await attachStoreMetrics(stores as any[]) } };
+    .sort({ createdAt: -1 });
+
+  for (const store of stores) {
+    await applyTrialExpiryToStore(store);
+  }
+
+  const leanStores = stores.map((store) => store.toObject());
+  return { ok: true as const, data: { stores: await attachStoreMetrics(leanStores as any[]) } };
 }
 
 export async function getStoreById(storeId: string, userId: string) {
   await connectDatabase();
   const store = await StoreModel.findOne({ _id: storeId, userId })
     .populate("selectedTemplateId", "name slug category preview")
-    .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
-    .lean();
+    .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive");
   if (!store) return { ok: false as const, message: "Store not found" };
-  const [hydrated] = await attachStoreMetrics([store as any]);
+  await applyTrialExpiryToStore(store);
+  const leanStore = store.toObject();
+  const [hydrated] = await attachStoreMetrics([leanStore as any]);
+  return { ok: true as const, data: { store: hydrated } };
+}
+
+export async function getStoreBySlug(slug: string, userId: string) {
+  await connectDatabase();
+  const store = await StoreModel.findOne({ slug, userId })
+    .populate("selectedTemplateId", "name slug category preview")
+    .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive");
+  if (!store) return { ok: false as const, message: "Store not found" };
+  await applyTrialExpiryToStore(store);
+  const leanStore = store.toObject();
+  const [hydrated] = await attachStoreMetrics([leanStore as any]);
   return { ok: true as const, data: { store: hydrated } };
 }
 

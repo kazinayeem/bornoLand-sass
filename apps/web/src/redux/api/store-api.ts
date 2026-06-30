@@ -33,11 +33,16 @@ export type Store = {
   subdomain: string;
   description: string;
   category: string;
+  storeType?: string;
   plan: string;
   planId?: Plan | string | null;
   billingStatus?: "trial" | "active" | "past_due" | "cancelled" | "paused";
   subscriptionStatus?: "trialing" | "active" | "past_due" | "cancelled" | "paused";
   renewalDate?: string | null;
+  trialStartedAt?: string | null;
+  trialEndsAt?: string | null;
+  published?: boolean;
+  allowNewOrders?: boolean;
   status: string;
   logoUrl: string;
   selectedTemplateId?: { _id: string; name: string; slug: string; category: string; preview: string } | string;
@@ -56,6 +61,7 @@ type CreateStoreRequest = {
   slug: string;
   description?: string;
   category?: string;
+  storeType?: string;
   plan?: string;
   selectedTemplateId?: string;
   logoUrl?: string;
@@ -83,6 +89,10 @@ export const storeApi = baseApi.injectEndpoints({
     getStore: builder.query<ApiEnvelope<{ store: Store }>, string>({
       query: (id) => ({ url: `/stores/${id}` }),
       providesTags: (_result, _error, id) => [{ type: "Stores", id }]
+    }),
+    getStoreBySlug: builder.query<ApiEnvelope<{ store: Store }>, string>({
+      query: (slug) => ({ url: `/stores/by-slug/${slug}` }),
+      providesTags: (result) => [{ type: "Stores", id: result?.data?.store?._id }],
     }),
     updateStore: builder.mutation<ApiEnvelope<{ store: Store }>, { id: string; data: UpdateStoreRequest }>({
       query: ({ id, data }) => ({ url: `/stores/${id}`, method: "PUT", body: data }),
@@ -119,6 +129,7 @@ export const {
   useCreateStoreMutation,
   useGetMyStoresQuery,
   useGetStoreQuery,
+  useGetStoreBySlugQuery,
   useUpdateStoreMutation,
   useChangeStoreThemeMutation,
   useDeleteStoreMutation,

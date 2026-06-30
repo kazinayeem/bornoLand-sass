@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useAppSelector } from "@/hooks/redux";
-import { WorkspaceSidebar } from "@/components/workspace/workspace-sidebar";
+import { PlatformSidebar } from "@/components/workspace/platform-sidebar";
 import { WorkspaceNavbar } from "@/components/workspace/workspace-navbar";
 
 export function WorkspaceShell({ children }: { children: ReactNode }) {
@@ -11,7 +11,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#f8f9fb]">
-      <WorkspaceSidebar />
+      <PlatformSidebar />
       <div
         className={cn(
           "min-h-screen transition-all duration-300",

@@ -11,18 +11,33 @@ export type StoreStatus =
   | "draft";
 
 export function resolveStoreStatus(store: Store): StoreStatus {
+  if (store.status === "archived") return "archived";
+  if (store.status === "suspended") return "suspended";
+  if (store.status === "expired") return "expired";
+  if (store.status === "pending_payment") return "pending_payment";
+  if (store.status === "pending_approval") return "pending_approval";
+
   const billing = store.billingStatus;
   const sub = store.subscriptionStatus;
 
-  if (store.status === "suspended") return "suspended";
-  if (store.status === "draft") return "draft";
-
-  if (billing === "trial" || sub === "trialing") return "trial";
+  if (billing === "trial" || sub === "trialing") {
+    if (store.trialEndsAt && new Date(store.trialEndsAt).getTime() < Date.now()) {
+      return "expired";
+    }
+    return "trial";
+  }
   if (billing === "past_due") return "pending_payment";
   if (billing === "cancelled" || sub === "cancelled") return "expired";
   if (billing === "active" || sub === "active") return "active";
 
   return store.status === "active" ? "active" : "draft";
+}
+
+export function getTrialDaysRemaining(trialEndsAt?: string | null) {
+  if (!trialEndsAt) return null;
+  const diff = new Date(trialEndsAt).getTime() - Date.now();
+  if (diff <= 0) return 0;
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
 export const storeStatusConfig: Record<

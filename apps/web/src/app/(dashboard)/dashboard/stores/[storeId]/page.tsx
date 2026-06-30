@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Loader2, Store, AlertTriangle, Trash2, Menu, Construction } from "lucide-react";
 import Link from "next/link";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
-import { WorkspaceSidebar } from "@/components/workspace/workspace-sidebar";
+import { StoreNavSidebar } from "@/components/workspace/store-nav-sidebar";
 import { Drawer } from "@/components/ui/drawer";
 import { OverviewTab } from "@/components/workspace/overview-tab";
 import { ProductsTab } from "@/components/workspace/products-tab";
@@ -197,7 +197,7 @@ export default function StoreWorkspacePage() {
         {/* Desktop sidebar */}
         <div className="hidden lg:block lg:sticky lg:top-6 lg:h-[calc(100vh-1.5rem)]">
           <div className="h-full overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
-            <WorkspaceSidebar
+            <StoreNavSidebar
               store={store}
               activeTab={activeTab}
               onTabChange={setActiveTab}
@@ -265,7 +265,7 @@ export default function StoreWorkspacePage() {
       {/* Mobile drawer */}
       <Drawer open={showNav} onClose={() => setShowNav(false)} title={store.name} description="Store navigation" side="left" size="full">
         <div className="h-full overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm">
-          <WorkspaceSidebar
+          <StoreNavSidebar
             store={store}
             activeTab={activeTab}
             onTabChange={(tab) => {

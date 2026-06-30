@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   createStoreController,
   deleteStoreController,
+  getStoreBySlugController,
   getStoreController,
   getUserStoresController,
   updateStoreController,
@@ -18,6 +19,7 @@ storeRouter.use(requireAuth);
 
 storeRouter.post("/create", createStoreController);
 storeRouter.get("/my-stores", getUserStoresController);
+storeRouter.get("/by-slug/:slug", getStoreBySlugController);
 storeRouter.get("/:id", getStoreController);
 storeRouter.put("/:id", updateStoreController);
 storeRouter.put("/:id/theme", changeStoreThemeController);

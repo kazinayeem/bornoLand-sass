@@ -82,7 +82,7 @@ function NavLink({
   );
 }
 
-export function WorkspaceSidebar() {
+export function PlatformSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();

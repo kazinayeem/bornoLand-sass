@@ -1,10 +1,10 @@
 "use client";
 
-import { Monitor, Smartphone, Tablet, ArrowLeft, Save, Send, Undo2, Redo2, ZoomIn } from "lucide-react";
+import { Monitor, Smartphone, Tablet, ArrowLeft, Save, Send, Undo2, Redo2, ZoomIn, Search, Plus } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setDevice, setZoom } from "@/redux/slices/preview-slice";
-import { markSaved, setSaving, setPublishing, undoBuilder, redoBuilder } from "@/redux/slices/builder-slice";
+import { markSaved, setSaving, setPublishing, setActiveTab, undoBuilder, redoBuilder } from "@/redux/slices/builder-slice";
 import { useSavePageMutation, usePublishPageMutation } from "@/redux/api/builder-api";
 import { useUpdateStoreMutation } from "@/redux/api/store-api";
 import { toast } from "sonner";
@@ -116,6 +116,19 @@ export function BuilderToolbar({ storeId, storeName, onBack, saving, publishing,
               <option key={value} value={value}>{value}%</option>
             ))}
           </select>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => dispatch(setActiveTab("sections"))}
+          className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition-all hover:bg-zinc-50"
+        >
+          <Plus className="h-3.5 w-3.5" /> Quick Add
+        </button>
+
+        <div className="hidden items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-500 lg:flex">
+          <Search className="h-3.5 w-3.5 text-zinc-400" />
+          Search sections, templates, media...
         </div>
 
         {isDirty && (

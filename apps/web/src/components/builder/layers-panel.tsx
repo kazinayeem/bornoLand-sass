@@ -67,6 +67,7 @@ export function LayersPanel() {
           const def = getSectionDef(section.type);
           const children = getLayerChildren(section.type, section.props);
           const selected = selectedSectionId === section.id;
+          const currentIndex = sections.findIndex((s) => s.id === section.id);
           return (
             <div
               key={section.id}
@@ -122,8 +123,8 @@ export function LayersPanel() {
                       <button onClick={() => { dispatch(pasteSection(section.id)); setMenuOpenFor(null); }} disabled={!clipboardSection} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-40"><Copy className="h-3.5 w-3.5" /> Paste</button>
                       <button onClick={() => { dispatch(toggleSection(section.id)); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50">{section.visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}{section.visible ? "Hide" : "Show"}</button>
                       <button onClick={() => { dispatch(toggleSectionLock(section.id)); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50">{section.locked ? <LockOpen className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}{section.locked ? "Unlock" : "Lock"}</button>
-                      <button onClick={() => { if (index > 0) dispatch(moveSection({ from: sections.findIndex((s) => s.id === section.id), to: sections.findIndex((s) => s.id === section.id) - 1 })); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50"><MoveUp className="h-3.5 w-3.5" /> Move Up</button>
-                      <button onClick={() => { const currentIndex = sections.findIndex((s) => s.id === section.id); if (currentIndex < sections.length - 1) dispatch(moveSection({ from: currentIndex, to: currentIndex + 1 })); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50"><MoveDown className="h-3.5 w-3.5" /> Move Down</button>
+                      <button onClick={() => { if (currentIndex > 0) dispatch(moveSection({ from: currentIndex, to: currentIndex - 1 })); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50"><MoveUp className="h-3.5 w-3.5" /> Move Up</button>
+                      <button onClick={() => { if (currentIndex < sections.length - 1) dispatch(moveSection({ from: currentIndex, to: currentIndex + 1 })); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50"><MoveDown className="h-3.5 w-3.5" /> Move Down</button>
                       <button onClick={() => { dispatch(removeSection(section.id)); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /> Delete</button>
                     </div>
                   )}

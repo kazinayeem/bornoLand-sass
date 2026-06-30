@@ -168,6 +168,7 @@ export function PropertiesPanel() {
   const sectionCount = useSelector((s: RootState) => s.builder.sections.length);
 
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<"general" | "content" | "style" | "advanced">("content");
 
   const toggleGroup = (g: string) => {
     setCollapsedGroups((prev) => {
@@ -203,6 +204,13 @@ export function PropertiesPanel() {
     grouped[group].push([key, propDef]);
   }
 
+  const tabGroups: Record<typeof activeTab, string[]> = {
+    general: ["content", "layout"],
+    content: ["content"],
+    style: ["background", "typography", "spacing"],
+    advanced: ["advanced"],
+  };
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
@@ -236,11 +244,30 @@ export function PropertiesPanel() {
           />
         </div>
         <p className="mt-1 text-[10px] text-zinc-400">{section.type}</p>
+        <div className="mt-3 flex flex-wrap gap-1 rounded-xl bg-zinc-100 p-1">
+          {[
+            { key: "general", label: "General" },
+            { key: "content", label: "Content" },
+            { key: "style", label: "Style" },
+            { key: "advanced", label: "Advanced" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key as typeof activeTab)}
+              className={`rounded-lg px-2.5 py-1 text-[10px] font-medium ${
+                activeTab === tab.key ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Properties by group */}
       <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
-        {groupOrder.filter((g) => grouped[g]?.length).map((group) => {
+        {groupOrder.filter((g) => grouped[g]?.length && tabGroups[activeTab].includes(g)).map((group) => {
           const items = grouped[group];
           const isCollapsed = collapsedGroups.has(group);
           return (

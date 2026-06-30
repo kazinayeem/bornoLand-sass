@@ -2,10 +2,13 @@
 
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
-import { updateSectionProps, setSelectedSection } from "@/redux/slices/builder-slice";
-import { X, Image, Palette, Type, Layers, AlignLeft, Eye, EyeOff, PaintBucket, Ruler, ChevronDown, Lightbulb } from "lucide-react";
+import { updateSectionProps, setSelectedSection, duplicateSection, moveSection, removeSection, toggleSection, updateSectionMeta } from "@/redux/slices/builder-slice";
+import { X, Image, Palette, Type, Layers, AlignLeft, PaintBucket, Ruler, ChevronDown, Lightbulb, Copy, ArrowUp, ArrowDown, Trash2, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { sectionRegistryMap, type SectionPropDef } from "@/lib/section-registry";
+import { useParams } from "next/navigation";
+import { getSectionDef, type SectionPropDef } from "@/lib/section-registry";
+import { MediaPicker } from "@/components/media/media-picker";
+import { normalizeMediaSelection, type MediaSelection } from "@/lib/media-selection";
 
 // ─── Control components ──────────────────────────────────────────
 
@@ -20,25 +23,23 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
   );
 }
 
-function ImageInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
-  const [preview, setPreview] = useState(false);
+function ImageInput({ storeId, storeSlug, label, value, onChange }: { storeId?: string; storeSlug?: string; label: string; value: string; onChange: (v: string) => void }) {
+  const selection = normalizeMediaSelection(value);
+  if (!storeId || !storeSlug) {
+    return (
+      <input type="text" value={value} onChange={(e) => onChange(e.target.value)}
+        className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none" />
+    );
+  }
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-2">
-        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-          className="h-7 flex-1 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
-        {value && (
-          <button onClick={() => setPreview(!preview)} className="shrink-0 rounded p-0.5 text-zinc-400 hover:text-zinc-600">
-            {preview ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-          </button>
-        )}
-      </div>
-      {preview && value && (
-        <div className="overflow-hidden rounded-lg border border-zinc-200">
-          <img src={value} alt="preview" className="h-20 w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-        </div>
-      )}
-    </div>
+    <MediaPicker
+      storeId={storeId}
+      billingHref={`/store/${storeSlug}/billing`}
+      folder="builder"
+      label={label}
+      value={selection}
+      onChange={(selected: MediaSelection) => onChange(selected.url)}
+    />
   );
 }
 
@@ -77,10 +78,10 @@ function AlignInput({ value, onChange }: { value: string; onChange: (v: string) 
   );
 }
 
-function ControlRenderer({ propDef, value, onChange }: { propDef: SectionPropDef; value: string; onChange: (v: string) => void }) {
+function ControlRenderer({ propDef, value, onChange, storeId, storeSlug, fieldLabel }: { propDef: SectionPropDef; value: string; onChange: (v: string) => void; storeId?: string; storeSlug?: string; fieldLabel: string }) {
   switch (propDef.type) {
     case "color": return <ColorInput value={value} onChange={onChange} />;
-    case "image": return <ImageInput value={value} onChange={onChange} placeholder={propDef.placeholder} />;
+    case "image": return <ImageInput storeId={storeId} storeSlug={storeSlug} label={fieldLabel} value={value} onChange={onChange} />;
     case "range": return <RangeInput value={value} onChange={onChange} min={propDef.min} max={propDef.max} step={propDef.step} />;
     case "align": return <AlignInput value={value} onChange={onChange} />;
     case "toggle": {
@@ -158,8 +159,13 @@ const groupOrder = ["content", "layout", "background", "typography", "spacing", 
 
 export function PropertiesPanel() {
   const dispatch = useDispatch();
+  const params = useParams();
+  const storeId = typeof params.storeId === "string" ? params.storeId : undefined;
+  const storeSlug = typeof params.storeSlug === "string" ? params.storeSlug : undefined;
   const selectedId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const section = useSelector((s: RootState) => s.builder.sections.find((sec) => sec.id === selectedId));
+  const sectionIndex = useSelector((s: RootState) => s.builder.sections.findIndex((sec) => sec.id === selectedId));
+  const sectionCount = useSelector((s: RootState) => s.builder.sections.length);
 
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
@@ -185,7 +191,7 @@ export function PropertiesPanel() {
     dispatch(updateSectionProps({ id: section.id, props: { ...section.props, [key]: value } }));
   };
 
-  const def = sectionRegistryMap[section.type];
+  const def = getSectionDef(section.type);
   const allProps = def?.props ?? {};
   const controls = Object.entries(allProps);
 
@@ -212,6 +218,22 @@ export function PropertiesPanel() {
             className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
             <X className="h-3.5 w-3.5" />
           </button>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button onClick={() => dispatch(duplicateSection(section.id))} className="rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-zinc-600"><Copy className="mr-1 inline h-3 w-3" />Duplicate</button>
+          <button onClick={() => dispatch(toggleSection(section.id))} className="rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-zinc-600">{section.visible ? <Eye className="mr-1 inline h-3 w-3" /> : <EyeOff className="mr-1 inline h-3 w-3" />}{section.visible ? "Hide" : "Show"}</button>
+          <button onClick={() => sectionIndex > 0 && dispatch(moveSection({ from: sectionIndex, to: sectionIndex - 1 }))} disabled={sectionIndex <= 0} className="rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-zinc-600 disabled:opacity-40"><ArrowUp className="mr-1 inline h-3 w-3" />Up</button>
+          <button onClick={() => sectionIndex < sectionCount - 1 && dispatch(moveSection({ from: sectionIndex, to: sectionIndex + 1 }))} disabled={sectionIndex >= sectionCount - 1} className="rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-zinc-600 disabled:opacity-40"><ArrowDown className="mr-1 inline h-3 w-3" />Down</button>
+          <button onClick={() => dispatch(removeSection(section.id))} className="rounded-lg border border-red-200 px-2 py-1 text-[10px] font-medium text-red-600"><Trash2 className="mr-1 inline h-3 w-3" />Delete</button>
+        </div>
+        <div className="mt-3">
+          <label className="mb-1 flex items-center gap-1 text-[10px] font-medium text-zinc-500">Section name</label>
+          <input
+            type="text"
+            value={section.label}
+            onChange={(e) => dispatch(updateSectionMeta({ id: section.id, label: e.target.value }))}
+            className="h-8 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-xs text-zinc-700 focus:border-zinc-400 focus:outline-none"
+          />
         </div>
         <p className="mt-1 text-[10px] text-zinc-400">{section.type}</p>
       </div>
@@ -243,7 +265,7 @@ export function PropertiesPanel() {
                           {propDef.label}
                           {propDef.responsive && <span className="rounded bg-blue-50 px-1 text-[8px] font-bold text-blue-500">R</span>}
                         </label>
-                        <ControlRenderer propDef={propDef} value={val} onChange={(v) => handlePropChange(key, v)} />
+                        <ControlRenderer propDef={propDef} value={val} onChange={(v) => handlePropChange(key, v)} storeId={storeId} storeSlug={storeSlug} fieldLabel={propDef.label} />
                       </div>
                     );
                   })}

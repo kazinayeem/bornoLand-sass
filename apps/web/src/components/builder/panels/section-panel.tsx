@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
-import { addSection, removeSection, toggleSection, duplicateSection, setSelectedSection } from "@/redux/slices/builder-slice";
+import { addSection, removeSection, toggleSection, duplicateSection, setSelectedSection, updateSectionMeta, moveSection } from "@/redux/slices/builder-slice";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   GripVertical, Eye, EyeOff, Copy, Trash2, Plus, Search, X,
@@ -17,7 +17,7 @@ import {
   PanelRight, SquareSquare, GalleryHorizontalEnd, SlidersHorizontal,
   PackagePlus, Grid2x2, Columns, ChevronDown, ChevronRight,
 } from "lucide-react";
-import { sectionRegistry, sectionCategories, getDefaultProps, sectionRegistryMap, type SectionCategory } from "@/lib/section-registry";
+import { sectionRegistry, sectionCategories, getDefaultProps, getSectionDef, getSectionLabel, normalizeSectionType, type SectionCategory } from "@/lib/section-registry";
 
 const iconMap: Record<string, any> = {
   Layout, Image, Star, Mail, Menu, Columns2, Video, Timer, Zap, ShoppingBag,
@@ -61,7 +61,7 @@ export function SectionPanel() {
   const handleAdd = (type: string) => {
     dispatch(addSection({
       id: `${type}-${Date.now()}`,
-      type, label: sectionRegistryMap[type]?.label || type, visible: true,
+      type, label: getSectionLabel(type), visible: true,
       props: getDefaultProps(type),
     }));
     setShowPicker(false);
@@ -72,7 +72,7 @@ export function SectionPanel() {
   const handleDragOver = (e: React.DragEvent, idx: number) => {
     e.preventDefault();
     if (dragIdx !== null && dragIdx !== idx) {
-      dispatch({ type: "builder/moveSection", payload: { from: dragIdx, to: idx } });
+      dispatch(moveSection({ from: dragIdx, to: idx }));
       setDragIdx(idx);
     }
   };
@@ -106,9 +106,17 @@ export function SectionPanel() {
                 : "border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50/50"
             } ${!section.visible ? "opacity-50" : ""}`}>
             <GripVertical className="h-3.5 w-3.5 shrink-0 cursor-grab text-zinc-300" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500">
+              <SectionIcon icon={getSectionDef(section.type)?.icon || "Layout"} />
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="truncate text-xs font-medium text-zinc-700">{section.label}</div>
-              <div className="text-[10px] text-zinc-400">{section.type}</div>
+              <input
+                value={section.label}
+                onChange={(e) => dispatch(updateSectionMeta({ id: section.id, label: e.target.value }))}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full truncate bg-transparent text-xs font-medium text-zinc-700 outline-none"
+              />
+              <div className="text-[10px] text-zinc-400">{normalizeSectionType(section.type)}</div>
             </div>
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <button onClick={(e) => { e.stopPropagation(); dispatch(duplicateSection(section.id)); }}

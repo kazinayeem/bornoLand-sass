@@ -1,10 +1,10 @@
 "use client";
 
-import { Monitor, Smartphone, Tablet, ArrowLeft, Save, Send } from "lucide-react";
+import { Monitor, Smartphone, Tablet, ArrowLeft, Save, Send, Undo2, Redo2, ZoomIn } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
-import { setDevice } from "@/redux/slices/preview-slice";
-import { markSaved, setSaving, setPublishing } from "@/redux/slices/builder-slice";
+import { setDevice, setZoom } from "@/redux/slices/preview-slice";
+import { markSaved, setSaving, setPublishing, undoBuilder, redoBuilder } from "@/redux/slices/builder-slice";
 import { useSavePageMutation, usePublishPageMutation } from "@/redux/api/builder-api";
 import { useUpdateStoreMutation } from "@/redux/api/store-api";
 import { toast } from "sonner";
@@ -21,9 +21,13 @@ type Props = {
 export function BuilderToolbar({ storeId, storeName, onBack, saving, publishing, isDirty }: Props) {
   const dispatch = useDispatch();
   const device = useSelector((s: RootState) => s.preview.device);
+  const zoom = useSelector((s: RootState) => s.preview.zoom);
   const theme = useSelector((s: RootState) => s.theme);
   const sections = useSelector((s: RootState) => s.builder.sections);
   const pageId = useSelector((s: RootState) => s.builder.pageId);
+  const lastSaved = useSelector((s: RootState) => s.builder.lastSaved);
+  const pastCount = useSelector((s: RootState) => s.builder.past.length);
+  const futureCount = useSelector((s: RootState) => s.builder.future.length);
 
   const [savePage] = useSavePageMutation();
   const [publishPage] = usePublishPageMutation();
@@ -92,9 +96,36 @@ export function BuilderToolbar({ storeId, storeName, onBack, saving, publishing,
 
         <div className="h-5 w-px bg-zinc-200" />
 
+        <button onClick={() => dispatch(undoBuilder())} disabled={pastCount === 0}
+          className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition-all hover:bg-zinc-50 disabled:opacity-40">
+          <Undo2 className="h-3.5 w-3.5" /> Undo
+        </button>
+        <button onClick={() => dispatch(redoBuilder())} disabled={futureCount === 0}
+          className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition-all hover:bg-zinc-50 disabled:opacity-40">
+          <Redo2 className="h-3.5 w-3.5" /> Redo
+        </button>
+
+        <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2 py-1">
+          <ZoomIn className="h-3.5 w-3.5 text-zinc-400" />
+          <select
+            value={zoom}
+            onChange={(e) => dispatch(setZoom(Number(e.target.value)))}
+            className="bg-transparent text-xs text-zinc-600 outline-none"
+          >
+            {[50, 75, 100, 125, 150].map((value) => (
+              <option key={value} value={value}>{value}%</option>
+            ))}
+          </select>
+        </div>
+
         {isDirty && (
           <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-600">
             Unsaved
+          </span>
+        )}
+        {!isDirty && lastSaved && (
+          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600">
+            Saved
           </span>
         )}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { sectionRegistryMap, type SectionDef } from "@/lib/section-registry";
+import { getSectionDef, normalizeSectionType } from "@/lib/section-registry";
 import { motion } from "framer-motion";
 
 export type SectionData = {
@@ -191,7 +191,7 @@ const VideoSection = dynamic(() => import("./video-section").then((m) => ({ defa
 // ─── Placeholder for unimplemented sections ──────────────────────
 
 function PlaceholderSection({ section }: { section: SectionData }) {
-  const def = sectionRegistryMap[section.type];
+  const def = getSectionDef(section.type);
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100 mb-4">
@@ -206,80 +206,82 @@ function PlaceholderSection({ section }: { section: SectionData }) {
 // ─── Main renderer ──────────────────────────────────────────────
 
 export function SectionRenderer({ section }: { section: SectionData }) {
-  const def = sectionRegistryMap[section.type];
+  const normalizedType = normalizeSectionType(section.type);
+  const normalizedSection = normalizedType === section.type ? section : { ...section, type: normalizedType };
+  const def = getSectionDef(normalizedSection.type);
   if (!def) return null;
 
   // Hero sections
-  if (section.type === "hero-banner") return <HeroBanner section={section} />;
-  if (section.type === "split-hero") return <SplitHero section={section} />;
-  if (section.type === "video-hero") return <VideoHero section={section} />;
-  if (section.type === "slider-hero") return <SliderHero section={section} />;
-  if (section.type === "image-hero") return <ImageHero section={section} />;
-  if (section.type === "fullscreen-hero") return <FullscreenHero section={section} />;
-  if (section.type === "countdown-hero") return <CountdownHero section={section} />;
-  if (section.type === "flash-sale-hero") return <FlashSaleHero section={section} />;
-  if (section.type === "product-hero") return <ProductHero section={section} />;
+  if (normalizedSection.type === "hero-banner") return <HeroBanner section={normalizedSection} />;
+  if (normalizedSection.type === "split-hero") return <SplitHero section={normalizedSection} />;
+  if (normalizedSection.type === "video-hero") return <VideoHero section={normalizedSection} />;
+  if (normalizedSection.type === "slider-hero") return <SliderHero section={normalizedSection} />;
+  if (normalizedSection.type === "image-hero") return <ImageHero section={normalizedSection} />;
+  if (normalizedSection.type === "fullscreen-hero") return <FullscreenHero section={normalizedSection} />;
+  if (normalizedSection.type === "countdown-hero") return <CountdownHero section={normalizedSection} />;
+  if (normalizedSection.type === "flash-sale-hero") return <FlashSaleHero section={normalizedSection} />;
+  if (normalizedSection.type === "product-hero") return <ProductHero section={normalizedSection} />;
 
   // Products
-  if (section.type === "featured-products") return <FeaturedProducts section={section} />;
-  if (section.type === "new-arrivals") return <NewArrivals section={section} />;
-  if (section.type === "best-sellers") return <BestSellers section={section} />;
-  if (section.type === "trending-products") return <TrendingProducts section={section} />;
-  if (section.type === "flash-sale") return <FlashSale section={section} />;
-  if (section.type === "product-grid") return <ProductGrid section={section} />;
-  if (section.type === "product-carousel") return <ProductCarousel section={section} />;
-  if (section.type === "product-slider") return <ProductSlider section={section} />;
-  if (section.type === "product-tabs") return <ProductTabs section={section} />;
+  if (normalizedSection.type === "featured-products") return <FeaturedProducts section={normalizedSection} />;
+  if (normalizedSection.type === "new-arrivals") return <NewArrivals section={normalizedSection} />;
+  if (normalizedSection.type === "best-sellers") return <BestSellers section={normalizedSection} />;
+  if (normalizedSection.type === "trending-products") return <TrendingProducts section={normalizedSection} />;
+  if (normalizedSection.type === "flash-sale") return <FlashSale section={normalizedSection} />;
+  if (normalizedSection.type === "product-grid") return <ProductGrid section={normalizedSection} />;
+  if (normalizedSection.type === "product-carousel") return <ProductCarousel section={normalizedSection} />;
+  if (normalizedSection.type === "product-slider") return <ProductSlider section={normalizedSection} />;
+  if (normalizedSection.type === "product-tabs") return <ProductTabs section={normalizedSection} />;
 
   // Categories
-  if (section.type === "category-grid" || section.type === "featured-categories" || section.type === "mega-category-grid")
-    return <CategoryGrid section={section} />;
-  if (section.type === "category-slider") return <CategorySlider section={section} />;
+  if (normalizedSection.type === "category-grid" || normalizedSection.type === "featured-categories" || normalizedSection.type === "mega-category-grid")
+    return <CategoryGrid section={normalizedSection} />;
+  if (normalizedSection.type === "category-slider") return <CategorySlider section={normalizedSection} />;
 
   // Promotions
-  if (section.type === "discount-banner" || section.type === "offer-banner" || section.type === "bogo")
-    return <DiscountBanner section={section} />;
-  if (section.type === "deal-of-day") return <DealOfDay section={section} />;
+  if (normalizedSection.type === "discount-banner" || normalizedSection.type === "offer-banner" || normalizedSection.type === "bogo")
+    return <DiscountBanner section={normalizedSection} />;
+  if (normalizedSection.type === "deal-of-day") return <DealOfDay section={normalizedSection} />;
 
   // Trust
-  if (section.type === "testimonials") return <Testimonials section={section} />;
-  if (section.type === "trust-badges" || section.type === "guarantee-section")
-    return <TrustBadges section={section} />;
-  if (section.type === "why-choose-us") return <WhyChooseUs section={section} />;
+  if (normalizedSection.type === "testimonials") return <Testimonials section={normalizedSection} />;
+  if (normalizedSection.type === "trust-badges" || normalizedSection.type === "guarantee-section")
+    return <TrustBadges section={normalizedSection} />;
+  if (normalizedSection.type === "why-choose-us") return <WhyChooseUs section={normalizedSection} />;
 
   // Content
-  if (section.type === "rich-text") return <RichText section={section} />;
-  if (section.type === "faq") return <FAQSection section={section} />;
-  if (section.type === "accordion") return <Accordion section={section} />;
-  if (section.type === "team-members") return <TeamMembers section={section} />;
+  if (normalizedSection.type === "rich-text") return <RichText section={normalizedSection} />;
+  if (normalizedSection.type === "faq") return <FAQSection section={normalizedSection} />;
+  if (normalizedSection.type === "accordion") return <Accordion section={normalizedSection} />;
+  if (normalizedSection.type === "team-members") return <TeamMembers section={normalizedSection} />;
 
   // Media
-  if (section.type === "image-banner") return <ImageBanner section={section} />;
-  if (section.type === "gallery" || section.type === "image-grid" || section.type === "masonry-gallery")
-    return <Gallery section={section} />;
-  if (section.type === "video-section" || section.type === "youtube-embed" || section.type === "vimeo-embed")
-    return <VideoSection section={section} />;
+  if (normalizedSection.type === "image-banner") return <ImageBanner section={normalizedSection} />;
+  if (normalizedSection.type === "gallery" || normalizedSection.type === "image-grid" || normalizedSection.type === "masonry-gallery")
+    return <Gallery section={normalizedSection} />;
+  if (normalizedSection.type === "video-section" || normalizedSection.type === "youtube-embed" || normalizedSection.type === "vimeo-embed")
+    return <VideoSection section={normalizedSection} />;
 
   // Social
-  if (section.type === "instagram-feed") return <InstagramFeed section={section} />;
+  if (normalizedSection.type === "instagram-feed") return <InstagramFeed section={normalizedSection} />;
 
   // Marketing
-  if (section.type === "newsletter" || section.type === "email-capture")
-    return <Newsletter section={section} />;
-  if (section.type === "announcement-bar") return <AnnouncementBar section={section} />;
+  if (normalizedSection.type === "newsletter" || normalizedSection.type === "email-capture")
+    return <Newsletter section={normalizedSection} />;
+  if (normalizedSection.type === "announcement-bar") return <AnnouncementBar section={normalizedSection} />;
 
   // Advanced
-  if (section.type === "countdown-timer") return <CountdownTimer section={section} />;
+  if (normalizedSection.type === "countdown-timer") return <CountdownTimer section={normalizedSection} />;
 
   // Footer
-  if (section.type === "simple-footer") return <SimpleFooter section={section} />;
-  if (section.type === "ecommerce-footer" || section.type === "mega-footer" || section.type === "multi-column-footer")
-    return <EcommerceFooter section={section} />;
+  if (normalizedSection.type === "simple-footer") return <SimpleFooter section={normalizedSection} />;
+  if (normalizedSection.type === "ecommerce-footer" || normalizedSection.type === "mega-footer" || normalizedSection.type === "multi-column-footer")
+    return <EcommerceFooter section={normalizedSection} />;
 
   // Layout sections - render as wrapping divs
-  if (section.type === "full-width" || section.type === "container" || section.type === "one-column" || section.type === "two-column" || section.type === "three-column" || section.type === "four-column" || section.type === "grid-layout" || section.type === "masonry-layout" || section.type === "tabs-layout") {
-    return <PlaceholderSection section={section} />;
+  if (normalizedSection.type === "full-width" || normalizedSection.type === "container" || normalizedSection.type === "one-column" || normalizedSection.type === "two-column" || normalizedSection.type === "three-column" || normalizedSection.type === "four-column" || normalizedSection.type === "grid-layout" || normalizedSection.type === "masonry-layout" || normalizedSection.type === "tabs-layout") {
+    return <PlaceholderSection section={normalizedSection} />;
   }
 
-  return <PlaceholderSection section={section} />;
+  return <PlaceholderSection section={normalizedSection} />;
 }

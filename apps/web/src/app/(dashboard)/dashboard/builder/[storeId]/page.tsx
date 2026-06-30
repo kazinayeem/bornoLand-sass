@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
@@ -11,7 +11,7 @@ import { useGetStoreSettingsQuery, useGetHomepageSlidersQuery } from "@/redux/ap
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
 import { setTheme } from "@/redux/slices/theme-slice";
 import { setStoreSettings } from "@/redux/slices/store-settings-slice";
-import { loadSections, setPageId, markSaved, setSaving } from "@/redux/slices/builder-slice";
+import { loadSections, setPageId, markSaved, setSaving, setLeftPanelWidth, setRightPanelWidth } from "@/redux/slices/builder-slice";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
 import { useSavePageMutation } from "@/redux/api/builder-api";
 import { BuilderToolbar } from "@/components/builder/builder-toolbar";
@@ -20,12 +20,12 @@ import { StorePreview } from "@/components/builder/store-preview";
 import { PropertiesPanel } from "@/components/builder/properties-panel";
 
 const defaultSections: BuilderSection[] = [
-  { id: "hero-1", type: "hero", label: "Hero Banner", visible: true, props: { headline: "Welcome to Our Store", subheadline: "Discover amazing products curated just for you", buttonText: "Shop Now", buttonLink: "/shop", imageUrl: "", overlayColor: "rgba(15, 23, 42, 0.45)", textAlignment: "left", heroHeight: "md", kicker: "Welcome" } },
-  { id: "features-1", type: "features", label: "Categories", visible: true, props: { title: "Shop by Category", subtitle: "Browse our collections", gridColumns: "4", cardStyle: "default", backgroundColor: "" } },
-  { id: "products-1", type: "products", label: "Products", visible: true, props: { title: "Featured Products", subtitle: "Our best selling items", gridColumns: "4", layout: "grid", showBadges: "true", showRatings: "true", backgroundColor: "" } },
-  { id: "testimonials-1", type: "testimonials", label: "Testimonials", visible: true, props: { title: "What Customers Say", subtitle: "Hear from our happy customers", layout: "grid", cardStyle: "default", backgroundColor: "", avatarStyle: "circle" } },
-  { id: "cta-1", type: "cta", label: "Newsletter", visible: true, props: { headline: "Stay in the Loop", subtitle: "Subscribe to get special offers, free giveaways, and exclusive deals.", buttonText: "Subscribe", inputPlaceholder: "Enter your email", backgroundColor: "", backgroundImage: "" } },
-  { id: "footer-1", type: "footer", label: "Footer", visible: true, props: { copyright: "© 2026 Your Store. All rights reserved.", showSocialLinks: "true", contactEmail: "hello@example.com", contactPhone: "+1 (555) 123-4567", contactAddress: "123 Commerce St, NY 10001" } },
+  { id: "hero-banner-1", type: "hero-banner", label: "Hero Banner", visible: true, props: { headline: "Welcome to Our Store", subheadline: "Discover amazing products curated just for you", buttonText: "Shop Now", buttonLink: "/shop", imageUrl: "", overlayColor: "rgba(15, 23, 42, 0.45)", textAlignment: "left", heroHeight: "md", kicker: "Welcome" } },
+  { id: "category-grid-1", type: "category-grid", label: "Categories", visible: true, props: { title: "Shop by Category", subtitle: "Browse our collections", gridColumns: "4" } },
+  { id: "featured-products-1", type: "featured-products", label: "Featured Products", visible: true, props: { title: "Featured Products", subtitle: "Our best selling items", gridColumns: "4", showBadges: "true", showRatings: "true" } },
+  { id: "testimonials-1", type: "testimonials", label: "Testimonials", visible: true, props: { title: "What Customers Say", subtitle: "Hear from our happy customers", layout: "grid", cardStyle: "default", avatarStyle: "circle" } },
+  { id: "newsletter-1", type: "newsletter", label: "Newsletter", visible: true, props: { headline: "Stay in the Loop", subheadline: "Subscribe to get special offers, free giveaways, and exclusive deals.", buttonText: "Subscribe", placeholderText: "Enter your email" } },
+  { id: "simple-footer-1", type: "simple-footer", label: "Footer", visible: true, props: { copyright: "© 2026 Your Store. All rights reserved.", showSocial: "true" } },
 ];
 
 export default function BuilderPage() {
@@ -60,8 +60,43 @@ export default function BuilderPage() {
   const selectedSectionId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const pageId = useSelector((s: RootState) => s.builder.pageId);
   const currentTheme = useSelector((s: RootState) => s.theme);
+  const leftPanelWidth = useSelector((s: RootState) => s.builder.leftPanelWidth);
+  const rightPanelWidth = useSelector((s: RootState) => s.builder.rightPanelWidth);
+  const [resizing, setResizing] = useState<"left" | "right" | null>(null);
 
   const loadedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const left = window.localStorage.getItem("builder.leftPanelWidth");
+    const right = window.localStorage.getItem("builder.rightPanelWidth");
+    if (left) dispatch(setLeftPanelWidth(Number(left)));
+    if (right) dispatch(setRightPanelWidth(Number(right)));
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("builder.leftPanelWidth", String(leftPanelWidth));
+    window.localStorage.setItem("builder.rightPanelWidth", String(rightPanelWidth));
+  }, [leftPanelWidth, rightPanelWidth]);
+
+  useEffect(() => {
+    if (!resizing) return;
+    const handleMove = (event: MouseEvent) => {
+      if (resizing === "left") {
+        dispatch(setLeftPanelWidth(event.clientX));
+      } else {
+        dispatch(setRightPanelWidth(window.innerWidth - event.clientX));
+      }
+    };
+    const handleUp = () => setResizing(null);
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+    };
+  }, [dispatch, resizing]);
 
   useEffect(() => {
     if (store?.theme) {
@@ -144,9 +179,15 @@ export default function BuilderPage() {
         saving={saving} publishing={publishing} isDirty={isDirty}
       />
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-72 flex-shrink-0 border-r border-zinc-200 overflow-hidden bg-white">
+        <div className="flex-shrink-0 border-r border-zinc-200 overflow-hidden bg-white" style={{ width: leftPanelWidth }}>
           <BuilderSidebar storeId={storeId} />
         </div>
+        <button
+          type="button"
+          onMouseDown={() => setResizing("left")}
+          className="w-1.5 flex-shrink-0 cursor-col-resize bg-zinc-200/80 transition-colors hover:bg-zinc-400"
+          aria-label="Resize left panel"
+        />
         <div className="flex-1 overflow-y-auto bg-zinc-100">
           <StorePreview
             store={store} theme={currentTheme} products={products} categories={categories}
@@ -155,9 +196,17 @@ export default function BuilderPage() {
           />
         </div>
         {selectedSectionId && (
-          <div className="w-72 flex-shrink-0 border-l border-zinc-200 bg-white overflow-y-auto shadow-sm">
+          <>
+            <button
+              type="button"
+              onMouseDown={() => setResizing("right")}
+              className="w-1.5 flex-shrink-0 cursor-col-resize bg-zinc-200/80 transition-colors hover:bg-zinc-400"
+              aria-label="Resize right panel"
+            />
+            <div className="flex-shrink-0 border-l border-zinc-200 bg-white overflow-y-auto shadow-sm" style={{ width: rightPanelWidth }}>
             <PropertiesPanel />
-          </div>
+            </div>
+          </>
         )}
       </div>
     </div>

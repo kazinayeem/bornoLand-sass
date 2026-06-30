@@ -30,6 +30,14 @@ export type SectionDef = {
   props: Record<string, SectionPropDef>;
 };
 
+const sectionTypeAliases: Record<string, string> = {
+  hero: "hero-banner",
+  features: "category-grid",
+  products: "featured-products",
+  cta: "newsletter",
+  footer: "simple-footer",
+};
+
 // ─── Shared prop groups ──────────────────────────────────────────
 
 const G = {
@@ -830,7 +838,7 @@ export const sectionCategories: { id: SectionCategory; label: string }[] = [
 ];
 
 export function getDefaultProps(type: string): Record<string, string> {
-  const def = sectionRegistryMap[type];
+  const def = getSectionDef(type);
   if (!def) return {};
   const props: Record<string, string> = {};
   for (const [key, propDef] of Object.entries(def.props)) {
@@ -840,9 +848,17 @@ export function getDefaultProps(type: string): Record<string, string> {
 }
 
 export function getSectionLabel(type: string): string {
-  return sectionRegistryMap[type]?.label ?? type;
+  return getSectionDef(type)?.label ?? type;
 }
 
 export function getSectionsByCategory(category: SectionCategory): SectionDef[] {
   return sectionRegistry.filter((s) => s.category === category);
+}
+
+export function normalizeSectionType(type: string): string {
+  return sectionTypeAliases[type] ?? type;
+}
+
+export function getSectionDef(type: string): SectionDef | undefined {
+  return sectionRegistryMap[normalizeSectionType(type)];
 }

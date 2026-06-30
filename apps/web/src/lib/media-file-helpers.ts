@@ -6,23 +6,23 @@ export function isPdf(file: MediaFile) {
 }
 
 export function isOfficeDoc(file: MediaFile) {
-  return ["docx", "xlsx", "pptx"].includes(file.extension.toLowerCase());
+  return ["docx", "xlsx", "pptx"].includes((file.extension ?? "").toLowerCase());
 }
 
 export function isArchive(file: MediaFile) {
-  return ["zip", "rar", "7z", "tar", "gz"].includes(file.extension.toLowerCase());
+  return ["zip", "rar", "7z", "tar", "gz"].includes((file.extension ?? "").toLowerCase());
 }
 
 export function isAudio(file: MediaFile) {
-  return file.fileType === "audio" || file.mimeType.startsWith("audio/");
+  return file.fileType === "audio" || (file.mimeType?.startsWith("audio/") ?? false);
 }
 
 export function isVideo(file: MediaFile) {
-  return file.fileType === "video" || file.mimeType.startsWith("video/");
+  return file.fileType === "video" || (file.mimeType?.startsWith("video/") ?? false);
 }
 
 export function isImage(file: MediaFile) {
-  return file.fileType === "image" || file.mimeType.startsWith("image/");
+  return file.fileType === "image" || (file.mimeType?.startsWith("image/") ?? false);
 }
 
 export function mediaThumbnailSrc(file: MediaFile): string {

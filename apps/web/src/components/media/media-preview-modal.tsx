@@ -34,7 +34,7 @@ function OfficeIcon({ extension }: { extension: string }) {
 
 function FileIconPreview({ file }: { file: MediaFile }) {
   if (file.fileType === "video") return <FileVideo className="h-16 w-16 text-violet-600" />;
-  if (file.mimeType.startsWith("audio/")) return <FileAudio className="h-16 w-16 text-pink-600" />;
+  if (file.mimeType?.startsWith("audio/")) return <FileAudio className="h-16 w-16 text-pink-600" />;
   if (["zip", "rar", "7z"].includes(file.extension)) return <FileArchive className="h-16 w-16 text-amber-600" />;
   if (isOfficeDoc(file)) return <OfficeIcon extension={file.extension} />;
   return <FileText className="h-16 w-16 text-zinc-500" />;

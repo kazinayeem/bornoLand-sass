@@ -1,0 +1,210 @@
+"use client";
+
+import { memo, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Copy,
+  Download,
+  Eye,
+  FileArchive,
+  FileAudio,
+  FileSpreadsheet,
+  FileText,
+  FileVideo,
+  MoreHorizontal,
+  Pencil,
+  Presentation,
+  Trash2,
+} from "lucide-react";
+import { formatBytes, type MediaFile } from "@/redux/api/media-api";
+import { SafeMediaImage } from "@/components/media/safe-media-image";
+import {
+  fileTypeLabel,
+  isImage,
+  isOfficeDoc,
+  isPdf,
+  mediaDownloadHref,
+  mediaThumbnailSrc,
+} from "@/lib/media-file-helpers";
+
+function FileTypeIcon({ file }: { file: MediaFile }) {
+  const ext = (file.extension ?? "").toLowerCase();
+  if (file.fileType === "video") return <FileVideo className="h-10 w-10 text-violet-500" />;
+  if (file.mimeType?.startsWith("audio/")) return <FileAudio className="h-10 w-10 text-pink-500" />;
+  if (["zip", "rar", "7z"].includes(ext)) return <FileArchive className="h-10 w-10 text-amber-500" />;
+  if (ext === "xlsx") return <FileSpreadsheet className="h-10 w-10 text-emerald-600" />;
+  if (ext === "pptx") return <Presentation className="h-10 w-10 text-orange-600" />;
+  if (isOfficeDoc(file) || isPdf(file)) return <FileText className="h-10 w-10 text-blue-600" />;
+  return <FileText className="h-10 w-10 text-zinc-400" />;
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+type MediaLibraryCardProps = {
+  file: MediaFile;
+  selected?: boolean;
+  onToggleSelect?: () => void;
+  onPreview: () => void;
+  onCopy: () => void;
+  onRename: () => void;
+  onDelete: () => void;
+  onSelect?: () => void;
+  copied?: boolean;
+};
+
+export const MediaLibraryCard = memo(function MediaLibraryCard({
+  file,
+  selected,
+  onToggleSelect,
+  onPreview,
+  onCopy,
+  onRename,
+  onDelete,
+  onSelect,
+  copied,
+}: MediaLibraryCardProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const thumb = mediaThumbnailSrc(file);
+  const name = file.displayName || file.originalName;
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`group relative overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md ${
+        selected ? "border-blue-500 ring-2 ring-blue-100" : "border-zinc-100"
+      }`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => {
+        setHovered(false);
+        setMenuOpen(false);
+      }}
+    >
+      <div className="relative aspect-square overflow-hidden bg-zinc-50">
+        {isImage(file) && thumb ? (
+          <button type="button" onClick={onPreview} className="block h-full w-full">
+            <SafeMediaImage src={thumb} alt={name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onPreview}
+            className="flex h-full w-full flex-col items-center justify-center gap-2 p-4 text-center"
+          >
+            <FileTypeIcon file={file} />
+          </button>
+        )}
+
+        <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 shadow-sm backdrop-blur-sm">
+          {fileTypeLabel(file)}
+        </span>
+
+        {onToggleSelect && (
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggleSelect}
+            className="absolute right-2 top-2 z-10 h-4 w-4 rounded border-zinc-300"
+          />
+        )}
+
+        {(hovered || menuOpen) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 flex items-end justify-center gap-1 bg-gradient-to-t from-black/50 via-black/10 to-transparent p-2"
+          >
+            <ActionIcon icon={Eye} label="Preview" onClick={onPreview} />
+            <ActionIcon icon={Copy} label={copied ? "Copied ✓" : "Copy URL"} onClick={onCopy} active={copied} />
+            <a
+              href={mediaDownloadHref(file)}
+              download
+              title="Download"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/95 text-zinc-800 shadow-sm backdrop-blur transition hover:bg-white"
+            >
+              <Download className="h-3.5 w-3.5" />
+            </a>
+            <ActionIcon icon={Pencil} label="Rename" onClick={onRename} />
+            <ActionIcon icon={Trash2} label="Delete" onClick={onDelete} danger />
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/95 text-zinc-800 shadow-sm backdrop-blur transition hover:bg-white"
+                title="More"
+              >
+                <MoreHorizontal className="h-3.5 w-3.5" />
+              </button>
+              {menuOpen && (
+                <div className="absolute bottom-full right-0 z-20 mb-1 w-36 rounded-xl border border-zinc-200 bg-white py-1 shadow-xl">
+                  {onSelect && (
+                    <button type="button" onClick={onSelect} className="block w-full px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50">
+                      Select file
+                    </button>
+                  )}
+                  <button type="button" onClick={onRename} className="block w-full px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50">
+                    Rename
+                  </button>
+                  <button type="button" onClick={onDelete} className="block w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50">
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      <div className="space-y-1 p-3">
+        <p className="truncate text-sm font-medium text-zinc-900" title={name}>
+          {name}
+        </p>
+        <p className="text-xs text-zinc-500">
+          {formatBytes(file.size)}
+          {file.width && file.height ? ` · ${file.width}×${file.height}` : ""}
+        </p>
+        <p className="text-[11px] text-zinc-400">{formatDate(file.createdAt)}</p>
+        {onSelect && (
+          <button
+            type="button"
+            onClick={onSelect}
+            className="mt-2 w-full rounded-lg bg-zinc-900 py-1.5 text-xs font-semibold text-white hover:bg-zinc-800"
+          >
+            Select
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+});
+
+function ActionIcon({
+  icon: Icon,
+  label,
+  onClick,
+  danger,
+  active,
+}: {
+  icon: typeof Eye;
+  label: string;
+  onClick?: () => void;
+  danger?: boolean;
+  active?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      onClick={onClick}
+      className={`flex h-8 w-8 items-center justify-center rounded-lg bg-white/95 text-zinc-800 shadow-sm backdrop-blur transition hover:bg-white ${
+        danger ? "hover:!bg-red-500 hover:!text-white" : ""
+      } ${active ? "!bg-emerald-500 !text-white" : ""}`}
+    >
+      <Icon className="h-3.5 w-3.5" />
+    </button>
+  );
+}

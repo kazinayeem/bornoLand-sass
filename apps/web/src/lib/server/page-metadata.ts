@@ -90,17 +90,18 @@ function resolveIconUrl(iconUrl?: string) {
 export function buildPageMetadata(args: {
   title: string;
   description: string;
-  canonicalPath: string;
+  canonicalPath?: string;
   iconUrl?: string;
   keywords?: string;
   ogImage?: string;
 }): Metadata {
   const siteUrl = getAppOrigin();
-  const canonical = args.canonicalPath.startsWith("http")
-    ? args.canonicalPath
+  const canonicalPath = args.canonicalPath ?? "/";
+  const canonical = canonicalPath.startsWith("http")
+    ? canonicalPath
     : siteUrl
-      ? `${siteUrl}${args.canonicalPath}`
-      : args.canonicalPath;
+      ? `${siteUrl}${canonicalPath}`
+      : canonicalPath;
   const icon = resolveIconUrl(args.iconUrl);
   const ogImage = args.ogImage || (args.iconUrl && args.iconUrl !== DEFAULT_FAVICON ? args.iconUrl : undefined);
   return {

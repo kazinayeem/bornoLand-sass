@@ -1,17 +1,30 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useGetAdminPaymentsQuery } from "@/redux/api/admin-api";
 import { useGetPlansQuery } from "@/redux/api/store-api";
+import {
+  useGetAdminSubscriptionPaymentsQuery,
+  useApproveSubscriptionPaymentMutation,
+  useRejectSubscriptionPaymentMutation,
+} from "@/redux/api/subscription-payment-api";
 import { CreditCard, DollarSign, AlertTriangle, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/format-currency";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { toast } from "sonner";
 
 export default function AdminPaymentsPage() {
   const { data, isLoading } = useGetAdminPaymentsQuery();
   const { data: plansData } = useGetPlansQuery();
+  const { data: pendingData, isLoading: pendingLoading } = useGetAdminSubscriptionPaymentsQuery({ status: "pending" });
+  const [approvePayment, { isLoading: approving }] = useApproveSubscriptionPaymentMutation();
+  const [rejectPayment, { isLoading: rejecting }] = useRejectSubscriptionPaymentMutation();
+  const [rejectId, setRejectId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const subscriptions = data?.data?.subscriptions ?? [];
+  const pendingPayments = pendingData?.data?.payments ?? [];
   const totals = data?.data?.totals;
   const plans = plansData?.data?.plans ?? [];
 
@@ -93,6 +106,27 @@ export default function AdminPaymentsPage() {
     return "—";
   };
 
+  const handleApprove = async (id: string) => {
+    try {
+      await approvePayment(id).unwrap();
+      toast.success("Payment approved and subscription activated");
+    } catch {
+      toast.error("Failed to approve payment");
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectId || !rejectReason.trim()) return;
+    try {
+      await rejectPayment({ id: rejectId, reason: rejectReason }).unwrap();
+      toast.success("Payment rejected");
+      setRejectId(null);
+      setRejectReason("");
+    } catch {
+      toast.error("Failed to reject payment");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -120,6 +154,105 @@ export default function AdminPaymentsPage() {
           </motion.div>
         ))}
       </div>
+
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+        <h3 className="mb-4 text-lg font-semibold text-zinc-900">Pending Subscription Payments</h3>
+        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+          {pendingLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-zinc-100 bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                    <th className="px-4 py-3">Store</th>
+                    <th className="px-4 py-3">User</th>
+                    <th className="px-4 py-3">Plan</th>
+                    <th className="px-4 py-3">Amount</th>
+                    <th className="px-4 py-3">Method</th>
+                    <th className="px-4 py-3">Txn ID</th>
+                    <th className="px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {pendingPayments.map((payment) => (
+                    <tr key={payment._id}>
+                      <td className="px-4 py-3 text-sm font-medium text-zinc-900">
+                        {typeof payment.storeId === "object" ? payment.storeId.name : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-zinc-600">
+                        {typeof payment.userId === "object" ? payment.userId.email : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {typeof payment.planId === "object" ? payment.planId.name : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium">{formatCurrency(payment.amount)}</td>
+                      <td className="px-4 py-3 text-sm capitalize">{payment.paymentMethod}</td>
+                      <td className="px-4 py-3 text-sm text-zinc-500">{payment.transactionId}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={approving}
+                            onClick={() => handleApprove(payment._id)}
+                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRejectId(payment._id)}
+                            className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {pendingPayments.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-12 text-center text-sm text-zinc-500">
+                        No pending payments
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {rejectId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl">
+            <h4 className="text-lg font-semibold text-zinc-900">Reject payment</h4>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={3}
+              placeholder="Reason for rejection"
+              className="mt-3 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" onClick={() => setRejectId(null)} className="rounded-xl border px-4 py-2 text-sm">
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={rejecting}
+                onClick={handleReject}
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}

@@ -25,6 +25,7 @@ import { paymentMethodRouter } from "./routes/payment-method.route.js";
 import { deliveryZoneRouter } from "./routes/delivery-zone.route.js";
 import { cmsRouter } from "./routes/cms.route.js";
 import { categoryRouter } from "./routes/category.route.js";
+import { subscriptionPaymentRouter } from "./routes/subscription-payment.route.js";
 import { CartModel } from "./models/cart.model.js";
 
 import { subdomainDetector } from "./middleware/subdomain.middleware.js";
@@ -145,6 +146,7 @@ app.use("/payment-methods", paymentMethodRouter);
 app.use("/delivery-zones", deliveryZoneRouter);
 app.use("/cms", cmsRouter);
 app.use("/categories", categoryRouter);
+app.use("/subscription-payments", subscriptionPaymentRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

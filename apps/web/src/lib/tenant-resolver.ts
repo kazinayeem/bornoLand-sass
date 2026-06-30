@@ -1,36 +1,42 @@
+import { extractSubdomainFromHost, getBaseDomain, isRootHost } from "@/lib/urls";
+
 export type TenantResolution = {
   tenantKey: string | null;
   source: "subdomain" | "custom-domain" | "session" | "none";
 };
 
 export function resolveTenant(hostname: string, sessionTenantId?: string): TenantResolution {
-  const rootDomain = process.env.ROOT_DOMAIN ?? "bornoland.com";
-
   if (sessionTenantId) {
     return {
       tenantKey: sessionTenantId,
-      source: "session"
+      source: "session",
     };
   }
 
-  if (hostname === rootDomain) {
+  if (isRootHost(hostname)) {
     return {
       tenantKey: null,
-      source: "none"
+      source: "none",
     };
   }
 
-  if (hostname.endsWith(`.${rootDomain}`)) {
-    const tenantKey = hostname.replace(`.${rootDomain}`, "").split(".")[0] ?? null;
-
+  const tenantKey = extractSubdomainFromHost(hostname);
+  if (tenantKey) {
     return {
       tenantKey,
-      source: "subdomain"
+      source: "subdomain",
+    };
+  }
+
+  if (hostname === getBaseDomain()) {
+    return {
+      tenantKey: null,
+      source: "none",
     };
   }
 
   return {
     tenantKey: hostname,
-    source: "custom-domain"
+    source: "custom-domain",
   };
 }

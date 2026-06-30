@@ -25,6 +25,7 @@ import { shippingRouter } from "../shipping/shipping.route.js";
 import { taxRouter } from "../tax/tax.route.js";
 import { marketingRouter } from "../marketing/marketing.route.js";
 import { mediaRouter } from "../media/media.route.js";
+import { storeAuditRouter } from "../audit/audit.route.js";
 
 export const storeRouter: Router = Router();
 
@@ -64,3 +65,4 @@ storeRouter.use("/:storeId/shipping", shippingRouter);
 storeRouter.use("/:storeId/tax", taxRouter);
 storeRouter.use("/:storeId/marketing", marketingRouter);
 storeRouter.use("/:storeId/media", mediaRouter);
+storeRouter.use("/:storeId/audit-logs", storeAuditRouter);

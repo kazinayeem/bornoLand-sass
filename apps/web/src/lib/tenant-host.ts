@@ -1,4 +1,9 @@
-import { config } from "@/lib/config";
+import {
+  extractSubdomainFromHost,
+  getBaseDomain,
+  getRootDomain,
+  isRootHost,
+} from "@/lib/urls";
 
 export type TenantHostResolution = {
   hostname: string;
@@ -12,41 +17,38 @@ function stripPort(host: string): string {
   return host.split(":")[0]?.toLowerCase() ?? "";
 }
 
-function isLocalhostHost(hostname: string): boolean {
-  return hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".localhost.com") || hostname === "127.0.0.1";
-}
-
 export function resolveTenantFromHost(host: string): TenantHostResolution {
   const hostname = stripPort(host);
-  const rootDomain = config.rootDomain.toLowerCase();
+  const rootDomain = getRootDomain().toLowerCase();
+  const baseDomain = getBaseDomain();
+  const subdomain = extractSubdomainFromHost(host);
 
-  const localhostMatch = hostname.match(/^(?<subdomain>[a-z0-9-]+)\.(localhost(?:\.com)?|127\.0\.0\.1)$/i);
-  if (localhostMatch?.groups?.subdomain) {
+  if (subdomain) {
+    const isLocalhost = baseDomain === "localhost" || hostname.endsWith(".localhost");
     return {
       hostname,
-      subdomain: localhostMatch.groups.subdomain.toLowerCase(),
-      rootDomain: localhostMatch[2].toLowerCase(),
-      isLocalhost: true,
+      subdomain,
+      rootDomain: rootDomain || baseDomain,
+      isLocalhost,
       isCustomDomain: false,
     };
   }
 
-  if (hostname === rootDomain) {
-    return { hostname, subdomain: null, rootDomain, isLocalhost: false, isCustomDomain: false };
-  }
-
-  if (hostname.endsWith(`.${rootDomain}`)) {
-    const prefix = hostname.slice(0, -(rootDomain.length + 1));
-    if (prefix && !prefix.includes(".")) {
-      return { hostname, subdomain: prefix, rootDomain, isLocalhost: false, isCustomDomain: false };
-    }
+  if (isRootHost(host)) {
+    return {
+      hostname,
+      subdomain: null,
+      rootDomain: rootDomain || baseDomain,
+      isLocalhost: baseDomain === "localhost",
+      isCustomDomain: false,
+    };
   }
 
   return {
     hostname,
     subdomain: hostname || null,
     rootDomain: null,
-    isLocalhost: isLocalhostHost(hostname),
+    isLocalhost: baseDomain === "localhost",
     isCustomDomain: true,
   };
 }

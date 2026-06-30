@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { CACHE_REVALIDATE, cacheTags } from "@/lib/server/cache-tags";
+import { getApiUrl } from "@/lib/urls";
 
 export type TenantSiteData = {
   store: Record<string, unknown> | null;
@@ -14,7 +15,7 @@ export type TenantSiteData = {
   sliders?: unknown[];
 };
 
-const apiUrl = process.env.API_URL ?? "http://localhost:4000";
+const apiUrl = getApiUrl();
 
 async function fetchTenantSiteRemote(slug: string): Promise<TenantSiteData | null> {
   try {

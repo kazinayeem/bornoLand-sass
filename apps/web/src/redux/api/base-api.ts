@@ -1,8 +1,9 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { clearAuthState } from "@/redux/slices/auth-slice";
+import { getApiUrl } from "@/lib/urls";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const apiBaseUrl = getApiUrl();
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: apiBaseUrl,
@@ -60,6 +61,6 @@ const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown,
 export const baseApi = createApi({
   reducerPath: "baseApi",
   baseQuery: baseQueryWithGlobalErrorHandling,
-  tagTypes: ["Auth", "User", "Tenant", "Dashboard", "Stores", "Templates", "Products", "Cart", "Orders", "BuilderPages", "BuilderPage", "Customer", "StoreSettings", "HomepageSliders", "PaymentMethods", "DeliveryZones", "CmsPages", "CmsPage", "Faqs", "Categories", "SubscriptionPayments", "Subscriptions", "Notifications", "Invoices", "Features", "Coupons", "Inventory", "Reviews", "Marketing", "Reports", "Media"],
+  tagTypes: ["Auth", "User", "Tenant", "Dashboard", "Stores", "Templates", "Products", "Cart", "Orders", "BuilderPages", "BuilderPage", "Customer", "StoreSettings", "HomepageSliders", "PaymentMethods", "DeliveryZones", "CmsPages", "CmsPage", "Faqs", "Categories", "SubscriptionPayments", "Subscriptions", "Notifications", "Invoices", "Features", "Coupons", "Inventory", "Reviews", "Marketing", "Reports", "Media", "AuditLogs"],
   endpoints: () => ({})
 });

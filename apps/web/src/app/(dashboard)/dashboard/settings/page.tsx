@@ -12,6 +12,7 @@ import {
   Store, Globe, DollarSign, Calendar, Clock, Languages,
   Save, Loader2, RefreshCw, CheckCircle, ChevronDown, ToggleLeft, ToggleRight
 } from "lucide-react";
+import { getStoreDisplayDomain } from "@/lib/urls";
 
 const currencyOptions = [
   { value: "USD", label: "USD ($)", symbol: "$", locale: "en-US", decimal: 2, position: "before" },
@@ -189,7 +190,7 @@ export default function SettingsPage() {
                   {s.name[0]}
                 </div>
                 <h3 className="mt-3 font-semibold text-zinc-900">{s.name}</h3>
-                <p className="text-xs text-zinc-400">{s.subdomain || s.slug}.bornoland.com</p>
+                <p className="text-xs text-zinc-400">{getStoreDisplayDomain(s.subdomain || s.slug)}</p>
               </motion.button>
             ))}
           </motion.div>

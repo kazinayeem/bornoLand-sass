@@ -18,11 +18,16 @@ import {
   updatePlanStorageController,
   updateStoreStorageController,
 } from "../media/admin-storage.controller.js";
+import { adminAuditRouter } from "../audit/audit.route.js";
+import { recordAuditFromRequest } from "../audit/audit.service.js";
+import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
+import { AUDIT_MODULES } from "../audit/audit.constants.js";
 
 export const adminRouter: Router = Router();
 
 adminRouter.use(requireAuth);
 adminRouter.use(requireRole("super_admin"));
+adminRouter.use("/audit-logs", adminAuditRouter);
 
 // ── Analytics Dashboard ──────────────────────────────────────────
 adminRouter.get("/analytics", async (_request, response) => {
@@ -148,10 +153,21 @@ adminRouter.get("/stores", async (_request, response) => {
   }
 });
 
-adminRouter.put("/stores/:id/suspend", async (request, response) => {
+adminRouter.put("/stores/:id/suspend", async (request: AuthRequest, response) => {
   try {
+    const before = await StoreModel.findById(request.params.id).lean() as { status?: string } | null;
     const store = await StoreModel.findByIdAndUpdate(request.params.id, { status: "suspended" }, { new: true });
     if (!store) return response.status(404).json({ message: "Store not found" });
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.STORE_SUSPENDED,
+      module: AUDIT_MODULES.PLATFORM,
+      entityType: "Store",
+      entityId: String(store._id),
+      entityName: store.name,
+      storeId: String(store._id),
+      oldValue: { status: before?.status },
+      newValue: { status: "suspended" },
+    });
     response.json({ data: { store } });
   } catch (error) {
     console.error("Admin suspend store error:", error);
@@ -159,10 +175,21 @@ adminRouter.put("/stores/:id/suspend", async (request, response) => {
   }
 });
 
-adminRouter.put("/stores/:id/activate", async (request, response) => {
+adminRouter.put("/stores/:id/activate", async (request: AuthRequest, response) => {
   try {
+    const before = await StoreModel.findById(request.params.id).lean() as { status?: string } | null;
     const store = await StoreModel.findByIdAndUpdate(request.params.id, { status: "active" }, { new: true });
     if (!store) return response.status(404).json({ message: "Store not found" });
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.STORE_ACTIVATED,
+      module: AUDIT_MODULES.PLATFORM,
+      entityType: "Store",
+      entityId: String(store._id),
+      entityName: store.name,
+      storeId: String(store._id),
+      oldValue: { status: before?.status },
+      newValue: { status: "active" },
+    });
     response.json({ data: { store } });
   } catch (error) {
     console.error("Admin activate store error:", error);
@@ -224,10 +251,20 @@ adminRouter.get("/users", async (_request, response) => {
   }
 });
 
-adminRouter.put("/users/:id/suspend", async (request, response) => {
+adminRouter.put("/users/:id/suspend", async (request: AuthRequest, response) => {
   try {
+    const before = await UserModel.findById(request.params.id).lean() as { status?: string } | null;
     const user = await UserModel.findByIdAndUpdate(request.params.id, { status: "suspended" }, { new: true });
     if (!user) return response.status(404).json({ message: "User not found" });
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.USER_SUSPENDED,
+      module: AUDIT_MODULES.PLATFORM,
+      entityType: "User",
+      entityId: String(user._id),
+      entityName: user.name,
+      oldValue: { status: before?.status },
+      newValue: { status: "suspended" },
+    });
     response.json({ data: { user } });
   } catch (error) {
     console.error("Admin suspend user error:", error);

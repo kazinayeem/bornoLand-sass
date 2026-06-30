@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useUpdateStoreMutation } from "@/redux/api/store-api";
 import { toast } from "sonner";
 import { revalidateStorefrontForStore } from "@/lib/revalidate-storefront-client";
-import { getStoreUrl } from "@/utils/domain";
+import { getStoreUrl } from "@/lib/urls";
 import type { Store as StoreType } from "@/redux/api/store-api";
 import type { WorkspaceTabId } from "@/components/workspace/types";
 

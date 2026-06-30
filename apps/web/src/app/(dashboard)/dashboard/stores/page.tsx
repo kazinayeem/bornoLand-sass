@@ -14,6 +14,7 @@ import {
   useDeleteStoreMutation,
   type Store as StoreType,
 } from "@/redux/api/store-api";
+import { getStoreDisplayDomain } from "@/lib/urls";
 import { useGetTemplatesQuery } from "@/redux/api/template-api";
 import { resolveStoreStatus } from "@/lib/store-status";
 
@@ -161,7 +162,7 @@ export default function StoresPage() {
               </div>
               <div className="mt-3 rounded-xl bg-zinc-50 p-3">
                 <p className="text-sm font-semibold text-zinc-900">{deleteTarget.name}</p>
-                <p className="text-xs text-zinc-500">{deleteTarget.subdomain}.bornoland.com</p>
+                <p className="text-xs text-zinc-500">{getStoreDisplayDomain(deleteTarget.subdomain || deleteTarget.slug)}</p>
               </div>
               <input
                 value={confirmName}

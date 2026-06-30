@@ -3,6 +3,9 @@ import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
 import type { SubdomainRequest } from "../../common/middleware/subdomain.middleware.js";
 import { getCmsPages, getCmsPage, saveCmsPage, getFaqs, createFaq, updateFaq, deleteFaq, reorderFaqs } from "./cms.service.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
+import { recordAuditFromRequest } from "../audit/audit.service.js";
+import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
+import { AUDIT_MODULES } from "../audit/audit.constants.js";
 
 export async function getPagesController(request: AuthRequest, response: Response) {
   const storeId = request.params.storeId as string;
@@ -22,6 +25,18 @@ export async function savePageController(request: AuthRequest, response: Respons
   const slug = request.params.slug as string;
   const userId = request.user?.userId as string;
   const result = await saveCmsPage(storeId, userId, slug, request.body);
+  if (result.ok) {
+    const page = result.data.page as { title?: string; status?: string };
+    await recordAuditFromRequest(request, {
+      action: page.status === "published" ? AUDIT_ACTIONS.CMS_PAGE_PUBLISHED : AUDIT_ACTIONS.CMS_PAGE_UPDATED,
+      module: AUDIT_MODULES.CMS,
+      entityType: "CmsPage",
+      entityName: page.title ?? slug,
+      storeId,
+      metadata: { slug },
+      newValue: request.body,
+    });
+  }
   return result.ok ? sendSuccess(response, result.data, "Page saved") : sendFailure(response, result.message, 404);
 }
 

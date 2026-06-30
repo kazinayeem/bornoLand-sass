@@ -3,7 +3,9 @@ import "server-only";
 import { cache } from "react";
 import { CACHE_REVALIDATE, cacheTags } from "@/lib/server/cache-tags";
 
-const API_BASE = (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "");
+import { getApiUrl } from "@/lib/urls";
+
+const API_BASE = getApiUrl();
 
 import type { CmsPageData } from "@/lib/cms-page-types";
 

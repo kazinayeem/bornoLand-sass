@@ -2,6 +2,9 @@ import type { Response } from "express";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
 import { getPages, getPage, savePage, createPage, deletePage, publishPage } from "./builder.service.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
+import { recordAuditFromRequest } from "../audit/audit.service.js";
+import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
+import { AUDIT_MODULES } from "../audit/audit.constants.js";
 
 export async function getPagesController(request: AuthRequest, response: Response) {
   const storeId = request.params.storeId as string;
@@ -18,6 +21,18 @@ export async function getPageController(request: AuthRequest, response: Response
 export async function savePageController(request: AuthRequest, response: Response) {
   const pageId = request.params.pageId as string;
   const result = await savePage(pageId, request.body);
+  if (result.ok) {
+    const page = result.data.page as { title?: string; storeId?: string };
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.BUILDER_DRAFT_SAVED,
+      module: AUDIT_MODULES.BUILDER,
+      entityType: "BuilderPage",
+      entityId: pageId,
+      entityName: page.title,
+      storeId: page.storeId ?? request.params.storeId as string,
+      newValue: { sections: request.body?.sections?.length },
+    });
+  }
   return result.ok ? sendSuccess(response, result.data, "Page saved") : sendFailure(response, result.message, 404);
 }
 
@@ -36,5 +51,16 @@ export async function deletePageController(request: AuthRequest, response: Respo
 export async function publishPageController(request: AuthRequest, response: Response) {
   const pageId = request.params.pageId as string;
   const result = await publishPage(pageId, request.body);
+  if (result.ok) {
+    const page = result.data.page as { title?: string; storeId?: string };
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.BUILDER_PUBLISHED,
+      module: AUDIT_MODULES.BUILDER,
+      entityType: "BuilderPage",
+      entityId: pageId,
+      entityName: page.title,
+      storeId: page.storeId ?? request.body?.storeId,
+    });
+  }
   return result.ok ? sendSuccess(response, result.data, "Page published") : sendFailure(response, result.message, 404);
 }

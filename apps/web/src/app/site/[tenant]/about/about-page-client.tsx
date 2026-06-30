@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ShoppingBag, Truck, Shield, HeadphonesIcon, RefreshCw, Star } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
 import type { CmsPageData } from "@/lib/cms-page-types";
+import { getApiUrl } from "@/lib/urls";
 
 type CmsPage = CmsPageData;
 
@@ -28,7 +29,8 @@ export function AboutPageClient({ initialPage }: { initialPage?: CmsPageData | n
   useEffect(() => {
     if (initialPage || !store._id) return;
     setLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+    const apiUrl = getApiUrl();
+    if (!apiUrl) return;
     fetch(`${apiUrl}/public/page/about-us?storeId=${store._id}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((json) => {

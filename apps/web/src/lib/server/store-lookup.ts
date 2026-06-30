@@ -2,7 +2,9 @@ import "server-only";
 
 import { cookies } from "next/headers";
 
-const API_BASE = (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "");
+import { getApiUrl } from "@/lib/urls";
+
+const API_BASE = getApiUrl();
 
 type StorePayload = {
   success?: boolean;

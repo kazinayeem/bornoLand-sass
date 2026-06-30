@@ -7,6 +7,7 @@ import type { Store as StoreType } from "@/redux/api/store-api";
 import {
   ChevronDown, Search, Sparkles, Settings, ExternalLink, Trash2,
 } from "lucide-react";
+import { getStoreDisplayDomain } from "@/lib/urls";
 
 type StoreNavSidebarProps = {
   store: StoreType;
@@ -80,7 +81,7 @@ export function StoreNavSidebar({
       .filter((g) => g.items.length > 0);
   }, [search]);
 
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornosoftnr.site";
+  const storeDomain = getStoreDisplayDomain(store.subdomain || store.slug);
 
   return (
     <aside className="flex h-full flex-col border-r border-zinc-200/80 bg-white">
@@ -92,7 +93,7 @@ export function StoreNavSidebar({
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-zinc-900">{store.name}</p>
-            <p className="truncate text-xs text-zinc-400">{store.subdomain}.{rootDomain}</p>
+            <p className="truncate text-xs text-zinc-400">{storeDomain}</p>
           </div>
         </div>
         <div className="mt-2.5 flex flex-wrap gap-1.5">

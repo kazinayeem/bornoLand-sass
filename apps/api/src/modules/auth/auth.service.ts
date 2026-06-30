@@ -14,7 +14,9 @@ import { UserModel } from "../users/user.model.js";
 import { TeamMemberModel } from "../team/team-member.model.js";
 import { SubscriptionModel } from "../subscriptions/subscription.model.js";
 import { VerificationTokenModel } from "./verification-token.model.js";
-import { AuditLogModel } from "./audit-log.model.js";
+import { recordAudit } from "../audit/audit.service.js";
+import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
+import { AUDIT_MODULES } from "../audit/audit.constants.js";
 import { sendEmail } from "../../common/integrations/email.js";
 import { signSessionToken, type SessionPayload } from "../../common/utils/jwt.js";
 
@@ -163,12 +165,15 @@ export async function loginUser(payload: unknown) {
     }
   );
 
-  await AuditLogModel.create({
-    actorId: user._id,
-    ...(user.tenantId ? { tenantId: user.tenantId } : {}),
-    action: isAdminLogin ? "admin_login" : "user_login",
+  await recordAudit({
+    actorId: String(user._id),
+    tenantId: user.tenantId ? String(user.tenantId) : undefined,
+    action: isAdminLogin ? "admin_login" : AUDIT_ACTIONS.LOGIN,
+    module: AUDIT_MODULES.AUTH,
     entityType: "User",
-    entityId: user._id,
+    entityId: String(user._id),
+    entityName: user.name,
+    actorRole: user.role,
   });
 
   return {

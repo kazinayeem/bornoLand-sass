@@ -52,7 +52,11 @@ export function getSessionCookieOptions(maxAgeSeconds: number) {
   // (e.g., .localhost.com for *.localhost.com testing).
   // For lvh.me or bare localhost, omit domain entirely (cookies stay per-origin).
   if (process.env.NODE_ENV === "production") {
-    options.domain = process.env.WILDCARD_DOMAIN ?? `.${process.env.ROOT_DOMAIN ?? "bornoland.com"}`;
+    const rootDomain = process.env.ROOT_DOMAIN ?? process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "";
+    const hostname = rootDomain.includes(":") ? rootDomain.split(":")[0] : rootDomain;
+    if (hostname) {
+      options.domain = process.env.WILDCARD_DOMAIN ?? `.${hostname}`;
+    }
   } else if (process.env.WILDCARD_DOMAIN) {
     // In development, only set domain if explicitly configured
     // (e.g., WILDCARD_DOMAIN=.localhost.com for *.localhost.com).

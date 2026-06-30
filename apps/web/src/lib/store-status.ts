@@ -1,4 +1,5 @@
 import type { Store } from "@/redux/api/store-api";
+import { getStoreDisplayDomain, getStoreUrlFromRecord } from "@/lib/urls";
 
 export type StoreStatus =
   | "trial"
@@ -63,10 +64,7 @@ export function formatBDT(value: number) {
 }
 
 export function getStoreUrl(store: Pick<Store, "subdomain" | "slug">) {
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornoland.com";
-  const subdomain = store.subdomain || store.slug;
-  if (rootDomain.includes("localhost")) {
-    return `http://${subdomain}.localhost:3000`;
-  }
-  return `https://${subdomain}.${rootDomain}`;
+  return getStoreUrlFromRecord(store);
 }
+
+export { getStoreDisplayDomain };

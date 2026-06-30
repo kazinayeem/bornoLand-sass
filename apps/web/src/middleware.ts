@@ -1,19 +1,11 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
+import { extractSubdomainFromHost, getApiUrl, getAppOrigin, isRootHost } from "@/lib/urls";
 
 const PUBLIC_FILE = /\.(.*)$/;
 const authSecret = process.env.JWT_SECRET ?? "bornoland-dev-secret";
 const sessionCookieName = process.env.SESSION_COOKIE_NAME ?? "bornoland.session";
-const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "bornoland.com";
-const API_BASE = (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "");
-
-const DEV_ROOT_DOMAINS = new Set([
-  "localhost.com",
-  "lvh.me",
-  "localhost",
-  "127.0.0.1",
-]);
 
 const APP_ROUTES = new Set([
   "/login",
@@ -49,8 +41,10 @@ function isMongoObjectId(value: string): boolean {
 }
 
 async function fetchStoreSlug(storeId: string, cookieHeader: string): Promise<string | null> {
+  const apiBase = getApiUrl();
+  if (!apiBase) return null;
   try {
-    const response = await fetch(`${API_BASE}/stores/${storeId}`, {
+    const response = await fetch(`${apiBase}/stores/${storeId}`, {
       headers: cookieHeader ? { cookie: cookieHeader } : undefined,
       cache: "no-store",
     });
@@ -63,8 +57,10 @@ async function fetchStoreSlug(storeId: string, cookieHeader: string): Promise<st
 }
 
 async function fetchBuilderPageSlug(pageId: string, cookieHeader: string): Promise<string | null> {
+  const apiBase = getApiUrl();
+  if (!apiBase) return null;
   try {
-    const response = await fetch(`${API_BASE}/builder/page/${pageId}`, {
+    const response = await fetch(`${apiBase}/builder/page/${pageId}`, {
       headers: cookieHeader ? { cookie: cookieHeader } : undefined,
       cache: "no-store",
     });
@@ -76,42 +72,6 @@ async function fetchBuilderPageSlug(pageId: string, cookieHeader: string): Promi
   }
 }
 
-function getSubdomain(hostname: string): string | null {
-  const lower = hostname.toLowerCase();
-
-  if (lower === "localhost" || lower === "127.0.0.1" || lower === "0.0.0.0") {
-    return null;
-  }
-
-  for (const dev of DEV_ROOT_DOMAINS) {
-    if (lower === dev) return null;
-    if (lower.endsWith(`.${dev}`)) {
-      const prefix = lower.slice(0, -(dev.length + 1));
-      if (prefix && !prefix.includes(".")) return prefix;
-      return null;
-    }
-  }
-
-  if (lower.endsWith(`.${ROOT_DOMAIN}`)) {
-    const prefix = lower.slice(0, -(ROOT_DOMAIN.length + 1));
-    if (prefix && !prefix.includes(".")) return prefix;
-  }
-
-  return null;
-}
-
-function getBaseDomain(hostname: string): string {
-  const lower = hostname.toLowerCase();
-
-  for (const dev of DEV_ROOT_DOMAINS) {
-    if (lower.endsWith(`.${dev}`)) return dev;
-  }
-
-  if (lower.endsWith(`.${ROOT_DOMAIN}`)) return ROOT_DOMAIN;
-
-  return lower;
-}
-
 function isAppRoute(pathname: string): boolean {
   const base = pathname.split("/")[1] ?? "";
   return APP_ROUTES.has(`/${base}`) || base.startsWith("_next") || base.startsWith("api");
@@ -120,20 +80,17 @@ function isAppRoute(pathname: string): boolean {
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get("host") ?? "";
-  const hostname = host.split(":")[0] ?? "";
   const cookieHeader = request.headers.get("cookie") ?? "";
 
   if (PUBLIC_FILE.test(pathname)) {
     return NextResponse.next();
   }
 
-  const subdomain = getSubdomain(hostname);
+  const subdomain = extractSubdomainFromHost(host);
   if (process.env.NODE_ENV === "development") {
-    console.log(`[mw] host="${host}" hostname="${hostname}" subdomain=${subdomain} path="${pathname}"`);
+    console.log(`[mw] host="${host}" subdomain=${subdomain} path="${pathname}"`);
   }
 
-  // Subdomain check runs before auth so app-route subdomain requests
-  // redirect to the base domain in a single hop.
   if (subdomain) {
     if (pathname.startsWith("/api")) {
       return NextResponse.next();
@@ -144,16 +101,18 @@ export default async function middleware(request: NextRequest) {
     }
 
     if (isAppRoute(pathname)) {
-      const baseDomain = getBaseDomain(hostname);
-      const protocol = request.nextUrl.protocol;
-      const port = request.nextUrl.port ? `:${request.nextUrl.port}` : "";
-      const url = `${protocol}//${baseDomain}${port}${pathname}${request.nextUrl.search}`;
+      const appOrigin = getAppOrigin();
+      const url = `${appOrigin}${pathname}${request.nextUrl.search}`;
       return NextResponse.redirect(url);
     }
 
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = `/site/${subdomain}${pathname === "/" ? "" : pathname}`;
     return NextResponse.rewrite(rewriteUrl);
+  }
+
+  if (!isRootHost(host) && !subdomain) {
+    return NextResponse.next();
   }
 
   const legacyBuilderMatch = pathname.match(/^\/dashboard\/builder\/([^/]+)(?:\/([^/]+))?$/);

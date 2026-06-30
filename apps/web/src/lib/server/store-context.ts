@@ -12,7 +12,9 @@ import { CACHE_REVALIDATE, cacheTags } from "@/lib/server/cache-tags";
  * StoreProvider hydrates once; client navigations do not refetch on mount.
  */
 
-const API_BASE = (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "");
+import { getApiUrl } from "@/lib/urls";
+
+const API_BASE = getApiUrl();
 
 type StoreResponse = {
   success?: boolean;

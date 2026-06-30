@@ -6,6 +6,7 @@ import { Mail, Phone, MapPin, Send, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useTenant } from "@/providers/tenant-provider";
 import type { CmsPageData } from "@/lib/cms-page-types";
+import { getApiUrl } from "@/lib/urls";
 
 type CmsPage = CmsPageData;
 
@@ -20,7 +21,8 @@ export function ContactPageClient({ initialPage }: { initialPage?: CmsPageData |
   useEffect(() => {
     if (initialPage || !store._id) return;
     setLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+    const apiUrl = getApiUrl();
+    if (!apiUrl) return;
     fetch(`${apiUrl}/public/page/contact-us?storeId=${store._id}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((json) => {

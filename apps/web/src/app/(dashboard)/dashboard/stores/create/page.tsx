@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/workspace/page-header";
 import { STORE_TYPES, STORE_TRIAL_DAYS, type StoreTypeId } from "@/lib/store-types";
+import { getRootDomain, getStoreDisplayDomain } from "@/lib/urls";
 import { Badge } from "@/components/ui/badge";
 
 const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -57,8 +58,7 @@ export default function CreateStorePage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [createdStoreId, setCreatedStoreId] = useState<string | null>(null);
 
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "bornoland.com";
-  const previewUrl = form.slug ? `${form.slug}.localhost:3000` : "...";
+  const previewUrl = form.slug ? getStoreDisplayDomain(form.slug) : "...";
 
   const updateSlug = (name: string) => {
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -239,7 +239,7 @@ export default function CreateStorePage() {
                       placeholder="myshop"
                       className="h-10 flex-1 bg-transparent text-sm focus:outline-none"
                     />
-                    <span className="text-xs text-zinc-400">.{rootDomain}</span>
+                    <span className="text-xs text-zinc-400">.{getRootDomain()}</span>
                   </div>
                   {errors.slug && <p className="mt-1 text-xs text-red-500">{errors.slug}</p>}
                 </div>
@@ -332,7 +332,7 @@ export default function CreateStorePage() {
               </div>
               <div className="flex justify-between gap-4 border-b border-zinc-100 pb-3">
                 <dt className="text-zinc-500">Subdomain</dt>
-                <dd className="font-medium text-zinc-900">{form.slug}.{rootDomain}</dd>
+                <dd className="font-medium text-zinc-900">{getStoreDisplayDomain(form.slug)}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-zinc-500">Trial</dt>

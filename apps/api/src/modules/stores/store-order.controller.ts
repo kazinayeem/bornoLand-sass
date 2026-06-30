@@ -2,6 +2,9 @@ import type { Response } from "express";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
 import { OrderModel } from "../../models/order.model.js";
 import { StoreModel } from "../../models/store.model.js";
+import { recordAuditFromRequest } from "../audit/audit.service.js";
+import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
+import { AUDIT_MODULES } from "../audit/audit.constants.js";
 
 export async function listStoreOrdersController(request: AuthRequest, response: Response) {
   try {
@@ -119,6 +122,8 @@ export async function updateOrderStatusController(request: AuthRequest, response
       return response.status(404).json({ message: "Store not found" });
     }
 
+    const before = await OrderModel.findOne({ _id: id, storeId }).lean() as { status?: string; paymentStatus?: string; orderNumber?: string } | null;
+
     const order = await OrderModel.findOneAndUpdate(
       { _id: id, storeId },
       {
@@ -137,6 +142,23 @@ export async function updateOrderStatusController(request: AuthRequest, response
     if (!order) {
       return response.status(404).json({ message: "Order not found" });
     }
+
+    const action =
+      status === "delivered" ? AUDIT_ACTIONS.ORDER_DELIVERED
+        : status === "cancelled" ? AUDIT_ACTIONS.ORDER_CANCELLED
+          : status === "refunded" || status === "partial_refund" ? AUDIT_ACTIONS.ORDER_REFUNDED
+            : AUDIT_ACTIONS.ORDER_STATUS_CHANGED;
+
+    await recordAuditFromRequest(request, {
+      action,
+      module: AUDIT_MODULES.ORDERS,
+      entityType: "Order",
+      entityId: String(id),
+      entityName: (order as { orderNumber?: string }).orderNumber,
+      storeId: String(storeId),
+      oldValue: { status: before?.status },
+      newValue: { status },
+    });
 
     response.json({ data: { order } });
   } catch (error) {
@@ -161,6 +183,8 @@ export async function updatePaymentStatusController(request: AuthRequest, respon
       return response.status(404).json({ message: "Store not found" });
     }
 
+    const before = await OrderModel.findOne({ _id: id, storeId }).lean() as { status?: string; paymentStatus?: string; orderNumber?: string } | null;
+
     const order = await OrderModel.findOneAndUpdate(
       { _id: id, storeId },
       { paymentStatus },
@@ -170,6 +194,17 @@ export async function updatePaymentStatusController(request: AuthRequest, respon
     if (!order) {
       return response.status(404).json({ message: "Order not found" });
     }
+
+    await recordAuditFromRequest(request, {
+      action: paymentStatus === "paid" ? AUDIT_ACTIONS.ORDER_PAID : AUDIT_ACTIONS.ORDER_STATUS_CHANGED,
+      module: AUDIT_MODULES.ORDERS,
+      entityType: "Order",
+      entityId: String(id),
+      entityName: (order as { orderNumber?: string }).orderNumber,
+      storeId: String(storeId),
+      oldValue: { paymentStatus: before?.paymentStatus },
+      newValue: { paymentStatus },
+    });
 
     response.json({ data: { order } });
   } catch (error) {
@@ -240,6 +275,16 @@ export async function processRefundController(request: AuthRequest, response: Re
       },
       { new: true }
     ).lean();
+
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.ORDER_REFUNDED,
+      module: AUDIT_MODULES.ORDERS,
+      entityType: "Order",
+      entityId: String(id),
+      entityName: (order as { orderNumber?: string } | null)?.orderNumber,
+      storeId: String(storeId),
+      newValue: { refundAmount, status },
+    });
 
     response.json({ data: { order } });
   } catch (error) {

@@ -6,6 +6,7 @@ import { TenantProvider, type HomepageSliderData, type ProductData, type StoreDa
 import { ProductDetailClient } from "@/app/site/[tenant]/products/[slug]/product-detail-client";
 import { CACHE_REVALIDATE, cacheTags } from "@/lib/server/cache-tags";
 import { buildPageMetadata } from "@/lib/server/page-metadata";
+import { extractSubdomainFromHost, getApiUrl, getTenantCanonicalUrl } from "@/lib/urls";
 
 /** ISR — product detail pages */
 export const revalidate = 60;
@@ -28,10 +29,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     });
   }
   const storeName = data.store.name || "Store";
+  const tenantSlug = extractSubdomainFromHost(host) ?? data.store.slug;
   return buildPageMetadata({
     title: `${data.product.name} • ${storeName}`,
     description: data.product.description || `${data.product.name} at ${storeName}`,
-    canonicalPath: `/products/${slug}`,
+    canonicalPath: getTenantCanonicalUrl(tenantSlug, `/products/${slug}`),
     iconUrl: data.store.logoUrl,
     keywords: [data.product.name, storeName, "product", "shop"].join(", "),
     ogImage: data.product.images?.[0] || data.store.logoUrl,
@@ -49,8 +51,9 @@ type ProductRouteData = {
 
 async function fetchProductPage(slug: string, host: string): Promise<ProductRouteData | null> {
   try {
-    const apiUrl = process.env.API_URL ?? "http://localhost:4000";
-    const tenantSlug = host.split(".")[0];
+    const apiUrl = getApiUrl();
+    if (!apiUrl) return null;
+    const tenantSlug = extractSubdomainFromHost(host) ?? host.split(".")[0];
     const res = await fetch(`${apiUrl}/public/product/${slug}`, {
       next: {
         revalidate: CACHE_REVALIDATE.product,

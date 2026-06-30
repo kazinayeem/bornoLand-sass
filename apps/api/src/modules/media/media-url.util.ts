@@ -1,4 +1,5 @@
 import path from "path";
+import { getApiUrl } from "../../common/utils/app-url.js";
 import { getUploadRoot } from "./providers/local-storage.provider.js";
 
 export type SerializedMediaUrls = {
@@ -9,7 +10,7 @@ export type SerializedMediaUrls = {
 };
 
 function getApiBase() {
-  return (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "");
+  return getApiUrl();
 }
 
 /** Extract `/uploads/...` from any stored URL variant. */

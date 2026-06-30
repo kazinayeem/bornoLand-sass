@@ -22,6 +22,7 @@ import {
   LayoutTemplate,
   Package,
   ShoppingCart,
+  ScrollText,
 } from "lucide-react";
 
 const primaryNav = [
@@ -33,6 +34,7 @@ const primaryNav = [
   { href: "/admin/dashboard/payments", label: "Payments", icon: Wallet },
   { href: "/admin/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/dashboard/platform", label: "Platform", icon: Globe },
+  { href: "/admin/dashboard/audit-center", label: "Audit Logs", icon: ScrollText },
   { href: "/admin/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

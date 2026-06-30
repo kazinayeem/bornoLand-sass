@@ -12,7 +12,11 @@ import {
   verifySessionToken,
 } from "../../common/utils/jwt.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
+import { getWebUrl } from "../../common/utils/app-url.js";
 import { forgotPassword, loginUser, registerUser, resetPassword } from "./auth.service.js";
+import { recordAuditFromRequest } from "../audit/audit.service.js";
+import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
+import { AUDIT_MODULES } from "../audit/audit.constants.js";
 
 function extractCookieToken(request: Request) {
   const rawCookie = request.header("cookie") ?? "";
@@ -34,8 +38,27 @@ export async function loginController(request: Request, response: Response) {
   const result = await loginUser(request.body);
 
   if (!result.ok) {
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.LOGIN_FAILED,
+      module: AUDIT_MODULES.AUTH,
+      entityType: "User",
+      status: "failure",
+      metadata: { email: request.body?.email },
+      description: "Failed login attempt",
+    });
     return sendFailure(response, result.message ?? "Login failed", 401);
   }
+
+  await recordAuditFromRequest(request, {
+    action: AUDIT_ACTIONS.LOGIN,
+    module: AUDIT_MODULES.AUTH,
+    entityType: "User",
+    entityId: result.data.user.id,
+    entityName: result.data.user.name,
+    actorId: result.data.user.id,
+    actorRole: result.data.user.role,
+    tenantId: result.data.user.tenantId,
+  });
 
   response.cookie(getSessionCookieName(), result.data.token, getSessionCookieOptions(getSessionCookieMaxAge(request.body?.rememberMe === true)));
   return sendSuccess(response, { user: result.data.user, session: result.data.session }, "Signed in");
@@ -48,6 +71,14 @@ export async function forgotPasswordController(request: Request, response: Respo
 
 export async function resetPasswordController(request: Request, response: Response) {
   const result = await resetPassword(request.body);
+  if (result.ok) {
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.PASSWORD_RESET,
+      module: AUDIT_MODULES.AUTH,
+      entityType: "User",
+      description: "Password reset completed",
+    });
+  }
   return result.ok ? sendSuccess(response, undefined, result.message) : sendFailure(response, result.message ?? "Reset password failed");
 }
 
@@ -66,7 +97,24 @@ export async function meController(request: Request, response: Response) {
   }
 }
 
-export async function logoutController(_request: Request, response: Response) {
+export async function logoutController(request: Request, response: Response) {
+  const token = extractCookieToken(request);
+  if (token) {
+    try {
+      const session = verifySessionToken(token);
+      await recordAuditFromRequest(request, {
+        action: AUDIT_ACTIONS.LOGOUT,
+        module: AUDIT_MODULES.AUTH,
+        entityType: "User",
+        entityId: session.userId,
+        actorId: session.userId,
+        actorRole: session.role,
+        tenantId: session.tenantId,
+      });
+    } catch {
+      // ignore invalid session on logout
+    }
+  }
   response.clearCookie(getSessionCookieName(), { path: "/" });
   return sendSuccess(response, undefined, "Signed out");
 }
@@ -96,7 +144,7 @@ export async function googleCallbackController(request: Request, response: Respo
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI;
-  const webUrl = process.env.WEB_URL ?? process.env.APP_URL ?? "http://localhost:3000";
+  const webUrl = getWebUrl();
 
   const code = typeof request.query.code === "string" ? request.query.code : null;
   const state = typeof request.query.state === "string" ? request.query.state : null;

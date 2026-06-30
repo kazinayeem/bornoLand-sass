@@ -1,3 +1,5 @@
+import { extractSubdomainFromHost, getBaseDomain, isRootHost } from "@/lib/urls";
+
 export type TenantResolution = {
   tenantId: string | null;
   tenantSlug: string | null;
@@ -5,19 +7,23 @@ export type TenantResolution = {
 };
 
 export function resolveTenantFromHost(hostname: string, sessionTenantId?: string): TenantResolution {
-  const rootDomain = process.env.ROOT_DOMAIN ?? "bornoland.com";
-
   if (sessionTenantId) {
     return { tenantId: sessionTenantId, tenantSlug: null, source: "session" };
   }
 
-  if (hostname === rootDomain) {
+  const host = hostname.includes(":") ? hostname : hostname;
+  if (isRootHost(host)) {
     return { tenantId: null, tenantSlug: null, source: "none" };
   }
 
-  if (hostname.endsWith(`.${rootDomain}`)) {
-    const tenantSlug = hostname.replace(`.${rootDomain}`, "").split(".")[0] ?? null;
+  const tenantSlug = extractSubdomainFromHost(host);
+  if (tenantSlug) {
     return { tenantId: null, tenantSlug, source: "subdomain" };
+  }
+
+  const baseDomain = getBaseDomain();
+  if (hostname === baseDomain) {
+    return { tenantId: null, tenantSlug: null, source: "none" };
   }
 
   return { tenantId: null, tenantSlug: hostname, source: "custom-domain" };

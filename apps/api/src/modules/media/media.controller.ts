@@ -16,6 +16,9 @@ import {
   uploadMediaFiles,
 } from "./media.service.js";
 import { DEFAULT_MAX_FILE_SIZE_MB } from "./media.constants.js";
+import { recordAuditFromRequest } from "../audit/audit.service.js";
+import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
+import { AUDIT_MODULES } from "../audit/audit.constants.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -84,6 +87,19 @@ export async function uploadMediaController(request: AuthRequest, response: Resp
     { folder, uploaderId: request.user?.userId, tags: parsedTags }
   );
 
+  if (result.data?.files?.length) {
+    for (const file of result.data.files as Array<{ id?: string; _id?: string; displayName?: string; originalName?: string }>) {
+      await recordAuditFromRequest(request, {
+        action: AUDIT_ACTIONS.MEDIA_UPLOADED,
+        module: AUDIT_MODULES.MEDIA,
+        entityType: "MediaFile",
+        entityId: file.id ?? String(file._id),
+        entityName: file.displayName ?? file.originalName,
+        storeId,
+      });
+    }
+  }
+
   return sendSuccess(response, result.data, "Upload complete", 201);
 }
 
@@ -96,6 +112,16 @@ export async function renameMediaController(request: AuthRequest, response: Resp
     return sendFailure(response, "Store not found", 404);
   }
   const result = await renameMediaFile(storeId, id, displayName);
+  if (result.ok) {
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.MEDIA_RENAMED,
+      module: AUDIT_MODULES.MEDIA,
+      entityType: "MediaFile",
+      entityId: id,
+      entityName: displayName,
+      storeId,
+    });
+  }
   return result.ok ? sendSuccess(response, result.data, "File renamed") : sendFailure(response, result.message, 404);
 }
 
@@ -116,6 +142,13 @@ export async function deleteMediaController(request: AuthRequest, response: Resp
       data: "data" in result ? result.data : undefined,
     });
   }
+  await recordAuditFromRequest(request, {
+    action: AUDIT_ACTIONS.MEDIA_DELETED,
+    module: AUDIT_MODULES.MEDIA,
+    entityType: "MediaFile",
+    entityId: id,
+    storeId,
+  });
   return sendSuccess(response, result.data, "File deleted");
 }
 
@@ -138,6 +171,16 @@ export async function replaceMediaController(request: AuthRequest, response: Res
     return sendFailure(response, "Store not found", 404);
   }
   const result = await replaceMediaFile(storeId, id, newMediaFileId);
+  if (result.ok) {
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.MEDIA_REPLACED,
+      module: AUDIT_MODULES.MEDIA,
+      entityType: "MediaFile",
+      entityId: id,
+      storeId,
+      metadata: { newMediaFileId },
+    });
+  }
   return result.ok ? sendSuccess(response, result.data, "Media replaced") : sendFailure(response, result.message, 404);
 }
 
@@ -149,6 +192,14 @@ export async function downloadMediaController(request: AuthRequest, response: Re
   }
   const result = await downloadMediaFile(storeId, id);
   if (!result.ok) return sendFailure(response, result.message, 404);
+  await recordAuditFromRequest(request, {
+    action: AUDIT_ACTIONS.MEDIA_DOWNLOADED,
+    module: AUDIT_MODULES.MEDIA,
+    entityType: "MediaFile",
+    entityId: id,
+    storeId,
+    entityName: result.data.fileName,
+  });
   response.setHeader("Content-Type", result.data.mimeType);
   response.setHeader(
     "Content-Disposition",

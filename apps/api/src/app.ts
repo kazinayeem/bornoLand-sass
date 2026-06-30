@@ -30,6 +30,7 @@ import { subscriptionRouter } from "./modules/subscriptions/subscription.route.j
 import { invoiceRouter } from "./modules/subscriptions/invoice.route.js";
 import { billingNotificationRouter } from "./modules/notifications/billing-notification.route.js";
 import { featureRouter } from "./modules/features/feature.route.js";
+import { auditRouter } from "./modules/audit/audit.route.js";
 import { getUploadRoot } from "./modules/media/providers/local-storage.provider.js";
 import { subdomainDetector } from "./common/middleware/subdomain.middleware.js";
 import { errorHandler, notFoundHandler } from "./common/middleware/error.middleware.js";
@@ -37,7 +38,8 @@ import { errorHandler, notFoundHandler } from "./common/middleware/error.middlew
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
 
-const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? "bornoland.com";
+const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "";
+const ROOT_HOSTNAME = ROOT_DOMAIN.includes(":") ? ROOT_DOMAIN.split(":")[0] : ROOT_DOMAIN;
 
 const configuredOrigins = [
   process.env.WEB_URL,
@@ -51,7 +53,7 @@ const allowedOriginPatterns: RegExp[] = [
   /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.127\.0\.0\.1(:\d+)?$/i,
   /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.localhost\.com(:\d+)?$/i,
   /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.lvh\.me(:\d+)?$/i,
-  new RegExp(`^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.${ROOT_DOMAIN.replace(/\./g, "\\.")}(:\\d+)?$`, "i"),
+  new RegExp(`^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.${ROOT_HOSTNAME.replace(/\./g, "\\.")}(:\\d+)?$`, "i"),
 ];
 
 const corsOptions: CorsOptions = {
@@ -131,6 +133,7 @@ app.use("/subscriptions", subscriptionRouter);
 app.use("/invoices", invoiceRouter);
 app.use("/notifications", billingNotificationRouter);
 app.use("/features", featureRouter);
+app.use("/audit", auditRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

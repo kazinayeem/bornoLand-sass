@@ -1,7 +1,8 @@
 import { mediaApi } from "@/redux/api/media-api";
 import { store } from "@/redux/store";
+import { getApiUrl } from "@/lib/urls";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const apiBaseUrl = getApiUrl();
 
 export type UploadProgress = {
   fileName: string;

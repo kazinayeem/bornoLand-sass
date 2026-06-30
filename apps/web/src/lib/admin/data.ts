@@ -1,3 +1,5 @@
+import { getStoreDisplayDomain } from "@/lib/urls";
+
 export const stats = {
   totalUsers: 2847,
   totalTenants: 186,
@@ -94,7 +96,7 @@ export const tenants = Array.from({ length: 20 }, (_, i) => ({
   sites: Math.floor(Math.random() * 20) + 1,
   revenue: Math.floor(Math.random() * 5000) + 500,
   created: new Date(2024, i > 10 ? 5 : 0, i + 1).toISOString().split("T")[0],
-  domain: `${["acme-corp", "techstartup", "greenenergy", "dataflow", "cloudbase", "pixelperfect", "novaworks", "streamline", "quantum", "brightpath", "metalworks", "softpixel", "ecovation", "urbannest", "healthfirst", "finbridge", "aerospace", "oceanview", "codecraft", "vitalsign"][i]}.bornoland.com`
+  domain: getStoreDisplayDomain(["acme-corp", "techstartup", "greenenergy", "dataflow", "cloudbase", "pixelperfect", "novaworks", "streamline", "quantum", "brightpath", "metalworks", "softpixel", "ecovation", "urbannest", "healthfirst", "finbridge", "aerospace", "oceanview", "codecraft", "vitalsign"][i]),
 }));
 
 export const subscriptions = [

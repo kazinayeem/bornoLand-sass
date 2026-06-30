@@ -5,8 +5,9 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { fetchTenantSite } from "@/lib/server/tenant-site";
 import { CACHE_REVALIDATE, cacheTags } from "@/lib/server/cache-tags";
+import { getApiUrl, getAppOrigin, getTenantCanonicalUrl } from "@/lib/urls";
 
-const API_BASE = (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "");
+const API_BASE = getApiUrl();
 const APP_NAME = "BornoLand";
 const DEFAULT_FAVICON = "/favicon.ico";
 
@@ -94,8 +95,12 @@ export function buildPageMetadata(args: {
   keywords?: string;
   ogImage?: string;
 }): Metadata {
-  const siteUrl = (process.env.NEXT_PUBLIC_WEB_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
-  const canonical = siteUrl ? `${siteUrl}${args.canonicalPath}` : args.canonicalPath;
+  const siteUrl = getAppOrigin();
+  const canonical = args.canonicalPath.startsWith("http")
+    ? args.canonicalPath
+    : siteUrl
+      ? `${siteUrl}${args.canonicalPath}`
+      : args.canonicalPath;
   const icon = resolveIconUrl(args.iconUrl);
   const ogImage = args.ogImage || (args.iconUrl && args.iconUrl !== DEFAULT_FAVICON ? args.iconUrl : undefined);
   return {
@@ -153,14 +158,17 @@ export async function generateTenantMetadata(args: {
 }): Promise<Metadata> {
   const store = await getTenantMetadataContext(args.tenant);
   const storeName = store?.shortName || store?.name || "Store";
-  return buildPageMetadata({
+  const storefrontPath = args.canonicalPath.replace(/^\/site\/[^/]+/, "") || "/";
+  const canonicalUrl = getTenantCanonicalUrl(args.tenant, storefrontPath);
+  const base = buildPageMetadata({
     title: `${args.pageTitle} • ${storeName}`,
     description: args.description ?? (store?.description || `${args.pageTitle} at ${storeName}.`),
-    canonicalPath: args.canonicalPath,
+    canonicalPath: canonicalUrl,
     iconUrl: store?.faviconUrl || store?.logoUrl,
     keywords: [args.pageTitle, storeName, "online store", "shop"].filter(Boolean).join(", "),
     ogImage: store?.logoUrl,
   });
+  return base;
 }
 
 export async function generateProductPageMetadata(args: {

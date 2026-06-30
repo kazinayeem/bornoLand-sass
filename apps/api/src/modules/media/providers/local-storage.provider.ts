@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import { getApiUrl } from "../../../common/utils/app-url.js";
 import type { StorageProvider, StorageUploadInput, StorageUploadResult } from "./storage-provider.js";
 
 const UPLOAD_ROOT = process.env.MEDIA_UPLOAD_ROOT ?? path.resolve(process.cwd(), "uploads");
@@ -8,7 +9,7 @@ function getMediaPublicBase(): string {
   if (process.env.MEDIA_PUBLIC_BASE_URL) {
     return process.env.MEDIA_PUBLIC_BASE_URL.replace(/\/$/, "");
   }
-  return (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "");
+  return getApiUrl();
 }
 
 const PUBLIC_BASE = getMediaPublicBase();

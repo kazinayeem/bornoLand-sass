@@ -24,6 +24,7 @@ import {
   Sparkles,
   ChevronLeft,
   Lock,
+  ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
@@ -60,6 +61,7 @@ const appearanceLinks = [
 ];
 
 const bottomLinks = [
+  { href: "/activity", label: "Activity", icon: ScrollText },
   { href: "/settings", label: "Settings", icon: Settings },
   { href: "/billing", label: "Billing", icon: CreditCard },
   { href: "/builder", label: "Builder", icon: Sparkles },

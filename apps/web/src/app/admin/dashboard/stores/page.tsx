@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/format-currency";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { StoreDetailDrawer } from "@/components/admin/store-detail-drawer";
 import type { AdminStore } from "@/redux/api/admin-api";
+import { getStoreDisplayDomain, getStoreUrl } from "@/lib/urls";
 
 const planColors: Record<string, string> = {
   free: "bg-zinc-100 text-zinc-700", starter: "bg-blue-50 text-blue-700",
@@ -129,7 +130,7 @@ export default function AdminStoresPage() {
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-zinc-900">{s.name}</p>
                         <p className="flex items-center gap-1 text-xs text-zinc-500">
-                          <Globe className="h-3 w-3" /> {s.subdomain || s.slug}.bornoland.com
+                          <Globe className="h-3 w-3" /> {getStoreDisplayDomain(s.subdomain || s.slug)}
                         </p>
                       </div>
                     </div>
@@ -155,7 +156,7 @@ export default function AdminStoresPage() {
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(null)} />
                         <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
-                          <button onClick={() => { window.open(`http://${s.subdomain || s.slug}.localhost:3000`, "_blank"); setMenuOpen(null); }}
+                          <button onClick={() => { window.open(getStoreUrl(s.subdomain || s.slug), "_blank"); setMenuOpen(null); }}
                             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">
                             <ExternalLink className="h-4 w-4" /> Open Store
                           </button>

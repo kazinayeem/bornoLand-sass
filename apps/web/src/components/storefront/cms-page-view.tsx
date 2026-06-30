@@ -6,6 +6,7 @@ import { Loader2, FileText, HelpCircle, Shield, Truck, RotateCcw, Ruler } from "
 import { useTenant } from "@/providers/tenant-provider";
 import type { CmsPageData } from "@/lib/cms-page-types";
 import type { LucideIcon } from "lucide-react";
+import { getApiUrl } from "@/lib/urls";
 
 const ICON_MAP = {
   help: HelpCircle,
@@ -37,7 +38,8 @@ export default function CmsPageView({ slug, title, description, icon: IconProp, 
   useEffect(() => {
     if (initialPage || !store._id) return;
     setLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+    const apiUrl = getApiUrl();
+    if (!apiUrl) return;
     fetch(`${apiUrl}/public/page/${slug}?storeId=${store._id}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((json) => {

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useUpdateStoreMutation, useChangeStoreThemeMutation, type Store as StoreType, type Plan } from "@/redux/api/store-api";
+import { getStoreUrl } from "@/lib/urls";
 
 type DrawerTab = "overview" | "billing" | "theme";
 
@@ -216,7 +217,7 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
                 <div className="border-t border-zinc-100 pt-4">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-400">Quick links</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <a href={`http://${store.subdomain || store.slug}.localhost:3000`} target="_blank" rel="noreferrer"
+                    <a href={getStoreUrl(store.subdomain || store.slug)} target="_blank" rel="noreferrer"
                       className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
                       <ExternalLink className="h-3.5 w-3.5" /> Storefront
                     </a>

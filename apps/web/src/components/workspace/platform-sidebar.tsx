@@ -16,6 +16,7 @@ import {
   PanelLeft,
   Plus,
   Archive,
+  ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppSelector, useAppDispatch } from "@/hooks/redux";
@@ -29,6 +30,7 @@ const mainNav = [
   { href: "/dashboard/stores", label: "Stores", icon: Store },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard/team", label: "Team", icon: Users },
+  { href: "/dashboard/activity", label: "Activity", icon: ScrollText },
   { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
   { href: "/dashboard/account", label: "Settings", icon: Settings },
   { href: "/dashboard/help", label: "Help", icon: HelpCircle },

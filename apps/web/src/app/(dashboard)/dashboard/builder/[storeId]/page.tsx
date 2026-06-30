@@ -11,11 +11,12 @@ import { useGetStoreSettingsQuery, useGetHomepageSlidersQuery } from "@/redux/ap
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
 import { setTheme } from "@/redux/slices/theme-slice";
 import { setStoreSettings } from "@/redux/slices/store-settings-slice";
-import { loadSections, setPageId, markSaved, setSaving, setLeftPanelWidth, setRightPanelWidth } from "@/redux/slices/builder-slice";
+import { loadSections, setPageId, markSaved, setSaving, setLeftPanelWidth, setRightPanelWidth, copySection, duplicateSection, pasteSection, redoBuilder, removeSection, undoBuilder } from "@/redux/slices/builder-slice";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
 import { useSavePageMutation } from "@/redux/api/builder-api";
 import { BuilderToolbar } from "@/components/builder/builder-toolbar";
 import { BuilderSidebar } from "@/components/builder/builder-sidebar";
+import { LayersPanel } from "@/components/builder/layers-panel";
 import { StorePreview } from "@/components/builder/store-preview";
 import { PropertiesPanel } from "@/components/builder/properties-panel";
 
@@ -60,6 +61,7 @@ export default function BuilderPage() {
   const selectedSectionId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const pageId = useSelector((s: RootState) => s.builder.pageId);
   const currentTheme = useSelector((s: RootState) => s.theme);
+  const clipboardSection = useSelector((s: RootState) => s.builder.clipboardSection);
   const leftPanelWidth = useSelector((s: RootState) => s.builder.leftPanelWidth);
   const rightPanelWidth = useSelector((s: RootState) => s.builder.rightPanelWidth);
   const [resizing, setResizing] = useState<"left" | "right" | null>(null);
@@ -151,6 +153,54 @@ export default function BuilderPage() {
     return () => clearTimeout(timer);
   }, [isDirty, pageId, sections, currentTheme, dispatch, savePage]);
 
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      const mod = event.metaKey || event.ctrlKey;
+      if (mod && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        if (!pageId) return;
+        dispatch(setSaving(true));
+        savePage({ pageId, data: { sections, theme: currentTheme } })
+          .unwrap()
+          .then(() => dispatch(markSaved(new Date().toISOString())))
+          .catch(() => dispatch(setSaving(false)));
+        return;
+      }
+      if (mod && event.key.toLowerCase() === "z" && !event.shiftKey) {
+        event.preventDefault();
+        dispatch(undoBuilder());
+        return;
+      }
+      if (mod && ((event.key.toLowerCase() === "z" && event.shiftKey) || event.key.toLowerCase() === "y")) {
+        event.preventDefault();
+        dispatch(redoBuilder());
+        return;
+      }
+      if (mod && event.key.toLowerCase() === "d" && selectedSectionId) {
+        event.preventDefault();
+        dispatch(duplicateSection(selectedSectionId));
+        return;
+      }
+      if (mod && event.key.toLowerCase() === "c" && selectedSectionId) {
+        event.preventDefault();
+        dispatch(copySection(selectedSectionId));
+        return;
+      }
+      if (mod && event.key.toLowerCase() === "v" && clipboardSection) {
+        event.preventDefault();
+        dispatch(pasteSection(selectedSectionId));
+        return;
+      }
+      if (event.key === "Delete" && selectedSectionId) {
+        event.preventDefault();
+        dispatch(removeSection(selectedSectionId));
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [clipboardSection, currentTheme, dispatch, pageId, savePage, sections, selectedSectionId]);
+
   if (storeLoading || pagesLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-zinc-50">
@@ -179,8 +229,9 @@ export default function BuilderPage() {
         saving={saving} publishing={publishing} isDirty={isDirty}
       />
       <div className="flex flex-1 overflow-hidden">
+        <LayersPanel />
         <div className="flex-shrink-0 border-r border-zinc-200 overflow-hidden bg-white" style={{ width: leftPanelWidth }}>
-          <BuilderSidebar storeId={storeId} />
+          <BuilderSidebar storeId={storeId} storeSlug={store.slug} />
         </div>
         <button
           type="button"

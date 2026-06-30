@@ -7,6 +7,9 @@ export type BuilderSection = {
   type: string;
   label: string;
   visible: boolean;
+  locked?: boolean;
+  favorite?: boolean;
+  collapsed?: boolean;
   props: SectionProps;
 };
 
@@ -15,7 +18,7 @@ type BuilderState = {
   selectedSectionId: string | null;
   hoveredSectionId: string | null;
   editingSectionId: string | null;
-  activeTab: "sections" | "theme" | "products" | "pages";
+  activeTab: "sections" | "theme" | "products" | "pages" | "templates" | "media";
   leftPanelWidth: number;
   rightPanelWidth: number;
   isDirty: boolean;
@@ -23,6 +26,7 @@ type BuilderState = {
   saving: boolean;
   publishing: boolean;
   pageId: string | null;
+  clipboardSection: BuilderSection | null;
   past: BuilderSection[][];
   future: BuilderSection[][];
 };
@@ -40,6 +44,7 @@ const initialState: BuilderState = {
   saving: false,
   publishing: false,
   pageId: null,
+  clipboardSection: null,
   past: [],
   future: [],
 };
@@ -123,6 +128,44 @@ const builderSlice = createSlice({
     setActiveTab(state, action: PayloadAction<BuilderState["activeTab"]>) {
       state.activeTab = action.payload;
     },
+    toggleSectionLock(state, action: PayloadAction<string>) {
+      pushHistory(state);
+      const s = state.sections.find((sec) => sec.id === action.payload);
+      if (s) {
+        s.locked = !s.locked;
+        state.isDirty = true;
+      }
+    },
+    toggleSectionFavorite(state, action: PayloadAction<string>) {
+      const s = state.sections.find((sec) => sec.id === action.payload);
+      if (s) {
+        s.favorite = !s.favorite;
+      }
+    },
+    copySection(state, action: PayloadAction<string>) {
+      const s = state.sections.find((sec) => sec.id === action.payload);
+      state.clipboardSection = s ? { ...s, props: { ...s.props } } : null;
+    },
+    pasteSection(state, action: PayloadAction<string | null | undefined>) {
+      if (!state.clipboardSection) return;
+      pushHistory(state);
+      const base = state.clipboardSection;
+      const pasted: BuilderSection = {
+        ...base,
+        id: `${base.type}-${Date.now()}`,
+        label: `${base.label} (Copy)`,
+        props: { ...base.props },
+      };
+      if (!action.payload) {
+        state.sections.push(pasted);
+      } else {
+        const idx = state.sections.findIndex((sec) => sec.id === action.payload);
+        if (idx === -1) state.sections.push(pasted);
+        else state.sections.splice(idx + 1, 0, pasted);
+      }
+      state.selectedSectionId = pasted.id;
+      state.isDirty = true;
+    },
     setLeftPanelWidth(state, action: PayloadAction<number>) {
       state.leftPanelWidth = Math.max(280, Math.min(460, action.payload));
     },
@@ -171,6 +214,7 @@ export const {
   setSections, addSection, removeSection, toggleSection,
   updateSectionProps, moveSection, duplicateSection,
   updateSectionMeta, setSelectedSection, setHoveredSection, setEditingSection, setActiveTab,
+  toggleSectionLock, toggleSectionFavorite, copySection, pasteSection,
   setLeftPanelWidth, setRightPanelWidth, undoBuilder, redoBuilder,
   markSaved, setSaving, setPublishing, loadSections, setPageId,
 } = builderSlice.actions;

@@ -3,20 +3,26 @@
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setActiveTab } from "@/redux/slices/builder-slice";
-import { Layout, Palette, Grid3X3, FileText } from "lucide-react";
+import { Layout, Palette, Grid3X3, FileText, AppWindow, ImagePlus } from "lucide-react";
 import { SectionPanel } from "./panels/section-panel";
 import { ThemePanel } from "./panels/theme-panel";
 import { ProductsPanel } from "./panels/products-panel";
+import { PagesPanel } from "./panels/pages-panel";
+import { TemplatesPanel } from "./panels/templates-panel";
+import { MediaPanel } from "./panels/media-panel";
 
-export function BuilderSidebar({ storeId }: { storeId?: string }) {
+export function BuilderSidebar({ storeId, storeSlug }: { storeId?: string; storeSlug?: string }) {
   const dispatch = useDispatch();
   const activeTab = useSelector((s: RootState) => s.builder.activeTab);
   const sectionCount = useSelector((s: RootState) => s.builder.sections.length);
 
   const tabs = [
     { key: "sections" as const, icon: Layout, label: "Sections", meta: `${sectionCount}` },
-    { key: "theme" as const, icon: Palette, label: "Theme" },
-    { key: "products" as const, icon: Grid3X3, label: "Products" },
+    { key: "pages" as const, icon: FileText, label: "Pages" },
+    { key: "products" as const, icon: Grid3X3, label: "Components" },
+    { key: "theme" as const, icon: Palette, label: "Style" },
+    { key: "templates" as const, icon: AppWindow, label: "Templates" },
+    { key: "media" as const, icon: ImagePlus, label: "Media" },
   ];
 
   return (
@@ -38,6 +44,9 @@ export function BuilderSidebar({ storeId }: { storeId?: string }) {
         {activeTab === "sections" && <SectionPanel />}
         {activeTab === "theme" && <ThemePanel />}
         {activeTab === "products" && <ProductsPanel storeId={storeId} />}
+        {activeTab === "pages" && <PagesPanel storeId={storeId} />}
+        {activeTab === "templates" && <TemplatesPanel />}
+        {activeTab === "media" && <MediaPanel storeId={storeId} billingHref={storeSlug ? `/store/${storeSlug}/billing` : "#"} />}
       </div>
     </div>
   );

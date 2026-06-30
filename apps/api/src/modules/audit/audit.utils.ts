@@ -1,5 +1,11 @@
 type ChangeEntry = { field: string; oldValue: unknown; newValue: unknown };
 
+export function optionalObjectId(value: unknown): string | undefined {
+  if (value == null) return undefined;
+  const id = String(value).trim();
+  return id.length > 0 ? id : undefined;
+}
+
 export function computeChanges(
   before: Record<string, unknown> | null | undefined,
   after: Record<string, unknown> | null | undefined,

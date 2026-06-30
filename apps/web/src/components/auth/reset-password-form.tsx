@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useResetPasswordMutation } from "@/redux/api/auth-api";
+import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/auth/password-input";
+import { Button } from "@/components/ui/button";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const [loading, setLoading] = useState(false);
@@ -10,7 +13,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
   return (
     <form
-      className="space-y-4"
+      className="space-y-5"
       onSubmit={async (event) => {
         event.preventDefault();
         setLoading(true);
@@ -31,10 +34,22 @@ export function ResetPasswordForm({ token }: { token: string }) {
         window.location.href = "/login";
       }}
     >
-      <input type="password" name="password" placeholder="New password" className="w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-950" />
-      <button type="submit" disabled={loading} className="w-full rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-950">
+      <div className="space-y-2">
+        <Label htmlFor="reset-password">New password</Label>
+        <PasswordInput id="reset-password" name="password" placeholder="Enter a new password" />
+      </div>
+      <Button
+        type="submit"
+        disabled={loading}
+        className="h-11 w-full rounded-xl bg-zinc-900 text-sm font-semibold hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-white"
+      >
         {loading ? "Resetting..." : "Reset password"}
-      </button>
+      </Button>
+      <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+        <a href="/login" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">
+          Back to sign in
+        </a>
+      </p>
     </form>
   );
 }

@@ -6,7 +6,7 @@ import { UserModel } from "../users/user.model.js";
 import { TenantModel } from "../workspaces/tenant.model.js";
 import { AUDIT_RETENTION_DAYS } from "./audit.constants.js";
 import { AuditLogModel, type AuditLogDocument } from "./audit-log.model.js";
-import { buildDescription, computeChanges } from "./audit.utils.js";
+import { buildDescription, computeChanges, optionalObjectId } from "./audit.utils.js";
 import { buildAuditRequestContext, type AuditRequestContext } from "./audit-request.helper.js";
 import type { Request } from "express";
 
@@ -82,9 +82,12 @@ export async function recordAudit(input: RecordAuditInput) {
 
     const actor = await resolveActor(input.actorId ?? input.requestContext?.actorId);
     const store = await resolveStore(input.storeId);
-    const tenant = await resolveTenant(
-      input.tenantId ?? (store?.tenantId ? String(store.tenantId) : undefined) ?? input.requestContext?.tenantId,
-    );
+    const resolvedTenantId =
+      optionalObjectId(input.tenantId) ??
+      optionalObjectId(store?.tenantId) ??
+      optionalObjectId(actor?.tenantId) ??
+      optionalObjectId(input.requestContext?.tenantId);
+    const tenant = await resolveTenant(resolvedTenantId);
 
     const changes =
       input.changes ??
@@ -101,18 +104,18 @@ export async function recordAudit(input: RecordAuditInput) {
 
     await AuditLogModel.create({
       auditId: randomUUID(),
-      tenantId: input.tenantId ?? store?.tenantId ?? actor?.tenantId ?? ctx?.tenantId,
+      tenantId: resolvedTenantId,
       workspaceName: input.workspaceName ?? tenant?.name ?? "",
-      storeId: input.storeId,
+      storeId: optionalObjectId(input.storeId),
       storeName: input.storeName ?? store?.name ?? "",
-      actorId: input.actorId ?? actor?._id ?? ctx?.actorId,
+      actorId: optionalObjectId(input.actorId ?? actor?._id ?? ctx?.actorId),
       actorName: input.actorName ?? actor?.name ?? "",
       actorEmail: input.actorEmail ?? actor?.email ?? "",
       actorRole: input.actorRole ?? actor?.role ?? ctx?.actorRole ?? "",
       action: input.action,
       module: input.module,
       entityType: input.entityType,
-      entityId: input.entityId,
+      entityId: optionalObjectId(input.entityId),
       entityName: input.entityName ?? "",
       oldValue: input.oldValue,
       newValue: input.newValue,

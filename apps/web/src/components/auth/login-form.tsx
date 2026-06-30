@@ -66,13 +66,14 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={onSubmit} className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="login-email">Email</Label>
         <Input
           id="login-email"
           type="email"
           placeholder="you@example.com"
+          className="h-11 rounded-xl border-zinc-200 bg-zinc-50/50 px-4 dark:border-zinc-800 dark:bg-zinc-900/50"
           {...register("email")}
         />
         {errors.email ? <p className="text-xs text-red-500">{errors.email.message}</p> : null}
@@ -86,10 +87,10 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
 
       <div className="flex items-center justify-between gap-4">
         <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-          <input type="checkbox" {...register("rememberMe")} className="h-4 w-4 rounded border-zinc-300" />
+          <input type="checkbox" {...register("rememberMe")} className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
           Remember me
         </label>
-        <a href="/forgot-password" className="text-sm font-medium text-zinc-950 dark:text-zinc-50">
+        <a href="/forgot-password" className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">
           Forgot password?
         </a>
       </div>
@@ -97,40 +98,47 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
       <Button
         type="submit"
         disabled={loading}
-        className="w-full"
+        className="h-11 w-full rounded-xl bg-zinc-900 text-sm font-semibold hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-white"
       >
         {loading ? "Signing in..." : loginType === "admin" ? "Admin Sign In" : "Sign in"}
       </Button>
 
-      <div className="relative py-2">
+      <div className="relative py-1">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-white px-3 text-xs uppercase tracking-[0.35em] text-zinc-500 dark:bg-zinc-950">or</span>
+          <span className="bg-white px-3 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-400 dark:bg-zinc-950">or continue with</span>
         </div>
       </div>
 
       <GoogleButton label="Continue with Google" />
-      <div className="grid gap-3 sm:grid-cols-2">
-        <QuickLoginButton
-          label="Quick user login"
-          email="demo@bornoland.com"
-          password="Demo@123"
-          loginType="user"
-          callbackUrl="/dashboard"
-        />
-        <QuickLoginButton
-          label="Quick admin login"
-          email="admin@bornoland.com"
-          password="Admin@123"
-          loginType="admin"
-          callbackUrl="/admin/dashboard"
-        />
+
+      <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-zinc-500">Quick demo access</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <QuickLoginButton
+            label="Quick user login"
+            email="demo@bornoland.com"
+            password="Demo@123"
+            loginType="user"
+            callbackUrl="/dashboard"
+          />
+          <QuickLoginButton
+            label="Quick admin login"
+            email="admin@bornoland.com"
+            password="Admin@123"
+            loginType="admin"
+            callbackUrl="/admin/dashboard"
+          />
+        </div>
       </div>
 
       <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
-        New here? <a href="/register" className="font-medium text-zinc-950 dark:text-zinc-50">Create an account</a>
+        New here?{" "}
+        <a href="/register" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">
+          Create an account
+        </a>
       </p>
     </form>
   );

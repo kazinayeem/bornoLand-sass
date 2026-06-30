@@ -27,7 +27,7 @@ export function QuickLoginButton({ label, email, password, loginType, callbackUr
     <Button
       type="button"
       variant="secondary"
-      className="w-full gap-2"
+      className="h-10 w-full gap-2 rounded-xl text-sm"
       disabled={loading}
       onClick={async () => {
         setLoading(true);

@@ -3,8 +3,9 @@
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
-export function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+export function PasswordInput({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   const [visible, setVisible] = useState(false);
 
   return (
@@ -12,7 +13,10 @@ export function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>
       <Input
         {...props}
         type={visible ? "text" : "password"}
-        className="pr-12"
+        className={cn(
+          "h-11 rounded-xl border-zinc-200 bg-zinc-50/50 px-4 pr-12 dark:border-zinc-800 dark:bg-zinc-900/50",
+          className
+        )}
       />
       <button
         type="button"

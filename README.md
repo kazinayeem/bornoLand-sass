@@ -118,16 +118,16 @@ docs/screenshots/
 
 | | | |
 |---|---|---|
-| ![](project_image/Screenshot%202026-06-30%20at%206.08.04%20PM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.08.12%20PM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.08.28%20PM.png) |
-| `Screenshot 2026-06-30 at 6.08.04 PM.png` | `Screenshot 2026-06-30 at 6.08.12 PM.png` | `Screenshot 2026-06-30 at 6.08.28 PM.png` |
-| ![](project_image/Screenshot%202026-06-30%20at%206.08.32%20PM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.08.41%20PM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.08.47%20PM.png) |
-| `Screenshot 2026-06-30 at 6.08.32 PM.png` | `Screenshot 2026-06-30 at 6.08.41 PM.png` | `Screenshot 2026-06-30 at 6.08.47 PM.png` |
-| ![](project_image/Screenshot%202026-06-30%20at%206.08.51%20PM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.08.58%20PM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.09.07%20PM.png) |
-| `Screenshot 2026-06-30 at 6.08.51 PM.png` | `Screenshot 2026-06-30 at 6.08.58 PM.png` | `Screenshot 2026-06-30 at 6.09.07 PM.png` |
-| ![](project_image/Screenshot%202026-06-30%20at%206.09.25%20PM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.09.31%20PM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.09.39%20PM.png) |
-| `Screenshot 2026-06-30 at 6.09.25 PM.png` | `Screenshot 2026-06-30 at 6.09.31 PM.png` | `Screenshot 2026-06-30 at 6.09.39 PM.png` |
-| ![](project_image/Screenshot%202026-06-30%20at%206.09.44%20PM.png) | | |
-| `Screenshot 2026-06-30 at 6.09.44 PM.png` | | |
+| ![](project_image/Screenshot%202026-06-30%20at%206.08.04%E2%80%AFPM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.08.12%E2%80%AFPM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.08.28%E2%80%AFPM.png) |
+| `Screenshot 2026-06-30 at 6.08.04 PM.png` | `Screenshot 2026-06-30 at 6.08.12 PM.png` | `Screenshot 2026-06-30 at 6.08.28 PM.png` |
+| ![](project_image/Screenshot%202026-06-30%20at%206.08.32%E2%80%AFPM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.08.41%E2%80%AFPM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.08.47%E2%80%AFPM.png) |
+| `Screenshot 2026-06-30 at 6.08.32 PM.png` | `Screenshot 2026-06-30 at 6.08.41 PM.png` | `Screenshot 2026-06-30 at 6.08.47 PM.png` |
+| ![](project_image/Screenshot%202026-06-30%20at%206.08.51%E2%80%AFPM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.08.58%E2%80%AFPM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.09.07%E2%80%AFPM.png) |
+| `Screenshot 2026-06-30 at 6.08.51 PM.png` | `Screenshot 2026-06-30 at 6.08.58 PM.png` | `Screenshot 2026-06-30 at 6.09.07 PM.png` |
+| ![](project_image/Screenshot%202026-06-30%20at%206.09.25%E2%80%AFPM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.09.31%E2%80%AFPM.png) | ![](project_image/Screenshot%202026-06-30%20at%206.09.39%E2%80%AFPM.png) |
+| `Screenshot 2026-06-30 at 6.09.25 PM.png` | `Screenshot 2026-06-30 at 6.09.31 PM.png` | `Screenshot 2026-06-30 at 6.09.39 PM.png` |
+| ![](project_image/Screenshot%202026-06-30%20at%206.09.44%E2%80%AFPM.png) | | |
+| `Screenshot 2026-06-30 at 6.09.44 PM.png` | | |
 
 ---
 

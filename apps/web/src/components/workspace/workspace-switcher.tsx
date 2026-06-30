@@ -72,7 +72,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
                   type="button"
                   onClick={() => {
                     setOpen(false);
-                    router.push(`/dashboard/stores/${store._id}`);
+                    router.push(`/store/${store.slug}`);
                   }}
                   className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-50"
                 >

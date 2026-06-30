@@ -141,7 +141,7 @@ export default function WorkspaceDashboardPage() {
                   <button
                     key={store._id}
                     type="button"
-                    onClick={() => router.push(`/dashboard/stores/${store._id}`)}
+                    onClick={() => router.push(`/store/${store.slug}`)}
                     className="flex w-full items-center justify-between gap-4 rounded-2xl border border-zinc-100 bg-zinc-50/80 px-4 py-3 text-left transition-all hover:border-zinc-200 hover:bg-white"
                   >
                     <div className="min-w-0">

@@ -388,7 +388,7 @@ export default function CreateStorePage() {
               </button>
               <button
                 type="button"
-                onClick={() => router.push(`/dashboard/stores/${createdStoreId}`)}
+                onClick={() => router.push(`/store/${form.slug}`)}
                 className="rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800"
               >
                 Open Dashboard

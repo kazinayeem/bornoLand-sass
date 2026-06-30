@@ -57,7 +57,7 @@ export default function ArchivedStoresPage() {
           {archivedStores.map((store) => (
             <Link
               key={store._id}
-              href={`/dashboard/stores/${store._id}`}
+              href={`/store/${store.slug}`}
               className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white px-4 py-4 transition-colors hover:bg-zinc-50"
             >
               <div>

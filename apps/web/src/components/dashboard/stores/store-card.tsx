@@ -126,8 +126,8 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
                 {[
                   { icon: ExternalLink, label: "Open storefront", action: () => window.open(storeUrl, "_blank") },
                   { icon: Copy, label: "Copy store URL", action: copyUrl },
-                  { icon: LayoutGrid, label: "Open dashboard", action: () => router.push(`/dashboard/stores/${store._id}`) },
-                  { icon: Palette, label: "Open builder", action: () => router.push(`/dashboard/builder/${store._id}`) },
+                  { icon: LayoutGrid, label: "Open dashboard", action: () => router.push(`/store/${store.slug}`) },
+                  { icon: Palette, label: "Open builder", action: () => router.push(`/store/${store.slug}/builder`) },
                   { icon: Trash2, label: "Delete store", action: () => onDelete(store), danger: true },
                 ].map((item) => (
                   <button
@@ -215,7 +215,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/dashboard/stores/${store._id}`);
+              router.push(`/store/${store.slug}`);
             }}
             className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-zinc-700 transition-all hover:bg-zinc-50"
           >

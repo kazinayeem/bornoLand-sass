@@ -5,6 +5,13 @@ import { cookies } from "next/headers";
 import type { Store } from "@/redux/api/store-api";
 import { CACHE_REVALIDATE, cacheTags } from "@/lib/server/cache-tags";
 
+/**
+ * Authenticated store context loader — Server Component only.
+ * Uses fetch cache + React request memoization (not unstable_cache) because
+ * the upstream API validates session cookies per user.
+ * StoreProvider hydrates once; client navigations do not refetch on mount.
+ */
+
 const API_BASE = (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "");
 
 type StoreResponse = {

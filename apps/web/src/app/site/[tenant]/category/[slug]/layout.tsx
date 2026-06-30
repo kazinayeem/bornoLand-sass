@@ -5,6 +5,12 @@ import { TenantPageLayout } from "@/lib/server/tenant-page-metadata";
 
 export const revalidate = 60;
 
+export async function generateStaticParams() {
+  return [];
+}
+
+export const dynamicParams = true;
+
 type CategoryLayoutProps = {
   params: Promise<{ tenant: string; slug: string }>;
 };

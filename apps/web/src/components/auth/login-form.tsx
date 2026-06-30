@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/validators/auth";
@@ -18,6 +19,7 @@ import { setUserProfile } from "@/redux/slices/user-slice";
 import { setTenantContext } from "@/redux/slices/tenant-slice";
 
 export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin" }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [login] = useLoginMutation();
   const dispatch = useAppDispatch();
@@ -59,7 +61,8 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
     dispatch(setUserProfile(payload.user));
     dispatch(setTenantContext({ tenantId: payload.user.tenantId }));
 
-    window.location.href = loginType === "admin" ? "/admin/dashboard" : "/dashboard";
+    router.push(loginType === "admin" ? "/admin/dashboard" : "/dashboard");
+    router.refresh();
   });
 
   return (

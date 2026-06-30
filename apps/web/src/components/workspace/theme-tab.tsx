@@ -6,10 +6,13 @@ import { useGetStoreQuery, useChangeStoreThemeMutation } from "@/redux/api/store
 import { useGetTemplatesQuery } from "@/redux/api/template-api";
 import { Palette, Loader2, Check, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { revalidateStorefrontForStore } from "@/lib/revalidate-storefront-client";
+import { useStorePage } from "@/components/store-dashboard/store-page";
 
 type ThemeTabProps = { storeId: string };
 
 export function ThemeTab({ storeId }: ThemeTabProps) {
+  const { store: storeContext } = useStorePage();
   const { data, isLoading } = useGetStoreQuery(storeId);
   const { data: templatesData } = useGetTemplatesQuery();
   const [changeTheme] = useChangeStoreThemeMutation();
@@ -51,6 +54,9 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
           theme: { primaryColor, secondaryColor, font, buttonStyle, layoutWidth, darkMode, navbarStyle },
         },
       }).unwrap();
+      if (storeContext) {
+        await revalidateStorefrontForStore(storeContext, { scope: "theme" });
+      }
       toast.success("Theme updated");
     } catch {
       toast.error("Failed to update theme");

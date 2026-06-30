@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUpdateStoreMutation } from "@/redux/api/store-api";
 import { toast } from "sonner";
+import { revalidateStorefrontForStore } from "@/lib/revalidate-storefront-client";
 import { getStoreUrl } from "@/utils/domain";
 import type { Store as StoreType } from "@/redux/api/store-api";
 import type { WorkspaceTabId } from "@/components/workspace/types";
@@ -25,6 +26,7 @@ export function WorkspaceHeader({ store, onSettings, onBuilder }: WorkspaceHeade
     try {
       const newStatus = store.status === "active" ? "draft" : "active";
       await updateStore({ id: store._id, data: { status: newStatus } }).unwrap();
+      await revalidateStorefrontForStore(store, { scope: "all" });
       toast.success(newStatus === "active" ? "Store published!" : "Store unpublished");
     } catch {
       toast.error("Failed to update store status");

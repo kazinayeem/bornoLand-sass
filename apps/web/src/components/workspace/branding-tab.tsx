@@ -14,6 +14,8 @@ import { MediaPicker } from "@/components/media/media-picker";
 import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 import { selectionMediaId, type MediaSelection } from "@/lib/media-selection";
 import { SmartImage } from "@/components/ui/smart-image";
+import { revalidateStorefrontForStore } from "@/lib/revalidate-storefront-client";
+import { useStorePage } from "@/components/store-dashboard/store-page";
 
 type BrandingTabProps = {
   storeId: string;
@@ -26,6 +28,7 @@ function normalizeColor(value: string, fallback: string) {
 }
 
 export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
+  const { store } = useStorePage();
   const { data, isLoading } = useGetStoreBrandingQuery(storeId);
   const [updateBranding] = useUpdateStoreBrandingMutation();
   const [deleteLogo] = useDeleteStoreLogoMutation();
@@ -82,6 +85,9 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
           accentColor: normalizeColor(accentColor, "#0f172a"),
         },
       }).unwrap();
+      if (store) {
+        await revalidateStorefrontForStore(store, { scope: "theme" });
+      }
       toast.success("Branding updated");
     } catch {
       toast.error("Failed to save branding");

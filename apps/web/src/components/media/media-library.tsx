@@ -42,6 +42,7 @@ import {
   Grid3X3,
   Info,
   List,
+  Loader2,
   MoreHorizontal,
   Pencil,
   Presentation,
@@ -80,6 +81,8 @@ const FILTER_OPTIONS: { value: FileFilter; label: string }[] = [
   { value: "unused", label: "Unused" },
   { value: "used", label: "Used" },
 ];
+
+const PAGE_LIMIT = 48;
 
 function mapFilterToQuery(filter: FileFilter): { fileType?: string; usage?: string } {
   if (filter === "unused") return { usage: "unused" };
@@ -137,12 +140,20 @@ export function MediaLibrary({
   );
   const inputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [page, setPage] = useState(1);
+  const [accumulatedFiles, setAccumulatedFiles] = useState<MediaFile[]>([]);
 
   useEffect(() => {
     if (pickerMode && pickerSort !== "recent") {
       setActiveFolder(normalizeMediaFolder(folder));
     }
   }, [folder, pickerMode, pickerSort]);
+
+  useEffect(() => {
+    setPage(1);
+    setAccumulatedFiles([]);
+  }, [search, fileFilter, sortOption, activeFolder, storeId, pickerSort]);
 
   const queryFolder = pickerSort === "recent" ? undefined : activeFolder ?? undefined;
   const filterQuery = mapFilterToQuery(fileFilter);
@@ -152,9 +163,50 @@ export function MediaLibrary({
     search: search || undefined,
     folder: queryFolder,
     sort: pickerSort === "recent" ? "newest" : sortOption,
-    limit: 200,
+    page: pickerSort === "recent" ? 1 : page,
+    limit: pickerSort === "recent" ? 24 : PAGE_LIMIT,
     ...filterQuery,
   });
+
+  useEffect(() => {
+    const batch = data?.data?.files ?? [];
+    if (pickerSort === "recent") {
+      setAccumulatedFiles([...batch].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 24));
+      return;
+    }
+    if (page === 1) {
+      setAccumulatedFiles(batch);
+      return;
+    }
+    if (batch.length === 0) return;
+    setAccumulatedFiles((prev) => {
+      const seen = new Set(prev.map((file) => file._id));
+      const merged = [...prev];
+      for (const file of batch) {
+        if (!seen.has(file._id)) merged.push(file);
+      }
+      return merged;
+    });
+  }, [data?.data?.files, page, pickerSort]);
+
+  const totalCount = data?.data?.total ?? accumulatedFiles.length;
+  const hasMore = pickerSort !== "recent" && accumulatedFiles.length < totalCount;
+
+  useEffect(() => {
+    if (!hasMore || isFetching) return;
+    const node = loadMoreRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setPage((current) => current + 1);
+        }
+      },
+      { rootMargin: "240px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, isFetching, accumulatedFiles.length]);
 
   const [deleteFile] = useDeleteMediaFileMutation();
   const [bulkDelete] = useBulkDeleteMediaMutation();
@@ -166,13 +218,11 @@ export function MediaLibrary({
     { skip: !deleteTarget || !(deleteTarget.referenceCount ?? 0) }
   );
 
-  const allFiles = data?.data?.files ?? [];
-  const files =
-    pickerSort === "recent" ? [...allFiles].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 24) : allFiles;
+  const allFiles = accumulatedFiles;
+  const files = allFiles;
   const imageFiles = files.filter(isImage);
   const stats = data?.data?.stats;
   const globalStats = data?.data?.globalStats ?? stats;
-  const totalCount = data?.data?.total ?? files.length;
 
   const requestDelete = (file: MediaFile) => setDeleteTarget(file);
 
@@ -430,7 +480,7 @@ export function MediaLibrary({
         )}
       </div>
 
-      {isLoading ? (
+      {isLoading && page === 1 && accumulatedFiles.length === 0 ? (
         <MediaGridSkeleton />
       ) : files.length === 0 ? (
         <MediaEmptyState onUpload={pickerMode ? undefined : () => inputRef.current?.click()} />
@@ -493,6 +543,12 @@ export function MediaLibrary({
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {hasMore && (
+        <div ref={loadMoreRef} className="flex justify-center py-6" aria-hidden>
+          {isFetching ? <Loader2 className="h-5 w-5 animate-spin text-zinc-400" /> : null}
         </div>
       )}
 

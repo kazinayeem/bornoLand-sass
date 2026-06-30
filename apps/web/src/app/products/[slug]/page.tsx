@@ -1,11 +1,42 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { StorefrontFrame } from "@/components/storefront/storefront-frame";
 import { TenantProvider, type HomepageSliderData, type ProductData, type StoreData, type StoreSettingsData, type ThemeData } from "@/providers/tenant-provider";
 import { ProductDetailClient } from "@/app/site/[tenant]/products/[slug]/product-detail-client";
 import { CACHE_REVALIDATE, cacheTags } from "@/lib/server/cache-tags";
+import { buildPageMetadata } from "@/lib/server/page-metadata";
 
+/** ISR — product detail pages */
 export const revalidate = 60;
+
+export async function generateStaticParams() {
+  return [];
+}
+
+export const dynamicParams = true;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const host = (await headers()).get("host") ?? "";
+  const data = await fetchProductPage(slug, host);
+  if (!data?.store || !data?.product) {
+    return buildPageMetadata({
+      title: "Product",
+      description: "Product details",
+      canonicalPath: `/products/${slug}`,
+    });
+  }
+  const storeName = data.store.name || "Store";
+  return buildPageMetadata({
+    title: `${data.product.name} • ${storeName}`,
+    description: data.product.description || `${data.product.name} at ${storeName}`,
+    canonicalPath: `/products/${slug}`,
+    iconUrl: data.store.logoUrl,
+    keywords: [data.product.name, storeName, "product", "shop"].join(", "),
+    ogImage: data.product.images?.[0] || data.store.logoUrl,
+  });
+}
 
 type ProductRouteData = {
   store: StoreData;

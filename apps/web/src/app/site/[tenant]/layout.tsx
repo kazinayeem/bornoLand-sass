@@ -12,7 +12,15 @@ import {
 import { fetchTenantSite } from "@/lib/server/tenant-site";
 import { generateTenantMetadata } from "@/lib/server/page-metadata";
 
+/** ISR — public storefront shell (store, theme, products, categories, navigation) */
 export const revalidate = 60;
+
+/** On-demand ISR: tenants generated on first visit; publish invalidates via cache tags */
+export async function generateStaticParams() {
+  return [];
+}
+
+export const dynamicParams = true;
 
 export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }): Promise<Metadata> {
   const { tenant } = await params;

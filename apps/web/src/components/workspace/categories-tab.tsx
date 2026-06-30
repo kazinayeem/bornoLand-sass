@@ -17,6 +17,8 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SearchBar } from "@/components/ui/search-bar";
 import { MediaPicker } from "@/components/media/media-picker";
 import { selectionMediaId } from "@/lib/media-selection";
+import { useStorePage } from "@/components/store-dashboard/store-page";
+import { revalidateStorefrontForStore } from "@/lib/revalidate-storefront-client";
 
 type CategoriesTabProps = { storeId: string; billingHref?: string };
 
@@ -72,6 +74,7 @@ function getCategoryPath(catId: string, categories: Category[]): string {
 }
 
 export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps) {
+  const { store } = useStorePage();
   const { data, isLoading } = useGetCategoriesQuery(storeId);
   const [createCategory] = useCreateCategoryMutation();
   const [updateCategory] = useUpdateCategoryMutation();
@@ -149,9 +152,21 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
       };
       if (editCat) {
         await updateCategory({ storeId, id: editCat._id, data: payload }).unwrap();
+        if (store) {
+          await revalidateStorefrontForStore(store, {
+            scope: "categories",
+            categorySlug: payload.slug,
+          });
+        }
         toast.success("Category updated");
       } else {
         await createCategory({ storeId, data: payload }).unwrap();
+        if (store) {
+          await revalidateStorefrontForStore(store, {
+            scope: "categories",
+            categorySlug: payload.slug,
+          });
+        }
         toast.success("Category created");
       }
       resetForm();
@@ -164,6 +179,12 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
     if (!deleteTarget) return;
     try {
       await deleteCategory({ storeId, id: deleteTarget._id }).unwrap();
+      if (store) {
+        await revalidateStorefrontForStore(store, {
+          scope: "categories",
+          categorySlug: deleteTarget.slug,
+        });
+      }
       toast.success("Category deleted");
       setDeleteTarget(null);
     } catch { toast.error("Failed to delete"); }

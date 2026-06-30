@@ -7,6 +7,7 @@ export async function revalidateStorefrontAction(args: {
   storeId: string;
   scope?: RevalidateScope;
   productSlug?: string;
+  categorySlug?: string;
   cmsSlugs?: string[];
 }) {
   await revalidateStorefront(args);

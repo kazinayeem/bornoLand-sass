@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -18,6 +19,7 @@ import { PlanFeatureMatrix } from "@/components/admin/plans/plan-feature-matrix"
 import { getAllPlanStats } from "@/lib/plan-stats";
 
 export default function PlansPage() {
+  const router = useRouter();
   const { data, isLoading } = useGetPlansQuery({ all: true });
   const { data: featuresData } = useGetAdminFeaturesQuery();
   const { data: storesData } = useGetAdminStoresQuery();
@@ -45,7 +47,7 @@ export default function PlansPage() {
       }).unwrap();
       toast.success("Plan created — configure everything in Plan Builder");
       const id = result.data?.plan?._id;
-      if (id) window.location.href = `/admin/dashboard/plans/${id}`;
+      if (id) router.push(`/admin/dashboard/plans/${id}`);
     } catch {
       toast.error("Failed to create plan");
     }

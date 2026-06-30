@@ -3,16 +3,17 @@ import "server-only";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { cacheTags } from "@/lib/server/cache-tags";
 
-export type RevalidateScope = "all" | "home" | "products" | "cms" | "theme";
+export type RevalidateScope = "all" | "home" | "products" | "cms" | "theme" | "categories" | "navigation";
 
 export async function revalidateStorefront(args: {
   tenantSlug: string;
   storeId?: string;
   scope?: RevalidateScope;
   productSlug?: string;
+  categorySlug?: string;
   cmsSlugs?: string[];
 }) {
-  const { tenantSlug, storeId, scope = "all", productSlug, cmsSlugs } = args;
+  const { tenantSlug, storeId, scope = "all", productSlug, categorySlug, cmsSlugs } = args;
 
   revalidateTag(cacheTags.tenant(tenantSlug));
 
@@ -40,6 +41,17 @@ export async function revalidateStorefront(args: {
 
   if ((scope === "all" || scope === "products") && productSlug) {
     revalidateTag(cacheTags.product(productSlug));
+  }
+
+  if (scope === "all" || scope === "categories") {
+    revalidatePath(`/site/${tenantSlug}/categories`);
+    if (categorySlug) {
+      revalidatePath(`/site/${tenantSlug}/category/${categorySlug}`);
+    }
+  }
+
+  if (scope === "all" || scope === "navigation") {
+    revalidatePath(`/site/${tenantSlug}`);
   }
 
   revalidatePath(`/site/${tenantSlug}`);

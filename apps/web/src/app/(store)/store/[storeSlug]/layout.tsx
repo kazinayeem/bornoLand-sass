@@ -4,6 +4,13 @@ import { buildPageMetadata, getStoreMetadataContext } from "@/lib/server/page-me
 import { getStoreContext } from "@/lib/server/store-context";
 import type { Metadata } from "next";
 
+/**
+ * Store layout — Server Component.
+ * Loads store (branding, theme, plan, subscription) once per navigation tree.
+ * Child routes share StoreProvider without refetching on client navigations.
+ * Dashboard pages under (shell) use SSR via force-dynamic on that layout.
+ */
+
 type StoreLayoutProps = {
   children: ReactNode;
   params: Promise<{ storeSlug: string }>;

@@ -97,7 +97,7 @@ const layout = {
 const bg = {
   bgColor: G.color("bgColor", "Background Color", ""),
   bgGradient: G.text("bgGradient", "Gradient", "", "background"),
-  bgImage: G.image("bgImage", "Background Image URL"),
+  bgImage: G.image("bgImage", "Background Image"),
   bgOverlayColor: G.color("bgOverlayColor", "Overlay Color", ""),
   bgOverlayOpacity: G.range("bgOverlayOpacity", "Overlay Opacity", "40", 0, 100, 5, "background"),
 };
@@ -122,21 +122,21 @@ export const sectionRegistry: SectionDef[] = [
   {
     type: "hero-banner", label: "Hero Banner", category: "hero", icon: "Layout", description: "Full-width banner with headline, CTA, and background image",
     props: merge(
-      { kicker: G.text("kicker", "Kicker / Badge", "Welcome"), headline: G.text("headline", "Headline", "Welcome to Our Store"), subheadline: G.textarea("subheadline", "Subheadline", "Discover amazing products curated just for you"), buttonText: G.text("buttonText", "Button Text", "Shop Now"), buttonLink: G.text("buttonLink", "Button Link", "/shop"), secondaryButtonText: G.text("secondaryButtonText", "Secondary Button Text", "Learn More"), secondaryButtonLink: G.text("secondaryButtonLink", "Secondary Button Link", "/about"), heroHeight: G.select("heroHeight", "Height", "md", [{ value: "sm", label: "Small" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }, { value: "full", label: "Full Screen" }], "layout"), imageUrl: G.image("imageUrl", "Image URL"), mobileImageUrl: G.image("mobileImageUrl", "Mobile Image URL"), overlayColor: G.color("overlayColor", "Overlay Color", "rgba(15,23,42,0.45)"), overlayOpacity: G.range("overlayOpacity", "Overlay Opacity", "45", 0, 100, 5), showVideoModal: G.toggle("showVideoModal", "Show Video Modal", "false"), videoUrl: G.text("videoUrl", "Video URL", ""), videoButtonText: G.text("videoButtonText", "Video Button Text", "Watch Video") },
+      { kicker: G.text("kicker", "Kicker / Badge", "Welcome"), headline: G.text("headline", "Headline", "Welcome to Our Store"), subheadline: G.textarea("subheadline", "Subheadline", "Discover amazing products curated just for you"), buttonText: G.text("buttonText", "Button Text", "Shop Now"), buttonLink: G.text("buttonLink", "Button Link", "/shop"), secondaryButtonText: G.text("secondaryButtonText", "Secondary Button Text", "Learn More"), secondaryButtonLink: G.text("secondaryButtonLink", "Secondary Button Link", "/about"), heroHeight: G.select("heroHeight", "Height", "md", [{ value: "sm", label: "Small" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }, { value: "full", label: "Full Screen" }], "layout"), imageUrl: G.image("imageUrl", "Image"), mobileImageUrl: G.image("mobileImageUrl", "Mobile Image"), overlayColor: G.color("overlayColor", "Overlay Color", "rgba(15,23,42,0.45)"), overlayOpacity: G.range("overlayOpacity", "Overlay Opacity", "45", 0, 100, 5), showVideoModal: G.toggle("showVideoModal", "Show Video Modal", "false"), videoUrl: G.text("videoUrl", "Video URL", ""), videoButtonText: G.text("videoButtonText", "Video Button Text", "Watch Video") },
       layout, bg, typography,
     ),
   },
   {
     type: "split-hero", label: "Split Hero", category: "hero", icon: "Columns2", description: "Hero with image and text side by side",
     props: merge(
-      { headline: G.text("headline", "Headline", "Your Store Title"), subheadline: G.textarea("subheadline", "Subheadline", "Description text here"), buttonText: G.text("buttonText", "Button Text", "Get Started"), buttonLink: G.text("buttonLink", "Button Link", "/shop"), imageUrl: G.image("imageUrl", "Image URL"), imagePosition: G.select("imagePosition", "Image Position", "right", [{ value: "left", label: "Left" }, { value: "right", label: "Right" }], "layout"), contentWidth: G.select("contentWidth", "Content Width", "50", [{ value: "40", label: "40%" }, { value: "50", label: "50%" }, { value: "60", label: "60%" }], "layout") },
+      { headline: G.text("headline", "Headline", "Your Store Title"), subheadline: G.textarea("subheadline", "Subheadline", "Description text here"), buttonText: G.text("buttonText", "Button Text", "Get Started"), buttonLink: G.text("buttonLink", "Button Link", "/shop"), imageUrl: G.image("imageUrl", "Image"), imagePosition: G.select("imagePosition", "Image Position", "right", [{ value: "left", label: "Left" }, { value: "right", label: "Right" }], "layout"), contentWidth: G.select("contentWidth", "Content Width", "50", [{ value: "40", label: "40%" }, { value: "50", label: "50%" }, { value: "60", label: "60%" }], "layout") },
       layout, bg, typography,
     ),
   },
   {
     type: "video-hero", label: "Video Hero", category: "hero", icon: "Video", description: "Hero with background video and overlay content",
     props: merge(
-      { videoUrl: G.video("videoUrl", "Video URL (MP4/YouTube)"), posterImage: G.image("posterImage", "Poster Image URL"), headline: G.text("headline", "Headline", "Welcome"), subheadline: G.textarea("subheadline", "Subheadline", "Description"), buttonText: G.text("buttonText", "Button Text", "Explore"), buttonLink: G.text("buttonLink", "Button Link", "/shop"), heroHeight: G.select("heroHeight", "Height", "lg", [{ value: "md", label: "Medium" }, { value: "lg", label: "Large" }, { value: "full", label: "Full Screen" }], "layout"), muted: G.toggle("muted", "Muted", "true"), loop: G.toggle("loop", "Loop", "true") },
+      { videoUrl: G.video("videoUrl", "Video URL (MP4/YouTube)"), posterImage: G.image("posterImage", "Poster Image"), headline: G.text("headline", "Headline", "Welcome"), subheadline: G.textarea("subheadline", "Subheadline", "Description"), buttonText: G.text("buttonText", "Button Text", "Explore"), buttonLink: G.text("buttonLink", "Button Link", "/shop"), heroHeight: G.select("heroHeight", "Height", "lg", [{ value: "md", label: "Medium" }, { value: "lg", label: "Large" }, { value: "full", label: "Full Screen" }], "layout"), muted: G.toggle("muted", "Muted", "true"), loop: G.toggle("loop", "Loop", "true") },
       layout, bg, typography,
     ),
   },
@@ -150,7 +150,7 @@ export const sectionRegistry: SectionDef[] = [
   {
     type: "image-hero", label: "Image Hero", category: "hero", icon: "Image", description: "Clean hero with a single striking image",
     props: merge(
-      { imageUrl: G.image("imageUrl", "Image URL"), overlay: G.toggle("overlay", "Show Overlay", "true"), headline: G.text("headline", "Headline", "Hero Title"), subheadline: G.textarea("subheadline", "Subheadline", ""), buttonText: G.text("buttonText", "Button Text", "Shop Now"), buttonLink: G.text("buttonLink", "Button Link", "/shop") },
+      { imageUrl: G.image("imageUrl", "Image"), overlay: G.toggle("overlay", "Show Overlay", "true"), headline: G.text("headline", "Headline", "Hero Title"), subheadline: G.textarea("subheadline", "Subheadline", ""), buttonText: G.text("buttonText", "Button Text", "Shop Now"), buttonLink: G.text("buttonLink", "Button Link", "/shop") },
       layout, bg, typography,
     ),
   },
@@ -503,7 +503,7 @@ export const sectionRegistry: SectionDef[] = [
   {
     type: "about-section", label: "About Section", category: "content", icon: "Info", description: "About us section for the page",
     props: merge(
-      { title: G.text("title", "Section Title", "About Us"), content: G.textarea("content", "Content", "Learn about our brand..."), imageUrl: G.image("imageUrl", "Image URL"), imagePosition: G.select("imagePosition", "Image Position", "left", [{ value: "left", label: "Left" }, { value: "right", label: "Right" }], "layout"), layout: G.select("layout", "Layout", "side-by-side", [{ value: "side-by-side", label: "Side by Side" }, { value: "full", label: "Full Width" }], "layout") },
+      { title: G.text("title", "Section Title", "About Us"), content: G.textarea("content", "Content", "Learn about our brand..."), imageUrl: G.image("imageUrl", "Image"), imagePosition: G.select("imagePosition", "Image Position", "left", [{ value: "left", label: "Left" }, { value: "right", label: "Right" }], "layout"), layout: G.select("layout", "Layout", "side-by-side", [{ value: "side-by-side", label: "Side by Side" }, { value: "full", label: "Full Width" }], "layout") },
       layout, bg, typography,
     ),
   },
@@ -612,7 +612,7 @@ export const sectionRegistry: SectionDef[] = [
   {
     type: "social-proof", label: "Social Proof", category: "social", icon: "Users", description: "Live social proof notifications",
     props: merge(
-      { title: G.text("title", "Section Title", "Join Our Community"), userCount: G.text("userCount", "User Count", "10,000+"), joinText: G.text("joinText", "Join Text", "Happy customers"), showAvatars: G.toggle("showAvatars", "Show Avatar Group", "true"), avatarImages: G.text("avatarImages", "Avatar URLs (comma)", "") },
+      { title: G.text("title", "Section Title", "Join Our Community"), userCount: G.text("userCount", "User Count", "10,000+"), joinText: G.text("joinText", "Join Text", "Happy customers"), showAvatars: G.toggle("showAvatars", "Show Avatar Group", "true"), avatarImage: G.image("avatarImage", "Avatar Image") },
       layout, bg, typography,
     ),
   },

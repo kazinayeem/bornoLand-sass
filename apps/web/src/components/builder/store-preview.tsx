@@ -11,8 +11,7 @@ import { duplicateSection, moveSection, removeSection, setHoveredSection, setSel
 import { getSectionDef, normalizeSectionType } from "@/lib/section-registry";
 import { Copy, Eye, EyeOff, ImagePlus, Lock, LockOpen, MoveDown, MoveUp, Pencil, Trash2 } from "lucide-react";
 import { Drawer } from "@/components/ui/drawer";
-import { MediaPicker } from "@/components/media/media-picker";
-import { normalizeMediaSelection, type MediaSelection } from "@/lib/media-selection";
+import { BuilderMediaField } from "@/components/builder/builder-media-field";
 
 type StorePreviewProps = {
   store: StoreData;
@@ -47,7 +46,10 @@ export function StorePreview({ store, theme, products, categories, settings, sli
     const byType = (propType: string) => entries.filter(([, def]) => def.type === propType).map(([key]) => key);
     const textCandidates = ["headline", "title", "productName", "text", "kicker", "subheadline", "subtitle", "description", "content"];
     const buttonCandidates = ["buttonText", "secondaryButtonText", "linkText"];
-    const imageCandidates = ["imageUrl", "bgImage", "productImage", "posterImage", "slide1Image", "mobileImageUrl"];
+    const imageCandidates = [
+      "imageUrl", "bgImage", "productImage", "posterImage", "mobileImageUrl",
+      "slide1Image", "slide2Image", "slide3Image", "beforeImage", "afterImage",
+    ];
 
     const pickFirst = (candidates: string[], fallbackKeys: string[]) =>
       candidates.find((key) => selectedSection.props[key] !== undefined) ?? fallbackKeys[0] ?? null;
@@ -130,13 +132,17 @@ export function StorePreview({ store, theme, products, categories, settings, sli
                 <div key={field.key}>
                   <label className="mb-1 block text-[11px] font-medium text-zinc-500">{field.label}</label>
                   {field.kind === "image" ? (
-                    <MediaPicker
+                    <BuilderMediaField
                       storeId={store._id}
-                      billingHref={`/store/${store.slug}/billing`}
-                      folder="builder"
-                      label={field.label}
-                      value={normalizeMediaSelection(selectedSection.props[field.key] ?? "")}
-                      onChange={(selected: MediaSelection) => updateQuickEditField(field.key, selected.url)}
+                      storeSlug={store.slug}
+                      propKey={field.key}
+                      sectionProps={selectedSection.props}
+                      onPropsChange={(nextProps) => {
+                        dispatch(updateSectionProps({
+                          id: selectedSection.id,
+                          props: nextProps as typeof selectedSection.props,
+                        }));
+                      }}
                     />
                   ) : (
                     <input

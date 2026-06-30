@@ -3,12 +3,13 @@
 import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
 import { Clock, ImagePlus, Library, RefreshCw, Upload } from "lucide-react";
-import { formatBytes } from "@/lib/format-bytes";
 import { Modal } from "@/components/ui/modal";
 import type { MediaFile } from "@/redux/api/media-api";
+import { formatBytes, useGetMediaFileQuery } from "@/redux/api/media-api";
 import { resolveMediaUrl } from "@/lib/resolve-media-url";
 import {
   mediaSelectionFromFile,
+  selectionMediaId,
   selectionUrl,
   type MediaSelection,
 } from "@/lib/media-selection";
@@ -36,15 +37,16 @@ function fileNameFromUrl(url: string): string {
   }
 }
 
-function selectionMeta(value?: string | MediaSelection | null) {
+function selectionMeta(value?: string | MediaSelection | null, fetchedFile?: MediaFile | null) {
   const selection = typeof value === "string" ? (value ? { url: value } : undefined) : value?.url ? value : undefined;
   if (!selection) return null;
 
-  const name = selection.file?.displayName || selection.file?.originalName || fileNameFromUrl(selection.url);
-  const size = selection.file?.size ? formatBytes(selection.file.size) : "";
+  const file = selection.file ?? fetchedFile ?? undefined;
+  const name = file?.displayName || file?.originalName || fileNameFromUrl(selection.url);
+  const size = file?.size ? formatBytes(file.size) : "";
   const dimensions =
-    selection.file?.width && selection.file?.height
-      ? `${selection.file.width} × ${selection.file.height}`
+    file?.width && file?.height
+      ? `${file.width} × ${file.height}`
       : "";
 
   return { name, size, dimensions };
@@ -75,7 +77,13 @@ export function MediaPicker({
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const previewUrl = selectionUrl(value);
-  const meta = selectionMeta(value);
+  const mediaId = selectionMediaId(value);
+  const { data: mediaFileData } = useGetMediaFileQuery(
+    { storeId, id: mediaId ?? "" },
+    { skip: !mediaId || Boolean(typeof value === "object" && value?.file) },
+  );
+  const fetchedFile = mediaFileData?.data?.file;
+  const meta = selectionMeta(value, fetchedFile);
   const previewSize = compact ? "h-16 w-16" : "h-20 w-20";
   const openPicker = () => setOpen(true);
 

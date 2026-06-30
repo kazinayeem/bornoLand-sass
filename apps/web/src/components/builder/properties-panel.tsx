@@ -7,8 +7,6 @@ import { X, Type, Layers, AlignLeft, PaintBucket, Ruler, ChevronDown, Lightbulb,
 import { useState } from "react";
 import { getSectionDef, type SectionPropDef } from "@/lib/section-registry";
 import { BuilderMediaField } from "@/components/builder/builder-media-field";
-import { patchImageSelection } from "@/lib/builder-section-media";
-import type { MediaSelection } from "@/lib/media-selection";
 import { useRequiredStore } from "@/providers/store-context";
 
 // ─── Control components ──────────────────────────────────────────
@@ -24,25 +22,6 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
   );
 }
 
-function ImageInput({ storeId, storeSlug, label, value, onChange }: { storeId?: string; storeSlug?: string; label: string; value: string; onChange: (v: string) => void }) {
-  const selection = normalizeMediaSelection(value);
-  if (!storeId || !storeSlug) {
-    return (
-      <input type="text" value={value} onChange={(e) => onChange(e.target.value)}
-        className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none" />
-    );
-  }
-  return (
-    <MediaPicker
-      storeId={storeId}
-      billingHref={`/store/${storeSlug}/billing`}
-      folder="builder"
-      label={label}
-      value={selection}
-      onChange={(selected: MediaSelection) => onChange(selected.url)}
-    />
-  );
-}
 
 function RangeInput({ value, onChange, min, max, step }: { value: string; onChange: (v: string) => void; min?: number; max?: number; step?: number }) {
   const num = Number(value) || 0;
@@ -84,7 +63,7 @@ function ControlRenderer({
   propKey,
   value,
   onChange,
-  onImageChange,
+  onSectionPropsChange,
   sectionProps,
   storeId,
   storeSlug,
@@ -93,14 +72,23 @@ function ControlRenderer({
   propKey: string;
   value: string;
   onChange: (v: string) => void;
-  onImageChange: (selection: MediaSelection) => void;
+  onSectionPropsChange: (props: Record<string, string | undefined>) => void;
   sectionProps: Record<string, string | undefined>;
   storeId: string;
   storeSlug: string;
 }) {
   switch (propDef.type) {
     case "color": return <ColorInput value={value} onChange={onChange} />;
-    case "image": return <ImageInput storeId={storeId} storeSlug={storeSlug} label={fieldLabel} value={value} onChange={onChange} />;
+    case "image":
+      return (
+        <BuilderMediaField
+          storeId={storeId}
+          storeSlug={storeSlug}
+          propKey={propKey}
+          sectionProps={sectionProps}
+          onPropsChange={onSectionPropsChange}
+        />
+      );
     case "range": return <RangeInput value={value} onChange={onChange} min={propDef.min} max={propDef.max} step={propDef.step} />;
     case "align": return <AlignInput value={value} onChange={onChange} />;
     case "toggle": {
@@ -205,6 +193,10 @@ export function PropertiesPanel() {
 
   const handlePropChange = (key: string, value: string) => {
     dispatch(updateSectionProps({ id: section.id, props: { ...section.props, [key]: value } }));
+  };
+
+  const handleSectionPropsChange = (props: Record<string, string | undefined>) => {
+    dispatch(updateSectionProps({ id: section.id, props: props as typeof section.props }));
   };
 
   const def = getSectionDef(section.type);
@@ -321,7 +313,16 @@ export function PropertiesPanel() {
                           {propDef.label}
                           {propDef.responsive && <span className="rounded bg-blue-50 px-1 text-[8px] font-bold text-blue-500">R</span>}
                         </label>
-                        <ControlRenderer propDef={propDef} value={val} onChange={(v) => handlePropChange(key, v)} storeId={storeId} storeSlug={storeSlug} fieldLabel={propDef.label} />
+                        <ControlRenderer
+                          propDef={propDef}
+                          propKey={key}
+                          value={val}
+                          onChange={(v) => handlePropChange(key, v)}
+                          onSectionPropsChange={handleSectionPropsChange}
+                          sectionProps={section.props}
+                          storeId={storeId}
+                          storeSlug={storeSlug}
+                        />
                       </div>
                     );
                   })}

@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Suspense, useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -7,8 +8,11 @@ import { useGetCmsPageQuery, useSaveCmsPageMutation } from "@/redux/api/cms-api"
 import { Store, Save, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { HelpCircle, Truck, RotateCcw, Ruler, Mail, Shield, FileText, Info } from "lucide-react";
-import RichTextEditor from "@/components/cms/rich-text-editor";
 import { useCurrentStore } from "@/hooks/use-current-store";
+
+const RichTextEditor = dynamic(() => import("@/components/cms/rich-text-editor"), {
+  loading: () => <div className="min-h-[240px] rounded-xl border border-zinc-200 bg-zinc-50" />,
+});
 
 const pageMeta: Record<string, { label: string; icon: typeof HelpCircle; description: string }> = {
   faq: { label: "FAQ", icon: HelpCircle, description: "Frequently asked questions about your store." },
@@ -104,7 +108,6 @@ function CmsPageEditor() {
       }).unwrap();
       toast.success("Page saved successfully");
     } catch (err) {
-      console.error("Failed to save CMS page:", err);
       const msg = (err as any)?.data?.message || (err as any)?.message || "Failed to save page";
       toast.error(msg);
     }

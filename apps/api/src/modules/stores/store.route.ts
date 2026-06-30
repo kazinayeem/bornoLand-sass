@@ -3,11 +3,15 @@ import { requireAuth } from "../../common/middleware/auth.middleware.js";
 import {
   createStoreController,
   deleteStoreController,
+  deleteStoreFaviconController,
+  deleteStoreLogoController,
+  getStoreBrandingController,
   getStoreBySlugController,
   getStoreController,
   getUserStoresController,
   updateStoreController,
-  changeStoreThemeController
+  changeStoreThemeController,
+  updateStoreBrandingController
 } from "./store.controller.js";
 import { getStoreSettingsController, updateStoreSettingsController } from "./store-settings.controller.js";
 import { createHomepageSliderController, deleteHomepageSliderController, listHomepageSlidersController, updateHomepageSliderController } from "./homepage-slider.controller.js";
@@ -32,6 +36,10 @@ storeRouter.get("/by-slug/:slug", getStoreBySlugController);
 storeRouter.get("/:id", getStoreController);
 storeRouter.put("/:id", updateStoreController);
 storeRouter.put("/:id/theme", changeStoreThemeController);
+storeRouter.get("/:id/branding", getStoreBrandingController);
+storeRouter.put("/:id/branding", updateStoreBrandingController);
+storeRouter.delete("/:id/branding/logo", deleteStoreLogoController);
+storeRouter.delete("/:id/branding/favicon", deleteStoreFaviconController);
 storeRouter.get("/:id/settings", getStoreSettingsController);
 storeRouter.put("/:id/settings", updateStoreSettingsController);
 storeRouter.get("/:id/sliders", listHomepageSlidersController);

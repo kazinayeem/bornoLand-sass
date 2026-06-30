@@ -1,13 +1,17 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetFaqsQuery, useCreateFaqMutation, useUpdateFaqMutation, useDeleteFaqMutation, useReorderFaqsMutation } from "@/redux/api/cms-api";
 import type { FaqItem } from "@/redux/api/cms-api";
-import RichTextEditor from "@/components/cms/rich-text-editor";
 import { Store, Plus, Loader2, GripVertical, Pencil, Trash2, X, Check, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+
+const RichTextEditor = dynamic(() => import("@/components/cms/rich-text-editor"), {
+  loading: () => <div className="min-h-[240px] rounded-xl border border-zinc-200 bg-zinc-50" />,
+});
 
 export default function FaqsPage() {
   const { currentStoreId, stores, selectStore, clearStore } = useCurrentStore();

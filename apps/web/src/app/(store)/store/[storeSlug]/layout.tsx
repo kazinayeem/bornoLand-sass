@@ -1,20 +1,26 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { StoreShell } from "@/components/store-dashboard/store-shell";
-import { buildPageMetadata, getStoreMetadataContext } from "@/lib/server/page-metadata";
+import { generateStoreMetadata } from "@/lib/server/page-metadata";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type StoreLayoutProps = {
   children: ReactNode;
-  params: Promise<{ storeSlug: string }>;
+  params: Promise<{ storeSlug: string }> | { storeSlug: string };
 };
 
-export async function generateMetadata({ params }: { params: Promise<{ storeSlug: string }> }): Promise<Metadata> {
-  const { storeSlug } = await params;
-  const store = await getStoreMetadataContext(storeSlug);
-  const storeName = store?.name ?? "Store";
-  return buildPageMetadata({
-    title: `Dashboard • ${storeName}`,
-    description: `Manage ${storeName} in BornoLand.`,
+async function resolveParams(params: StoreLayoutProps["params"]) {
+  return params instanceof Promise ? params : Promise.resolve(params);
+}
+
+export async function generateMetadata({ params }: { params: StoreLayoutProps["params"] }): Promise<Metadata> {
+  const { storeSlug } = await resolveParams(params);
+  return generateStoreMetadata({
+    storeSlug,
+    pageTitle: "Dashboard",
+    description: "Manage your store workspace in BornoLand.",
     canonicalPath: `/store/${storeSlug}`,
   });
 }

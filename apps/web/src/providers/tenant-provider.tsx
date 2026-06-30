@@ -17,7 +17,7 @@ export type StoreData = {
 export type ProductData = {
   _id: string; storeId: string; name: string; slug: string;
   description: string; price: number; comparePrice?: number;
-  category: string; stock: number; status: "active" | "inactive";
+  category: string; stock: number; status: "active" | "inactive" | "draft" | "archived";
   sku: string; imageUrl?: string; thumbnailUrl?: string; galleryImageUrls?: string[]; images: string[]; featured: boolean;
   categoryIds?: string[];
   createdAt: string; updatedAt: string;

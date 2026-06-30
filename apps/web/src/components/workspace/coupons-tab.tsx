@@ -100,7 +100,7 @@ export function CouponsTab({ storeId }: { storeId: string }) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant={coupon.status === "active" ? "success" : "secondary"}>{coupon.status}</Badge>
+              <Badge variant={coupon.status === "active" ? "success" : "slate"}>{coupon.status}</Badge>
               <button type="button" onClick={() => openEdit(coupon)} className="text-sm font-medium text-blue-600">Edit</button>
               <button
                 type="button"

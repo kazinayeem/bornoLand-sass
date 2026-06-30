@@ -62,6 +62,8 @@ export type Store = {
   tenantId: string;
   userId: string;
   name: string;
+  shortName?: string;
+  tagline?: string;
   slug: string;
   subdomain: string;
   description: string;
@@ -78,6 +80,11 @@ export type Store = {
   allowNewOrders?: boolean;
   status: string;
   logoUrl: string;
+  logoMediaId?: string | null;
+  faviconUrl?: string;
+  faviconMediaId?: string | null;
+  brandColor?: string;
+  accentColor?: string;
   selectedTemplateId?: { _id: string; name: string; slug: string; category: string; preview: string } | string;
   theme: ThemeSettings;
   productCount?: number;
@@ -91,6 +98,8 @@ type ApiEnvelope<T> = { success: boolean; data?: T; message?: string };
 
 type CreateStoreRequest = {
   name: string;
+  shortName?: string;
+  tagline?: string;
   slug: string;
   description?: string;
   category?: string;
@@ -98,6 +107,11 @@ type CreateStoreRequest = {
   plan?: string;
   selectedTemplateId?: string;
   logoUrl?: string;
+  logoMediaId?: string | null;
+  faviconUrl?: string;
+  faviconMediaId?: string | null;
+  brandColor?: string;
+  accentColor?: string;
 };
 
 type UpdateStoreRequest = Partial<CreateStoreRequest> & {
@@ -108,6 +122,29 @@ type UpdateStoreRequest = Partial<CreateStoreRequest> & {
   subscriptionStatus?: Store["subscriptionStatus"];
   renewalDate?: string;
 };
+
+export type StoreBranding = Pick<
+  Store,
+  | "_id"
+  | "name"
+  | "shortName"
+  | "tagline"
+  | "logoUrl"
+  | "logoMediaId"
+  | "faviconUrl"
+  | "faviconMediaId"
+  | "brandColor"
+  | "accentColor"
+  | "plan"
+  | "planId"
+>;
+
+type UpdateStoreBrandingRequest = Partial<
+  Pick<
+    Store,
+    "name" | "shortName" | "tagline" | "logoUrl" | "logoMediaId" | "faviconUrl" | "faviconMediaId" | "brandColor" | "accentColor"
+  >
+>;
 
 export const storeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -134,6 +171,25 @@ export const storeApi = baseApi.injectEndpoints({
     changeStoreTheme: builder.mutation<ApiEnvelope<{ store: Store }>, { id: string; data: { templateId?: string; theme?: Partial<ThemeSettings> } }>({
       query: ({ id, data }) => ({ url: `/stores/${id}/theme`, method: "PUT", body: data }),
       invalidatesTags: (_result, _error, { id }) => ["Stores", { type: "Stores", id }]
+    }),
+    getStoreBranding: builder.query<ApiEnvelope<{ branding: StoreBranding }>, string>({
+      query: (id) => ({ url: `/stores/${id}/branding` }),
+      providesTags: (_result, _error, id) => [{ type: "Stores", id }],
+    }),
+    updateStoreBranding: builder.mutation<
+      ApiEnvelope<{ branding: StoreBranding; store: Store }>,
+      { id: string; data: UpdateStoreBrandingRequest }
+    >({
+      query: ({ id, data }) => ({ url: `/stores/${id}/branding`, method: "PUT", body: data }),
+      invalidatesTags: (_result, _error, { id }) => ["Stores", { type: "Stores", id }],
+    }),
+    deleteStoreLogo: builder.mutation<ApiEnvelope<{ branding: StoreBranding; store: Store }>, string>({
+      query: (id) => ({ url: `/stores/${id}/branding/logo`, method: "DELETE" }),
+      invalidatesTags: (_result, _error, id) => ["Stores", { type: "Stores", id }],
+    }),
+    deleteStoreFavicon: builder.mutation<ApiEnvelope<{ branding: StoreBranding; store: Store }>, string>({
+      query: (id) => ({ url: `/stores/${id}/branding/favicon`, method: "DELETE" }),
+      invalidatesTags: (_result, _error, id) => ["Stores", { type: "Stores", id }],
     }),
     deleteStore: builder.mutation<ApiEnvelope<never>, string>({
       query: (id) => ({ url: `/stores/${id}`, method: "DELETE" }),
@@ -172,6 +228,10 @@ export const {
   useGetStoreBySlugQuery,
   useUpdateStoreMutation,
   useChangeStoreThemeMutation,
+  useGetStoreBrandingQuery,
+  useUpdateStoreBrandingMutation,
+  useDeleteStoreLogoMutation,
+  useDeleteStoreFaviconMutation,
   useDeleteStoreMutation,
   useGetPlansQuery,
   useCreatePlanMutation,

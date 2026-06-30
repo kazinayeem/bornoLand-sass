@@ -8,7 +8,7 @@ import { PageModel } from "../../models/page.model.js";
 import { seedDemoProducts } from "../products/product.service.js";
 import { ensureDefaultStoreSettings } from "./store-settings.service.js";
 import { HomepageSliderModel } from "../../models/homepage-slider.model.js";
-import { createStoreSchema, updateStoreSchema, type CreateStoreInput, type UpdateStoreInput } from "./store.validator.js";
+import { createStoreSchema, updateStoreSchema, updateStoreBrandingSchema, type CreateStoreInput, type UpdateStoreInput, type UpdateStoreBrandingInput } from "./store.validator.js";
 import { ProductModel } from "../../models/product.model.js";
 import { OrderModel } from "../../models/order.model.js";
 import { applyTrialExpiryToStore, applySubscriptionExpiryToStore, buildTrialFields } from "./trial.service.js";
@@ -92,12 +92,19 @@ export async function createStore(userId: string, payload: unknown) {
     slug: parsed.data.slug,
     subdomain: parsed.data.slug,
     description: parsed.data.description ?? "",
+    shortName: parsed.data.shortName ?? "",
+    tagline: parsed.data.tagline ?? "",
     category: parsed.data.category ?? "ecommerce",
     storeType: parsed.data.storeType ?? "ecommerce",
     plan: requestedPlan?.slug ?? parsed.data.plan ?? "free",
     ...(requestedPlan ? { planId: requestedPlan._id } : {}),
     ...trialFields,
     logoUrl: parsed.data.logoUrl ?? "",
+    logoMediaId: parsed.data.logoMediaId ?? null,
+    faviconUrl: parsed.data.faviconUrl ?? "",
+    faviconMediaId: parsed.data.faviconMediaId ?? null,
+    brandColor: parsed.data.brandColor ?? "#2563eb",
+    accentColor: parsed.data.accentColor ?? "#0f172a",
     ...(templateId ? { selectedTemplateId: templateId } : {}),
     ...(themeFromTemplate ? { theme: themeFromTemplate } : {}),
   });
@@ -210,6 +217,51 @@ export async function updateStore(storeId: string, userId: string, payload: unkn
   ).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
   return { ok: true as const, data: { store } };
+}
+
+export async function getStoreBranding(storeId: string, userId: string) {
+  await connectDatabase();
+  const store = await StoreModel.findOne({ _id: storeId, userId })
+    .select("name shortName tagline logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor plan planId")
+    .populate("planId", "name slug")
+    .lean();
+  if (!store) return { ok: false as const, message: "Store not found" };
+  return { ok: true as const, data: { branding: store } };
+}
+
+export async function updateStoreBranding(storeId: string, userId: string, payload: unknown) {
+  const parsed = updateStoreBrandingSchema.safeParse(payload);
+  if (!parsed.success) return { ok: false as const, message: "Invalid branding data" };
+
+  await connectDatabase();
+  const store = await StoreModel.findOneAndUpdate(
+    { _id: storeId, userId },
+    { $set: parsed.data },
+    { new: true }
+  )
+    .select("name shortName tagline logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor plan planId")
+    .populate("planId", "name slug")
+    .lean();
+  if (!store) return { ok: false as const, message: "Store not found" };
+  return { ok: true as const, data: { branding: store, store } };
+}
+
+export async function clearStoreBrandAsset(
+  storeId: string,
+  userId: string,
+  asset: "logo" | "favicon"
+) {
+  await connectDatabase();
+  const update =
+    asset === "logo"
+      ? { logoUrl: "", logoMediaId: null }
+      : { faviconUrl: "", faviconMediaId: null };
+  const store = await StoreModel.findOneAndUpdate({ _id: storeId, userId }, { $set: update }, { new: true })
+    .select("name shortName tagline logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor plan planId")
+    .populate("planId", "name slug")
+    .lean();
+  if (!store) return { ok: false as const, message: "Store not found" };
+  return { ok: true as const, data: { branding: store, store } };
 }
 
 export async function deleteStore(storeId: string, userId: string) {

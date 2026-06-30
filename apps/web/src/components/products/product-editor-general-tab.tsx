@@ -1,7 +1,11 @@
 "use client";
 
-import RichTextEditor from "@/components/cms/rich-text-editor";
+import dynamic from "next/dynamic";
 import type { ProductEditorForm } from "@/components/products/product-form";
+
+const RichTextEditor = dynamic(() => import("@/components/cms/rich-text-editor"), {
+  loading: () => <div className="min-h-[240px] rounded-xl border border-zinc-200 bg-zinc-50" />,
+});
 
 const inputClass =
   "h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20";

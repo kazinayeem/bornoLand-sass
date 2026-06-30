@@ -1,9 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
 import { Clock, ImagePlus, Library, Upload } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
-import { MediaLibrary } from "@/components/media/media-library";
 import type { MediaFile } from "@/redux/api/media-api";
 import { resolveMediaUrl } from "@/lib/resolve-media-url";
 import {
@@ -13,6 +13,14 @@ import {
 } from "@/lib/media-selection";
 import { uploadMediaWithProgress, type UploadProgress } from "@/lib/media-upload";
 import { toast } from "sonner";
+import { SmartImage } from "@/components/ui/smart-image";
+
+const MediaLibrary = dynamic(
+  () => import("@/components/media/media-library").then((module) => module.MediaLibrary),
+  {
+    loading: () => <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-8 text-sm text-zinc-500">Loading media library...</div>,
+  }
+);
 
 type PickerTab = "library" | "upload" | "recent";
 
@@ -80,8 +88,15 @@ export function MediaPicker({
       <label className="text-sm font-medium text-zinc-700">{label}</label>
       <div className="flex flex-wrap items-center gap-3">
         {previewUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={resolveMediaUrl(previewUrl)} alt="" className="h-20 w-20 rounded-xl border object-cover" />
+          <div className="relative h-20 w-20 overflow-hidden rounded-xl border">
+            <SmartImage
+              src={resolveMediaUrl(previewUrl)}
+              alt=""
+              fill
+              sizes="80px"
+              className="object-cover"
+            />
+          </div>
         ) : (
           <div className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-400">
             <ImagePlus className="h-6 w-6" />

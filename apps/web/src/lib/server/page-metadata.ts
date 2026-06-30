@@ -81,7 +81,7 @@ export function buildPageMetadata(args: {
   };
 }
 
-export async function generateStorePageMetadata(args: {
+export async function generateStoreMetadata(args: {
   storeSlug: string;
   pageTitle: string;
   canonicalPath: string;
@@ -95,6 +95,8 @@ export async function generateStorePageMetadata(args: {
     canonicalPath: args.canonicalPath,
   });
 }
+
+export const generateStorePageMetadata = generateStoreMetadata;
 
 export async function generateProductPageMetadata(args: {
   storeSlug: string;

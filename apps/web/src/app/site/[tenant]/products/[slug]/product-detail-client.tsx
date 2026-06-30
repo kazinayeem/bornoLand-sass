@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/format-currency";
 import { getProductGalleryUrls, getProductImageUrl } from "@/lib/product-media";
 import { resolveMediaUrl } from "@/lib/resolve-media-url";
 import { toast } from "sonner";
+import { SmartImage } from "@/components/ui/smart-image";
 
 type ProductOption = { _id?: string; name: string; values: string[] };
 type ProductVariant = {
@@ -185,7 +186,13 @@ export function ProductDetailClient({ product }: { product: Product }) {
             <div className="relative overflow-hidden rounded-[2rem] border border-zinc-200 bg-zinc-50 shadow-[0_20px_80px_rgba(0,0,0,0.08)]">
               <div className="group relative aspect-square overflow-hidden bg-white">
                 {displayImage ? (
-                  <img src={displayImage} alt={product.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <SmartImage
+                    src={displayImage}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 55vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
                 ) : (
                   <div className="flex h-full items-center justify-center">
                     <ShoppingCart className="h-24 w-24 text-zinc-200" />
@@ -211,7 +218,13 @@ export function ProductDetailClient({ product }: { product: Product }) {
               <div className="flex gap-3 overflow-x-auto pb-1">
                 {gallery.map((image) => (
                   <button key={image} onClick={() => setSelectedImage(image)} className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl border transition-all ${selectedImage === image ? "border-zinc-950 ring-2 ring-zinc-950/10" : "border-zinc-200 hover:border-zinc-300"}`}>
-                    <img src={image} alt={`${product.name} thumbnail`} className="h-full w-full object-cover" />
+                    <SmartImage
+                      src={image}
+                      alt={`${product.name} thumbnail`}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
                   </button>
                 ))}
               </div>

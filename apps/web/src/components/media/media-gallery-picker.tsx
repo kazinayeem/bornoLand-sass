@@ -1,9 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { GripVertical, ImagePlus, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
-import { MediaLibrary } from "@/components/media/media-library";
 import { uploadMediaWithProgress } from "@/lib/media-upload";
 import { resolveMediaUrl } from "@/lib/resolve-media-url";
 import {
@@ -12,6 +12,14 @@ import {
 } from "@/lib/media-selection";
 import type { MediaFile } from "@/redux/api/media-api";
 import { toast } from "sonner";
+import { SmartImage } from "@/components/ui/smart-image";
+
+const MediaLibrary = dynamic(
+  () => import("@/components/media/media-library").then((module) => module.MediaLibrary),
+  {
+    loading: () => <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-8 text-sm text-zinc-500">Loading media library...</div>,
+  }
+);
 
 export function MediaGalleryPicker({
   storeId,
@@ -88,12 +96,15 @@ export function MediaGalleryPicker({
             }}
             className="group relative"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={resolveMediaUrl(item.thumbnailUrl || item.url)}
-              alt=""
-              className="h-20 w-20 rounded-xl border object-cover"
-            />
+            <div className="relative h-20 w-20 overflow-hidden rounded-xl border">
+              <SmartImage
+                src={resolveMediaUrl(item.thumbnailUrl || item.url)}
+                alt=""
+                fill
+                sizes="80px"
+                className="object-cover"
+              />
+            </div>
             <span className="absolute left-1 top-1 rounded bg-black/50 p-0.5 text-white opacity-0 group-hover:opacity-100">
               <GripVertical className="h-3.5 w-3.5" />
             </span>

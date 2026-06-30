@@ -13,7 +13,7 @@ import {
   GalleryHorizontal, Flame, TrendingUp, Clock, Link, Layers3, Gift,
   Calendar, Ticket, Sun, AlarmClock, Award, Heart, ListChecks, BookOpen,
   Info, Target, SplitSquareHorizontal, Music, Facebook, ImageUp, AtSign,
-  SquareMousePointer, ChartNoAxesColumn, Bell, Columns3, Tabs, Columns1,
+  SquareMousePointer, ChartNoAxesColumn, Bell, Columns3,
   PanelRight, SquareSquare, GalleryHorizontalEnd, SlidersHorizontal,
   PackagePlus, Grid2x2, Columns, ChevronDown, ChevronRight,
 } from "lucide-react";
@@ -26,9 +26,11 @@ const iconMap: Record<string, any> = {
   GalleryHorizontal, Flame, TrendingUp, Clock, Link, Layers3, Gift,
   Calendar, Ticket, Sun, AlarmClock, Award, Heart, ListChecks, BookOpen,
   Info, Target, SplitSquareHorizontal, Music, Facebook, ImageUp, AtSign,
-  SquareMousePointer, ChartNoAxesColumn, Bell, Columns3, Tabs, Columns1,
+  SquareMousePointer, ChartNoAxesColumn, Bell, Columns3,
   PanelRight, SquareSquare, GalleryHorizontalEnd, SlidersHorizontal,
   PackagePlus, Grid2x2, Columns, ChevronDown, ChevronRight,
+  Tabs: Columns3,
+  Columns1: Columns,
 };
 
 function SectionIcon({ icon }: { icon: string }) {

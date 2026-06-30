@@ -1,4 +1,5 @@
 "use client";
+import { getProductImageUrl } from "@/lib/product-media";
 
 import Link from "next/link";
 import { SectionWrapper, ColumnGrid, SectionTitle, type SectionData } from "./section-renderer";
@@ -22,8 +23,8 @@ export function FeaturedProducts({ section }: { section: SectionData }) {
             <Link key={pr._id} href={`/products/${pr.slug}`}
               className="group rounded-xl border border-zinc-200 bg-white p-3 transition-all hover:shadow-md hover:-translate-y-0.5">
               <div className="mb-3 aspect-square overflow-hidden rounded-lg bg-zinc-50">
-                {pr.imageUrl ? (
-                  <img src={pr.imageUrl} alt={pr.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                {getProductImageUrl(pr) ? (
+                  <img src={getProductImageUrl(pr)} alt={pr.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 ) : (
                   <div className="flex h-full items-center justify-center text-zinc-300 text-xs">No Image</div>
                 )}

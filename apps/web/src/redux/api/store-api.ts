@@ -10,14 +10,47 @@ export type ThemeSettings = {
   navbarStyle: string;
 };
 
+export type PlanLimits = {
+  stores: number;
+  products: number;
+  orders?: number;
+  categories?: number;
+  staff: number;
+  storageGB?: number;
+  bandwidthGB: number;
+  domains?: number;
+  themes?: number;
+  builderPages?: number;
+  apiAccess?: boolean;
+  analytics?: boolean;
+  coupons?: boolean;
+  reviews?: boolean;
+  marketing?: boolean;
+  customCode?: boolean;
+};
+
 export type Plan = {
   _id: string;
   name: string;
   slug: string;
+  description?: string;
   priceBDT: number;
+  priceYearly?: number;
+  isCustomPrice?: boolean;
   trialDays: number;
   features: string[];
-  limits: { stores: number; products: number; staff: number; bandwidthGB: number };
+  limits: PlanLimits;
+  pricing?: {
+    monthly?: number;
+    quarterly?: number;
+    halfYearly?: number;
+    yearly?: number;
+    lifetime?: number;
+  };
+  customDomain?: boolean;
+  prioritySupport?: boolean;
+  sortOrder?: number;
+  visible?: boolean;
   isRecommended: boolean;
   isActive: boolean;
   createdAt: string;
@@ -106,8 +139,11 @@ export const storeApi = baseApi.injectEndpoints({
       query: (id) => ({ url: `/stores/${id}`, method: "DELETE" }),
       invalidatesTags: ["Stores"]
     }),
-    getPlans: builder.query<ApiEnvelope<{ plans: Plan[] }>, void>({
-      query: () => ({ url: "/plans" }),
+    getPlans: builder.query<ApiEnvelope<{ plans: Plan[] }>, { all?: boolean } | void>({
+      query: (params) => ({
+        url: "/plans",
+        params: params?.all ? { all: "true" } : undefined,
+      }),
       providesTags: ["Stores"]
     }),
     createPlan: builder.mutation<ApiEnvelope<{ plan: Plan }>, Omit<Plan, "_id" | "createdAt" | "updatedAt">>({
@@ -120,6 +156,10 @@ export const storeApi = baseApi.injectEndpoints({
     }),
     deletePlan: builder.mutation<ApiEnvelope<never>, string>({
       query: (id) => ({ url: `/plans/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Stores"]
+    }),
+    duplicatePlan: builder.mutation<ApiEnvelope<{ plan: Plan }>, string>({
+      query: (id) => ({ url: `/plans/${id}/duplicate`, method: "POST" }),
       invalidatesTags: ["Stores"]
     })
   })
@@ -136,5 +176,6 @@ export const {
   useGetPlansQuery,
   useCreatePlanMutation,
   useUpdatePlanMutation,
-  useDeletePlanMutation
+  useDeletePlanMutation,
+  useDuplicatePlanMutation
 } = storeApi;

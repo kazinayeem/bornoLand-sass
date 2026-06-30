@@ -1,4 +1,5 @@
 "use client";
+import { getProductImageUrl } from "@/lib/product-media";
 
 import { SectionWrapper, SectionTitle, type SectionData } from "./section-renderer";
 import { useTenant } from "@/providers/tenant-provider";
@@ -18,8 +19,8 @@ export function ProductSlider({ section }: { section: SectionData }) {
           {display.map((pr) => (
             <div key={pr._id} className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm hover:shadow-md transition-all">
               <div className="aspect-square mb-3 overflow-hidden rounded-lg bg-zinc-50">
-                {pr.imageUrl ? (
-                  <img src={pr.imageUrl} alt={pr.name} className="h-full w-full object-cover" />
+                {getProductImageUrl(pr) ? (
+                  <img src={getProductImageUrl(pr)} alt={pr.name} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full items-center justify-center text-zinc-300 text-xs">No Image</div>
                 )}

@@ -6,6 +6,11 @@ export type Category = {
   name: string;
   slug: string;
   imageUrl: string;
+  imageId?: string | null;
+  bannerUrl?: string;
+  bannerId?: string | null;
+  iconUrl?: string;
+  iconId?: string | null;
   description: string;
   parentId: string | null;
   active: boolean;
@@ -26,6 +31,11 @@ type CreateCategoryPayload = {
   name: string;
   slug: string;
   imageUrl?: string;
+  imageId?: string | null;
+  bannerUrl?: string;
+  bannerId?: string | null;
+  iconUrl?: string;
+  iconId?: string | null;
   description?: string;
   parentId?: string | null;
   active?: boolean;
@@ -38,6 +48,11 @@ type UpdateCategoryPayload = {
   name?: string;
   slug?: string;
   imageUrl?: string;
+  imageId?: string | null;
+  bannerUrl?: string;
+  bannerId?: string | null;
+  iconUrl?: string;
+  iconId?: string | null;
   description?: string;
   parentId?: string | null;
   active?: boolean;

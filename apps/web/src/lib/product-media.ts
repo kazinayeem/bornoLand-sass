@@ -1,3 +1,5 @@
+import { resolveMediaUrl } from "@/lib/resolve-media-url";
+
 export type ProductMediaLike = {
   imageUrl?: string;
   thumbnailUrl?: string;
@@ -6,11 +8,14 @@ export type ProductMediaLike = {
 };
 
 export function getProductImageUrl(product: ProductMediaLike) {
-  return product.imageUrl ?? product.thumbnailUrl ?? product.galleryImageUrls?.[0] ?? product.images?.[0] ?? "";
+  return resolveMediaUrl(
+    product.imageUrl ?? product.thumbnailUrl ?? product.galleryImageUrls?.[0] ?? product.images?.[0] ?? ""
+  );
 }
 
 export function getProductGalleryUrls(product: ProductMediaLike) {
   return [product.imageUrl, product.thumbnailUrl, ...(product.galleryImageUrls ?? []), ...(product.images ?? [])]
     .filter((value): value is string => Boolean(value))
-    .filter((value, index, array) => array.indexOf(value) === index);
+    .map((value) => resolveMediaUrl(value))
+    .filter((value, index, array) => value && array.indexOf(value) === index);
 }

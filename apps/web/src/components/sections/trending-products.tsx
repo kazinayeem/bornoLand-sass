@@ -1,4 +1,5 @@
 "use client";
+import { getProductImageUrl } from "@/lib/product-media";
 
 import Link from "next/link";
 import { Flame } from "lucide-react";
@@ -23,8 +24,8 @@ export function TrendingProducts({ section }: { section: SectionData }) {
             <Link key={pr._id} href={`/products/${pr.slug}`}
               className="group rounded-xl border border-zinc-200 bg-white p-3 transition-all hover:shadow-md hover:-translate-y-0.5">
               <div className="mb-3 relative aspect-square overflow-hidden rounded-lg bg-zinc-50">
-                {pr.imageUrl ? (
-                  <img src={pr.imageUrl} alt={pr.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
+                {getProductImageUrl(pr) ? (
+                  <img src={getProductImageUrl(pr)} alt={pr.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
                 ) : (
                   <div className="flex h-full items-center justify-center text-zinc-300">No Image</div>
                 )}

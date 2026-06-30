@@ -5,10 +5,13 @@ export type PlatformPaymentMethod = {
   type: "bkash" | "nagad" | "rocket" | "bank";
   label: string;
   accountNumber: string;
+  merchantNumber?: string;
+  personalNumber?: string;
   accountName?: string;
   bankName?: string;
   branchName?: string;
   instructions?: string;
+  qrCodeUrl?: string;
   enabled: boolean;
   sortOrder: number;
 };
@@ -17,7 +20,9 @@ export type SubscriptionPayment = {
   _id: string;
   storeId: string | { _id: string; name: string; slug: string; subdomain?: string };
   userId: string | { _id: string; name: string; email: string };
+  tenantId?: string | { _id: string; name: string; slug: string };
   planId: string | { _id: string; name: string; slug: string; priceBDT: number };
+  duration?: "monthly" | "quarterly" | "half_yearly" | "yearly" | "lifetime";
   amount: number;
   currency: string;
   paymentMethod: string;
@@ -37,6 +42,7 @@ type ApiEnvelope<T> = { success?: boolean; data?: T; message?: string };
 type SubmitPaymentRequest = {
   storeId: string;
   planId: string;
+  duration?: "monthly" | "quarterly" | "half_yearly" | "yearly" | "lifetime";
   amount: number;
   paymentMethod: "bkash" | "nagad" | "rocket" | "bank";
   senderNumber: string;

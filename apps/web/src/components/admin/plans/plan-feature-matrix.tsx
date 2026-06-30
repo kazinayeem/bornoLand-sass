@@ -1,0 +1,133 @@
+"use client";
+
+import { useMemo } from "react";
+import {
+  useGetAdminFeaturesQuery,
+  useGetPlanFeatureAssignmentsQuery,
+  normalizeFeatureType,
+  type PlanFeatureAssignment,
+} from "@/redux/api/feature-api";
+import type { Plan } from "@/redux/api/store-api";
+
+const COMPARISON_KEYS = [
+  "products",
+  "storage",
+  "product_variants",
+  "coupons",
+  "analytics",
+  "seo",
+  "custom_domain",
+  "domains",
+  "media",
+  "orders",
+  "staff",
+  "bandwidth",
+  "api",
+  "ai",
+  "marketing",
+  "cms",
+  "builder",
+];
+
+const COMPARISON_LABELS: Record<string, string> = {
+  products: "Products",
+  storage: "Storage",
+  product_variants: "Variants",
+  coupons: "Coupons",
+  analytics: "Analytics",
+  seo: "SEO",
+  custom_domain: "Domains",
+  domains: "Custom domains",
+  media: "Media",
+  orders: "Orders",
+  staff: "Staff",
+  bandwidth: "Bandwidth",
+  api: "API",
+  ai: "AI",
+  marketing: "Marketing",
+  cms: "CMS",
+  builder: "Builder",
+};
+
+function formatCell(feature: PlanFeatureAssignment | undefined) {
+  if (!feature) return "—";
+  const type = normalizeFeatureType(feature.type);
+  if (type === "boolean") return feature.enabled ? "Yes" : "No";
+  if (type === "tier") {
+    const tier = feature.tierKey ?? feature.value ?? "disabled";
+    if (tier === "disabled" || tier === "none") return "No";
+    return tier.charAt(0).toUpperCase() + tier.slice(1);
+  }
+  if (!feature.enabled && (feature.limit ?? 0) <= 0) return "No";
+  if ((feature.limit ?? 0) === 0) return "Unlimited";
+  const unit = feature.limitMeta?.unit ?? "";
+  if (feature.featureKey === "storage" && unit === "GB") {
+    const gb = feature.limit;
+    if (gb < 1) return `${Math.round(gb * 1024)} MB`;
+    return `${gb} GB`;
+  }
+  return `${feature.limit}${unit ? ` ${unit}` : ""}`;
+}
+
+
+export function PlanFeatureMatrix({ plans }: { plans: Plan[] }) {
+  const { data: featuresData } = useGetAdminFeaturesQuery();
+  const activePlans = plans.filter((p) => p.isActive).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  const featureCount = featuresData?.data?.features?.length ?? 0;
+
+  if (activePlans.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-12 text-center text-sm text-zinc-500">
+        No active plans to compare.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+      <div className="border-b border-zinc-100 px-5 py-4">
+        <h3 className="text-lg font-semibold text-zinc-900">Plan comparison</h3>
+        <p className="text-sm text-zinc-500">
+          Dynamically generated from plan features · {activePlans.length} plans · {featureCount} features
+        </p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="border-b border-zinc-100 bg-zinc-50/80 text-left text-xs uppercase tracking-wide text-zinc-500">
+              <th className="sticky left-0 z-10 bg-zinc-50/95 px-5 py-3 font-semibold">Feature</th>
+              {activePlans.map((plan) => (
+                <th key={plan._id} className="px-4 py-3 text-center font-semibold">
+                  <div>{plan.name}</div>
+                  {plan.isRecommended && (
+                    <span className="mt-1 inline-block rounded-full bg-blue-50 px-2 py-0.5 text-[10px] text-blue-600">
+                      Popular
+                    </span>
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {COMPARISON_KEYS.map((key) => (
+              <tr key={key} className="border-b border-zinc-50 hover:bg-zinc-50/50">
+                <td className="sticky left-0 z-10 bg-white px-5 py-3 font-medium text-zinc-800">
+                  {COMPARISON_LABELS[key] ?? key}
+                </td>
+                {activePlans.map((plan) => (
+                  <PlanMatrixCell key={`${plan._id}-${key}`} planId={plan._id} featureKey={key} />
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function PlanMatrixCell({ planId, featureKey }: { planId: string; featureKey: string }) {
+  const { data } = useGetPlanFeatureAssignmentsQuery(planId);
+  const feature = data?.data?.features?.find((f) => f.featureKey === featureKey);
+  return <td className="px-4 py-3 text-center text-sm text-zinc-700">{formatCell(feature)}</td>;
+}

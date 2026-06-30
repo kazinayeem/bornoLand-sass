@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import dynamic from "next/dynamic";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
 import { ShoppingCart, Star, Heart, Eye } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
@@ -11,10 +11,15 @@ import { addToCart } from "@/redux/slices/cart-slice";
 import { toggleWishlist } from "@/redux/slices/wishlist-slice";
 import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { useTenant } from "@/providers/tenant-provider";
-import { QuickViewModal } from "./quick-view-modal";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/format-currency";
 import { getProductImageUrl } from "@/lib/product-media";
+import { SmartImage } from "@/components/ui/smart-image";
+
+const QuickViewModal = dynamic(
+  () => import("./quick-view-modal").then((module) => module.QuickViewModal),
+  { loading: () => null }
+);
 
 type ProductCardProps = {
   product: {
@@ -37,8 +42,10 @@ export function ProductCard({ product }: ProductCardProps) {
     : product.category;
   const [addToCartRemote] = useAddToCartMutation();
   const [quickViewOpen, setQuickViewOpen] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
   const isDark = darkMode;
   const isOutOfStock = product.stock <= 0;
+  const imageUrl = useMemo(() => getProductImageUrl(product), [product]);
 
   const discount = product.comparePrice && product.comparePrice > product.price
     ? Math.round((1 - product.price / product.comparePrice) * 100) : 0;
@@ -88,11 +95,20 @@ export function ProductCard({ product }: ProductCardProps) {
           backgroundColor: isDark ? "#18181b" : "#ffffff"
         }}>
         <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: isDark ? "#09090b" : "#f4f4f5" }}>
-          {getProductImageUrl(product) ? (
-            <Image src={getProductImageUrl(product)} alt={product.name}
-              fill className="object-cover transition-transform duration-500 group-hover:scale-105"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              priority={false} />
+          {imageUrl && !imageFailed ? (
+            <SmartImage
+              src={imageUrl}
+              alt={product.name}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={() => setImageFailed(true)}
+              fallback={
+                <div className="flex h-full items-center justify-center">
+                  <ShoppingCart className="h-12 w-12" style={{ color: `${primaryColor}30` }} />
+                </div>
+              }
+            />
           ) : (
             <div className="flex h-full items-center justify-center">
               <ShoppingCart className="h-12 w-12" style={{ color: `${primaryColor}30` }} />

@@ -1,32 +1,18 @@
 import { notFound } from "next/navigation";
 import { StorefrontFrame } from "@/components/storefront/storefront-frame";
 import { type ThemeData, type ProductData, type CategoryData, type StoreData, type StoreSettingsData, type HomepageSliderData } from "@/providers/tenant-provider";
-
-type SiteData = {
-  store: StoreData | null;
-  tenant: Record<string, unknown> | null;
-  page: Record<string, unknown> | null;
-  products: ProductData[];
-  categories?: CategoryData[];
-  settings?: StoreSettingsData | null;
-  sliders?: HomepageSliderData[];
-};
-
-async function fetchTenantSite(slug: string): Promise<SiteData | null> {
-  try {
-    const apiUrl = process.env.API_URL ?? "http://localhost:4000";
-    const res = await fetch(`${apiUrl}/public/tenant/${slug}`, { cache: "no-store" });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data ?? null;
-  } catch {
-    return null;
-  }
-}
+import { fetchTenantSite } from "@/lib/server/tenant-site";
 
 export default async function TenantLayout({ params, children }: { params: Promise<{ tenant: string }>; children: React.ReactNode }) {
   const { tenant: slug } = await params;
-  const data = await fetchTenantSite(slug);
+  const data = (await fetchTenantSite(slug)) as {
+    store: StoreData | null;
+    page: Record<string, unknown> | null;
+    products: ProductData[];
+    categories?: CategoryData[];
+    settings?: StoreSettingsData | null;
+    sliders?: HomepageSliderData[];
+  } | null;
   if (!data?.store) notFound();
 
   const { store, products, settings, sliders } = data;

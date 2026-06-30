@@ -11,6 +11,7 @@ import {
   ResponsiveContainer, AreaChart, Area
 } from "recharts";
 import { formatCurrency } from "@/lib/format-currency";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "#f59e0b",
@@ -84,20 +85,10 @@ export default function AdminAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Analytics</h2>
-          <p className="mt-1 text-sm text-zinc-500">Detailed platform analytics and metrics.</p>
-        </div>
-        <div className="hidden items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2 sm:flex">
-          <Activity className="h-4 w-4 text-emerald-500" />
-          <span className="text-sm font-medium text-zinc-700">Live data</span>
-        </div>
-      </motion.div>
+      <AdminPageHeader
+        title="Analytics"
+        description="Revenue, growth, subscriptions, and storage trends."
+      />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {statItems.map((item, i) => (

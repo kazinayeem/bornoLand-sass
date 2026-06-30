@@ -5,7 +5,6 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Plus, RefreshCw, Store, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useDispatch } from "react-redux";
 import { PageHeader } from "@/components/workspace/page-header";
 import { StoreCard } from "@/components/dashboard/stores/store-card";
 import { StoreDrawer } from "@/components/dashboard/stores/store-drawer";
@@ -16,12 +15,9 @@ import {
   type Store as StoreType,
 } from "@/redux/api/store-api";
 import { useGetTemplatesQuery } from "@/redux/api/template-api";
-import { setStores } from "@/redux/slices/stores-slice";
-import { setPlans as setPlansSlice } from "@/redux/slices/plan-slice";
 import { resolveStoreStatus } from "@/lib/store-status";
 
 export default function StoresPage() {
-  const dispatch = useDispatch();
   const { data, isLoading, refetch } = useGetMyStoresQuery();
   const { data: plansData } = useGetPlansQuery();
   const { data: templatesData } = useGetTemplatesQuery();
@@ -40,14 +36,6 @@ export default function StoresPage() {
   const [confirmName, setConfirmName] = useState("");
   const [workspaceStore, setWorkspaceStore] = useState<StoreType | null>(null);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
-
-  useEffect(() => {
-    dispatch(setStores(stores));
-  }, [dispatch, stores]);
-
-  useEffect(() => {
-    dispatch(setPlansSlice(plans));
-  }, [dispatch, plans]);
 
   const requestDelete = (s: StoreType) => {
     setDeleteTarget(s);

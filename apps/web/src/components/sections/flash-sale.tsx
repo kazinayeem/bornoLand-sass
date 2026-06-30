@@ -1,4 +1,5 @@
 "use client";
+import { getProductImageUrl } from "@/lib/product-media";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -54,8 +55,8 @@ export function FlashSale({ section }: { section: SectionData }) {
               <Link key={pr._id} href={`/products/${pr.slug}`}
                 className="group relative rounded-xl border-2 border-red-100 bg-white p-3 transition-all hover:shadow-lg hover:-translate-y-0.5">
                 <div className="mb-3 aspect-square overflow-hidden rounded-lg bg-zinc-50">
-                  {pr.imageUrl ? (
-                    <img src={pr.imageUrl} alt={pr.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
+                  {getProductImageUrl(pr) ? (
+                    <img src={getProductImageUrl(pr)} alt={pr.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
                   ) : (
                     <div className="flex h-full items-center justify-center text-zinc-300 text-xs">No Image</div>
                   )}

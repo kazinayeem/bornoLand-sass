@@ -7,31 +7,28 @@ import { SubscriptionModel } from "../models/subscription.model.js";
 import { TenantModel } from "../models/tenant.model.js";
 import { UserModel } from "../models/user.model.js";
 import { seedTemplates } from "./templates.js";
-
-async function upsertUser(email: string, data: Record<string, unknown>) {
-  const existing = await UserModel.findOne({ email });
-  if (existing) {
-    await UserModel.updateOne({ email }, { $set: data });
-    return UserModel.findOne({ email });
-  }
-
-  return UserModel.create(data);
-}
+import { runSafeMigration } from "../bootstrap/safe-migrate.js";
 
 export async function seedDatabase() {
   await connectDatabase();
 
-  const superAdminPassword = await bcrypt.hash("Admin@123", 12);
-  const demoUserPassword = await bcrypt.hash("Demo@123", 12);
+  // Safe platform defaults — never overwrites existing production data
+  await runSafeMigration();
 
-  const superAdmin = await upsertUser("admin@bornoland.com", {
-    name: "Super Admin",
-    email: "admin@bornoland.com",
-    passwordHash: superAdminPassword,
-    role: "super_admin",
-    status: "active",
-    rememberMe: true
-  });
+  const superAdminCount = await UserModel.countDocuments({ role: "super_admin" });
+  if (superAdminCount === 0) {
+    const email = process.env.DEFAULT_SUPER_ADMIN_EMAIL ?? "admin@bornoland.com";
+    const password = process.env.DEFAULT_SUPER_ADMIN_PASSWORD ?? "Admin@123";
+    const passwordHash = await bcrypt.hash(password, 12);
+    await UserModel.create({
+      name: "Super Admin",
+      email,
+      passwordHash,
+      role: "super_admin",
+      status: "active",
+      rememberMe: true,
+    });
+  }
 
   const demoTenant =
     (await TenantModel.findOne({ slug: "demo" })) ||
@@ -39,47 +36,52 @@ export async function seedDatabase() {
       name: "Demo Tenant",
       slug: "demo",
       subdomain: "demo",
-      plan: "growth",
-      status: "active"
+      plan: "free",
+      status: "active",
     }));
 
-  const demoUser = await upsertUser("demo@bornoland.com", {
-    name: "Demo User",
-    email: "demo@bornoland.com",
-    passwordHash: demoUserPassword,
-    role: "admin",
-    tenantId: demoTenant._id,
-    status: "active",
-    rememberMe: true
-  });
+  const demoUser = await UserModel.findOne({ email: "demo@bornoland.com" });
+  if (!demoUser) {
+    const demoUserPassword = await bcrypt.hash("Demo@123", 12);
+    const created = await UserModel.create({
+      name: "Demo User",
+      email: "demo@bornoland.com",
+      passwordHash: demoUserPassword,
+      role: "admin",
+      tenantId: demoTenant._id,
+      status: "active",
+      rememberMe: true,
+    });
 
-  await TeamMemberModel.updateOne(
-    { tenantId: demoTenant._id, userId: demoUser._id },
-    { $setOnInsert: { role: "admin", status: "active", invitedAt: new Date(), acceptedAt: new Date() } },
-    { upsert: true }
-  );
+    await TeamMemberModel.updateOne(
+      { tenantId: demoTenant._id, userId: created._id },
+      { $setOnInsert: { role: "admin", status: "active", invitedAt: new Date(), acceptedAt: new Date() } },
+      { upsert: true }
+    );
+  }
 
   await SubscriptionModel.updateOne(
     { tenantId: demoTenant._id },
-    { $setOnInsert: { provider: "stripe", plan: "growth", status: "active" } },
+    { $setOnInsert: { provider: "manual", plan: "free", status: "active" } },
     { upsert: true }
   );
 
+  const superAdmin = await UserModel.findOne({ role: "super_admin" });
   await AuditLogModel.updateOne(
     { action: "seed_completed", entityType: "System" },
     {
       $setOnInsert: {
-        actorId: superAdmin!._id,
+        actorId: superAdmin?._id,
         tenantId: demoTenant._id,
         action: "seed_completed",
         entityType: "System",
-        metadata: { seedRunId: randomBytes(8).toString("hex") }
-      }
+        metadata: { seedRunId: randomBytes(8).toString("hex") },
+      },
     },
     { upsert: true }
   );
 
   await seedTemplates();
 
-  console.log("Seed complete: super admin, demo tenant, demo user, templates");
+  console.log("Seed complete: safe migration, demo tenant (if missing), templates");
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useGetPlansQuery } from "@/redux/api/store-api";
@@ -9,30 +9,75 @@ import {
   useGetStoreSubscriptionPaymentsQuery,
   useSubmitSubscriptionPaymentMutation,
 } from "@/redux/api/subscription-payment-api";
-import type { Store } from "@/redux/api/store-api";
+import { useGetBillingConfigQuery, useGetStoreSubscriptionQuery, type SubscriptionDuration } from "@/redux/api/billing-api";
+import type { Store, Plan } from "@/redux/api/store-api";
 import { formatBDT, resolveStoreStatus } from "@/lib/store-status";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+const DURATION_LABELS: Record<SubscriptionDuration, string> = {
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  half_yearly: "Half Yearly",
+  yearly: "Yearly",
+  lifetime: "Lifetime",
+};
+
+function getPlanAmount(plan: Plan, duration: SubscriptionDuration): number {
+  const pricing = plan.pricing ?? {};
+  if (duration === "monthly") return pricing.monthly ?? plan.priceBDT;
+  if (duration === "quarterly") return pricing.quarterly ?? plan.priceBDT * 3;
+  if (duration === "half_yearly") return pricing.halfYearly ?? plan.priceBDT * 6;
+  if (duration === "yearly") return pricing.yearly ?? plan.priceYearly ?? plan.priceBDT * 12;
+  return pricing.lifetime ?? 0;
+}
 
 export function StoreSubscriptionBilling({ store }: { store: Store }) {
   const { data: plansData } = useGetPlansQuery();
   const { data: methodsData } = useGetPlatformPaymentMethodsQuery();
   const { data: paymentsData, isLoading: paymentsLoading } = useGetStoreSubscriptionPaymentsQuery(store._id);
+  const { data: billingConfigData } = useGetBillingConfigQuery();
+  const { data: subscriptionData } = useGetStoreSubscriptionQuery(store._id);
   const [submitPayment, { isLoading: submitting }] = useSubmitSubscriptionPaymentMutation();
 
   const plans = plansData?.data?.plans ?? [];
   const methods = methodsData?.data?.methods ?? [];
   const payments = paymentsData?.data?.payments ?? [];
+  const billingConfig = billingConfigData?.data;
+  const subscription = subscriptionData?.data?.subscription;
+  const remainingDays = subscriptionData?.data?.remainingDays;
+
+  const enabledDurations = useMemo(() => {
+    const config = billingConfig?.enabledDurations ?? {
+      monthly: true,
+      quarterly: true,
+      halfYearly: true,
+      yearly: true,
+      lifetime: false,
+    };
+    return (Object.keys(DURATION_LABELS) as SubscriptionDuration[]).filter((d) => {
+      const key = d === "half_yearly" ? "halfYearly" : d;
+      return config[key] !== false;
+    });
+  }, [billingConfig]);
 
   const [selectedPlanId, setSelectedPlanId] = useState(plans.find((p) => p.slug === store.plan)?._id ?? plans[0]?._id ?? "");
+  const [duration, setDuration] = useState<SubscriptionDuration>("monthly");
   const [paymentMethod, setPaymentMethod] = useState<"bkash" | "nagad" | "rocket" | "bank">("bkash");
   const [senderNumber, setSenderNumber] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const [notes, setNotes] = useState("");
 
+  useEffect(() => {
+    if (enabledDurations.length > 0 && !enabledDurations.includes(duration)) {
+      setDuration(enabledDurations[0]);
+    }
+  }, [enabledDurations, duration]);
+
   const selectedPlan = plans.find((p) => p._id === selectedPlanId);
   const selectedMethod = methods.find((m) => m.type === paymentMethod);
   const status = resolveStoreStatus(store);
+  const paymentAmount = selectedPlan ? getPlanAmount(selectedPlan, duration) : 0;
 
   const currentPlan = useMemo(
     () => plans.find((p) => p.slug === store.plan) ?? plans[0],
@@ -45,7 +90,8 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
       await submitPayment({
         storeId: store._id,
         planId: selectedPlan._id,
-        amount: selectedPlan.priceBDT,
+        duration,
+        amount: paymentAmount,
         paymentMethod,
         senderNumber,
         transactionId,
@@ -74,7 +120,17 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
         <CardContent className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-2xl font-semibold text-zinc-900">{currentPlan?.name ?? store.plan}</p>
-            <p className="text-sm text-zinc-500">{formatBDT(currentPlan?.priceBDT ?? 0)} / month</p>
+            <p className="text-sm text-zinc-500">
+              {currentPlan?.isCustomPrice ? "Custom pricing" : `${formatBDT(currentPlan?.priceBDT ?? 0)} / month`}
+            </p>
+            {remainingDays !== null && remainingDays !== undefined && (
+              <p className="mt-1 text-xs text-zinc-500">{remainingDays} day(s) remaining</p>
+            )}
+            {subscription?.expireDate && (
+              <p className="text-xs text-zinc-400">
+                Expires {new Date(subscription.expireDate).toLocaleDateString()}
+              </p>
+            )}
           </div>
           <Badge variant={status === "active" || status === "trial" ? "success" : "warning"}>
             {status.replace("_", " ")}
@@ -85,11 +141,11 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
       <Card>
         <CardHeader>
           <CardTitle>Upgrade Plan</CardTitle>
-          <CardDescription>Choose a plan and pay manually via bKash, Nagad, Rocket, or bank transfer.</CardDescription>
+          <CardDescription>Choose a plan, duration, and pay manually via bKash, Nagad, Rocket, or bank transfer.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {plans.map((plan) => (
+            {plans.filter((p) => p.visible !== false).map((plan) => (
               <button
                 key={plan._id}
                 type="button"
@@ -99,10 +155,37 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
                 }`}
               >
                 <p className="font-semibold text-zinc-900">{plan.name}</p>
-                <p className="mt-1 text-lg font-bold">{formatBDT(plan.priceBDT)}</p>
+                <p className="mt-1 text-lg font-bold">
+                  {plan.isCustomPrice ? "Custom" : formatBDT(plan.priceBDT)}
+                </p>
               </button>
             ))}
           </div>
+
+          {enabledDurations.length > 0 && (
+            <div>
+              <p className="mb-2 text-sm font-medium text-zinc-700">Billing Duration</p>
+              <div className="flex flex-wrap gap-2">
+                {enabledDurations.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setDuration(d)}
+                    className={`rounded-lg border px-3 py-2 text-sm ${
+                      duration === d ? "border-zinc-900 bg-zinc-50 font-medium" : "border-zinc-200"
+                    }`}
+                  >
+                    {DURATION_LABELS[d]}
+                  </button>
+                ))}
+              </div>
+              {selectedPlan && !selectedPlan.isCustomPrice && (
+                <p className="mt-2 text-sm text-zinc-600">
+                  Total: <span className="font-semibold text-zinc-900">{formatBDT(paymentAmount)}</span>
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {methods.map((method) => (
@@ -123,7 +206,22 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
             <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm">
               <p className="font-medium text-zinc-900">Send payment to</p>
               <p className="mt-1 text-lg font-bold tracking-wide text-zinc-900">{selectedMethod.accountNumber}</p>
+              {selectedMethod.merchantNumber && (
+                <p className="text-zinc-600">Merchant: {selectedMethod.merchantNumber}</p>
+              )}
+              {selectedMethod.personalNumber && (
+                <p className="text-zinc-600">Personal: {selectedMethod.personalNumber}</p>
+              )}
               {selectedMethod.accountName && <p className="text-zinc-600">{selectedMethod.accountName}</p>}
+              {selectedMethod.bankName && (
+                <p className="text-zinc-600">
+                  {selectedMethod.bankName}
+                  {selectedMethod.branchName ? ` · ${selectedMethod.branchName}` : ""}
+                </p>
+              )}
+              {selectedMethod.qrCodeUrl && (
+                <img src={selectedMethod.qrCodeUrl} alt="QR Code" className="mt-3 h-32 w-32 rounded-lg border" />
+              )}
               {selectedMethod.instructions && <p className="mt-2 text-zinc-500">{selectedMethod.instructions}</p>}
             </div>
           )}
@@ -160,7 +258,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={submitting || !senderNumber || !transactionId || !selectedPlan}
+            disabled={submitting || !senderNumber || !transactionId || !selectedPlan || (paymentAmount <= 0 && !selectedPlan.isCustomPrice)}
             className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -190,6 +288,9 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
                   <div>
                     <p className="text-sm font-medium text-zinc-900">
                       {typeof payment.planId === "object" ? payment.planId.name : "Plan"} · {formatBDT(payment.amount)}
+                      {payment.duration && (
+                        <span className="ml-1 text-xs text-zinc-500">({payment.duration.replace("_", " ")})</span>
+                      )}
                     </p>
                     <p className="text-xs text-zinc-500">
                       {payment.paymentMethod} · {payment.transactionId}

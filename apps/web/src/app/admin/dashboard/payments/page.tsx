@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { useGetAdminPaymentsQuery } from "@/redux/api/admin-api";
 import { useGetPlansQuery } from "@/redux/api/store-api";
@@ -9,107 +10,56 @@ import {
   useApproveSubscriptionPaymentMutation,
   useRejectSubscriptionPaymentMutation,
 } from "@/redux/api/subscription-payment-api";
-import { CreditCard, DollarSign, AlertTriangle, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { CreditCard, DollarSign, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/format-currency";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { toast } from "sonner";
+import { AdminPlatformPaymentMethodsPanel } from "@/components/admin/platform-payment-methods-panel";
+import { useRunBillingCronMutation } from "@/redux/api/billing-api";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminTabs } from "@/components/admin/admin-tabs";
 
 export default function AdminPaymentsPage() {
+  const [tab, setTab] = useState("overview");
   const { data, isLoading } = useGetAdminPaymentsQuery();
   const { data: plansData } = useGetPlansQuery();
   const { data: pendingData, isLoading: pendingLoading } = useGetAdminSubscriptionPaymentsQuery({ status: "pending" });
+  const { data: allPaymentsData, isLoading: historyLoading } = useGetAdminSubscriptionPaymentsQuery({});
   const [approvePayment, { isLoading: approving }] = useApproveSubscriptionPaymentMutation();
   const [rejectPayment, { isLoading: rejecting }] = useRejectSubscriptionPaymentMutation();
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [runCron, { isLoading: runningCron }] = useRunBillingCronMutation();
 
   const subscriptions = data?.data?.subscriptions ?? [];
   const pendingPayments = pendingData?.data?.payments ?? [];
+  const allPayments = allPaymentsData?.data?.payments ?? [];
   const totals = data?.data?.totals;
   const plans = plansData?.data?.plans ?? [];
-
   const activeSubscriptions = subscriptions.filter((s) => s.status === "active").length;
-
-  if (isLoading) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
-
-  const summaryCards = [
-    {
-      icon: DollarSign,
-      label: "All-Time Revenue",
-      value: totals ? formatCurrency(totals.allTimeRevenue) : "—",
-      sub: null,
-      color: "text-emerald-600 bg-emerald-50"
-    },
-    {
-      icon: CheckCircle,
-      label: "Paid Orders",
-      value: totals ? formatCurrency(totals.paid.total) : "—",
-      sub: totals ? `${totals.paid.count} orders` : null,
-      color: "text-blue-600 bg-blue-50"
-    },
-    {
-      icon: Clock,
-      label: "Pending Payments",
-      value: totals ? formatCurrency(totals.pending.total) : "—",
-      sub: totals ? `${totals.pending.count} pending` : null,
-      color: "text-amber-600 bg-amber-50"
-    },
-    {
-      icon: CreditCard,
-      label: "Active Subscriptions",
-      value: activeSubscriptions,
-      sub: `${subscriptions.length} total`,
-      color: "text-purple-600 bg-purple-50"
-    }
-  ];
 
   const getPlanName = (plan: unknown) => {
     if (typeof plan === "string") return plan;
     if (plan && typeof plan === "object") {
       const p = plan as Record<string, unknown>;
       if (p.name) return String(p.name);
-      if (p.planId) return String(p.planId);
     }
     return "—";
   };
 
   const formatDate = (date: unknown) => {
     if (!date) return "—";
-    try {
-      return new Date(String(date)).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric"
-      });
-    } catch {
-      return "—";
-    }
-  };
-
-  const formatPeriod = (start: unknown, end: unknown) => {
-    if (!start || !end) return "—";
-    return `${formatDate(start)} — ${formatDate(end)}`;
-  };
-
-  const getTenantName = (sub: Record<string, unknown>) => {
-    const tenantId = sub.tenantId;
-    if (tenantId && typeof tenantId === "object") {
-      const t = tenantId as Record<string, unknown>;
-      return String(t.name ?? t.slug ?? "—");
-    }
-    return "—";
+    return new Date(String(date)).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   const handleApprove = async (id: string) => {
     try {
       await approvePayment(id).unwrap();
-      toast.success("Payment approved and subscription activated");
+      toast.success("Payment approved");
     } catch {
       toast.error("Failed to approve payment");
     }
@@ -127,104 +77,197 @@ export default function AdminPaymentsPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  const summaryCards = [
+    { icon: DollarSign, label: "All-time revenue", value: totals ? formatCurrency(totals.allTimeRevenue) : "—", sub: null },
+    { icon: CheckCircle, label: "Paid orders", value: totals ? formatCurrency(totals.paid.total) : "—", sub: totals ? `${totals.paid.count} orders` : null },
+    { icon: Clock, label: "Pending", value: totals ? formatCurrency(totals.pending.total) : "—", sub: `${pendingPayments.length} awaiting review` },
+    { icon: CreditCard, label: "Active subs", value: activeSubscriptions, sub: `${subscriptions.length} total` },
+  ];
+
   return (
     <div className="space-y-6">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Payments</h2>
-        <p className="mt-1 text-sm text-zinc-500">{subscriptions.length} subscriptions on the platform</p>
-      </motion.div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {summaryCards.map((card, i) => (
-          <motion.div
-            key={card.label}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="rounded-2xl border border-zinc-200 bg-white p-5 transition-shadow hover:shadow-sm"
+      <AdminPageHeader
+        title="Payments"
+        description="Revenue, subscription payments, and platform payment methods."
+        actions={
+          <Link
+            href="/admin/dashboard/subscriptions"
+            className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
           >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-zinc-500">{card.label}</p>
-              <div className={`rounded-xl p-2 ${card.color}`}>
-                <card.icon className="h-4 w-4" />
-              </div>
-            </div>
-            <p className="mt-3 text-2xl font-bold tracking-tight text-zinc-900">{card.value}</p>
-            {card.sub && <p className="mt-0.5 text-xs text-zinc-500">{card.sub}</p>}
-          </motion.div>
-        ))}
-      </div>
+            View subscriptions
+          </Link>
+        }
+      />
 
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-        <h3 className="mb-4 text-lg font-semibold text-zinc-900">Pending Subscription Payments</h3>
+      <AdminTabs
+        tabs={[
+          { id: "overview", label: "Overview" },
+          { id: "pending", label: "Pending", count: pendingPayments.length },
+          { id: "history", label: "History", count: allPayments.length },
+          { id: "methods", label: "Payment methods" },
+        ]}
+        active={tab}
+        onChange={setTab}
+      />
+
+      {(tab === "overview" || tab === "pending") && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {summaryCards.map((card, i) => (
+            <motion.div
+              key={card.label}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="rounded-2xl border border-zinc-200 bg-white p-5"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-zinc-500">{card.label}</p>
+                <card.icon className="h-4 w-4 text-blue-600" />
+              </div>
+              <p className="mt-3 text-2xl font-bold text-zinc-900">{card.value}</p>
+              {card.sub && <p className="mt-0.5 text-xs text-zinc-500">{card.sub}</p>}
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {(tab === "overview" || tab === "pending") && (
         <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+          <div className="border-b border-zinc-100 px-5 py-4">
+            <h3 className="font-semibold text-zinc-900">Pending subscription payments</h3>
+          </div>
           {pendingLoading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-zinc-100 bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                    <th className="px-4 py-3">Store</th>
-                    <th className="px-4 py-3">User</th>
-                    <th className="px-4 py-3">Plan</th>
-                    <th className="px-4 py-3">Amount</th>
-                    <th className="px-4 py-3">Method</th>
-                    <th className="px-4 py-3">Txn ID</th>
-                    <th className="px-4 py-3">Actions</th>
+            <table className="min-w-full text-sm">
+              <thead className="bg-zinc-50 text-left text-xs uppercase text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3">Store</th>
+                  <th className="px-4 py-3">User</th>
+                  <th className="px-4 py-3">Plan</th>
+                  <th className="px-4 py-3">Amount</th>
+                  <th className="px-4 py-3">Method</th>
+                  <th className="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingPayments.map((payment) => (
+                  <tr key={payment._id} className="border-t border-zinc-100">
+                    <td className="px-4 py-3 font-medium">
+                      {typeof payment.storeId === "object" ? payment.storeId.name : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-600">
+                      {typeof payment.userId === "object" ? payment.userId.email : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {typeof payment.planId === "object" ? payment.planId.name : "—"}
+                    </td>
+                    <td className="px-4 py-3 font-medium">{formatCurrency(payment.amount)}</td>
+                    <td className="px-4 py-3 capitalize">{payment.paymentMethod}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          disabled={approving}
+                          onClick={() => handleApprove(payment._id)}
+                          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRejectId(payment._id)}
+                          className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  {pendingPayments.map((payment) => (
-                    <tr key={payment._id}>
-                      <td className="px-4 py-3 text-sm font-medium text-zinc-900">
-                        {typeof payment.storeId === "object" ? payment.storeId.name : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-zinc-600">
-                        {typeof payment.userId === "object" ? payment.userId.email : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {typeof payment.planId === "object" ? payment.planId.name : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm font-medium">{formatCurrency(payment.amount)}</td>
-                      <td className="px-4 py-3 text-sm capitalize">{payment.paymentMethod}</td>
-                      <td className="px-4 py-3 text-sm text-zinc-500">{payment.transactionId}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            disabled={approving}
-                            onClick={() => handleApprove(payment._id)}
-                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setRejectId(payment._id)}
-                            className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {pendingPayments.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center text-sm text-zinc-500">
-                        No pending payments
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                ))}
+                {pendingPayments.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-12 text-center text-zinc-500">
+                      No pending payments
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           )}
         </div>
-      </motion.div>
+      )}
+
+      {tab === "history" && (
+        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+          {historyLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+            </div>
+          ) : (
+            <table className="min-w-full text-sm">
+              <thead className="bg-zinc-50 text-left text-xs uppercase text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3">Store</th>
+                  <th className="px-4 py-3">Amount</th>
+                  <th className="px-4 py-3">Method</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allPayments.map((p) => (
+                  <tr key={p._id} className="border-t border-zinc-100">
+                    <td className="px-4 py-3">
+                      {typeof p.storeId === "object" ? p.storeId.name : "—"}
+                    </td>
+                    <td className="px-4 py-3 font-medium">{formatCurrency(p.amount)}</td>
+                    <td className="px-4 py-3 capitalize">{p.paymentMethod}</td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={p.status} />
+                    </td>
+                    <td className="px-4 py-3 text-zinc-500">{formatDate(p.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {tab === "methods" && (
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-lg font-semibold text-zinc-900">Platform payment methods</h3>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const result = await runCron().unwrap();
+                  toast.success(`Billing cron: ${JSON.stringify(result.data)}`);
+                } catch {
+                  toast.error("Failed to run billing cron");
+                }
+              }}
+              disabled={runningCron}
+              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm"
+            >
+              {runningCron ? "Running..." : "Run billing cron"}
+            </button>
+          </div>
+          <AdminPlatformPaymentMethodsPanel />
+        </div>
+      )}
 
       {rejectId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -253,60 +296,6 @@ export default function AdminPaymentsPage() {
           </div>
         </div>
       )}
-
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <h3 className="mb-4 text-lg font-semibold text-zinc-900">All Subscriptions</h3>
-
-        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-zinc-100 bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  <th className="px-4 py-3">Tenant</th>
-                  <th className="px-4 py-3">Plan</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Provider</th>
-                  <th className="px-4 py-3">Period</th>
-                  <th className="px-4 py-3">Created</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {subscriptions.map((sub) => (
-                  <tr key={String(sub._id ?? sub.id)} className="group transition-colors hover:bg-zinc-50">
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-zinc-900">{getTenantName(sub)}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-lg bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700">
-                        {getPlanName(sub.plan)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={String(sub.status ?? "")} />
-                    </td>
-                    <td className="px-4 py-3 text-sm capitalize text-zinc-700">{String(sub.provider ?? "—")}</td>
-                    <td className="px-4 py-3 text-sm text-zinc-500">
-                      {formatPeriod(sub.currentPeriodStart, sub.currentPeriodEnd)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-zinc-500">{formatDate(sub.createdAt)}</td>
-                  </tr>
-                ))}
-                {subscriptions.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-sm text-zinc-500">
-                      No subscriptions found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </motion.div>
     </div>
   );
 }

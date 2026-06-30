@@ -11,6 +11,7 @@ import { useTenant } from "@/providers/tenant-provider";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/format-currency";
 import { getProductImageUrl } from "@/lib/product-media";
+import { SmartImage } from "@/components/ui/smart-image";
 
 type ProductData = {
   _id: string; name: string; slug: string;
@@ -60,7 +61,15 @@ export function QuickViewModal({ product, onClose }: Props) {
 
         <div className="flex aspect-square items-center justify-center bg-zinc-50 p-8">
           {getProductImageUrl(product) ? (
-            <img src={getProductImageUrl(product)} alt={product.name} className="h-full w-full object-cover" />
+            <div className="relative h-full w-full">
+              <SmartImage
+                src={getProductImageUrl(product)}
+                alt={product.name}
+                fill
+                sizes="(max-width: 1024px) 100vw, 40vw"
+                className="object-cover"
+              />
+            </div>
           ) : (
             <ShoppingCart className="h-20 w-20" style={{ color: `${primaryColor}30` }} />
           )}

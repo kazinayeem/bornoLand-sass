@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import { Save, Plus, Trash2, PencilLine, Store, Image as ImageIcon, Globe, Shield, CreditCard, ToggleLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,9 @@ import {
   useUpdateHomepageSliderMutation,
   useUpdateStoreSettingsMutation
 } from "@/redux/api/store-settings-api";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminTabs } from "@/components/admin/admin-tabs";
+import { PlatformStoragePanel } from "@/components/admin/platform-storage-panel";
 
 type CurrencyFormData = {
   currencyCode: "USD" | "BDT" | "EUR" | "GBP" | "INR";
@@ -60,6 +63,13 @@ const defaultSliderForm: SliderFormData = {
 };
 
 export default function SettingsPage() {
+  const searchParams = useSearchParams();
+  const [settingsTab, setSettingsTab] = useState(searchParams.get("tab") || "general");
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab) setSettingsTab(tab);
+  }, [searchParams]);
   const { data: storesData } = useGetMyStoresQuery();
   const { data: platformData } = useGetPlatformSettingsQuery();
   const [updatePlatform, { isLoading: savingPlatform }] = useUpdatePlatformSettingsMutation();
@@ -174,26 +184,51 @@ export default function SettingsPage() {
     }
   };
 
-  if (stores.length === 0) {
+  if (stores.length === 0 && settingsTab === "store") {
     return (
-      <div className="rounded-2xl border border-zinc-200 bg-white p-16 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100">
-          <Store className="h-8 w-8 text-zinc-400" />
+      <div className="space-y-6">
+        <AdminPageHeader title="Platform settings" description="Global configuration." />
+        <AdminTabs
+          tabs={[
+            { id: "general", label: "General" },
+            { id: "trial", label: "Trial" },
+            { id: "payments", label: "Payments" },
+            { id: "maintenance", label: "Maintenance" },
+            { id: "store", label: "Store overrides" },
+          ]}
+          active={settingsTab}
+          onChange={setSettingsTab}
+        />
+        <div className="rounded-2xl border border-zinc-200 bg-white p-16 text-center">
+          <Store className="mx-auto h-8 w-8 text-zinc-400" />
+          <h3 className="mt-4 text-xl font-semibold text-zinc-900">No stores yet</h3>
+          <p className="mt-2 text-sm text-zinc-500">Store overrides appear when stores exist.</p>
         </div>
-        <h3 className="mt-4 text-xl font-semibold text-zinc-900">No stores yet</h3>
-        <p className="mt-2 text-sm text-zinc-500">Create a store first so currency and homepage sliders can be managed here.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Settings</h2>
-        <p className="mt-1 text-sm text-zinc-500">Manage platform settings and store-specific configuration.</p>
-      </motion.div>
+      <AdminPageHeader
+        title="Platform settings"
+        description="Global brand, trial, payments, security, and per-store overrides."
+      />
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+      <AdminTabs
+        tabs={[
+          { id: "general", label: "General" },
+          { id: "trial", label: "Trial" },
+          { id: "payments", label: "Payments" },
+          { id: "storage", label: "Storage" },
+          { id: "maintenance", label: "Maintenance" },
+          { id: "store", label: "Store overrides" },
+        ]}
+        active={settingsTab}
+        onChange={setSettingsTab}
+      />
+
+      {(settingsTab === "general" || settingsTab === "trial" || settingsTab === "payments" || settingsTab === "maintenance") && (
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
@@ -215,7 +250,39 @@ export default function SettingsPage() {
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-zinc-700">Trial Days</label>
-                <input type="number" min={0} value={platformForm.trialDays ?? 14} onChange={(e) => setPlatformForm((p) => ({ ...p, trialDays: Number(e.target.value) }))}
+                <input type="number" min={0} value={platformForm.trialDays ?? 3} onChange={(e) => setPlatformForm((p) => ({ ...p, trialDays: Number(e.target.value) }))}
+                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              </div>
+              <div className="flex items-end">
+                <label className="flex items-center gap-2 cursor-pointer pb-2">
+                  <input type="checkbox" checked={platformForm.trialEnabled !== false} onChange={(e) => setPlatformForm((p) => ({ ...p, trialEnabled: e.target.checked }))}
+                    className="h-4 w-4 rounded border-zinc-300" />
+                  <span className="text-sm font-medium text-zinc-700">Trial Enabled</span>
+                </label>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Company Name</label>
+                <input value={platformForm.companyName ?? ""} onChange={(e) => setPlatformForm((p) => ({ ...p, companyName: e.target.value }))}
+                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Support Email</label>
+                <input value={platformForm.supportEmail ?? ""} onChange={(e) => setPlatformForm((p) => ({ ...p, supportEmail: e.target.value }))}
+                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700">VAT (%)</label>
+                <input type="number" min={0} max={100} value={platformForm.vatPercent ?? 0} onChange={(e) => setPlatformForm((p) => ({ ...p, vatPercent: Number(e.target.value) }))}
+                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Tax (%)</label>
+                <input type="number" min={0} max={100} value={platformForm.taxPercent ?? 0} onChange={(e) => setPlatformForm((p) => ({ ...p, taxPercent: Number(e.target.value) }))}
+                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Invoice Prefix</label>
+                <input value={platformForm.invoicePrefix ?? "INV-"} onChange={(e) => setPlatformForm((p) => ({ ...p, invoicePrefix: e.target.value }))}
                   className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
               </div>
               <div>
@@ -302,8 +369,16 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      )}
 
+      {settingsTab === "storage" && (
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+          <PlatformStoragePanel />
+        </div>
+      )}
+
+      {settingsTab === "store" && (
+      <>
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="min-w-[240px]">
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">Store Settings</label>
@@ -316,7 +391,7 @@ export default function SettingsPage() {
 
       {selectedStoreId && (
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <div>
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-lg font-semibold text-zinc-900">Currency Settings</CardTitle>
@@ -357,9 +432,9 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+        <div>
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-lg font-semibold text-zinc-900">Homepage Slider</CardTitle>
@@ -438,8 +513,10 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
       </div>
+      )}
+      </>
       )}
     </div>
   );

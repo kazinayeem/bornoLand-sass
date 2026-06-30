@@ -1,33 +1,33 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   useGetProductsQuery, useCreateProductMutation,
   useUpdateProductMutation, useDeleteProductMutation,
-  useDuplicateProductMutation,
+  useLazyGetProductQuery,
 } from "@/redux/api/product-api";
-import type { Product } from "@/redux/api/product-api";
+import type { CreateProductRequest, Product, ProductOption, ProductVariant } from "@/redux/api/product-api";
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
 import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
 import { formatCurrency } from "@/lib/format-currency";
-import RichTextEditor from "@/components/cms/rich-text-editor";
-import { VariantsPanel } from "@/components/workspace/variants-panel";
+import { getProductImageUrl } from "@/lib/product-media";
 import {
-  Package, Plus, Pencil, Trash2, Star, X, Check, Filter, Layers,
+  Package, Plus, Pencil, Trash2, Star, Filter,
   LayoutGrid, List, Download, Upload, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, type Column, type BulkAction } from "@/components/ui/data-table";
-import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge, statusBadge } from "@/components/ui/badge";
 import { FilterPanel, type FilterConfig } from "@/components/ui/filter-panel";
 import { useQueryParams } from "@/hooks/use-query-params";
+import { genSlug } from "@/components/products/product-form";
 
 type ViewMode = "table" | "grid";
 
-type ProductsTabProps = { storeId: string };
+type ProductsTabProps = { storeId: string; storeSlug?: string; billingHref?: string };
 
 function csvEscape(val: string | number | undefined | null): string {
   if (val == null) return "";
@@ -66,13 +66,26 @@ function parseCSV(text: string): Record<string, string>[] {
   });
 }
 
-export function ProductsTab({ storeId }: ProductsTabProps) {
+function parseJsonArray<T>(value: string | undefined, fallback: T[]): T[] {
+  if (!value?.trim()) return fallback;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? (parsed as T[]) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsTabProps) {
+  const router = useRouter();
+  const editorBase = storeSlug ? `/store/${storeSlug}/products` : null;
+
   const { data, isLoading } = useGetProductsQuery(storeId);
   const { data: catsData } = useGetCategoriesQuery(storeId);
   const [createProduct] = useCreateProductMutation();
   const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
-  const [duplicateProduct] = useDuplicateProductMutation();
+  const [fetchProduct] = useLazyGetProductQuery();
 
   const { data: settingsData } = useGetStoreSettingsQuery(storeId);
   const storeSettings = settingsData?.data?.settings;
@@ -98,18 +111,7 @@ export function ProductsTab({ storeId }: ProductsTabProps) {
     setParams({ sort: s.key, order: s.order, page: undefined });
   }, [setParams]);
 
-  const [showForm, setShowForm] = useState(false);
-  const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
-  const [form, setForm] = useState({
-    name: "", slug: "", price: "", comparePrice: "", stock: "",
-    category: "", status: "active" as "active" | "inactive",
-    sku: "", imageUrl: "", thumbnailUrl: "", galleryImageUrls: "",
-    description: "", featured: false,
-    categoryIds: [] as string[],
-  });
-  const [saving, setSaving] = useState(false);
-  const [editTab, setEditTab] = useState<"details" | "variants">("details");
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -152,48 +154,16 @@ export function ProductsTab({ storeId }: ProductsTabProps) {
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const resetForm = useCallback(() => {
-    setForm({ name: "", slug: "", price: "", comparePrice: "", stock: "", category: "", status: "active", sku: "", imageUrl: "", thumbnailUrl: "", galleryImageUrls: "", description: "", featured: false, categoryIds: [] });
-    setEditProduct(null);
-    setShowForm(false);
-  }, []);
+  const openCreate = () => {
+    if (editorBase) router.push(`${editorBase}/new`);
+  };
 
-  const genSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const openEdit = (p: Product) => {
+    if (editorBase) router.push(`${editorBase}/${p._id}/edit`);
+  };
 
-  const handleSave = async () => {
-    if (!form.name.trim() || !form.price) {
-      toast.error("Name and price are required");
-      return;
-    }
-    setSaving(true);
-    try {
-      const payload = {
-        name: form.name.trim(),
-        slug: form.slug || genSlug(form.name),
-        price: Number(form.price),
-        comparePrice: form.comparePrice ? Number(form.comparePrice) : undefined,
-        stock: Number(form.stock) || 0,
-        category: form.category,
-        status: form.status,
-        sku: form.sku,
-        imageUrl: form.imageUrl,
-        thumbnailUrl: form.thumbnailUrl || undefined,
-        galleryImageUrls: form.galleryImageUrls ? form.galleryImageUrls.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
-        description: form.description,
-        featured: form.featured,
-        categoryIds: form.categoryIds.length > 0 ? form.categoryIds : undefined,
-      };
-      if (editProduct) {
-        await updateProduct({ storeId, id: editProduct._id, data: payload }).unwrap();
-        toast.success("Product updated");
-      } else {
-        await createProduct({ storeId, data: payload }).unwrap();
-        toast.success("Product created");
-      }
-      resetForm();
-    } catch (err: any) {
-      toast.error(err?.data?.message ?? "Failed to save product");
-    } finally { setSaving(false); }
+  const openDuplicate = (p: Product) => {
+    if (editorBase) router.push(`${editorBase}/${p._id}/duplicate`);
   };
 
   const handleDelete = async () => {
@@ -217,35 +187,28 @@ export function ProductsTab({ storeId }: ProductsTabProps) {
     } catch { toast.error("Failed to update featured"); }
   };
 
-  const handleDuplicate = async (p: Product) => {
-    try {
-      await duplicateProduct({ storeId, id: p._id }).unwrap();
-      toast.success("Product duplicated");
-    } catch { toast.error("Failed to duplicate"); }
-  };
+  const handleDuplicate = (p: Product) => openDuplicate(p);
 
-  const openEdit = (p: Product) => {
-    setEditProduct(p);
-    setForm({
-      name: p.name, slug: p.slug, price: String(p.price),
-      comparePrice: p.comparePrice ? String(p.comparePrice) : "",
-      stock: String(p.stock), category: p.category || "",
-      status: p.status, sku: p.sku || "", imageUrl: p.imageUrl || "",
-      thumbnailUrl: p.thumbnailUrl || "",
-      galleryImageUrls: p.galleryImageUrls?.join(", ") || "",
-      description: p.description || "", featured: p.featured,
-      categoryIds: p.categoryIds ?? [],
-    });
-    setShowForm(true);
-  };
-
-  const handleExportCSV = useCallback(() => {
-    const headers = ["name", "slug", "sku", "price", "comparePrice", "stock", "category", "status", "description", "imageUrl", "featured"];
-    const rows = filtered.map((p) => [
-      csvEscape(p.name), csvEscape(p.slug), csvEscape(p.sku), csvEscape(p.price),
+  const handleExportCSV = useCallback(async () => {
+    const headers = ["name", "slug", "productType", "sku", "price", "comparePrice", "stock", "category", "status", "description", "imageUrl", "featured", "options", "variants"];
+    const productsForExport = await Promise.all(
+      filtered.map(async (product) => {
+        if (product.productType !== "variable" && !product.variantCount) return product;
+        try {
+          const response = await fetchProduct(product._id).unwrap();
+          return response.data?.product ?? product;
+        } catch {
+          return product;
+        }
+      })
+    );
+    const rows = productsForExport.map((p) => [
+      csvEscape(p.name), csvEscape(p.slug), csvEscape(p.productType ?? "simple"), csvEscape(p.sku), csvEscape(p.price),
       csvEscape(p.comparePrice), csvEscape(p.stock), csvEscape(p.category),
       csvEscape(p.status), csvEscape(p.description), csvEscape(p.imageUrl),
       csvEscape(p.featured ? "yes" : "no"),
+      csvEscape(JSON.stringify(p.options ?? [])),
+      csvEscape(JSON.stringify(p.variants ?? [])),
     ]);
     const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -255,8 +218,8 @@ export function ProductsTab({ storeId }: ProductsTabProps) {
     a.download = `products-${storeId}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success(`Exported ${filtered.length} products`);
-  }, [filtered, storeId]);
+    toast.success(`Exported ${productsForExport.length} products`);
+  }, [fetchProduct, filtered, storeId]);
 
   const handleImportCSV = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -272,18 +235,25 @@ export function ProductsTab({ storeId }: ProductsTabProps) {
       for (const row of rows) {
         try {
           const existing = products.find((p) => p.sku && p.sku === row.sku);
-          const payload = {
+          const payload: CreateProductRequest = {
             name: row.name || "Untitled",
             slug: row.slug || genSlug(row.name || "untitled"),
+            productType: row.productType === "variable" ? "variable" : "simple",
             price: Number(row.price) || 0,
             comparePrice: row.comparePrice ? Number(row.comparePrice) : undefined,
             stock: Number(row.stock) || 0,
             category: row.category || "general",
-            status: (row.status === "active" || row.status === "inactive" ? row.status : "active") as "active" | "inactive",
+            status: (
+              row.status === "active" || row.status === "inactive" || row.status === "draft" || row.status === "archived"
+                ? row.status
+                : "active"
+            ) as "active" | "inactive" | "draft" | "archived",
             sku: row.sku || "",
             imageUrl: row.imageUrl || "",
             description: row.description || "",
             featured: row.featured === "yes" || row.featured === "true",
+            options: parseJsonArray<ProductOption>(row.options, []),
+            variants: parseJsonArray<ProductVariant>(row.variants, []),
           };
           if (existing) {
             await updateProduct({ storeId, id: existing._id, data: payload }).unwrap();
@@ -341,7 +311,7 @@ export function ProductsTab({ storeId }: ProductsTabProps) {
       render: (p) => (
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 shrink-0 rounded-lg bg-zinc-100 flex items-center justify-center overflow-hidden">
-            {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" /> : <Package className="h-4 w-4 text-zinc-400" />}
+            {getProductImageUrl(p) ? <img src={getProductImageUrl(p)} alt={p.name} className="h-full w-full object-cover" /> : <Package className="h-4 w-4 text-zinc-400" />}
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium text-zinc-900 truncate max-w-[200px]">{p.name}</p>
@@ -463,7 +433,7 @@ export function ProductsTab({ storeId }: ProductsTabProps) {
             <Upload className="h-3.5 w-3.5" /> {importing ? "Importing..." : "Import"}
           </button>
           <input ref={fileInputRef} type="file" accept=".csv" onChange={handleImportCSV} className="hidden" />
-          <button onClick={() => { resetForm(); setShowForm(true); }}
+          <button onClick={openCreate}
             className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
             <Plus className="h-3.5 w-3.5" /> Add Product
           </button>
@@ -528,8 +498,8 @@ export function ProductsTab({ storeId }: ProductsTabProps) {
             <motion.div key={p._id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
               className="group relative rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm hover:shadow-lg transition-all">
               <div className="mb-3 aspect-square overflow-hidden rounded-xl bg-zinc-50">
-                {p.imageUrl ? (
-                  <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                {getProductImageUrl(p) ? (
+                  <img src={getProductImageUrl(p)} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 ) : (
                   <div className="flex h-full items-center justify-center">
                     <Package className="h-8 w-8 text-zinc-300" />
@@ -595,129 +565,7 @@ export function ProductsTab({ storeId }: ProductsTabProps) {
         />
       )}
 
-      {/* Modal */}
-      <Modal
-        open={showForm}
-        onClose={resetForm}
-        title={editProduct ? "Edit Product" : "Add Product"}
-        size="xl"
-      >
-        {editProduct && (
-          <div className="flex gap-1 border-b border-zinc-200 mb-6">
-            <button onClick={() => setEditTab("details")}
-              className={`px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${editTab === "details" ? "border-zinc-900 text-zinc-900" : "border-transparent text-zinc-400 hover:text-zinc-700"}`}>
-              Details
-            </button>
-            <button onClick={() => setEditTab("variants")}
-              className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px ${editTab === "variants" ? "border-zinc-900 text-zinc-900" : "border-transparent text-zinc-400 hover:text-zinc-700"}`}>
-              <Layers className="h-3.5 w-3.5" /> Variants
-            </button>
-          </div>
-        )}
-        {(!editProduct || editTab === "details") ? (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Name</label>
-                <input type="text" value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value, slug: editProduct ? form.slug : genSlug(e.target.value) })}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Slug</label>
-                <input type="text" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">SKU</label>
-                <input type="text" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Price</label>
-                <input type="number" min={0} step="0.01" value={form.price}
-                  onChange={(e) => setForm({ ...form, price: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Compare Price</label>
-                <input type="number" min={0} step="0.01" value={form.comparePrice}
-                  onChange={(e) => setForm({ ...form, comparePrice: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Stock</label>
-                <input type="number" min={0} value={form.stock}
-                  onChange={(e) => setForm({ ...form, stock: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Category</label>
-                <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
-                  <option value="">Select category</option>
-                  {categories.map((c) => <option key={c._id} value={c.name}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Status</label>
-                <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as "active" | "inactive" })}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Image URL</label>
-                <input type="text" value={form.imageUrl}
-                  onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" placeholder="https://..." />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Thumbnail URL</label>
-                <input type="text" value={form.thumbnailUrl}
-                  onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" placeholder="https://..." />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Gallery Image URLs (comma separated)</label>
-                <input type="text" value={form.galleryImageUrls}
-                  onChange={(e) => setForm({ ...form, galleryImageUrls: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" placeholder="https://..., https://..." />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Description</label>
-                <RichTextEditor
-                  content={form.description}
-                  onChange={(html) => setForm({ ...form, description: html })}
-                  placeholder="Write a detailed product description..."
-                />
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="inline-flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={form.featured}
-                    onChange={(e) => setForm({ ...form, featured: e.target.checked })}
-                    className="rounded border-zinc-300" />
-                  <span className="text-xs font-medium text-zinc-700">Featured product</span>
-                </label>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button onClick={resetForm}
-                className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors">
-                Cancel
-              </button>
-              <button onClick={handleSave} disabled={saving}
-                className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 transition-colors">
-                {saving ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Check className="h-4 w-4" />}
-                {editProduct ? "Update" : "Create"}
-              </button>
-            </div>
-          </>
-        ) : (
-          <VariantsPanel product={editProduct} storeId={storeId} />
-        )}
-      </Modal>
+      {/* Modal removed — product create/edit uses dedicated editor pages */}
 
       <ConfirmDialog
         open={!!deleteTarget}

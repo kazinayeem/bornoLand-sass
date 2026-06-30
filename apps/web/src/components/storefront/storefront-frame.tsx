@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { AuthInit } from "@/components/auth/auth-init";
 import { CartProvider } from "@/components/storefront/cart-provider";

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
-import { ReduxProvider } from "@/providers/redux-provider";
+import { AppProviders } from "@/providers/app-providers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,18 +15,32 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "BornoLand | AI-Powered Multi-Tenant Ecommerce Platform",
-  description: "Build premium ecommerce storefronts, multi-tenant SaaS experiences, and AI-powered store builders with BornoLand."
+  title: {
+    default: "BornoLand",
+    template: "%s | BornoLand",
+  },
+  description: "Build premium ecommerce storefronts, multi-tenant SaaS experiences, and AI-powered store builders with BornoLand.",
+  openGraph: {
+    title: "BornoLand",
+    description: "Build premium ecommerce storefronts, multi-tenant SaaS experiences, and AI-powered store builders with BornoLand.",
+    siteName: "BornoLand",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BornoLand",
+    description: "Build premium ecommerce storefronts, multi-tenant SaaS experiences, and AI-powered store builders with BornoLand.",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} scroll-smooth`}>
       <body className="bg-white text-zinc-950 antialiased">
-        <ReduxProvider>
+        <AppProviders>
           {children}
           <Toaster richColors position="top-right" />
-        </ReduxProvider>
+        </AppProviders>
       </body>
     </html>
   );

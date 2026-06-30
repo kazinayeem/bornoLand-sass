@@ -7,6 +7,8 @@ import {
   BarChart3, DollarSign, Users, Activity,
 } from "lucide-react";
 import type { Store as StoreType } from "@/redux/api/store-api";
+import { StorageUsageBar } from "@/components/media/storage-usage-bar";
+import { useGetMediaStatsQuery } from "@/redux/api/media-api";
 
 type OverviewTabProps = {
   storeId: string;
@@ -20,6 +22,8 @@ function formatBDT(value: number) {
 }
 
 export function OverviewTab({ storeId, store }: OverviewTabProps) {
+  const { data: mediaStats } = useGetMediaStatsQuery(storeId);
+  const billingHref = `/store/${store.slug}/billing`;
   const stats = useMemo(() => [
     {
       label: "Total Products",
@@ -102,6 +106,7 @@ export function OverviewTab({ storeId, store }: OverviewTabProps) {
 
   return (
     <div className="space-y-6">
+      <StorageUsageBar stats={mediaStats?.data?.stats} billingHref={billingHref} compact />
       {/* Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {stats.map((stat, i) => {

@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { useGetAdminStoresQuery, useSuspendStoreMutation, useActivateStoreMutation, useDeleteAdminStoreMutation, useChangeStorePlanMutation } from "@/redux/api/admin-api";
 import { useGetPlansQuery } from "@/redux/api/store-api";
-import { Search, Store, Globe, Calendar, MoreHorizontal, ExternalLink, Ban, CheckCircle, Trash2, RefreshCw, Loader2 } from "lucide-react";
+import { Search, Globe, MoreHorizontal, ExternalLink, Ban, CheckCircle, Trash2, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/format-currency";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { StoreDetailDrawer } from "@/components/admin/store-detail-drawer";
+import type { AdminStore } from "@/redux/api/admin-api";
 
 const planColors: Record<string, string> = {
   free: "bg-zinc-100 text-zinc-700", starter: "bg-blue-50 text-blue-700",
@@ -31,6 +33,7 @@ export default function AdminStoresPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(0);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [selectedStore, setSelectedStore] = useState<AdminStore | null>(null);
   const perPage = 10;
 
   const filtered = stores.filter((s) => {
@@ -76,10 +79,10 @@ export default function AdminStoresPage() {
 
   return (
     <div className="space-y-6">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Stores</h2>
-        <p className="mt-1 text-sm text-zinc-500">{stores.length} stores on the platform</p>
-      </motion.div>
+      <AdminPageHeader
+        title="Stores"
+        description={`${stores.length} stores on the platform`}
+      />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
@@ -113,7 +116,11 @@ export default function AdminStoresPage() {
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {paged.map((s) => (
-                <tr key={s._id} className="group transition-colors hover:bg-zinc-50">
+                <tr
+                  key={s._id}
+                  className="group cursor-pointer transition-colors hover:bg-zinc-50"
+                  onClick={() => setSelectedStore(s as AdminStore)}
+                >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-sm font-bold text-white">
@@ -139,7 +146,7 @@ export default function AdminStoresPage() {
                   <td className="px-4 py-3 text-sm text-zinc-500">
                     {new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </td>
-                  <td className="px-4 py-3 relative">
+                  <td className="relative px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <button onClick={() => setMenuOpen(menuOpen === s._id ? null : s._id)}
                       className="rounded-lg p-1.5 text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-100 hover:text-zinc-700 group-hover:opacity-100">
                       <MoreHorizontal className="h-4 w-4" />
@@ -198,6 +205,17 @@ export default function AdminStoresPage() {
           </div>
         </div>
       </div>
+
+      <StoreDetailDrawer
+        store={selectedStore}
+        plans={plans}
+        open={!!selectedStore}
+        onClose={() => setSelectedStore(null)}
+        onSuspend={handleSuspend}
+        onActivate={handleActivate}
+        onDelete={handleDelete}
+        onChangePlan={handleChangePlan}
+      />
     </div>
   );
 }

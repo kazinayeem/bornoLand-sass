@@ -7,6 +7,7 @@ import {
   AlertTriangle, Ban, Activity, Loader2
 } from "lucide-react";
 import { StatCard } from "@/components/admin/stat-card";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, AreaChart, Area
@@ -43,16 +44,16 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Dashboard</h2>
-          <p className="mt-1 text-sm text-zinc-500">Platform overview at a glance.</p>
-        </div>
-        <div className="hidden items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2 sm:flex">
-          <Activity className="h-4 w-4 text-emerald-500" />
-          <span className="text-sm font-medium text-zinc-700">All systems operational</span>
-        </div>
-      </motion.div>
+      <AdminPageHeader
+        title="Dashboard"
+        description="Platform overview at a glance."
+        badge={
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+            <Activity className="h-3 w-3" />
+            Operational
+          </span>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <StatCard title="Total Users" value={counts.users} icon={Users} variant="blue" delay={0} />

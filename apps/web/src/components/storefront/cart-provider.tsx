@@ -33,9 +33,14 @@ function CartInitializer() {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const existing = localStorage.getItem("session_id");
     if (!existing) {
-      localStorage.setItem("session_id", `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+      const randomPart =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      localStorage.setItem("session_id", `sess-${randomPart}`);
     }
   }, []);
 

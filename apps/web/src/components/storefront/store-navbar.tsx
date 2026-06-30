@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,8 +10,13 @@ import { Search, ShoppingCart, Menu, X, User, LogIn, Package, LogOut, Heart, Hom
 import type { RootState } from "@/redux/store";
 import { clearCustomer } from "@/redux/slices/customer-slice";
 import { openCart } from "@/redux/slices/cart-slice";
-import { CartDrawer } from "./cart-drawer";
 import { useTenant } from "@/providers/tenant-provider";
+import { SmartImage } from "@/components/ui/smart-image";
+
+const CartDrawer = dynamic(
+  () => import("./cart-drawer").then((module) => module.CartDrawer),
+  { loading: () => null }
+);
 
 export function StoreNavbar() {
   const dispatch = useDispatch();
@@ -21,12 +27,9 @@ export function StoreNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [mounted, setMounted] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { primaryColor, font, navbarStyle } = theme;
-
-  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const handleStorage = () => {
@@ -85,7 +88,14 @@ export function StoreNavbar() {
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
               {store.logoUrl ? (
-                <img src={store.logoUrl} alt={store.name} className="h-8 w-8 rounded-lg object-cover" />
+                <SmartImage
+                  src={store.logoUrl}
+                  alt={store.name}
+                  width={32}
+                  height={32}
+                  sizes="32px"
+                  className="rounded-lg object-cover"
+                />
               ) : (
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ backgroundColor: primaryColor }}>
                   {store.name[0]}

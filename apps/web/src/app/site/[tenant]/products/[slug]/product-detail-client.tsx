@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -12,10 +12,22 @@ import { ProductCard } from "@/components/storefront/product-card";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
 import { getProductGalleryUrls, getProductImageUrl } from "@/lib/product-media";
+import { resolveMediaUrl } from "@/lib/resolve-media-url";
 import { toast } from "sonner";
 
 type ProductOption = { _id?: string; name: string; values: string[] };
-type ProductVariant = { _id?: string; optionValues: Record<string, string>; price?: number; stock: number; sku: string; imageUrl: string; enabled: boolean };
+type ProductVariant = {
+  _id?: string;
+  title?: string;
+  optionValues: Record<string, string>;
+  price?: number;
+  comparePrice?: number;
+  stock: number;
+  sku: string;
+  imageUrl: string;
+  galleryUrls?: string[];
+  enabled: boolean;
+};
 
 type Product = {
   _id: string; name: string; slug: string;
@@ -33,6 +45,10 @@ function findVariant(product: Product, selected: Record<string, string>): Produc
   });
 }
 
+function firstAvailableVariant(product: Product): ProductVariant | undefined {
+  return product.variants?.find((variant) => variant.enabled && variant.stock > 0) ?? product.variants?.find((variant) => variant.enabled);
+}
+
 export function ProductDetailClient({ product }: { product: Product }) {
   const dispatch = useDispatch();
   const { theme, products, settings } = useTenant();
@@ -46,9 +62,10 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const hasVariants = (product.options?.length ?? 0) > 0 && (product.variants?.length ?? 0) > 0;
 
   const initialSelections: Record<string, string> = {};
+  const initialVariant = hasVariants ? firstAvailableVariant(product) : undefined;
   if (hasVariants) {
     for (const opt of product.options ?? []) {
-      initialSelections[opt.name] = opt.values[0] ?? "";
+      initialSelections[opt.name] = initialVariant?.optionValues[opt.name] ?? opt.values[0] ?? "";
     }
   }
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(initialSelections);
@@ -59,13 +76,29 @@ export function ProductDetailClient({ product }: { product: Product }) {
   }, [product, selectedOptions, hasVariants]);
 
   const displayPrice = activeVariant?.price ?? product.price;
+  const displayComparePrice = activeVariant?.comparePrice ?? product.comparePrice;
   const displayStock = activeVariant?.stock ?? product.stock;
-  const displayImage = activeVariant?.imageUrl || selectedImage;
-  const enableAddToCart = !hasVariants || !!activeVariant;
+  const variantGallery = activeVariant?.galleryUrls?.length
+    ? activeVariant.galleryUrls.map(resolveMediaUrl)
+    : activeVariant?.imageUrl
+      ? [resolveMediaUrl(activeVariant.imageUrl)]
+      : [];
+  const displayImage = resolveMediaUrl(variantGallery[0] || activeVariant?.imageUrl || selectedImage);
+  const inStock = displayStock > 0;
+  const enableAddToCart = (!hasVariants || !!activeVariant) && inStock;
 
-  const discount = product.comparePrice && product.comparePrice > product.price
-    ? Math.round((1 - displayPrice / product.comparePrice) * 100) : 0;
-  const gallery = useMemo(() => getProductGalleryUrls(product), [product]);
+  useEffect(() => {
+    if (variantGallery.length > 0) setSelectedImage(variantGallery[0]);
+  }, [activeVariant?._id, variantGallery]);
+
+  const discount =
+    displayComparePrice && displayComparePrice > displayPrice
+      ? Math.round((1 - displayPrice / displayComparePrice) * 100)
+      : 0;
+  const gallery = useMemo(() => {
+    if (variantGallery.length > 0) return variantGallery;
+    return getProductGalleryUrls(product);
+  }, [variantGallery, product]);
 
   const relatedProducts = useMemo(() => {
     return products
@@ -217,9 +250,9 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
               <div className="mt-5 flex items-end gap-3">
                 <span className="text-4xl font-semibold tracking-tight text-zinc-950">{formatCurrency(displayPrice, settings)}</span>
-                {product.comparePrice && product.comparePrice > displayPrice && (
+                {displayComparePrice && displayComparePrice > displayPrice && (
                   <>
-                    <span className="pb-1 text-lg text-zinc-400 line-through">{formatCurrency(product.comparePrice, settings)}</span>
+                    <span className="pb-1 text-lg text-zinc-400 line-through">{formatCurrency(displayComparePrice, settings)}</span>
                     <span className="mb-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">Save {discount}%</span>
                   </>
                 )}

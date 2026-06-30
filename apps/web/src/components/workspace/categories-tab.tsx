@@ -15,8 +15,10 @@ import {
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SearchBar } from "@/components/ui/search-bar";
+import { MediaPicker } from "@/components/media/media-picker";
+import { selectionMediaId } from "@/lib/media-selection";
 
-type CategoriesTabProps = { storeId: string };
+type CategoriesTabProps = { storeId: string; billingHref?: string };
 
 type TreeNode = {
   category: Category;
@@ -69,7 +71,7 @@ function getCategoryPath(catId: string, categories: Category[]): string {
   return cat.name;
 }
 
-export function CategoriesTab({ storeId }: CategoriesTabProps) {
+export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps) {
   const { data, isLoading } = useGetCategoriesQuery(storeId);
   const [createCategory] = useCreateCategoryMutation();
   const [updateCategory] = useUpdateCategoryMutation();
@@ -86,7 +88,8 @@ export function CategoriesTab({ storeId }: CategoriesTabProps) {
   const [editCat, setEditCat] = useState<Category | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [form, setForm] = useState({
-    name: "", slug: "", description: "", imageUrl: "",
+    name: "", slug: "", description: "", imageUrl: "", imageId: "",
+    bannerUrl: "", bannerId: "", iconUrl: "", iconId: "",
     parentId: "", active: true, featured: false,
     metaTitle: "", metaDescription: "",
   });
@@ -97,7 +100,11 @@ export function CategoriesTab({ storeId }: CategoriesTabProps) {
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   const resetForm = () => {
-    setForm({ name: "", slug: "", description: "", imageUrl: "", parentId: "", active: true, featured: false, metaTitle: "", metaDescription: "" });
+    setForm({
+      name: "", slug: "", description: "", imageUrl: "", imageId: "",
+      bannerUrl: "", bannerId: "", iconUrl: "", iconId: "",
+      parentId: "", active: true, featured: false, metaTitle: "", metaDescription: "",
+    });
     setEditCat(null);
     setShowForm(false);
   };
@@ -106,7 +113,10 @@ export function CategoriesTab({ storeId }: CategoriesTabProps) {
     setEditCat(c);
     setForm({
       name: c.name, slug: c.slug, description: c.description || "",
-      imageUrl: c.imageUrl || "", parentId: c.parentId || "",
+      imageUrl: c.imageUrl || "", imageId: c.imageId || "",
+      bannerUrl: c.bannerUrl || "", bannerId: c.bannerId || "",
+      iconUrl: c.iconUrl || "", iconId: c.iconId || "",
+      parentId: c.parentId || "",
       active: c.active, featured: c.featured,
       metaTitle: c.metaTitle || "",
       metaDescription: c.metaDescription || "",
@@ -126,6 +136,11 @@ export function CategoriesTab({ storeId }: CategoriesTabProps) {
         slug: form.slug || genSlug(form.name),
         description: form.description,
         imageUrl: form.imageUrl,
+        imageId: form.imageId || null,
+        bannerUrl: form.bannerUrl,
+        bannerId: form.bannerId || null,
+        iconUrl: form.iconUrl,
+        iconId: form.iconId || null,
         parentId: form.parentId || null,
         active: form.active,
         featured: form.featured,
@@ -369,10 +384,43 @@ export function CategoriesTab({ storeId }: CategoriesTabProps) {
                 <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
                   className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
               </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Image URL</label>
-                <input type="text" value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" placeholder="https://..." />
+              <div className="grid gap-4 md:grid-cols-3">
+                <MediaPicker
+                  storeId={storeId}
+                  billingHref={billingHref}
+                  folder="categories"
+                  label="Category image"
+                  value={{ mediaId: form.imageId || undefined, url: form.imageUrl }}
+                  onChange={(selection) => setForm({
+                    ...form,
+                    imageUrl: selection.url,
+                    imageId: selectionMediaId(selection) ?? "",
+                  })}
+                />
+                <MediaPicker
+                  storeId={storeId}
+                  billingHref={billingHref}
+                  folder="categories"
+                  label="Category banner"
+                  value={{ mediaId: form.bannerId || undefined, url: form.bannerUrl }}
+                  onChange={(selection) => setForm({
+                    ...form,
+                    bannerUrl: selection.url,
+                    bannerId: selectionMediaId(selection) ?? "",
+                  })}
+                />
+                <MediaPicker
+                  storeId={storeId}
+                  billingHref={billingHref}
+                  folder="categories"
+                  label="Category icon"
+                  value={{ mediaId: form.iconId || undefined, url: form.iconUrl }}
+                  onChange={(selection) => setForm({
+                    ...form,
+                    iconUrl: selection.url,
+                    iconId: selectionMediaId(selection) ?? "",
+                  })}
+                />
               </div>
               <div className="flex items-center gap-4">
                 <label className="inline-flex items-center gap-2 cursor-pointer">

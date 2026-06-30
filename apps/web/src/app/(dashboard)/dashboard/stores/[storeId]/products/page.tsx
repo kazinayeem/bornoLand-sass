@@ -6,12 +6,12 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGetStoreQuery } from "@/redux/api/store-api";
 import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
-import { useGetProductsQuery, useCreateProductMutation, useUpdateProductMutation, useDeleteProductMutation, useDuplicateProductMutation } from "@/redux/api/product-api";
+import { useGetProductsQuery, useUpdateProductMutation, useDeleteProductMutation } from "@/redux/api/product-api";
 import type { Product } from "@/redux/api/product-api";
 import { toast } from "sonner";
 import {
   Package, Plus, Search, Filter, ArrowLeft, Edit, Trash2, Copy,
-  Eye, EyeOff, Loader2, X, AlertTriangle, Store, Grid3X3, List
+  Eye, EyeOff, Loader2, AlertTriangle, Store, Grid3X3, List
 } from "lucide-react";
 import { formatCurrency } from "@/lib/format-currency";
 import { getProductImageUrl } from "@/lib/product-media";
@@ -58,70 +58,22 @@ export default function StoreProductsPage() {
   const activeCount = products.filter((p) => p.status === "active").length;
   const inactiveCount = products.filter((p) => p.status === "inactive").length;
 
-  const [showForm, setShowForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
-  const [form, setForm] = useState({
-    name: "",
-    slug: "",
-    price: 0,
-    comparePrice: 0,
-    category: "general",
-    stock: 0,
-    sku: "",
-    description: "",
-    status: "active" as "active" | "inactive",
-    imageUrl: "",
-    thumbnailUrl: "",
-    galleryImageUrls: ""
-  });
+  const editorBase = store ? `/store/${store.slug}/products` : null;
 
-  const [createProduct, { isLoading: creating }] = useCreateProductMutation();
-  const [updateProduct, { isLoading: updating }] = useUpdateProductMutation();
+  const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct, { isLoading: deleting }] = useDeleteProductMutation();
-  const [duplicateProduct, { isLoading: duplicating }] = useDuplicateProductMutation();
-
-  const resetForm = () => {
-    setForm({ name: "", slug: "", price: 0, comparePrice: 0, category: "general", stock: 0, sku: "", description: "", status: "active", imageUrl: "", thumbnailUrl: "", galleryImageUrls: "" });
-    setEditingProduct(null);
-    setShowForm(false);
-  };
 
   const openEdit = (p: Product) => {
-    setForm({
-      name: p.name,
-      slug: p.slug,
-      price: p.price,
-      comparePrice: p.comparePrice ?? 0,
-      category: p.category,
-      stock: p.stock,
-      sku: p.sku,
-      description: p.description,
-      status: p.status,
-      imageUrl: p.imageUrl ?? p.images?.[0] ?? "",
-      thumbnailUrl: p.thumbnailUrl ?? p.imageUrl ?? p.images?.[0] ?? "",
-      galleryImageUrls: (p.galleryImageUrls ?? p.images ?? []).join("\n")
-    });
-    setEditingProduct(p);
-    setShowForm(true);
+    if (editorBase) router.push(`${editorBase}/${p._id}/edit`);
   };
 
-  const parseImageList = (value: string) =>
-    value.split(/\n|,/).map((item) => item.trim()).filter(Boolean);
+  const openCreate = () => {
+    if (editorBase) router.push(`${editorBase}/new`);
+  };
 
-  const handleSave = async () => {
-    try {
-      if (editingProduct) {
-        await updateProduct({ storeId, id: editingProduct._id, data: { ...form, galleryImageUrls: parseImageList(form.galleryImageUrls) } }).unwrap();
-        toast.success("Product updated");
-      } else {
-        await createProduct({ storeId, data: { ...form, slug: form.slug || form.name.toLowerCase().replace(/\s+/g, "-"), galleryImageUrls: parseImageList(form.galleryImageUrls) } }).unwrap();
-        toast.success("Product created");
-      }
-      resetForm();
-    } catch (e: any) {
-      toast.error(e?.data?.message ?? "Failed to save product");
-    }
+  const handleDuplicate = (p: Product) => {
+    if (editorBase) router.push(`${editorBase}/${p._id}/duplicate`);
   };
 
   const handleDelete = async () => {
@@ -131,13 +83,6 @@ export default function StoreProductsPage() {
       toast.success("Product deleted");
       setDeleteTarget(null);
     } catch { toast.error("Failed to delete"); }
-  };
-
-  const handleDuplicate = async (p: Product) => {
-    try {
-      await duplicateProduct({ storeId, id: p._id }).unwrap();
-      toast.success("Product duplicated");
-    } catch { toast.error("Failed to duplicate"); }
   };
 
   const handleToggleStatus = async (p: Product) => {
@@ -191,7 +136,7 @@ export default function StoreProductsPage() {
             <button onClick={() => setViewMode("grid")} className={`rounded-lg p-1.5 ${viewMode === "grid" ? "bg-zinc-100 text-zinc-900" : "text-zinc-400"}`}><Grid3X3 className="h-4 w-4" /></button>
             <button onClick={() => setViewMode("list")} className={`rounded-lg p-1.5 ${viewMode === "list" ? "bg-zinc-100 text-zinc-900" : "text-zinc-400"}`}><List className="h-4 w-4" /></button>
           </div>
-          <button onClick={() => { resetForm(); setShowForm(true); }}
+          <button onClick={openCreate}
             className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-blue-700 active:scale-95">
             <Plus className="h-4 w-4" /> Add Product
           </button>
@@ -244,7 +189,7 @@ export default function StoreProductsPage() {
           <h3 className="mt-4 text-xl font-semibold text-zinc-900">No products found</h3>
           <p className="mt-2 text-sm text-zinc-500">{search ? "Try a different search." : "Add your first product to get started."}</p>
           {!search && (
-            <button onClick={() => { resetForm(); setShowForm(true); }}
+            <button onClick={openCreate}
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700">
               <Plus className="h-4 w-4" /> Add Product
             </button>
@@ -356,99 +301,6 @@ export default function StoreProductsPage() {
             className="rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-600 disabled:opacity-50 hover:bg-zinc-50">Next</button>
         </div>
       )}
-
-      {/* Add/Edit Product Modal */}
-      <AnimatePresence>
-        {showForm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-            onClick={(e) => { if (e.target === e.currentTarget) resetForm(); }}>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-              className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-zinc-900">{editingProduct ? "Edit Product" : "Add Product"}</h3>
-                <button onClick={resetForm} className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100"><X className="h-5 w-5" /></button>
-              </div>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-700">Name *</label>
-                    <input type="text" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value, slug: editingProduct ? f.slug : e.target.value.toLowerCase().replace(/\s+/g, "-") }))}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-700">Slug</label>
-                    <input type="text" value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-zinc-700">Description</label>
-                  <textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} rows={3}
-                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-700">Price *</label>
-                    <input type="number" min={0} step={0.01} value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-700">Compare Price</label>
-                    <input type="number" min={0} step={0.01} value={form.comparePrice} onChange={(e) => setForm((f) => ({ ...f, comparePrice: Number(e.target.value) }))}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-700">Stock</label>
-                    <input type="number" min={0} value={form.stock} onChange={(e) => setForm((f) => ({ ...f, stock: Number(e.target.value) }))}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-700">Category</label>
-                    <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-                      {categories.filter((c) => c !== "All").map((c) => <option key={c} value={c.toLowerCase()}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-700">SKU</label>
-                    <input type="text" value={form.sku} onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-700">Primary Image URL</label>
-                    <input type="text" value={form.imageUrl} onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-zinc-700">Thumbnail URL</label>
-                    <input type="text" value={form.thumbnailUrl} onChange={(e) => setForm((f) => ({ ...f, thumbnailUrl: e.target.value }))}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-zinc-700">Gallery Image URLs</label>
-                  <textarea value={form.galleryImageUrls} onChange={(e) => setForm((f) => ({ ...f, galleryImageUrls: e.target.value }))} rows={3}
-                    placeholder="One URL per line or comma separated"
-                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-                </div>
-              </div>
-              <div className="mt-6 flex items-center justify-end gap-3">
-                <button onClick={resetForm} className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">Cancel</button>
-                <button onClick={handleSave} disabled={creating || updating || !form.name}
-                  className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-                  {(creating || updating) && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {editingProduct ? "Update" : "Create"}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>

@@ -32,6 +32,7 @@ export function WorkspaceNavbar() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.user.profile);
+  const currentStore = useAppSelector((s) => s.currentStore);
   const { data } = useGetMyStoresQuery();
   const stores = data?.data?.stores ?? [];
 
@@ -40,9 +41,26 @@ export function WorkspaceNavbar() {
   const [query, setQuery] = useState("");
 
   const segments = pathname.split("/").filter(Boolean);
-  const pageTitle = segments.length > 1
-    ? segments[segments.length - 1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-    : "Dashboard";
+  const routeLabels: Record<string, string> = {
+    "/dashboard": "Dashboard",
+    "/dashboard/stores": "Stores",
+    "/dashboard/stores/create": "Create Store",
+    "/dashboard/billing": "Billing",
+    "/dashboard/team": "Team",
+    "/dashboard/account": "Account",
+    "/dashboard/orders": "Orders",
+    "/dashboard/products": "Products",
+    "/dashboard/categories": "Categories",
+    "/dashboard/cms": "CMS",
+    "/dashboard/settings": "Settings",
+    "/dashboard/notifications": "Notifications",
+    "/dashboard/help": "Help",
+  };
+  const pageTitle = routeLabels[pathname]
+    ?? (pathname.startsWith("/dashboard/stores/") ? "Store Details" : segments.length > 1
+      ? segments[segments.length - 1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      : "Dashboard");
+  const contextTitle = currentStore.storeName || "Workspace";
 
   const searchResults = [
     ...stores.map((s) => ({
@@ -98,6 +116,8 @@ export function WorkspaceNavbar() {
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-zinc-900">{pageTitle}</h1>
             <p className="hidden text-xs text-zinc-500 sm:block">
+              <span>{contextTitle}</span>
+              <span className="mx-1 text-zinc-300">/</span>
               {segments.map((s, i) => (
                 <span key={`${s}-${i}`}>
                   {i > 0 && <span className="mx-1 text-zinc-300">/</span>}

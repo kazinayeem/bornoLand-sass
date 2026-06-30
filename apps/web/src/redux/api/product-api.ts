@@ -4,16 +4,35 @@ export type ProductOption = {
   _id?: string;
   name: string;
   values: string[];
+  displayType?: "dropdown" | "button" | "color_swatch" | "image_swatch";
+  position?: number;
 };
 
 export type ProductVariant = {
   _id?: string;
+  title?: string;
   optionValues: Record<string, string>;
   price?: number;
+  comparePrice?: number;
+  wholesalePrice?: number;
+  costPrice?: number;
   stock: number;
+  lowStockThreshold?: number;
   sku: string;
+  barcode?: string;
   imageUrl: string;
+  imageMediaIds?: string[];
+  galleryUrls?: string[];
   enabled: boolean;
+  status?: "active" | "draft" | "out_of_stock" | "archived" | "hidden";
+  isDefault?: boolean;
+  isFeatured?: boolean;
+  isBestSeller?: boolean;
+  allowPreOrder?: boolean;
+  allowBackorder?: boolean;
+  isComingSoon?: boolean;
+  weight?: number;
+  weightUnit?: string;
 };
 
 export type Product = {
@@ -22,14 +41,22 @@ export type Product = {
   name: string;
   slug: string;
   description: string;
+  productType?: "simple" | "variable" | "digital" | "service" | "downloadable";
   price: number;
   comparePrice?: number;
+  priceMin?: number;
+  priceMax?: number;
+  priceRange?: { min: number; max: number };
+  totalStock?: number;
+  variantCount?: number;
   category: string;
   stock: number;
-  status: "active" | "inactive";
+  status: "active" | "inactive" | "draft" | "archived";
   sku: string;
   imageUrl?: string;
   thumbnailUrl?: string;
+  featuredImageId?: string | null;
+  galleryImageIds?: string[];
   galleryImageUrls?: string[];
   images: string[];
   featured: boolean;
@@ -75,18 +102,21 @@ export type PublicProductPageData = {
   relatedProducts: Product[];
 };
 
-type CreateProductRequest = {
+export type CreateProductRequest = {
   name: string;
   slug: string;
   description?: string;
+  productType?: "simple" | "variable" | "digital" | "service" | "downloadable";
   price: number;
   comparePrice?: number;
   category?: string;
   stock?: number;
-  status?: "active" | "inactive";
+  status?: "active" | "inactive" | "draft" | "archived";
   sku?: string;
   imageUrl?: string;
   thumbnailUrl?: string;
+  featuredImageId?: string | null;
+  galleryImageIds?: string[];
   galleryImageUrls?: string[];
   images?: string[];
   featured?: boolean;
@@ -95,7 +125,7 @@ type CreateProductRequest = {
   variants?: ProductVariant[];
 };
 
-type UpdateProductRequest = Partial<CreateProductRequest>;
+export type UpdateProductRequest = Partial<CreateProductRequest>;
 
 type CreateVariantRequest = {
   optionValues: Record<string, string>;
@@ -149,12 +179,48 @@ export const productApi = baseApi.injectEndpoints({
     deleteVariant: builder.mutation<ApiEnvelope<never>, { storeId: string; id: string; variantId: string }>({
       query: ({ storeId, id, variantId }) => ({ url: `/products/${storeId}/${id}/variants/${variantId}`, method: "DELETE" }),
       invalidatesTags: (_result, _error, { storeId }) => [{ type: "Products", id: storeId }]
-    })
+    }),
+    syncVariants: builder.mutation<
+      ApiEnvelope<{ product: Product }>,
+      { storeId: string; id: string; data: { options: ProductOption[]; variants: ProductVariant[]; productType?: string } }
+    >({
+      query: ({ storeId, id, data }) => ({
+        url: `/products/${storeId}/${id}/variants/sync`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { storeId, id }) => [
+        { type: "Products", id: storeId },
+        { type: "Products", id },
+      ],
+    }),
+    generateVariants: builder.mutation<ApiEnvelope<{ product: Product }>, { storeId: string; id: string }>({
+      query: ({ storeId, id }) => ({ url: `/products/${storeId}/${id}/variants/generate`, method: "POST" }),
+      invalidatesTags: (_result, _error, { storeId, id }) => [
+        { type: "Products", id: storeId },
+        { type: "Products", id },
+      ],
+    }),
+    bulkUpdateVariants: builder.mutation<
+      ApiEnvelope<{ product?: Product; deleted?: number }>,
+      { storeId: string; id: string; data: { variantIds: string[]; action: string; price?: number; stock?: number } }
+    >({
+      query: ({ storeId, id, data }) => ({
+        url: `/products/${storeId}/${id}/variants/bulk`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { storeId, id }) => [
+        { type: "Products", id: storeId },
+        { type: "Products", id },
+      ],
+    }),
   })
 });
 
 export const {
-  useGetProductsQuery, useGetProductQuery, useGetPublicProductQuery, useCreateProductMutation,
+  useGetProductsQuery, useGetProductQuery, useLazyGetProductQuery, useGetPublicProductQuery, useCreateProductMutation,
   useUpdateProductMutation, useDeleteProductMutation, useDuplicateProductMutation,
-  useCreateVariantMutation, useUpdateVariantMutation, useDeleteVariantMutation
+  useCreateVariantMutation, useUpdateVariantMutation, useDeleteVariantMutation,
+  useSyncVariantsMutation, useGenerateVariantsMutation, useBulkUpdateVariantsMutation,
 } = productApi;

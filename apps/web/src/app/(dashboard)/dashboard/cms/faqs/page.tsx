@@ -1,7 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetFaqsQuery, useCreateFaqMutation, useUpdateFaqMutation, useDeleteFaqMutation, useReorderFaqsMutation } from "@/redux/api/cms-api";
@@ -14,7 +15,16 @@ const RichTextEditor = dynamic(() => import("@/components/cms/rich-text-editor")
 });
 
 export default function FaqsPage() {
+  const router = useRouter();
+  const pathname = usePathname();
   const { currentStoreId, stores, selectStore, clearStore } = useCurrentStore();
+  const currentStore = stores.find((s) => s._id === currentStoreId);
+
+  useEffect(() => {
+    if (pathname?.startsWith("/dashboard") && currentStore?.slug) {
+      router.replace(`/store/${currentStore.slug}/cms/faqs`);
+    }
+  }, [currentStore?.slug, pathname, router]);
 
   const { data: faqsData, isLoading: faqsLoading } = useGetFaqsQuery(currentStoreId, { skip: !currentStoreId });
   const faqs = faqsData?.data?.faqs ?? [];

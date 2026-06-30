@@ -2,8 +2,8 @@
 
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
-import { updateSectionProps, setSelectedSection, duplicateSection, moveSection, removeSection, toggleSection, updateSectionMeta } from "@/redux/slices/builder-slice";
-import { X, Image, Palette, Type, Layers, AlignLeft, PaintBucket, Ruler, ChevronDown, Lightbulb, Copy, ArrowUp, ArrowDown, Trash2, Eye, EyeOff } from "lucide-react";
+import { updateSectionProps, setSelectedSection, updateSectionMeta } from "@/redux/slices/builder-slice";
+import { X, Type, Layers, AlignLeft, PaintBucket, Ruler, ChevronDown, Lightbulb, Sparkles, MonitorSmartphone, Box } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { getSectionDef, type SectionPropDef } from "@/lib/section-registry";
@@ -164,11 +164,9 @@ export function PropertiesPanel() {
   const storeSlug = typeof params.storeSlug === "string" ? params.storeSlug : undefined;
   const selectedId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const section = useSelector((s: RootState) => s.builder.sections.find((sec) => sec.id === selectedId));
-  const sectionIndex = useSelector((s: RootState) => s.builder.sections.findIndex((sec) => sec.id === selectedId));
-  const sectionCount = useSelector((s: RootState) => s.builder.sections.length);
 
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState<"general" | "content" | "style" | "advanced">("content");
+  const [activeTab, setActiveTab] = useState<"general" | "content" | "style" | "layout" | "animation" | "responsive" | "advanced">("content");
 
   const toggleGroup = (g: string) => {
     setCollapsedGroups((prev) => {
@@ -205,34 +203,43 @@ export function PropertiesPanel() {
   }
 
   const tabGroups: Record<typeof activeTab, string[]> = {
-    general: ["content", "layout"],
+    general: ["content"],
     content: ["content"],
-    style: ["background", "typography", "spacing"],
+    style: ["background", "typography"],
+    layout: ["layout", "spacing"],
+    animation: [],
+    responsive: [],
     advanced: ["advanced"],
+  };
+
+  const tabIcons = {
+    general: Layers,
+    content: Type,
+    style: PaintBucket,
+    layout: Box,
+    animation: Sparkles,
+    responsive: MonitorSmartphone,
+    advanced: Lightbulb,
   };
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-zinc-100 bg-white px-4 py-3">
+      <div className="sticky top-0 z-10 border-b border-zinc-100 bg-white/95 px-4 py-4 backdrop-blur">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-zinc-100">
+            <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-zinc-100">
               <Layers className="h-3 w-3 text-zinc-500" />
             </div>
-            <p className="text-xs font-semibold text-zinc-900">{section.label}</p>
+            <div>
+              <p className="text-sm font-semibold text-zinc-900">{section.label}</p>
+              <p className="text-[11px] text-zinc-400">{section.type}</p>
+            </div>
           </div>
           <button onClick={() => dispatch(setSelectedSection(null))}
             className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
             <X className="h-3.5 w-3.5" />
           </button>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button onClick={() => dispatch(duplicateSection(section.id))} className="rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-zinc-600"><Copy className="mr-1 inline h-3 w-3" />Duplicate</button>
-          <button onClick={() => dispatch(toggleSection(section.id))} className="rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-zinc-600">{section.visible ? <Eye className="mr-1 inline h-3 w-3" /> : <EyeOff className="mr-1 inline h-3 w-3" />}{section.visible ? "Hide" : "Show"}</button>
-          <button onClick={() => sectionIndex > 0 && dispatch(moveSection({ from: sectionIndex, to: sectionIndex - 1 }))} disabled={sectionIndex <= 0} className="rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-zinc-600 disabled:opacity-40"><ArrowUp className="mr-1 inline h-3 w-3" />Up</button>
-          <button onClick={() => sectionIndex < sectionCount - 1 && dispatch(moveSection({ from: sectionIndex, to: sectionIndex + 1 }))} disabled={sectionIndex >= sectionCount - 1} className="rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-zinc-600 disabled:opacity-40"><ArrowDown className="mr-1 inline h-3 w-3" />Down</button>
-          <button onClick={() => dispatch(removeSection(section.id))} className="rounded-lg border border-red-200 px-2 py-1 text-[10px] font-medium text-red-600"><Trash2 className="mr-1 inline h-3 w-3" />Delete</button>
         </div>
         <div className="mt-3">
           <label className="mb-1 flex items-center gap-1 text-[10px] font-medium text-zinc-500">Section name</label>
@@ -243,29 +250,34 @@ export function PropertiesPanel() {
             className="h-8 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-xs text-zinc-700 focus:border-zinc-400 focus:outline-none"
           />
         </div>
-        <p className="mt-1 text-[10px] text-zinc-400">{section.type}</p>
-        <div className="mt-3 flex flex-wrap gap-1 rounded-xl bg-zinc-100 p-1">
+        <div className="mt-4 flex flex-wrap gap-1 rounded-2xl bg-zinc-100/80 p-1">
           {[
             { key: "general", label: "General" },
             { key: "content", label: "Content" },
             { key: "style", label: "Style" },
+            { key: "layout", label: "Layout" },
+            { key: "animation", label: "Animation" },
+            { key: "responsive", label: "Responsive" },
             { key: "advanced", label: "Advanced" },
           ].map((tab) => (
             <button
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key as typeof activeTab)}
-              className={`rounded-lg px-2.5 py-1 text-[10px] font-medium ${
+              className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[10px] font-medium ${
                 activeTab === tab.key ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500"
               }`}
             >
+              {(() => {
+                const Icon = tabIcons[tab.key as keyof typeof tabIcons];
+                return <Icon className="h-3 w-3" />;
+              })()}
               {tab.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Properties by group */}
       <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
         {groupOrder.filter((g) => grouped[g]?.length && tabGroups[activeTab].includes(g)).map((group) => {
           const items = grouped[group];
@@ -301,6 +313,20 @@ export function PropertiesPanel() {
             </div>
           );
         })}
+        {tabGroups[activeTab].length > 0 && groupOrder.filter((g) => grouped[g]?.length && tabGroups[activeTab].includes(g)).length === 0 && (
+          <div className="p-6 text-center">
+            <p className="text-sm font-medium text-zinc-700">No settings in this tab yet</p>
+            <p className="mt-1 text-xs text-zinc-500">This section does not expose controls for the current category.</p>
+          </div>
+        )}
+        {(activeTab === "animation" || activeTab === "responsive") && (
+          <div className="p-6 text-center">
+            <p className="text-sm font-medium text-zinc-700">{activeTab === "animation" ? "Animation drawer" : "Responsive drawer"}</p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Advanced {activeTab} controls are intentionally deferred so the default inspector stays focused and uncluttered.
+            </p>
+          </div>
+        )}
         {controls.length === 0 && (
           <div className="p-4 text-center">
             <p className="text-xs text-zinc-400">No editable properties</p>

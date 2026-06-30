@@ -18,7 +18,7 @@ type BuilderState = {
   selectedSectionId: string | null;
   hoveredSectionId: string | null;
   editingSectionId: string | null;
-  activeTab: "sections" | "theme" | "products" | "pages" | "templates" | "media";
+  activeTab: "layers" | "components" | "pages" | "templates" | "media";
   leftPanelWidth: number;
   rightPanelWidth: number;
   isDirty: boolean;
@@ -36,9 +36,9 @@ const initialState: BuilderState = {
   selectedSectionId: null,
   hoveredSectionId: null,
   editingSectionId: null,
-  activeTab: "sections",
-  leftPanelWidth: 320,
-  rightPanelWidth: 360,
+  activeTab: "layers",
+  leftPanelWidth: 300,
+  rightPanelWidth: 340,
   isDirty: false,
   lastSaved: null,
   saving: false,
@@ -167,10 +167,16 @@ const builderSlice = createSlice({
       state.isDirty = true;
     },
     setLeftPanelWidth(state, action: PayloadAction<number>) {
-      state.leftPanelWidth = Math.max(280, Math.min(460, action.payload));
+      state.leftPanelWidth = Math.max(220, Math.min(420, action.payload));
     },
     setRightPanelWidth(state, action: PayloadAction<number>) {
-      state.rightPanelWidth = Math.max(320, Math.min(520, action.payload));
+      state.rightPanelWidth = Math.max(300, Math.min(460, action.payload));
+    },
+    restoreHistorySnapshot(state, action: PayloadAction<BuilderSection[]>) {
+      pushHistory(state);
+      state.sections = action.payload.map((section) => ({ ...section, props: { ...section.props } }));
+      state.isDirty = true;
+      state.selectedSectionId = action.payload[0]?.id ?? null;
     },
     undoBuilder(state) {
       const previous = state.past.pop();
@@ -215,7 +221,7 @@ export const {
   updateSectionProps, moveSection, duplicateSection,
   updateSectionMeta, setSelectedSection, setHoveredSection, setEditingSection, setActiveTab,
   toggleSectionLock, toggleSectionFavorite, copySection, pasteSection,
-  setLeftPanelWidth, setRightPanelWidth, undoBuilder, redoBuilder,
+  setLeftPanelWidth, setRightPanelWidth, restoreHistorySnapshot, undoBuilder, redoBuilder,
   markSaved, setSaving, setPublishing, loadSections, setPageId,
 } = builderSlice.actions;
 export const builderReducer = builderSlice.reducer;

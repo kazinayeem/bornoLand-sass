@@ -49,15 +49,15 @@ export function LayersPanel() {
   }, [sections]);
 
   return (
-    <aside className="flex h-full w-72 flex-col border-r border-zinc-200 bg-white">
-      <div className="border-b border-zinc-100 px-4 py-3">
+    <aside className="flex h-full flex-col bg-white">
+      <div className="border-b border-zinc-100 px-4 py-4">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-100 text-zinc-600">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-600">
             <PanelLeft className="h-4 w-4" />
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Layers</p>
-            <p className="text-sm font-semibold text-zinc-900">Home Page</p>
+            <p className="text-sm font-semibold text-zinc-900">Page Structure</p>
           </div>
         </div>
       </div>
@@ -71,8 +71,8 @@ export function LayersPanel() {
           return (
             <div
               key={section.id}
-              className={`group mb-2 rounded-xl border p-3 transition-colors ${
-                selected ? "border-zinc-900 bg-zinc-50" : "border-zinc-100 hover:border-zinc-200"
+              className={`group mb-2 rounded-2xl border p-3 transition-all ${
+                selected ? "border-zinc-900/80 bg-zinc-50" : "border-transparent bg-zinc-50/70 hover:border-zinc-200 hover:bg-white"
               }`}
               onClick={() => dispatch(setSelectedSection(section.id))}
             >

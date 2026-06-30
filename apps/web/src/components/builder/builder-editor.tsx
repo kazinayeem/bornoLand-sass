@@ -1,0 +1,291 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState } from "@/redux/store";
+import { useGetProductsQuery } from "@/redux/api/product-api";
+import { useGetPagesQuery, useCreatePageMutation } from "@/redux/api/builder-api";
+import { useGetStoreSettingsQuery, useGetHomepageSlidersQuery } from "@/redux/api/store-settings-api";
+import { useGetCategoriesQuery } from "@/redux/api/category-api";
+import { setTheme } from "@/redux/slices/theme-slice";
+import { setStoreSettings } from "@/redux/slices/store-settings-slice";
+import {
+  loadSections,
+  setPageId,
+  markSaved,
+  setSaving,
+  setLeftPanelWidth,
+  setRightPanelWidth,
+  copySection,
+  duplicateSection,
+  pasteSection,
+  redoBuilder,
+  removeSection,
+  undoBuilder,
+} from "@/redux/slices/builder-slice";
+import type { BuilderSection } from "@/redux/slices/builder-slice";
+import { useSavePageMutation } from "@/redux/api/builder-api";
+import { BuilderToolbar } from "@/components/builder/builder-toolbar";
+import { BuilderSidebar } from "@/components/builder/builder-sidebar";
+import { StorePreview } from "@/components/builder/store-preview";
+import { PropertiesPanel } from "@/components/builder/properties-panel";
+import type { Store } from "@/redux/api/store-api";
+
+const defaultSections: BuilderSection[] = [
+  { id: "hero-banner-1", type: "hero-banner", label: "Hero Banner", visible: true, props: { headline: "Welcome to Our Store", subheadline: "Discover amazing products curated just for you", buttonText: "Shop Now", buttonLink: "/shop", imageUrl: "", overlayColor: "rgba(15, 23, 42, 0.45)", textAlignment: "left", heroHeight: "md", kicker: "Welcome" } },
+  { id: "category-grid-1", type: "category-grid", label: "Categories", visible: true, props: { title: "Shop by Category", subtitle: "Browse our collections", gridColumns: "4" } },
+  { id: "featured-products-1", type: "featured-products", label: "Featured Products", visible: true, props: { title: "Featured Products", subtitle: "Our best selling items", gridColumns: "4", showBadges: "true", showRatings: "true" } },
+  { id: "testimonials-1", type: "testimonials", label: "Testimonials", visible: true, props: { title: "What Customers Say", subtitle: "Hear from our happy customers", layout: "grid", cardStyle: "default", avatarStyle: "circle" } },
+  { id: "newsletter-1", type: "newsletter", label: "Newsletter", visible: true, props: { headline: "Stay in the Loop", subheadline: "Subscribe to get special offers, free giveaways, and exclusive deals.", buttonText: "Subscribe", placeholderText: "Enter your email" } },
+  { id: "simple-footer-1", type: "simple-footer", label: "Footer", visible: true, props: { copyright: "© 2026 Your Store. All rights reserved.", showSocial: "true" } },
+];
+
+type BuilderEditorProps = {
+  store: Store;
+};
+
+export function BuilderEditor({ store }: BuilderEditorProps) {
+  const params = useParams();
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const routePageId = typeof params.pageId === "string" ? params.pageId : "";
+  const storeId = store._id;
+  const storeSlug = store.slug;
+
+  const { data: productsData } = useGetProductsQuery(storeId);
+  const { data: pagesData, isLoading: pagesLoading } = useGetPagesQuery(storeId);
+  const { data: settingsData } = useGetStoreSettingsQuery(storeId);
+  const { data: slidersData } = useGetHomepageSlidersQuery(storeId);
+  const { data: categoriesData } = useGetCategoriesQuery(storeId);
+  const [createPage] = useCreatePageMutation();
+  const [savePage] = useSavePageMutation();
+
+  const products = productsData?.data?.products ?? [];
+  const settings = settingsData?.data?.settings ?? {
+    currencyCode: "USD", currencySymbol: "$", currencyPosition: "before",
+    locale: "en-US", decimalPlaces: 2, taxRate: 0,
+    dateFormat: "MM/DD/YYYY", timezone: "UTC", language: "en",
+  };
+  const sliders = slidersData?.data?.sliders ?? [];
+  const categories = categoriesData?.data?.categories ?? [];
+
+  const isDirty = useSelector((s: RootState) => s.builder.isDirty);
+  const saving = useSelector((s: RootState) => s.builder.saving);
+  const publishing = useSelector((s: RootState) => s.builder.publishing);
+  const sections = useSelector((s: RootState) => s.builder.sections);
+  const selectedSectionId = useSelector((s: RootState) => s.builder.selectedSectionId);
+  const pageId = useSelector((s: RootState) => s.builder.pageId);
+  const currentTheme = useSelector((s: RootState) => s.theme);
+  const clipboardSection = useSelector((s: RootState) => s.builder.clipboardSection);
+  const leftPanelWidth = useSelector((s: RootState) => s.builder.leftPanelWidth);
+  const rightPanelWidth = useSelector((s: RootState) => s.builder.rightPanelWidth);
+  const [resizing, setResizing] = useState<"left" | "right" | null>(null);
+
+  const loadedRef = useRef<string>("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const left = window.localStorage.getItem("builder.leftPanelWidth");
+    const right = window.localStorage.getItem("builder.rightPanelWidth");
+    if (left) dispatch(setLeftPanelWidth(Number(left)));
+    if (right) dispatch(setRightPanelWidth(Number(right)));
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("builder.leftPanelWidth", String(leftPanelWidth));
+    window.localStorage.setItem("builder.rightPanelWidth", String(rightPanelWidth));
+  }, [leftPanelWidth, rightPanelWidth]);
+
+  useEffect(() => {
+    if (!resizing) return;
+    const handleMove = (event: MouseEvent) => {
+      if (resizing === "left") {
+        dispatch(setLeftPanelWidth(event.clientX));
+      } else {
+        dispatch(setRightPanelWidth(window.innerWidth - event.clientX));
+      }
+    };
+    const handleUp = () => setResizing(null);
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+    };
+  }, [dispatch, resizing]);
+
+  useEffect(() => {
+    if (store?.theme) {
+      dispatch(setTheme({
+        primaryColor: store.theme.primaryColor, secondaryColor: store.theme.secondaryColor,
+        font: store.theme.font, buttonStyle: store.theme.buttonStyle,
+        layoutWidth: store.theme.layoutWidth, darkMode: store.theme.darkMode,
+        navbarStyle: store.theme.navbarStyle,
+      }));
+    }
+  }, [store, dispatch]);
+
+  useEffect(() => {
+    if (settings) {
+      dispatch(setStoreSettings({
+        currencyCode: settings.currencyCode, currencySymbol: settings.currencySymbol,
+        currencyPosition: settings.currencyPosition, locale: settings.locale,
+        decimalPlaces: settings.decimalPlaces,
+        dateFormat: settings.dateFormat, timezone: settings.timezone, language: settings.language,
+      }));
+    }
+  }, [settings, dispatch]);
+
+  useEffect(() => {
+    const pages = pagesData?.data?.pages;
+    const loadKey = `${storeId}:${routePageId || "root"}`;
+    if (!pages || loadedRef.current === loadKey) return;
+
+    const redirectToPage = (targetSlugOrId: string) => {
+      router.replace(`/store/${storeSlug}/builder/${targetSlugOrId}`);
+    };
+
+    loadedRef.current = loadKey;
+
+    if (pages.length > 0) {
+      const matchedPage = pages.find((page) => page._id === routePageId || page.slug === routePageId) ?? pages[0];
+      dispatch(loadSections((matchedPage.sections?.length ? matchedPage.sections : defaultSections) as BuilderSection[]));
+      dispatch(setPageId(matchedPage._id));
+
+      const canonicalRouteId = matchedPage.slug || matchedPage._id;
+      if (!routePageId || routePageId !== canonicalRouteId) {
+        redirectToPage(canonicalRouteId);
+      }
+      return;
+    }
+
+    createPage({ storeId, data: { title: "Home", slug: "home" } })
+      .unwrap()
+      .then((res) => {
+        const createdPage = res.data?.page;
+        if (!createdPage) return;
+        dispatch(loadSections(defaultSections));
+        dispatch(setPageId(createdPage._id));
+        redirectToPage(createdPage.slug || createdPage._id);
+      })
+      .catch(() => {});
+  }, [pagesData, dispatch, storeId, routePageId, createPage, router, storeSlug]);
+
+  useEffect(() => {
+    if (!isDirty || !pageId) return;
+    const timer = setTimeout(() => {
+      dispatch(setSaving(true));
+      savePage({ pageId, data: { sections, theme: currentTheme } })
+        .unwrap()
+        .then(() => dispatch(markSaved(new Date().toISOString())))
+        .catch(() => dispatch(setSaving(false)));
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [isDirty, pageId, sections, currentTheme, dispatch, savePage]);
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      const mod = event.metaKey || event.ctrlKey;
+      if (mod && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        if (!pageId) return;
+        dispatch(setSaving(true));
+        savePage({ pageId, data: { sections, theme: currentTheme } })
+          .unwrap()
+          .then(() => dispatch(markSaved(new Date().toISOString())))
+          .catch(() => dispatch(setSaving(false)));
+        return;
+      }
+      if (mod && event.key.toLowerCase() === "z" && !event.shiftKey) {
+        event.preventDefault();
+        dispatch(undoBuilder());
+        return;
+      }
+      if (mod && ((event.key.toLowerCase() === "z" && event.shiftKey) || event.key.toLowerCase() === "y")) {
+        event.preventDefault();
+        dispatch(redoBuilder());
+        return;
+      }
+      if (mod && event.key.toLowerCase() === "d" && selectedSectionId) {
+        event.preventDefault();
+        dispatch(duplicateSection(selectedSectionId));
+        return;
+      }
+      if (mod && event.key.toLowerCase() === "c" && selectedSectionId) {
+        event.preventDefault();
+        dispatch(copySection(selectedSectionId));
+        return;
+      }
+      if (mod && event.key.toLowerCase() === "v" && clipboardSection) {
+        event.preventDefault();
+        dispatch(pasteSection(selectedSectionId));
+        return;
+      }
+      if (event.key === "Delete" && selectedSectionId) {
+        event.preventDefault();
+        dispatch(removeSection(selectedSectionId));
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [clipboardSection, currentTheme, dispatch, pageId, savePage, sections, selectedSectionId]);
+
+  if (pagesLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-zinc-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen flex-col bg-zinc-50">
+      <BuilderToolbar
+        storeId={storeId}
+        storeName={store.name}
+        onBack={() => router.push(`/store/${storeSlug}`)}
+        saving={saving}
+        publishing={publishing}
+        isDirty={isDirty}
+      />
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-shrink-0 overflow-hidden border-r border-zinc-200/70 bg-white/90 backdrop-blur" style={{ width: leftPanelWidth }}>
+          <BuilderSidebar storeId={storeId} storeSlug={storeSlug} />
+        </div>
+        <button
+          type="button"
+          onMouseDown={() => setResizing("left")}
+          className="w-1 flex-shrink-0 cursor-col-resize bg-zinc-200/70 transition-colors hover:bg-zinc-400"
+          aria-label="Resize left panel"
+        />
+        <div className="flex-1 overflow-y-auto bg-zinc-100">
+          <StorePreview
+            store={store}
+            theme={currentTheme}
+            products={products}
+            categories={categories}
+            settings={settings}
+            sliders={sliders}
+            sections={sections as any}
+          />
+        </div>
+        {selectedSectionId && (
+          <>
+            <button
+              type="button"
+              onMouseDown={() => setResizing("right")}
+              className="w-1 flex-shrink-0 cursor-col-resize bg-zinc-200/70 transition-colors hover:bg-zinc-400"
+              aria-label="Resize right panel"
+            />
+            <div className="flex-shrink-0 overflow-y-auto border-l border-zinc-200/70 bg-white/95" style={{ width: rightPanelWidth }}>
+              <PropertiesPanel />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

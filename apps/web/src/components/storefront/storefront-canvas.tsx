@@ -9,6 +9,7 @@ type StorefrontCanvasProps = {
   hoveredSectionId?: string | null;
   onSelectSection?: (sectionId: string) => void;
   onHoverSection?: (sectionId: string | null) => void;
+  onQuickEditRequest?: (payload: { sectionId: string; mode: "text" | "image" | "button" }) => void;
 };
 
 function toSectionData(s: StorefrontSectionLike): SectionData {
@@ -21,7 +22,7 @@ function toSectionData(s: StorefrontSectionLike): SectionData {
   return { id: s.id, type: s.type, visible: s.visible, props };
 }
 
-export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId, onSelectSection, onHoverSection }: StorefrontCanvasProps) {
+export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId, onSelectSection, onHoverSection, onQuickEditRequest }: StorefrontCanvasProps) {
   const visibleSections = sections.filter((section) => section.visible !== false);
 
   if (visibleSections.length === 0) {
@@ -34,7 +35,27 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
         <div
           key={section.id}
           data-builder-section-id={section.id}
-          onClick={onSelectSection ? () => onSelectSection(section.id) : undefined}
+          onClick={(event) => {
+            onSelectSection?.(section.id);
+            if (!onQuickEditRequest) return;
+            const target = event.target as HTMLElement | null;
+            if (!target) return;
+            const tagName = target.tagName.toLowerCase();
+            if (tagName === "img") {
+              onQuickEditRequest({ sectionId: section.id, mode: "image" });
+            } else if (tagName === "a" || tagName === "button") {
+              onQuickEditRequest({ sectionId: section.id, mode: "button" });
+            }
+          }}
+          onDoubleClick={(event) => {
+            if (!onQuickEditRequest) return;
+            const target = event.target as HTMLElement | null;
+            if (!target) return;
+            const tagName = target.tagName.toLowerCase();
+            if (["h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "small"].includes(tagName)) {
+              onQuickEditRequest({ sectionId: section.id, mode: "text" });
+            }
+          }}
           onMouseEnter={onHoverSection ? () => onHoverSection(section.id) : undefined}
           onMouseLeave={onHoverSection ? () => onHoverSection(null) : undefined}
           className={`relative transition-all ${

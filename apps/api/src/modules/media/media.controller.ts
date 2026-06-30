@@ -1,5 +1,5 @@
 import multer from "multer";
-import type { Response } from "express";
+import type { RequestHandler, Response } from "express";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 import { StoreModel } from "../stores/store.model.js";
@@ -22,7 +22,7 @@ const upload = multer({
   limits: { fileSize: (Number(process.env.MEDIA_MAX_FILE_SIZE_MB) || DEFAULT_MAX_FILE_SIZE_MB) * 1024 * 1024 },
 });
 
-export const mediaUploadMiddleware = upload.array("files", 20);
+export const mediaUploadMiddleware: RequestHandler = upload.array("files", 20) as RequestHandler;
 
 async function verifyStoreOwner(storeId: string, userId?: string) {
   return Boolean(await StoreModel.findOne({ _id: storeId, userId }).lean());

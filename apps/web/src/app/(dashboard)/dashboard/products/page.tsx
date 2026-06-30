@@ -1,5 +1,11 @@
-import { redirect } from "next/navigation";
+"use client";
+
+import { LegacyStoreRouteRedirect } from "@/components/store-dashboard/legacy-store-route-redirect";
 
 export default function LegacyProductsPage() {
-  redirect("/dashboard/stores");
+  return (
+    <LegacyStoreRouteRedirect
+      resolveTargetPath={(storeSlug) => `/store/${storeSlug}/products`}
+    />
+  );
 }

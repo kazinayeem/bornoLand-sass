@@ -9,7 +9,7 @@ import {
   ExternalLink, Loader2, Eye, EyeOff,
 } from "lucide-react";
 
-type CmsTabProps = { storeId: string };
+type CmsTabProps = { storeId: string; storeSlug?: string };
 
 const pageMeta: Record<string, { label: string; icon: typeof FileText }> = {
   faq: { label: "FAQ", icon: HelpCircle },
@@ -22,10 +22,16 @@ const pageMeta: Record<string, { label: string; icon: typeof FileText }> = {
   "about-us": { label: "About Us", icon: Info },
 };
 
-export function CmsTab({ storeId }: CmsTabProps) {
+export function CmsTab({ storeId, storeSlug }: CmsTabProps) {
   const router = useRouter();
   const { data, isLoading } = useGetCmsPagesQuery(storeId);
   const pages = data?.data?.pages ?? [];
+  const buildCmsPath = (slug: string) => {
+    if (storeSlug) {
+      return slug === "faq" ? `/store/${storeSlug}/cms/faqs` : `/store/${storeSlug}/cms/${slug}`;
+    }
+    return slug === "faq" ? `/dashboard/cms/faqs?storeId=${storeId}` : `/dashboard/cms/${slug}?storeId=${storeId}`;
+  };
 
   const pageList = useMemo(
     () =>
@@ -52,8 +58,7 @@ export function CmsTab({ storeId }: CmsTabProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03 }}
               onClick={() => {
-                const base = page.slug === "faq" ? "/dashboard/cms/faqs" : `/dashboard/cms/${page.slug}`;
-                router.push(`${base}?storeId=${storeId}`);
+                router.push(buildCmsPath(page.slug));
               }}
               className="group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 text-left transition-all hover:shadow-md hover:-translate-y-0.5"
             >
@@ -94,7 +99,7 @@ export function CmsTab({ storeId }: CmsTabProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        onClick={() => router.push(`/dashboard/cms/faqs?storeId=${storeId}`)}
+        onClick={() => router.push(buildCmsPath("faq"))}
         className="group relative w-full overflow-hidden rounded-2xl border border-dashed border-zinc-300 bg-white p-5 text-left transition-all hover:shadow-md hover:-translate-y-0.5"
       >
         <div className="flex items-center gap-4">

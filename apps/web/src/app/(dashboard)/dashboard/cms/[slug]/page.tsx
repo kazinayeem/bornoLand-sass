@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Suspense, useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useGetCmsPageQuery, useSaveCmsPageMutation } from "@/redux/api/cms-api";
 import { Store, Save, Loader2, Eye, EyeOff } from "lucide-react";
@@ -30,11 +30,14 @@ function CmsPageEditor() {
   useEffect(() => { setMounted(true); }, []);
 
   const params = useParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const slug = params.slug as string;
   const meta = pageMeta[slug] ?? { label: slug, icon: FileText, description: "Edit page content." };
   const Icon = meta.icon;
 
   const { currentStoreId, stores, selectStore, clearStore } = useCurrentStore();
+  const currentStore = stores.find((s) => s._id === currentStoreId);
 
   const { data: pageData, isLoading: pageLoading } = useGetCmsPageQuery(
     { storeId: currentStoreId, slug },
@@ -68,6 +71,12 @@ function CmsPageEditor() {
       </div>
     );
   }
+
+  useEffect(() => {
+    if (pathname?.startsWith("/dashboard") && currentStore?.slug) {
+      router.replace(`/store/${currentStore.slug}/cms/${slug}`);
+    }
+  }, [currentStore?.slug, pathname, router, slug]);
 
   if (!currentStoreId) {
     return (

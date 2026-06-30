@@ -26,8 +26,8 @@ export function StoreNavbar({ store }: { store: Store }) {
         >
           <Bell className="h-4 w-4" />
         </Link>
-        <div className="hidden w-48 lg:block">
-          <WorkspaceSwitcher collapsed />
+        <div className="hidden w-48 xl:block">
+          <WorkspaceSwitcher />
         </div>
       </div>
     </header>

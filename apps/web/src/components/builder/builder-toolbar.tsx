@@ -13,6 +13,7 @@ import { Drawer } from "@/components/ui/drawer";
 import { ThemePanel } from "@/components/builder/panels/theme-panel";
 import { BuilderCommandPalette } from "@/components/builder/builder-command-palette";
 import { useRequiredStore } from "@/providers/store-context";
+import { revalidateStorefrontAction } from "@/lib/actions/revalidate-storefront";
 
 type Props = {
   onBack: () => void;
@@ -92,6 +93,11 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
       await savePage({ storeId, pageId, data: { sections, theme, settings: storeSettings } }).unwrap();
       await publishPage({ storeId, pageId, status: "published" }).unwrap();
       await updateStore({ id: storeId, data: { theme } }).unwrap();
+      await revalidateStorefrontAction({
+        tenantSlug: store.subdomain || store.slug,
+        storeId,
+        scope: "all",
+      });
       dispatch(markSaved(new Date().toISOString()));
       toast.success("Storefront published!");
     } catch {

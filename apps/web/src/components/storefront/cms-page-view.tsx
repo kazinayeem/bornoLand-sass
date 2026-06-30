@@ -2,41 +2,40 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Loader2, FileText } from "lucide-react";
+import { Loader2, FileText, HelpCircle, Shield, Truck, RotateCcw, Ruler } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
+import type { CmsPageData } from "@/lib/cms-page-types";
 import type { LucideIcon } from "lucide-react";
 
-type CmsPage = {
-  _id: string;
-  storeId: string;
-  slug: string;
-  title: string;
-  html: string;
-  seoTitle?: string;
-  seoDescription?: string;
-  ogImage?: string;
-  published: boolean;
-  layout: string;
-};
+const ICON_MAP = {
+  help: HelpCircle,
+  file: FileText,
+  shield: Shield,
+  truck: Truck,
+  returns: RotateCcw,
+  ruler: Ruler,
+} as const;
 
 type CmsPageViewProps = {
   slug: string;
   title: string;
   description?: string;
   icon?: LucideIcon;
+  iconName?: keyof typeof ICON_MAP;
+  initialPage?: CmsPageData | null;
 };
 
-export default function CmsPageView({ slug, title, description, icon: Icon }: CmsPageViewProps) {
+export default function CmsPageView({ slug, title, description, icon: IconProp, iconName, initialPage }: CmsPageViewProps) {
   const { store, theme } = useTenant();
   const { primaryColor, darkMode } = theme;
   const isDark = darkMode;
-  const DisplayIcon = Icon ?? FileText;
+  const DisplayIcon = IconProp ?? (iconName ? ICON_MAP[iconName] : FileText);
 
-  const [page, setPage] = useState<CmsPage | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState<CmsPageData | null>(initialPage ?? null);
+  const [loading, setLoading] = useState(!initialPage);
 
   useEffect(() => {
-    if (!store._id) return;
+    if (initialPage || !store._id) return;
     setLoading(true);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
     fetch(`${apiUrl}/public/page/${slug}?storeId=${store._id}`, { cache: "no-store" })
@@ -48,7 +47,7 @@ export default function CmsPageView({ slug, title, description, icon: Icon }: Cm
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [store._id, slug]);
+  }, [store._id, slug, initialPage]);
 
   if (loading) {
     return (
@@ -86,7 +85,7 @@ export default function CmsPageView({ slug, title, description, icon: Icon }: Cm
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
       <div className="text-center mb-12">
-        {Icon && (
+        {(IconProp || iconName) && (
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl"
             style={{ backgroundColor: `${primaryColor}12` }}>
             <DisplayIcon className="h-6 w-6" style={{ color: primaryColor }} />

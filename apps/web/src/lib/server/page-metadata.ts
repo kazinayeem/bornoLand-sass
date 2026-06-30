@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { fetchTenantSite } from "@/lib/server/tenant-site";
+import { CACHE_REVALIDATE, cacheTags } from "@/lib/server/cache-tags";
 
 const API_BASE = (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "");
 const APP_NAME = "BornoLand";
@@ -37,7 +38,7 @@ type ProductResponse = {
   };
 };
 
-async function apiFetch<T>(path: string, options?: { public?: boolean }): Promise<T | null> {
+async function apiFetch<T>(path: string, options?: { public?: boolean }, tagSlug?: string): Promise<T | null> {
   try {
     const headers: Record<string, string> = {};
     if (!options?.public) {
@@ -46,7 +47,10 @@ async function apiFetch<T>(path: string, options?: { public?: boolean }): Promis
     }
     const response = await fetch(`${API_BASE}${path}`, {
       headers: Object.keys(headers).length ? headers : undefined,
-      next: { revalidate: 120, tags: [path] },
+      next: {
+        revalidate: CACHE_REVALIDATE.metadata,
+        tags: [path, cacheTags.storeBySlug(tagSlug ?? path), cacheTags.storeMetadata(tagSlug ?? path)],
+      },
     });
     if (!response.ok) return null;
     return (await response.json()) as T;
@@ -56,7 +60,7 @@ async function apiFetch<T>(path: string, options?: { public?: boolean }): Promis
 }
 
 export const getStoreMetadataContext = cache(async (storeSlug: string) => {
-  const payload = await apiFetch<StoreResponse>(`/stores/by-slug/${storeSlug}`);
+  const payload = await apiFetch<StoreResponse>(`/stores/by-slug/${storeSlug}`, undefined, storeSlug);
   return payload?.data?.store ?? null;
 });
 
@@ -87,13 +91,17 @@ export function buildPageMetadata(args: {
   description: string;
   canonicalPath: string;
   iconUrl?: string;
+  keywords?: string;
+  ogImage?: string;
 }): Metadata {
   const siteUrl = (process.env.NEXT_PUBLIC_WEB_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
   const canonical = siteUrl ? `${siteUrl}${args.canonicalPath}` : args.canonicalPath;
   const icon = resolveIconUrl(args.iconUrl);
+  const ogImage = args.ogImage || (args.iconUrl && args.iconUrl !== DEFAULT_FAVICON ? args.iconUrl : undefined);
   return {
     title: { absolute: args.title },
     description: args.description,
+    keywords: args.keywords,
     alternates: { canonical },
     openGraph: {
       title: args.title,
@@ -101,11 +109,13 @@ export function buildPageMetadata(args: {
       url: canonical,
       siteName: APP_NAME,
       type: "website",
+      images: ogImage ? [{ url: ogImage }] : undefined,
     },
     twitter: {
       title: args.title,
       description: args.description,
-      card: "summary_large_image",
+      card: ogImage ? "summary_large_image" : "summary",
+      images: ogImage ? [ogImage] : undefined,
     },
     icons: {
       icon,
@@ -128,6 +138,8 @@ export async function generateStoreMetadata(args: {
     description: args.description ?? `${args.pageTitle} for ${storeName}.`,
     canonicalPath: args.canonicalPath,
     iconUrl: store?.faviconUrl || store?.logoUrl,
+    keywords: [args.pageTitle, storeName, "dashboard", "ecommerce"].join(", "),
+    ogImage: store?.logoUrl,
   });
 }
 
@@ -146,6 +158,8 @@ export async function generateTenantMetadata(args: {
     description: args.description ?? (store?.description || `${args.pageTitle} at ${storeName}.`),
     canonicalPath: args.canonicalPath,
     iconUrl: store?.faviconUrl || store?.logoUrl,
+    keywords: [args.pageTitle, storeName, "online store", "shop"].filter(Boolean).join(", "),
+    ogImage: store?.logoUrl,
   });
 }
 

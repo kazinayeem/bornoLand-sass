@@ -5,6 +5,8 @@ import { getServerSession } from "@/lib/auth-session";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { buildPageMetadata } from "@/lib/server/page-metadata";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = buildPageMetadata({
   title: "Dashboard • Super Admin",
   description: "Manage the BornoLand platform as Super Admin.",

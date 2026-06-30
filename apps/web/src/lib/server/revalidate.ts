@@ -1,0 +1,58 @@
+import "server-only";
+
+import { revalidatePath, revalidateTag } from "next/cache";
+import { cacheTags } from "@/lib/server/cache-tags";
+
+export type RevalidateScope = "all" | "home" | "products" | "cms" | "theme";
+
+export async function revalidateStorefront(args: {
+  tenantSlug: string;
+  storeId?: string;
+  scope?: RevalidateScope;
+  productSlug?: string;
+  cmsSlugs?: string[];
+}) {
+  const { tenantSlug, storeId, scope = "all", productSlug, cmsSlugs } = args;
+
+  revalidateTag(cacheTags.tenant(tenantSlug));
+
+  if (storeId) {
+    revalidateTag(cacheTags.store(storeId));
+    revalidateTag(cacheTags.cmsStore(storeId));
+  }
+
+  revalidateTag(cacheTags.storeMetadata(tenantSlug));
+  revalidateTag(cacheTags.storeBySlug(tenantSlug));
+
+  if (scope === "all" || scope === "theme") {
+    revalidateTag(cacheTags.tenantTheme(tenantSlug));
+  }
+
+  if ((scope === "all" || scope === "cms") && storeId) {
+    if (cmsSlugs?.length) {
+      for (const slug of cmsSlugs) {
+        revalidateTag(cacheTags.cmsPage(storeId, slug));
+      }
+    } else {
+      revalidateTag(cacheTags.cmsStore(storeId));
+    }
+  }
+
+  if ((scope === "all" || scope === "products") && productSlug) {
+    revalidateTag(cacheTags.product(productSlug));
+  }
+
+  revalidatePath(`/site/${tenantSlug}`);
+  if (scope === "all" || scope === "home") {
+    revalidatePath(`/site/${tenantSlug}`, "page");
+  }
+  if (scope === "all" || scope === "products") {
+    revalidatePath(`/site/${tenantSlug}/shop`);
+    if (productSlug) revalidatePath(`/products/${productSlug}`);
+  }
+  if (scope === "all" || scope === "cms") {
+    for (const segment of ["about", "contact", "faq", "terms", "privacy", "shipping", "returns", "size-guide"]) {
+      revalidatePath(`/site/${tenantSlug}/${segment}`);
+    }
+  }
+}

@@ -9,6 +9,7 @@ import { Save, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { HelpCircle, Truck, RotateCcw, Ruler, Mail, Shield, FileText, Info } from "lucide-react";
 import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-page";
+import { revalidateStorefrontAction } from "@/lib/actions/revalidate-storefront";
 
 const RichTextEditor = dynamic(() => import("@/components/cms/rich-text-editor"), {
   loading: () => <div className="min-h-[240px] rounded-xl border border-zinc-200 bg-zinc-50" />,
@@ -79,6 +80,14 @@ export function CmsPageEditor() {
         slug,
         data: { title, html: htmlContent, seoTitle, seoDescription, ogImage, published },
       }).unwrap();
+      if (published) {
+        await revalidateStorefrontAction({
+          tenantSlug: store.subdomain || store.slug,
+          storeId,
+          scope: "cms",
+          cmsSlugs: [slug],
+        });
+      }
       toast.success("Page saved successfully");
     } catch (err) {
       const msg = (err as { data?: { message?: string }; message?: string })?.data?.message

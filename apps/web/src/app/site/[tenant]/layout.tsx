@@ -12,6 +12,8 @@ import {
 import { fetchTenantSite } from "@/lib/server/tenant-site";
 import { generateTenantMetadata } from "@/lib/server/page-metadata";
 
+export const revalidate = 60;
+
 export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }): Promise<Metadata> {
   const { tenant } = await params;
   return generateTenantMetadata({

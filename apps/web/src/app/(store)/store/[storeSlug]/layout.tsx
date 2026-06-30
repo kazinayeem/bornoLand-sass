@@ -1,10 +1,8 @@
-import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { StoreProvider } from "@/providers/store-context";
 import { buildPageMetadata, getStoreMetadataContext } from "@/lib/server/page-metadata";
-
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+import { getStoreContext } from "@/lib/server/store-context";
+import type { Metadata } from "next";
 
 type StoreLayoutProps = {
   children: ReactNode;
@@ -20,9 +18,14 @@ export async function generateMetadata({ params }: { params: Promise<{ storeSlug
     description: store?.description || `Manage ${storeName} in BornoLand.`,
     canonicalPath: `/store/${storeSlug}/dashboard`,
     iconUrl: store?.faviconUrl || store?.logoUrl,
+    keywords: [storeName, "store dashboard", "ecommerce"].join(", "),
+    ogImage: store?.logoUrl,
   });
 }
 
-export default function StoreLayout({ children }: StoreLayoutProps) {
-  return <StoreProvider>{children}</StoreProvider>;
+export default async function StoreLayout({ children, params }: StoreLayoutProps) {
+  const { storeSlug } = await params;
+  const initialStore = await getStoreContext(storeSlug);
+
+  return <StoreProvider initialStore={initialStore}>{children}</StoreProvider>;
 }

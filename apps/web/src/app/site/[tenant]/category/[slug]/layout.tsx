@@ -3,6 +3,8 @@ import { generateTenantMetadata } from "@/lib/server/page-metadata";
 import { fetchTenantSite } from "@/lib/server/tenant-site";
 import { TenantPageLayout } from "@/lib/server/tenant-page-metadata";
 
+export const revalidate = 60;
+
 type CategoryLayoutProps = {
   params: Promise<{ tenant: string; slug: string }>;
 };

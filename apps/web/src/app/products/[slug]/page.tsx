@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { StorefrontFrame } from "@/components/storefront/storefront-frame";
 import { TenantProvider, type HomepageSliderData, type ProductData, type StoreData, type StoreSettingsData, type ThemeData } from "@/providers/tenant-provider";
 import { ProductDetailClient } from "@/app/site/[tenant]/products/[slug]/product-detail-client";
+import { CACHE_REVALIDATE, cacheTags } from "@/lib/server/cache-tags";
+
+export const revalidate = 60;
 
 type ProductRouteData = {
   store: StoreData;
@@ -16,9 +19,13 @@ type ProductRouteData = {
 async function fetchProductPage(slug: string, host: string): Promise<ProductRouteData | null> {
   try {
     const apiUrl = process.env.API_URL ?? "http://localhost:4000";
+    const tenantSlug = host.split(".")[0];
     const res = await fetch(`${apiUrl}/public/product/${slug}`, {
-      cache: "no-store",
-      headers: { "x-forwarded-host": host }
+      next: {
+        revalidate: CACHE_REVALIDATE.product,
+        tags: [cacheTags.product(slug), cacheTags.tenant(tenantSlug)],
+      },
+      headers: { "x-forwarded-host": host },
     });
     if (!res.ok) return null;
     const json = await res.json();

@@ -28,15 +28,17 @@ export type StoreContextValue = {
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
-export function StoreProvider({ children }: { children: ReactNode }) {
+export function StoreProvider({ children, initialStore }: { children: ReactNode; initialStore?: Store | null }) {
   const params = useParams();
   const storeSlug = typeof params.storeSlug === "string" ? params.storeSlug : "";
   const dispatch = useDispatch();
   const query = useGetStoreBySlugQuery(storeSlug, {
     skip: !storeSlug,
-    refetchOnMountOrArgChange: 300,
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
   });
-  const store = query.data?.data?.store ?? null;
+  const store = query.data?.data?.store ?? initialStore ?? null;
 
   useEffect(() => {
     if (store) {
@@ -65,11 +67,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             trialEndsAt: store.trialEndsAt,
           }
         : null,
-      isLoading: query.isLoading || (!!storeSlug && !store && !query.isError),
+      isLoading: !store && !initialStore && (query.isLoading || (!!storeSlug && !query.isError)),
       isError: query.isError,
       isReady: !!store && !!store._id,
     }),
-    [store, storeSlug, query.isLoading, query.isError],
+    [store, storeSlug, initialStore, query.isLoading, query.isError],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

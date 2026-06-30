@@ -34,6 +34,7 @@ import {
   type VariantDraft,
 } from "@/components/products/product-form";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes";
+import { revalidateStorefrontAction } from "@/lib/actions/revalidate-storefront";
 
 const TABS: { id: ProductEditorTab; label: string }[] = [
   { id: "general", label: "General" },
@@ -166,10 +167,26 @@ export function ProductEditor({
 
         if (isEdit && productId) {
           await updateProduct({ storeId, id: productId, data: payload }).unwrap();
+          if (options?.forceStatus === "active") {
+            await revalidateStorefrontAction({
+              tenantSlug: storeSlug,
+              storeId,
+              scope: "products",
+              productSlug: payload.slug || form.slug,
+            });
+          }
           toast.success(options?.forceStatus === "active" ? "Product published" : "Product saved");
         } else {
           const result = await createProduct({ storeId, data: payload }).unwrap();
           const newId = result.data?.product?._id;
+          if (options?.forceStatus === "active") {
+            await revalidateStorefrontAction({
+              tenantSlug: storeSlug,
+              storeId,
+              scope: "products",
+              productSlug: payload.slug || form.slug,
+            });
+          }
           toast.success("Product created");
           savedSnapshot.current = snapshot;
           setIsDirty(false);

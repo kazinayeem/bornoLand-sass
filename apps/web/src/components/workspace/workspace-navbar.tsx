@@ -60,7 +60,8 @@ export function WorkspaceNavbar() {
     ?? (pathname.startsWith("/dashboard/stores/") ? "Store Details" : segments.length > 1
       ? segments[segments.length - 1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
       : "Dashboard");
-  const contextTitle = currentStore.storeName || "Workspace";
+  const contextTitle =
+    currentStore.initialized && currentStore.storeName ? currentStore.storeName : "Workspace";
 
   const searchResults = [
     ...stores.map((s) => ({

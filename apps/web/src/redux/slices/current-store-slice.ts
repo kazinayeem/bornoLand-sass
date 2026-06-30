@@ -36,10 +36,10 @@ function saveToStorage(state: Omit<CurrentStoreState, "initialized">) {
   } catch {}
 }
 
-const persisted = loadFromStorage();
-
 const initialState: CurrentStoreState = {
-  ...persisted,
+  storeId: "",
+  storeName: "",
+  storeSlug: "",
   initialized: false,
 };
 

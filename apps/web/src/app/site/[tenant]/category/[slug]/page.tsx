@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { notFound, useParams } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, Search, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "@/components/storefront/product-card";
@@ -47,9 +48,9 @@ export default function CategoryPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: isDark ? "#000000" : "#ffffff" }}>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <a href="/categories" className="mb-6 flex items-center gap-1 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
+        <Link href="/categories" className="mb-6 flex items-center gap-1 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
           <ArrowLeft className="h-4 w-4" /> All Categories
-        </a>
+        </Link>
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">

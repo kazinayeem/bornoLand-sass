@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { generateStoreMetadata } from "@/lib/server/page-metadata";
+import { StoreProvider } from "@/providers/store-context";
+import { buildPageMetadata, getStoreMetadataContext } from "@/lib/server/page-metadata";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,14 +13,16 @@ type StoreLayoutProps = {
 
 export async function generateMetadata({ params }: { params: Promise<{ storeSlug: string }> }): Promise<Metadata> {
   const { storeSlug } = await params;
-  return generateStoreMetadata({
-    storeSlug,
-    pageTitle: "Store",
-    description: "Manage your store workspace in BornoLand.",
-    canonicalPath: `/store/${storeSlug}`,
+  const store = await getStoreMetadataContext(storeSlug);
+  const storeName = store?.shortName || store?.name || "Store";
+  return buildPageMetadata({
+    title: `${storeName}`,
+    description: store?.description || `Manage ${storeName} in BornoLand.`,
+    canonicalPath: `/store/${storeSlug}/dashboard`,
+    iconUrl: store?.faviconUrl || store?.logoUrl,
   });
 }
 
 export default function StoreLayout({ children }: StoreLayoutProps) {
-  return children;
+  return <StoreProvider>{children}</StoreProvider>;
 }

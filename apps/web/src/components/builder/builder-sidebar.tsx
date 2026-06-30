@@ -10,9 +10,11 @@ import { PagesPanel } from "./panels/pages-panel";
 import { TemplatesPanel } from "./panels/templates-panel";
 import { MediaPanel } from "./panels/media-panel";
 import { LayersPanel } from "./layers-panel";
+import { useRequiredStore } from "@/providers/store-context";
 
-export function BuilderSidebar({ storeId, storeSlug }: { storeId?: string; storeSlug?: string }) {
+export function BuilderSidebar() {
   const dispatch = useDispatch();
+  const { storeSlug } = useRequiredStore();
   const activeTab = useSelector((s: RootState) => s.builder.activeTab);
   const sectionCount = useSelector((s: RootState) => s.builder.sections.length);
   const [railCollapsed, setRailCollapsed] = useState(false);
@@ -58,9 +60,9 @@ export function BuilderSidebar({ storeId, storeSlug }: { storeId?: string; store
         <div className="flex-1 overflow-y-auto bg-white">
           {activeTab === "layers" && <LayersPanel />}
           {activeTab === "components" && <SectionPanel />}
-        {activeTab === "pages" && <PagesPanel storeId={storeId} storeSlug={storeSlug} />}
-        {activeTab === "templates" && <TemplatesPanel />}
-        {activeTab === "media" && <MediaPanel storeId={storeId} billingHref={storeSlug ? `/store/${storeSlug}/billing` : "#"} />}
+          {activeTab === "pages" && <PagesPanel />}
+          {activeTab === "templates" && <TemplatesPanel />}
+          {activeTab === "media" && <MediaPanel billingHref={`/store/${storeSlug}/billing`} />}
         </div>
       )}
     </div>

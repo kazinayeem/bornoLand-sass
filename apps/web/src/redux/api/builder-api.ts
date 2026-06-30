@@ -19,8 +19,16 @@ type PagesResponse = ApiEnvelope<{ pages: PageData[] }>;
 type PageResponse = ApiEnvelope<{ page: PageData }>;
 
 type SavePayload = {
+  storeId: string;
   sections?: unknown[];
   theme?: Record<string, unknown>;
+  settings?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+};
+
+type PublishPayload = {
+  storeId: string;
+  status?: "draft" | "published";
 };
 
 type CreatePagePayload = {
@@ -41,13 +49,21 @@ export const builderApi = baseApi.injectEndpoints({
       query: (pageId) => ({ url: `/builder/page/${pageId}` }),
       providesTags: (_result, _error, pageId) => [{ type: "BuilderPage" as const, id: pageId }],
     }),
-    savePage: builder.mutation<PageResponse, { pageId: string; data: SavePayload }>({
-      query: ({ pageId, data }) => ({ url: `/builder/page/${pageId}/save`, method: "PUT", body: data }),
+    savePage: builder.mutation<PageResponse, { storeId: string; pageId: string; data: Omit<SavePayload, "storeId"> }>({
+      query: ({ pageId, storeId, data }) => ({
+        url: `/builder/page/${pageId}/save`,
+        method: "PUT",
+        body: { ...data, storeId },
+      }),
       invalidatesTags: (_result, _error, { pageId }) => [{ type: "BuilderPage" as const, id: pageId }],
     }),
-    publishPage: builder.mutation<PageResponse, string>({
-      query: (pageId) => ({ url: `/builder/page/${pageId}/publish`, method: "POST" }),
-      invalidatesTags: (_result, _error, pageId) => [{ type: "BuilderPage" as const, id: pageId }],
+    publishPage: builder.mutation<PageResponse, { storeId: string; pageId: string; status?: PublishPayload["status"] }>({
+      query: ({ pageId, storeId, status }) => ({
+        url: `/builder/page/${pageId}/publish`,
+        method: "POST",
+        body: { storeId, status: status ?? "published" },
+      }),
+      invalidatesTags: (_result, _error, { pageId }) => [{ type: "BuilderPage" as const, id: pageId }],
     }),
     createPage: builder.mutation<PageResponse, { storeId: string; data: CreatePagePayload }>({
       query: ({ storeId, data }) => ({ url: `/builder/${storeId}/pages/create`, method: "POST", body: data }),

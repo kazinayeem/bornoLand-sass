@@ -87,8 +87,10 @@ function resolveLimitValue(limit: number, unit?: string): number {
 export function resolveStoreIdFromRequest(request: Request): string | null {
   const params = request.params as Record<string, string>;
   const body = request.body as Record<string, unknown>;
+  const resolvedStoreId = (request as Request & { resolvedStoreId?: string }).resolvedStoreId;
   return (
     params.storeId ||
+    resolvedStoreId ||
     params.id ||
     (typeof body.storeId === "string" ? body.storeId : null) ||
     null

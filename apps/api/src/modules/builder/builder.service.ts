@@ -15,12 +15,29 @@ export async function getPage(pageId: string) {
   return { ok: true as const, data: { page } };
 }
 
-export async function savePage(pageId: string, payload: { sections?: unknown[]; theme?: Record<string, unknown> }) {
+export async function savePage(
+  pageId: string,
+  payload: {
+    storeId?: string;
+    sections?: unknown[];
+    theme?: Record<string, unknown>;
+    settings?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+  },
+) {
   await connectDatabase();
+  const existing = (await PageModel.findById(pageId).lean()) as { storeId?: unknown } | null;
+  if (!existing) return { ok: false as const, message: "Page not found" };
+  if (payload.storeId && String(existing.storeId) !== payload.storeId) {
+    return { ok: false as const, message: "Page does not belong to this store" };
+  }
+
   const update: Record<string, unknown> = {};
   if (payload.sections) update.sections = payload.sections;
   if (payload.theme) update.theme = payload.theme;
-  update.status = "published";
+  if (payload.settings) update.settings = payload.settings;
+  if (payload.metadata) update.metadata = payload.metadata;
+  update.status = "draft";
 
   const page = await PageModel.findByIdAndUpdate(pageId, { $set: update }, { new: true }).lean() as any;
   if (!page) return { ok: false as const, message: "Page not found" };
@@ -52,9 +69,19 @@ export async function deletePage(pageId: string) {
   return { ok: true as const, message: "Page deleted" };
 }
 
-export async function publishPage(pageId: string) {
+export async function publishPage(pageId: string, payload?: { storeId?: string; status?: string }) {
   await connectDatabase();
-  const page = await PageModel.findByIdAndUpdate(pageId, { $set: { status: "published" } }, { new: true }).lean() as any;
+  const existing = (await PageModel.findById(pageId).lean()) as { storeId?: unknown } | null;
+  if (!existing) return { ok: false as const, message: "Page not found" };
+  if (payload?.storeId && String(existing.storeId) !== payload.storeId) {
+    return { ok: false as const, message: "Page does not belong to this store" };
+  }
+
+  const page = await PageModel.findByIdAndUpdate(
+    pageId,
+    { $set: { status: payload?.status ?? "published" } },
+    { new: true },
+  ).lean() as any;
   if (!page) return { ok: false as const, message: "Page not found" };
   return { ok: true as const, data: { page } };
 }

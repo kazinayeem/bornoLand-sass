@@ -5,10 +5,11 @@ import type { RootState } from "@/redux/store";
 import { updateSectionProps, setSelectedSection, updateSectionMeta } from "@/redux/slices/builder-slice";
 import { X, Type, Layers, AlignLeft, PaintBucket, Ruler, ChevronDown, Lightbulb, Sparkles, MonitorSmartphone, Box } from "lucide-react";
 import { useState } from "react";
-import { useParams } from "next/navigation";
 import { getSectionDef, type SectionPropDef } from "@/lib/section-registry";
-import { MediaPicker } from "@/components/media/media-picker";
-import { normalizeMediaSelection, type MediaSelection } from "@/lib/media-selection";
+import { BuilderMediaField } from "@/components/builder/builder-media-field";
+import { patchImageSelection } from "@/lib/builder-section-media";
+import type { MediaSelection } from "@/lib/media-selection";
+import { useRequiredStore } from "@/providers/store-context";
 
 // ─── Control components ──────────────────────────────────────────
 
@@ -78,7 +79,25 @@ function AlignInput({ value, onChange }: { value: string; onChange: (v: string) 
   );
 }
 
-function ControlRenderer({ propDef, value, onChange, storeId, storeSlug, fieldLabel }: { propDef: SectionPropDef; value: string; onChange: (v: string) => void; storeId?: string; storeSlug?: string; fieldLabel: string }) {
+function ControlRenderer({
+  propDef,
+  propKey,
+  value,
+  onChange,
+  onImageChange,
+  sectionProps,
+  storeId,
+  storeSlug,
+}: {
+  propDef: SectionPropDef;
+  propKey: string;
+  value: string;
+  onChange: (v: string) => void;
+  onImageChange: (selection: MediaSelection) => void;
+  sectionProps: Record<string, string | undefined>;
+  storeId: string;
+  storeSlug: string;
+}) {
   switch (propDef.type) {
     case "color": return <ColorInput value={value} onChange={onChange} />;
     case "image": return <ImageInput storeId={storeId} storeSlug={storeSlug} label={fieldLabel} value={value} onChange={onChange} />;
@@ -159,9 +178,7 @@ const groupOrder = ["content", "layout", "background", "typography", "spacing", 
 
 export function PropertiesPanel() {
   const dispatch = useDispatch();
-  const params = useParams();
-  const storeId = typeof params.storeId === "string" ? params.storeId : undefined;
-  const storeSlug = typeof params.storeSlug === "string" ? params.storeSlug : undefined;
+  const { storeId, storeSlug } = useRequiredStore();
   const selectedId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const section = useSelector((s: RootState) => s.builder.sections.find((sec) => sec.id === selectedId));
 

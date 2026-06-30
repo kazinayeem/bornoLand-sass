@@ -6,24 +6,23 @@ import { useCreatePageMutation, useGetPagesQuery } from "@/redux/api/builder-api
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { loadSections, setPageId } from "@/redux/slices/builder-slice";
+import { useRequiredStore } from "@/providers/store-context";
 
-export function PagesPanel({ storeId, storeSlug }: { storeId?: string; storeSlug?: string }) {
+export function PagesPanel() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const { storeId, storeSlug } = useRequiredStore();
   const pageId = useSelector((s: RootState) => s.builder.pageId);
-  const { data, isLoading } = useGetPagesQuery(storeId ?? "", { skip: !storeId });
+  const { data, isLoading } = useGetPagesQuery(storeId);
   const [createPage] = useCreatePageMutation();
   const pages = data?.data?.pages ?? [];
 
   const openPage = (page: { _id: string; slug: string; sections?: unknown[] }) => {
     dispatch(setPageId(page._id));
     dispatch(loadSections((page.sections ?? []) as never));
-    if (storeSlug) {
-      router.push(`/store/${storeSlug}/builder/${page.slug}`);
-    }
+    router.push(`/store/${storeSlug}/builder/${page.slug}`);
   };
 
-  if (!storeId) return <div className="p-4 text-xs text-zinc-400">Select a store to manage pages.</div>;
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-5 w-5 animate-spin text-zinc-400" /></div>;
 
   return (

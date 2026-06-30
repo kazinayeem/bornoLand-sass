@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useStoreFromSlug } from "@/hooks/use-store-from-slug";
+import { useStoreContext } from "@/providers/store-context";
 
 export function StorePageCard({ children }: { children: ReactNode }) {
   return (
@@ -12,7 +12,7 @@ export function StorePageCard({ children }: { children: ReactNode }) {
 }
 
 export function useStorePage() {
-  const { store, storeId, isLoading } = useStoreFromSlug();
+  const { store, storeId, isLoading } = useStoreContext();
   if (!storeId || !store) {
     return { store: null, storeId: null, isLoading };
   }

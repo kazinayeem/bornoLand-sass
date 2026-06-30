@@ -12,18 +12,19 @@ import { toast } from "sonner";
 import { Drawer } from "@/components/ui/drawer";
 import { ThemePanel } from "@/components/builder/panels/theme-panel";
 import { BuilderCommandPalette } from "@/components/builder/builder-command-palette";
+import { useRequiredStore } from "@/providers/store-context";
 
 type Props = {
-  storeId: string;
-  storeName: string;
   onBack: () => void;
   saving: boolean;
   publishing: boolean;
   isDirty: boolean;
 };
 
-export function BuilderToolbar({ storeId, storeName, onBack, saving, publishing, isDirty }: Props) {
+export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
   const dispatch = useDispatch();
+  const { store, storeId } = useRequiredStore();
+  const storeSettings = useSelector((s: RootState) => s.storeSettings);
   const device = useSelector((s: RootState) => s.preview.device);
   const zoom = useSelector((s: RootState) => s.preview.zoom);
   const theme = useSelector((s: RootState) => s.theme);
@@ -71,8 +72,9 @@ export function BuilderToolbar({ storeId, storeName, onBack, saving, publishing,
     dispatch(setSaving(true));
     try {
       await savePage({
+        storeId,
         pageId,
-        data: { sections, theme },
+        data: { sections, theme, settings: storeSettings },
       }).unwrap();
       await updateStore({ id: storeId, data: { theme } }).unwrap();
       dispatch(markSaved(new Date().toISOString()));
@@ -87,8 +89,8 @@ export function BuilderToolbar({ storeId, storeName, onBack, saving, publishing,
     if (!pageId) { toast.error("No page selected"); return; }
     dispatch(setPublishing(true));
     try {
-      await savePage({ pageId, data: { sections, theme } }).unwrap();
-      await publishPage(pageId).unwrap();
+      await savePage({ storeId, pageId, data: { sections, theme, settings: storeSettings } }).unwrap();
+      await publishPage({ storeId, pageId, status: "published" }).unwrap();
       await updateStore({ id: storeId, data: { theme } }).unwrap();
       dispatch(markSaved(new Date().toISOString()));
       toast.success("Storefront published!");
@@ -113,7 +115,7 @@ export function BuilderToolbar({ storeId, storeName, onBack, saving, publishing,
         <div className="h-5 w-px bg-zinc-200" />
         <div>
           <h1 className="text-sm font-semibold text-zinc-900">Store Builder</h1>
-          <p className="text-[11px] text-zinc-400">{storeName}</p>
+          <p className="text-[11px] text-zinc-400">{store.shortName || store.name}</p>
         </div>
       </div>
 

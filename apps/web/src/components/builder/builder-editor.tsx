@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { useGetProductsQuery } from "@/redux/api/product-api";
-import { useGetPagesQuery, useCreatePageMutation } from "@/redux/api/builder-api";
+import { useGetPagesQuery, useCreatePageMutation, useSavePageMutation } from "@/redux/api/builder-api";
 import { useGetStoreSettingsQuery, useGetHomepageSlidersQuery } from "@/redux/api/store-settings-api";
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
 import { setTheme } from "@/redux/slices/theme-slice";
@@ -25,12 +25,11 @@ import {
   undoBuilder,
 } from "@/redux/slices/builder-slice";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
-import { useSavePageMutation } from "@/redux/api/builder-api";
 import { BuilderToolbar } from "@/components/builder/builder-toolbar";
 import { BuilderSidebar } from "@/components/builder/builder-sidebar";
 import { StorePreview } from "@/components/builder/store-preview";
 import { PropertiesPanel } from "@/components/builder/properties-panel";
-import type { Store } from "@/redux/api/store-api";
+import { useRequiredStore } from "@/providers/store-context";
 
 const defaultSections: BuilderSection[] = [
   { id: "hero-banner-1", type: "hero-banner", label: "Hero Banner", visible: true, props: { headline: "Welcome to Our Store", subheadline: "Discover amazing products curated just for you", buttonText: "Shop Now", buttonLink: "/shop", imageUrl: "", overlayColor: "rgba(15, 23, 42, 0.45)", textAlignment: "left", heroHeight: "md", kicker: "Welcome" } },
@@ -41,17 +40,12 @@ const defaultSections: BuilderSection[] = [
   { id: "simple-footer-1", type: "simple-footer", label: "Footer", visible: true, props: { copyright: "© 2026 Your Store. All rights reserved.", showSocial: "true" } },
 ];
 
-type BuilderEditorProps = {
-  store: Store;
-};
-
-export function BuilderEditor({ store }: BuilderEditorProps) {
+export function BuilderEditor() {
   const params = useParams();
   const router = useRouter();
   const dispatch = useDispatch();
+  const { store, storeId, storeSlug } = useRequiredStore();
   const routePageSlug = typeof params.pageSlug === "string" ? params.pageSlug : "";
-  const storeId = store._id;
-  const storeSlug = store.slug;
 
   const { data: productsData } = useGetProductsQuery(storeId);
   const { data: pagesData, isLoading: pagesLoading } = useGetPagesQuery(storeId);
@@ -117,7 +111,7 @@ export function BuilderEditor({ store }: BuilderEditorProps) {
   }, [dispatch, resizing]);
 
   useEffect(() => {
-    if (store?.theme) {
+    if (store.theme) {
       dispatch(setTheme({
         primaryColor: store.theme.primaryColor, secondaryColor: store.theme.secondaryColor,
         font: store.theme.font, buttonStyle: store.theme.buttonStyle,
@@ -184,13 +178,17 @@ export function BuilderEditor({ store }: BuilderEditorProps) {
     if (!isDirty || !pageId) return;
     const timer = setTimeout(() => {
       dispatch(setSaving(true));
-      savePage({ pageId, data: { sections, theme: currentTheme } })
+      savePage({
+        storeId,
+        pageId,
+        data: { sections, theme: currentTheme, settings },
+      })
         .unwrap()
         .then(() => dispatch(markSaved(new Date().toISOString())))
         .catch(() => dispatch(setSaving(false)));
     }, 4000);
     return () => clearTimeout(timer);
-  }, [isDirty, pageId, sections, currentTheme, dispatch, savePage]);
+  }, [isDirty, pageId, sections, currentTheme, settings, storeId, dispatch, savePage]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -199,7 +197,11 @@ export function BuilderEditor({ store }: BuilderEditorProps) {
         event.preventDefault();
         if (!pageId) return;
         dispatch(setSaving(true));
-        savePage({ pageId, data: { sections, theme: currentTheme } })
+        savePage({
+          storeId,
+          pageId,
+          data: { sections, theme: currentTheme, settings },
+        })
           .unwrap()
           .then(() => dispatch(markSaved(new Date().toISOString())))
           .catch(() => dispatch(setSaving(false)));
@@ -238,7 +240,7 @@ export function BuilderEditor({ store }: BuilderEditorProps) {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [clipboardSection, currentTheme, dispatch, pageId, savePage, sections, selectedSectionId]);
+  }, [clipboardSection, currentTheme, dispatch, pageId, savePage, sections, selectedSectionId, settings, storeId]);
 
   if (pagesLoading) {
     return (
@@ -251,8 +253,6 @@ export function BuilderEditor({ store }: BuilderEditorProps) {
   return (
     <div className="flex h-screen flex-col bg-zinc-50">
       <BuilderToolbar
-        storeId={storeId}
-        storeName={store.name}
         onBack={() => router.push(`/store/${storeSlug}/dashboard`)}
         saving={saving}
         publishing={publishing}
@@ -260,7 +260,7 @@ export function BuilderEditor({ store }: BuilderEditorProps) {
       />
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-shrink-0 overflow-hidden border-r border-zinc-200/70 bg-white/90 backdrop-blur" style={{ width: leftPanelWidth }}>
-          <BuilderSidebar storeId={storeId} storeSlug={storeSlug} />
+          <BuilderSidebar />
         </div>
         <button
           type="button"
@@ -276,7 +276,7 @@ export function BuilderEditor({ store }: BuilderEditorProps) {
             categories={categories}
             settings={settings}
             sliders={sliders}
-            sections={sections as any}
+            sections={sections as never}
           />
         </div>
         {selectedSectionId && (

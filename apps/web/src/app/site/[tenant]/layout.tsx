@@ -1,7 +1,25 @@
 import { notFound } from "next/navigation";
-import { StorefrontFrame } from "@/components/storefront/storefront-frame";
-import { type ThemeData, type ProductData, type CategoryData, type StoreData, type StoreSettingsData, type HomepageSliderData } from "@/providers/tenant-provider";
+import type { Metadata } from "next";
+import { StorefrontShell } from "@/components/storefront/storefront-shell";
+import {
+  type ThemeData,
+  type ProductData,
+  type CategoryData,
+  type StoreData,
+  type StoreSettingsData,
+  type HomepageSliderData,
+} from "@/providers/tenant-provider";
 import { fetchTenantSite } from "@/lib/server/tenant-site";
+import { generateTenantMetadata } from "@/lib/server/page-metadata";
+
+export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }): Promise<Metadata> {
+  const { tenant } = await params;
+  return generateTenantMetadata({
+    tenant,
+    pageTitle: "Home",
+    canonicalPath: `/site/${tenant}`,
+  });
+}
 
 export default async function TenantLayout({ params, children }: { params: Promise<{ tenant: string }>; children: React.ReactNode }) {
   const { tenant: slug } = await params;
@@ -20,7 +38,7 @@ export default async function TenantLayout({ params, children }: { params: Promi
   const pageSections = (data.page?.sections as { id: string; type: string; visible?: boolean; props?: Record<string, string> }[] | undefined) ?? [];
   const theme: ThemeData = store.theme ?? {
     primaryColor: "#2563eb", secondaryColor: "#0f172a", font: "Inter",
-    buttonStyle: "rounded-lg", layoutWidth: "1200px", darkMode: false, navbarStyle: "fixed"
+    buttonStyle: "rounded-lg", layoutWidth: "1200px", darkMode: false, navbarStyle: "fixed",
   };
   const currencySettings = settings ?? {
     currencyCode: "USD",
@@ -36,7 +54,7 @@ export default async function TenantLayout({ params, children }: { params: Promi
   const footerSection = pageSections.find((section) => section.type === "footer") ?? null;
 
   return (
-    <StorefrontFrame
+    <StorefrontShell
       store={store}
       theme={theme}
       products={products}
@@ -45,10 +63,9 @@ export default async function TenantLayout({ params, children }: { params: Promi
       sliders={sliders ?? []}
       pageSections={pageSections}
       footerSection={footerSection}
-      adminBarStoreId={store._id}
       showAdminBar
     >
       {children}
-    </StorefrontFrame>
+    </StorefrontShell>
   );
 }

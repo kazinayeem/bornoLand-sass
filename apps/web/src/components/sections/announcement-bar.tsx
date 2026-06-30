@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Megaphone } from "lucide-react";
+import { StoreLink } from "@/components/storefront/store-link";
 import { type SectionData } from "./section-renderer";
 
 export function AnnouncementBar({ section }: { section: SectionData }) {
@@ -17,9 +18,9 @@ export function AnnouncementBar({ section }: { section: SectionData }) {
           {p.text || "Free shipping on orders over $50!"}
         </span>
         {p.link && (
-          <a href={p.link} className="text-xs font-semibold underline" style={{ color: p.textColor || "#ffffff" }}>
+          <StoreLink href={p.link} className="text-xs font-semibold underline" style={{ color: p.textColor || "#ffffff" }}>
             {p.linkText || "Shop Now"}
-          </a>
+          </StoreLink>
         )}
         {p.dismissible !== "false" && (
           <button onClick={() => setDismissed(true)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: p.textColor || "#ffffff" }}>

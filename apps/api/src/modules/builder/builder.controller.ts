@@ -35,6 +35,6 @@ export async function deletePageController(request: AuthRequest, response: Respo
 
 export async function publishPageController(request: AuthRequest, response: Response) {
   const pageId = request.params.pageId as string;
-  const result = await publishPage(pageId);
+  const result = await publishPage(pageId, request.body);
   return result.ok ? sendSuccess(response, result.data, "Page published") : sendFailure(response, result.message, 404);
 }

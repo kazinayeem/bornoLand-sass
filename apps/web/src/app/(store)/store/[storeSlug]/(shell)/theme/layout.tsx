@@ -1,0 +1,16 @@
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
+import { generateStorePageMetadata } from "@/lib/server/page-metadata";
+
+export async function generateMetadata({ params }: { params: Promise<{ storeSlug: string }> }): Promise<Metadata> {
+  const { storeSlug } = await params;
+  return generateStorePageMetadata({
+    storeSlug,
+    pageTitle: "Theme",
+    canonicalPath: `/store/${storeSlug}/theme`,
+  });
+}
+
+export default function StoreThemeLayout({ children }: { children: ReactNode }) {
+  return children;
+}

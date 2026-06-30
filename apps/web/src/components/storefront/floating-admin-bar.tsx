@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutTemplate, Palette, Package, ShoppingBag, LayoutDashboard, X } from "lucide-react";
 
@@ -40,10 +41,14 @@ export function FloatingAdminBar({ storeSlug, primaryColor }: FloatingAdminBarPr
           <motion.div initial={{ opacity: 0, y: 10, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.9 }}
             className="flex flex-col gap-1 rounded-xl border bg-white p-2 shadow-lg">
             {links.map((link) => (
-              <a key={link.label} href={link.href} onClick={() => setExpanded(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900">
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={() => setExpanded(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900"
+              >
                 <link.icon className="h-3.5 w-3.5" /> {link.label}
-              </a>
+              </Link>
             ))}
           </motion.div>
         )}

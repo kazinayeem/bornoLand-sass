@@ -1,11 +1,15 @@
-import type { ReactNode } from "react";
-import { AuthInit } from "@/components/auth/auth-init";
-import { CartProvider } from "@/components/storefront/cart-provider";
-import { FloatingAdminBar } from "@/components/storefront/floating-admin-bar";
-import { StoreFooter } from "@/components/storefront/store-footer";
-import { StoreNavbar } from "@/components/storefront/store-navbar";
-import type { CategoryData, HomepageSliderData, ProductData, StoreData, StoreSettingsData, ThemeData } from "@/providers/tenant-provider";
-import { TenantProvider } from "@/providers/tenant-provider";
+"use client";
+
+import { useMemo, type ReactNode } from "react";
+import { StorefrontShell } from "@/components/storefront/storefront-shell";
+import type {
+  CategoryData,
+  HomepageSliderData,
+  ProductData,
+  StoreData,
+  StoreSettingsData,
+  ThemeData,
+} from "@/providers/tenant-provider";
 import type { StorefrontSectionLike } from "@/components/storefront/storefront-types";
 
 type StorefrontFrameProps = {
@@ -31,23 +35,27 @@ export function StorefrontFrame({
   sliders,
   pageSections,
   footerSection,
-  adminBarStoreId,
   showAdminBar = false,
   children,
 }: StorefrontFrameProps) {
+  const stableProducts = useMemo(() => products, [products]);
+  const stableCategories = useMemo(() => categories, [categories]);
+  const stableSliders = useMemo(() => sliders, [sliders]);
+  const stableSections = useMemo(() => pageSections, [pageSections]);
+
   return (
-    <div style={{ fontFamily: theme.font, backgroundColor: theme.darkMode ? "#000000" : "#ffffff" }}>
-      <TenantProvider value={{ store, theme, products, categories, settings, sliders, pageSections }}>
-        <AuthInit />
-        <StoreNavbar />
-        <CartProvider>
-          {children}
-        </CartProvider>
-        <StoreFooter section={footerSection ?? undefined} />
-        {showAdminBar && adminBarStoreId ? (
-          <FloatingAdminBar storeSlug={store.slug} primaryColor={theme.primaryColor} />
-        ) : null}
-      </TenantProvider>
-    </div>
+    <StorefrontShell
+      store={store}
+      theme={theme}
+      products={stableProducts}
+      categories={stableCategories}
+      settings={settings}
+      sliders={stableSliders}
+      pageSections={stableSections}
+      footerSection={footerSection}
+      showAdminBar={showAdminBar}
+    >
+      {children}
+    </StorefrontShell>
   );
 }

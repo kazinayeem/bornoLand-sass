@@ -6,6 +6,7 @@ import { Bell, ChevronRight, Search } from "lucide-react";
 import type { Store } from "@/redux/api/store-api";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useGetProductQuery } from "@/redux/api/product-api";
+import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 
 function titleCase(value: string) {
   return value.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
@@ -58,7 +59,10 @@ export function StoreNavbar({ store }: { store: Store }) {
     <header className="sticky top-0 z-30 border-b border-zinc-200/80 bg-white/90 px-4 py-3 backdrop-blur-xl sm:px-6">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">{store.name}</p>
+          <div className="flex items-center gap-2">
+            <StoreBrandMark store={store} size={28} roundedClassName="rounded-lg" />
+            <p className="truncate text-xs font-medium uppercase tracking-wider text-zinc-400">{store.shortName || store.name}</p>
+          </div>
           <h1 className="truncate text-lg font-semibold text-zinc-900">{pageTitle}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-zinc-500">
             {breadcrumbs.map((item, index) => (

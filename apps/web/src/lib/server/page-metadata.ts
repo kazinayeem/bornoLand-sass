@@ -12,8 +12,11 @@ type StoreResponse = {
     store?: {
       _id: string;
       name: string;
+      shortName?: string;
       slug: string;
       description?: string;
+      logoUrl?: string;
+      faviconUrl?: string;
     };
   };
 };
@@ -59,6 +62,7 @@ export function buildPageMetadata(args: {
   title: string;
   description: string;
   canonicalPath: string;
+  iconUrl?: string;
 }): Metadata {
   const siteUrl = (process.env.NEXT_PUBLIC_WEB_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
   const canonical = siteUrl ? `${siteUrl}${args.canonicalPath}` : args.canonicalPath;
@@ -78,6 +82,13 @@ export function buildPageMetadata(args: {
       description: args.description,
       card: "summary_large_image",
     },
+    icons: args.iconUrl
+      ? {
+          icon: args.iconUrl,
+          shortcut: args.iconUrl,
+          apple: args.iconUrl,
+        }
+      : undefined,
   };
 }
 
@@ -93,6 +104,7 @@ export async function generateStoreMetadata(args: {
     title: `${args.pageTitle} • ${storeName}`,
     description: args.description ?? `${args.pageTitle} for ${storeName}.`,
     canonicalPath: args.canonicalPath,
+    iconUrl: store?.faviconUrl || store?.logoUrl,
   });
 }
 
@@ -115,6 +127,7 @@ export async function generateProductPageMetadata(args: {
     title: `${title} • ${storeName}`,
     description: product?.description || `${title} in ${storeName}.`,
     canonicalPath: args.canonicalPath,
+    iconUrl: store?.faviconUrl || store?.logoUrl,
   });
 }
 

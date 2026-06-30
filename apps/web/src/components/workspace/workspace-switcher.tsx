@@ -7,6 +7,7 @@ import { Check, ChevronsUpDown, Plus, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
 import { useAppSelector } from "@/hooks/redux";
+import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 
 export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const router = useRouter();
@@ -76,12 +77,12 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
                   }}
                   className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-50"
                 >
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-[10px] font-bold text-zinc-600">
-                    {store.name[0]}
-                  </div>
+                  <StoreBrandMark store={store} size={28} roundedClassName="rounded-md" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{store.name}</p>
-                    <p className="truncate text-xs text-zinc-400">{store.slug}</p>
+                    <p className="truncate font-medium">{store.shortName || store.name}</p>
+                    <p className="truncate text-xs text-zinc-400">
+                      {typeof store.planId === "object" && store.planId ? store.planId.name : store.plan}
+                    </p>
                   </div>
                   <Check className="h-3.5 w-3.5 shrink-0 text-transparent" />
                 </button>

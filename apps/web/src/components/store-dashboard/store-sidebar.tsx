@@ -31,6 +31,8 @@ import { Badge } from "@/components/ui/badge";
 import { resolveStoreStatus, storeStatusConfig, getTrialDaysRemaining } from "@/lib/store-status";
 import { useGetStoreFeatureAccessQuery, NAV_FEATURE_MAP, getFeatureByKey } from "@/redux/api/feature-api";
 import { ComingSoonBadge } from "@/components/ecommerce/coming-soon-badge";
+import { useGetMediaStatsQuery } from "@/redux/api/media-api";
+import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 
 const mainLinks = [
   { href: "", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -50,6 +52,7 @@ const mainLinks = [
 ];
 
 const appearanceLinks = [
+  { href: "/appearance/branding", label: "Branding", icon: Sparkles },
   { href: "/appearance/theme", label: "Theme", icon: Palette },
   { href: "/appearance/domain", label: "Domain", icon: Globe },
   { href: "/appearance/seo", label: "SEO", icon: Search },
@@ -108,7 +111,10 @@ export function StoreSidebar({ store }: { store: Store }) {
   const statusConfig = storeStatusConfig[status];
   const trialDays = getTrialDaysRemaining(store.trialEndsAt);
   const { data: accessData } = useGetStoreFeatureAccessQuery(store._id);
+  const { data: storageData } = useGetMediaStatsQuery(store._id);
   const features = accessData?.data?.features ?? [];
+  const stats = storageData?.data?.stats;
+  const currentPlan = typeof store.planId === "object" && store.planId ? store.planId.name : store.plan;
 
   const resolveLink = (link: { label: string; featureKey?: string; comingSoon?: boolean }) => {
     const key = link.featureKey ?? NAV_FEATURE_MAP[link.label];
@@ -132,19 +138,27 @@ export function StoreSidebar({ store }: { store: Store }) {
           All Stores
         </Link>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 text-sm font-bold text-white">
-            {store.name.slice(0, 2).toUpperCase()}
-          </div>
+          <StoreBrandMark store={store} size={40} />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-zinc-900">{store.name}</p>
-            <p className="truncate text-xs text-zinc-500">{store.slug}</p>
+            <p className="truncate text-sm font-semibold text-zinc-900">{store.shortName || store.name}</p>
+            <p className="truncate text-xs text-zinc-500">{store.tagline || store.slug}</p>
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5">
           <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+          <Badge variant="slate">{currentPlan}</Badge>
           {status === "trial" && trialDays !== null && (
             <Badge variant="primary">{trialDays}d trial</Badge>
           )}
+        </div>
+        <div className="mt-3 rounded-xl bg-zinc-50 p-3">
+          <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500">
+            <span>Storage</span>
+            <span>{stats?.usedMB?.toFixed?.(1) ?? "0.0"} / {stats?.unlimited ? "Unlimited" : `${stats?.limitMB ?? 0} MB`}</span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-200">
+            <div className="h-full rounded-full bg-zinc-900" style={{ width: `${Math.min(stats?.percentUsed ?? 0, 100)}%` }} />
+          </div>
         </div>
       </div>
 

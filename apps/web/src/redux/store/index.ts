@@ -17,6 +17,7 @@ import { themeReducer } from "@/redux/slices/theme-slice";
 import { previewReducer } from "@/redux/slices/preview-slice";
 import storeSettingsReducer from "@/redux/slices/store-settings-slice";
 import { currentStoreReducer } from "@/redux/slices/current-store-slice";
+import { uiReducer } from "@/redux/slices/ui-slice";
 
 export const store = configureStore({
   reducer: {
@@ -38,6 +39,7 @@ export const store = configureStore({
     preview: previewReducer,
     storeSettings: storeSettingsReducer,
     currentStore: currentStoreReducer,
+    ui: uiReducer,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(baseApi.middleware)
 });

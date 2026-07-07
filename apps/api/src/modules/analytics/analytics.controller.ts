@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { trackPageView, trackSessionEnd, getLiveVisitors, getLiveVisitorsCount } from "./analytics-tracking.service.js";
-import { getStoreAnalyticsStats, getStoreVisitorCharts, getStoreTrafficSources, getStoreDevices, getStoreTopContent } from "./analytics-query.service.js";
+import { getStoreAnalyticsStats, getStoreVisitorCharts, getStoreTrafficSources, getStoreDevices, getStoreTopContent, getStoreCities, getStoreConversion } from "./analytics-query.service.js";
 import { runHourlyAggregation } from "./analytics-aggregation.service.js";
 import { trackPageViewSchema, trackSessionEndSchema } from "./analytics.validator.js";
 
@@ -149,6 +149,38 @@ export async function getLiveVisitorsController(request: Request, response: Resp
   } catch (error) {
     console.error("[Analytics] get live visitors error:", error);
     response.status(500).json({ ok: false, message: "Failed to get live visitors" });
+  }
+}
+
+export async function getStoreCitiesController(request: Request, response: Response) {
+  try {
+    const storeId = String(request.params.storeId ?? "");
+    if (!storeId) {
+      response.status(400).json({ ok: false, message: "storeId is required" });
+      return;
+    }
+
+    const cities = await getStoreCities(storeId);
+    response.json({ ok: true, data: cities });
+  } catch (error) {
+    console.error("[Analytics] get cities error:", error);
+    response.status(500).json({ ok: false, message: "Failed to get city analytics" });
+  }
+}
+
+export async function getStoreConversionController(request: Request, response: Response) {
+  try {
+    const storeId = String(request.params.storeId ?? "");
+    if (!storeId) {
+      response.status(400).json({ ok: false, message: "storeId is required" });
+      return;
+    }
+
+    const conversion = await getStoreConversion(storeId);
+    response.json({ ok: true, data: conversion });
+  } catch (error) {
+    console.error("[Analytics] get conversion error:", error);
+    response.status(500).json({ ok: false, message: "Failed to get conversion data" });
   }
 }
 

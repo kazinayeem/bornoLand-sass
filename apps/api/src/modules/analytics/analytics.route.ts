@@ -11,6 +11,8 @@ import {
   getStoreDevicesController,
   getStoreTopContentController,
   getLiveVisitorsController,
+  getStoreCitiesController,
+  getStoreConversionController,
   triggerAggregationController,
 } from "./analytics.controller.js";
 
@@ -38,6 +40,12 @@ analyticsRouter.get("/:storeId/top-content", requireAuth, (req, res, next) =>
 
 analyticsRouter.get("/:storeId/live", requireAuth, (req, res, next) =>
   requireFeatureEnabled(req, res, next, "realtimeVisitors"), getLiveVisitorsController);
+
+analyticsRouter.get("/:storeId/cities", requireAuth, (req, res, next) =>
+  requireFeatureEnabled(req, res, next, "visitorAnalytics"), getStoreCitiesController);
+
+analyticsRouter.get("/:storeId/conversion", requireAuth, (req, res, next) =>
+  requireFeatureEnabled(req, res, next, "visitorAnalytics"), getStoreConversionController);
 
 analyticsRouter.post("/:storeId/aggregate", requireAuth, triggerAggregationController);
 

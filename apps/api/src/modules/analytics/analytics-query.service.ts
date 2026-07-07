@@ -3,6 +3,7 @@ import { PageViewModel } from "./page-view.model.js";
 import { DailyAnalyticModel } from "./daily-analytic.model.js";
 import { MonthlyAnalyticModel } from "./monthly-analytic.model.js";
 import { TrafficSourceModel } from "./traffic-source.model.js";
+import { OrderModel } from "../orders/order.model.js";
 
 export async function getStoreAnalyticsStats(storeId: string) {
   const now = new Date();
@@ -254,6 +255,62 @@ export async function getStoreTopContent(storeId: string) {
     topCategories: topCategories.map((c: any) => ({ categoryId: c._id?.toString() || "", name: c.name || "Unknown", views: c.views || 0 })),
     topPages: topPages.map((p: any) => ({ url: p._id || "", title: p.title || "", path: p.path || "", views: p.views || 0 })),
     topSearches: topSearches.map((s: any) => ({ query: s._id || "", count: s.count || 0 })),
+  };
+}
+
+export async function getStoreCities(storeId: string) {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const cities = await PageViewModel.aggregate([
+    { $match: { storeId: storeId as any, city: { $ne: "", $exists: true }, createdAt: { $gte: startOfMonth } } },
+    { $group: { _id: { city: "$city", country: "$country" }, count: { $sum: 1 }, visitors: { $addToSet: "$visitorId" } } },
+    { $project: { _id: 0, city: "$_id.city", country: "$_id.country", count: 1, uniqueVisitors: { $size: "$visitors" } } },
+    { $sort: { count: -1 } },
+    { $limit: 50 },
+  ]);
+
+  return cities;
+}
+
+export async function getStoreConversion(storeId: string) {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const [sessions, pageViewsByType, orders] = await Promise.all([
+    VisitorSessionModel.countDocuments({ storeId, startedAt: { $gte: startOfMonth } }),
+    PageViewModel.aggregate([
+      { $match: { storeId: storeId as any, createdAt: { $gte: startOfMonth } } },
+      { $group: { _id: "$pageType", count: { $sum: 1 }, unique: { $addToSet: "$visitorId" } } },
+    ]),
+    OrderModel.countDocuments({
+      storeId,
+      createdAt: { $gte: startOfMonth },
+    }),
+  ]);
+
+  const pageTypeMap: Record<string, { count: number; unique: number }> = {};
+  for (const pt of pageViewsByType) {
+    pageTypeMap[String(pt._id ?? "other")] = { count: pt.count || 0, unique: (pt.unique ?? []).length };
+  }
+
+  return {
+    totalSessions: sessions,
+    totalPageViews: pageViewsByType.reduce((s: number, p: any) => s + (p.count || 0), 0),
+    homepageViews: pageTypeMap["homepage"]?.count ?? 0,
+    homepageUnique: pageTypeMap["homepage"]?.unique ?? 0,
+    productViews: pageTypeMap["product"]?.count ?? 0,
+    productUnique: pageTypeMap["product"]?.unique ?? 0,
+    categoryViews: pageTypeMap["category"]?.count ?? 0,
+    cartViews: pageTypeMap["cart"]?.count ?? 0,
+    checkoutViews: pageTypeMap["checkout"]?.count ?? 0,
+    orderSuccessViews: pageTypeMap["order_success"]?.count ?? 0,
+    searchViews: pageTypeMap["search"]?.count ?? 0,
+    totalOrders: orders,
+    conversionRate: sessions > 0 ? Number(((orders / sessions) * 100).toFixed(2)) : 0,
+    cartConversion: pageTypeMap["product"]?.count ? Number((((pageTypeMap["cart"]?.count ?? 0) / (pageTypeMap["product"]?.count ?? 1)) * 100).toFixed(2)) : 0,
+    checkoutConversion: pageTypeMap["cart"]?.count ? Number((((pageTypeMap["checkout"]?.count ?? 0) / (pageTypeMap["cart"]?.count ?? 1)) * 100).toFixed(2)) : 0,
+    orderConversion: pageTypeMap["checkout"]?.count ? Number((((pageTypeMap["order_success"]?.count ?? 0) / (pageTypeMap["checkout"]?.count ?? 1)) * 100).toFixed(2)) : 0,
   };
 }
 

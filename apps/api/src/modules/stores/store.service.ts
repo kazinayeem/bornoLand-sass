@@ -6,7 +6,6 @@ import { TenantModel } from "../../models/tenant.model.js";
 import { TeamMemberModel } from "../../models/team-member.model.js";
 import { TemplateModel } from "../../models/template.model.js";
 import { PageModel } from "../../models/page.model.js";
-import { seedDemoProducts } from "../products/product.service.js";
 import { ensureDefaultStoreSettings } from "./store-settings.service.js";
 import { HomepageSliderModel } from "../../models/homepage-slider.model.js";
 import { createStoreSchema, updateStoreSchema, updateStoreBrandingSchema, type CreateStoreInput, type UpdateStoreInput, type UpdateStoreBrandingInput } from "./store.validator.js";
@@ -40,6 +39,12 @@ import { MediaFileModel } from "../../models/media-file.model.js";
 import { StorageUsageModel } from "../../models/storage-usage.model.js";
 import { NewsletterModel } from "../../models/newsletter.model.js";
 import { SubscriptionPaymentModel } from "../../models/subscription-payment.model.js";
+import { VisitorSessionModel } from "../analytics/visitor-session.model.js";
+import { PageViewModel } from "../analytics/page-view.model.js";
+import { TrafficSourceModel } from "../analytics/traffic-source.model.js";
+import { DailyAnalyticModel } from "../analytics/daily-analytic.model.js";
+import { MonthlyAnalyticModel } from "../analytics/monthly-analytic.model.js";
+import { VisitorStatisticModel } from "../analytics/visitor-statistic.model.js";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -156,7 +161,6 @@ export async function createStore(userId: string, payload: unknown) {
       }], { session });
     }
 
-    await seedDemoProducts(store._id.toString(), session);
     await ensureDefaultStoreSettings(store._id.toString(), session);
     await HomepageSliderModel.deleteMany({ storeId: store._id }).session(session);
     await HomepageSliderModel.create([{
@@ -361,6 +365,13 @@ export async function deleteStore(storeId: string, userId: string): Promise<{ ok
       StorageUsageModel.deleteMany({ storeId: storeObjectId }).session(session),
       NewsletterModel.deleteMany({ storeId: storeObjectId }).session(session),
       AuditLogModel.deleteMany({ storeId: storeObjectId }).session(session),
+      // Analytics data
+      VisitorSessionModel.deleteMany({ storeId: storeObjectId }).session(session),
+      PageViewModel.deleteMany({ storeId: storeObjectId }).session(session),
+      TrafficSourceModel.deleteMany({ storeId: storeObjectId }).session(session),
+      DailyAnalyticModel.deleteMany({ storeId: storeObjectId }).session(session),
+      MonthlyAnalyticModel.deleteMany({ storeId: storeObjectId }).session(session),
+      VisitorStatisticModel.deleteMany({ storeId: storeObjectId }).session(session),
     ]);
 
     // ── 2. Delete the store itself ──────────────────────────────────

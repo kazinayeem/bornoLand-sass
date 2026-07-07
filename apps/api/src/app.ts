@@ -35,6 +35,7 @@ import { analyticsRouter } from "./modules/analytics/analytics.route.js";
 import { adminAnalyticsRouter } from "./modules/analytics/admin-analytics.route.js";
 import { getUploadRoot } from "./modules/media/providers/local-storage.provider.js";
 import { subdomainDetector } from "./common/middleware/subdomain.middleware.js";
+import { globalRateLimit, authRateLimit, analyticsTrackRateLimit, newsletterRateLimit } from "./common/middleware/rate-limit.middleware.js";
 import { errorHandler, notFoundHandler } from "./common/middleware/error.middleware.js";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -92,6 +93,7 @@ export const app: Express = express();
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
+app.use(globalRateLimit);
 app.use(subdomainDetector);
 
 app.use("/uploads", express.static(getUploadRoot()));
@@ -109,7 +111,7 @@ app.get("/health/database", async (_request, response) => {
   }
 });
 
-app.use("/auth", authRouter);
+app.use("/auth", authRateLimit, authRouter);
 app.use("/tenants", tenantRouter);
 app.use("/pages", pageRouter);
 app.use("/admin", adminRouter);
@@ -123,8 +125,8 @@ app.use("/products", productRouter);
 app.use("/customer", customerRouter);
 app.use("/cart", cartRouter);
 app.use("/orders", orderRouter);
-app.use("/newsletter", newsletterRouter);
-app.use("/contact", contactRouter);
+app.use("/newsletter", newsletterRateLimit, newsletterRouter);
+app.use("/contact", newsletterRateLimit, contactRouter);
 app.use("/wishlist", wishlistRouter);
 app.use("/payment-methods", paymentMethodRouter);
 app.use("/delivery-zones", deliveryZoneRouter);

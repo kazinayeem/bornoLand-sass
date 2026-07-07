@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Package,
@@ -23,8 +24,13 @@ import {
   CreditCard,
   Sparkles,
   ChevronLeft,
+  ChevronDown,
   Lock,
   ScrollText,
+  Eye,
+  TrendingUp,
+  Wallet,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
@@ -48,10 +54,18 @@ const mainLinks = [
   { href: "/pages", label: "Pages", icon: FileText, featureKey: "cms" },
   { href: "/media", label: "Media", icon: Image, featureKey: "media" },
   { href: "/theme", label: "Theme", icon: Palette },
-  { href: "/analytics", label: "Analytics", icon: BarChart3, featureKey: "analytics" },
-  { href: "/reports", label: "Reports", icon: BarChart3, featureKey: "reports", comingSoon: true },
   { href: "/marketing", label: "Marketing", icon: Megaphone, featureKey: "marketing", comingSoon: true },
   { href: "/apps", label: "Apps", icon: Blocks, featureKey: "apps", comingSoon: true },
+];
+
+const analyticsSubLinks = [
+  { href: "/analytics", label: "Overview", icon: BarChart3, exact: true },
+  { href: "/analytics/visitors", label: "Visitors", icon: Eye },
+  { href: "/analytics/sales", label: "Sales", icon: TrendingUp },
+  { href: "/analytics/products", label: "Products", icon: Package },
+  { href: "/analytics/customers", label: "Customers", icon: Users },
+  { href: "/analytics/sources", label: "Traffic Sources", icon: Globe },
+  { href: "/analytics/live", label: "Live Visitors", icon: Activity },
 ];
 
 const appearanceLinks = [
@@ -112,6 +126,10 @@ function NavItem({
 
 export function StoreSidebar({ store }: { store: Store }) {
   const basePath = `/store/${store.slug}`;
+  const pathname = usePathname();
+  const [analyticsOpen, setAnalyticsOpen] = useState(
+    pathname.startsWith(`${basePath}/analytics`)
+  );
   const status = resolveStoreStatus(store);
   const statusConfig = storeStatusConfig[status];
   const trialDays = getTrialDaysRemaining(store.trialEndsAt);
@@ -178,6 +196,33 @@ export function StoreSidebar({ store }: { store: Store }) {
             );
           })}
         </ul>
+
+        {/* Analytics Sub Menu */}
+        <div>
+          <button onClick={() => setAnalyticsOpen(!analyticsOpen)}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all",
+              pathname.startsWith(`${basePath}/analytics`)
+                ? "bg-zinc-900 text-white shadow-sm"
+                : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+            )}>
+            <BarChart3 className={cn("h-[18px] w-[18px] shrink-0", pathname.startsWith(`${basePath}/analytics`) ? "text-white" : "text-zinc-400")} />
+            <span className="flex-1 text-left">Analytics</span>
+            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", analyticsOpen && "rotate-180")} />
+          </button>
+          {analyticsOpen && (
+            <ul className="mt-0.5 space-y-0.5 pl-3">
+              {analyticsSubLinks.map((link) => {
+                const meta = resolveLink({ label: link.label, featureKey: "analytics" });
+                return (
+                  <li key={link.href}>
+                    <NavItem {...link} basePath={basePath} locked={meta.locked} requiredPlan={meta.requiredPlan} comingSoon={meta.comingSoon} />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
 
         <div>
           <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Appearance</p>

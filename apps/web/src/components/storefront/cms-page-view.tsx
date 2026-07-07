@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Loader2, FileText, HelpCircle, Shield, Truck, RotateCcw, Ruler } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
+import { useTrackCmsPageView } from "@/hooks/use-analytics-tracker";
 import type { CmsPageData } from "@/lib/cms-page-types";
 import type { LucideIcon } from "lucide-react";
 import { getApiUrl } from "@/lib/urls";
@@ -27,6 +28,8 @@ type CmsPageViewProps = {
 };
 
 export default function CmsPageView({ slug, title, description, icon: IconProp, iconName, initialPage }: CmsPageViewProps) {
+  useTrackCmsPageView(slug, title);
+
   const { store, theme } = useTenant();
   const { primaryColor, darkMode } = theme;
   const isDark = darkMode;

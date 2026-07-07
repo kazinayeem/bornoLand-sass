@@ -3,6 +3,7 @@ import type { AuthRequest } from "./auth.middleware.js";
 import { connectDatabase } from "../database/connection.js";
 import { StoreModel } from "../../models/store.model.js";
 import { ProductModel } from "../../models/product.model.js";
+import { OrderModel } from "../../models/order.model.js";
 import { CategoryModel } from "../../models/category.model.js";
 import { CouponModel } from "../../models/coupon.model.js";
 import { ReviewModel } from "../../models/review.model.js";
@@ -24,7 +25,7 @@ type LimitKey = keyof NonNullable<import("../../models/plan.model.js").PlanDocum
 const COUNTER_MAP: Record<string, (storeId: string) => Promise<number>> = {
   products: (sid) => ProductModel.countDocuments({ storeId: sid }),
   categories: (sid) => CategoryModel.countDocuments({ storeId: sid }),
-  orders: (sid) => ProductModel.countDocuments({ storeId: sid }),
+  orders: (sid) => OrderModel.countDocuments({ storeId: sid }),
   customers: (sid) => CustomerModel.countDocuments({ storeId: sid }),
   staff: async (sid) => {
     const store = await StoreModel.findById(sid).select("tenantId").lean() as { tenantId?: unknown } | null;
@@ -39,12 +40,15 @@ const COUNTER_MAP: Record<string, (storeId: string) => Promise<number>> = {
 };
 
 export async function requirePlanLimit(req: AuthRequest, res: Response, next: NextFunction, limitKey: LimitKey) {
+  const userId = req.user?.userId;
+  if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
   const storeId = req.params.storeId || req.params.id || req.body?.storeId;
   if (!storeId) return res.status(400).json({ success: false, message: "Store ID required" });
 
   await connectDatabase();
 
-  const store = await StoreModel.findById(storeId).select("_id").lean() as { _id?: unknown } | null;
+  const store = await StoreModel.findOne({ _id: storeId, userId }).select("_id").lean() as { _id?: unknown } | null;
   if (!store) return res.status(404).json({ success: false, message: "Store not found" });
 
   const limit = await resolveStoreLimit(String(store._id), limitKey as string);
@@ -76,12 +80,15 @@ export async function requirePlanLimit(req: AuthRequest, res: Response, next: Ne
 }
 
 export async function requireFeatureEnabled(req: AuthRequest, res: Response, next: NextFunction, featureKey: string) {
+  const userId = req.user?.userId;
+  if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
   const storeId = req.params.storeId || req.params.id || req.body?.storeId;
   if (!storeId) return res.status(400).json({ success: false, message: "Store ID required" });
 
   await connectDatabase();
 
-  const store = await StoreModel.findById(storeId).select("_id").lean() as { _id?: unknown } | null;
+  const store = await StoreModel.findOne({ _id: storeId, userId }).select("_id").lean() as { _id?: unknown } | null;
   if (!store) return res.status(404).json({ success: false, message: "Store not found" });
 
   const enabled = await resolveStoreFeature(String(store._id), featureKey);
@@ -99,12 +106,15 @@ export async function requireFeatureEnabled(req: AuthRequest, res: Response, nex
 }
 
 export async function requireStorageAvailable(req: AuthRequest, res: Response, next: NextFunction) {
+  const userId = req.user?.userId;
+  if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
   const storeId = req.params.storeId || req.params.id || req.body?.storeId;
   if (!storeId) return res.status(400).json({ success: false, message: "Store ID required" });
 
   await connectDatabase();
 
-  const store = await StoreModel.findById(storeId).select("_id").lean() as { _id?: unknown } | null;
+  const store = await StoreModel.findOne({ _id: storeId, userId }).select("_id").lean() as { _id?: unknown } | null;
   if (!store) return res.status(404).json({ success: false, message: "Store not found" });
 
   const storage = await resolveStorageLimitMB(String(store._id));
@@ -138,6 +148,9 @@ export async function requireStorageAvailable(req: AuthRequest, res: Response, n
 }
 
 export async function requireSubscriptionActive(req: AuthRequest, res: Response, next: NextFunction) {
+  const userId = req.user?.userId;
+  if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
   const storeId = req.params.storeId || req.params.id || req.body?.storeId;
   if (!storeId) return res.status(400).json({ success: false, message: "Store ID required" });
 
@@ -146,7 +159,7 @@ export async function requireSubscriptionActive(req: AuthRequest, res: Response,
   // Also check override status
   const override = await StoreOverrideModel.findOne({ storeId }).lean() as Record<string, unknown> | null;
 
-  const store = await StoreModel.findById(storeId).select("billingStatus subscriptionStatus status").lean() as { billingStatus?: string; subscriptionStatus?: string; status?: string } | null;
+  const store = await StoreModel.findOne({ _id: storeId, userId }).select("billingStatus subscriptionStatus status").lean() as { billingStatus?: string; subscriptionStatus?: string; status?: string } | null;
   if (!store) return res.status(404).json({ success: false, message: "Store not found" });
 
   const effectiveStatus = (override?.subscriptionStatusOverride as string) || store.subscriptionStatus || "";

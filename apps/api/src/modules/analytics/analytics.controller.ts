@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { trackPageView, trackSessionEnd, getLiveVisitors, getLiveVisitorsCount } from "./analytics-tracking.service.js";
 import { getStoreAnalyticsStats, getStoreVisitorCharts, getStoreTrafficSources, getStoreDevices, getStoreTopContent } from "./analytics-query.service.js";
 import { runHourlyAggregation } from "./analytics-aggregation.service.js";
+import { trackPageViewSchema, trackSessionEndSchema } from "./analytics.validator.js";
 
 export async function trackPageViewController(request: Request, response: Response) {
   try {
@@ -11,9 +12,15 @@ export async function trackPageViewController(request: Request, response: Respon
       return;
     }
 
+    const parsed = trackPageViewSchema.safeParse(request.body);
+    if (!parsed.success) {
+      response.status(400).json({ ok: false, message: "Invalid tracking data", errors: parsed.error.flatten().fieldErrors });
+      return;
+    }
+
     const result = await trackPageView({
       storeId,
-      ...request.body,
+      ...parsed.data,
     });
 
     response.json({ ok: true, data: result });
@@ -26,13 +33,18 @@ export async function trackPageViewController(request: Request, response: Respon
 export async function trackSessionEndController(request: Request, response: Response) {
   try {
     const storeId = String(request.params.storeId ?? "");
-    const { sessionId, exitPage, duration } = request.body;
-    if (!storeId || !sessionId) {
-      response.status(400).json({ ok: false, message: "storeId and sessionId are required" });
+    if (!storeId) {
+      response.status(400).json({ ok: false, message: "storeId is required" });
       return;
     }
 
-    await trackSessionEnd({ storeId, sessionId, exitPage: exitPage || "", duration: duration || 0 });
+    const parsed = trackSessionEndSchema.safeParse(request.body);
+    if (!parsed.success) {
+      response.status(400).json({ ok: false, message: "Invalid session end data", errors: parsed.error.flatten().fieldErrors });
+      return;
+    }
+
+    await trackSessionEnd({ storeId, ...parsed.data });
     response.json({ ok: true });
   } catch (error) {
     console.error("[Analytics] track session end error:", error);

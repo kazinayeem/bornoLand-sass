@@ -6,9 +6,12 @@ import {
   useGetAdminAnalyticsQuery,
 } from "@/redux/api/admin-api";
 import {
+  useGetAdminPlatformAnalyticsQuery,
+} from "@/redux/api/analytics-api";
+import {
   Users, Store, Package, ShoppingCart, DollarSign, CreditCard,
   AlertTriangle, Ban, Activity, Loader2, HardDrive, TrendingUp,
-  UserCheck, UserX, CalendarClock, Hourglass, Globe,
+  UserCheck, UserX, CalendarClock, Hourglass, Globe, Eye,
 } from "lucide-react";
 import { StatCard } from "@/components/admin/stat-card";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
@@ -21,6 +24,7 @@ import { formatBDT, formatBDTShort, formatBDTCompact } from "@/lib/format-bdt";
 export default function AdminDashboardPage() {
   const { data: platformData, isLoading: platLoading } = useGetPlatformOverviewQuery();
   const { data: legacyData, isLoading: legacyLoading } = useGetAdminAnalyticsQuery();
+  const { data: platformAnalyticsData } = useGetAdminPlatformAnalyticsQuery();
 
   const isLoading = platLoading && legacyLoading;
   const ov = platformData?.data as Record<string, unknown> | undefined;
@@ -96,6 +100,19 @@ export default function AdminDashboardPage() {
           <StatCard title="Products" value={String(products?.total ?? 0)} icon={Package} variant="purple" delay={0.36} />
           <StatCard title="Media Storage" value={(storage?.usedFormatted as string) ?? "0 B"} icon={HardDrive} variant="default" delay={0.4} />
           <StatCard title="Active Subscriptions" value={String(stores?.active ?? 0)} icon={CreditCard} variant="green" delay={0.44} />
+        </div>
+      </div>
+
+      {/* Visitor Analytics */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-zinc-700">Platform Visitor Analytics</h3>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard title="Total Visitors" value={String((platformAnalyticsData?.data as Record<string, unknown> | undefined)?.totalUniqueVisitors ?? "—")} icon={Eye} variant="blue" delay={0} />
+          <StatCard title="Total Sessions" value={String((platformAnalyticsData?.data as Record<string, unknown> | undefined)?.totalSessions ?? "—")} icon={Activity} variant="purple" delay={0.04} />
+          <StatCard title="Today" value={String((platformAnalyticsData?.data as Record<string, unknown> | undefined)?.todaySessions ?? "—")} icon={Eye} variant="green" delay={0.08} />
+          <StatCard title="This Month" value={String((platformAnalyticsData?.data as Record<string, unknown> | undefined)?.monthSessions ?? "—")} icon={TrendingUp} variant="amber" delay={0.12} />
+          <StatCard title="Page Views" value={String((platformAnalyticsData?.data as Record<string, unknown> | undefined)?.totalPageViews ?? "—")} icon={Activity} variant="default" delay={0.16} />
+          <StatCard title="Active Stores" value={String((platformAnalyticsData?.data as Record<string, unknown> | undefined)?.activeStoresWithVisitors ?? "—")} icon={Store} variant="green" delay={0.2} />
         </div>
       </div>
 

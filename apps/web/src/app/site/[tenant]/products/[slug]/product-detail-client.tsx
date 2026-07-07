@@ -10,6 +10,7 @@ import { toggleWishlist } from "@/redux/slices/wishlist-slice";
 import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { ProductCard } from "@/components/storefront/product-card";
 import { useTenant } from "@/providers/tenant-provider";
+import { useTrackProductView } from "@/hooks/use-analytics-tracker";
 import { formatCurrency } from "@/lib/format-currency";
 import { getProductGalleryUrls, getProductImageUrl } from "@/lib/product-media";
 import { resolveMediaUrl } from "@/lib/resolve-media-url";
@@ -51,6 +52,8 @@ function firstAvailableVariant(product: Product): ProductVariant | undefined {
 }
 
 export function ProductDetailClient({ product }: { product: Product }) {
+  useTrackProductView(product._id, product.name);
+
   const dispatch = useDispatch();
   const { theme, products, settings } = useTenant();
   const { primaryColor } = theme;

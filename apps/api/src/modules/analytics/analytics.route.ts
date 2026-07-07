@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../../common/middleware/auth.middleware.js";
 import { requireFeatureEnabled } from "../../common/middleware/plan-enforcement.middleware.js";
+import { analyticsTrackRateLimit } from "../../common/middleware/rate-limit.middleware.js";
 import {
   trackPageViewController,
   trackSessionEndController,
@@ -16,8 +17,8 @@ import {
 export const analyticsRouter: Router = Router();
 
 // Public tracking endpoint (no auth required - called from storefront)
-analyticsRouter.post("/track/:storeId", trackPageViewController);
-analyticsRouter.post("/track/:storeId/session-end", trackSessionEndController);
+analyticsRouter.post("/track/:storeId", analyticsTrackRateLimit, trackPageViewController);
+analyticsRouter.post("/track/:storeId/session-end", analyticsTrackRateLimit, trackSessionEndController);
 
 // Store owner analytics (requires auth + feature enabled)
 analyticsRouter.get("/:storeId/stats", requireAuth, (req, res, next) =>

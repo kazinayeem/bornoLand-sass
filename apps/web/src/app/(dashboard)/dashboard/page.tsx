@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -14,18 +14,28 @@ import {
   RefreshCw,
   Loader2,
   ArrowRight,
+  Eye,
+  Activity,
+  TrendingUp,
 } from "lucide-react";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
+import { useGetStoreAnalyticsStatsQuery } from "@/redux/api/analytics-api";
 import { PageHeader } from "@/components/workspace/page-header";
 import { StatCard } from "@/components/workspace/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { formatBDT, resolveStoreStatus, storeStatusConfig } from "@/lib/store-status";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export default function WorkspaceDashboardPage() {
   const router = useRouter();
   const { data, isLoading, refetch } = useGetMyStoresQuery();
   const stores = data?.data?.stores ?? [];
+
+  const primaryStoreId = stores[0]?._id ?? "";
+  const { data: visitorStatsData } = useGetStoreAnalyticsStatsQuery(primaryStoreId, { skip: !primaryStoreId });
+  const visitorStats = visitorStatsData?.data as Record<string, unknown> | undefined;
 
   const metrics = useMemo(() => {
     const counts = {
@@ -122,6 +132,39 @@ export default function WorkspaceDashboardPage() {
           value={stores.length > 0 ? `${metrics.active + metrics.trial} active` : "No stores"}
           icon={CreditCard}
         />
+      </div>
+
+      {/* Visitor Analytics Section */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-zinc-700">Visitor Analytics</h3>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: "Visitors Today", value: String(visitorStats?.today ?? 0), icon: Activity, color: "blue", href: "/dashboard/analytics/visitors" },
+            { label: "This Week", value: String(visitorStats?.week ?? 0), icon: TrendingUp, color: "emerald", href: "/dashboard/analytics/visitors" },
+            { label: "This Month", value: String(visitorStats?.month ?? 0), icon: Eye, color: "purple", href: "/dashboard/analytics/visitors" },
+            { label: "Live Now", value: String(visitorStats?.liveVisitors ?? 0), icon: Activity, color: "emerald", href: "/dashboard/analytics/live" },
+          ].map((card, i) => {
+            const colorMap: Record<string, string> = {
+              blue: "border-blue-100 bg-blue-50 text-blue-700",
+              emerald: "border-emerald-100 bg-emerald-50 text-emerald-700",
+              purple: "border-purple-100 bg-purple-50 text-purple-700",
+            };
+            return (
+              <Link key={card.label} href={card.href}>
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+                  className={`cursor-pointer rounded-xl border p-3.5 transition-colors hover:shadow-sm ${colorMap[card.color] || "border-zinc-100 bg-white"}`}>
+                  <div className="flex items-center gap-3">
+                    <card.icon className="h-4 w-4" />
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wider opacity-70">{card.label}</p>
+                      <p className="text-lg font-bold">{card.value}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">

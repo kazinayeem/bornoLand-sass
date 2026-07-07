@@ -17,6 +17,12 @@ import {
   Plus,
   Archive,
   ScrollText,
+  BarChart3,
+  Eye,
+  Activity,
+  Globe,
+  FileText,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppSelector, useAppDispatch } from "@/hooks/redux";
@@ -34,6 +40,13 @@ const mainNav = [
   { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
   { href: "/dashboard/account", label: "Settings", icon: Settings },
   { href: "/dashboard/help", label: "Help", icon: HelpCircle },
+];
+
+const analyticsSubLinks = [
+  { href: "/dashboard/analytics/visitors", label: "Visitors", icon: Eye },
+  { href: "/dashboard/analytics/live", label: "Live Visitors", icon: Activity },
+  { href: "/dashboard/analytics/sources", label: "Traffic Sources", icon: Globe },
+  { href: "/dashboard/analytics/reports", label: "Reports", icon: FileText },
 ];
 
 const storeNav = [
@@ -94,6 +107,7 @@ export function PlatformSidebar() {
   const [logout] = useLogoutMutation();
 
   const isStoresSection = pathname.startsWith("/dashboard/stores");
+  const isAnalyticsSection = pathname.startsWith("/dashboard/analytics");
 
   const closeMobile = () => dispatch(setMobileSidebarOpen(false));
 
@@ -166,6 +180,41 @@ export function PlatformSidebar() {
             </ul>
           </>
         )}
+
+        <div className="mt-4">
+          {collapsed ? (
+            <NavLink href="/dashboard/analytics/visitors" label="Analytics" icon={BarChart3} collapsed={true} onNavigate={closeMobile} />
+          ) : (
+            <>
+              <button
+                onClick={() => {
+                  if (!isAnalyticsSection) {
+                    router.push("/dashboard/analytics/visitors");
+                  }
+                }}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                  isAnalyticsSection
+                    ? "bg-zinc-900 text-white shadow-sm"
+                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                )}
+              >
+                <BarChart3 className={cn("h-[18px] w-[18px] shrink-0", isAnalyticsSection ? "text-white" : "text-zinc-400")} />
+                <span className="flex-1 text-left">Analytics</span>
+                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isAnalyticsSection && "rotate-180")} />
+              </button>
+              {isAnalyticsSection && (
+                <ul className="mt-1 space-y-0.5 pl-3">
+                  {analyticsSubLinks.map((link) => (
+                    <li key={link.href}>
+                      <NavLink {...link} collapsed={false} onNavigate={closeMobile} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
       </nav>
 
       {!collapsed && (

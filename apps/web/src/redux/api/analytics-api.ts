@@ -69,6 +69,32 @@ export interface PlatformAnalytics {
   activeStoresWithVisitors: number;
 }
 
+export interface CityData {
+  city: string;
+  country: string;
+  count: number;
+  uniqueVisitors: number;
+}
+
+export interface ConversionData {
+  totalSessions: number;
+  totalPageViews: number;
+  homepageViews: number;
+  homepageUnique: number;
+  productViews: number;
+  productUnique: number;
+  categoryViews: number;
+  cartViews: number;
+  checkoutViews: number;
+  orderSuccessViews: number;
+  searchViews: number;
+  totalOrders: number;
+  conversionRate: number;
+  cartConversion: number;
+  checkoutConversion: number;
+  orderConversion: number;
+}
+
 const analyticsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // Store Owner Analytics
@@ -96,6 +122,14 @@ const analyticsApi = baseApi.injectEndpoints({
       query: (storeId) => ({ url: `/analytics/${storeId}/live` }),
       providesTags: (_r, _e, storeId) => [{ type: "Analytics" as const, id: storeId }],
     }),
+    getStoreCities: builder.query<ApiEnvelope<CityData[]>, string>({
+      query: (storeId) => ({ url: `/analytics/${storeId}/cities` }),
+      providesTags: (_r, _e, storeId) => [{ type: "Analytics" as const, id: storeId }],
+    }),
+    getStoreConversion: builder.query<ApiEnvelope<ConversionData>, string>({
+      query: (storeId) => ({ url: `/analytics/${storeId}/conversion` }),
+      providesTags: (_r, _e, storeId) => [{ type: "Analytics" as const, id: storeId }],
+    }),
 
     // Platform Analytics
     getAdminPlatformAnalytics: builder.query<ApiEnvelope<PlatformAnalytics>, void>({
@@ -121,6 +155,8 @@ export const {
   useGetStoreDevicesQuery,
   useGetStoreTopContentQuery,
   useGetLiveVisitorsQuery,
+  useGetStoreCitiesQuery,
+  useGetStoreConversionQuery,
   useGetAdminPlatformAnalyticsQuery,
   useGetAdminStoreAnalyticsQuery,
   useGetAdminStoreVisitorStatsQuery,

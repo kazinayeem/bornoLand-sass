@@ -31,6 +31,14 @@ import {
   TrendingUp,
   Wallet,
   Activity,
+  Monitor,
+  Smartphone,
+  MapPin,
+  Building,
+  ExternalLink,
+  Link2,
+  Target,
+  FileSpreadsheet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
@@ -61,11 +69,17 @@ const mainLinks = [
 const analyticsSubLinks = [
   { href: "/analytics", label: "Overview", icon: BarChart3, exact: true },
   { href: "/analytics/visitors", label: "Visitors", icon: Eye },
-  { href: "/analytics/sales", label: "Sales", icon: TrendingUp },
-  { href: "/analytics/products", label: "Products", icon: Package },
-  { href: "/analytics/customers", label: "Customers", icon: Users },
-  { href: "/analytics/sources", label: "Traffic Sources", icon: Globe },
   { href: "/analytics/live", label: "Live Visitors", icon: Activity },
+  { href: "/analytics/traffic-sources", label: "Traffic Sources", icon: Globe },
+  { href: "/analytics/devices", label: "Devices", icon: Monitor },
+  { href: "/analytics/browsers", label: "Browsers", icon: Globe },
+  { href: "/analytics/countries", label: "Countries", icon: MapPin },
+  { href: "/analytics/cities", label: "Cities", icon: Building },
+  { href: "/analytics/pages", label: "Pages", icon: ExternalLink },
+  { href: "/analytics/referrers", label: "Referrers", icon: Link2 },
+  { href: "/analytics/campaigns", label: "Campaigns", icon: Target },
+  { href: "/analytics/conversion", label: "Conversion", icon: TrendingUp },
+  { href: "/analytics/reports", label: "Reports", icon: FileSpreadsheet },
 ];
 
 const appearanceLinks = [

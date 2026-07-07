@@ -11,6 +11,8 @@ const billingNotificationSchema = new Schema(
       enum: [
         "trial_started",
         "trial_ending",
+        "trial_ending_soon_7",
+        "trial_ending_soon_3",
         "trial_expired",
         "payment_submitted",
         "payment_approved",

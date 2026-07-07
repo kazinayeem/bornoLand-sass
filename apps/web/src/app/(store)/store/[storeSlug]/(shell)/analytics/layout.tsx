@@ -1,16 +1,5 @@
-import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { generateStorePageMetadata } from "@/lib/server/page-metadata";
 
-export async function generateMetadata({ params }: { params: Promise<{ storeSlug: string }> }): Promise<Metadata> {
-  const { storeSlug } = await params;
-  return generateStorePageMetadata({
-    storeSlug,
-    pageTitle: "Analytics",
-    canonicalPath: `/store/${storeSlug}/analytics`,
-  });
-}
-
-export default function Layout({ children }: { children: ReactNode }) {
-  return children;
+export default function AnalyticsLayout({ children }: { children: ReactNode }) {
+  return <div className="space-y-6">{children}</div>;
 }

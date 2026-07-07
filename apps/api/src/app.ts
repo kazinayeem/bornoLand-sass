@@ -90,6 +90,7 @@ const corsOptions: CorsOptions = {
 
 export const app: Express = express();
 
+app.set("trust proxy", 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));

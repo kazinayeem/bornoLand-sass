@@ -58,7 +58,7 @@ export const billingApi = baseApi.injectEndpoints({
     getBillingConfig: builder.query<ApiEnvelope<BillingConfig>, void>({
       query: () => ({ url: "/subscriptions/billing-config" }),
     }),
-    getStoreSubscription: builder.query<
+    getBillingStoreSubscription: builder.query<
       ApiEnvelope<{ subscription: StoreSubscription | null; remainingDays: number | null }>,
       string
     >({
@@ -100,7 +100,7 @@ export const billingApi = baseApi.injectEndpoints({
 
 export const {
   useGetBillingConfigQuery,
-  useGetStoreSubscriptionQuery,
+  useGetBillingStoreSubscriptionQuery,
   useGetNotificationsQuery,
   useGetUnreadNotificationCountQuery,
   useMarkNotificationReadMutation,

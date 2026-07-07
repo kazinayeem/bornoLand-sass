@@ -9,7 +9,7 @@ import {
   useGetStoreSubscriptionPaymentsQuery,
   useSubmitSubscriptionPaymentMutation,
 } from "@/redux/api/subscription-payment-api";
-import { useGetBillingConfigQuery, useGetStoreSubscriptionQuery, type SubscriptionDuration } from "@/redux/api/billing-api";
+import { useGetBillingConfigQuery, useGetBillingStoreSubscriptionQuery, type SubscriptionDuration } from "@/redux/api/billing-api";
 import type { Store, Plan } from "@/redux/api/store-api";
 import { formatBDT, resolveStoreStatus } from "@/lib/store-status";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +37,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
   const { data: methodsData } = useGetPlatformPaymentMethodsQuery();
   const { data: paymentsData, isLoading: paymentsLoading } = useGetStoreSubscriptionPaymentsQuery(store._id);
   const { data: billingConfigData } = useGetBillingConfigQuery();
-  const { data: subscriptionData } = useGetStoreSubscriptionQuery(store._id);
+  const { data: subscriptionData } = useGetBillingStoreSubscriptionQuery(store._id);
   const [submitPayment, { isLoading: submitting }] = useSubmitSubscriptionPaymentMutation();
 
   const plans = plansData?.data?.plans ?? [];

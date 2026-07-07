@@ -1,1013 +1,765 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Loader2, Save } from "lucide-react";
+import { ChevronDown, Loader2, Save, Zap, Shield, HardDrive, DollarSign, Eye, GripVertical, Clock } from "lucide-react";
 import { toast } from "sonner";
-import type { Plan, PlanLimits } from "@/redux/api/store-api";
+import type { Plan, PlanLimits, PlanFeatureToggles } from "@/redux/api/store-api";
 import { useUpdatePlanMutation } from "@/redux/api/store-api";
-import {
-  useGetAdminFeatureGroupsQuery,
-  useGetPlanFeatureAssignmentsQuery,
-  useSetPlanFeatureAssignmentsMutation,
-  normalizeFeatureType,
-} from "@/redux/api/feature-api";
-import { useUpdatePlanStorageMutation } from "@/redux/api/admin-storage-api";
 import { AdminTabs } from "@/components/admin/admin-tabs";
-import { cn } from "@/lib/utils";
 import { PlanPreviewCard } from "@/components/admin/plans/plan-preview-card";
-import Link from "next/link";
-import {
-  useCreateAdminFeatureMutation,
-  useGetAdminFeaturesQuery,
-  type FeatureGroup,
-  type PlanFeatureAssignment,
-  type PlatformFeature,
-} from "@/redux/api/feature-api";
-import { AdminPlatformPaymentMethodsPanel } from "@/components/admin/platform-payment-methods-panel";
-
-type AssignmentState = { enabled: boolean; limit: number; tierKey: string };
 
 const BUILDER_TABS = [
-  { id: "general", label: "General" },
-  { id: "pricing", label: "Pricing" },
-  { id: "trial", label: "Trial" },
-  { id: "storage", label: "Storage" },
-  { id: "limits", label: "Limits" },
-  { id: "features", label: "Features" },
-  { id: "permissions", label: "Permissions" },
-  { id: "payment", label: "Payment" },
-  { id: "visibility", label: "Visibility" },
-  { id: "preview", label: "Preview" },
+  { id: "general", label: "General", icon: "Zap" },
+  { id: "pricing", label: "Pricing", icon: "DollarSign" },
+  { id: "limits", label: "Limits", icon: "Shield" },
+  { id: "features", label: "Features", icon: "Zap" },
+  { id: "storage", label: "Storage", icon: "HardDrive" },
+  { id: "trial", label: "Trial", icon: "Clock" },
+  { id: "visibility", label: "Visibility", icon: "Eye" },
+  { id: "preview", label: "Preview", icon: "Eye" },
 ];
 
-const LIMIT_FIELDS: Array<{ key: keyof PlanLimits; label: string; hint?: string }> = [
-  { key: "products", label: "Products", hint: "0 = unlimited" },
-  { key: "orders", label: "Orders", hint: "0 = unlimited" },
-  { key: "categories", label: "Categories" },
-  { key: "staff", label: "Staff members" },
-  { key: "domains", label: "Domains" },
-  { key: "builderPages", label: "Pages" },
-  { key: "themes", label: "Templates" },
-  { key: "bandwidthGB", label: "Bandwidth (GB)" },
-  { key: "storageGB", label: "Storage (GB)" },
-];
-
-const ROLE_FEATURES = [
-  { role: "Admin", keys: ["products", "orders", "customers", "marketing", "analytics", "cms", "media"] },
-  { role: "Manager", keys: ["products", "orders", "customers", "inventory", "coupons"] },
-  { role: "Staff", keys: ["orders", "products", "customers"] },
-  { role: "Viewer", keys: ["analytics", "reports"] },
-];
-
-const DEFAULT_STORAGE = {
-  storageLimitMB: 500,
-  maxFileSizeMB: 10,
-  allowedMimeTypes: [] as string[],
-  unlimited: false,
+type LimitGroup = {
+  key: string;
+  label: string;
+  fields: Array<{ key: keyof PlanLimits; label: string; suffix?: string }>;
 };
 
-export function PlanBuilder({ plan, initialTab }: { plan: Plan; initialTab?: string }) {
+const LIMIT_GROUPS: LimitGroup[] = [
+  {
+    key: "catalog", label: "Catalog",
+    fields: [
+      { key: "products", label: "Products" },
+      { key: "categories", label: "Categories" },
+      { key: "collections", label: "Collections" },
+      { key: "brands", label: "Brands" },
+      { key: "productVariants", label: "Product Variants" },
+      { key: "productImages", label: "Images per Product" },
+    ],
+  },
+  {
+    key: "commerce", label: "Commerce",
+    fields: [
+      { key: "orders", label: "Orders" },
+      { key: "customers", label: "Customers" },
+      { key: "coupons", label: "Coupons" },
+      { key: "giftCards", label: "Gift Cards" },
+      { key: "returnRequests", label: "Return Requests" },
+      { key: "wishlistItems", label: "Wishlist Items" },
+    ],
+  },
+  {
+    key: "content", label: "Content",
+    fields: [
+      { key: "blogs", label: "Blogs" },
+      { key: "pages", label: "Pages" },
+      { key: "builderPages", label: "Builder Pages" },
+      { key: "builderTemplates", label: "Builder Templates" },
+      { key: "cmsBlocks", label: "CMS Blocks" },
+      { key: "dynamicSections", label: "Dynamic Sections" },
+      { key: "menus", label: "Menus" },
+      { key: "navItems", label: "Navigation Items" },
+    ],
+  },
+  {
+    key: "staff", label: "Staff & Access",
+    fields: [
+      { key: "staff", label: "Staff Accounts" },
+      { key: "staffRoles", label: "Staff Roles" },
+      { key: "apiKeys", label: "API Keys" },
+      { key: "webhooks", label: "Webhooks" },
+    ],
+  },
+  {
+    key: "marketing", label: "Marketing",
+    fields: [
+      { key: "campaigns", label: "Campaigns" },
+      { key: "emailTemplates", label: "Email Templates" },
+      { key: "automationRules", label: "Automation Rules" },
+      { key: "newsletterSubscribers", label: "Newsletter Subscribers" },
+      { key: "announcements", label: "Announcements" },
+      { key: "popups", label: "Popups" },
+      { key: "qrCodes", label: "QR Codes" },
+    ],
+  },
+  {
+    key: "reviews", label: "Social Proof",
+    fields: [
+      { key: "reviews", label: "Reviews" },
+      { key: "testimonials", label: "Testimonials" },
+      { key: "forms", label: "Forms" },
+    ],
+  },
+  {
+    key: "shipping", label: "Shipping & Fulfillment",
+    fields: [
+      { key: "shippingZones", label: "Shipping Zones" },
+      { key: "pickupLocations", label: "Pickup Locations" },
+      { key: "inventoryLocations", label: "Inventory Locations" },
+      { key: "warehouses", label: "Warehouses" },
+    ],
+  },
+  {
+    key: "payment", label: "Payment",
+    fields: [
+      { key: "paymentMethods", label: "Payment Methods" },
+      { key: "posDevices", label: "POS Devices" },
+    ],
+  },
+  {
+    key: "domains", label: "Domains & Themes",
+    fields: [
+      { key: "customDomains", label: "Custom Domains" },
+      { key: "activeThemes", label: "Active Themes" },
+    ],
+  },
+  {
+    key: "analytics", label: "Analytics & Reports",
+    fields: [
+      { key: "analyticsReports", label: "Analytics Reports" },
+      { key: "exportRequests", label: "Export Requests" },
+    ],
+  },
+  {
+    key: "advanced", label: "Advanced",
+    fields: [
+      { key: "mediaUploads", label: "Media Uploads" },
+      { key: "storage", label: "Storage (MB)", suffix: "MB" },
+      { key: "languages", label: "Languages" },
+      { key: "currencies", label: "Currencies" },
+      { key: "taxRules", label: "Tax Rules" },
+      { key: "integrations", label: "Integrations" },
+      { key: "redirectRules", label: "Redirect Rules" },
+      { key: "customCss", label: "Custom CSS" },
+      { key: "customJs", label: "Custom JS" },
+      { key: "customFonts", label: "Custom Fonts" },
+    ],
+  },
+];
+
+type FeatureGroup = {
+  key: string;
+  label: string;
+  toggles: Array<{ key: keyof PlanFeatureToggles; label: string; description?: string }>;
+};
+
+const FEATURE_GROUPS: FeatureGroup[] = [
+  {
+    key: "products", label: "Products",
+    toggles: [
+      { key: "productVariants", label: "Product Variants", description: "Allow products with multiple variants (size, color, etc.)" },
+      { key: "inventory", label: "Inventory", description: "Track stock levels per product" },
+      { key: "advancedInventory", label: "Advanced Inventory", description: "Multi-location inventory tracking" },
+      { key: "digitalProducts", label: "Digital Products", description: "Sell downloads, software, licenses" },
+      { key: "physicalProducts", label: "Physical Products", description: "Sell physical goods with shipping" },
+    ],
+  },
+  {
+    key: "commerce", label: "Commerce",
+    toggles: [
+      { key: "subscriptions", label: "Subscriptions", description: "Recurring billing for products" },
+      { key: "bookings", label: "Bookings", description: "Appointment and reservation system" },
+      { key: "giftCards", label: "Gift Cards", description: "Sell store gift cards" },
+      { key: "coupons", label: "Coupons", description: "Discount coupon engine" },
+      { key: "wholesale", label: "Wholesale", description: "Wholesale pricing tiers" },
+      { key: "dropshipping", label: "Dropshipping", description: "Dropshipping integration" },
+    ],
+  },
+  {
+    key: "content", label: "Content Management",
+    toggles: [
+      { key: "blog", label: "Blog", description: "Blog engine with categories and comments" },
+      { key: "cms", label: "CMS", description: "Full content management system" },
+      { key: "pageBuilder", label: "Page Builder", description: "Drag-and-drop page building" },
+      { key: "dragDropBuilder", label: "Drag & Drop Builder", description: "Visual drag-and-drop editor" },
+      { key: "themeEditor", label: "Theme Editor", description: "Customize store theme" },
+      { key: "reviews", label: "Reviews", description: "Product review system" },
+    ],
+  },
+  {
+    key: "checkout", label: "Checkout & Sales",
+    toggles: [
+      { key: "customCheckout", label: "Custom Checkout", description: "Custom-branded checkout" },
+      { key: "checkoutFields", label: "Checkout Fields", description: "Custom checkout form fields" },
+      { key: "advancedCheckout", label: "Advanced Checkout", description: "Multi-step, upsells, cross-sells" },
+      { key: "abandonedCart", label: "Abandoned Cart", description: "Recover abandoned carts via email" },
+      { key: "invoiceGenerator", label: "Invoice Generator", description: "Generate PDF invoices" },
+      { key: "loyaltyPoints", label: "Loyalty Points", description: "Points-based loyalty program" },
+      { key: "referralSystem", label: "Referral System", description: "Customer referral program" },
+      { key: "affiliateSystem", label: "Affiliate System", description: "Affiliate marketing platform" },
+    ],
+  },
+  {
+    key: "marketing", label: "Marketing & Engagement",
+    toggles: [
+      { key: "emailMarketing", label: "Email Marketing", description: "Send email campaigns" },
+      { key: "smsMarketing", label: "SMS Marketing", description: "Send SMS campaigns" },
+      { key: "pushNotification", label: "Push Notification", description: "Browser/App push notifications" },
+      { key: "liveChat", label: "Live Chat", description: "Live chat with customers" },
+      { key: "seo", label: "SEO", description: "Search engine optimization tools" },
+      { key: "aiContent", label: "AI Content", description: "AI-powered content generation" },
+    ],
+  },
+  {
+    key: "domains", label: "Domain & Branding",
+    toggles: [
+      { key: "customDomain", label: "Custom Domain", description: "Use your own domain name" },
+      { key: "subdomain", label: "Subdomain", description: "Platform subdomain (store.bornoland.com)" },
+      { key: "whiteLabel", label: "White Label", description: "Remove platform branding" },
+      { key: "darkMode", label: "Dark Mode", description: "Dark mode toggle for storefront" },
+    ],
+  },
+  {
+    key: "integration", label: "Integrations & Access",
+    toggles: [
+      { key: "apiAccess", label: "API Access", description: "REST API access" },
+      { key: "webhooks", label: "Webhooks", description: "Webhook event system" },
+      { key: "googleLogin", label: "Google Login", description: "Sign in with Google" },
+      { key: "facebookLogin", label: "Facebook Login", description: "Sign in with Facebook" },
+      { key: "otpLogin", label: "OTP Login", description: "Phone OTP authentication" },
+    ],
+  },
+  {
+    key: "operations", label: "Operations",
+    toggles: [
+      { key: "shipping", label: "Shipping", description: "Shipping rate management" },
+      { key: "localPickup", label: "Local Pickup", description: "In-store pickup option" },
+      { key: "taxEngine", label: "Tax Engine", description: "Automated tax calculation" },
+      { key: "multiCurrency", label: "Multi Currency", description: "Multiple currency support" },
+      { key: "multiLanguage", label: "Multi Language", description: "Multiple language support" },
+      { key: "pos", label: "POS", description: "Point of sale system" },
+      { key: "marketplace", label: "Marketplace", description: "Multi-vendor marketplace" },
+    ],
+  },
+  {
+    key: "media", label: "Media & Files",
+    toggles: [
+      { key: "mediaLibrary", label: "Media Library", description: "Central media and file manager" },
+      { key: "fileManager", label: "File Manager", description: "Advanced file management" },
+      { key: "bulkImport", label: "Bulk Import", description: "Import data in bulk" },
+      { key: "bulkExport", label: "Bulk Export", description: "Export data in bulk" },
+      { key: "csvImport", label: "CSV Import", description: "CSV file import" },
+      { key: "csvExport", label: "CSV Export", description: "CSV file export" },
+    ],
+  },
+  {
+    key: "management", label: "Management",
+    toggles: [
+      { key: "staffManagement", label: "Staff Management", description: "Multi-user staff accounts" },
+      { key: "auditLogs", label: "Audit Logs", description: "Full activity audit trail" },
+      { key: "backupRestore", label: "Backup & Restore", description: "Automated backups" },
+      { key: "storeVerification", label: "Store Verification", description: "Verified store badge" },
+      { key: "developerMode", label: "Developer Mode", description: "Custom code and debug tools" },
+      { key: "maintenanceMode", label: "Maintenance Mode", description: "Put store in maintenance" },
+    ],
+  },
+  {
+    key: "analytics", label: "Analytics & Insights",
+    toggles: [
+      { key: "visitorAnalytics", label: "Visitor Analytics", description: "Visitor tracking and analytics dashboard" },
+      { key: "realtimeVisitors", label: "Real-time Visitors", description: "Live visitor dashboard" },
+      { key: "analyticsExport", label: "Analytics Export", description: "Export analytics as CSV/Excel/PDF" },
+      { key: "advancedAnalytics", label: "Advanced Analytics", description: "Advanced analytics and reports" },
+    ],
+  },
+];
+
+type Props = {
+  plan: Plan;
+  initialTab?: string;
+};
+
+export function PlanBuilder({ plan, initialTab }: Props) {
   const router = useRouter();
-  const [tab, setTab] = useState(initialTab && BUILDER_TABS.some((t) => t.id === initialTab) ? initialTab : "general");
-  const [saving, setSaving] = useState(false);
+  const [updatePlan, { isLoading: isSaving }] = useUpdatePlanMutation();
 
-  const [form, setForm] = useState({
-    name: plan.name,
-    slug: plan.slug,
-    description: plan.description ?? "",
-    priceBDT: plan.priceBDT,
-    priceYearly: plan.priceYearly ?? plan.pricing?.yearly ?? 0,
-    trialDays: plan.trialDays,
-    features: plan.features.join("\n"),
-    isRecommended: plan.isRecommended,
-    isActive: plan.isActive,
-    visible: plan.visible ?? true,
-    isCustomPrice: plan.isCustomPrice ?? false,
-    customDomain: plan.customDomain ?? false,
-    prioritySupport: plan.prioritySupport ?? false,
-    sortOrder: plan.sortOrder ?? 0,
-    limits: { ...plan.limits },
-    pricing: {
-      monthly: plan.pricing?.monthly ?? plan.priceBDT,
-      quarterly: plan.pricing?.quarterly ?? 0,
-      halfYearly: plan.pricing?.halfYearly ?? 0,
-      yearly: plan.pricing?.yearly ?? plan.priceYearly ?? 0,
-      lifetime: plan.pricing?.lifetime ?? 0,
-    },
+  const [activeTab, setActiveTab] = useState(initialTab || "general");
+  const [name, setName] = useState(plan.name);
+  const [slug, setSlug] = useState(plan.slug);
+  const [description, setDescription] = useState(plan.description ?? "");
+  const [priceBDT, setPriceBDT] = useState(plan.priceBDT);
+  const [priceYearly, setPriceYearly] = useState(plan.priceYearly ?? 0);
+  const [isCustomPrice, setIsCustomPrice] = useState(plan.isCustomPrice ?? false);
+  const [trialDays, setTrialDays] = useState(plan.trialDays);
+  const [sortOrder, setSortOrder] = useState(plan.sortOrder ?? 0);
+  const [visible, setVisible] = useState(plan.visible ?? true);
+  const [isRecommended, setIsRecommended] = useState(plan.isRecommended);
+  const [isActive, setIsActive] = useState(plan.isActive);
+  const [customDomain, setCustomDomain] = useState(plan.customDomain ?? false);
+  const [prioritySupport, setPrioritySupport] = useState(plan.prioritySupport ?? false);
+  const [features, setFeatures] = useState<string[]>((plan as any).features ?? []);
+
+  const [pricing, setPricing] = useState({
+    monthly: plan.pricing?.monthly ?? priceBDT,
+    quarterly: plan.pricing?.quarterly ?? priceBDT * 3,
+    halfYearly: plan.pricing?.halfYearly ?? priceBDT * 6,
+    yearly: plan.pricing?.yearly ?? priceBDT * 12,
+    lifetime: plan.pricing?.lifetime ?? 0,
   });
 
-  const [storageForm, setStorageForm] = useState({
-    ...DEFAULT_STORAGE,
-    storageLimitMB: Math.round((plan.limits.storageGB ?? 0.5) * 1024) || 500,
-    imageCompression: true,
-    cdnEnabled: false,
-  });
+  const [limits, setLimits] = useState<PlanLimits>(() => ({
+    storage: plan.limits?.storage ?? 512,
+    products: plan.limits?.products ?? 10,
+    categories: plan.limits?.categories ?? 5,
+    collections: plan.limits?.collections ?? 5,
+    brands: plan.limits?.brands ?? 3,
+    productVariants: plan.limits?.productVariants ?? 0,
+    productImages: plan.limits?.productImages ?? 5,
+    orders: plan.limits?.orders ?? 50,
+    customers: plan.limits?.customers ?? 50,
+    staff: plan.limits?.staff ?? 1,
+    warehouses: plan.limits?.warehouses ?? 0,
+    blogs: plan.limits?.blogs ?? 0,
+    pages: plan.limits?.pages ?? 5,
+    mediaUploads: plan.limits?.mediaUploads ?? 100,
+    apiKeys: plan.limits?.apiKeys ?? 0,
+    customDomains: plan.limits?.customDomains ?? 0,
+    coupons: plan.limits?.coupons ?? 0,
+    shippingZones: plan.limits?.shippingZones ?? 1,
+    pickupLocations: plan.limits?.pickupLocations ?? 0,
+    paymentMethods: plan.limits?.paymentMethods ?? 1,
+    activeThemes: plan.limits?.activeThemes ?? 1,
+    builderPages: plan.limits?.builderPages ?? 3,
+    menus: plan.limits?.menus ?? 1,
+    navItems: plan.limits?.navItems ?? 10,
+    reviews: plan.limits?.reviews ?? 0,
+    testimonials: plan.limits?.testimonials ?? 0,
+    announcements: plan.limits?.announcements ?? 0,
+    newsletterSubscribers: plan.limits?.newsletterSubscribers ?? 0,
+    campaigns: plan.limits?.campaigns ?? 0,
+    emailTemplates: plan.limits?.emailTemplates ?? 0,
+    automationRules: plan.limits?.automationRules ?? 0,
+    integrations: plan.limits?.integrations ?? 0,
+    webhooks: plan.limits?.webhooks ?? 0,
+    languages: plan.limits?.languages ?? 1,
+    currencies: plan.limits?.currencies ?? 1,
+    taxRules: plan.limits?.taxRules ?? 0,
+    inventoryLocations: plan.limits?.inventoryLocations ?? 1,
+    posDevices: plan.limits?.posDevices ?? 0,
+    giftCards: plan.limits?.giftCards ?? 0,
+    returnRequests: plan.limits?.returnRequests ?? 0,
+    wishlistItems: plan.limits?.wishlistItems ?? 0,
+    analyticsReports: plan.limits?.analyticsReports ?? 0,
+    exportRequests: plan.limits?.exportRequests ?? 0,
+    staffRoles: plan.limits?.staffRoles ?? 1,
+    cmsBlocks: plan.limits?.cmsBlocks ?? 0,
+    dynamicSections: plan.limits?.dynamicSections ?? 0,
+    builderTemplates: plan.limits?.builderTemplates ?? 0,
+    forms: plan.limits?.forms ?? 0,
+    popups: plan.limits?.popups ?? 0,
+    qrCodes: plan.limits?.qrCodes ?? 0,
+    redirectRules: plan.limits?.redirectRules ?? 0,
+    customCss: plan.limits?.customCss ?? 0,
+    customJs: plan.limits?.customJs ?? 0,
+    customFonts: plan.limits?.customFonts ?? 0,
+  }));
 
-  const [trialForm, setTrialForm] = useState({
-    enabled: plan.trialDays > 0,
-    reminderDays: 2,
-    showUpgradeBanner: true,
-    disablePublishing: false,
-    disableOrders: false,
-  });
+  const [toggles, setToggles] = useState<PlanFeatureToggles>(() => ({
+    productVariants: plan.featureToggles?.productVariants ?? false,
+    inventory: plan.featureToggles?.inventory ?? false,
+    advancedInventory: plan.featureToggles?.advancedInventory ?? false,
+    digitalProducts: plan.featureToggles?.digitalProducts ?? false,
+    physicalProducts: plan.featureToggles?.physicalProducts ?? false,
+    subscriptions: plan.featureToggles?.subscriptions ?? false,
+    bookings: plan.featureToggles?.bookings ?? false,
+    giftCards: plan.featureToggles?.giftCards ?? false,
+    coupons: plan.featureToggles?.coupons ?? false,
+    reviews: plan.featureToggles?.reviews ?? false,
+    blog: plan.featureToggles?.blog ?? false,
+    cms: plan.featureToggles?.cms ?? false,
+    pageBuilder: plan.featureToggles?.pageBuilder ?? false,
+    dragDropBuilder: plan.featureToggles?.dragDropBuilder ?? false,
+    themeEditor: plan.featureToggles?.themeEditor ?? false,
+    advancedAnalytics: plan.featureToggles?.advancedAnalytics ?? false,
+    seo: plan.featureToggles?.seo ?? false,
+    aiContent: plan.featureToggles?.aiContent ?? false,
+    customDomain: plan.featureToggles?.customDomain ?? false,
+    subdomain: plan.featureToggles?.subdomain ?? true,
+    whiteLabel: plan.featureToggles?.whiteLabel ?? false,
+    apiAccess: plan.featureToggles?.apiAccess ?? false,
+    webhooks: plan.featureToggles?.webhooks ?? false,
+    staffManagement: plan.featureToggles?.staffManagement ?? false,
+    marketplace: plan.featureToggles?.marketplace ?? false,
+    pos: plan.featureToggles?.pos ?? false,
+    wholesale: plan.featureToggles?.wholesale ?? false,
+    dropshipping: plan.featureToggles?.dropshipping ?? false,
+    shipping: plan.featureToggles?.shipping ?? false,
+    localPickup: plan.featureToggles?.localPickup ?? false,
+    abandonedCart: plan.featureToggles?.abandonedCart ?? false,
+    emailMarketing: plan.featureToggles?.emailMarketing ?? false,
+    smsMarketing: plan.featureToggles?.smsMarketing ?? false,
+    pushNotification: plan.featureToggles?.pushNotification ?? false,
+    liveChat: plan.featureToggles?.liveChat ?? false,
+    fileManager: plan.featureToggles?.fileManager ?? false,
+    mediaLibrary: plan.featureToggles?.mediaLibrary ?? true,
+    bulkImport: plan.featureToggles?.bulkImport ?? false,
+    bulkExport: plan.featureToggles?.bulkExport ?? false,
+    csvImport: plan.featureToggles?.csvImport ?? false,
+    csvExport: plan.featureToggles?.csvExport ?? false,
+    googleLogin: plan.featureToggles?.googleLogin ?? false,
+    facebookLogin: plan.featureToggles?.facebookLogin ?? false,
+    otpLogin: plan.featureToggles?.otpLogin ?? false,
+    multiCurrency: plan.featureToggles?.multiCurrency ?? false,
+    multiLanguage: plan.featureToggles?.multiLanguage ?? false,
+    taxEngine: plan.featureToggles?.taxEngine ?? false,
+    invoiceGenerator: plan.featureToggles?.invoiceGenerator ?? false,
+    customCheckout: plan.featureToggles?.customCheckout ?? false,
+    checkoutFields: plan.featureToggles?.checkoutFields ?? false,
+    advancedCheckout: plan.featureToggles?.advancedCheckout ?? false,
+    loyaltyPoints: plan.featureToggles?.loyaltyPoints ?? false,
+    referralSystem: plan.featureToggles?.referralSystem ?? false,
+    affiliateSystem: plan.featureToggles?.affiliateSystem ?? false,
+    storeVerification: plan.featureToggles?.storeVerification ?? false,
+    backupRestore: plan.featureToggles?.backupRestore ?? false,
+    auditLogs: plan.featureToggles?.auditLogs ?? false,
+    developerMode: plan.featureToggles?.developerMode ?? false,
+    maintenanceMode: plan.featureToggles?.maintenanceMode ?? false,
+    darkMode: plan.featureToggles?.darkMode ?? false,
+    visitorAnalytics: plan.featureToggles?.visitorAnalytics ?? false,
+    realtimeVisitors: plan.featureToggles?.realtimeVisitors ?? false,
+    analyticsExport: plan.featureToggles?.analyticsExport ?? false,
+  }));
 
-  const [updatePlan] = useUpdatePlanMutation();
-  const [updatePlanStorage] = useUpdatePlanStorageMutation();
-  const [setPlanFeatures] = useSetPlanFeatureAssignmentsMutation();
-  const [createFeature] = useCreateAdminFeatureMutation();
-  const { data: allFeaturesData } = useGetAdminFeaturesQuery();
-  const { data: groupsData } = useGetAdminFeatureGroupsQuery();
-  const { data: planFeaturesData, isLoading: loadingFeatures } = useGetPlanFeatureAssignmentsQuery(plan._id);
+  const [featureText, setFeatureText] = useState(plan.features?.join("\n") ?? "");
 
-  const planFeatures = planFeaturesData?.data?.features ?? [];
-  const groups = groupsData?.data?.groups ?? [];
-  const [assignments, setAssignments] = useState<Record<string, AssignmentState>>({});
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const updateLimit = useCallback((key: keyof PlanLimits, value: number) => {
+    setLimits((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
-  useEffect(() => {
-    const next: Record<string, AssignmentState> = {};
-    for (const pf of planFeatures) {
-      next[pf.featureKey] = {
-        enabled: pf.enabled,
-        limit: pf.limit,
-        tierKey: pf.tierKey ?? pf.value ?? "disabled",
-      };
-    }
-    setAssignments(next);
-    const initialOpen: Record<string, boolean> = {};
-    for (const g of groups) initialOpen[g.key] = true;
-    setOpenGroups(initialOpen);
-  }, [planFeatures, groups]);
-
-  const groupedFeatures = useMemo(() => {
-    const map = new Map<string, typeof planFeatures>();
-    for (const pf of planFeatures) {
-      const g = pf.groupKey || pf.group || "general";
-      const list = map.get(g) ?? [];
-      list.push(pf);
-      map.set(g, list);
-    }
-    return Array.from(map.entries());
-  }, [planFeatures]);
-
-  const groupName = (key: string) => groups.find((g) => g.key === key)?.name ?? key;
+  const updateToggle = useCallback((key: keyof PlanFeatureToggles, value: boolean) => {
+    setToggles((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
   const handleSave = async () => {
-    setSaving(true);
+    const payload = {
+      name,
+      slug,
+      description,
+      priceBDT,
+      priceYearly,
+      isCustomPrice,
+      trialDays,
+      sortOrder,
+      visible,
+      isRecommended,
+      isActive,
+      customDomain,
+      prioritySupport,
+      features: featureText.split("\n").map((f) => f.trim()).filter(Boolean),
+      pricing: {
+        monthly: pricing.monthly || priceBDT,
+        quarterly: pricing.quarterly || priceBDT * 3,
+        halfYearly: pricing.halfYearly || priceBDT * 6,
+        yearly: pricing.yearly || priceBDT * 12,
+        lifetime: pricing.lifetime || 0,
+      },
+      limits,
+      featureToggles: toggles,
+    };
+
     try {
-      await updatePlan({
-        id: plan._id,
-        data: {
-          name: form.name,
-          slug: form.slug,
-          description: form.description,
-          priceBDT: form.priceBDT,
-          priceYearly: form.pricing.yearly,
-          trialDays: form.trialDays,
-          features: form.features
-            .split("\n")
-            .map((f) => f.trim())
-            .filter(Boolean),
-          limits: form.limits,
-          pricing: form.pricing,
-          isRecommended: form.isRecommended,
-          isActive: form.isActive,
-          visible: form.visible,
-          isCustomPrice: form.isCustomPrice,
-          customDomain: form.customDomain,
-          prioritySupport: form.prioritySupport,
-          sortOrder: form.sortOrder,
-        },
-      }).unwrap();
-
-      await updatePlanStorage({
-        planId: plan._id,
-        data: {
-          storageLimitMB: storageForm.storageLimitMB,
-          maxFileSizeMB: storageForm.maxFileSizeMB,
-          allowedMimeTypes: storageForm.allowedMimeTypes,
-          unlimited: storageForm.unlimited,
-        },
-      }).unwrap();
-
-      if (Object.keys(assignments).length > 0) {
-        await setPlanFeatures({
-          planId: plan._id,
-          features: Object.entries(assignments).map(([featureKey, v]) => ({
-            featureKey,
-            enabled: v.enabled,
-            limit: v.limit,
-            tierKey: v.tierKey,
-            value: v.tierKey,
-          })),
-        }).unwrap();
-      }
-
-      toast.success("Plan saved");
+      await updatePlan({ id: plan._id, data: payload }).unwrap();
+      toast.success("Plan saved successfully");
       router.refresh();
     } catch {
       toast.error("Failed to save plan");
-    } finally {
-      setSaving(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      <AdminTabs tabs={BUILDER_TABS} active={tab} onChange={setTab} />
-
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-        {tab === "general" && (
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Plan name">
-              <input
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Slug">
-              <input
-                value={form.slug}
-                onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Description" className="md:col-span-2">
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                rows={3}
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Marketing bullets (one per line)" className="md:col-span-2">
-              <textarea
-                value={form.features}
-                onChange={(e) => setForm((f) => ({ ...f, features: e.target.value }))}
-                rows={4}
-                className={inputClass}
-                placeholder="500 products&#10;5 GB storage&#10;Email support"
-              />
-            </Field>
-            <Field label="Sort order">
-              <input
-                type="number"
-                value={form.sortOrder}
-                onChange={(e) => setForm((f) => ({ ...f, sortOrder: Number(e.target.value) }))}
-                className={inputClass}
-              />
-            </Field>
-            <div className="md:col-span-2 flex flex-wrap gap-4">
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))} />
-                Active
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.isRecommended} onChange={(e) => setForm((f) => ({ ...f, isRecommended: e.target.checked }))} />
-                Recommended / Popular
-              </label>
-            </div>
-          </div>
-        )}
-
-        {tab === "pricing" && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {(
-              [
-                ["monthly", "Monthly"],
-                ["quarterly", "Quarterly"],
-                ["halfYearly", "Half Yearly"],
-                ["yearly", "Yearly"],
-                ["lifetime", "Lifetime"],
-              ] as const
-            ).map(([key, label]) => (
-              <Field key={key} label={`${label} (৳)`}>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.pricing[key]}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      pricing: { ...f.pricing, [key]: Number(e.target.value) },
-                      ...(key === "monthly" ? { priceBDT: Number(e.target.value) } : {}),
-                    }))
-                  }
-                  className={inputClass}
-                />
-              </Field>
-            ))}
-            <div className="sm:col-span-2 lg:col-span-3">
-              <label className="flex items-center gap-2 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={form.isCustomPrice}
-                  onChange={(e) => setForm((f) => ({ ...f, isCustomPrice: e.target.checked }))}
-                />
-                Custom / contact sales pricing
-              </label>
-            </div>
-          </div>
-        )}
-
-        {tab === "trial" && (
-          <div className="max-w-2xl space-y-4">
-            <label className="flex items-center gap-2 text-sm font-medium text-zinc-800">
-              <input
-                type="checkbox"
-                checked={trialForm.enabled}
-                onChange={(e) => {
-                  setTrialForm((t) => ({ ...t, enabled: e.target.checked }));
-                  if (!e.target.checked) setForm((f) => ({ ...f, trialDays: 0 }));
-                }}
-              />
-              Trial enabled for this plan
-            </label>
-            <Field label="Trial days">
-              <input
-                type="number"
-                min={0}
-                disabled={!trialForm.enabled}
-                value={form.trialDays}
-                onChange={(e) => setForm((f) => ({ ...f, trialDays: Number(e.target.value) }))}
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Reminder days before expiry">
-              <input
-                type="number"
-                min={0}
-                value={trialForm.reminderDays}
-                onChange={(e) => setTrialForm((t) => ({ ...t, reminderDays: Number(e.target.value) }))}
-                className={inputClass}
-              />
-            </Field>
-            <div className="space-y-2">
-              <Toggle label="Show upgrade banner" checked={trialForm.showUpgradeBanner} onChange={(v) => setTrialForm((t) => ({ ...t, showUpgradeBanner: v }))} />
-              <Toggle label="Disable publishing on expiry" checked={trialForm.disablePublishing} onChange={(v) => setTrialForm((t) => ({ ...t, disablePublishing: v }))} />
-              <Toggle label="Disable orders on expiry" checked={trialForm.disableOrders} onChange={(v) => setTrialForm((t) => ({ ...t, disableOrders: v }))} />
-            </div>
-            <p className="text-xs text-zinc-500">
-              Global trial policies (expire actions, cron) are in{" "}
-              <Link href="/admin/dashboard/settings?tab=trial" className="text-blue-600 underline">Platform Settings → Trial</Link>.
-              Per-plan trial length is saved with this plan.
-            </p>
-          </div>
-        )}
-
-        {tab === "storage" && (
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Storage limit (MB)">
-              <input
-                type="number"
-                min={0}
-                disabled={storageForm.unlimited}
-                value={storageForm.storageLimitMB}
-                onChange={(e) =>
-                  setStorageForm((s) => ({ ...s, storageLimitMB: Number(e.target.value) }))
-                }
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Max upload size (MB)">
-              <input
-                type="number"
-                min={1}
-                value={storageForm.maxFileSizeMB}
-                onChange={(e) =>
-                  setStorageForm((s) => ({ ...s, maxFileSizeMB: Number(e.target.value) }))
-                }
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Allowed MIME types" className="md:col-span-2">
-              <input
-                value={storageForm.allowedMimeTypes.join(", ")}
-                onChange={(e) =>
-                  setStorageForm((s) => ({
-                    ...s,
-                    allowedMimeTypes: e.target.value
-                      .split(",")
-                      .map((v) => v.trim())
-                      .filter(Boolean),
-                  }))
-                }
-                placeholder="image/jpeg, image/png, application/pdf (empty = all allowed)"
-                className={inputClass}
-              />
-            </Field>
-            <label className="flex items-center gap-2 text-sm text-zinc-700 md:col-span-2">
-              <input
-                type="checkbox"
-                checked={storageForm.unlimited}
-                onChange={(e) => setStorageForm((s) => ({ ...s, unlimited: e.target.checked }))}
-              />
-              Unlimited storage
-            </label>
-            <label className="flex items-center gap-2 text-sm text-zinc-700 md:col-span-2">
-              <input
-                type="checkbox"
-                checked={storageForm.imageCompression}
-                onChange={(e) => setStorageForm((s) => ({ ...s, imageCompression: e.target.checked }))}
-              />
-              Image compression on upload
-            </label>
-            <label className="flex items-center gap-2 text-sm text-zinc-700 md:col-span-2">
-              <input
-                type="checkbox"
-                checked={storageForm.cdnEnabled}
-                onChange={(e) => setStorageForm((s) => ({ ...s, cdnEnabled: e.target.checked }))}
-              />
-              CDN delivery (when configured)
-            </label>
-          </div>
-        )}
-
-        {tab === "limits" && (
-          <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {LIMIT_FIELDS.map(({ key, label, hint }) => (
-                <Field key={key} label={label} hint={hint}>
-                  <input
-                    type="number"
-                    min={0}
-                    value={Number(form.limits[key] ?? 0)}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        limits: { ...f.limits, [key]: Number(e.target.value) },
-                      }))
-                    }
-                    className={inputClass}
-                  />
-                </Field>
-              ))}
-              <Field label="Stores" hint="0 = unlimited">
-                <input
-                  type="number"
-                  min={0}
-                  value={Number(form.limits.stores ?? 0)}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      limits: { ...f.limits, stores: Number(e.target.value) },
-                    }))
-                  }
-                  className={inputClass}
-                />
-              </Field>
-            </div>
-            <div>
-              <h3 className="mb-3 text-sm font-semibold text-zinc-800">Capability flags</h3>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {(
-                  [
-                    ["apiAccess", "API access"],
-                    ["analytics", "Analytics"],
-                    ["coupons", "Coupons"],
-                    ["reviews", "Reviews"],
-                    ["marketing", "Marketing"],
-                    ["customCode", "Custom code"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <label key={key} className="flex items-center gap-2 rounded-xl border border-zinc-100 p-3 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(form.limits[key])}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          limits: { ...f.limits, [key]: e.target.checked },
-                        }))
-                      }
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <p className="text-xs text-zinc-500">
-              Variant, coupon, and AI limits are also controlled in the Features tab per feature key.
-            </p>
-          </div>
-        )}
-
-        {tab === "features" && (
-          <div className="space-y-4">
-            <FeatureCatalogPanel
-              groups={groups}
-              allFeatures={allFeaturesData?.data?.features ?? []}
-              onCreate={async (payload) => {
-                try {
-                  await createFeature(payload).unwrap();
-                  toast.success("Feature added to catalog");
-                } catch {
-                  toast.error("Failed to create feature");
-                }
-              }}
-            />
-            {loadingFeatures ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-              </div>
-            ) : (
-              groupedFeatures.map(([group, items]) => (
-                <div key={group} className="overflow-hidden rounded-xl border border-zinc-200">
-                  <button
-                    type="button"
-                    onClick={() => setOpenGroups((o) => ({ ...o, [group]: !o[group] }))}
-                    className="flex w-full items-center justify-between bg-zinc-50 px-4 py-3 text-left"
-                  >
-                    <span className="text-sm font-semibold text-zinc-900">{groupName(group)}</span>
-                    <ChevronDown
-                      className={cn(
-                        "h-4 w-4 text-zinc-400 transition-transform",
-                        openGroups[group] && "rotate-180"
-                      )}
-                    />
-                  </button>
-                  {openGroups[group] && (
-                    <div className="divide-y divide-zinc-100">
-                      {items.map((pf) => {
-                        const type = normalizeFeatureType(pf.type);
-                        const state = assignments[pf.featureKey] ?? {
-                          enabled: pf.enabled,
-                          limit: pf.limit,
-                          tierKey: pf.tierKey ?? "disabled",
-                        };
-                        const tierOptions = pf.tiers?.length
-                          ? pf.tiers
-                          : [
-                              { tierKey: "disabled", label: "Disabled", rank: 0 },
-                              { tierKey: "basic", label: "Basic", rank: 1 },
-                              { tierKey: "advanced", label: "Advanced", rank: 2 },
-                              { tierKey: "enterprise", label: "Enterprise", rank: 3 },
-                            ];
-
-                        return (
-                          <div
-                            key={pf.featureKey}
-                            className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-                          >
-                            <div>
-                              <p className="text-sm font-medium text-zinc-900">{pf.name}</p>
-                              <p className="text-xs text-zinc-500">
-                                {pf.featureKey} · {type}
-                              </p>
-                              {pf.comingSoon && (
-                                <span className="mt-0.5 inline-block text-[10px] uppercase text-amber-600">Coming soon</span>
-                              )}
-                            </div>
-                            {type === "boolean" && (
-                              <label className="flex items-center gap-2 text-sm">
-                                <input
-                                  type="checkbox"
-                                  checked={state.enabled}
-                                  onChange={(e) =>
-                                    setAssignments((prev) => ({
-                                      ...prev,
-                                      [pf.featureKey]: { ...state, enabled: e.target.checked },
-                                    }))
-                                  }
-                                />
-                                Enabled
-                              </label>
-                            )}
-                            {type === "limit" && (
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  value={state.limit}
-                                  onChange={(e) =>
-                                    setAssignments((prev) => ({
-                                      ...prev,
-                                      [pf.featureKey]: {
-                                        ...state,
-                                        limit: Number(e.target.value),
-                                        enabled: Number(e.target.value) !== 0 || state.enabled,
-                                      },
-                                    }))
-                                  }
-                                  className="h-9 w-28 rounded-lg border border-zinc-200 px-2 text-sm"
-                                />
-                                <span className="text-xs text-zinc-500">
-                                  {pf.limitMeta?.unit ?? ""} (0 = unlimited)
-                                </span>
-                              </div>
-                            )}
-                            {type === "tier" && (
-                              <div className="flex flex-col items-end gap-1">
-                                <select
-                                  value={state.tierKey}
-                                  onChange={(e) =>
-                                    setAssignments((prev) => ({
-                                      ...prev,
-                                      [pf.featureKey]: {
-                                        ...state,
-                                        tierKey: e.target.value,
-                                        enabled: e.target.value !== "disabled",
-                                      },
-                                    }))
-                                  }
-                                  className="h-9 rounded-lg border border-zinc-200 px-2 text-sm"
-                                >
-                                  {tierOptions.map((t) => (
-                                    <option key={t.tierKey} value={t.tierKey}>
-                                      {t.label}
-                                    </option>
-                                  ))}
-                                </select>
-                                <span className="text-[10px] text-zinc-400">Required tier</span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {tab === "permissions" && (
-          <PermissionsMatrix planFeatures={planFeatures} assignments={assignments} />
-        )}
-
-        {tab === "payment" && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-sm font-semibold text-zinc-900">Plan payment capabilities</h3>
-              <p className="mt-1 text-xs text-zinc-500">
-                Toggle payment-related features for this plan. Global provider credentials are in Platform Settings.
-              </p>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {planFeatures
-                  .filter((pf) =>
-                    /payment|bkash|nagad|rocket|bank|invoice|billing/i.test(pf.featureKey + pf.name)
-                  )
-                  .map((pf) => {
-                    const state = assignments[pf.featureKey] ?? {
-                      enabled: pf.enabled,
-                      limit: pf.limit,
-                      tierKey: pf.tierKey ?? "disabled",
-                    };
-                    return (
-                      <label
-                        key={pf.featureKey}
-                        className="flex items-center justify-between rounded-xl border border-zinc-100 p-3 text-sm"
-                      >
-                        <span className="font-medium text-zinc-800">{pf.name}</span>
-                        <input
-                          type="checkbox"
-                          checked={state.enabled}
-                          onChange={(e) =>
-                            setAssignments((prev) => ({
-                              ...prev,
-                              [pf.featureKey]: { ...state, enabled: e.target.checked },
-                            }))
-                          }
-                        />
-                      </label>
-                    );
-                  })}
-                {planFeatures.filter((pf) =>
-                  /payment|bkash|nagad|rocket|bank|invoice|billing/i.test(pf.featureKey + pf.name)
-                ).length === 0 && (
-                  <p className="text-sm text-zinc-500 sm:col-span-2">
-                    No payment features in catalog yet. Add <code className="text-xs">payment_gateway</code> in Features tab.
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="rounded-xl border border-zinc-100 bg-zinc-50/50 p-4">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold text-zinc-900">Platform payment methods</h3>
-                <Link href="/admin/dashboard/settings?tab=payments" className="text-xs text-blue-600 hover:underline">
-                  Configure in Settings →
-                </Link>
-              </div>
-              <div className="mt-3">
-                <AdminPlatformPaymentMethodsPanel compact />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {tab === "visibility" && (
-          <div className="grid gap-3 max-w-lg">
-            <Toggle
-              label="Active"
-              description="Inactive plans cannot be assigned to new stores."
-              checked={form.isActive}
-              onChange={(v) => setForm((f) => ({ ...f, isActive: v }))}
-            />
-            <Toggle
-              label="Visible on pricing page"
-              description="Hide from public pricing while keeping plan assignable."
-              checked={form.visible}
-              onChange={(v) => setForm((f) => ({ ...f, visible: v }))}
-            />
-            <Toggle
-              label="Recommended"
-              description="Highlight as the suggested plan."
-              checked={form.isRecommended}
-              onChange={(v) => setForm((f) => ({ ...f, isRecommended: v }))}
-            />
-            <Toggle
-              label="Custom domain included"
-              checked={form.customDomain}
-              onChange={(v) => setForm((f) => ({ ...f, customDomain: v }))}
-            />
-            <Toggle
-              label="Priority support"
-              checked={form.prioritySupport}
-              onChange={(v) => setForm((f) => ({ ...f, prioritySupport: v }))}
-            />
-            <div className="rounded-xl border border-zinc-100 p-4">
-              <p className="text-sm font-medium text-zinc-900">Visibility mode</p>
-              <div className="mt-3 space-y-2">
-                {(
-                  [
-                    { id: "public", label: "Public", desc: "Listed on pricing and available for signup" },
-                    { id: "private", label: "Private", desc: "Assignable by admin only, hidden from pricing" },
-                    { id: "hidden", label: "Hidden", desc: "Archived — not assignable to new stores" },
-                  ] as const
-                ).map((mode) => (
-                  <label key={mode.id} className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-zinc-50">
-                    <input
-                      type="radio"
-                      name="visibility-mode"
-                      checked={
-                        mode.id === "public"
-                          ? form.visible && form.isActive
-                          : mode.id === "private"
-                            ? !form.visible && form.isActive
-                            : !form.isActive
-                      }
-                      onChange={() => {
-                        if (mode.id === "public") setForm((f) => ({ ...f, visible: true, isActive: true }));
-                        if (mode.id === "private") setForm((f) => ({ ...f, visible: false, isActive: true }));
-                        if (mode.id === "hidden") setForm((f) => ({ ...f, isActive: false }));
-                      }}
-                      className="mt-1"
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-zinc-800">{mode.label}</p>
-                      <p className="text-xs text-zinc-500">{mode.desc}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {tab === "preview" && (
-          <PlanPreviewCard
-            plan={plan}
-            form={{
-              name: form.name,
-              description: form.description,
-              priceBDT: form.priceBDT,
-              pricing: form.pricing,
-              features: form.features,
-              trialDays: form.trialDays,
-              isRecommended: form.isRecommended,
-              isActive: form.isActive,
-              visible: form.visible,
-              limits: form.limits,
-            }}
-          />
-        )}
-      </div>
-
-      <div className="sticky bottom-4 flex justify-end">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 disabled:opacity-50"
-        >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Save plan
-        </button>
-      </div>
-    </div>
-  );
-}
-
-const inputClass =
-  "h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
-
-function Field({
-  label,
-  hint,
-  className,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={className}>
-      <label className="mb-1.5 block text-sm font-medium text-zinc-700">{label}</label>
-      {children}
-      {hint ? <p className="mt-1 text-xs text-zinc-500">{hint}</p> : null}
-    </div>
-  );
-}
-
-function Toggle({
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  label: string;
-  description?: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-zinc-100 p-4 hover:bg-zinc-50">
-      <div>
-        <p className="text-sm font-medium text-zinc-900">{label}</p>
-        {description ? <p className="mt-0.5 text-xs text-zinc-500">{description}</p> : null}
-      </div>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-1" />
-    </label>
-  );
-}
-
-function FeatureCatalogPanel({
-  groups,
-  allFeatures,
-  onCreate,
-}: {
-  groups: FeatureGroup[];
-  allFeatures: PlatformFeature[];
-  onCreate: (payload: Partial<PlatformFeature> & { key: string; name: string; type: string; groupKey: string }) => Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [draft, setDraft] = useState({
-    key: "",
-    name: "",
-    description: "",
-    type: "boolean" as const,
-    groupKey: groups[0]?.key ?? "general",
-  });
-
-  const handleCreate = async () => {
-    if (!draft.key.trim() || !draft.name.trim()) {
-      toast.error("Key and name are required");
-      return;
-    }
-    setCreating(true);
-    try {
-      await onCreate({
-        key: draft.key.trim(),
-        name: draft.name.trim(),
-        description: draft.description,
-        type: draft.type,
-        groupKey: draft.groupKey,
-        group: draft.groupKey,
-        isActive: true,
-        sortOrder: allFeatures.length + 1,
-      });
-      setDraft({ key: "", name: "", description: "", type: "boolean", groupKey: groups[0]?.key ?? "general" });
-      setOpen(false);
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  return (
-    <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-semibold text-zinc-900">Feature catalog</p>
-          <p className="text-xs text-zinc-500">{allFeatures.length} platform features · manage assignments below</p>
+          <h1 className="text-xl font-bold text-zinc-900">{plan.name}</h1>
+          <p className="text-sm text-zinc-500">/{plan.slug}</p>
         </div>
         <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+          onClick={handleSave}
+          disabled={isSaving}
+          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {open ? "Cancel" : "Add feature"}
+          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {isSaving ? "Saving..." : "Save Plan"}
         </button>
       </div>
-      {open && (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Field label="Key">
-            <input value={draft.key} onChange={(e) => setDraft((d) => ({ ...d, key: e.target.value }))} placeholder="seo" className={inputClass} />
-          </Field>
-          <Field label="Name">
-            <input value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} placeholder="SEO Tools" className={inputClass} />
-          </Field>
-          <Field label="Group" className="sm:col-span-2">
-            <select value={draft.groupKey} onChange={(e) => setDraft((d) => ({ ...d, groupKey: e.target.value }))} className={inputClass}>
-              {groups.map((g) => (
-                <option key={g.key} value={g.key}>{g.name}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Type">
-            <select value={draft.type} onChange={(e) => setDraft((d) => ({ ...d, type: e.target.value as "boolean" }))} className={inputClass}>
-              <option value="boolean">Boolean</option>
-              <option value="limit">Limit</option>
-              <option value="tier">Tier</option>
-            </select>
-          </Field>
-          <Field label="Description">
-            <input value={draft.description} onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))} className={inputClass} />
-          </Field>
-          <div className="sm:col-span-2">
-            <button
-              type="button"
-              onClick={handleCreate}
-              disabled={creating}
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {creating ? "Creating…" : "Create feature"}
-            </button>
+
+      <AdminTabs tabs={BUILDER_TABS} active={activeTab} onChange={setActiveTab} />
+
+      {/* ────────────── GENERAL ────────────── */}
+      {activeTab === "general" && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-zinc-700">Plan Name</label>
+              <input value={name} onChange={(e) => setName(e.target.value)}
+                className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-zinc-700">Slug</label>
+              <input value={slug} onChange={(e) => setSlug(e.target.value)}
+                className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm font-mono focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-zinc-700">Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
+              className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-zinc-700">Feature Bullets (one per line)</label>
+            <textarea value={featureText} onChange={(e) => setFeatureText(e.target.value)} rows={5}
+              placeholder="Up to 50 products&#10;Free custom domain&#10;24/7 support"
+              className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-zinc-700">Sort Order</label>
+              <input type="number" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))}
+                className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+            </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
-const PERMISSION_ROLES = ["Admin", "Manager", "Staff", "Viewer", "Customer"] as const;
+      {/* ────────────── PRICING ────────────── */}
+      {activeTab === "pricing" && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div>
+              <label className="text-sm font-medium text-zinc-700">Monthly (BDT)</label>
+              <input type="number" value={pricing.monthly} onChange={(e) => setPricing((p) => ({ ...p, monthly: Number(e.target.value) }))}
+                className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-zinc-700">Quarterly (BDT)</label>
+              <input type="number" value={pricing.quarterly} onChange={(e) => setPricing((p) => ({ ...p, quarterly: Number(e.target.value) }))}
+                className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-zinc-700">Half Yearly (BDT)</label>
+              <input type="number" value={pricing.halfYearly} onChange={(e) => setPricing((p) => ({ ...p, halfYearly: Number(e.target.value) }))}
+                className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-zinc-700">Yearly (BDT)</label>
+              <input type="number" value={pricing.yearly} onChange={(e) => setPricing((p) => ({ ...p, yearly: Number(e.target.value) }))}
+                className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-zinc-700">Lifetime (BDT)</label>
+              <input type="number" value={pricing.lifetime} onChange={(e) => setPricing((p) => ({ ...p, lifetime: Number(e.target.value) }))}
+                className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-zinc-700">Yearly Discounted (BDT)</label>
+              <input type="number" value={priceYearly} onChange={(e) => setPriceYearly(Number(e.target.value))}
+                className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+            </div>
+          </div>
 
-function PermissionsMatrix({
-  planFeatures,
-  assignments,
-}: {
-  planFeatures: PlanFeatureAssignment[];
-  assignments: Record<string, AssignmentState>;
-}) {
-  const enabledFeatures = planFeatures.filter((pf) => {
-    const state = assignments[pf.featureKey];
-    if (state) return state.enabled || state.limit > 0 || (state.tierKey && state.tierKey !== "disabled");
-    return pf.enabled || pf.limit > 0;
-  });
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={isCustomPrice} onChange={(e) => setIsCustomPrice(e.target.checked)}
+              className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+            <span className="text-sm text-zinc-700">Custom price (contact us)</span>
+          </label>
+        </div>
+      )}
 
-  const roleHasFeature = (role: string, featureKey: string) => {
-    const roleMap = ROLE_FEATURES.find((r) => r.role === role);
-    if (role === "Admin") return true;
-    if (role === "Customer") return false;
-    if (!roleMap) return false;
-    return roleMap.keys.some((k) => featureKey.includes(k) || k.includes(featureKey.split("_")[0] ?? ""));
-  };
-
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-zinc-600">
-        Role access is derived from enabled plan features. Store staff permissions cannot exceed what the plan allows.
-      </p>
-      <div className="overflow-x-auto rounded-xl border border-zinc-200">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="border-b border-zinc-100 bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
-              <th className="px-4 py-3 font-semibold">Feature</th>
-              {PERMISSION_ROLES.map((role) => (
-                <th key={role} className="px-3 py-3 text-center font-semibold">{role}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {enabledFeatures.map((pf) => (
-              <tr key={pf.featureKey} className="border-b border-zinc-50">
-                <td className="px-4 py-2.5 font-medium text-zinc-800">{pf.name}</td>
-                {PERMISSION_ROLES.map((role) => (
-                  <td key={role} className="px-3 py-2.5 text-center">
-                    {roleHasFeature(role, pf.featureKey) ? (
-                      <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" title="Allowed" />
-                    ) : (
-                      <span className="inline-block h-2 w-2 rounded-full bg-zinc-200" title="Not included" />
-                    )}
-                  </td>
+      {/* ────────────── LIMITS ────────────── */}
+      {activeTab === "limits" && (
+        <div className="space-y-8">
+          {LIMIT_GROUPS.map((group) => (
+            <div key={group.key}>
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">{group.label}</h3>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {group.fields.map((field) => (
+                  <div key={field.key}>
+                    <label className="text-xs font-medium text-zinc-600">{field.label}</label>
+                    <div className="relative mt-1">
+                      <input
+                        type="number" min={0}
+                        value={limits[field.key]}
+                        onChange={(e) => updateLimit(field.key, Number(e.target.value))}
+                        className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      />
+                      {field.suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">{field.suffix}</span>}
+                    </div>
+                  </div>
                 ))}
-              </tr>
-            ))}
-            {enabledFeatures.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
-                  Enable features in the Features tab to configure role access.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ────────────── FEATURES ────────────── */}
+      {activeTab === "features" && (
+        <div className="space-y-8">
+          {FEATURE_GROUPS.map((group) => (
+            <div key={group.key}>
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">{group.label}</h3>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {group.toggles.map((feat) => (
+                  <label
+                    key={feat.key}
+                    className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors hover:bg-zinc-50 ${
+                      toggles[feat.key] ? "border-blue-200 bg-blue-50/50" : "border-zinc-200"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={toggles[feat.key]}
+                      onChange={(e) => updateToggle(feat.key, e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-zinc-900">{feat.label}</p>
+                      {feat.description && (
+                        <p className="mt-0.5 text-xs text-zinc-500">{feat.description}</p>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ────────────── STORAGE ────────────── */}
+      {activeTab === "storage" && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-zinc-700">Storage Limit (MB)</label>
+              <input
+                type="number" min={0}
+                value={limits.storage}
+                onChange={(e) => updateLimit("storage", Number(e.target.value))}
+                className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <p className="mt-1 text-xs text-zinc-400">
+                {limits.storage >= 1024
+                  ? `= ${(limits.storage / 1024).toFixed(1)} GB`
+                  : `${limits.storage} MB`}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-zinc-700">Media Uploads</label>
+              <input
+                type="number" min={0}
+                value={limits.mediaUploads}
+                onChange={(e) => updateLimit("mediaUploads", Number(e.target.value))}
+                className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <p className="mt-1 text-xs text-zinc-400">0 = unlimited</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────── TRIAL ────────────── */}
+      {activeTab === "trial" && (
+        <div className="space-y-5">
+          <div>
+            <label className="text-sm font-medium text-zinc-700">Trial Days</label>
+            <input
+              type="number" min={0}
+              value={trialDays}
+              onChange={(e) => setTrialDays(Number(e.target.value))}
+              className="mt-1 h-10 w-full max-w-xs rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+            <p className="mt-1 text-xs text-zinc-400">Set to 0 to disable trial</p>
+          </div>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm text-amber-700">
+              Trial expiration is handled automatically by the daily cron job.
+              When the trial ends, the store is downgraded and premium features are disabled.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────── VISIBILITY ────────────── */}
+      {activeTab === "visibility" && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4">
+              <input type="checkbox" checked={visible} onChange={(e) => setVisible(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Visible</p>
+                <p className="text-xs text-zinc-500">Show this plan on the pricing page</p>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4">
+              <input type="checkbox" checked={isRecommended} onChange={(e) => setIsRecommended(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Recommended</p>
+                <p className="text-xs text-zinc-500">Highlight as "Most Popular"</p>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4">
+              <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Active</p>
+                <p className="text-xs text-zinc-500">Allow new subscriptions</p>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4">
+              <input type="checkbox" checked={customDomain} onChange={(e) => setCustomDomain(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Custom Domain</p>
+                <p className="text-xs text-zinc-500">Allow custom domain mapping</p>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4">
+              <input type="checkbox" checked={prioritySupport} onChange={(e) => setPrioritySupport(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Priority Support</p>
+                <p className="text-xs text-zinc-500">24/7 priority support</p>
+              </div>
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────── PREVIEW ────────────── */}
+      {activeTab === "preview" && (
+        <div className="flex justify-center">
+          <div className="w-full max-w-sm">
+            <PlanPreviewCard
+              plan={plan}
+              form={{
+                name,
+                description,
+                priceBDT,
+                pricing: {
+                  monthly: pricing.monthly || priceBDT,
+                  quarterly: pricing.quarterly || priceBDT * 3,
+                  halfYearly: pricing.halfYearly || priceBDT * 6,
+                  yearly: pricing.yearly || priceBDT * 12,
+                  lifetime: pricing.lifetime || 0,
+                },
+                features: featureText,
+                trialDays,
+                isRecommended,
+                isActive,
+                visible,
+                limits,
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

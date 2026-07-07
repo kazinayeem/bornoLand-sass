@@ -212,10 +212,6 @@ export default function AdminStoresPage() {
         plans={plans}
         open={!!selectedStore}
         onClose={() => setSelectedStore(null)}
-        onSuspend={handleSuspend}
-        onActivate={handleActivate}
-        onDelete={handleDelete}
-        onChangePlan={handleChangePlan}
       />
     </div>
   );

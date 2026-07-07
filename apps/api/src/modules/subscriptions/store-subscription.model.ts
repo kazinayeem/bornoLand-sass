@@ -31,6 +31,7 @@ const storeSubscriptionSchema = new Schema(
 );
 
 storeSubscriptionSchema.index({ storeId: 1, status: 1 });
+storeSubscriptionSchema.index({ storeId: 1, status: 1, createdAt: -1 });
 
 export type StoreSubscriptionDocument = InferSchemaType<typeof storeSubscriptionSchema>;
 export const StoreSubscriptionModel =

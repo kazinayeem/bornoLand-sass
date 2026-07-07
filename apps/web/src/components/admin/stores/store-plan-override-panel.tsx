@@ -24,7 +24,7 @@ export function StorePlanOverridePanel({
   const assignedPlan = plans.find((p) => p._id === planId) ?? plans.find((p) => p.slug === store.plan);
 
   const [limitMB, setLimitMB] = useState(
-    row ? Math.round(row.limitBytes / (1024 * 1024)) : assignedPlan?.limits.storageGB ? assignedPlan.limits.storageGB * 1024 : 500
+    row ? Math.round(row.limitBytes / (1024 * 1024)) : assignedPlan?.limits.storage ?? 512
   );
   const [unlimited, setUnlimited] = useState(row?.unlimited ?? false);
 
@@ -53,10 +53,10 @@ export function StorePlanOverridePanel({
         <div className="rounded-lg border border-zinc-100 bg-white p-3 text-sm">
           <p className="text-xs text-zinc-400">Plan storage</p>
           <p className="font-semibold text-zinc-800">
-            {assignedPlan?.limits.storageGB
-              ? assignedPlan.limits.storageGB < 1
-                ? `${Math.round(assignedPlan.limits.storageGB * 1024)} MB`
-                : `${assignedPlan.limits.storageGB} GB`
+            {assignedPlan?.limits.storage != null
+              ? assignedPlan.limits.storage >= 1024
+                ? `${(assignedPlan.limits.storage / 1024).toFixed(1)} GB`
+                : `${assignedPlan.limits.storage} MB`
               : "—"}
           </p>
         </div>

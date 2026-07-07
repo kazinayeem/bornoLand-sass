@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { connectDatabase } from "../../common/database/connection.js";
 import { StoreModel } from "../../models/store.model.js";
 import { StoreSettingsModel } from "../../models/store-settings.model.js";
@@ -17,11 +18,12 @@ const defaultSettings = {
   language: "en",
 } as const;
 
-export async function ensureDefaultStoreSettings(storeId: string) {
+export async function ensureDefaultStoreSettings(storeId: string, session?: mongoose.ClientSession) {
   await connectDatabase();
-  const existing = await StoreSettingsModel.findOne({ storeId });
+  const queryOptions = session ? { session } : {};
+  const existing = await StoreSettingsModel.findOne({ storeId }).session(session ?? null!);
   if (existing) return existing;
-  return StoreSettingsModel.create({ storeId, ...defaultSettings });
+  return StoreSettingsModel.create([{ storeId, ...defaultSettings }], queryOptions).then((r) => r[0]);
 }
 
 export async function getStoreSettings(storeId: string, userId?: string) {

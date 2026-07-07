@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { connectDatabase } from "../../common/database/connection.js";
 import { BillingNotificationModel } from "./billing-notification.model.js";
 import type { BillingNotificationType } from "../subscriptions/subscription.constants.js";
@@ -9,16 +10,17 @@ export async function createBillingNotification(input: {
   title: string;
   message: string;
   metadata?: Record<string, unknown>;
-}) {
+}, session?: mongoose.ClientSession) {
   await connectDatabase();
-  const notification = await BillingNotificationModel.create({
+  const createOptions = session ? { session } : {};
+  const [notification] = await BillingNotificationModel.create([{
     userId: input.userId,
     storeId: input.storeId,
     type: input.type,
     title: input.title,
     message: input.message,
     metadata: input.metadata ?? {},
-  });
+  }], createOptions);
   return notification.toObject();
 }
 

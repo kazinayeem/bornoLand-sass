@@ -10,6 +10,8 @@ import {
   useCreatePlanMutation,
   useUpdatePlanMutation,
   useDuplicatePlanMutation,
+  type Plan,
+  type PlanLimits,
 } from "@/redux/api/store-api";
 import { useGetAdminFeaturesQuery } from "@/redux/api/feature-api";
 import { useGetAdminStoresQuery } from "@/redux/api/admin-api";
@@ -41,7 +43,8 @@ export default function PlansPage() {
         priceBDT: 0,
         trialDays: 0,
         features: [],
-        limits: { stores: 1, products: 0, staff: 1, bandwidthGB: 1 },
+        limits: {} as PlanLimits,
+        featureToggles: {} as Plan["featureToggles"],
         isRecommended: false,
         isActive: true,
       }).unwrap();
@@ -102,7 +105,7 @@ export default function PlansPage() {
                 plan={plan}
                 index={i}
                 featureCount={featureCount}
-                storageMB={plan.limits.storageGB ? Math.round(plan.limits.storageGB * 1024) : undefined}
+                storageMB={plan.limits.storage ? plan.limits.storage : undefined}
                 stats={statsMap.get(plan._id)}
                 onDuplicate={handleDuplicate}
                 onArchive={handleArchive}

@@ -1,5 +1,42 @@
 import { baseApi } from "@/redux/api/base-api";
 
+export type AdminStoreSettings = {
+  store: Record<string, unknown>;
+  override: Record<string, unknown> | null;
+  usage: {
+    products: number;
+    categories: number;
+    orders: number;
+    customers: number;
+    staff: number;
+    pages: number;
+    collections: number;
+    reviews: number;
+    coupons: number;
+    media: number;
+    storageMB: number;
+    storageLimitMB: number;
+    storageUsedBytes: number;
+    storageUsedFormatted: string;
+    storageLimitFormatted: string;
+    storagePercent: number;
+    storageRemainingMB: number;
+  };
+  effectiveLimits: Record<string, number>;
+  effectiveFeatures: Record<string, boolean>;
+  storage: { limitMB: number; unlimited: boolean };
+};
+
+export type AdminStoreStats = {
+  revenue: number;
+  orders: number;
+  products: number;
+  customers: number;
+  media: number;
+  monthlySales: Array<{ _id: { year: number; month: number }; revenue: number; orders: number }>;
+  bestSelling: Array<{ _id: string; name: string; totalSold: number; revenue: number }>;
+};
+
 export type AdminAnalytics = {
   counts: {
     users: number; stores: number; products: number; orders: number;
@@ -74,6 +111,18 @@ export const adminApi = baseApi.injectEndpoints({
       query: (id) => ({ url: `/admin/stores/${id}/activate`, method: "PUT" }),
       invalidatesTags: ["Stores", "Dashboard"]
     }),
+    getAdminSubscriptionOverview: builder.query<ApiEnvelope<{
+      totalSubscribers: number;
+      totalActive: number;
+      totalTrialing: number;
+      totalExpired: number;
+      totalRevenue: number;
+      popularPlan: { name: string; slug: string; subscribers: number } | null;
+      plans: Array<{ _id: string; name: string; slug: string; priceBDT: number; subscribers: number; active: number; trialing: number; expired: number }>;
+    }>, void>({
+      query: () => ({ url: "/admin/subscriptions/overview" }),
+      providesTags: ["Subscriptions"],
+    }),
     deleteAdminStore: builder.mutation<ApiEnvelope<never>, string>({
       query: (id) => ({ url: `/admin/stores/${id}`, method: "DELETE" }),
       invalidatesTags: ["Stores", "Dashboard"]
@@ -126,7 +175,103 @@ export const adminApi = baseApi.injectEndpoints({
     updatePlatformSettings: builder.mutation<ApiEnvelope<{ settings: Record<string, unknown> }>, Record<string, unknown>>({
       query: (body) => ({ url: "/admin/settings", method: "PUT", body }),
       invalidatesTags: ["StoreSettings"]
-    })
+    }),
+
+    // ── Store Override & Enhanced Management ──────────────────
+    getAdminStoreSettings: builder.query<ApiEnvelope<AdminStoreSettings>, string>({
+      query: (id) => ({ url: `/admin/stores/${id}/settings` }),
+      providesTags: (_result, _error, id) => [{ type: "StoreSettings" as const, id }],
+    }),
+    saveStoreOverrides: builder.mutation<
+      ApiEnvelope<{ override: Record<string, unknown> }>,
+      { id: string; data: Record<string, unknown> }
+    >({
+      query: ({ id, data }) => ({ url: `/admin/stores/${id}/overrides`, method: "PUT", body: data }),
+      invalidatesTags: (_result, _error, { id }) => [
+        "Stores", "Dashboard", { type: "StoreSettings" as const, id },
+      ],
+    }),
+    changeStorePlanEnhanced: builder.mutation<ApiEnvelope<{ plan: Record<string, unknown> }>, { id: string; planId: string }>({
+      query: ({ id, planId }) => ({ url: `/admin/stores/${id}/plan`, method: "PUT", body: { planId } }),
+      invalidatesTags: ["Stores", "Dashboard"],
+    }),
+    manageStoreTrial: builder.mutation<
+      ApiEnvelope<{ trial: Record<string, unknown> }>,
+      { id: string; action: string; days?: number; endsAt?: string }
+    >({
+      query: ({ id, ...body }) => ({ url: `/admin/stores/${id}/trial`, method: "PUT", body }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: "StoreSettings" as const, id }],
+    }),
+    manageStoreSubscription: builder.mutation<
+      ApiEnvelope<{ subscription: Record<string, unknown> }>,
+      { id: string; action: string; planId?: string }
+    >({
+      query: ({ id, ...body }) => ({ url: `/admin/stores/${id}/subscription`, method: "PUT", body }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: "StoreSettings" as const, id }],
+    }),
+    resetStore: builder.mutation<ApiEnvelope<{ reset: string }>, { id: string; type: string }>({
+      query: ({ id, type }) => ({ url: `/admin/stores/${id}/reset/${type}`, method: "POST" }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: "StoreSettings" as const, id }],
+    }),
+    recalculateStore: builder.mutation<ApiEnvelope<{ usage: Record<string, unknown> }>, string>({
+      query: (id) => ({ url: `/admin/stores/${id}/recalculate`, method: "POST" }),
+      invalidatesTags: (_result, _error, id) => [{ type: "StoreSettings" as const, id }],
+    }),
+    syncStoreSubscription: builder.mutation<ApiEnvelope<{ synced: Record<string, unknown> }>, string>({
+      query: (id) => ({ url: `/admin/stores/${id}/sync-subscription`, method: "POST" }),
+      invalidatesTags: (_result, _error, id) => [{ type: "StoreSettings" as const, id }],
+    }),
+    deleteAdminStoreCascade: builder.mutation<ApiEnvelope<null>, string>({
+      query: (id) => ({ url: `/admin/stores/${id}/cascade`, method: "DELETE" }),
+      invalidatesTags: ["Stores", "Dashboard"],
+    }),
+    getAdminStoreStats: builder.query<ApiEnvelope<AdminStoreStats>, string>({
+      query: (id) => ({ url: `/admin/stores/${id}/stats` }),
+      providesTags: (_result, _error, id) => [{ type: "StoreSettings" as const, id }],
+    }),
+    getAdminStoreMedia: builder.query<ApiEnvelope<Record<string, unknown>>, string>({
+      query: (id) => ({ url: `/admin/stores/${id}/media` }),
+      providesTags: (_result, _error, id) => [{ type: "StoreSettings" as const, id }],
+    }),
+    manageStoreStaff: builder.mutation<
+      ApiEnvelope<null>,
+      { id: string; action: string; teamMemberId?: string; role?: string }
+    >({
+      query: ({ id, ...body }) => ({ url: `/admin/stores/${id}/staff`, method: "PUT", body }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: "StoreSettings" as const, id }],
+    }),
+
+    // ── Platform Analytics ───────────────────────────────────
+    getPlatformOverview: builder.query<ApiEnvelope<Record<string, unknown>>, void>({
+      query: () => ({ url: "/admin/platform/overview" }),
+      providesTags: ["Dashboard"],
+    }),
+    getPlatformRevenueAnalytics: builder.query<ApiEnvelope<Record<string, unknown>>, void>({
+      query: () => ({ url: "/admin/platform/revenue-analytics" }),
+      providesTags: ["Dashboard"],
+    }),
+    getPlatformSubscriptionRevenue: builder.query<ApiEnvelope<Record<string, unknown>>, void>({
+      query: () => ({ url: "/admin/platform/subscription-revenue" }),
+      providesTags: ["Dashboard"],
+    }),
+    getPlatformPaymentDashboard: builder.query<ApiEnvelope<Record<string, unknown>>, void>({
+      query: () => ({ url: "/admin/platform/payment-dashboard" }),
+      providesTags: ["Dashboard"],
+    }),
+    getPlatformFinance: builder.query<ApiEnvelope<Record<string, unknown>>, void>({
+      query: () => ({ url: "/admin/platform/finance" }),
+      providesTags: ["Dashboard"],
+    }),
+    getPlatformReports: builder.query<
+      ApiEnvelope<Record<string, unknown>>,
+      { type: string; from?: string; to?: string }
+    >({
+      query: ({ type, from, to }) => ({
+        url: `/admin/platform/reports/${type}`,
+        params: { ...(from && { from }), ...(to && { to }) },
+      }),
+      providesTags: ["Dashboard"],
+    }),
   })
 });
 
@@ -145,6 +290,25 @@ export const {
   useGetAdminOrdersQuery,
   useGetAdminOrderQuery,
   useGetAdminPaymentsQuery,
+  useGetAdminSubscriptionOverviewQuery,
   useGetPlatformSettingsQuery,
-  useUpdatePlatformSettingsMutation
+  useUpdatePlatformSettingsMutation,
+  useGetAdminStoreSettingsQuery,
+  useSaveStoreOverridesMutation,
+  useChangeStorePlanEnhancedMutation,
+  useManageStoreTrialMutation,
+  useManageStoreSubscriptionMutation,
+  useResetStoreMutation,
+  useRecalculateStoreMutation,
+  useSyncStoreSubscriptionMutation,
+  useDeleteAdminStoreCascadeMutation,
+  useGetAdminStoreStatsQuery,
+  useGetAdminStoreMediaQuery,
+  useManageStoreStaffMutation,
+  useGetPlatformOverviewQuery,
+  useGetPlatformRevenueAnalyticsQuery,
+  useGetPlatformSubscriptionRevenueQuery,
+  useGetPlatformPaymentDashboardQuery,
+  useGetPlatformFinanceQuery,
+  useGetPlatformReportsQuery,
 } = adminApi;

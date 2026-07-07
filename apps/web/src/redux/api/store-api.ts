@@ -11,22 +11,126 @@ export type ThemeSettings = {
 };
 
 export type PlanLimits = {
-  stores: number;
+  storage: number;
   products: number;
-  orders?: number;
-  categories?: number;
+  categories: number;
+  collections: number;
+  brands: number;
+  productVariants: number;
+  productImages: number;
+  orders: number;
+  customers: number;
   staff: number;
-  storageGB?: number;
-  bandwidthGB: number;
-  domains?: number;
-  themes?: number;
-  builderPages?: number;
-  apiAccess?: boolean;
-  analytics?: boolean;
-  coupons?: boolean;
-  reviews?: boolean;
-  marketing?: boolean;
-  customCode?: boolean;
+  warehouses: number;
+  blogs: number;
+  pages: number;
+  mediaUploads: number;
+  apiKeys: number;
+  customDomains: number;
+  coupons: number;
+  shippingZones: number;
+  pickupLocations: number;
+  paymentMethods: number;
+  activeThemes: number;
+  builderPages: number;
+  menus: number;
+  navItems: number;
+  reviews: number;
+  testimonials: number;
+  announcements: number;
+  newsletterSubscribers: number;
+  campaigns: number;
+  emailTemplates: number;
+  automationRules: number;
+  integrations: number;
+  webhooks: number;
+  languages: number;
+  currencies: number;
+  taxRules: number;
+  inventoryLocations: number;
+  posDevices: number;
+  giftCards: number;
+  returnRequests: number;
+  wishlistItems: number;
+  analyticsReports: number;
+  exportRequests: number;
+  staffRoles: number;
+  cmsBlocks: number;
+  dynamicSections: number;
+  builderTemplates: number;
+  forms: number;
+  popups: number;
+  qrCodes: number;
+  redirectRules: number;
+  customCss: number;
+  customJs: number;
+  customFonts: number;
+};
+
+export type PlanFeatureToggles = {
+  productVariants: boolean;
+  inventory: boolean;
+  advancedInventory: boolean;
+  digitalProducts: boolean;
+  physicalProducts: boolean;
+  subscriptions: boolean;
+  bookings: boolean;
+  giftCards: boolean;
+  coupons: boolean;
+  reviews: boolean;
+  blog: boolean;
+  cms: boolean;
+  pageBuilder: boolean;
+  dragDropBuilder: boolean;
+  themeEditor: boolean;
+  advancedAnalytics: boolean;
+  seo: boolean;
+  aiContent: boolean;
+  customDomain: boolean;
+  subdomain: boolean;
+  whiteLabel: boolean;
+  apiAccess: boolean;
+  webhooks: boolean;
+  staffManagement: boolean;
+  marketplace: boolean;
+  pos: boolean;
+  wholesale: boolean;
+  dropshipping: boolean;
+  shipping: boolean;
+  localPickup: boolean;
+  abandonedCart: boolean;
+  emailMarketing: boolean;
+  smsMarketing: boolean;
+  pushNotification: boolean;
+  liveChat: boolean;
+  fileManager: boolean;
+  mediaLibrary: boolean;
+  bulkImport: boolean;
+  bulkExport: boolean;
+  csvImport: boolean;
+  csvExport: boolean;
+  googleLogin: boolean;
+  facebookLogin: boolean;
+  otpLogin: boolean;
+  multiCurrency: boolean;
+  multiLanguage: boolean;
+  taxEngine: boolean;
+  invoiceGenerator: boolean;
+  customCheckout: boolean;
+  checkoutFields: boolean;
+  advancedCheckout: boolean;
+  loyaltyPoints: boolean;
+  referralSystem: boolean;
+  affiliateSystem: boolean;
+  storeVerification: boolean;
+  backupRestore: boolean;
+  auditLogs: boolean;
+  developerMode: boolean;
+  maintenanceMode: boolean;
+  darkMode: boolean;
+  visitorAnalytics: boolean;
+  realtimeVisitors: boolean;
+  analyticsExport: boolean;
 };
 
 export type Plan = {
@@ -40,6 +144,7 @@ export type Plan = {
   trialDays: number;
   features: string[];
   limits: PlanLimits;
+  featureToggles: PlanFeatureToggles;
   pricing?: {
     monthly?: number;
     quarterly?: number;
@@ -191,7 +296,7 @@ export const storeApi = baseApi.injectEndpoints({
       query: (id) => ({ url: `/stores/${id}/branding/favicon`, method: "DELETE" }),
       invalidatesTags: (_result, _error, id) => ["Stores", { type: "Stores", id }],
     }),
-    deleteStore: builder.mutation<ApiEnvelope<never>, string>({
+    deleteStore: builder.mutation<ApiEnvelope<{ storeName: string; storeSlug: string; tenantId: string }>, string>({
       query: (id) => ({ url: `/stores/${id}`, method: "DELETE" }),
       invalidatesTags: ["Stores"]
     }),

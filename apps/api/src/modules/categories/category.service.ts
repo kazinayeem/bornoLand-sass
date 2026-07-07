@@ -2,6 +2,7 @@ import { connectDatabase } from "../../common/database/connection.js";
 import { CategoryModel } from "../../models/category.model.js";
 import { ProductModel } from "../../models/product.model.js";
 import { StoreModel } from "../../models/store.model.js";
+import { checkLimit } from "../features/feature-access.service.js";
 import {
   removeEntityMediaReferences,
   resolveMediaFile,
@@ -79,6 +80,12 @@ export async function createCategory(storeId: string, userId: string, payload: {
   metaTitle?: string; metaDescription?: string;
 }) {
   await connectDatabase();
+
+  const limitResult = await checkLimit(storeId, "categories");
+  if (!limitResult.allowed) {
+    return { ok: false as const, message: limitResult.message ?? "Category limit reached" };
+  }
+
   const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
 

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { connectDatabase } from "../../common/database/connection.js";
 import { StoreModel } from "../../models/store.model.js";
 import { PlanModel } from "../../models/plan.model.js";
@@ -15,6 +16,36 @@ import { applyTrialExpiryToStore, applySubscriptionExpiryToStore, buildTrialFiel
 import { createTrialSubscription } from "../subscriptions/store-subscription.service.js";
 import { createBillingNotification } from "../notifications/billing-notification.service.js";
 import { getPlatformSettings } from "../settings/platform-settings.service.js";
+import { requireObjectId } from "../../common/utils/object-id.js";
+import { AuditLogModel } from "../../models/audit-log.model.js";
+import { CategoryModel } from "../../models/category.model.js";
+import { CouponModel } from "../../models/coupon.model.js";
+import { ReviewModel } from "../../models/review.model.js";
+import { CustomerModel } from "../../models/customer.model.js";
+import { CartModel } from "../../models/cart.model.js";
+import { WishlistModel } from "../../models/wishlist.model.js";
+import { CollectionModel } from "../../models/collection.model.js";
+import { PaymentMethodModel } from "../../models/payment-method.model.js";
+import { DeliveryZoneModel } from "../../models/delivery-zone.model.js";
+import { StoreSettingsModel } from "../../models/store-settings.model.js";
+import { StoreSubscriptionModel } from "../../models/store-subscription.model.js";
+import { InvoiceModel } from "../../models/invoice.model.js";
+import { CampaignModel } from "../../models/campaign.model.js";
+import { TaxClassModel } from "../../models/tax-class.model.js";
+import { ShippingZoneModel } from "../../models/shipping-zone.model.js";
+import { CmsPageModel } from "../../models/cms-page.model.js";
+import { FaqModel } from "../../models/faq.model.js";
+import { BillingNotificationModel } from "../../models/billing-notification.model.js";
+import { MediaFileModel } from "../../models/media-file.model.js";
+import { StorageUsageModel } from "../../models/storage-usage.model.js";
+import { NewsletterModel } from "../../models/newsletter.model.js";
+import { SubscriptionPaymentModel } from "../../models/subscription-payment.model.js";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+function safeId(id: string): mongoose.Types.ObjectId | null {
+  return requireObjectId(id).ok ? new mongoose.Types.ObjectId(id) : null;
+}
 
 import { listPlans } from "../plans/plan.service.js";
 
@@ -58,74 +89,77 @@ export async function createStore(userId: string, payload: unknown) {
     ? await PlanModel.findById(parsed.data.planId).lean()
     : await PlanModel.findOne({ slug: parsed.data.plan }).lean()) as { slug: string; _id: unknown } | null;
 
-  const userTenants = await TeamMemberModel.find({ userId }).distinct("tenantId");
-  let tenantId = userTenants[0];
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
 
-  if (!tenantId) {
-    const slug = `store-${Date.now()}`;
-    const tenant = await TenantModel.create({
-      name: parsed.data.name,
-      slug,
-      subdomain: slug,
-      plan: requestedPlan?.slug ?? parsed.data.plan ?? "free",
-      status: "active"
-    });
-    tenantId = tenant._id;
-    await TeamMemberModel.create({ tenantId, userId, role: "owner", status: "active", invitedAt: new Date(), acceptedAt: new Date() });
-  }
+    const userTenants = await TeamMemberModel.find({ userId }).distinct("tenantId").session(session);
+    let tenantId = userTenants[0];
 
-  let themeFromTemplate;
-  let templateId;
-  if (parsed.data.selectedTemplateId) {
-    const template = await TemplateModel.findById(parsed.data.selectedTemplateId).lean() as any;
-    if (template) {
-      themeFromTemplate = template.theme;
-      templateId = template._id;
+    if (!tenantId) {
+      const slug = `store-${Date.now()}`;
+      const [tenant] = await TenantModel.create([{
+        name: parsed.data.name,
+        slug,
+        subdomain: slug,
+        plan: requestedPlan?.slug ?? parsed.data.plan ?? "free",
+        status: "active"
+      }], { session });
+      tenantId = tenant._id;
+      await TeamMemberModel.create([{ tenantId, userId, role: "owner", status: "active", invitedAt: new Date(), acceptedAt: new Date() }], { session });
     }
-  }
 
-  const trialFields = await buildTrialFields();
-  const store = await StoreModel.create({
-    tenantId,
-    userId,
-    name: parsed.data.name,
-    slug: parsed.data.slug,
-    subdomain: parsed.data.slug,
-    description: parsed.data.description ?? "",
-    shortName: parsed.data.shortName ?? "",
-    tagline: parsed.data.tagline ?? "",
-    category: parsed.data.category ?? "ecommerce",
-    storeType: parsed.data.storeType ?? "ecommerce",
-    plan: requestedPlan?.slug ?? parsed.data.plan ?? "free",
-    ...(requestedPlan ? { planId: requestedPlan._id } : {}),
-    ...trialFields,
-    logoUrl: parsed.data.logoUrl ?? "",
-    logoMediaId: parsed.data.logoMediaId ?? null,
-    faviconUrl: parsed.data.faviconUrl ?? "",
-    faviconMediaId: parsed.data.faviconMediaId ?? null,
-    brandColor: parsed.data.brandColor ?? "#2563eb",
-    accentColor: parsed.data.accentColor ?? "#0f172a",
-    ...(templateId ? { selectedTemplateId: templateId } : {}),
-    ...(themeFromTemplate ? { theme: themeFromTemplate } : {}),
-  });
+    let themeFromTemplate;
+    let templateId;
+    if (parsed.data.selectedTemplateId) {
+      const template = await TemplateModel.findById(parsed.data.selectedTemplateId).session(session).lean() as any;
+      if (template) {
+        themeFromTemplate = template.theme;
+        templateId = template._id;
+      }
+    }
 
-  if (templateId && themeFromTemplate) {
-    await PageModel.deleteMany({ storeId: store._id });
-    await PageModel.create({
-      storeId: store._id,
-      title: "Home",
-      slug: "home",
-      status: "published",
-      sections: [],
-      theme: themeFromTemplate
-    });
-  }
+    const trialFields = await buildTrialFields();
+    const [store] = await StoreModel.create([{
+      tenantId,
+      userId,
+      name: parsed.data.name,
+      slug: parsed.data.slug,
+      subdomain: parsed.data.slug,
+      description: parsed.data.description ?? "",
+      shortName: parsed.data.shortName ?? "",
+      tagline: parsed.data.tagline ?? "",
+      category: parsed.data.category ?? "ecommerce",
+      storeType: parsed.data.storeType ?? "ecommerce",
+      plan: requestedPlan?.slug ?? parsed.data.plan ?? "free",
+      ...(requestedPlan ? { planId: requestedPlan._id } : {}),
+      ...trialFields,
+      logoUrl: parsed.data.logoUrl ?? "",
+      logoMediaId: parsed.data.logoMediaId ?? null,
+      faviconUrl: parsed.data.faviconUrl ?? "",
+      faviconMediaId: parsed.data.faviconMediaId ?? null,
+      brandColor: parsed.data.brandColor ?? "#2563eb",
+      accentColor: parsed.data.accentColor ?? "#0f172a",
+      ...(templateId ? { selectedTemplateId: templateId } : {}),
+      ...(themeFromTemplate ? { theme: themeFromTemplate } : {}),
+    }], { session });
 
-  await seedDemoProducts(store._id.toString());
-  await ensureDefaultStoreSettings(store._id.toString());
-  await HomepageSliderModel.deleteMany({ storeId: store._id });
-  await HomepageSliderModel.insertMany([
-    {
+    if (templateId && themeFromTemplate) {
+      await PageModel.deleteMany({ storeId: store._id }).session(session);
+      await PageModel.create([{
+        storeId: store._id,
+        title: "Home",
+        slug: "home",
+        status: "published",
+        sections: [],
+        theme: themeFromTemplate
+      }], { session });
+    }
+
+    await seedDemoProducts(store._id.toString(), session);
+    await ensureDefaultStoreSettings(store._id.toString(), session);
+    await HomepageSliderModel.deleteMany({ storeId: store._id }).session(session);
+    await HomepageSliderModel.create([{
       storeId: store._id,
       title: `${store.name} essentials`,
       subtitle: "Fresh arrivals and best-selling picks ready for checkout.",
@@ -136,30 +170,37 @@ export async function createStore(userId: string, payload: unknown) {
       isActive: true,
       overlayColor: "rgba(15, 23, 42, 0.45)",
       textAlignment: "left"
+    }], { session });
+
+    const planIdForTrial = requestedPlan?._id ?? (await PlanModel.findOne({ slug: "free" }).session(session).lean() as { _id: unknown } | null)?._id;
+    if (planIdForTrial && trialFields.trialEndsAt) {
+      await createTrialSubscription({
+        tenantId: String(tenantId),
+        storeId: String(store._id),
+        userId,
+        planId: String(planIdForTrial),
+        trialStartedAt: trialFields.trialStartedAt!,
+        trialEndsAt: trialFields.trialEndsAt,
+      }, session);
+      const settings = await getPlatformSettings();
+      await createBillingNotification({
+        userId,
+        storeId: String(store._id),
+        type: "trial_started",
+        title: "Trial started",
+        message: `Your store "${store.name}" trial has started (${settings.trialDays ?? 3} days).`,
+      }, session);
     }
-  ]);
 
-  const planIdForTrial = requestedPlan?._id ?? (await PlanModel.findOne({ slug: "free" }).lean() as { _id: unknown } | null)?._id;
-  if (planIdForTrial && trialFields.trialEndsAt) {
-    await createTrialSubscription({
-      tenantId: String(tenantId),
-      storeId: String(store._id),
-      userId,
-      planId: String(planIdForTrial),
-      trialStartedAt: trialFields.trialStartedAt!,
-      trialEndsAt: trialFields.trialEndsAt,
-    });
-    const settings = await getPlatformSettings();
-    await createBillingNotification({
-      userId,
-      storeId: String(store._id),
-      type: "trial_started",
-      title: "Trial started",
-      message: `Your store "${store.name}" trial has started (${settings.trialDays ?? 3} days).`,
-    });
+    await session.commitTransaction();
+    return { ok: true as const, data: { store: store.toObject() } };
+  } catch (error) {
+    await session.abortTransaction();
+    console.error("[store.service] createStore transaction failed:", error);
+    return { ok: false as const, message: "Failed to create store. All changes have been rolled back." };
+  } finally {
+    session.endSession();
   }
-
-  return { ok: true as const, data: { store: store.toObject() } };
 }
 
 export async function getUserStores(userId: string) {
@@ -180,8 +221,10 @@ export async function getUserStores(userId: string) {
 }
 
 export async function getStoreById(storeId: string, userId: string) {
+  const id = safeId(storeId);
+  if (!id) return { ok: false as const, message: "Invalid store ID" };
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, userId })
+  const store = await StoreModel.findOne({ _id: id, userId })
     .populate("selectedTemplateId", "name slug category preview")
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive");
   if (!store) return { ok: false as const, message: "Store not found" };
@@ -193,6 +236,7 @@ export async function getStoreById(storeId: string, userId: string) {
 }
 
 export async function getStoreBySlug(slug: string, userId: string) {
+  if (!slug) return { ok: false as const, message: "Store slug is required" };
   await connectDatabase();
   const store = await StoreModel.findOne({ slug, userId })
     .populate("selectedTemplateId", "name slug category preview")
@@ -206,12 +250,14 @@ export async function getStoreBySlug(slug: string, userId: string) {
 }
 
 export async function updateStore(storeId: string, userId: string, payload: unknown) {
+  const id = safeId(storeId);
+  if (!id) return { ok: false as const, message: "Invalid store ID" };
   const parsed = updateStoreSchema.safeParse(payload);
   if (!parsed.success) return { ok: false as const, message: "Invalid update data" };
 
   await connectDatabase();
   const store = await StoreModel.findOneAndUpdate(
-    { _id: storeId, userId },
+    { _id: id, userId },
     { $set: parsed.data },
     { new: true }
   ).lean();
@@ -220,8 +266,10 @@ export async function updateStore(storeId: string, userId: string, payload: unkn
 }
 
 export async function getStoreBranding(storeId: string, userId: string) {
+  const id = safeId(storeId);
+  if (!id) return { ok: false as const, message: "Invalid store ID" };
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, userId })
+  const store = await StoreModel.findOne({ _id: id, userId })
     .select("name shortName tagline logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor plan planId")
     .populate("planId", "name slug")
     .lean();
@@ -230,12 +278,14 @@ export async function getStoreBranding(storeId: string, userId: string) {
 }
 
 export async function updateStoreBranding(storeId: string, userId: string, payload: unknown) {
+  const id = safeId(storeId);
+  if (!id) return { ok: false as const, message: "Invalid store ID" };
   const parsed = updateStoreBrandingSchema.safeParse(payload);
   if (!parsed.success) return { ok: false as const, message: "Invalid branding data" };
 
   await connectDatabase();
   const store = await StoreModel.findOneAndUpdate(
-    { _id: storeId, userId },
+    { _id: id, userId },
     { $set: parsed.data },
     { new: true }
   )
@@ -251,12 +301,14 @@ export async function clearStoreBrandAsset(
   userId: string,
   asset: "logo" | "favicon"
 ) {
+  const id = safeId(storeId);
+  if (!id) return { ok: false as const, message: "Invalid store ID" };
   await connectDatabase();
   const update =
     asset === "logo"
       ? { logoUrl: "", logoMediaId: null }
       : { faviconUrl: "", faviconMediaId: null };
-  const store = await StoreModel.findOneAndUpdate({ _id: storeId, userId }, { $set: update }, { new: true })
+  const store = await StoreModel.findOneAndUpdate({ _id: id, userId }, { $set: update }, { new: true })
     .select("name shortName tagline logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor plan planId")
     .populate("planId", "name slug")
     .lean();
@@ -264,16 +316,88 @@ export async function clearStoreBrandAsset(
   return { ok: true as const, data: { branding: store, store } };
 }
 
-export async function deleteStore(storeId: string, userId: string) {
+export async function deleteStore(storeId: string, userId: string): Promise<{ ok: false; message: string } | { ok: true; data: { storeName: string; storeSlug: string; tenantId: string } }> {
+  const id = safeId(storeId);
+  if (!id) return { ok: false as const, message: "Invalid store ID" };
+
   await connectDatabase();
-  const store = await StoreModel.findOneAndDelete({ _id: storeId, userId }).lean();
+
+  const store = await StoreModel.findOne({ _id: id, userId }).lean() as { _id: mongoose.Types.ObjectId; tenantId: mongoose.Types.ObjectId; name: string; slug: string } | null;
   if (!store) return { ok: false as const, message: "Store not found" };
-  return { ok: true as const, message: "Store deleted" };
+
+  const tenantId = store.tenantId;
+  const storeObjectId = store._id;
+
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+
+    // ── 1. Delete all store-associated data in parallel ──────────────
+    await Promise.all([
+      ProductModel.deleteMany({ storeId: storeObjectId }).session(session),
+      OrderModel.deleteMany({ storeId: storeObjectId }).session(session),
+      CategoryModel.deleteMany({ storeId: storeObjectId }).session(session),
+      CouponModel.deleteMany({ storeId: storeObjectId }).session(session),
+      ReviewModel.deleteMany({ storeId: storeObjectId }).session(session),
+      CustomerModel.deleteMany({ storeId: storeObjectId }).session(session),
+      CartModel.deleteMany({ storeId: storeObjectId }).session(session),
+      WishlistModel.deleteMany({ storeId: storeObjectId }).session(session),
+      CollectionModel.deleteMany({ storeId: storeObjectId }).session(session),
+      PageModel.deleteMany({ storeId: storeObjectId }).session(session),
+      HomepageSliderModel.deleteMany({ storeId: storeObjectId }).session(session),
+      PaymentMethodModel.deleteMany({ storeId: storeObjectId }).session(session),
+      DeliveryZoneModel.deleteMany({ storeId: storeObjectId }).session(session),
+      StoreSettingsModel.deleteMany({ storeId: storeObjectId }).session(session),
+      StoreSubscriptionModel.deleteMany({ storeId: storeObjectId }).session(session),
+      InvoiceModel.deleteMany({ storeId: storeObjectId }).session(session),
+      SubscriptionPaymentModel.deleteMany({ storeId: storeObjectId }).session(session),
+      CampaignModel.deleteMany({ storeId: storeObjectId }).session(session),
+      TaxClassModel.deleteMany({ storeId: storeObjectId }).session(session),
+      ShippingZoneModel.deleteMany({ storeId: storeObjectId }).session(session),
+      CmsPageModel.deleteMany({ storeId: storeObjectId }).session(session),
+      FaqModel.deleteMany({ storeId: storeObjectId }).session(session),
+      BillingNotificationModel.deleteMany({ storeId: storeObjectId }).session(session),
+      MediaFileModel.deleteMany({ storeId: storeObjectId }).session(session),
+      StorageUsageModel.deleteMany({ storeId: storeObjectId }).session(session),
+      NewsletterModel.deleteMany({ storeId: storeObjectId }).session(session),
+      AuditLogModel.deleteMany({ storeId: storeObjectId }).session(session),
+    ]);
+
+    // ── 2. Delete the store itself ──────────────────────────────────
+    await StoreModel.deleteOne({ _id: storeObjectId }).session(session);
+
+    await session.commitTransaction();
+
+    // ── 3. Delete files from disk (outside transaction) ────────────
+    try {
+      const mediaDir = path.resolve(process.cwd(), "public/uploads", store.slug);
+      await fs.rm(mediaDir, { recursive: true, force: true });
+    } catch {
+      // non-critical — files may already be gone or stored on S3
+    }
+
+    return {
+      ok: true as const,
+      data: {
+        storeName: store.name,
+        storeSlug: store.slug,
+        tenantId: String(tenantId),
+      },
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    console.error("[store.service] deleteStore transaction failed:", error);
+    return { ok: false as const, message: "Failed to delete store. All changes have been rolled back." };
+  } finally {
+    session.endSession();
+  }
 }
 
 export async function changeStoreTheme(storeId: string, userId: string, payload: { templateId?: string; theme?: Record<string, unknown> }) {
+  const id = safeId(storeId);
+  if (!id) return { ok: false as const, message: "Invalid store ID" };
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, userId });
+  const store = await StoreModel.findOne({ _id: id, userId });
   if (!store) return { ok: false as const, message: "Store not found" };
 
   if (payload.templateId) {

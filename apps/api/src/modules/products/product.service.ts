@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { connectDatabase } from "../../common/database/connection.js";
 import { ProductModel } from "../../models/product.model.js";
 import { StoreModel } from "../../models/store.model.js";
@@ -371,10 +372,10 @@ export async function duplicateProduct(productId: string, storeId: string) {
   return { ok: true as const, data: { product: hydrated } };
 }
 
-export async function seedDemoProducts(storeId: string) {
+export async function seedDemoProducts(storeId: string, session?: mongoose.ClientSession) {
   await connectDatabase();
 
-  const existing = await ProductModel.countDocuments({ storeId });
+  const existing = await ProductModel.countDocuments({ storeId }).session(session ?? null!);
   if (existing > 0) return;
 
   const demoProducts = [
@@ -414,6 +415,7 @@ export async function seedDemoProducts(storeId: string) {
       images: [imageUrl]
     };
   });
-  await ProductModel.insertMany(products);
+  const insertOptions = session ? { session } : {};
+  await ProductModel.insertMany(products, insertOptions);
   console.log(`  ✔ Seeded ${products.length} demo products for store ${storeId}`);
 }

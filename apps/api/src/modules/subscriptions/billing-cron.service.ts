@@ -1,127 +1,151 @@
-import { connectDatabase } from "../../common/database/connection.js";
 import { StoreModel } from "../../models/store.model.js";
-import { SubscriptionPaymentModel } from "../../models/subscription-payment.model.js";
-import { StoreSubscriptionModel } from "./store-subscription.model.js";
-import { addDays, isTrialExpired } from "../../common/utils/store-trial.js";
-import { applyTrialExpiryToStore, applySubscriptionExpiryToStore } from "../stores/trial.service.js";
-import { createBillingNotification } from "../notifications/billing-notification.service.js";
-import { getRemainingDays } from "../plans/plan-pricing.util.js";
-
-const TRIAL_WARNING_DAYS = 1;
-const SUBSCRIPTION_WARNING_DAYS = 3;
+import { StoreSubscriptionModel } from "../../models/store-subscription.model.js";
+import { BillingNotificationModel } from "../../models/billing-notification.model.js";
+import { connectDatabase } from "../../common/database/connection.js";
 
 export async function runBillingCron() {
   await connectDatabase();
   const now = new Date();
   const results = {
-    trialsExpired: 0,
-    subscriptionsExpired: 0,
-    paymentsExpired: 0,
-    trialWarnings: 0,
-    subscriptionWarnings: 0,
+    expiredTrials: 0,
+    expiredSubscriptions: 0,
+    notifications: 0,
   };
 
-  const trialStores = await StoreModel.find({
+  // ── 1. Expire trials that have ended ──────────────────────────────
+  const expiredTrialStores = await StoreModel.find({
     billingStatus: "trial",
     subscriptionStatus: "trialing",
     trialEndsAt: { $lte: now },
-  });
+  }).lean() as Array<Record<string, unknown>>;
 
-  for (const store of trialStores) {
-    await applyTrialExpiryToStore(store);
-    await createBillingNotification({
-      userId: String(store.userId),
-      storeId: String(store._id),
-      type: "trial_expired",
-      title: "Trial expired",
-      message: `Your store "${store.name}" trial has expired. Upgrade to continue publishing and accepting orders.`,
-    });
-    results.trialsExpired += 1;
+  for (const store of expiredTrialStores) {
+    await StoreModel.updateOne(
+      { _id: store._id as any },
+      {
+        $set: {
+          billingStatus: "past_due",
+          subscriptionStatus: "past_due",
+          status: "expired",
+          published: false,
+          allowNewOrders: false,
+        },
+      }
+    );
+    await StoreSubscriptionModel.updateMany(
+      { storeId: store._id, status: "trial" },
+      { $set: { status: "expired" } }
+    );
+    results.expiredTrials++;
   }
 
-  const trialEndingSoon = await StoreModel.find({
+  // ── 2. Expire subscriptions that have ended ───────────────────────
+  const expiredSubscriptions = await StoreSubscriptionModel.find({
+    status: "active",
+    expireDate: { $lte: now },
+  }).lean();
+
+  for (const sub of expiredSubscriptions) {
+    const store = await StoreModel.findById(sub.storeId).lean() as Record<string, unknown> | null;
+    if (!store) continue;
+
+    const trialCheck = store.trialEndsAt && new Date(store.trialEndsAt as string) > now;
+    if (trialCheck) continue;
+
+    await StoreSubscriptionModel.updateOne(
+      { _id: sub._id },
+      { $set: { status: "expired" } }
+    );
+    await StoreModel.updateOne(
+      { _id: sub.storeId },
+      {
+        $set: {
+          billingStatus: "past_due",
+          subscriptionStatus: "past_due",
+          status: "expired",
+          published: false,
+          allowNewOrders: false,
+        },
+      }
+    );
+    results.expiredSubscriptions++;
+  }
+
+  // ── 3. Send trial expiry notifications ────────────────────────────
+  const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  const trialingSoon = await StoreModel.find({
     billingStatus: "trial",
     subscriptionStatus: "trialing",
     trialEndsAt: {
-      $gt: now,
-      $lte: addDays(now, TRIAL_WARNING_DAYS),
+      $gte: now,
+      $lte: sevenDaysFromNow,
     },
-  });
+  }).lean() as Array<Record<string, unknown>>;
 
-  for (const store of trialEndingSoon) {
-    const remaining = getRemainingDays(store.trialEndsAt) ?? 0;
-    await createBillingNotification({
-      userId: String(store.userId),
-      storeId: String(store._id),
-      type: "trial_ending",
-      title: "Trial ending soon",
-      message: `Your store "${store.name}" trial ends in ${remaining} day(s). Upgrade to keep your store active.`,
-    });
-    results.trialWarnings += 1;
+  for (const store of trialingSoon) {
+    const trialEndsAt = store.trialEndsAt as string | undefined;
+    if (!trialEndsAt) continue;
+    const remainingMs = new Date(trialEndsAt).getTime() - now.getTime();
+    const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+
+    if (remainingDays <= 7 && remainingDays > 3) {
+      const exists = await BillingNotificationModel.findOne({
+        storeId: store._id as any,
+        type: "trial_ending_soon_7",
+      }).lean();
+      if (!exists) {
+        await BillingNotificationModel.create([{
+          storeId: store._id as any,
+          userId: store.userId as any,
+          type: "trial_ending_soon_7",
+          title: "Trial ending soon",
+          message: `Your trial ends in ${remainingDays} days. Upgrade to keep your store active.`,
+        }] as any);
+        results.notifications++;
+      }
+    }
+
+    if (remainingDays <= 3 && remainingDays > 0) {
+      const exists = await BillingNotificationModel.findOne({
+        storeId: store._id as any,
+        type: "trial_ending_soon_3",
+      }).lean();
+      if (!exists) {
+        await BillingNotificationModel.create([{
+          storeId: store._id as any,
+          userId: store.userId as any,
+          type: "trial_ending_soon_3",
+          title: "Trial ending in 3 days",
+          message: `Your trial ends in ${remainingDays} days. Upgrade now to avoid disruption.`,
+        }] as any);
+        results.notifications++;
+      }
+    }
   }
-
-  const activeStores = await StoreModel.find({
-    billingStatus: "active",
-    subscriptionStatus: "active",
-    renewalDate: { $lte: now },
-  });
-
-  for (const store of activeStores) {
-    await applySubscriptionExpiryToStore(store);
-    await createBillingNotification({
-      userId: String(store.userId),
-      storeId: String(store._id),
-      type: "subscription_expired",
-      title: "Subscription expired",
-      message: `Your store "${store.name}" subscription has expired. Renew to restore full access.`,
-    });
-    results.subscriptionsExpired += 1;
-  }
-
-  const expiringSoon = await StoreModel.find({
-    billingStatus: "active",
-    subscriptionStatus: "active",
-    renewalDate: {
-      $gt: now,
-      $lte: addDays(now, SUBSCRIPTION_WARNING_DAYS),
-    },
-  });
-
-  for (const store of expiringSoon) {
-    const remaining = getRemainingDays(store.renewalDate) ?? 0;
-    await createBillingNotification({
-      userId: String(store.userId),
-      storeId: String(store._id),
-      type: "subscription_expiring",
-      title: "Subscription expiring soon",
-      message: `Your store "${store.name}" subscription expires in ${remaining} day(s).`,
-    });
-    results.subscriptionWarnings += 1;
-  }
-
-  const expiredPayments = await SubscriptionPaymentModel.updateMany(
-    { status: "pending", expiresAt: { $lte: now } },
-    { $set: { status: "expired" } }
-  );
-  results.paymentsExpired = expiredPayments.modifiedCount ?? 0;
-
-  await StoreSubscriptionModel.updateMany(
-    { status: { $in: ["trial", "active"] }, expireDate: { $lte: now } },
-    { $set: { status: "expired" } }
-  );
 
   return results;
 }
 
 export function startBillingCronScheduler() {
-  const dayMs = 24 * 60 * 60 * 1000;
-  const run = () => {
-    void runBillingCron().catch((error) => {
-      console.error("[billing-cron] failed", error);
-    });
+  // Run every hour
+  const INTERVAL_MS = 60 * 60 * 1000;
+
+  const run = async () => {
+    try {
+      const result = await runBillingCron();
+      if (result.expiredTrials > 0 || result.expiredSubscriptions > 0 || result.notifications > 0) {
+        console.log(`[BillingCron] Expired: ${result.expiredTrials} trials, ${result.expiredSubscriptions} subscriptions. Sent ${result.notifications} notifications.`);
+      }
+    } catch (error) {
+      console.error("[BillingCron] Error:", error);
+    }
   };
 
+  // Run immediately on start
   run();
-  setInterval(run, dayMs);
-  console.log("[billing-cron] scheduler started (daily)");
+
+  // Then run on interval
+  setInterval(run, INTERVAL_MS);
 }

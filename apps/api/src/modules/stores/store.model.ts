@@ -73,6 +73,9 @@ const storeSchema = new Schema(
 );
 
 storeSchema.index({ tenantId: 1, slug: 1 }, { unique: true });
+storeSchema.index({ userId: 1, createdAt: -1 });
+storeSchema.index({ status: 1, billingStatus: 1 });
+storeSchema.index({ tenantId: 1 });
 
 export type StoreDocument = InferSchemaType<typeof storeSchema>;
 export const StoreModel = models.Store ?? model("Store", storeSchema);

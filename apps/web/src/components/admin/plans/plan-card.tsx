@@ -114,11 +114,11 @@ export function PlanCard({
         )}
 
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-          <Metric icon={HardDrive} label="Storage" value={formatStorage(plan.limits.storageGB, storageMB)} />
+          <Metric icon={HardDrive} label="Storage" value={formatStorage(plan.limits.storage, storageMB)} />
           <Metric icon={Package} label="Products" value={formatLimit(plan.limits.products)} />
-          <Metric icon={ShoppingBag} label="Orders" value={formatLimit(plan.limits.orders ?? 0)} />
+          <Metric icon={ShoppingBag} label="Orders" value={formatLimit(plan.limits.orders)} />
           <Metric icon={Users} label="Staff" value={formatLimit(plan.limits.staff)} />
-          <Metric icon={Wifi} label="Bandwidth" value={`${plan.limits.bandwidthGB || 0} GB`} />
+          <Metric icon={Star} label="Features" value={featureCount != null ? String(featureCount) : "—"} />
           <Metric icon={Star} label="Features" value={featureCount != null ? String(featureCount) : "—"} />
         </div>
 

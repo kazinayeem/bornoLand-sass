@@ -1,6 +1,7 @@
 import { connectDatabase } from "../../common/database/connection.js";
 import { PageModel } from "../../models/page.model.js";
 import { StoreModel } from "../../models/store.model.js";
+import { checkLimit } from "../features/feature-access.service.js";
 
 export async function getPages(storeId: string) {
   await connectDatabase();
@@ -46,6 +47,12 @@ export async function savePage(
 
 export async function createPage(storeId: string, payload: { title: string; slug: string }) {
   await connectDatabase();
+
+  const limitResult = await checkLimit(storeId, "builderPages");
+  if (!limitResult.allowed) {
+    return { ok: false as const, message: limitResult.message ?? "Page limit reached" };
+  }
+
   const store = await StoreModel.findById(storeId).lean() as any;
   if (!store) return { ok: false as const, message: "Store not found" };
 

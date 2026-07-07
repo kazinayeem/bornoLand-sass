@@ -83,20 +83,20 @@ export async function deleteStoreController(request: AuthRequest, response: Resp
   const userId = request.user?.userId;
   const id = request.params.id as string;
   if (!userId) return sendFailure(response, "Unauthorized", 401);
-  const before = await StoreModel.findOne({ _id: id, userId }).lean() as { name?: string; status?: string } | null;
   const result = await deleteStore(id, userId);
-  if (result.ok && before) {
+  if (result.ok) {
     await recordAuditFromRequest(request, {
       action: AUDIT_ACTIONS.STORE_DELETED,
       module: AUDIT_MODULES.STORES,
       entityType: "Store",
       entityId: id,
-      entityName: before.name,
+      entityName: result.data.storeName,
       storeId: id,
-      oldValue: before,
+      oldValue: { name: result.data.storeName, slug: result.data.storeSlug },
     });
+    return sendSuccess(response, { storeName: result.data.storeName, storeSlug: result.data.storeSlug, tenantId: result.data.tenantId }, "Store deleted permanently");
   }
-  return result.ok ? sendSuccess(response, undefined, result.message) : sendFailure(response, result.message, 404);
+  return sendFailure(response, result.message, 404);
 }
 
 export async function changeStoreThemeController(request: AuthRequest, response: Response) {

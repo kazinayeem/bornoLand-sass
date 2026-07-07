@@ -5,7 +5,7 @@ import {
   Grid3X3, Layers3, Star, RotateCcw, ShoppingCart, Gift, Percent, Megaphone,
   Mail, Banknote, Wallet, MapPin, Globe, Search, Image, Menu, FileJson,
   HelpCircle, Shield, BookOpen, MessageSquare, Ruler, FolderOpen,
-  SlidersHorizontal, Download, Upload,
+  SlidersHorizontal, Download, Upload, Eye,
 } from "lucide-react";
 
 export type WorkspaceTabId =
@@ -19,7 +19,7 @@ export type WorkspaceTabId =
   | "builder" | "theme" | "pages" | "navigation" | "footer" | "seo"
   | "cms" | "faq" | "shipping-policy" | "return-policy" | "privacy-policy"
   | "terms" | "about" | "contact-page" | "size-guide"
-  | "analytics" | "analytics-sales" | "analytics-revenue" | "analytics-products" | "analytics-customers"
+  | "analytics" | "analytics-sales" | "analytics-revenue" | "analytics-products" | "analytics-customers" | "analytics-visitors"
   | "settings" | "store-info" | "domain" | "currency" | "taxes"
   | "languages" | "notifications" | "staff" | "security" | "api-keys";
 
@@ -150,6 +150,7 @@ export const navGroups: NavGroup[] = [
       { id: "analytics-revenue", label: "Revenue", icon: Wallet },
       { id: "analytics-products", label: "Products", icon: Package },
       { id: "analytics-customers", label: "Customers", icon: Users },
+      { id: "analytics-visitors", label: "Visitors", icon: Eye },
     ],
   },
   {

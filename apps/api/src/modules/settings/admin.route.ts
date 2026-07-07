@@ -1,15 +1,37 @@
 import { Router } from "express";
 import { requireAuth } from "../../common/middleware/auth.middleware.js";
 import { requireRole } from "../../common/middleware/role.middleware.js";
+import { isValidObjectId } from "../../common/utils/object-id.js";
 import { UserModel } from "../../models/user.model.js";
 import { StoreModel } from "../../models/store.model.js";
 import { ProductModel } from "../../models/product.model.js";
 import { OrderModel } from "../../models/order.model.js";
+import { CategoryModel } from "../../models/category.model.js";
+import { CouponModel } from "../../models/coupon.model.js";
+import { ReviewModel } from "../../models/review.model.js";
+import { CustomerModel } from "../../models/customer.model.js";
+import { PageModel } from "../../models/page.model.js";
+import { HomepageSliderModel } from "../../models/homepage-slider.model.js";
+import { PaymentMethodModel } from "../../models/payment-method.model.js";
+import { DeliveryZoneModel } from "../../models/delivery-zone.model.js";
+import { StoreSettingsModel } from "../../models/store-settings.model.js";
 import { PlanModel } from "../../models/plan.model.js";
 import { SubscriptionModel } from "../../models/subscription.model.js";
+import { StoreSubscriptionModel } from "../../models/store-subscription.model.js";
+import { InvoiceModel } from "../../models/invoice.model.js";
+import { MediaFileModel } from "../../models/media-file.model.js";
+import { StorageUsageModel } from "../../models/storage-usage.model.js";
+import { StoreUsageModel } from "../../models/store-usage.model.js";
+import { CampaignModel } from "../../models/campaign.model.js";
+import { TaxClassModel } from "../../models/tax-class.model.js";
+import { ShippingZoneModel } from "../../models/shipping-zone.model.js";
+import { CmsPageModel } from "../../models/cms-page.model.js";
+import { FaqModel } from "../../models/faq.model.js";
+import { BillingNotificationModel } from "../../models/billing-notification.model.js";
 import { TemplateModel } from "../../models/template.model.js";
 import { PlatformSettingsModel } from "../../models/platform-settings.model.js";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
+import { platformRouter } from "../platform/platform.route.js";
 import {
   adminDeleteMediaController,
   adminForceCleanupController,
@@ -22,12 +44,33 @@ import { adminAuditRouter } from "../audit/audit.route.js";
 import { recordAuditFromRequest } from "../audit/audit.service.js";
 import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
 import { AUDIT_MODULES } from "../audit/audit.constants.js";
+import { getAdminSubscriptionOverviewController } from "../plans/subscription-admin.controller.js";
+import {
+  getAdminStoreSettingsController,
+  saveStoreOverridesController,
+  changeStorePlanController,
+  manageStoreTrialController,
+  manageStoreSubscriptionController,
+  resetStoreController,
+  recalculateStoreController,
+  recalculateStoreLimitsController,
+  syncStoreSubscriptionController,
+  deleteAdminStoreController,
+  manageStoreStaffController,
+  getAdminStoreStatsController,
+  getAdminStoreMediaController,
+} from "../stores/admin-store.controller.js";
+import { StoreOverrideModel } from "../stores/store-override.model.js";
 
 export const adminRouter: Router = Router();
 
 adminRouter.use(requireAuth);
 adminRouter.use(requireRole("super_admin"));
 adminRouter.use("/audit-logs", adminAuditRouter);
+adminRouter.use("/platform", platformRouter);
+
+// ── Subscription Overview ──────────────────────────────────
+adminRouter.get("/subscriptions/overview", getAdminSubscriptionOverviewController);
 
 // ── Analytics Dashboard ──────────────────────────────────────────
 adminRouter.get("/analytics", async (_request, response) => {
@@ -155,8 +198,12 @@ adminRouter.get("/stores", async (_request, response) => {
 
 adminRouter.put("/stores/:id/suspend", async (request: AuthRequest, response) => {
   try {
-    const before = await StoreModel.findById(request.params.id).lean() as { status?: string } | null;
-    const store = await StoreModel.findByIdAndUpdate(request.params.id, { status: "suspended" }, { new: true });
+    const sid = String(request.params.id ?? "");
+    if (!isValidObjectId(sid)) {
+      return response.status(400).json({ message: "Invalid store ID" });
+    }
+    const before = await StoreModel.findById(sid).lean() as { status?: string } | null;
+    const store = await StoreModel.findByIdAndUpdate(sid, { status: "suspended" }, { new: true });
     if (!store) return response.status(404).json({ message: "Store not found" });
     await recordAuditFromRequest(request, {
       action: AUDIT_ACTIONS.STORE_SUSPENDED,
@@ -177,8 +224,12 @@ adminRouter.put("/stores/:id/suspend", async (request: AuthRequest, response) =>
 
 adminRouter.put("/stores/:id/activate", async (request: AuthRequest, response) => {
   try {
-    const before = await StoreModel.findById(request.params.id).lean() as { status?: string } | null;
-    const store = await StoreModel.findByIdAndUpdate(request.params.id, { status: "active" }, { new: true });
+    const sid2 = String(request.params.id ?? "");
+    if (!isValidObjectId(sid2)) {
+      return response.status(400).json({ message: "Invalid store ID" });
+    }
+    const before = await StoreModel.findById(sid2).lean() as { status?: string } | null;
+    const store = await StoreModel.findByIdAndUpdate(sid2, { status: "active" }, { new: true });
     if (!store) return response.status(404).json({ message: "Store not found" });
     await recordAuditFromRequest(request, {
       action: AUDIT_ACTIONS.STORE_ACTIVATED,
@@ -199,12 +250,41 @@ adminRouter.put("/stores/:id/activate", async (request: AuthRequest, response) =
 
 adminRouter.delete("/stores/:id", async (request, response) => {
   try {
-    const store = await StoreModel.findByIdAndDelete(request.params.id);
+    const sid3 = String(request.params.id ?? "");
+    if (!isValidObjectId(sid3)) {
+      return response.status(400).json({ message: "Invalid store ID" });
+    }
+    const store = await StoreModel.findById(sid3);
     if (!store) return response.status(404).json({ message: "Store not found" });
+    const storeId = store._id;
+
     await Promise.all([
-      ProductModel.deleteMany({ storeId: store._id }),
-      OrderModel.deleteMany({ storeId: store._id })
+      ProductModel.deleteMany({ storeId }),
+      OrderModel.deleteMany({ storeId }),
+      CategoryModel.deleteMany({ storeId }),
+      CouponModel.deleteMany({ storeId }),
+      ReviewModel.deleteMany({ storeId }),
+      CustomerModel.deleteMany({ storeId }),
+      PageModel.deleteMany({ storeId }),
+      HomepageSliderModel.deleteMany({ storeId }),
+      PaymentMethodModel.deleteMany({ storeId }),
+      DeliveryZoneModel.deleteMany({ storeId }),
+      StoreSettingsModel.deleteMany({ storeId }),
+      StoreSubscriptionModel.deleteMany({ storeId }),
+      InvoiceModel.deleteMany({ storeId }),
+      CampaignModel.deleteMany({ storeId }),
+      TaxClassModel.deleteMany({ storeId }),
+      ShippingZoneModel.deleteMany({ storeId }),
+      CmsPageModel.deleteMany({ storeId }),
+      FaqModel.deleteMany({ storeId }),
+      BillingNotificationModel.deleteMany({ storeId }),
+      MediaFileModel.deleteMany({ storeId }),
+      StorageUsageModel.deleteMany({ storeId }),
+      StoreUsageModel.deleteMany({ storeId }),
+      StoreOverrideModel.deleteMany({ storeId }),
     ]);
+
+    await StoreModel.findByIdAndDelete(storeId);
     response.json({ data: { deleted: true } });
   } catch (error) {
     console.error("Admin delete store error:", error);
@@ -212,15 +292,60 @@ adminRouter.delete("/stores/:id", async (request, response) => {
   }
 });
 
-adminRouter.put("/stores/:id/plan", async (request, response) => {
+// ── Store Override & Enhanced Management ──────────────────────
+adminRouter.get("/stores/:id/settings", getAdminStoreSettingsController);
+adminRouter.put("/stores/:id/overrides", saveStoreOverridesController);
+adminRouter.put("/stores/:id/plan", changeStorePlanController);
+adminRouter.put("/stores/:id/trial", manageStoreTrialController);
+adminRouter.put("/stores/:id/subscription", manageStoreSubscriptionController);
+adminRouter.post("/stores/:id/reset/:type", resetStoreController);
+adminRouter.post("/stores/:id/recalculate", recalculateStoreController);
+adminRouter.post("/stores/:id/recalculate-limits", recalculateStoreLimitsController);
+adminRouter.post("/stores/:id/sync-subscription", syncStoreSubscriptionController);
+adminRouter.delete("/stores/:id/cascade", deleteAdminStoreController);
+adminRouter.get("/stores/:id/stats", getAdminStoreStatsController);
+adminRouter.get("/stores/:id/media", getAdminStoreMediaController);
+adminRouter.put("/stores/:id/staff", manageStoreStaffController);
+adminRouter.put("/stores/:id/plan-legacy", async (request: AuthRequest, response) => {
   try {
+    const sid4 = String(request.params.id ?? "");
+    if (!isValidObjectId(sid4)) {
+      return response.status(400).json({ message: "Invalid store ID" });
+    }
     const { planId, plan } = request.body;
+    if (!planId && !plan) {
+      return response.status(400).json({ message: "planId or plan is required" });
+    }
+    if (planId && !isValidObjectId(String(planId))) {
+      return response.status(400).json({ message: "Invalid plan ID" });
+    }
+
+    const targetPlan = planId ? await PlanModel.findById(String(planId)).lean() : null;
+    if (planId && !targetPlan) {
+      return response.status(404).json({ message: "Plan not found" });
+    }
+
     const update: Record<string, unknown> = {};
-    if (planId) update.planId = planId;
-    if (plan) update.plan = plan;
-    const store = await StoreModel.findByIdAndUpdate(request.params.id, update, { new: true }).populate("planId", "name slug priceBDT");
+    if (planId) update.planId = String(planId);
+    if (plan || targetPlan) update.plan = plan || (targetPlan as any)?.slug;
+
+    const before = await StoreModel.findById(sid4).lean();
+    const store = await StoreModel.findByIdAndUpdate(sid4, update, { new: true })
+      .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
+      .lean();
     if (!store) return response.status(404).json({ message: "Store not found" });
-    response.json({ data: { store } });
+
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.STORE_SETTINGS_UPDATED,
+      module: AUDIT_MODULES.PLATFORM,
+      entityType: "Store",
+      entityId: sid4,
+      storeId: sid4,
+      oldValue: { planId: (before as any)?.planId, plan: (before as any)?.plan },
+      newValue: update,
+    });
+
+    response.json({ data: { store, plan: targetPlan } });
   } catch (error) {
     console.error("Admin change plan error:", error);
     response.status(500).json({ message: "Failed to change plan" });

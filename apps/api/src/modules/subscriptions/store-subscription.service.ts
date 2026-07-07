@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { connectDatabase } from "../../common/database/connection.js";
 import { StoreSubscriptionModel } from "./store-subscription.model.js";
 import { calculateSubscriptionExpireDate, getRemainingDays } from "../plans/plan-pricing.util.js";
@@ -10,9 +11,10 @@ export async function createTrialSubscription(input: {
   planId: string;
   trialEndsAt: Date;
   trialStartedAt: Date;
-}) {
+}, session?: mongoose.ClientSession) {
   await connectDatabase();
-  const subscription = await StoreSubscriptionModel.create({
+  const createOptions = session ? { session } : {};
+  const [subscription] = await StoreSubscriptionModel.create([{
     tenantId: input.tenantId,
     storeId: input.storeId,
     userId: input.userId,
@@ -24,7 +26,7 @@ export async function createTrialSubscription(input: {
     startDate: input.trialStartedAt,
     expireDate: input.trialEndsAt,
     renewDate: input.trialEndsAt,
-  });
+  }], createOptions);
   return subscription.toObject();
 }
 

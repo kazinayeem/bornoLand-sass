@@ -31,6 +31,8 @@ import { invoiceRouter } from "./modules/subscriptions/invoice.route.js";
 import { billingNotificationRouter } from "./modules/notifications/billing-notification.route.js";
 import { featureRouter } from "./modules/features/feature.route.js";
 import { auditRouter } from "./modules/audit/audit.route.js";
+import { analyticsRouter } from "./modules/analytics/analytics.route.js";
+import { adminAnalyticsRouter } from "./modules/analytics/admin-analytics.route.js";
 import { getUploadRoot } from "./modules/media/providers/local-storage.provider.js";
 import { subdomainDetector } from "./common/middleware/subdomain.middleware.js";
 import { errorHandler, notFoundHandler } from "./common/middleware/error.middleware.js";
@@ -134,6 +136,8 @@ app.use("/invoices", invoiceRouter);
 app.use("/notifications", billingNotificationRouter);
 app.use("/features", featureRouter);
 app.use("/audit", auditRouter);
+app.use("/analytics", analyticsRouter);
+app.use("/admin/analytics", adminAnalyticsRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

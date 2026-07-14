@@ -28,7 +28,7 @@ type ApiEnvelope<T> = { success?: boolean; data?: T; message?: string };
 export const builderTemplateApi = baseApi.injectEndpoints({
   overrideExisting: true,
   endpoints: (builder) => ({
-    getTemplates: builder.query<
+    getBuilderTemplates: builder.query<
       ApiEnvelope<{ templates: BuilderTemplate[] }>,
       { storeId: string; category?: string; templateType?: string }
     >({
@@ -42,7 +42,7 @@ export const builderTemplateApi = baseApi.injectEndpoints({
       providesTags: (_r, _e, { storeId }) => [{ type: "BuilderTemplates", id: storeId }],
     }),
 
-    getTemplate: builder.query<
+    getBuilderTemplate: builder.query<
       ApiEnvelope<{ template: BuilderTemplate }>,
       string
     >({
@@ -50,7 +50,7 @@ export const builderTemplateApi = baseApi.injectEndpoints({
       providesTags: (_r, _e, id) => [{ type: "BuilderTemplate", id }],
     }),
 
-    createTemplate: builder.mutation<
+    createBuilderTemplate: builder.mutation<
       ApiEnvelope<{ template: BuilderTemplate }>,
       {
         storeId: string; name: string; description?: string; category?: string;
@@ -73,7 +73,7 @@ export const builderTemplateApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { storeId }) => [{ type: "BuilderTemplates", id: storeId }],
     }),
 
-    updateTemplate: builder.mutation<
+    updateBuilderTemplate: builder.mutation<
       ApiEnvelope<{ template: BuilderTemplate }>,
       { id: string; storeId: string; data: Record<string, unknown> }
     >({
@@ -81,7 +81,7 @@ export const builderTemplateApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { id }) => [{ type: "BuilderTemplate", id }, { type: "BuilderTemplates" }],
     }),
 
-    deleteTemplate: builder.mutation<
+    deleteBuilderTemplate: builder.mutation<
       ApiEnvelope<never>,
       { id: string; storeId: string }
     >({
@@ -135,12 +135,12 @@ export const builderTemplateApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGetTemplatesQuery,
-  useGetTemplateQuery,
-  useCreateTemplateMutation,
+  useGetBuilderTemplatesQuery,
+  useGetBuilderTemplateQuery,
+  useCreateBuilderTemplateMutation,
   useCreateTemplateFromPageMutation,
-  useUpdateTemplateMutation,
-  useDeleteTemplateMutation,
+  useUpdateBuilderTemplateMutation,
+  useDeleteBuilderTemplateMutation,
   usePublishTemplateMutation,
   useDuplicateTemplateMutation,
   useExportTemplateQuery,

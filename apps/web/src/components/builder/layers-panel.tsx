@@ -61,7 +61,7 @@ export function LayersPanel() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3">
         {sortedSections.map((section, index) => {
           const def = getSectionDef(section.type);
           const children = getLayerChildren(section.type, section.props);
@@ -70,12 +70,12 @@ export function LayersPanel() {
           return (
             <div
               key={section.id}
-              className={`group mb-2 rounded-2xl border p-3 transition-all ${
+              className={`group mb-2 rounded-2xl border p-3 transition-all overflow-visible ${
                 selected ? "border-zinc-900/80 bg-zinc-50" : "border-transparent bg-zinc-50/70 hover:border-zinc-200 hover:bg-white"
               }`}
               onClick={() => dispatch(setSelectedSection(section.id))}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 overflow-visible">
                 <button
                   type="button"
                   onClick={(event) => {
@@ -86,12 +86,12 @@ export function LayersPanel() {
                 >
                   <Star className="h-3.5 w-3.5" />
                 </button>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 overflow-hidden">
                   <input
                     value={section.label}
                     onClick={(event) => event.stopPropagation()}
                     onChange={(event) => dispatch(updateSectionMeta({ id: section.id, label: event.target.value }))}
-                    className="w-full bg-transparent text-sm font-semibold text-zinc-900 outline-none"
+                    className="w-full truncate bg-transparent text-sm font-semibold text-zinc-900 outline-none"
                   />
                   <p className="mt-0.5 text-[11px] text-zinc-400">{def?.label || normalizeSectionType(section.type)}</p>
                   {children.length > 0 && (
@@ -104,14 +104,14 @@ export function LayersPanel() {
                     </div>
                   )}
                 </div>
-                <div className="relative">
+                <div className="shrink-0 self-start">
                   <DropdownMenu
                     placement="bottom-end"
                     trigger={
                       <button
                         type="button"
                         onClick={(event) => event.stopPropagation()}
-                        className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
                         aria-label="Section actions"
                       >
                         <MoreHorizontal className="h-4 w-4" />

@@ -86,7 +86,7 @@ export function BuilderSidebar() {
       </div>
 
       {/* Panel content */}
-      <div className="flex-1 overflow-y-auto bg-white">
+      <div className="flex-1 overflow-hidden bg-white">
         {renderPanel()}
       </div>
     </div>

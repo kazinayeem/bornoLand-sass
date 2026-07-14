@@ -25,7 +25,7 @@ type StorePreviewProps = {
   footerSections?: StorefrontSectionLike[];
 };
 
-export function StorePreview({ store, theme, products = [], categories = [], settings = {} as StoreSettingsData, sliders = [], sections, headerSections = [], footerSections = [], onQuickInsert }: StorePreviewProps & { onQuickInsert?: (index: number) => void }) {
+export function StorePreview({ store, theme, products = [], categories = [], settings = {} as StoreSettingsData, sliders = [], sections, headerSections = [], footerSections = [], onQuickInsert }: StorePreviewProps & { onQuickInsert?: (index: number, event: React.MouseEvent) => void }) {
   const dispatch = useDispatch();
   const device = useSelector((s: RootState) => s.preview.device);
   const zoom = useSelector((s: RootState) => s.preview.zoom);

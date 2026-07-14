@@ -59,12 +59,13 @@ type SectionLibraryModalProps = {
 
 export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps) {
   const dispatch = useDispatch();
-  const { isOpen, searchTerm, activeCategory, favoriteSections, recentlyUsed, insertPosition } =
+  const { isOpen, searchTerm, activeCategory, favoriteSections, recentlyUsed, insertPosition, anchorPosition } =
     useSelector((s: RootState) => s.builder.sectionLibrary);
 
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
   const [localSearch, setLocalSearch] = useState(searchTerm);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
+  const [addedSectionId, setAddedSectionId] = useState<string | null>(null);
 
   // Sync local search to Redux (debounced)
   useEffect(() => {
@@ -79,6 +80,7 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
     if (isOpen) {
       setLocalSearch("");
       setQuickFilter("all");
+      setAddedSectionId(null);
     }
   }, [isOpen]);
 

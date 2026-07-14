@@ -88,6 +88,7 @@ type BuilderState = {
     favoriteSections: string[];
     recentlyUsed: string[];
     insertPosition: number | null; // null = end, number = insert after index
+    anchorPosition: { top: number; left: number } | null; // Position for popover
   };
 
   // Undo/redo
@@ -138,6 +139,7 @@ const initialState: BuilderState = {
     favoriteSections: [],
     recentlyUsed: [],
     insertPosition: null,
+    anchorPosition: null,
   },
   past: [],
   future: [],
@@ -404,9 +406,10 @@ const builderSlice = createSlice({
     },
 
     // ─── Section Library Modal ─────────────────────────────────────────────
-    openSectionLibrary(state, action: PayloadAction<{ insertPosition?: number | null } | undefined>) {
+    openSectionLibrary(state, action: PayloadAction<{ insertPosition?: number | null; anchorPosition?: { top: number; left: number } | null } | undefined>) {
       state.sectionLibrary.isOpen = true;
       state.sectionLibrary.insertPosition = action.payload?.insertPosition ?? null;
+      state.sectionLibrary.anchorPosition = action.payload?.anchorPosition ?? null;
     },
 
     closeSectionLibrary(state) {
@@ -414,6 +417,7 @@ const builderSlice = createSlice({
       state.sectionLibrary.searchTerm = "";
       state.sectionLibrary.activeCategory = "all";
       state.sectionLibrary.insertPosition = null;
+      state.sectionLibrary.anchorPosition = null;
     },
 
     setSectionLibrarySearch(state, action: PayloadAction<string>) {

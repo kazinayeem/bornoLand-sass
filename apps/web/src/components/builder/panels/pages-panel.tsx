@@ -17,7 +17,7 @@ import {
   usePublishPageMutation,
   type PageData,
 } from "@/redux/api/builder-api";
-import { useGetTemplatesQuery, type BuilderTemplate } from "@/redux/api/builder-template-api";
+import { useGetBuilderTemplatesQuery, type BuilderTemplate } from "@/redux/api/builder-template-api";
 import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -65,7 +65,7 @@ export function PagesPanel() {
   const [publishPage] = usePublishPageMutation();
 
   // Templates for "New Page" picker
-  const { data: templatesData } = useGetTemplatesQuery({ storeId, templateType: "page" });
+  const { data: templatesData } = useGetBuilderTemplatesQuery({ storeId, templateType: "page" });
 
   const [search, setSearch] = useState("");
   const [ctxMenu, setCtxMenu] = useState<CtxMenu>(null);
@@ -240,10 +240,10 @@ export function PagesPanel() {
 
     return (
       <div key={page._id} className="group relative">
-        <button
+        <div
           onClick={() => handleOpenPage(page)}
           className={cn(
-            "w-full rounded-xl border px-3.5 py-3 text-left transition-all",
+            "w-full rounded-xl border px-3.5 py-3 text-left transition-all cursor-pointer",
             isActive
               ? "border-zinc-900 bg-zinc-50 shadow-sm"
               : "border-transparent hover:border-zinc-200 hover:bg-white hover:shadow-sm"
@@ -330,7 +330,7 @@ export function PagesPanel() {
               </button>
             </div>
           </div>
-        </button>
+        </div>
       </div>
     );
   };

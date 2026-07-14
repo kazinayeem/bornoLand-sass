@@ -123,8 +123,6 @@ export function BuilderEditor() {
   const fullscreen = useSelector((s: RootState) => s.builder.fullscreen);
   const presentationMode = useSelector((s: RootState) => s.builder.presentationMode);
   const [resizing, setResizing] = useState<"left" | "right" | null>(null);
-  const [sectionLibraryOpen, setSectionLibraryOpen] = useState(false);
-  const [sectionInsertIndex, setSectionInsertIndex] = useState<number | null>(null);
   const [clearPageOpen, setClearPageOpen] = useState(false);
 
   const loadedRef = useRef<string>("");
@@ -348,8 +346,7 @@ export function BuilderEditor() {
           publishing={publishing}
           isDirty={isDirty}
           onOpenSectionLibrary={() => {
-            setSectionInsertIndex(null);
-            setSectionLibraryOpen(true);
+            dispatch(openSectionLibrary({ insertPosition: null }));
           }}
           onClearPage={() => setClearPageOpen(true)}
         />
@@ -379,9 +376,18 @@ export function BuilderEditor() {
             sections={sections as never}
             headerSections={headerSections as never}
             footerSections={footerSections as never}
-            onQuickInsert={(index) => {
-              setSectionInsertIndex(index);
-              setSectionLibraryOpen(true);
+            onQuickInsert={(index, event) => {
+              // Calculate anchor position from click event
+              const rect = event.currentTarget.getBoundingClientRect();
+              const anchorPosition = {
+                top: rect.top + window.scrollY,
+                left: rect.left + rect.width / 2,
+              };
+              
+              dispatch(openSectionLibrary({ 
+                insertPosition: index,
+                anchorPosition 
+              }));
             }}
           />
         </div>

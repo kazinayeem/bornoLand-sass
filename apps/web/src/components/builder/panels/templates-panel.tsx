@@ -5,7 +5,7 @@ import { LayoutTemplate, Plus, Search, FileText, Layers, Loader2, AlertCircle, C
 import { useDispatch } from "react-redux";
 import { addSection, loadSections, setPageMetadata } from "@/redux/slices/builder-slice";
 import { Modal } from "@/components/ui/modal";
-import { useGetTemplatesQuery, type BuilderTemplate } from "@/redux/api/builder-template-api";
+import { useGetBuilderTemplatesQuery, type BuilderTemplate } from "@/redux/api/builder-template-api";
 import { useRequiredStore } from "@/providers/store-context";
 import { useCreatePageMutation } from "@/redux/api/builder-api";
 import { toast } from "sonner";
@@ -47,7 +47,7 @@ export function TemplatesPanel() {
   const [createPage] = useCreatePageMutation();
   const [applying, setApplying] = useState<string | null>(null);
 
-  const { data: templatesData, isLoading, error } = useGetTemplatesQuery({
+  const { data: templatesData, isLoading, error } = useGetBuilderTemplatesQuery({
     storeId,
     templateType: "page",
   });
@@ -109,7 +109,7 @@ export function TemplatesPanel() {
             router.push(`/store/${storeSlug}/builder/${page.slug}`);
           }
         } else {
-          const sections = template.sections ?? [];
+          const sections = (template.sections ?? []) as any[];
           for (const section of sections) {
             dispatch(addSection({
               id: `${section.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,

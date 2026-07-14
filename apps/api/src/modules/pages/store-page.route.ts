@@ -23,6 +23,13 @@ import {
   renameStorePage,
   reorderStorePages,
   searchStorePages,
+  listPagesByType,
+  getPageByType,
+  listSystemPages,
+  updatePageHeaderSections,
+  updatePageFooterSections,
+  updatePageHeaderSettings,
+  updatePageFooterSettings,
   listPageVersions,
   getPageVersion,
   restorePageVersion,
@@ -242,6 +249,63 @@ storePageRouter.post("/:id/import", async (request: AuthRequest, response: Respo
   if (!storeId) return sendFailure(response, "storeId is required");
   const result = await importPageSections(request.params.id as string, storeId, request.body, request.user!.userId);
   return result.ok ? sendSuccess(response, result.data, "Sections imported") : sendFailure(response, result.message);
+});
+
+// ─── List pages by type ───────────────────────────────────────────────────────
+
+storePageRouter.get("/stores/:storeId/type/:pageType", async (request: AuthRequest, response: Response) => {
+  const result = await listPagesByType(request.params.storeId as string, request.params.pageType as any);
+  return sendSuccess(response, result.data);
+});
+
+// ─── Get page by type (single) ───────────────────────────────────────────────
+
+storePageRouter.get("/stores/:storeId/type/:pageType/single", async (request: AuthRequest, response: Response) => {
+  const result = await getPageByType(request.params.storeId as string, request.params.pageType as any);
+  return result.ok ? sendSuccess(response, result.data) : sendFailure(response, result.message, 404);
+});
+
+// ─── List system pages ───────────────────────────────────────────────────────
+
+storePageRouter.get("/stores/:storeId/system", async (request: AuthRequest, response: Response) => {
+  const result = await listSystemPages(request.params.storeId as string);
+  return sendSuccess(response, result.data);
+});
+
+// ─── Update header sections ─────────────────────────────────────────────────
+
+storePageRouter.put("/:id/header-sections", async (request: AuthRequest, response: Response) => {
+  const { storeId, headerSections } = request.body as { storeId: string; headerSections: unknown[] };
+  if (!storeId || !headerSections) return sendFailure(response, "storeId and headerSections are required");
+  const result = await updatePageHeaderSections(request.params.id as string, storeId, headerSections);
+  return result.ok ? sendSuccess(response, result.data, "Header sections updated") : sendFailure(response, result.message);
+});
+
+// ─── Update footer sections ─────────────────────────────────────────────────
+
+storePageRouter.put("/:id/footer-sections", async (request: AuthRequest, response: Response) => {
+  const { storeId, footerSections } = request.body as { storeId: string; footerSections: unknown[] };
+  if (!storeId || !footerSections) return sendFailure(response, "storeId and footerSections are required");
+  const result = await updatePageFooterSections(request.params.id as string, storeId, footerSections);
+  return result.ok ? sendSuccess(response, result.data, "Footer sections updated") : sendFailure(response, result.message);
+});
+
+// ─── Update header settings ─────────────────────────────────────────────────
+
+storePageRouter.put("/:id/header-settings", async (request: AuthRequest, response: Response) => {
+  const { storeId, headerSettings } = request.body as { storeId: string; headerSettings: Record<string, unknown> };
+  if (!storeId || !headerSettings) return sendFailure(response, "storeId and headerSettings are required");
+  const result = await updatePageHeaderSettings(request.params.id as string, storeId, headerSettings);
+  return result.ok ? sendSuccess(response, result.data, "Header settings updated") : sendFailure(response, result.message);
+});
+
+// ─── Update footer settings ─────────────────────────────────────────────────
+
+storePageRouter.put("/:id/footer-settings", async (request: AuthRequest, response: Response) => {
+  const { storeId, footerSettings } = request.body as { storeId: string; footerSettings: Record<string, unknown> };
+  if (!storeId || !footerSettings) return sendFailure(response, "storeId and footerSettings are required");
+  const result = await updatePageFooterSettings(request.params.id as string, storeId as string, footerSettings);
+  return result.ok ? sendSuccess(response, result.data, "Footer settings updated") : sendFailure(response, result.message);
 });
 
 // ─── Deleted pages ───────────────────────────────────────────────────────────

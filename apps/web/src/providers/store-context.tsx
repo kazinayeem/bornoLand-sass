@@ -33,10 +33,8 @@ export function StoreProvider({ children, initialStore }: { children: ReactNode;
   const storeSlug = typeof params.storeSlug === "string" ? params.storeSlug : "";
   const dispatch = useDispatch();
   const query = useGetStoreBySlugQuery(storeSlug, {
-    skip: !storeSlug,
+    skip: !storeSlug || storeSlug === "",
     refetchOnMountOrArgChange: false,
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
   });
   const store = query.data?.data?.store ?? initialStore ?? null;
 

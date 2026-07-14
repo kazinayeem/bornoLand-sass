@@ -1,10 +1,12 @@
 import crypto from "crypto";
 import { connectDatabase } from "../../common/database/connection.js";
 import { StorePageModel } from "./store-page.model.js";
+import type { PageType } from "./store-page.model.js";
 import { PageVersionModel } from "./page-version.model.js";
 import { PageHistoryModel } from "./page-history.model.js";
 import { StoreModel } from "../../models/store.model.js";
 import { checkLimit } from "../features/feature-access.service.js";
+import { DEFAULT_PAGES, type DefaultPageDef } from "./default-pages.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -88,7 +90,7 @@ export async function ensureHomePage(storeId: string) {
 
   const existing = await StorePageModel.findOne({ storeId, slug: "/", deletedAt: null });
   if (existing) {
-    await StorePageModel.updateOne({ _id: existing._id }, { $set: { isHomePage: true } });
+    await StorePageModel.updateOne({ _id: existing._id }, { $set: { isHomePage: true, pageType: "home", isSystem: true } });
     return existing;
   }
 
@@ -97,10 +99,57 @@ export async function ensureHomePage(storeId: string) {
     title: "Home",
     slug: "/",
     isHomePage: true,
+    pageType: "home",
+    isSystem: true,
     status: "published",
     sortOrder: 0,
     settings: { layoutWidth: "1200px" },
   });
+}
+
+// ─── Ensure all default system pages exist ────────────────────────────────────
+
+export async function ensureDefaultPages(storeId: string) {
+  await connectDatabase();
+  const store = await StoreModel.findById(storeId).lean();
+  if (!store) return;
+
+  const existingPages = await StorePageModel.find({ storeId, deletedAt: null })
+    .select("pageType slug")
+    .lean();
+
+  const existingPageTypes = new Set(existingPages.map((p) => p.pageType));
+  const existingSlugs = new Set(existingPages.map((p) => p.slug));
+
+  const pagesToCreate: DefaultPageDef[] = [];
+
+  for (const def of DEFAULT_PAGES) {
+    if (def.isSystem && !existingPageTypes.has(def.pageType)) {
+      pagesToCreate.push(def);
+    }
+  }
+
+  if (pagesToCreate.length === 0) return;
+
+  const maxSort = existingPages.length;
+
+  const docs = pagesToCreate.map((def, i) => ({
+    storeId,
+    tenantId: (store as any).tenantId,
+    title: def.title,
+    slug: existingSlugs.has(def.slug)
+      ? `${def.slug}-${Date.now()}`
+      : def.slug,
+    description: def.description,
+    pageType: def.pageType,
+    isSystem: def.isSystem,
+    status: "draft" as const,
+    sortOrder: maxSort + i,
+    sections: [],
+    settings: (def.settings ?? {}) as Record<string, unknown>,
+  }));
+
+  await StorePageModel.insertMany(docs);
 }
 
 // ─── List pages with tree ────────────────────────────────────────────────────
@@ -108,6 +157,7 @@ export async function ensureHomePage(storeId: string) {
 export async function listStorePages(storeId: string) {
   await connectDatabase();
   await ensureHomePage(storeId);
+  await ensureDefaultPages(storeId);
 
   const pages = await StorePageModel.find({ storeId, deletedAt: null })
     .populate("authorId", "name email")
@@ -187,9 +237,18 @@ export async function createStorePage(
     title: string;
     slug: string;
     description?: string;
+    pageType?: PageType;
+    isSystem?: boolean;
     parentId?: string;
     authorId?: string;
     isFolder?: boolean;
+    sections?: unknown[];
+    headerSections?: unknown[];
+    footerSections?: unknown[];
+    globalSectionIds?: string[];
+    settings?: Record<string, unknown>;
+    seo?: Record<string, unknown>;
+    theme?: Record<string, unknown>;
   }
 ) {
   await connectDatabase();
@@ -214,12 +273,20 @@ export async function createStorePage(
     title: payload.title,
     slug,
     description: payload.description ?? "",
+    pageType: payload.pageType ?? "custom",
+    isSystem: payload.isSystem ?? false,
     authorId: payload.authorId,
     parentId: payload.parentId ?? null,
     isFolder: payload.isFolder ?? false,
     status: "draft",
     sortOrder: count,
-    sections: [],
+    sections: payload.sections ?? [],
+    headerSections: payload.headerSections ?? [],
+    footerSections: payload.footerSections ?? [],
+    globalSectionIds: payload.globalSectionIds ?? [],
+    settings: (payload.settings ?? {}) as Record<string, unknown>,
+    seo: (payload.seo ?? {}) as Record<string, unknown>,
+    theme: (payload.theme ?? {}) as Record<string, unknown>,
   });
 
   await recordHistory(storeId, "created", payload.authorId, {
@@ -258,10 +325,16 @@ export async function updateStorePage(
   if (payload.visibility !== undefined) update.visibility = payload.visibility;
   if (payload.sortOrder !== undefined) update.sortOrder = payload.sortOrder;
   if (payload.parentId !== undefined) update.parentId = payload.parentId === "" ? null : payload.parentId;
+  if (payload.pageType !== undefined) update.pageType = payload.pageType;
   if (payload.sections !== undefined) update.sections = payload.sections;
+  if (payload.headerSections !== undefined) update.headerSections = payload.headerSections;
+  if (payload.footerSections !== undefined) update.footerSections = payload.footerSections;
+  if (payload.globalSectionIds !== undefined) update.globalSectionIds = payload.globalSectionIds;
   if (payload.html !== undefined) update.html = payload.html;
   if (payload.seo !== undefined) update.seo = payload.seo;
   if (payload.settings !== undefined) update.settings = payload.settings;
+  if (payload.headerSettings !== undefined) update.headerSettings = payload.headerSettings;
+  if (payload.footerSettings !== undefined) update.footerSettings = payload.footerSettings;
   if (payload.theme !== undefined) update.theme = payload.theme;
 
   const updatedPage = (await StorePageModel.findOneAndUpdate(
@@ -594,9 +667,15 @@ export async function saveStorePageDraft(
   storeId: string,
   payload: {
     sections?: unknown[];
+    headerSections?: unknown[];
+    footerSections?: unknown[];
+    globalSectionIds?: string[];
     theme?: Record<string, unknown>;
     settings?: Record<string, unknown>;
+    headerSettings?: Record<string, unknown>;
+    footerSettings?: Record<string, unknown>;
     html?: string;
+    seo?: Record<string, unknown>;
   }
 ) {
   await connectDatabase();
@@ -605,9 +684,15 @@ export async function saveStorePageDraft(
 
   const update: Record<string, unknown> = {};
   if (payload.sections !== undefined) update.sections = payload.sections;
+  if (payload.headerSections !== undefined) update.headerSections = payload.headerSections;
+  if (payload.footerSections !== undefined) update.footerSections = payload.footerSections;
+  if (payload.globalSectionIds !== undefined) update.globalSectionIds = payload.globalSectionIds;
   if (payload.theme !== undefined) update.theme = payload.theme;
   if (payload.settings !== undefined) update.settings = payload.settings;
+  if (payload.headerSettings !== undefined) update.headerSettings = payload.headerSettings;
+  if (payload.footerSettings !== undefined) update.footerSettings = payload.footerSettings;
   if (payload.html !== undefined) update.html = payload.html;
+  if (payload.seo !== undefined) update.seo = payload.seo;
   update.status = existing.status === "published" ? "published" : "draft";
 
   const page = await StorePageModel.findByIdAndUpdate(pageId, { $set: update }, { new: true }).lean();
@@ -739,4 +824,101 @@ export async function searchStorePages(storeId: string, query: string) {
     .sort({ sortOrder: 1 })
     .lean();
   return { ok: true as const, data: { pages } };
+}
+
+// ─── List pages by type ───────────────────────────────────────────────────────
+
+export async function listPagesByType(storeId: string, pageType: PageType) {
+  await connectDatabase();
+  const pages = await StorePageModel.find({ storeId, pageType, deletedAt: null })
+    .sort({ sortOrder: 1 })
+    .lean();
+  return { ok: true as const, data: { pages } };
+}
+
+// ─── Get page by type (returns only one) ──────────────────────────────────────
+
+export async function getPageByType(storeId: string, pageType: PageType) {
+  await connectDatabase();
+  const page = await StorePageModel.findOne({ storeId, pageType, deletedAt: null }).lean();
+  if (!page) return { ok: false as const, message: `Page not found for type: ${pageType}` };
+  return { ok: true as const, data: { page } };
+}
+
+// ─── List system pages only ───────────────────────────────────────────────────
+
+export async function listSystemPages(storeId: string) {
+  await connectDatabase();
+  const pages = await StorePageModel.find({ storeId, isSystem: true, deletedAt: null })
+    .sort({ sortOrder: 1 })
+    .lean();
+  return { ok: true as const, data: { pages } };
+}
+
+// ─── Update page header sections ─────────────────────────────────────────────
+
+export async function updatePageHeaderSections(
+  pageId: string,
+  storeId: string,
+  headerSections: unknown[]
+) {
+  await connectDatabase();
+  const page = await StorePageModel.findOneAndUpdate(
+    { _id: pageId, storeId, deletedAt: null },
+    { $set: { headerSections } },
+    { new: true }
+  ).lean();
+  if (!page) return { ok: false as const, message: "Page not found" };
+  return { ok: true as const, data: { page } };
+}
+
+// ─── Update page footer sections ─────────────────────────────────────────────
+
+export async function updatePageFooterSections(
+  pageId: string,
+  storeId: string,
+  footerSections: unknown[]
+) {
+  await connectDatabase();
+  const page = await StorePageModel.findOneAndUpdate(
+    { _id: pageId, storeId, deletedAt: null },
+    { $set: { footerSections } },
+    { new: true }
+  ).lean();
+  if (!page) return { ok: false as const, message: "Page not found" };
+  return { ok: true as const, data: { page } };
+}
+
+// ─── Update page header settings ─────────────────────────────────────────────
+
+export async function updatePageHeaderSettings(
+  pageId: string,
+  storeId: string,
+  headerSettings: Record<string, unknown>
+) {
+  await connectDatabase();
+  const page = await StorePageModel.findOneAndUpdate(
+    { _id: pageId, storeId, deletedAt: null },
+    { $set: { headerSettings } },
+    { new: true }
+  ).lean();
+  if (!page) return { ok: false as const, message: "Page not found" };
+  return { ok: true as const, data: { page } };
+}
+
+// ─── Update page footer settings ─────────────────────────────────────────────
+
+export async function updatePageFooterSettings(
+  pageId: string,
+  storeId: string,
+  footerSettings: Record<string, unknown>
+) {
+  await connectDatabase();
+  const page = await StorePageModel.findOneAndUpdate(
+    { _id: pageId, storeId, deletedAt: null },
+    { $set: { footerSettings } },
+    { new: true }
+  ).lean();
+  if (!page) return { ok: false as const, message: "Page not found" };
+  return { ok: true as const, data: { page } };
 }

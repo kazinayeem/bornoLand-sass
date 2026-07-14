@@ -42,6 +42,38 @@ export type MenuItemTree = MenuItem & {
   children?: MenuItemTree[];
 };
 
+export type HeaderSettings = {
+  sticky?: boolean;
+  transparent?: boolean;
+  height?: string;
+  background?: string;
+  borderColor?: string;
+  shadow?: string;
+  padding?: string;
+  desktopLayout?: string;
+  mobileLayout?: string;
+  showSearch?: boolean;
+  showWishlist?: boolean;
+  showCart?: boolean;
+  showProfile?: boolean;
+  showLanguageSwitcher?: boolean;
+  showCurrencySwitcher?: boolean;
+  announcementBar?: string;
+  topBar?: string;
+};
+
+export type FooterSettings = {
+  columns?: number;
+  showNewsletter?: boolean;
+  showSocial?: boolean;
+  showPaymentIcons?: boolean;
+  showCopyright?: boolean;
+  copyright?: string;
+  background?: string;
+  textColor?: string;
+  padding?: string;
+};
+
 type ApiEnvelope<T> = { success?: boolean; data?: T; message?: string };
 
 export const navigationApi = baseApi.injectEndpoints({
@@ -129,6 +161,67 @@ export const navigationApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, { navigationId }) => [{ type: "Navigation", id: navigationId }, { type: "Navigations" }],
     }),
+
+    // ─── Available pages for navigation linking ───────────────────────────────
+    getAvailableNavPages: builder.query<
+      ApiEnvelope<{ pages: Array<{ _id: string; title: string; slug: string; pageType: string; isSystem: boolean }> }>,
+      string
+    >({
+      query: (storeId) => ({ url: `/navigation/stores/${storeId}/available-pages` }),
+      providesTags: (_r, _e, storeId) => [{ type: "StorePages", id: `nav-available-${storeId}` }],
+    }),
+
+    // ─── Check page usage in navigation ───────────────────────────────────────
+    checkPageNavigationUsage: builder.query<
+      ApiEnvelope<{ usedIn: Array<{ navigationId: string; navigationLabel: string; menuItemLabel: string }> }>,
+      { storeId: string; pageSlug: string }
+    >({
+      query: ({ storeId, pageSlug }) => ({
+        url: `/navigation/pages/${storeId}/usage?slug=${encodeURIComponent(pageSlug)}`,
+      }),
+    }),
+
+    // ─── Header Settings ─────────────────────────────────────────────────────
+    getHeaderSettings: builder.query<
+      ApiEnvelope<{ settings: HeaderSettings }>,
+      string
+    >({
+      query: (storeId) => ({ url: `/navigation/header-settings/${storeId}` }),
+      providesTags: (_r, _e, storeId) => [{ type: "Navigation", id: `header-${storeId}` }],
+    }),
+
+    updateHeaderSettings: builder.mutation<
+      ApiEnvelope<{ settings: HeaderSettings }>,
+      { storeId: string; data: HeaderSettings }
+    >({
+      query: ({ storeId, data }) => ({
+        url: `/navigation/header-settings/${storeId}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Navigation", id: `header-${storeId}` }],
+    }),
+
+    // ─── Footer Settings ─────────────────────────────────────────────────────
+    getFooterSettings: builder.query<
+      ApiEnvelope<{ settings: FooterSettings }>,
+      string
+    >({
+      query: (storeId) => ({ url: `/navigation/footer-settings/${storeId}` }),
+      providesTags: (_r, _e, storeId) => [{ type: "Navigation", id: `footer-${storeId}` }],
+    }),
+
+    updateFooterSettings: builder.mutation<
+      ApiEnvelope<{ settings: FooterSettings }>,
+      { storeId: string; data: FooterSettings }
+    >({
+      query: ({ storeId, data }) => ({
+        url: `/navigation/footer-settings/${storeId}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Navigation", id: `footer-${storeId}` }],
+    }),
   }),
 });
 
@@ -140,4 +233,10 @@ export const {
   useUpdateMenuItemMutation,
   useDeleteMenuItemMutation,
   useReorderMenuItemsMutation,
+  useGetAvailableNavPagesQuery,
+  useCheckPageNavigationUsageQuery,
+  useGetHeaderSettingsQuery,
+  useUpdateHeaderSettingsMutation,
+  useGetFooterSettingsQuery,
+  useUpdateFooterSettingsMutation,
 } = navigationApi;

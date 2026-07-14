@@ -4,15 +4,13 @@ import { useEffect, useRef, useState, useCallback, memo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
-import { useGetProductsQuery } from "@/redux/api/product-api";
 import { useGetPagesQuery, useCreatePageMutation, useSavePageMutation } from "@/redux/api/builder-api";
-import { useGetStoreSettingsQuery, useGetHomepageSlidersQuery } from "@/redux/api/store-settings-api";
-import { useGetCategoriesQuery } from "@/redux/api/category-api";
+import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
 import { setTheme } from "@/redux/slices/theme-slice";
 import { setStoreSettings } from "@/redux/slices/store-settings-slice";
 import {
   loadSections,
-  setPageId,
+  setPageMetadata,
   markSaved,
   setSaveError,
   setSaving,
@@ -28,12 +26,16 @@ import {
   redoBuilder,
   removeSection,
   undoBuilder,
+  openSectionLibrary,
 } from "@/redux/slices/builder-slice";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
 import { BuilderToolbar } from "@/components/builder/builder-toolbar";
 import { BuilderSidebar } from "@/components/builder/builder-sidebar";
 import { StorePreview } from "@/components/builder/store-preview";
 import { PropertiesPanel } from "@/components/builder/properties-panel";
+import { SectionLibraryModal } from "@/components/builder/section-library-modal";
+import { FloatingSectionToolbar } from "@/components/builder/floating-section-toolbar";
+import { ClearPageDialog } from "@/components/builder/clear-page-dialog";
 import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
 import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Maximize, Minimize, GripVertical } from "lucide-react";
@@ -46,6 +48,12 @@ const defaultSections: BuilderSection[] = [
   { id: "newsletter-1", type: "newsletter", label: "Newsletter", visible: true, props: { headline: "Stay in the Loop", subheadline: "Subscribe to get special offers, free giveaways, and exclusive deals.", buttonText: "Subscribe", placeholderText: "Enter your email" } },
   { id: "simple-footer-1", type: "simple-footer", label: "Footer", visible: true, props: { copyright: "© 2026 Your Store. All rights reserved.", showSocial: "true" } },
 ];
+
+const defaultSettings = {
+  currencyCode: "USD" as const, currencySymbol: "$", currencyPosition: "before" as const,
+  locale: "en-US", decimalPlaces: 2, taxRate: 0,
+  dateFormat: "MM/DD/YYYY", timezone: "UTC", language: "en",
+};
 
 const ResizeHandle = memo(function ResizeHandle({
   side,
@@ -80,29 +88,32 @@ export function BuilderEditor() {
   const routePageSlug = typeof params.pageSlug === "string" ? params.pageSlug : "";
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { data: productsData } = useGetProductsQuery(storeId);
-  const { data: pagesData, isLoading: pagesLoading } = useGetPagesQuery(storeId);
-  const { data: settingsData } = useGetStoreSettingsQuery(storeId);
-  const { data: slidersData } = useGetHomepageSlidersQuery(storeId);
-  const { data: categoriesData } = useGetCategoriesQuery(storeId);
+  // ─── Only fetch what the builder needs ─────────────────────────────────────
+  // Pages: essential for loading/managing builder pages
+  const { data: pagesData, isLoading: pagesLoading } = useGetPagesQuery(storeId, {
+    skip: !storeId || !store,
+  });
+
+  // Store settings: used for preview (currency, locale). Graceful default if unavailable.
+  const { data: settingsData } = useGetStoreSettingsQuery(storeId, {
+    skip: !storeId || !store,
+  });
+
   const [createPage] = useCreatePageMutation();
   const [savePage] = useSavePageMutation();
 
-  const products = productsData?.data?.products ?? [];
-  const settings = settingsData?.data?.settings ?? {
-    currencyCode: "USD", currencySymbol: "$", currencyPosition: "before",
-    locale: "en-US", decimalPlaces: 2, taxRate: 0,
-    dateFormat: "MM/DD/YYYY", timezone: "UTC", language: "en",
-  };
-  const sliders = slidersData?.data?.sliders ?? [];
-  const categories = categoriesData?.data?.categories ?? [];
+  const settings = settingsData?.data?.settings ?? defaultSettings;
 
   const isDirty = useSelector((s: RootState) => s.builder.isDirty);
   const saving = useSelector((s: RootState) => s.builder.saving);
   const publishing = useSelector((s: RootState) => s.builder.publishing);
   const sections = useSelector((s: RootState) => s.builder.sections);
+  const headerSections = useSelector((s: RootState) => s.builder.headerSections);
+  const footerSections = useSelector((s: RootState) => s.builder.footerSections);
+
   const selectedSectionId = useSelector((s: RootState) => s.builder.selectedSectionId);
-  const pageId = useSelector((s: RootState) => s.builder.pageId);
+  const editingZone = useSelector((s: RootState) => s.builder.editingZone);
+  const pageId = useSelector((s: RootState) => s.builder.page.id);
   const currentTheme = useSelector((s: RootState) => s.theme);
   const clipboardSection = useSelector((s: RootState) => s.builder.clipboardSection);
   const leftPanelOpen = useSelector((s: RootState) => s.builder.leftPanelOpen);
@@ -112,9 +123,13 @@ export function BuilderEditor() {
   const fullscreen = useSelector((s: RootState) => s.builder.fullscreen);
   const presentationMode = useSelector((s: RootState) => s.builder.presentationMode);
   const [resizing, setResizing] = useState<"left" | "right" | null>(null);
+  const [sectionLibraryOpen, setSectionLibraryOpen] = useState(false);
+  const [sectionInsertIndex, setSectionInsertIndex] = useState<number | null>(null);
+  const [clearPageOpen, setClearPageOpen] = useState(false);
 
   const loadedRef = useRef<string>("");
 
+  // ─── Restore saved panel widths ─────────────────────────────────────────────
   useEffect(() => {
     if (typeof window === "undefined") return;
     const left = window.localStorage.getItem("builder.leftPanelWidth");
@@ -129,6 +144,7 @@ export function BuilderEditor() {
     window.localStorage.setItem("builder.rightPanelWidth", String(rightPanelWidth));
   }, [leftPanelWidth, rightPanelWidth]);
 
+  // ─── Panel resize ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!resizing) return;
     const handleMove = (event: MouseEvent) => {
@@ -147,7 +163,7 @@ export function BuilderEditor() {
     };
   }, [dispatch, resizing]);
 
-  // Fullscreen keyboard shortcut
+  // ─── Escape fullscreen ─────────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape" && fullscreen) {
@@ -162,6 +178,7 @@ export function BuilderEditor() {
     return () => window.removeEventListener("keydown", handler);
   }, [dispatch, fullscreen]);
 
+  // ─── Dispatch theme from store ─────────────────────────────────────────────
   useEffect(() => {
     if (store.theme) {
       dispatch(setTheme({
@@ -173,6 +190,7 @@ export function BuilderEditor() {
     }
   }, [store, dispatch]);
 
+  // ─── Dispatch settings ─────────────────────────────────────────────────────
   useEffect(() => {
     if (settings) {
       dispatch(setStoreSettings({
@@ -184,6 +202,7 @@ export function BuilderEditor() {
     }
   }, [settings, dispatch]);
 
+  // ─── Load / redirect to page ────────────────────────────────────────────────
   useEffect(() => {
     const pages = pagesData?.data?.pages;
     const loadKey = `${storeId}:${routePageSlug || "root"}`;
@@ -205,7 +224,7 @@ export function BuilderEditor() {
         pages[0];
 
       dispatch(loadSections((matchedPage.sections?.length ? matchedPage.sections : defaultSections) as BuilderSection[]));
-      dispatch(setPageId(matchedPage._id));
+      dispatch(setPageMetadata({ id: matchedPage._id, title: matchedPage.title, slug: matchedPage.slug }));
 
       const canonicalSlug = matchedPage.slug;
       if (!routePageSlug || routePageSlug !== canonicalSlug || isMongoId(routePageSlug)) {
@@ -214,19 +233,21 @@ export function BuilderEditor() {
       return;
     }
 
-    createPage({ storeId, data: { title: "Home", slug: "home" } })
-      .unwrap()
-      .then((res) => {
-        const createdPage = res.data?.page;
-        if (!createdPage?.slug) return;
-        dispatch(loadSections(defaultSections));
-        dispatch(setPageId(createdPage._id));
-        redirectToPage(createdPage.slug);
-      })
-      .catch(() => {});
+    if (pages.length === 0) {
+      createPage({ storeId, data: { title: "Home", slug: "home" } })
+        .unwrap()
+        .then((res) => {
+          const createdPage = res.data?.page;
+          if (!createdPage?.slug) return;
+          dispatch(loadSections(defaultSections));
+          dispatch(setPageMetadata({ id: createdPage._id, title: createdPage.title, slug: createdPage.slug }));
+          redirectToPage(createdPage.slug);
+        })
+        .catch(() => {});
+    }
   }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug]);
 
-  // Autosave every 10 seconds
+  // ─── Autosave every 10s ────────────────────────────────────────────────────
   useEffect(() => {
     if (!isDirty || !pageId) return;
     const timer = setTimeout(() => {
@@ -239,9 +260,18 @@ export function BuilderEditor() {
     return () => clearTimeout(timer);
   }, [isDirty, pageId, sections, currentTheme, settings, storeId, dispatch, savePage]);
 
+  // ─── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       const mod = event.metaKey || event.ctrlKey;
+
+      // Shift + A - Open Section Library
+      if (event.key.toLowerCase() === "a" && event.shiftKey && !mod) {
+        event.preventDefault();
+        dispatch(openSectionLibrary({}));
+        return;
+      }
+
       if (mod && event.key.toLowerCase() === "s") {
         event.preventDefault();
         if (!pageId) return;
@@ -252,31 +282,37 @@ export function BuilderEditor() {
           .catch(() => dispatch(setSaveError("Save failed")));
         return;
       }
+
       if (mod && event.key.toLowerCase() === "z" && !event.shiftKey) {
         event.preventDefault();
         dispatch(undoBuilder());
         return;
       }
+
       if (mod && ((event.key.toLowerCase() === "z" && event.shiftKey) || event.key.toLowerCase() === "y")) {
         event.preventDefault();
         dispatch(redoBuilder());
         return;
       }
+
       if (mod && event.key.toLowerCase() === "d" && selectedSectionId) {
         event.preventDefault();
         dispatch(duplicateSection(selectedSectionId));
         return;
       }
+
       if (mod && event.key.toLowerCase() === "c" && selectedSectionId) {
         event.preventDefault();
         dispatch(copySection(selectedSectionId));
         return;
       }
+
       if (mod && event.key.toLowerCase() === "v" && clipboardSection) {
         event.preventDefault();
         dispatch(pasteSection(selectedSectionId));
         return;
       }
+
       if (event.key === "Delete" && selectedSectionId) {
         event.preventDefault();
         dispatch(removeSection(selectedSectionId));
@@ -287,16 +323,7 @@ export function BuilderEditor() {
     return () => window.removeEventListener("keydown", handler);
   }, [clipboardSection, currentTheme, dispatch, pageId, savePage, sections, selectedSectionId, settings, storeId]);
 
-  // Escape fullscreen on Escape key
-  useEffect(() => {
-    if (!fullscreen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") dispatch(setFullscreen(false));
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [dispatch, fullscreen]);
-
+  // ─── Loading state ─────────────────────────────────────────────────────────
   if (pagesLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-zinc-50">
@@ -320,6 +347,11 @@ export function BuilderEditor() {
           saving={saving}
           publishing={publishing}
           isDirty={isDirty}
+          onOpenSectionLibrary={() => {
+            setSectionInsertIndex(null);
+            setSectionLibraryOpen(true);
+          }}
+          onClearPage={() => setClearPageOpen(true)}
         />
       )}
 
@@ -338,25 +370,27 @@ export function BuilderEditor() {
         )}
 
         <div className={cn(
-          "flex-1 overflow-y-auto bg-zinc-100 transition-all duration-200",
+          "flex-1 overflow-x-hidden overflow-y-auto bg-zinc-100 transition-all duration-200",
           presentationMode && "bg-black"
         )}>
           <StorePreview
             store={store}
             theme={currentTheme}
-            products={products}
-            categories={categories}
-            settings={settings}
-            sliders={sliders}
             sections={sections as never}
+            headerSections={headerSections as never}
+            footerSections={footerSections as never}
+            onQuickInsert={(index) => {
+              setSectionInsertIndex(index);
+              setSectionLibraryOpen(true);
+            }}
           />
         </div>
 
-        {!presentationMode && rightPanelOpen && selectedSectionId && (
+        {!presentationMode && rightPanelOpen && (selectedSectionId || editingZone !== "body") && (
           <ResizeHandle side="right" onMouseDown={() => setResizing("right")} />
         )}
 
-        {!presentationMode && rightPanelOpen && selectedSectionId && (
+        {!presentationMode && rightPanelOpen && (selectedSectionId || editingZone !== "body") && (
           <div
             className="flex-shrink-0 overflow-y-auto border-l border-zinc-200/60 bg-white/95 backdrop-blur-sm"
             style={{ width: rightPanelWidth }}
@@ -416,6 +450,17 @@ export function BuilderEditor() {
           Exit fullscreen
         </button>
       )}
+
+      {/* Section Library Modal */}
+      <SectionLibraryModal />
+
+      {/* Floating section toolbar — shown when a section is selected */}
+      {!presentationMode && <FloatingSectionToolbar />}
+
+      <ClearPageDialog
+        open={clearPageOpen}
+        onClose={() => setClearPageOpen(false)}
+      />
 
       {/* Presentation mode exit */}
       {presentationMode && (

@@ -1,0 +1,213 @@
+"use client";
+
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState } from "@/redux/store";
+import { setFooterSettings } from "@/redux/slices/builder-slice";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
+
+function Section({ label, children, defaultOpen = true }: { label: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-zinc-100 pb-3 last:border-b-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between px-4 py-2.5 text-xs font-semibold text-zinc-700 hover:text-zinc-900"
+      >
+        {label}
+        <ChevronDown className={`h-3 w-3 text-zinc-400 transition-transform ${open ? "rotate-0" : "-rotate-90"}`} />
+      </button>
+      {open && <div className="space-y-3 px-4 pb-2">{children}</div>}
+    </div>
+  );
+}
+
+function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-[11px] text-zinc-600">{label}</span>
+      <button
+        onClick={() => onChange(!value)}
+        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${value ? "bg-zinc-900" : "bg-zinc-200"}`}
+      >
+        <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${value ? "translate-x-4" : "translate-x-0"}`} />
+      </button>
+    </div>
+  );
+}
+
+function SelectInput({ value, onChange, options, label }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; label: string }) {
+  return (
+    <div>
+      <label className="mb-1 block text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none"
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function TextInput({ value, onChange, label, placeholder }: { value: string; onChange: (v: string) => void; label: string; placeholder?: string }) {
+  return (
+    <div>
+      <label className="mb-1 block text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{label}</label>
+      <input
+        type="text"
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none"
+      />
+    </div>
+  );
+}
+
+function ColorInput({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
+  return (
+    <div>
+      <label className="mb-1 block text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{label}</label>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={value || "#000000"}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-7 w-7 cursor-pointer rounded border border-zinc-200 p-0.5"
+        />
+        <input
+          type="text"
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="#000000"
+          className="h-7 flex-1 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none"
+        />
+      </div>
+    </div>
+  );
+}
+
+export function FooterBuilderSettings() {
+  const dispatch = useDispatch();
+  const footerSettings = useSelector((state: RootState) => state.builder.footerSettings);
+
+  const update = (key: string, value: unknown) => {
+    dispatch(setFooterSettings({ ...footerSettings, [key]: value }));
+  };
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
+        <div>
+          <h3 className="text-xs font-semibold text-zinc-900">Footer Settings</h3>
+          <p className="text-[10px] text-zinc-400">Configure global footer appearance</p>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
+        {/* Layout */}
+        <Section label="Layout">
+          <SelectInput
+            label="Columns"
+            value={String(footerSettings.columns ?? 4)}
+            onChange={(v) => update("columns", Number(v))}
+            options={[
+              { value: "1", label: "1 Column" },
+              { value: "2", label: "2 Columns" },
+              { value: "3", label: "3 Columns" },
+              { value: "4", label: "4 Columns" },
+            ]}
+          />
+          <TextInput
+            label="Padding"
+            value={footerSettings.padding ?? ""}
+            onChange={(v) => update("padding", v)}
+            placeholder="48px 24px"
+          />
+        </Section>
+
+        {/* Appearance */}
+        <Section label="Appearance">
+          <ColorInput
+            label="Background"
+            value={footerSettings.background ?? ""}
+            onChange={(v) => update("background", v)}
+          />
+          <ColorInput
+            label="Text Color"
+            value={footerSettings.textColor ?? ""}
+            onChange={(v) => update("textColor", v)}
+          />
+        </Section>
+
+        {/* Elements */}
+        <Section label="Elements">
+          <Toggle
+            label="Newsletter Signup"
+            value={footerSettings.showNewsletter ?? false}
+            onChange={(v) => update("showNewsletter", v)}
+          />
+          <Toggle
+            label="Social Media Icons"
+            value={footerSettings.showSocial ?? true}
+            onChange={(v) => update("showSocial", v)}
+          />
+          <Toggle
+            label="Payment Icons"
+            value={footerSettings.showPaymentIcons ?? true}
+            onChange={(v) => update("showPaymentIcons", v)}
+          />
+          <Toggle
+            label="Copyright"
+            value={footerSettings.showCopyright ?? true}
+            onChange={(v) => update("showCopyright", v)}
+          />
+        </Section>
+
+        {/* Copyright */}
+        <Section label="Copyright">
+          <TextInput
+            label="Copyright Text"
+            value={footerSettings.copyright ?? ""}
+            onChange={(v) => update("copyright", v)}
+            placeholder="© 2026 Your Store. All rights reserved."
+          />
+        </Section>
+      </div>
+
+      {/* Preview */}
+      <div className="border-t border-zinc-100 bg-zinc-50 p-4">
+        <p className="mb-2 text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Preview</p>
+        <div
+          className="rounded-lg border border-zinc-200 p-4 text-[10px]"
+          style={{
+            backgroundColor: footerSettings.background || "#1a1a1a",
+            color: footerSettings.textColor || "#ffffff",
+          }}
+        >
+          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${footerSettings.columns || 4}, 1fr)` }}>
+            {Array.from({ length: footerSettings.columns || 4 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <p className="font-semibold text-[11px]">Column {i + 1}</p>
+                <div className="space-y-1 opacity-60">
+                  <p>Link item 1</p>
+                  <p>Link item 2</p>
+                  <p>Link item 3</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {footerSettings.showCopyright && (
+            <div className="mt-4 border-t border-white/10 pt-3 text-center opacity-60">
+              {footerSettings.copyright || "© 2026 Your Store. All rights reserved."}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

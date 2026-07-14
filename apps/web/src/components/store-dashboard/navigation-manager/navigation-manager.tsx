@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import {
   Menu, Plus, GripVertical, Trash2, Pencil, ExternalLink, EyeOff,
   ChevronRight, ChevronDown, Link, FileText,
-  Loader2, Globe, Settings,
+  Loader2, Globe, Settings, Search, X, Check, Copy,
+  MoreHorizontal, Pin, PinOff, Filter, Layers, PanelRightOpen,
 } from "lucide-react";
 import {
   DndContext,
@@ -28,6 +29,7 @@ import {
   useDeleteMenuItemMutation,
   useUpdateNavigationMutation,
   useReorderMenuItemsMutation,
+  useGetAvailableNavPagesQuery,
 } from "@/redux/api/navigation-api";
 import type { Navigation, MenuItem, MenuItemTree } from "@/redux/api/navigation-api";
 import { useStorePage } from "@/components/store-dashboard/store-page";
@@ -60,10 +62,16 @@ const LINK_TYPES = [
 export function NavigationManager({ storeId }: Props) {
   const [activeNavId, setActiveNavId] = useState<string | null>(null);
   const [showAddItem, setShowAddItem] = useState(false);
+  const [showAvailablePages, setShowAvailablePages] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterMode, setFilterMode] = useState<"all" | "active" | "hidden">("all");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkMode, setBulkMode] = useState(false);
   const [newItem, setNewItem] = useState({ title: "", link: "", linkType: "custom" });
 
   const { data, isLoading } = useGetStoreNavigationsQuery(storeId);
+  const { data: pagesData } = useGetAvailableNavPagesQuery(storeId);
   const [addItem] = useAddMenuItemMutation();
   const [updateItem] = useUpdateMenuItemMutation();
   const [deleteItem] = useDeleteMenuItemMutation();
@@ -71,15 +79,31 @@ export function NavigationManager({ storeId }: Props) {
   const [reorderItems] = useReorderMenuItemsMutation();
 
   const navigations = data?.data?.navigations ?? [];
+  const availablePages = pagesData?.data?.pages ?? [];
   const activeNav = navigations.find((n) => n._id === activeNavId) ?? navigations[0];
 
   const flatItems = useMemo(() => {
     if (!activeNav?.items) return [];
-    const flatten = (items: MenuItemTree[]): MenuItemTree[] => {
-      return items.flatMap((item) => [item, ...(item.children ? flatten(item.children) : [])]);
-    };
+    const flatten = (items: MenuItemTree[]): MenuItemTree[] =>
+      items.flatMap((item) => [item, ...(item.children ? flatten(item.children) : [])]);
     return flatten(activeNav.items);
   }, [activeNav]);
+
+  const filteredItems = useMemo(() => {
+    let items = flatItems;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter(
+        (i) => i.title.toLowerCase().includes(q) || (i.link ?? "").toLowerCase().includes(q)
+      );
+    }
+    if (filterMode === "active") {
+      items = items.filter((i) => i.isVisible !== false);
+    } else if (filterMode === "hidden") {
+      items = items.filter((i) => i.isVisible === false);
+    }
+    return items;
+  }, [flatItems, searchQuery, filterMode]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -126,13 +150,45 @@ export function NavigationManager({ storeId }: Props) {
     }
   };
 
+  const handleAddPageAsItem = async (page: { _id: string; title: string; slug: string }) => {
+    if (!activeNav) return;
+    try {
+      await addItem({
+        navigationId: activeNav._id,
+        storeId,
+        title: page.title,
+        link: page.slug,
+        linkType: "page",
+      }).unwrap();
+      toast.success(`"${page.title}" added to ${activeNav.label}`);
+    } catch {
+      toast.error("Failed to add page");
+    }
+  };
+
   const handleDeleteItem = async (item: MenuItem) => {
-    if (!confirm(`Delete "${item.title}"?`)) return;
     try {
       await deleteItem({ itemId: item._id, storeId }).unwrap();
       toast.success("Menu item deleted");
     } catch {
       toast.error("Failed to delete item");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const count = selectedIds.size;
+    try {
+      await Promise.all(
+        [...selectedIds].map((id) =>
+          deleteItem({ itemId: id, storeId }).unwrap()
+        )
+      );
+      toast.success(`${count} items deleted`);
+      setSelectedIds(new Set());
+      setBulkMode(false);
+    } catch {
+      toast.error("Failed to delete some items");
     }
   };
 
@@ -145,17 +201,29 @@ export function NavigationManager({ storeId }: Props) {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selectedIds.size === filteredItems.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredItems.map((i) => i._id)));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-48 animate-pulse rounded-lg bg-zinc-200" />
-        <div className="h-4 w-72 animate-pulse rounded-lg bg-zinc-100" />
-        <div className="mt-6 flex gap-2">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-9 w-28 animate-pulse rounded-lg bg-zinc-200" />
-          ))}
-        </div>
-        <div className="mt-4 h-64 animate-pulse rounded-2xl bg-zinc-100" />
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-6 w-full animate-pulse rounded-lg bg-zinc-200" />
+        ))}
       </div>
     );
   }
@@ -172,156 +240,318 @@ export function NavigationManager({ storeId }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Navigation</h1>
-        <p className="text-sm text-zinc-500">Manage your store menus, links, and navigation structure.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Navigation</h1>
+          <p className="text-sm text-zinc-500">Manage menus, links, and navigation structure.</p>
+        </div>
+        <button
+          onClick={() => setShowAvailablePages(!showAvailablePages)}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition-colors",
+            showAvailablePages
+              ? "border-zinc-900 bg-zinc-900 text-white"
+              : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+          )}
+        >
+          <Layers className="h-3.5 w-3.5" />
+          Pages
+        </button>
       </div>
 
-      {/* Nav Selector Tabs */}
-      <div className="flex gap-1.5 overflow-x-auto border-b border-zinc-200 pb-px">
-        {navigations.map((nav) => {
-          const Icon = NAV_ICONS[nav.key] ?? Menu;
-          const isActive = activeNav?._id === nav._id;
-          return (
-            <button
-              key={nav._id}
-              onClick={() => setActiveNavId(nav._id)}
-              className={cn(
-                "inline-flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-medium transition-colors",
-                isActive
-                  ? "border-zinc-900 text-zinc-900"
-                  : "border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700"
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {nav.label}
-              {!nav.isActive && <EyeOff className="h-3 w-3 text-zinc-300" />}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Active Navigation Panel */}
-      {activeNav && (
-        <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
-          {/* Nav Header */}
-          <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-zinc-900">{activeNav.label}</h3>
-              <span className={cn(
-                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
-                activeNav.isActive
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "bg-zinc-100 text-zinc-500"
-              )}>
-                {activeNav.isActive ? "Active" : "Hidden"}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => handleToggleNav(activeNav)}
-                className="rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50"
-              >
-                {activeNav.isActive ? "Hide" : "Show"}
-              </button>
-              <button
-                onClick={() => setShowAddItem(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-zinc-800"
-              >
-                <Plus className="h-3 w-3" />
-                Add Item
-              </button>
-            </div>
+      <div className="flex gap-6">
+        {/* Main Content */}
+        <div className="min-w-0 flex-1">
+          {/* Nav Tabs */}
+          <div className="flex gap-1.5 overflow-x-auto border-b border-zinc-200 pb-px">
+            {navigations.map((nav) => {
+              const Icon = NAV_ICONS[nav.key] ?? Menu;
+              const isActive = activeNav?._id === nav._id;
+              return (
+                <button
+                  key={nav._id}
+                  onClick={() => setActiveNavId(nav._id)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-medium transition-colors",
+                    isActive
+                      ? "border-zinc-900 text-zinc-900"
+                      : "border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700"
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {nav.label}
+                  {!nav.isActive && <EyeOff className="h-3 w-3 text-zinc-300" />}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Menu Items - Drag & Drop */}
-          {activeNav.items && activeNav.items.length > 0 ? (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={flatItems.map((i) => i._id)} strategy={verticalListSortingStrategy}>
-                <div className="p-3 space-y-0.5">
-                  {activeNav.items.map((item) => (
-                    <SortableMenuItemRow
-                      key={item._id}
-                      item={item}
-                      depth={0}
-                      onEdit={() => setEditingItem(item)}
-                      onDelete={() => handleDeleteItem(item)}
-                    />
+          {activeNav && (
+            <div className="mt-4 rounded-2xl border border-zinc-200 bg-white shadow-sm">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-zinc-900">{activeNav.label}</h3>
+                  <span className={cn(
+                    "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
+                    activeNav.isActive
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-zinc-100 text-zinc-500"
+                  )}>
+                    {activeNav.isActive ? "Active" : "Hidden"}
+                  </span>
+                  <span className="text-[10px] text-zinc-400">
+                    {flatItems.length} {flatItems.length === 1 ? "item" : "items"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleToggleNav(activeNav)}
+                    className="rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50"
+                  >
+                    {activeNav.isActive ? "Hide" : "Show"}
+                  </button>
+                  <button
+                    onClick={() => { setBulkMode(!bulkMode); setSelectedIds(new Set()); }}
+                    className={cn(
+                      "rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors",
+                      bulkMode
+                        ? "border-zinc-900 bg-zinc-900 text-white"
+                        : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                    )}
+                  >
+                    {bulkMode ? "Done" : "Select"}
+                  </button>
+                  <button
+                    onClick={() => setShowAddItem(true)}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-zinc-800"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add Item
+                  </button>
+                </div>
+              </div>
+
+              {/* Search + Filter */}
+              <div className="flex items-center gap-2 border-b border-zinc-100 px-5 py-2.5">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search items..."
+                    className="w-full rounded-lg border border-zinc-200 py-1.5 pl-8 pr-3 text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
+                      <X className="h-3 w-3 text-zinc-400 hover:text-zinc-600" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex rounded-lg border border-zinc-200 overflow-hidden">
+                  {(["all", "active", "hidden"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => setFilterMode(mode)}
+                      className={cn(
+                        "px-2.5 py-1.5 text-[10px] font-medium",
+                        filterMode === mode ? "bg-zinc-100 text-zinc-900" : "text-zinc-500 hover:text-zinc-700"
+                      )}
+                    >
+                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                    </button>
                   ))}
                 </div>
-              </SortableContext>
-            </DndContext>
-          ) : (
-            <div className="p-12 text-center">
-              <Link className="mx-auto h-8 w-8 text-zinc-300" />
-              <p className="mt-2 text-sm text-zinc-500">No menu items yet</p>
-              <button
-                onClick={() => setShowAddItem(true)}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-2 text-xs font-medium text-white hover:bg-zinc-800"
-              >
-                <Plus className="h-3 w-3" />
-                Add your first item
-              </button>
+              </div>
+
+              {/* Bulk actions bar */}
+              {bulkMode && selectedIds.size > 0 && (
+                <div className="flex items-center gap-2 border-b border-zinc-100 bg-zinc-50 px-5 py-2">
+                  <span className="text-xs font-medium text-zinc-600">
+                    {selectedIds.size} selected
+                  </span>
+                  <button
+                    onClick={selectAll}
+                    className="text-xs font-medium text-zinc-500 hover:text-zinc-700 underline"
+                  >
+                    {selectedIds.size === filteredItems.length ? "Deselect all" : "Select all"}
+                  </button>
+                  <div className="ml-auto flex gap-1.5">
+                    <button
+                      onClick={handleBulkDelete}
+                      className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-[10px] font-medium text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Delete ({selectedIds.size})
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Menu Items */}
+              {activeNav.items && activeNav.items.length > 0 ? (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext
+                    items={filteredItems.map((i) => i._id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="p-3 space-y-0.5">
+                      {filteredItems.length === 0 && searchQuery ? (
+                        <div className="p-8 text-center">
+                          <Search className="mx-auto h-6 w-6 text-zinc-300" />
+                          <p className="mt-2 text-sm text-zinc-500">No items match &ldquo;{searchQuery}&rdquo;</p>
+                        </div>
+                      ) : (
+                        activeNav.items.map((item) => (
+                          <SortableMenuItemRow
+                            key={item._id}
+                            item={item}
+                            depth={0}
+                            bulkMode={bulkMode}
+                            isSelected={selectedIds.has(item._id)}
+                            onToggleSelect={() => toggleSelect(item._id)}
+                            onEdit={() => setEditingItem(item)}
+                            onDelete={() => handleDeleteItem(item)}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                <div className="p-12 text-center">
+                  <Link className="mx-auto h-8 w-8 text-zinc-300" />
+                  <p className="mt-2 text-sm text-zinc-500">No menu items yet</p>
+                  <button
+                    onClick={() => setShowAddItem(true)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-2 text-xs font-medium text-white hover:bg-zinc-800"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add your first item
+                  </button>
+                </div>
+              )}
             </div>
           )}
+
+          {/* Add Item Panel */}
+          {showAddItem && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"
+            >
+              <h3 className="text-sm font-semibold text-zinc-900 mb-4">Add Menu Item</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-500 mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={newItem.title}
+                    onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
+                    placeholder="Home"
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-500 mb-1">Link</label>
+                  <input
+                    type="text"
+                    value={newItem.link}
+                    onChange={(e) => setNewItem({ ...newItem, link: e.target.value })}
+                    placeholder="/"
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-500 mb-1">Link Type</label>
+                  <select
+                    value={newItem.linkType}
+                    onChange={(e) => setNewItem({ ...newItem, linkType: e.target.value })}
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                  >
+                    {LINK_TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => { setShowAddItem(false); setNewItem({ title: "", link: "", linkType: "custom" }); }}
+                  className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddItem}
+                  disabled={!newItem.title.trim()}
+                  className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+                >
+                  Add Item
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Edit Item Modal */}
+          {editingItem && (
+            <EditMenuItemModal
+              item={editingItem}
+              storeId={storeId}
+              onClose={() => setEditingItem(null)}
+            />
+          )}
         </div>
-      )}
 
-      {/* Add Item Panel */}
-      {showAddItem && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"
-        >
-          <h3 className="text-sm font-semibold text-zinc-900 mb-4">Add Menu Item</h3>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-zinc-500 mb-1">Title</label>
-              <input type="text" value={newItem.title} onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
-                placeholder="Home"
-                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
-                autoFocus
-              />
+        {/* Available Pages Sidebar */}
+        {showAvailablePages && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="w-72 shrink-0"
+          >
+            <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+              <div className="border-b border-zinc-100 px-4 py-3">
+                <h3 className="text-xs font-semibold text-zinc-900 flex items-center gap-2">
+                  <Layers className="h-3.5 w-3.5" />
+                  Available Pages
+                </h3>
+                <p className="text-[10px] text-zinc-400 mt-0.5">
+                  Click to add as nav item in &ldquo;{activeNav?.label}&rdquo;
+                </p>
+              </div>
+              <div className="max-h-[500px] overflow-y-auto p-2 space-y-0.5">
+                {availablePages.length === 0 ? (
+                  <div className="p-4 text-center">
+                    <FileText className="mx-auto h-6 w-6 text-zinc-300" />
+                    <p className="mt-1 text-xs text-zinc-500">No pages available</p>
+                  </div>
+                ) : (
+                  availablePages.map((page) => (
+                    <button
+                      key={page._id}
+                      onClick={() => handleAddPageAsItem(page)}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-zinc-50 transition-colors group"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-zinc-700 truncate group-hover:text-zinc-900">
+                          {page.title}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 truncate">{page.slug}</p>
+                      </div>
+                      <Plus className="h-3 w-3 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-zinc-500 mb-1">Link</label>
-              <input type="text" value={newItem.link} onChange={(e) => setNewItem({ ...newItem, link: e.target.value })}
-                placeholder="/"
-                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-zinc-500 mb-1">Link Type</label>
-              <select value={newItem.linkType} onChange={(e) => setNewItem({ ...newItem, linkType: e.target.value })}
-                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400">
-                {LINK_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="mt-4 flex items-center justify-end gap-2">
-            <button onClick={() => { setShowAddItem(false); setNewItem({ title: "", link: "", linkType: "custom" }); }}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
-              Cancel
-            </button>
-            <button onClick={handleAddItem} disabled={!newItem.title.trim()}
-              className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50">
-              Add Item
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Edit Item Modal */}
-      {editingItem && (
-        <EditMenuItemModal
-          item={editingItem}
-          storeId={storeId}
-          onClose={() => setEditingItem(null)}
-        />
-      )}
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
@@ -331,16 +561,23 @@ export function NavigationManager({ storeId }: Props) {
 function SortableMenuItemRow({
   item,
   depth,
+  bulkMode,
+  isSelected,
+  onToggleSelect,
   onEdit,
   onDelete,
 }: {
   item: MenuItemTree;
   depth: number;
+  bulkMode: boolean;
+  isSelected: boolean;
+  onToggleSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item._id });
   const [expanded, setExpanded] = useState(true);
+  const [showMenu, setShowMenu] = useState(false);
   const hasChildren = item.children && item.children.length > 0;
 
   const style = {
@@ -352,12 +589,31 @@ function SortableMenuItemRow({
   return (
     <div ref={setNodeRef} style={style}>
       <div
-        className="group flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-zinc-50 transition-colors"
+        className={cn(
+          "group flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors",
+          isSelected ? "bg-zinc-100" : "hover:bg-zinc-50"
+        )}
         style={{ paddingLeft: `${8 + depth * 20}px` }}
       >
-        <button {...attributes} {...listeners} className="flex h-5 w-5 items-center justify-center text-zinc-300 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity hover:text-zinc-500">
-          <GripVertical className="h-3.5 w-3.5" />
-        </button>
+        {bulkMode ? (
+          <button
+            onClick={onToggleSelect}
+            className={cn(
+              "flex h-4 w-4 items-center justify-center rounded border transition-colors",
+              isSelected ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300"
+            )}
+          >
+            {isSelected && <Check className="h-3 w-3" />}
+          </button>
+        ) : (
+          <button
+            {...attributes}
+            {...listeners}
+            className="flex h-5 w-5 items-center justify-center text-zinc-300 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity hover:text-zinc-500"
+          >
+            <GripVertical className="h-3.5 w-3.5" />
+          </button>
+        )}
         {hasChildren ? (
           <button onClick={() => setExpanded(!expanded)} className="flex h-4 w-4 items-center justify-center">
             {expanded ? <ChevronDown className="h-3 w-3 text-zinc-400" /> : <ChevronRight className="h-3 w-3 text-zinc-400" />}
@@ -365,30 +621,79 @@ function SortableMenuItemRow({
         ) : (
           <div className="w-4" />
         )}
-        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-zinc-100">
-          {item.linkType === "external" ? (
-            <ExternalLink className="h-3 w-3 text-zinc-500" />
-          ) : (
-            <FileText className="h-3 w-3 text-zinc-500" />
+        <div className="flex h-5 w-5 items-center justify-center rounded bg-zinc-100 shrink-0">
+          <FileText className="h-2.5 w-2.5 text-zinc-500" />
+        </div>
+        <span className="flex-1 text-sm font-medium text-zinc-900 truncate min-w-0">{item.title}</span>
+
+        {/* Status badges */}
+        <div className="flex items-center gap-1 shrink-0">
+          {item.isVisible === false && (
+            <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium text-amber-600 border border-amber-200">
+              Hidden
+            </span>
+          )}
+          {item.openInNewTab && (
+            <span className="text-zinc-300" title="Opens in new tab">
+              <ExternalLink className="h-2.5 w-2.5" />
+            </span>
+          )}
+          {item.authRequired && (
+            <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[9px] font-medium text-blue-600 border border-blue-200">
+              Auth
+            </span>
+          )}
+          {item.badge && (
+            <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[9px] font-medium text-zinc-600">
+              {item.badge}
+            </span>
           )}
         </div>
-        <span className="flex-1 text-sm font-medium text-zinc-900 truncate">{item.title}</span>
-        {item.isVisible === false && <EyeOff className="h-3 w-3 text-zinc-300 shrink-0" />}
-        {item.openInNewTab && <ExternalLink className="h-3 w-3 text-zinc-300 shrink-0" />}
-        {item.badge && (
-          <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 shrink-0">
-            {item.badge}
-          </span>
+
+        {!bulkMode && (
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="flex h-6 w-6 items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600 transition-all"
+            >
+              <MoreHorizontal className="h-3.5 w-3.5" />
+            </button>
+            {showMenu && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute right-0 top-full z-50 mt-0.5 w-36 rounded-xl border border-zinc-200 bg-white py-1 shadow-lg"
+              >
+                <button
+                  onClick={() => { onEdit(); setShowMenu(false); }}
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                >
+                  <Pencil className="h-3 w-3" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(item.link ?? "/");
+                    toast.success("Link copied");
+                    setShowMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                >
+                  <Copy className="h-3 w-3" />
+                  Copy Link
+                </button>
+                <div className="my-1 border-t border-zinc-100" />
+                <button
+                  onClick={() => { onDelete(); setShowMenu(false); }}
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  Delete
+                </button>
+              </motion.div>
+            )}
+          </div>
         )}
-        <span className="hidden sm:block text-[10px] text-zinc-400 max-w-[120px] truncate">{item.link || "/"}</span>
-        <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
-          <button onClick={onEdit} className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600">
-            <Pencil className="h-3 w-3" />
-          </button>
-          <button onClick={onDelete} className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-red-50 text-zinc-400 hover:text-red-500">
-            <Trash2 className="h-3 w-3" />
-          </button>
-        </div>
       </div>
       {hasChildren && expanded && (
         <div>
@@ -397,6 +702,9 @@ function SortableMenuItemRow({
               key={child._id}
               item={child}
               depth={depth + 1}
+              bulkMode={bulkMode}
+              isSelected={isSelected}
+              onToggleSelect={onToggleSelect}
               onEdit={onEdit}
               onDelete={onDelete}
             />
@@ -510,7 +818,6 @@ function EditMenuItemModal({
             <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={inputClass} />
           </div>
 
-          {/* Toggles */}
           <div className="space-y-3 border-t border-zinc-100 pt-3">
             <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Visibility & Behavior</p>
             <div className="grid grid-cols-2 gap-2">

@@ -190,8 +190,8 @@ export function MediaPicker({
         </div>
       </div>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Media Picker" size="xl">
-        <div className="mb-4 flex flex-wrap gap-2 border-b border-zinc-100 pb-3">
+      <Modal open={open} onClose={() => setOpen(false)} title="Media Picker" size="2xl" stickyHeader>
+        <div className="flex flex-wrap gap-2 -mx-1 pb-3 mb-4 border-b border-zinc-100">
           {tabs.map(({ id, label: tabLabel, icon: Icon }) => (
             <button
               key={id}

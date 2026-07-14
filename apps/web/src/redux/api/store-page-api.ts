@@ -1,5 +1,39 @@
 import { baseApi } from "@/redux/api/base-api";
 
+// ─── Page Types ──────────────────────────────────────────────────────────────
+
+export type PageType =
+  | "home" | "shop" | "product" | "category" | "collection"
+  | "cart" | "checkout" | "wishlist" | "account" | "login" | "register"
+  | "forgot_password" | "order_tracking" | "search" | "contact"
+  | "about" | "faq" | "privacy_policy" | "terms_conditions" | "shipping_policy"
+  | "returns_policy" | "blog" | "blog_details" | "system_404"
+  | "custom" | "landing";
+
+export const PAGE_TYPE_LABELS: Record<PageType, string> = {
+  home: "Home", shop: "Shop", product: "Product Detail", category: "Category",
+  collection: "Collection", cart: "Cart", checkout: "Checkout", wishlist: "Wishlist",
+  account: "Account", login: "Login", register: "Register", forgot_password: "Forgot Password",
+  order_tracking: "Order Tracking", search: "Search", contact: "Contact",
+  about: "About Us", faq: "FAQ", privacy_policy: "Privacy Policy",
+  terms_conditions: "Terms & Conditions", shipping_policy: "Shipping Policy",
+  returns_policy: "Returns Policy", blog: "Blog", blog_details: "Blog Post",
+  system_404: "404 Page", custom: "Custom Page", landing: "Landing Page",
+};
+
+export const PAGE_TYPE_ICONS: Record<PageType, string> = {
+  home: "Home", shop: "Store", product: "Package", category: "Tags",
+  collection: "Layers", cart: "ShoppingCart", checkout: "CreditCard", wishlist: "Heart",
+  account: "User", login: "LogIn", register: "UserPlus", forgot_password: "KeyRound",
+  order_tracking: "PackageSearch", search: "Search", contact: "MailQuestion",
+  about: "Info", faq: "HelpCircle", privacy_policy: "Shield",
+  terms_conditions: "FileText", shipping_policy: "Truck", returns_policy: "RotateCcw",
+  blog: "Newspaper", blog_details: "FileText", system_404: "FileX",
+  custom: "File", landing: "Layout",
+};
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
 export type StorePageSeo = {
   title?: string;
   description?: string;
@@ -36,6 +70,42 @@ export type StorePageTheme = {
   navbarStyle?: string;
 };
 
+export type HeaderSettings = {
+  logo?: string;
+  logoWidth?: number;
+  sticky?: boolean;
+  transparent?: boolean;
+  height?: string;
+  background?: string;
+  borderColor?: string;
+  shadow?: string;
+  padding?: string;
+  showSearch?: boolean;
+  showWishlist?: boolean;
+  showCart?: boolean;
+  showProfile?: boolean;
+  showLanguageSwitcher?: boolean;
+  showCurrencySwitcher?: boolean;
+  announcementBar?: string;
+  topBar?: string;
+  desktopLayout?: string;
+  mobileLayout?: string;
+};
+
+export type FooterSettings = {
+  logo?: string;
+  description?: string;
+  showNewsletter?: boolean;
+  showSocial?: boolean;
+  showPaymentIcons?: boolean;
+  showCopyright?: boolean;
+  copyright?: string;
+  columns?: number;
+  background?: string;
+  textColor?: string;
+  padding?: string;
+};
+
 export type StorePage = {
   _id: string;
   storeId: string;
@@ -46,15 +116,22 @@ export type StorePage = {
   description?: string;
   pageIcon?: string;
   featuredImage?: string;
+  pageType: PageType;
+  isSystem: boolean;
   status: "draft" | "published" | "scheduled" | "archived";
   visibility: "visible" | "hidden" | "password";
   isHomePage: boolean;
   sortOrder: number;
   sections?: unknown[];
+  headerSections?: unknown[];
+  footerSections?: unknown[];
+  globalSectionIds?: string[];
   html?: string;
   theme?: StorePageTheme;
   seo?: StorePageSeo;
   settings?: StorePageSettings;
+  headerSettings?: HeaderSettings;
+  footerSettings?: FooterSettings;
   publishedAt?: string;
   scheduledAt?: string;
   archivedAt?: string;
@@ -103,7 +180,7 @@ type ApiEnvelope<T> = { success?: boolean; data?: T; message?: string };
 
 export const storePageApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // ─── Pages CRUD ──────────────────────────────────────────────────────────
+    // ─── Pages CRUD ────────────────────────────────────────────────────────
     getStorePages: builder.query<
       ApiEnvelope<{ pages: StorePage[]; tree: StorePage[] }>,
       string
@@ -127,7 +204,11 @@ export const storePageApi = baseApi.injectEndpoints({
 
     createStorePage: builder.mutation<
       ApiEnvelope<{ page: StorePage }>,
-      { storeId: string; title: string; slug: string; description?: string; parentId?: string; isFolder?: boolean }
+      {
+        storeId: string; title: string; slug: string; description?: string;
+        pageType?: PageType; isSystem?: boolean; parentId?: string; isFolder?: boolean;
+        sections?: unknown[]; settings?: Record<string, unknown>;
+      }
     >({
       query: ({ storeId, ...body }) => ({ url: `/store-pages/stores/${storeId}`, method: "POST", body }),
       invalidatesTags: (_r, _e, { storeId }) => [{ type: "StorePages", id: storeId }],
@@ -149,7 +230,7 @@ export const storePageApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { storeId }) => [{ type: "StorePages", id: storeId }],
     }),
 
-    // ─── Actions ─────────────────────────────────────────────────────────────
+    // ─── Actions ───────────────────────────────────────────────────────────
     duplicateStorePage: builder.mutation<
       ApiEnvelope<{ page: StorePage }>,
       { id: string; storeId: string }
@@ -208,7 +289,14 @@ export const storePageApi = baseApi.injectEndpoints({
 
     saveStorePageDraft: builder.mutation<
       ApiEnvelope<{ page: StorePage }>,
-      { id: string; storeId: string; sections?: unknown[]; theme?: Record<string, unknown>; settings?: Record<string, unknown>; html?: string }
+      {
+        id: string; storeId: string;
+        sections?: unknown[]; headerSections?: unknown[]; footerSections?: unknown[];
+        globalSectionIds?: string[];
+        theme?: Record<string, unknown>; settings?: Record<string, unknown>;
+        headerSettings?: Record<string, unknown>; footerSettings?: Record<string, unknown>;
+        html?: string; seo?: Record<string, unknown>;
+      }
     >({
       query: ({ id, storeId, ...data }) => ({ url: `/store-pages/${id}/draft`, method: "PUT", body: { storeId, ...data } }),
       invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
@@ -222,7 +310,81 @@ export const storePageApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { storeId }) => [{ type: "StorePages", id: storeId }],
     }),
 
-    // ─── Versions ────────────────────────────────────────────────────────────
+    // ─── Page type endpoints ───────────────────────────────────────────────
+    getPagesByType: builder.query<
+      ApiEnvelope<{ pages: StorePage[] }>,
+      { storeId: string; pageType: PageType }
+    >({
+      query: ({ storeId, pageType }) => ({ url: `/store-pages/stores/${storeId}/type/${pageType}` }),
+      providesTags: (_r, _e, { storeId }) => [{ type: "StorePages", id: `type-${storeId}` }],
+    }),
+
+    getPageByType: builder.query<
+      ApiEnvelope<{ page: StorePage }>,
+      { storeId: string; pageType: PageType }
+    >({
+      query: ({ storeId, pageType }) => ({ url: `/store-pages/stores/${storeId}/type/${pageType}/single` }),
+      providesTags: (_r, _e, { storeId, pageType }) => [{ type: "StorePage", id: `${storeId}-${pageType}` }],
+    }),
+
+    getSystemPages: builder.query<
+      ApiEnvelope<{ pages: StorePage[] }>,
+      string
+    >({
+      query: (storeId) => ({ url: `/store-pages/stores/${storeId}/system` }),
+      providesTags: (_r, _e, storeId) => [{ type: "StorePages", id: `system-${storeId}` }],
+    }),
+
+    // ─── Header / Footer ───────────────────────────────────────────────────
+    updatePageHeaderSections: builder.mutation<
+      ApiEnvelope<{ page: StorePage }>,
+      { id: string; storeId: string; headerSections: unknown[] }
+    >({
+      query: ({ id, storeId, headerSections }) => ({
+        url: `/store-pages/${id}/header-sections`,
+        method: "PUT",
+        body: { storeId, headerSections },
+      }),
+      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+    }),
+
+    updatePageFooterSections: builder.mutation<
+      ApiEnvelope<{ page: StorePage }>,
+      { id: string; storeId: string; footerSections: unknown[] }
+    >({
+      query: ({ id, storeId, footerSections }) => ({
+        url: `/store-pages/${id}/footer-sections`,
+        method: "PUT",
+        body: { storeId, footerSections },
+      }),
+      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+    }),
+
+    updatePageHeaderSettings: builder.mutation<
+      ApiEnvelope<{ page: StorePage }>,
+      { id: string; storeId: string; headerSettings: Record<string, unknown> }
+    >({
+      query: ({ id, storeId, headerSettings }) => ({
+        url: `/store-pages/${id}/header-settings`,
+        method: "PUT",
+        body: { storeId, headerSettings },
+      }),
+      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+    }),
+
+    updatePageFooterSettings: builder.mutation<
+      ApiEnvelope<{ page: StorePage }>,
+      { id: string; storeId: string; footerSettings: Record<string, unknown> }
+    >({
+      query: ({ id, storeId, footerSettings }) => ({
+        url: `/store-pages/${id}/footer-settings`,
+        method: "PUT",
+        body: { storeId, footerSettings },
+      }),
+      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+    }),
+
+    // ─── Versions ──────────────────────────────────────────────────────────
     getPageVersions: builder.query<ApiEnvelope<{ versions: PageVersion[] }>, string>({
       query: (pageId) => ({ url: `/store-pages/${pageId}/versions` }),
       providesTags: (_r, _e, pageId) => [{ type: "PageVersions", id: pageId }],
@@ -244,7 +406,7 @@ export const storePageApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { pageId }) => [{ type: "StorePage", id: pageId }, { type: "PageVersions", id: pageId }],
     }),
 
-    // ─── History ──────────────────────────────────────────────────────────────
+    // ─── History ────────────────────────────────────────────────────────────
     getPageHistory: builder.query<
       ApiEnvelope<{ history: PageHistory[] }>,
       { pageId: string; storeId: string }
@@ -259,7 +421,7 @@ export const storePageApi = baseApi.injectEndpoints({
       query: (storeId) => ({ url: `/store-pages/stores/${storeId}/history` }),
     }),
 
-    // ─── Preview ────────────────────────────────────────────────────────────
+    // ─── Preview ──────────────────────────────────────────────────────────
     generatePreviewToken: builder.mutation<
       ApiEnvelope<{ token: string; expiresAt: string; previewUrl: string }>,
       { pageId: string; storeId: string }
@@ -271,7 +433,7 @@ export const storePageApi = baseApi.injectEndpoints({
       }),
     }),
 
-    // ─── Export / Import ────────────────────────────────────────────────────
+    // ─── Export / Import ──────────────────────────────────────────────────
     exportPageSections: builder.query<
       ApiEnvelope<{ version: string; exportedAt: string; sourcePage: string; sourceSlug: string; sections: unknown[]; theme?: Record<string, unknown>; seo?: Record<string, unknown>; settings?: Record<string, unknown> }>,
       { pageId: string; storeId: string }
@@ -291,7 +453,7 @@ export const storePageApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { pageId }) => [{ type: "StorePage", id: pageId }],
     }),
 
-    // ─── Deleted pages (trash) ──────────────────────────────────────────────
+    // ─── Deleted pages (trash) ────────────────────────────────────────────
     getDeletedStorePages: builder.query<
       ApiEnvelope<{ pages: StorePage[] }>,
       string
@@ -330,6 +492,13 @@ export const {
   useRenameStorePageMutation,
   useSaveStorePageDraftMutation,
   useReorderStorePagesMutation,
+  useGetPagesByTypeQuery,
+  useGetPageByTypeQuery,
+  useGetSystemPagesQuery,
+  useUpdatePageHeaderSectionsMutation,
+  useUpdatePageFooterSectionsMutation,
+  useUpdatePageHeaderSettingsMutation,
+  useUpdatePageFooterSettingsMutation,
   useGetPageVersionsQuery,
   useGetPageVersionQuery,
   useRestorePageVersionMutation,

@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Monitor, Smartphone, Tablet, ArrowLeft, Save, Send, Undo2, Redo2, ZoomIn, Search, Plus, Download, Upload, History, Palette, Maximize, Eye, EyeOff } from "lucide-react";
+import { Monitor, Smartphone, Tablet, ArrowLeft, Save, Send, Undo2, Redo2, ZoomIn, Search, Plus, Download, Upload, History, Palette, Maximize, Eye, EyeOff, Layers, PanelRightOpen, Trash2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setDevice, setZoom, toggleGuides, toggleGrid, setFullscreen } from "@/redux/slices/preview-slice";
-import { markSaved, setSaving, setPublishing, setActiveTab, undoBuilder, redoBuilder, restoreHistorySnapshot, updateSectionProps, loadSections, toggleLeftPanel, toggleRightPanel, setSaveError } from "@/redux/slices/builder-slice";
+import { markSaved, setSaving, setPublishing, undoBuilder, redoBuilder, restoreHistorySnapshot, updateSectionProps, loadSections, toggleLeftPanel, toggleRightPanel, setSaveError, setEditingZone } from "@/redux/slices/builder-slice";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
 import { useSavePageMutation, usePublishPageMutation } from "@/redux/api/builder-api";
-import { useUpdateStoreMutation } from "@/redux/api/store-api";
 import { toast } from "sonner";
 import { Drawer } from "@/components/ui/drawer";
 import { ThemePanel } from "@/components/builder/panels/theme-panel";
@@ -23,9 +22,11 @@ type Props = {
   saving: boolean;
   publishing: boolean;
   isDirty: boolean;
+  onOpenSectionLibrary?: () => void;
+  onClearPage?: () => void;
 };
 
-export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
+export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSectionLibrary, onClearPage }: Props) {
   const dispatch = useDispatch();
   const { store, storeId } = useRequiredStore();
   const storeSettings = useSelector((s: RootState) => s.storeSettings);
@@ -33,7 +34,12 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
   const zoom = useSelector((s: RootState) => s.preview.zoom);
   const theme = useSelector((s: RootState) => s.theme);
   const sections = useSelector((s: RootState) => s.builder.sections);
-  const pageId = useSelector((s: RootState) => s.builder.pageId);
+  const headerSections = useSelector((s: RootState) => s.builder.headerSections);
+  const footerSections = useSelector((s: RootState) => s.builder.footerSections);
+  const headerSettings = useSelector((s: RootState) => s.builder.headerSettings);
+  const footerSettings = useSelector((s: RootState) => s.builder.footerSettings);
+  const editingZone = useSelector((s: RootState) => s.builder.editingZone);
+  const pageId = useSelector((s: RootState) => s.builder.page.id);
   const lastSaved = useSelector((s: RootState) => s.builder.lastSaved);
   const lastSaveError = useSelector((s: RootState) => s.builder.lastSaveError);
   const pastCount = useSelector((s: RootState) => s.builder.past.length);
@@ -46,7 +52,6 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
 
   const [savePage] = useSavePageMutation();
   const [publishPage] = usePublishPageMutation();
-  const [updateStore] = useUpdateStoreMutation();
   const [importPageSections] = useImportPageSectionsMutation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stylesOpen, setStylesOpen] = useState(false);
@@ -68,8 +73,10 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
     if (!pageId) { toast.error("No page selected"); return; }
     dispatch(setSaving(true));
     try {
-      await savePage({ storeId, pageId, data: { sections, theme, settings: storeSettings } }).unwrap();
-      await updateStore({ id: storeId, data: { theme } }).unwrap();
+      await savePage({
+        storeId, pageId,
+        data: { sections, headerSections, footerSections, headerSettings, footerSettings, theme, settings: storeSettings },
+      }).unwrap();
       dispatch(markSaved(new Date().toISOString()));
       toast.success("Saved");
     } catch {
@@ -82,9 +89,11 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
     if (!pageId) { toast.error("No page selected"); return; }
     dispatch(setPublishing(true));
     try {
-      await savePage({ storeId, pageId, data: { sections, theme, settings: storeSettings } }).unwrap();
+      await savePage({
+        storeId, pageId,
+        data: { sections, headerSections, footerSections, headerSettings, footerSettings, theme, settings: storeSettings },
+      }).unwrap();
       await publishPage({ storeId, pageId, status: "published" }).unwrap();
-      await updateStore({ id: storeId, data: { theme } }).unwrap();
       await revalidateStorefrontAction({ tenantSlug: store.subdomain || store.slug, storeId, scope: "all" });
       dispatch(markSaved(new Date().toISOString()));
       toast.success("Published!");
@@ -168,7 +177,24 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
       </div>
 
       {/* Center */}
-      <div className="hidden md:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-1">
+        {/* Editing Zone Switcher */}
+        <div className="flex rounded-lg border border-zinc-200 bg-white p-0.5">
+          {[
+            { key: "body" as const, label: "Body", icon: Layers },
+            { key: "header" as const, label: "Header", icon: PanelRightOpen },
+            { key: "footer" as const, label: "Footer", icon: PanelRightOpen },
+          ].map(({ key, label, icon: Icon }) => (
+            <button key={key} title={label} onClick={() => dispatch(setEditingZone(key))}
+              className={cn("rounded-md px-2 py-1 text-[10px] font-medium transition-colors inline-flex items-center gap-1",
+                editingZone === key ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-600")}>
+              <Icon className="h-3 w-3" />
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="h-4 w-px bg-zinc-200 mx-1" />
+
         {/* Device switcher */}
         <div className="flex rounded-lg border border-zinc-200 bg-white p-0.5">
           {devices.map(({ key, icon: Icon, label }) => (
@@ -204,7 +230,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
         <div className="h-4 w-px bg-zinc-200 mx-1" />
 
         {/* Quick add */}
-        <button onClick={() => dispatch(setActiveTab("components"))}
+        <button onClick={() => onOpenSectionLibrary?.()}
           className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50">
           <Plus className="h-3.5 w-3.5" /> Add
         </button>
@@ -232,6 +258,12 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
           <Upload className="h-3.5 w-3.5" />
         </button>
         <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+
+        <div className="h-4 w-px bg-zinc-200 mx-1" />
+        <button onClick={onClearPage}
+          className="flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-50">
+          <Trash2 className="h-3.5 w-3.5" /> Clear
+        </button>
       </div>
 
       {/* Right */}

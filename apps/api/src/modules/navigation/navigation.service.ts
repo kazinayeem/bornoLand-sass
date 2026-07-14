@@ -1,6 +1,7 @@
 import { connectDatabase } from "../../common/database/connection.js";
 import { NavigationModel } from "./navigation.model.js";
 import { MenuItemModel } from "./menu-item.model.js";
+import { StorePageModel } from "../pages/store-page.model.js";
 import { StoreModel } from "../../models/store.model.js";
 
 const NAVIGATION_KEYS = ["primary", "footer", "mobile", "top_bar", "account", "sidebar"] as const;
@@ -237,4 +238,119 @@ export async function reorderMenuItems(
     );
   }
   return { ok: true as const, message: "Menu items reordered" };
+}
+
+// ─── Get available pages for navigation linking ───────────────────────────────
+
+export async function getAvailableNavPages(storeId: string) {
+  await connectDatabase();
+  const pages = await StorePageModel.find({ storeId, deletedAt: null })
+    .select("title slug pageType isSystem status")
+    .sort({ sortOrder: 1 })
+    .lean();
+  return { ok: true as const, data: { pages } };
+}
+
+// ─── Check which navigations reference a given page slug ──────────────────────
+
+export async function checkPageNavigationUsage(storeId: string, pageSlug: string) {
+  await connectDatabase();
+  const slug = pageSlug.startsWith("/") ? pageSlug : `/${pageSlug}`;
+
+  const menuItems = await MenuItemModel.find({ storeId, link: slug })
+    .select("navigationId title link")
+    .lean();
+
+  if (menuItems.length === 0) {
+    return { ok: true as const, data: { usedIn: [] } };
+  }
+
+  const navIds = [...new Set(menuItems.map((m) => String(m.navigationId)))];
+  const navigations = await NavigationModel.find({ _id: { $in: navIds } })
+    .select("label key")
+    .lean();
+  const navMap = new Map(navigations.map((n) => [String(n._id), n.label || n.key]));
+
+  const usedIn = menuItems.map((item) => ({
+    navigationId: String(item.navigationId),
+    navigationLabel: navMap.get(String(item.navigationId)) ?? "Unknown",
+    menuItemId: String(item._id),
+    menuItemLabel: item.title,
+  }));
+
+  return { ok: true as const, data: { usedIn } };
+}
+
+// ─── Header / Footer Settings ─────────────────────────────────────────────────
+
+type HeaderSettingsPayload = {
+  sticky?: boolean;
+  transparent?: boolean;
+  height?: string;
+  background?: string;
+  borderColor?: string;
+  shadow?: string;
+  padding?: string;
+  desktopLayout?: string;
+  mobileLayout?: string;
+  showSearch?: boolean;
+  showWishlist?: boolean;
+  showCart?: boolean;
+  showProfile?: boolean;
+  showLanguageSwitcher?: boolean;
+  showCurrencySwitcher?: boolean;
+  announcementBar?: string;
+  topBar?: string;
+  pageId?: string;
+};
+
+export async function getHeaderSettings(storeId: string, pageId?: string) {
+  await connectDatabase();
+  const query: Record<string, unknown> = { storeId, key: "header_settings" };
+  if (pageId) query.pageId = pageId;
+
+  const store = await StoreModel.findById(storeId).select("headerSettings").lean();
+  const settings = (store as any)?.headerSettings ?? {};
+
+  return { ok: true as const, data: { settings } };
+}
+
+export async function updateHeaderSettings(storeId: string, payload: HeaderSettingsPayload) {
+  await connectDatabase();
+  const { pageId, ...settings } = payload;
+
+  await StoreModel.updateOne(
+    { _id: storeId },
+    { $set: { headerSettings: settings } }
+  );
+
+  return { ok: true as const, data: { settings } };
+}
+
+type FooterSettingsPayload = {
+  columns?: number;
+  showNewsletter?: boolean;
+  showSocial?: boolean;
+  showPaymentIcons?: boolean;
+  showCopyright?: boolean;
+  copyright?: string;
+  background?: string;
+  textColor?: string;
+  padding?: string;
+};
+
+export async function getFooterSettings(storeId: string) {
+  await connectDatabase();
+  const store = await StoreModel.findById(storeId).select("footerSettings").lean();
+  const settings = (store as any)?.footerSettings ?? {};
+  return { ok: true as const, data: { settings } };
+}
+
+export async function updateFooterSettings(storeId: string, payload: FooterSettingsPayload) {
+  await connectDatabase();
+  await StoreModel.updateOne(
+    { _id: storeId },
+    { $set: { footerSettings: payload } }
+  );
+  return { ok: true as const, data: { settings: payload } };
 }

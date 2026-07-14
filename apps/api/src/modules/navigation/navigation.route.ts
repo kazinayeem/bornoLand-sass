@@ -11,6 +11,12 @@ import {
   updateMenuItem,
   deleteMenuItem,
   reorderMenuItems,
+  getAvailableNavPages,
+  checkPageNavigationUsage,
+  getHeaderSettings,
+  updateHeaderSettings,
+  getFooterSettings,
+  updateFooterSettings,
 } from "./navigation.service.js";
 
 export const navigationRouter: Router = Router();
@@ -78,4 +84,45 @@ navigationRouter.put("/:id/items/reorder", async (request: AuthRequest, response
   if (!orderedIds) return sendFailure(response, "orderedIds is required");
   const result = await reorderMenuItems(request.params.id as string, storeId, orderedIds);
   return result.ok ? sendSuccess(response, undefined, result.message) : sendFailure(response, result.message);
+});
+
+// ─── Available pages for navigation linking ───────────────────────────────────
+
+navigationRouter.get("/stores/:storeId/available-pages", async (request: AuthRequest, response: Response) => {
+  const result = await getAvailableNavPages(request.params.storeId as string);
+  return sendSuccess(response, result.data);
+});
+
+// ─── Check page usage in navigation ───────────────────────────────────────────
+
+navigationRouter.get("/pages/:storeId/usage", async (request: AuthRequest, response: Response) => {
+  const slug = request.query.slug as string;
+  if (!slug) return sendFailure(response, "slug query parameter is required");
+  const result = await checkPageNavigationUsage(request.params.storeId as string, slug);
+  return sendSuccess(response, result.data);
+});
+
+// ─── Header Settings ──────────────────────────────────────────────────────────
+
+navigationRouter.get("/header-settings/:storeId", async (request: AuthRequest, response: Response) => {
+  const pageId = request.query.pageId as string | undefined;
+  const result = await getHeaderSettings(request.params.storeId as string, pageId);
+  return sendSuccess(response, result.data);
+});
+
+navigationRouter.put("/header-settings/:storeId", async (request: AuthRequest, response: Response) => {
+  const result = await updateHeaderSettings(request.params.storeId as string, request.body);
+  return sendSuccess(response, result.data);
+});
+
+// ─── Footer Settings ──────────────────────────────────────────────────────────
+
+navigationRouter.get("/footer-settings/:storeId", async (request: AuthRequest, response: Response) => {
+  const result = await getFooterSettings(request.params.storeId as string);
+  return sendSuccess(response, result.data);
+});
+
+navigationRouter.put("/footer-settings/:storeId", async (request: AuthRequest, response: Response) => {
+  const result = await updateFooterSettings(request.params.storeId as string, request.body);
+  return sendSuccess(response, result.data);
 });

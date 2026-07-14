@@ -6,10 +6,9 @@ import type { RootState } from "@/redux/store";
 import { setActiveTab, toggleLeftPanel } from "@/redux/slices/builder-slice";
 import type { LeftTab } from "@/redux/slices/builder-slice";
 import {
-  Layers3, Grid3X3, FileText, AppWindow, ImagePlus,
-  Navigation, History, Palette, Package, PanelRightOpen, ChevronLeft,
+  Layers3, FileText, AppWindow, ImagePlus,
+  Palette, ChevronLeft,
 } from "lucide-react";
-import { SectionPanel } from "./panels/section-panel";
 import { PagesPanel } from "./panels/pages-panel";
 import { TemplatesPanel } from "./panels/templates-panel";
 import { MediaPanel } from "./panels/media-panel";
@@ -34,13 +33,9 @@ export function BuilderSidebar() {
   const tabs: TabDef[] = useMemo(() => [
     { key: "layers", icon: Layers3, label: "Layers", meta: `${sectionCount}` },
     { key: "pages", icon: FileText, label: "Pages" },
-    { key: "components", icon: Grid3X3, label: "Blocks" },
     { key: "templates", icon: AppWindow, label: "Templates" },
     { key: "media", icon: ImagePlus, label: "Media" },
-    { key: "navigator", icon: Navigation, label: "Navigator" },
-    { key: "history", icon: History, label: "History" },
     { key: "theme", icon: Palette, label: "Theme" },
-    { key: "assets", icon: Package, label: "Assets" },
   ], [sectionCount]);
 
   const handleTabClick = useCallback((key: LeftTab) => {
@@ -50,14 +45,10 @@ export function BuilderSidebar() {
   const renderPanel = () => {
     switch (activeTab) {
       case "layers": return <LayersPanel />;
-      case "components": return <SectionPanel />;
       case "pages": return <PagesPanel />;
       case "templates": return <TemplatesPanel />;
       case "media": return <MediaPanel billingHref={`/store/${storeSlug}/billing`} />;
-      case "navigator": return <PagesPanel />; // Reuse pages for now
-      case "history": return <LayersPanel />; // Reuse layers for now
       case "theme": return <ThemePanel />;
-      case "assets": return <MediaPanel billingHref={`/store/${storeSlug}/billing`} />; // Reuse media for now
       default: return <LayersPanel />;
     }
   };

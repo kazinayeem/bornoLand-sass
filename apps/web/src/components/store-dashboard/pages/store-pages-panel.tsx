@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { PageTreeNode } from "./page-tree-node";
 import { PageContextMenu } from "./page-context-menu";
 import { PageSettingsDrawer } from "./page-settings-drawer";
+import { NavConflictDialog } from "./nav-conflict-dialog";
 import { toast } from "sonner";
 
 function PagesSkeleton() {
@@ -97,6 +98,7 @@ export function StorePagesPanel() {
   const [newPageTitle, setNewPageTitle] = useState("");
   const [newPageSlug, setNewPageSlug] = useState("");
   const [showTrash, setShowTrash] = useState(false);
+  const [deleteCheckPage, setDeleteCheckPage] = useState<StorePage | null>(null);
 
   const { data, isLoading: pagesLoading } = useGetStorePagesQuery(storeId ?? "", { skip: !storeId });
   const { data: trashData, isLoading: trashLoading } = useGetDeletedStorePagesQuery(storeId ?? "", { skip: !storeId || !showTrash });
@@ -183,10 +185,7 @@ export function StorePagesPanel() {
           toast.success("Page restored");
           break;
         case "delete":
-          if (confirm(`Move "${page.title}" to trash?`)) {
-            await deletePage({ id: page._id, storeId }).unwrap();
-            toast.success("Page moved to trash");
-          }
+          setDeleteCheckPage(page);
           break;
         case "generate-preview": {
           const result = await generatePreviewToken({ pageId: page._id, storeId }).unwrap();
@@ -203,6 +202,17 @@ export function StorePagesPanel() {
       toast.error(message);
     }
   }, [storeId, store?.slug, openBuilder, duplicatePage, publishPage, unpublishPage, archivePage, restorePage, deletePage, generatePreviewToken]);
+
+  const handleConfirmDeletePage = useCallback(async () => {
+    if (!storeId || !deleteCheckPage) return;
+    try {
+      await deletePage({ id: deleteCheckPage._id, storeId }).unwrap();
+      toast.success("Page moved to trash");
+      setDeleteCheckPage(null);
+    } catch {
+      toast.error("Failed to delete page");
+    }
+  }, [storeId, deleteCheckPage, deletePage]);
 
   const handleRenameSubmit = async (pageId: string) => {
     if (!storeId || !renameValue.trim()) return;
@@ -533,6 +543,16 @@ export function StorePagesPanel() {
           page={selectedPage}
           storeId={storeId}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* Delete Confirmation with Nav Conflict Check */}
+      {deleteCheckPage && (
+        <NavConflictDialog
+          page={deleteCheckPage}
+          storeId={storeId}
+          onClose={() => setDeleteCheckPage(null)}
+          onConfirmDelete={handleConfirmDeletePage}
         />
       )}
     </div>

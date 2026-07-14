@@ -8,6 +8,8 @@ import { X, Type, Layers, AlignLeft, PaintBucket, Ruler, ChevronDown, Lightbulb,
 import { useState } from "react";
 import { getSectionDef, type SectionPropDef } from "@/lib/section-registry";
 import { BuilderMediaField } from "@/components/builder/builder-media-field";
+import { HeaderBuilderSettings } from "@/components/builder/header-builder-settings";
+import { FooterBuilderSettings } from "@/components/builder/footer-builder-settings";
 import { useRequiredStore } from "@/providers/store-context";
 
 // ─── Control components ──────────────────────────────────────────
@@ -109,6 +111,7 @@ export function PropertiesPanel() {
   const { storeId, storeSlug } = useRequiredStore();
   const selectedId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const section = useSelector((s: RootState) => s.builder.sections.find((sec) => sec.id === selectedId));
+  const editingZone = useSelector((s: RootState) => s.builder.editingZone);
   const activeRightTab = useSelector((s: RootState) => s.builder.activeRightTab);
   const rightPanelPinned = useSelector((s: RootState) => s.builder.rightPanelPinned);
 
@@ -123,6 +126,12 @@ export function PropertiesPanel() {
   };
 
   if (!section) {
+    if (editingZone === "header") {
+      return <HeaderBuilderSettings />;
+    }
+    if (editingZone === "footer") {
+      return <FooterBuilderSettings />;
+    }
     return (
       <div className="flex h-full items-center justify-center p-4">
         <div className="text-center">

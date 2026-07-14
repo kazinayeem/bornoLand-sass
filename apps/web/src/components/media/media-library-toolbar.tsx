@@ -103,7 +103,7 @@ export function MediaLibraryToolbar({
         {!showTitle && stats && !compact && (
           <StorageUsageBar stats={stats} billingHref={billingHref} compact />
         )}
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
             <input
@@ -114,13 +114,13 @@ export function MediaLibraryToolbar({
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
+          <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+            <div className="relative flex-1 sm:flex-initial min-w-[120px]">
               <SlidersHorizontal className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
               <select
                 value={fileFilter}
                 onChange={(e) => onFilterChange(e.target.value as MediaFileFilter)}
-                className="h-10 appearance-none rounded-xl border border-zinc-200 bg-white pl-9 pr-8 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                className="h-10 w-full appearance-none rounded-xl border border-zinc-200 bg-white pl-9 pr-8 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
               >
                 {MEDIA_FILTER_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -133,7 +133,7 @@ export function MediaLibraryToolbar({
             <select
               value={sortOption}
               onChange={(e) => onSortChange(e.target.value as MediaSortOption)}
-              className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              className="h-10 flex-1 sm:flex-initial rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
             >
               {MEDIA_SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -145,7 +145,7 @@ export function MediaLibraryToolbar({
             <button
               type="button"
               onClick={onUploadClick}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 shrink-0"
             >
               <Upload className="h-4 w-4" />
               <span className="hidden sm:inline">Upload</span>

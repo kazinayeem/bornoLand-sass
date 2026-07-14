@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
@@ -113,14 +114,22 @@ export function PagesPanel() {
   }, [ctxMenu]);
 
   useEffect(() => {
+    if (!ctxMenu) return;
     const handler = (e: MouseEvent) => {
       if (ctxRef.current && !ctxRef.current.contains(e.target as Node)) {
         setCtxMenu(null);
       }
     };
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setCtxMenu(null);
+    };
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+    document.addEventListener("keydown", keyHandler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("keydown", keyHandler);
+    };
+  }, [ctxMenu]);
 
   const handleOpenPage = useCallback((page: PageData) => {
     dispatch(setPageMetadata({ id: page._id, title: page.title, slug: page.slug }));
@@ -399,46 +408,50 @@ export function PagesPanel() {
         )}
       </div>
 
-      {/* Context menu */}
-      <AnimatePresence>
-        {ctxMenu && (
-          <motion.div
-            ref={ctxRef}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            style={{ position: "fixed", left: ctxPos.x, top: ctxPos.y, zIndex: 100 }}
-            className="w-48 rounded-xl border border-zinc-200 bg-white py-1 shadow-xl"
-          >
-            {isHome(ctxMenu.page) ? (
-              <>
-                <CtxBtn icon={Eye} label="Open" onClick={() => handleOpenPage(ctxMenu.page)} />
-                <CtxBtn icon={Settings} label="Page Settings" onClick={() => { setSettingsPage(ctxMenu.page); setCtxMenu(null); }} />
-                <CtxBtn icon={RefreshCw} label="Reset to Template" onClick={() => { setResetPageTarget(ctxMenu.page); setCtxMenu(null); }} />
-              </>
-            ) : (
-              <>
-                <CtxBtn icon={Eye} label="Open" onClick={() => handleOpenPage(ctxMenu.page)} />
-                <CtxBtn icon={ExternalLink} label="Preview" onClick={() => window.open(`/preview/${storeSlug}/${ctxMenu.page.slug}`, "_blank")} />
-                <div className="border-t border-zinc-100 my-1" />
-                <CtxBtn icon={Settings} label="Page Settings" onClick={() => { setSettingsPage(ctxMenu.page); setCtxMenu(null); }} />
-                <CtxBtn icon={Edit3} label="Rename" onClick={() => { setRenamingId(ctxMenu.page._id); setRenameValue(ctxMenu.page.title); setCtxMenu(null); }} />
-                <CtxBtn icon={Copy} label="Duplicate" onClick={() => handleDuplicate(ctxMenu.page)} />
-                <div className="border-t border-zinc-100 my-1" />
-                <CtxBtn icon={ctxMenu.page.status === "published" ? EyeOff : Eye} label={ctxMenu.page.status === "published" ? "Unpublish" : "Publish"} onClick={() => handlePublish(ctxMenu.page)} />
-                {ctxMenu.page.status === "archived" ? (
-                  <CtxBtn icon={Globe} label="Restore" onClick={() => handleRestore(ctxMenu.page)} />
-                ) : (
-                  <CtxBtn icon={Archive} label="Archive" onClick={() => handleArchive(ctxMenu.page)} />
-                )}
-                <CtxBtn icon={RefreshCw} label="Reset to Template" onClick={() => { setResetPageTarget(ctxMenu.page); setCtxMenu(null); }} />
-                <div className="border-t border-zinc-100 my-1" />
-                <CtxBtn icon={Trash2} label="Delete" danger onClick={() => handleDelete(ctxMenu.page)} />
-              </>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Context menu — portal to body so it's never clipped by overflow containers */}
+      {typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {ctxMenu && (
+            <motion.div
+              ref={ctxRef}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              style={{ position: "fixed", left: ctxPos.x, top: ctxPos.y, zIndex: 9999 }}
+              className="w-48 rounded-xl border border-zinc-200/80 bg-white py-1.5 shadow-2xl shadow-black/10 ring-1 ring-black/5"
+            >
+              {isHome(ctxMenu.page) ? (
+                <>
+                  <CtxBtn icon={Eye} label="Open" onClick={() => handleOpenPage(ctxMenu.page)} />
+                  <CtxBtn icon={Settings} label="Page Settings" onClick={() => { setSettingsPage(ctxMenu.page); setCtxMenu(null); }} />
+                  <CtxBtn icon={RefreshCw} label="Reset to Template" onClick={() => { setResetPageTarget(ctxMenu.page); setCtxMenu(null); }} />
+                </>
+              ) : (
+                <>
+                  <CtxBtn icon={Eye} label="Open" onClick={() => handleOpenPage(ctxMenu.page)} />
+                  <CtxBtn icon={ExternalLink} label="Preview" onClick={() => window.open(`/preview/${storeSlug}/${ctxMenu.page.slug}`, "_blank")} />
+                  <div className="border-t border-zinc-100 my-1" />
+                  <CtxBtn icon={Settings} label="Page Settings" onClick={() => { setSettingsPage(ctxMenu.page); setCtxMenu(null); }} />
+                  <CtxBtn icon={Edit3} label="Rename" onClick={() => { setRenamingId(ctxMenu.page._id); setRenameValue(ctxMenu.page.title); setCtxMenu(null); }} />
+                  <CtxBtn icon={Copy} label="Duplicate" onClick={() => handleDuplicate(ctxMenu.page)} />
+                  <div className="border-t border-zinc-100 my-1" />
+                  <CtxBtn icon={ctxMenu.page.status === "published" ? EyeOff : Eye} label={ctxMenu.page.status === "published" ? "Unpublish" : "Publish"} onClick={() => handlePublish(ctxMenu.page)} />
+                  {ctxMenu.page.status === "archived" ? (
+                    <CtxBtn icon={Globe} label="Restore" onClick={() => handleRestore(ctxMenu.page)} />
+                  ) : (
+                    <CtxBtn icon={Archive} label="Archive" onClick={() => handleArchive(ctxMenu.page)} />
+                  )}
+                  <CtxBtn icon={RefreshCw} label="Reset to Template" onClick={() => { setResetPageTarget(ctxMenu.page); setCtxMenu(null); }} />
+                  <div className="border-t border-zinc-100 my-1" />
+                  <CtxBtn icon={Trash2} label="Delete" danger onClick={() => handleDelete(ctxMenu.page)} />
+                </>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* New Page Dialog */}
       <AnimatePresence>
@@ -560,11 +573,11 @@ function CtxBtn({ icon: Icon, label, onClick, danger }: { icon: any; label: stri
     <button
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors",
+        "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm font-medium transition-colors outline-none",
         danger ? "text-red-600 hover:bg-red-50" : "text-zinc-700 hover:bg-zinc-50"
       )}
     >
-      <Icon className={cn("h-3.5 w-3.5", danger ? "text-red-400" : "text-zinc-400")} />
+      <Icon className={cn("h-4 w-4 shrink-0", danger ? "text-red-500" : "text-zinc-400")} />
       {label}
     </button>
   );

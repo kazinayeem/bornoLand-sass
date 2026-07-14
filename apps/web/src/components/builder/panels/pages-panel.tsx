@@ -453,44 +453,65 @@ export function PagesPanel() {
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl"
+              className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white shadow-2xl"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-semibold text-zinc-900">New Page</h3>
-                <button onClick={() => setNewPageOpen(false)} className="rounded-lg p-1 hover:bg-zinc-100">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
+                <div>
+                  <h3 className="text-base font-semibold text-zinc-900">New Page</h3>
+                  <p className="mt-0.5 text-xs text-zinc-500">Start blank or pick a template</p>
+                </div>
+                <button onClick={() => setNewPageOpen(false)} className="rounded-lg p-1.5 hover:bg-zinc-100 transition-colors">
                   <X className="h-4 w-4 text-zinc-500" />
                 </button>
               </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="mb-1 block text-[11px] font-medium text-zinc-500">Page Name</label>
-                  <input
-                    value={newPageTitle}
-                    onChange={(e) => {
-                      setNewPageTitle(e.target.value);
-                      setNewPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""));
-                    }}
-                    placeholder="Sale Page"
-                    className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-zinc-400 focus:bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-[11px] font-medium text-zinc-500">URL Slug</label>
-                  <div className="flex items-center gap-1 rounded-xl border border-zinc-200 bg-zinc-50 px-3 focus-within:border-zinc-400 focus-within:bg-white">
-                    <span className="text-xs text-zinc-400">/</span>
+
+              <div className="p-5 space-y-5">
+                {/* Title + Slug */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="mb-1 block text-[11px] font-medium text-zinc-500">Page Name</label>
                     <input
-                      value={newPageSlug}
-                      onChange={(e) => setNewPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, "").replace(/(^-|-$)/g, ""))}
-                      placeholder="sale-page"
-                      className="h-10 flex-1 bg-transparent text-sm outline-none"
+                      value={newPageTitle}
+                      onChange={(e) => {
+                        setNewPageTitle(e.target.value);
+                        setNewPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""));
+                      }}
+                      placeholder="Sale Page"
+                      autoFocus
+                      className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-zinc-400 focus:bg-white transition-colors"
                     />
                   </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-medium text-zinc-500">URL Slug</label>
+                    <div className="flex items-center gap-1 rounded-xl border border-zinc-200 bg-zinc-50 px-3 focus-within:border-zinc-400 focus-within:bg-white transition-colors">
+                      <span className="text-xs text-zinc-400">/</span>
+                      <input
+                        value={newPageSlug}
+                        onChange={(e) => setNewPageSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, "").replace(/(^-|-$)/g, ""))}
+                        placeholder="sale-page"
+                        className="h-10 flex-1 bg-transparent text-sm outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Template picker */}
+                <div>
+                  <label className="mb-2 block text-[11px] font-medium text-zinc-500">Start With</label>
+                  <NewPageTemplatePicker
+                    templates={templatesData?.data?.templates ?? []}
+                    selected={newPageTemplateId}
+                    onChange={setNewPageTemplateId}
+                  />
                 </div>
               </div>
-              <div className="mt-5 flex items-center justify-end gap-2">
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-2 border-t border-zinc-100 px-5 py-4">
                 <button
-                  onClick={() => { setNewPageOpen(false); setNewPageTitle(""); setNewPageSlug(""); }}
-                  className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
+                  onClick={() => { setNewPageOpen(false); setNewPageTitle(""); setNewPageSlug(""); setNewPageTemplateId("blank"); }}
+                  className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -499,7 +520,7 @@ export function PagesPanel() {
                   disabled={creating || !newPageTitle.trim() || !newPageSlug.trim()}
                   className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
                 >
-                  {creating ? "Creating..." : "Create Page"}
+                  {creating ? "Creating…" : "Create Page"}
                 </button>
               </div>
             </motion.div>
@@ -689,5 +710,70 @@ function ToggleField({ label, checked, onChange }: { label: string; checked: boo
         )} />
       </button>
     </label>
+  );
+}
+
+// ─── Template picker for New Page dialog ─────────────────────────────────────
+
+const CATEGORY_META: Record<string, { icon: string; label: string; color: string }> = {
+  ecommerce:   { icon: "🛍️", label: "Ecommerce",   color: "from-violet-500 to-purple-600" },
+  fashion:     { icon: "👗", label: "Fashion",      color: "from-pink-500 to-rose-500" },
+  electronics: { icon: "💻", label: "Electronics",  color: "from-blue-500 to-cyan-500" },
+  restaurant:  { icon: "🍽️", label: "Restaurant",   color: "from-orange-500 to-red-500" },
+  landing:     { icon: "🚀", label: "Landing Page", color: "from-emerald-500 to-teal-500" },
+};
+
+function NewPageTemplatePicker({
+  templates,
+  selected,
+  onChange,
+}: {
+  templates: BuilderTemplate[];
+  selected: string;
+  onChange: (id: string) => void;
+}) {
+  const options = [
+    { id: "blank", name: "Blank Page", description: "Start with an empty canvas", icon: "📄", color: "from-zinc-200 to-zinc-300" },
+    ...templates.map((t) => ({
+      id: t._id,
+      name: t.name,
+      description: t.description ?? `${t.sections?.length ?? 0} sections`,
+      icon: CATEGORY_META[t.category]?.icon ?? "📄",
+      color: CATEGORY_META[t.category]?.color ?? "from-zinc-400 to-zinc-500",
+    })),
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      {options.map((opt) => (
+        <button
+          key={opt.id}
+          type="button"
+          onClick={() => onChange(opt.id)}
+          className={cn(
+            "relative flex flex-col overflow-hidden rounded-xl border text-left transition-all",
+            selected === opt.id
+              ? "border-zinc-900 ring-2 ring-zinc-900/10"
+              : "border-zinc-200 hover:border-zinc-300",
+          )}
+        >
+          {/* Colour swatch */}
+          <div className={`flex h-14 items-center justify-center bg-gradient-to-br ${opt.color}`}>
+            <span className="text-2xl">{opt.icon}</span>
+          </div>
+          {/* Label */}
+          <div className="px-2.5 py-2">
+            <p className="text-xs font-semibold text-zinc-900 truncate">{opt.name}</p>
+            <p className="mt-0.5 text-[10px] text-zinc-400 leading-tight line-clamp-2">{opt.description}</p>
+          </div>
+          {/* Selected tick */}
+          {selected === opt.id && (
+            <div className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-zinc-900">
+              <Check className="h-2.5 w-2.5 text-white" />
+            </div>
+          )}
+        </button>
+      ))}
+    </div>
   );
 }

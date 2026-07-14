@@ -30,9 +30,11 @@ export type SubscriptionPayment = {
   transactionId: string;
   screenshotUrl?: string;
   notes?: string;
-  status: "pending" | "approved" | "rejected" | "expired";
+  status: "pending" | "approved" | "rejected" | "expired" | "requested_info";
   approvedAt?: string;
   rejectedReason?: string;
+  requestInfoMessage?: string;
+  requestInfoAt?: string;
   subscriptionExpireDate?: string;
   createdAt: string;
 };
@@ -94,6 +96,17 @@ export const subscriptionPaymentApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["SubscriptionPayments", "Stores"],
     }),
+    requestInfoSubscriptionPayment: builder.mutation<
+      ApiEnvelope<{ payment: SubscriptionPayment }>,
+      { id: string; message: string }
+    >({
+      query: ({ id, message }) => ({
+        url: `/subscription-payments/${id}/request-info`,
+        method: "POST",
+        body: { message },
+      }),
+      invalidatesTags: ["SubscriptionPayments"],
+    }),
     getAdminPlatformPaymentMethods: builder.query<ApiEnvelope<{ methods: PlatformPaymentMethod[] }>, void>({
       query: () => ({ url: "/subscription-payments/admin/methods" }),
       providesTags: ["SubscriptionPayments"],
@@ -119,6 +132,7 @@ export const {
   useGetAdminSubscriptionPaymentsQuery,
   useApproveSubscriptionPaymentMutation,
   useRejectSubscriptionPaymentMutation,
+  useRequestInfoSubscriptionPaymentMutation,
   useGetAdminPlatformPaymentMethodsQuery,
   useUpdateAdminPlatformPaymentMethodMutation,
 } = subscriptionPaymentApi;

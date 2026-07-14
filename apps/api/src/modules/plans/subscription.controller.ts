@@ -8,7 +8,6 @@ import { getStoreUsageReport } from "./usage.service.js";
 import { SubscriptionPaymentModel } from "../payments/subscription-payment.model.js";
 import { getPlanPriceForDuration } from "./plan-pricing.util.js";
 import { approveSubscriptionPayment } from "../payments/subscription-payment.service.js";
-import mongoose from "mongoose";
 
 export async function getStoreSubscriptionDashboardController(request: AuthRequest, response: Response) {
   const userId = request.user?.userId;
@@ -37,9 +36,12 @@ export async function getStoreSubscriptionDashboardController(request: AuthReque
       subscriptionStatus: store.subscriptionStatus,
       trialEndsAt: store.trialEndsAt,
       trialStartedAt: store.trialStartedAt,
+      renewalDate: store.renewalDate,
+      subscriptionDuration: store.subscriptionDuration,
       published: store.published,
       allowNewOrders: store.allowNewOrders,
       plan: store.plan,
+      createdAt: store.createdAt,
     },
     plan: plan ? {
       _id: plan._id,
@@ -119,21 +121,22 @@ export async function initiateCheckoutController(request: AuthRequest, response:
   const storeId = String(request.params.storeId || "");
   if (!userId || !storeId) return sendFailure(response, "Unauthorized", 401);
 
-  const { planId, duration, paymentMethod } = request.body;
-  if (!planId || !duration || !paymentMethod) {
-    return sendFailure(response, "planId, duration, and paymentMethod are required", 400);
+  const { planId, duration, paymentMethod, amount, senderNumber, transactionId, notes } = request.body;
+  if (!planId || !duration || !paymentMethod || !senderNumber || !transactionId) {
+    return sendFailure(response, "planId, duration, paymentMethod, senderNumber, and transactionId are required", 400);
   }
 
   await connectDatabase();
   const store = await StoreModel.findOne({ _id: storeId, userId });
   if (!store) return sendFailure(response, "Store not found", 404);
 
-  const plan = await PlanModel.findById(planId).lean();
+  const plan = await PlanModel.findById(planId).lean() as Record<string, unknown> | null;
   if (!plan) return sendFailure(response, "Plan not found", 404);
 
-  const amount = getPlanPriceForDuration(plan as any, duration);
-
-  const txnId = `TXN-${new mongoose.Types.ObjectId().toString().toUpperCase()}`;
+  const expectedAmount = getPlanPriceForDuration(plan as any, duration);
+  if (!(plan as any).isCustomPrice && Math.abs((amount || 0) - expectedAmount) > 1) {
+    return sendFailure(response, "Payment amount does not match plan price for selected duration");
+  }
 
   const payment = await SubscriptionPaymentModel.create({
     tenantId: store.tenantId,
@@ -141,47 +144,26 @@ export async function initiateCheckoutController(request: AuthRequest, response:
     userId,
     planId: plan._id,
     duration,
-    amount,
+    amount: amount || expectedAmount,
     paymentMethod,
-    senderNumber: "01700000000", // Default sender number for mock online checkout
-    transactionId: txnId,
+    senderNumber,
+    transactionId,
     paymentDate: new Date(),
+    notes: notes || "",
     status: "pending",
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   });
+
+  await StoreModel.updateOne(
+    { _id: store._id },
+    { $set: { status: "pending_payment", billingStatus: "past_due" } }
+  );
 
   return sendSuccess(response, {
-    payment,
-    mockRedirectUrl: `/store/${store.slug}/billing/payment-gateway-mock?paymentId=${payment._id}`,
-  });
+    payment: payment.toObject(),
+  }, "Payment submitted for admin approval", 201);
 }
 
-export async function checkoutCallbackController(request: AuthRequest, response: Response) {
-  const userId = request.user?.userId;
-  if (!userId) return sendFailure(response, "Unauthorized", 401);
-
-  const { paymentId, status } = request.body;
-  if (!paymentId || !status) {
-    return sendFailure(response, "paymentId and status are required", 400);
-  }
-
-  await connectDatabase();
-
-  const payment = await SubscriptionPaymentModel.findById(paymentId);
-  if (!payment) return sendFailure(response, "Payment not found", 404);
-
-  if (status === "success") {
-    // Approve subscription payment automatically
-    const result = await approveSubscriptionPayment(paymentId, userId, {});
-    if (!result.ok) {
-      return sendFailure(response, result.message ?? "Approval failed");
-    }
-    return sendSuccess(response, result.data, "Payment successful and subscription activated");
-  } else {
-    // Cancel the payment
-    payment.status = "rejected";
-    payment.rejectedReason = "Payment cancelled by user";
-    await payment.save();
-    return sendSuccess(response, { status: "cancelled" }, "Payment cancelled");
-  }
+export async function checkoutCallbackController(_request: AuthRequest, response: Response) {
+  return sendFailure(response, "This endpoint is deprecated. Use the manual payment submission flow instead.", 410);
 }

@@ -8,6 +8,7 @@ import {
   getStorePaymentsController,
   listAdminPaymentsController,
   rejectPaymentController,
+  requestInfoPaymentController,
   submitStorePaymentController,
   updateAdminPaymentMethodController,
 } from "./subscription-payment.controller.js";
@@ -28,3 +29,4 @@ subscriptionPaymentRouter.put("/admin/methods/:type", updateAdminPaymentMethodCo
 subscriptionPaymentRouter.get("/", listAdminPaymentsController);
 subscriptionPaymentRouter.post("/:id/approve", approvePaymentController);
 subscriptionPaymentRouter.post("/:id/reject", rejectPaymentController);
+subscriptionPaymentRouter.post("/:id/request-info", requestInfoPaymentController);

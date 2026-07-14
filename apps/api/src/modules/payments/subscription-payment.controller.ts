@@ -7,6 +7,7 @@ import {
   getStoreSubscriptionPayments,
   listSubscriptionPayments,
   rejectSubscriptionPayment,
+  requestInfoSubscriptionPayment,
   submitStoreSubscriptionPayment,
   updatePlatformPaymentMethod,
 } from "./subscription-payment.service.js";
@@ -55,6 +56,14 @@ export async function rejectPaymentController(request: AuthRequest, response: Re
   if (!adminUserId) return sendFailure(response, "Unauthorized", 401);
   const result = await rejectSubscriptionPayment(paymentId, adminUserId, request.body);
   return result.ok ? sendSuccess(response, result.data, "Payment rejected") : sendFailure(response, result.message);
+}
+
+export async function requestInfoPaymentController(request: AuthRequest, response: Response) {
+  const adminUserId = request.user?.userId;
+  const paymentId = request.params.id as string;
+  if (!adminUserId) return sendFailure(response, "Unauthorized", 401);
+  const result = await requestInfoSubscriptionPayment(paymentId, adminUserId, request.body);
+  return result.ok ? sendSuccess(response, result.data, "Info requested") : sendFailure(response, result.message);
 }
 
 export async function getAdminPaymentMethodsController(_request: AuthRequest, response: Response) {

@@ -12,7 +12,7 @@ export function Navbar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
     "/admin/dashboard/stores": "Stores",
     "/admin/dashboard/subscriptions": "Subscriptions",
     "/admin/dashboard/plans": "Plans",
-    "/admin/dashboard/payments": "Payments",
+    "/admin/dashboard/payments": "Payments & Review",
     "/admin/dashboard/analytics": "Analytics",
     "/admin/dashboard/platform": "Platform",
     "/admin/dashboard/settings": "Settings",

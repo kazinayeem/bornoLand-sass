@@ -56,16 +56,20 @@ export function PaymentHistoryTable({ storeId }: { storeId?: string }) {
                 <td className="px-6 py-4 font-medium text-zinc-900">
                   {payment.amount.toLocaleString()} {payment.currency}
                 </td>
-                <td className="px-6 py-4 text-xs text-zinc-500 max-w-[200px] truncate" title={payment.bankTransactionId ?? "-"}>
-                  {payment.bankTransactionId ?? "-"}
+                <td className="px-6 py-4 text-xs text-zinc-500 max-w-[200px] truncate" title={payment.transactionId}>
+                  {payment.transactionId}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  {payment.status === "completed" ? (
-                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Paid</Badge>
+                  {payment.status === "approved" ? (
+                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">Approved</Badge>
                   ) : payment.status === "pending" ? (
-                    <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">Pending</Badge>
+                    <Badge className="bg-amber-100 text-amber-800 border-amber-200">Pending</Badge>
+                  ) : payment.status === "rejected" ? (
+                    <Badge className="bg-red-100 text-red-800 border-red-200">Rejected</Badge>
+                  ) : payment.status === "requested_info" ? (
+                    <Badge className="bg-violet-100 text-violet-800 border-violet-200">More Info</Badge>
                   ) : (
-                    <Badge className="bg-red-100 text-red-800 hover:bg-red-100">{payment.status}</Badge>
+                    <Badge className="bg-zinc-100 text-zinc-800 border-zinc-200">{payment.status}</Badge>
                   )}
                 </td>
               </tr>

@@ -1,85 +1,103 @@
 "use client";
 
-import { useGetStoreInvoicesQuery } from "@/redux/api/billing-api";
-import { Loader2, Download, Eye } from "lucide-react";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Loader2, FileText, Eye, Download } from "lucide-react";
+import { useGetStoreInvoicesQuery, type Invoice } from "@/redux/api/billing-api";
+import { formatBDT } from "@/lib/store-status";
 import { Badge } from "@/components/ui/badge";
+import { InvoiceDetail } from "./invoice-detail";
 
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
-}
+export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
+  const { data, isLoading } = useGetStoreInvoicesQuery(storeId);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
-export function InvoiceHistoryTable({ storeId }: { storeId?: string }) {
-  const { data: invoicesData, isLoading } = useGetStoreInvoicesQuery(storeId ?? "", { skip: !storeId });
+  const invoices = data?.data?.invoices ?? [];
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-16">
         <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
       </div>
     );
   }
 
-  const invoices = invoicesData?.data?.invoices ?? [];
-
   if (invoices.length === 0) {
     return (
-      <div className="rounded-2xl border border-zinc-200/80 bg-white p-12 text-center shadow-sm">
-        <p className="text-sm font-medium text-zinc-500">No invoices found for this store.</p>
+      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center shadow-sm">
+        <FileText className="mx-auto h-10 w-10 text-zinc-300" />
+        <h3 className="mt-3 text-lg font-semibold text-zinc-900">No invoices yet</h3>
+        <p className="mt-1 text-sm text-zinc-500">Invoices are generated after payment approval.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-200/80 bg-white shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-zinc-200/80">
-        <h2 className="text-lg font-semibold text-zinc-900">Invoice History</h2>
-        <p className="text-sm text-zinc-500">View and download your past invoices.</p>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm text-zinc-600">
-          <thead className="bg-zinc-50/50 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            <tr>
-              <th className="px-6 py-4">Invoice Number</th>
-              <th className="px-6 py-4">Date</th>
-              <th className="px-6 py-4">Plan</th>
-              <th className="px-6 py-4">Amount</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Actions</th>
+    <>
+      <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-zinc-100 bg-zinc-50/50">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Invoice</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Date</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Plan</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Duration</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">Amount</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-zinc-500">Status</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200/80 bg-white">
-            {invoices.map((invoice) => (
-              <tr key={invoice._id} className="transition-colors hover:bg-zinc-50/50">
-                <td className="px-6 py-4 font-medium text-zinc-900">{invoice.invoiceNumber}</td>
-                <td className="px-6 py-4">{formatDate(invoice.createdAt)}</td>
-                <td className="px-6 py-4">{invoice.planId?.name}</td>
-                <td className="px-6 py-4 font-medium text-zinc-900">
-                  {invoice.total.toLocaleString()} {invoice.currency}
-                </td>
-                <td className="px-6 py-4">
-                  {invoice.status === "paid" ? (
-                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Paid</Badge>
-                  ) : invoice.status === "pending" ? (
-                    <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">Pending</Badge>
-                  ) : (
-                    <Badge className="bg-red-100 text-red-800 hover:bg-red-100">{invoice.status}</Badge>
-                  )}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button className="flex items-center justify-center rounded-md p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors">
-                      <Eye className="h-4 w-4" />
+          <tbody className="divide-y divide-zinc-100">
+            {invoices.map((inv, idx) => {
+              const planName = typeof inv.planId === "object" ? inv.planId.name : "—";
+              return (
+                <motion.tr
+                  key={inv._id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.02 }}
+                  className="hover:bg-zinc-50/50 transition-colors"
+                >
+                  <td className="px-4 py-3">
+                    <p className="font-mono text-xs font-semibold text-zinc-900">{inv.invoiceNumber}</p>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">
+                    {new Date(inv.createdAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-zinc-900">{planName}</td>
+                  <td className="px-4 py-3 text-xs text-zinc-500 capitalize">{inv.duration?.replace("_", " ")}</td>
+                  <td className="px-4 py-3 text-right text-sm font-semibold text-zinc-900">{formatBDT(inv.total)}</td>
+                  <td className="px-4 py-3 text-center">
+                    <Badge variant="success" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                      {inv.status}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => setSelectedInvoice(inv)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      View
                     </button>
-                    <button className="flex items-center justify-center rounded-md p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors">
-                      <Download className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </motion.tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
-    </div>
+
+      {selectedInvoice && (
+        <InvoiceDetail
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+        />
+      )}
+    </>
   );
 }

@@ -7,6 +7,7 @@ import {
   submitSubscriptionPaymentSchema,
   rejectPaymentSchema,
   approvePaymentSchema,
+  requestInfoPaymentSchema,
   updatePlatformPaymentMethodSchema,
 } from "./subscription-payment.validator.js";
 import { addDays } from "../../common/utils/store-trial.js";
@@ -215,6 +216,13 @@ export async function approveSubscriptionPayment(
     paymentId: String(payment._id),
     duration,
     subtotal: payment.amount,
+    gateway: payment.paymentMethod,
+    transactionId: payment.transactionId,
+    senderNumber: payment.senderNumber,
+    approvedBy: adminUserId,
+    paidAt: new Date(),
+    billingPeriodStart: startDate,
+    billingPeriodEnd: expireDate ?? undefined,
   });
 
   await createBillingNotification({
@@ -260,6 +268,37 @@ export async function rejectSubscriptionPayment(
     title: "Payment rejected",
     message: `Your subscription payment was rejected. Reason: ${parsed.data.reason}`,
     metadata: { paymentId: String(payment._id), reason: parsed.data.reason },
+  });
+
+  return { ok: true as const, data: { payment: payment.toObject() } };
+}
+
+export async function requestInfoSubscriptionPayment(
+  paymentId: string,
+  adminUserId: string,
+  payload: unknown
+) {
+  const parsed = requestInfoPaymentSchema.safeParse(payload);
+  if (!parsed.success) return { ok: false as const, message: "Message is required" };
+
+  await connectDatabase();
+  const payment = await SubscriptionPaymentModel.findById(paymentId);
+  if (!payment) return { ok: false as const, message: "Payment not found" };
+  if (payment.status !== "pending") return { ok: false as const, message: "Payment is not pending" };
+
+  payment.status = "requested_info";
+  payment.approvedBy = adminUserId as never;
+  payment.requestInfoMessage = parsed.data.message;
+  payment.requestInfoAt = new Date();
+  await payment.save();
+
+  await createBillingNotification({
+    userId: String(payment.userId),
+    storeId: String(payment.storeId),
+    type: "payment_rejected",
+    title: "Additional information requested",
+    message: `Admin requested more information for your payment: ${parsed.data.message}`,
+    metadata: { paymentId: String(payment._id), message: parsed.data.message },
   });
 
   return { ok: true as const, data: { payment: payment.toObject() } };

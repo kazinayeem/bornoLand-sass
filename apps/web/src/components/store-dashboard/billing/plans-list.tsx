@@ -302,7 +302,7 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
                         const currentValue = currentPlan ? row.getValue(currentPlan, isYearly) : undefined;
                         const diffClass =
                           !isCurrent && currentValue !== undefined && row.category === "limits"
-                            ? getDiffClass(currentValue, value, row.format)
+                            ? getDiffClass(currentValue as number | boolean, value as number | boolean, row.format)
                             : "";
 
                         return (

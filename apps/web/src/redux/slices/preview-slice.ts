@@ -5,6 +5,8 @@ type PreviewState = {
   zoom: number;
   showGuides: boolean;
   showGrid: boolean;
+  fullscreen: boolean;
+  presentationMode: boolean;
 };
 
 const initialState: PreviewState = {
@@ -12,6 +14,8 @@ const initialState: PreviewState = {
   zoom: 100,
   showGuides: false,
   showGrid: false,
+  fullscreen: false,
+  presentationMode: false,
 };
 
 const previewSlice = createSlice({
@@ -22,7 +26,7 @@ const previewSlice = createSlice({
       state.device = action.payload;
     },
     setZoom(state, action: PayloadAction<number>) {
-      state.zoom = Math.max(25, Math.min(200, action.payload));
+      state.zoom = Math.max(10, Math.min(200, action.payload));
     },
     toggleGuides(state) {
       state.showGuides = !state.showGuides;
@@ -30,8 +34,16 @@ const previewSlice = createSlice({
     toggleGrid(state) {
       state.showGrid = !state.showGrid;
     },
+    setFullscreen(state, action: PayloadAction<boolean>) {
+      state.fullscreen = action.payload;
+      if (action.payload) state.presentationMode = false;
+    },
+    setPresentationMode(state, action: PayloadAction<boolean>) {
+      state.presentationMode = action.payload;
+      if (action.payload) state.fullscreen = false;
+    },
   },
 });
 
-export const { setDevice, setZoom, toggleGuides, toggleGrid } = previewSlice.actions;
+export const { setDevice, setZoom, toggleGuides, toggleGrid, setFullscreen, setPresentationMode } = previewSlice.actions;
 export const previewReducer = previewSlice.reducer;

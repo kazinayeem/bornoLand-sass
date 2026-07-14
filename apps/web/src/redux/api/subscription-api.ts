@@ -30,6 +30,9 @@ export type SubscriptionDashboardResponse = {
     subscriptionStatus: string;
     trialEndsAt?: string;
     trialStartedAt?: string;
+    renewalDate?: string;
+    subscriptionDuration?: string;
+    createdAt?: string;
     published: boolean;
     allowNewOrders: boolean;
     plan: string;

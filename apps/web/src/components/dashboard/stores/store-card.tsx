@@ -6,17 +6,20 @@ import { motion } from "framer-motion";
 import {
   Box,
   BarChart3,
-  CreditCard,
-  Globe,
-  Palette,
-  LayoutGrid,
   MoreHorizontal,
   Copy,
   ExternalLink,
   Trash2,
-  Wrench,
-  Eye,
+  LayoutGrid,
+  Palette,
   Calendar,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  RefreshCcw,
+  CreditCard,
+  HardDrive,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Store as StoreType, Plan } from "@/redux/api/store-api";
@@ -27,6 +30,7 @@ import {
   resolveStoreStatus,
   storeStatusConfig,
   getTrialDaysRemaining,
+  type StoreStatus,
 } from "@/lib/store-status";
 import { STORE_TYPES } from "@/lib/store-types";
 
@@ -56,6 +60,98 @@ function getStoreTypeLabel(storeType?: string) {
   return STORE_TYPES.find((t) => t.id === storeType)?.label ?? "Ecommerce";
 }
 
+function getDaysRemainingText(store: StoreType): { text: string; urgent: boolean; expired: boolean } {
+  const status = resolveStoreStatus(store);
+
+  if (status === "pending_payment" || status === "pending_approval") {
+    return { text: "Waiting Approval", urgent: false, expired: false };
+  }
+
+  if (status === "expired") {
+    const endsAt = store.trialEndsAt;
+    if (endsAt) {
+      const diff = Date.now() - new Date(endsAt).getTime();
+      const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      if (days <= 0) return { text: "Expired Today", urgent: true, expired: true };
+      return { text: `Expired ${days}d ago`, urgent: true, expired: true };
+    }
+    return { text: "Expired", urgent: true, expired: true };
+  }
+
+  if (status === "suspended") {
+    return { text: "Suspended", urgent: true, expired: true };
+  }
+
+  if (status === "active") {
+    if (store.renewalDate) {
+      const diff = new Date(store.renewalDate).getTime() - Date.now();
+      const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      if (days <= 0) return { text: "Renewal Due", urgent: true, expired: false };
+      if (days <= 7) return { text: `${days}d left`, urgent: true, expired: false };
+      return { text: `${days} Days Left`, urgent: false, expired: false };
+    }
+    return { text: "Active", urgent: false, expired: false };
+  }
+
+  if (status === "trial") {
+    const days = getTrialDaysRemaining(store.trialEndsAt);
+    if (days === null) return { text: "Trial", urgent: false, expired: false };
+    if (days <= 0) return { text: "Trial Expired", urgent: true, expired: true };
+    if (days <= 3) return { text: `${days}d left`, urgent: true, expired: false };
+    return { text: `${days} Days Left`, urgent: false, expired: false };
+  }
+
+  return { text: "—", urgent: false, expired: false };
+}
+
+function DaysBadge({ store }: { store: StoreType }) {
+  const status = resolveStoreStatus(store);
+
+  if (status === "pending_payment" || status === "pending_approval") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+        <Clock className="h-3 w-3" />
+        Awaiting Approval
+      </span>
+    );
+  }
+
+  const info = getDaysRemainingText(store);
+  if (info.expired) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-semibold text-red-700">
+        <AlertTriangle className="h-3 w-3" />
+        {info.text}
+      </span>
+    );
+  }
+  if (info.urgent) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+        <Clock className="h-3 w-3" />
+        {info.text}
+      </span>
+    );
+  }
+  if (status === "active") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+        <CheckCircle2 className="h-3 w-3" />
+        {info.text}
+      </span>
+    );
+  }
+  if (status === "trial") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700">
+        <Clock className="h-3 w-3" />
+        {info.text}
+      </span>
+    );
+  }
+  return null;
+}
+
 export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCardProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -77,7 +173,11 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
   const statusConfig = storeStatusConfig[status];
   const selectedPlan = plans.find((p) => p._id === (store.planId && typeof store.planId === "object" ? store.planId._id : ""));
   const subsPlan = plans.find((p) => p.slug === store.plan) ?? selectedPlan;
-  const trialDays = getTrialDaysRemaining(store.trialEndsAt);
+  const daysInfo = getDaysRemainingText(store);
+
+  const isActionable = status === "active" || status === "trial";
+  const isExpired = status === "expired";
+  const isPending = status === "pending_payment" || status === "pending_approval";
 
   const copyUrl = () => {
     navigator.clipboard.writeText(storeUrl);
@@ -90,15 +190,29 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03 }}
-      className="group relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
+      className={`group relative overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+        isPending
+          ? "border-amber-200/80 bg-white shadow-amber-100/30"
+          : isExpired
+          ? "border-red-200/80 bg-white shadow-red-100/30"
+          : "border-zinc-200/80 bg-white shadow-sm hover:border-zinc-300"
+      }`}
     >
-      <div className="relative h-28 overflow-hidden bg-gradient-to-br from-zinc-950 via-zinc-800 to-zinc-700 p-5 text-white">
+      {/* Header gradient */}
+      <div
+        className={`relative h-28 overflow-hidden p-5 text-white ${
+          isPending
+            ? "bg-gradient-to-br from-amber-700 via-amber-600 to-amber-500"
+            : isExpired
+            ? "bg-gradient-to-br from-red-700 via-red-600 to-red-500"
+            : "bg-gradient-to-br from-zinc-950 via-zinc-800 to-zinc-700"
+        }`}
+      >
         <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/5" />
         <div className="relative flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-white/15 text-lg font-black shadow-lg backdrop-blur-sm">
               {store.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img src={store.logoUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 (store.name || "S").slice(0, 2).toUpperCase()
@@ -113,10 +227,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
           <div ref={menuRef} className="relative">
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setMenuOpen(!menuOpen);
-              }}
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
               className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white/80 transition-colors hover:bg-white/20"
             >
               <MoreHorizontal className="h-4 w-4" />
@@ -133,11 +244,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
                   <button
                     key={item.label}
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      item.action();
-                      setMenuOpen(false);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); item.action(); setMenuOpen(false); }}
                     className={`flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm transition-colors ${
                       item.danger ? "text-red-600 hover:bg-red-50" : "text-zinc-700 hover:bg-zinc-50"
                     }`}
@@ -152,34 +259,37 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
         </div>
 
         <div className="relative mt-3 flex flex-wrap items-center gap-2">
-          <Badge variant={statusConfig.variant} className="bg-white/10 text-white ring-white/20">
+          <Badge variant={statusConfig.variant} className="bg-white/15 text-white ring-white/20 border-0">
             {statusConfig.label}
           </Badge>
-          <Badge variant="primary" className="bg-white/10 text-white ring-white/20">
+          <Badge variant="primary" className="bg-white/15 text-white ring-white/20 border-0">
             {subsPlan?.name ?? planName}
           </Badge>
-          {status === "trial" && trialDays !== null && (
-            <span className="rounded-full bg-blue-500/30 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-100">
-              {trialDays}d left
-            </span>
-          )}
+          <DaysBadge store={store} />
         </div>
       </div>
 
+      {/* Body */}
       <div className="space-y-3.5 p-4">
-        <div className="flex items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
-          <Globe className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-          <span className="truncate">{storeUrl}</span>
+        {/* Plan info bar */}
+        <div className="flex items-center justify-between rounded-xl bg-zinc-50 px-3 py-2 text-xs">
+          <span className="text-zinc-500">
+            {subsPlan && !subsPlan.isCustomPrice ? `${formatBDT(subsPlan.priceBDT ?? 0)}/mo` : "—"}
+          </span>
+          <span className="text-zinc-500">
+            {store.renewalDate ? `Renewal: ${formatDate(store.renewalDate)}` : ""}
+          </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {/* Stats grid */}
+        <div className="grid grid-cols-4 gap-2">
           {[
-            { label: "Revenue", value: formatBDT(store.revenueBDT ?? 0), icon: CreditCard },
-            { label: "Orders", value: store.orderCount ?? 0, icon: BarChart3 },
+            { label: "Storage", value: store.storageUsed ? `${Math.round(store.storageUsed / (1024 * 1024))}MB` : "0MB", icon: HardDrive },
             { label: "Products", value: store.productCount ?? 0, icon: Box },
-            { label: "Visitors", value: "—", icon: Eye },
+            { label: "Staff", value: store.staffCount ?? 0, icon: Users },
+            { label: "Orders", value: store.orderCount ?? 0, icon: BarChart3 },
           ].map((stat) => (
-            <div key={stat.label} className="rounded-xl bg-zinc-50 p-2.5 text-center">
+            <div key={stat.label} className="rounded-xl bg-zinc-50 p-2 text-center">
               <stat.icon className="mx-auto h-3.5 w-3.5 text-zinc-400" />
               <p className="mt-1 text-sm font-bold text-zinc-900">{stat.value}</p>
               <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">{stat.label}</p>
@@ -187,36 +297,30 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
           ))}
         </div>
 
-        {store.description && (
-          <p className="line-clamp-2 text-xs leading-relaxed text-zinc-500">{store.description}</p>
-        )}
-
-        <div className="flex items-center justify-between border-t border-zinc-100 pt-3 text-[11px] text-zinc-400">
-          <span className="inline-flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            Created {formatDate(store.createdAt)}
-          </span>
-          <span>Updated {formatDate(store.updatedAt)}</span>
+        {/* Created date */}
+        <div className="flex items-center gap-1.5 text-[11px] text-zinc-400">
+          <Calendar className="h-3 w-3" />
+          Created {formatDate(store.createdAt)}
         </div>
 
+        {/* Action buttons */}
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onManage(store, "overview");
-            }}
+            onClick={() => router.push(`/store/${store.slug}/billing`)}
             className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-3 py-2.5 text-xs font-semibold text-white transition-all hover:bg-zinc-800"
           >
-            <Wrench className="h-3.5 w-3.5" />
-            Manage
+            {isExpired ? (
+              <><RefreshCcw className="h-3.5 w-3.5" /> Renew</>
+            ) : isPending ? (
+              <><Clock className="h-3.5 w-3.5" /> Pending</>
+            ) : (
+              <><CreditCard className="h-3.5 w-3.5" /> Manage</>
+            )}
           </button>
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/store/${store.slug}`);
-            }}
+            onClick={() => router.push(`/store/${store.slug}`)}
             className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-zinc-700 transition-all hover:bg-zinc-50"
           >
             <LayoutGrid className="h-3.5 w-3.5" />

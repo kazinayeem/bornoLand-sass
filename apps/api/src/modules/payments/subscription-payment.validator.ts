@@ -17,6 +17,10 @@ export const rejectPaymentSchema = z.object({
   reason: z.string().min(3).max(500),
 });
 
+export const requestInfoPaymentSchema = z.object({
+  message: z.string().min(3).max(1000),
+});
+
 export const approvePaymentSchema = z.object({
   subscriptionExpireDate: z.string().datetime().optional(),
 });

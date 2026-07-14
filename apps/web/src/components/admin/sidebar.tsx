@@ -31,7 +31,7 @@ const primaryNav = [
   { href: "/admin/dashboard/stores", label: "Stores", icon: Store },
   { href: "/admin/dashboard/subscriptions", label: "Subscriptions", icon: Layers },
   { href: "/admin/dashboard/plans", label: "Plans", icon: Sparkles },
-  { href: "/admin/dashboard/payments", label: "Payments", icon: Wallet },
+  { href: "/admin/dashboard/payments", label: "Payments & Review", icon: Wallet },
   { href: "/admin/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/dashboard/platform", label: "Platform", icon: Globe },
   { href: "/admin/dashboard/audit-center", label: "Audit Logs", icon: ScrollText },

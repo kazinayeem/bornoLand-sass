@@ -13,16 +13,26 @@ export type BuilderSection = {
   props: SectionProps;
 };
 
+export type LeftTab = "layers" | "pages" | "components" | "templates" | "media" | "navigator" | "history" | "theme" | "assets";
+export type RightTab = "content" | "style" | "layout" | "responsive" | "animation" | "advanced" | "seo" | "visibility";
+
 type BuilderState = {
   sections: BuilderSection[];
   selectedSectionId: string | null;
   hoveredSectionId: string | null;
   editingSectionId: string | null;
-  activeTab: "layers" | "components" | "pages" | "templates" | "media";
+  activeTab: LeftTab;
+  activeRightTab: RightTab;
+  leftPanelOpen: boolean;
+  rightPanelOpen: boolean;
+  rightPanelPinned: boolean;
   leftPanelWidth: number;
   rightPanelWidth: number;
+  fullscreen: boolean;
+  presentationMode: boolean;
   isDirty: boolean;
   lastSaved: string | null;
+  lastSaveError: string | null;
   saving: boolean;
   publishing: boolean;
   pageId: string | null;
@@ -37,10 +47,17 @@ const initialState: BuilderState = {
   hoveredSectionId: null,
   editingSectionId: null,
   activeTab: "layers",
-  leftPanelWidth: 300,
-  rightPanelWidth: 340,
+  activeRightTab: "content",
+  leftPanelOpen: true,
+  rightPanelOpen: true,
+  rightPanelPinned: true,
+  leftPanelWidth: 280,
+  rightPanelWidth: 320,
+  fullscreen: false,
+  presentationMode: false,
   isDirty: false,
   lastSaved: null,
+  lastSaveError: null,
   saving: false,
   publishing: false,
   pageId: null,
@@ -51,7 +68,7 @@ const initialState: BuilderState = {
 
 function pushHistory(state: BuilderState) {
   state.past.push(state.sections.map((section) => ({ ...section, props: { ...section.props } })));
-  if (state.past.length > 40) state.past.shift();
+  if (state.past.length > 50) state.past.shift();
   state.future = [];
 }
 
@@ -111,13 +128,16 @@ const builderSlice = createSlice({
       const dup: BuilderSection = {
         ...original,
         id: `${original.type}-${Date.now()}`,
-        label: `${original.label} (Copy)`,
+        label: `${original.label} ${original.label.match(/\(\d+\)$/) ? `(${parseInt((original.label.match(/\((\d+)\)$/)?.[1] || "0")) + 1})` : "(Copy)"}`,
       };
       state.sections.splice(idx + 1, 0, dup);
       state.isDirty = true;
     },
     setSelectedSection(state, action: PayloadAction<string | null>) {
       state.selectedSectionId = action.payload;
+      if (action.payload && !state.rightPanelOpen) {
+        state.rightPanelOpen = true;
+      }
     },
     setHoveredSection(state, action: PayloadAction<string | null>) {
       state.hoveredSectionId = action.payload;
@@ -125,8 +145,39 @@ const builderSlice = createSlice({
     setEditingSection(state, action: PayloadAction<string | null>) {
       state.editingSectionId = action.payload;
     },
-    setActiveTab(state, action: PayloadAction<BuilderState["activeTab"]>) {
+    setActiveTab(state, action: PayloadAction<LeftTab>) {
       state.activeTab = action.payload;
+      if (!state.leftPanelOpen) state.leftPanelOpen = true;
+    },
+    setActiveRightTab(state, action: PayloadAction<RightTab>) {
+      state.activeRightTab = action.payload;
+    },
+    toggleLeftPanel(state) {
+      state.leftPanelOpen = !state.leftPanelOpen;
+    },
+    toggleRightPanel(state) {
+      state.rightPanelOpen = !state.rightPanelOpen;
+    },
+    setRightPanelPinned(state, action: PayloadAction<boolean>) {
+      state.rightPanelPinned = action.payload;
+    },
+    setLeftPanelWidth(state, action: PayloadAction<number>) {
+      state.leftPanelWidth = Math.max(44, Math.min(400, action.payload));
+    },
+    setRightPanelWidth(state, action: PayloadAction<number>) {
+      state.rightPanelWidth = Math.max(300, Math.min(500, action.payload));
+    },
+    setFullscreen(state, action: PayloadAction<boolean>) {
+      state.fullscreen = action.payload;
+      if (action.payload) state.presentationMode = false;
+    },
+    setPresentationMode(state, action: PayloadAction<boolean>) {
+      state.presentationMode = action.payload;
+      if (action.payload) {
+        state.fullscreen = false;
+        state.leftPanelOpen = false;
+        state.rightPanelOpen = false;
+      }
     },
     toggleSectionLock(state, action: PayloadAction<string>) {
       pushHistory(state);
@@ -166,12 +217,6 @@ const builderSlice = createSlice({
       state.selectedSectionId = pasted.id;
       state.isDirty = true;
     },
-    setLeftPanelWidth(state, action: PayloadAction<number>) {
-      state.leftPanelWidth = Math.max(220, Math.min(420, action.payload));
-    },
-    setRightPanelWidth(state, action: PayloadAction<number>) {
-      state.rightPanelWidth = Math.max(300, Math.min(460, action.payload));
-    },
     restoreHistorySnapshot(state, action: PayloadAction<BuilderSection[]>) {
       pushHistory(state);
       state.sections = action.payload.map((section) => ({ ...section, props: { ...section.props } }));
@@ -195,11 +240,17 @@ const builderSlice = createSlice({
     markSaved(state, action: PayloadAction<string>) {
       state.isDirty = false;
       state.lastSaved = action.payload;
+      state.lastSaveError = null;
       state.saving = false;
       state.publishing = false;
     },
     setSaving(state, action: PayloadAction<boolean>) {
       state.saving = action.payload;
+      if (action.payload) state.lastSaveError = null;
+    },
+    setSaveError(state, action: PayloadAction<string>) {
+      state.lastSaveError = action.payload;
+      state.saving = false;
     },
     setPublishing(state, action: PayloadAction<boolean>) {
       state.publishing = action.payload;
@@ -219,9 +270,11 @@ const builderSlice = createSlice({
 export const {
   setSections, addSection, removeSection, toggleSection,
   updateSectionProps, moveSection, duplicateSection,
-  updateSectionMeta, setSelectedSection, setHoveredSection, setEditingSection, setActiveTab,
+  updateSectionMeta, setSelectedSection, setHoveredSection, setEditingSection, setActiveTab, setActiveRightTab,
+  toggleLeftPanel, toggleRightPanel, setRightPanelPinned,
+  setLeftPanelWidth, setRightPanelWidth, setFullscreen, setPresentationMode,
   toggleSectionLock, toggleSectionFavorite, copySection, pasteSection,
-  setLeftPanelWidth, setRightPanelWidth, restoreHistorySnapshot, undoBuilder, redoBuilder,
-  markSaved, setSaving, setPublishing, loadSections, setPageId,
+  restoreHistorySnapshot, undoBuilder, redoBuilder,
+  markSaved, setSaving, setSaveError, setPublishing, loadSections, setPageId,
 } = builderSlice.actions;
 export const builderReducer = builderSlice.reducer;

@@ -1,0 +1,144 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { X, Download, Printer, FileText, CheckCircle2, CreditCard } from "lucide-react";
+import type { Invoice } from "@/redux/api/billing-api";
+import { formatBDT } from "@/lib/store-status";
+import { Badge } from "@/components/ui/badge";
+
+type Props = {
+  invoice: Invoice;
+  onClose: () => void;
+  storeName?: string;
+  ownerName?: string;
+};
+
+export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props) {
+  const planName = typeof invoice.planId === "object" ? invoice.planId.name : "—";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="border-b border-zinc-100 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
+              <FileText className="h-5 w-5 text-zinc-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900">Invoice</h2>
+              <p className="text-sm text-zinc-500">{invoice.invoiceNumber}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-zinc-100">
+            <X className="h-4 w-4 text-zinc-500" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 space-y-4">
+          {/* Status & Date */}
+          <div className="flex items-center justify-between">
+            <Badge variant="success" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              {invoice.status}
+            </Badge>
+            <p className="text-xs text-zinc-500">
+              Issued: {new Date(invoice.paidAt || invoice.createdAt).toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </p>
+          </div>
+
+          {/* Business info */}
+          <div className="rounded-xl bg-zinc-50 p-4 text-sm space-y-1">
+            {storeName && <p className="text-zinc-900 font-medium">{storeName}</p>}
+            {ownerName && <p className="text-zinc-500">{ownerName}</p>}
+          </div>
+
+          {/* Details */}
+          <div className="space-y-3 border-t border-zinc-100 pt-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-zinc-500">Plan</span>
+              <span className="font-medium text-zinc-900">{planName}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-zinc-500">Duration</span>
+              <span className="font-medium text-zinc-900 capitalize">{invoice.duration?.replace("_", " ")}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-zinc-500">Invoice Number</span>
+              <span className="font-mono font-medium text-zinc-900">{invoice.invoiceNumber}</span>
+            </div>
+          </div>
+
+          {/* Pricing */}
+          <div className="space-y-2 border-t border-zinc-100 pt-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-zinc-500">Subtotal</span>
+              <span className="text-zinc-900">{formatBDT(invoice.subtotal)}</span>
+            </div>
+            {invoice.vatAmount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-500">VAT</span>
+                <span className="text-zinc-900">{formatBDT(invoice.vatAmount)}</span>
+              </div>
+            )}
+            {invoice.taxAmount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-500">Tax</span>
+                <span className="text-zinc-900">{formatBDT(invoice.taxAmount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-base font-bold border-t border-zinc-200 pt-2">
+              <span className="text-zinc-900">Total</span>
+              <span className="text-zinc-900">{formatBDT(invoice.total)}</span>
+            </div>
+            <p className="text-xs text-zinc-400">{invoice.currency}</p>
+          </div>
+
+          {/* Payment info */}
+          <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 flex items-center gap-3 text-sm">
+            <CreditCard className="h-5 w-5 text-emerald-600" />
+            <div>
+              <p className="font-medium text-emerald-800">Payment Received</p>
+              <p className="text-emerald-600 text-xs">
+                {new Date(invoice.paidAt || invoice.createdAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="border-t border-zinc-100 px-6 py-4 flex gap-3">
+          <button className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50">
+            <Download className="h-4 w-4" />
+            Download PDF
+          </button>
+          <button className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50">
+            <Printer className="h-4 w-4" />
+            Print
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}

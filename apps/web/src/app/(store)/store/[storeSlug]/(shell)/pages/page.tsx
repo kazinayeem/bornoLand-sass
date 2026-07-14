@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { generateStorePageMetadata } from "@/lib/server/page-metadata";
-import { StorePagesPanel } from "@/components/store-dashboard/store-pages-panel";
+import { StorePagesPanel } from "@/components/store-dashboard/pages/store-pages-panel";
 
 export async function generateMetadata({ params }: { params: Promise<{ storeSlug: string }> }): Promise<Metadata> {
   const { storeSlug } = await params;

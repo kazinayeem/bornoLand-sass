@@ -95,6 +95,23 @@ export const billingApi = baseApi.injectEndpoints({
       query: () => ({ url: "/subscriptions/cron/run", method: "POST" }),
       invalidatesTags: ["Subscriptions", "Notifications", "Stores", "SubscriptionPayments"],
     }),
+    initiateCheckout: builder.mutation<
+      ApiEnvelope<{ payment: Record<string, unknown>; mockRedirectUrl: string }>,
+      { storeId: string; planId: string; duration: string; paymentMethod: string }
+    >({
+      query: ({ storeId, ...body }) => ({
+        url: `/plans/store/${storeId}/checkout`,
+        method: "POST",
+        body,
+      }),
+    }),
+    checkoutCallback: builder.mutation<
+      ApiEnvelope<Record<string, unknown>>,
+      { paymentId: string; status: "success" | "cancelled" }
+    >({
+      query: (body) => ({ url: "/plans/checkout/callback", method: "POST", body }),
+      invalidatesTags: ["Subscriptions", "Notifications", "Stores", "SubscriptionPayments", "Invoices"],
+    }),
   }),
 });
 
@@ -108,4 +125,6 @@ export const {
   useGetStoreInvoicesQuery,
   useGetPlanPriceQuery,
   useRunBillingCronMutation,
+  useInitiateCheckoutMutation,
+  useCheckoutCallbackMutation,
 } = billingApi;

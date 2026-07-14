@@ -12,7 +12,7 @@ async function ensureDefaultPlans() {
 export async function listPlans(includeHidden = false) {
   await connectDatabase();
   await ensureDefaultPlans();
-  const filter = includeHidden ? {} : { isActive: true, visible: true };
+  const filter = includeHidden ? {} : { isActive: true, visible: { $ne: false } };
   const plans = await PlanModel.find(filter).sort({ sortOrder: 1, priceBDT: 1 }).lean();
   return { ok: true as const, data: { plans } };
 }

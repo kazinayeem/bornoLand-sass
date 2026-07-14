@@ -120,9 +120,9 @@ const planFeatureSchema = new Schema({
   developerMode: { type: Boolean, default: false },
   maintenanceMode: { type: Boolean, default: false },
   darkMode: { type: Boolean, default: false },
-  visitorAnalytics: { type: Boolean, default: false },
-  realtimeVisitors: { type: Boolean, default: false },
-  analyticsExport: { type: Boolean, default: false },
+  visitorAnalytics: { type: Boolean, default: true },
+  realtimeVisitors: { type: Boolean, default: true },
+  analyticsExport: { type: Boolean, default: true },
 }, { _id: false });
 
 const planPricingSchema = new Schema({

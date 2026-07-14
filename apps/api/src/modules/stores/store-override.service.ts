@@ -102,7 +102,9 @@ export async function resolveStoreFeature(
   if (toggles && featureKey in toggles) {
     return Boolean(toggles[featureKey]);
   }
-  return false;
+  // Key absent from plan's featureToggles → treat as enabled (default-open).
+  // Only an explicit `false` should block access.
+  return true;
 }
 
 // ── Resolve effective storage limit (MB) ──────────────────────

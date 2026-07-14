@@ -5,6 +5,10 @@ import { StoreModel } from "../../models/store.model.js";
 import { PlanModel } from "../../models/plan.model.js";
 import { sendSuccess, sendFailure } from "../../common/utils/api-response.js";
 import { getStoreUsageReport } from "./usage.service.js";
+import { SubscriptionPaymentModel } from "../payments/subscription-payment.model.js";
+import { getPlanPriceForDuration } from "./plan-pricing.util.js";
+import { approveSubscriptionPayment } from "../payments/subscription-payment.service.js";
+import mongoose from "mongoose";
 
 export async function getStoreSubscriptionDashboardController(request: AuthRequest, response: Response) {
   const userId = request.user?.userId;
@@ -108,4 +112,76 @@ export async function getStoreDashboardStatsController(request: AuthRequest, res
       featureToggles: plan.featureToggles,
     } : null,
   });
+}
+
+export async function initiateCheckoutController(request: AuthRequest, response: Response) {
+  const userId = request.user?.userId;
+  const storeId = String(request.params.storeId || "");
+  if (!userId || !storeId) return sendFailure(response, "Unauthorized", 401);
+
+  const { planId, duration, paymentMethod } = request.body;
+  if (!planId || !duration || !paymentMethod) {
+    return sendFailure(response, "planId, duration, and paymentMethod are required", 400);
+  }
+
+  await connectDatabase();
+  const store = await StoreModel.findOne({ _id: storeId, userId });
+  if (!store) return sendFailure(response, "Store not found", 404);
+
+  const plan = await PlanModel.findById(planId).lean();
+  if (!plan) return sendFailure(response, "Plan not found", 404);
+
+  const amount = getPlanPriceForDuration(plan as any, duration);
+
+  const txnId = `TXN-${new mongoose.Types.ObjectId().toString().toUpperCase()}`;
+
+  const payment = await SubscriptionPaymentModel.create({
+    tenantId: store.tenantId,
+    storeId: store._id,
+    userId,
+    planId: plan._id,
+    duration,
+    amount,
+    paymentMethod,
+    senderNumber: "01700000000", // Default sender number for mock online checkout
+    transactionId: txnId,
+    paymentDate: new Date(),
+    status: "pending",
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+  });
+
+  return sendSuccess(response, {
+    payment,
+    mockRedirectUrl: `/store/${store.slug}/billing/payment-gateway-mock?paymentId=${payment._id}`,
+  });
+}
+
+export async function checkoutCallbackController(request: AuthRequest, response: Response) {
+  const userId = request.user?.userId;
+  if (!userId) return sendFailure(response, "Unauthorized", 401);
+
+  const { paymentId, status } = request.body;
+  if (!paymentId || !status) {
+    return sendFailure(response, "paymentId and status are required", 400);
+  }
+
+  await connectDatabase();
+
+  const payment = await SubscriptionPaymentModel.findById(paymentId);
+  if (!payment) return sendFailure(response, "Payment not found", 404);
+
+  if (status === "success") {
+    // Approve subscription payment automatically
+    const result = await approveSubscriptionPayment(paymentId, userId, {});
+    if (!result.ok) {
+      return sendFailure(response, result.message ?? "Approval failed");
+    }
+    return sendSuccess(response, result.data, "Payment successful and subscription activated");
+  } else {
+    // Cancel the payment
+    payment.status = "rejected";
+    payment.rejectedReason = "Payment cancelled by user";
+    await payment.save();
+    return sendSuccess(response, { status: "cancelled" }, "Payment cancelled");
+  }
 }

@@ -94,7 +94,8 @@ export function StoreNavbar() {
                   width={32}
                   height={32}
                   sizes="32px"
-                  className="rounded-lg object-cover"
+                  className="rounded-lg"
+                  style={{ width: 32, height: 32, objectFit: "contain" }}
                 />
               ) : (
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ backgroundColor: primaryColor }}>

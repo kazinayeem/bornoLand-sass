@@ -96,7 +96,9 @@ export async function deleteStoreController(request: AuthRequest, response: Resp
     });
     return sendSuccess(response, { storeName: result.data.storeName, storeSlug: result.data.storeSlug, tenantId: result.data.tenantId }, "Store deleted permanently");
   }
-  return sendFailure(response, result.message, 404);
+  // Surface the specific HTTP status code returned by the service
+  const httpStatus = (result as { code?: number }).code ?? 500;
+  return sendFailure(response, result.message, httpStatus);
 }
 
 export async function changeStoreThemeController(request: AuthRequest, response: Response) {

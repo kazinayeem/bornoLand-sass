@@ -6,6 +6,7 @@ import { useGetAdminUsersQuery, useSuspendUserMutation, useActivateUserMutation,
 import { Search, Shield, MoreHorizontal, Ban, CheckCircle, Trash2, Store, Loader2 } from "lucide-react";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { toast } from "sonner";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
 
 const roles = ["all", "super_admin", "admin", "editor", "analyst", "viewer"];
 
@@ -20,7 +21,6 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(0);
-  const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const perPage = 10;
 
   const filtered = users.filter((u) => {
@@ -34,18 +34,18 @@ export default function UsersPage() {
   const totalPages = Math.ceil(filtered.length / perPage);
 
   const handleSuspend = async (id: string) => {
-    try { await suspendUser(id).unwrap(); toast.success("User suspended"); setMenuOpen(null); }
+    try { await suspendUser(id).unwrap(); toast.success("User suspended"); }
     catch { toast.error("Failed to suspend user"); }
   };
 
   const handleActivate = async (id: string) => {
-    try { await activateUser(id).unwrap(); toast.success("User activated"); setMenuOpen(null); }
+    try { await activateUser(id).unwrap(); toast.success("User activated"); }
     catch { toast.error("Failed to activate user"); }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this user permanently? Their stores will also be deleted.")) return;
-    try { await deleteUser(id).unwrap(); toast.success("User deleted"); setMenuOpen(null); }
+    try { await deleteUser(id).unwrap(); toast.success("User deleted"); }
     catch { toast.error("Failed to delete user"); }
   };
 
@@ -133,33 +133,27 @@ export default function UsersPage() {
                   <td className="px-6 py-3.5 text-sm text-zinc-500">
                     {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Never"}
                   </td>
-                  <td className="px-6 py-3.5 relative">
-                    <button onClick={() => setMenuOpen(menuOpen === user._id ? null : user._id)}
-                      className="rounded-lg p-1.5 text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-100 hover:text-zinc-700 group-hover:opacity-100">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
-                    {menuOpen === user._id && (
-                      <>
-                        <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(null)} />
-                        <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
-                          {user.status !== "suspended" ? (
-                            <button onClick={() => handleSuspend(user._id)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-amber-600 hover:bg-amber-50">
-                              <Ban className="h-4 w-4" /> Suspend
-                            </button>
-                          ) : (
-                            <button onClick={() => handleActivate(user._id)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-emerald-600 hover:bg-emerald-50">
-                              <CheckCircle className="h-4 w-4" /> Activate
-                            </button>
-                          )}
-                          <button onClick={() => handleDelete(user._id)}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">
-                            <Trash2 className="h-4 w-4" /> Delete
-                          </button>
-                        </div>
-                      </>
-                    )}
+                  <td className="px-6 py-3.5">
+                    {/* Portal-based DropdownMenu — escapes overflow-x-auto table stacking context */}
+                    <DropdownMenu
+                      placement="bottom-end"
+                      minWidth={160}
+                      trigger={
+                        <button
+                          className="rounded-lg p-1.5 text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-100 hover:text-zinc-700 group-hover:opacity-100"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      }
+                      items={[
+                        ...(user.status !== "suspended"
+                          ? [{ label: "Suspend", icon: Ban,         onClick: () => handleSuspend(user._id), warning: true }]
+                          : [{ label: "Activate",icon: CheckCircle, onClick: () => handleActivate(user._id) }]
+                        ),
+                        { divider: true },
+                        { label: "Delete", icon: Trash2, onClick: () => handleDelete(user._id), danger: true },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

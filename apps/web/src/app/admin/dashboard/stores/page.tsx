@@ -10,6 +10,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { StoreDetailDrawer } from "@/components/admin/store-detail-drawer";
 import type { AdminStore } from "@/redux/api/admin-api";
 import { getStoreDisplayDomain, getStoreUrl } from "@/lib/urls";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
 
 const planColors: Record<string, string> = {
   free: "bg-zinc-100 text-zinc-700", starter: "bg-blue-50 text-blue-700",
@@ -33,7 +34,6 @@ export default function AdminStoresPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(0);
-  const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [selectedStore, setSelectedStore] = useState<AdminStore | null>(null);
   const perPage = 10;
 
@@ -47,18 +47,18 @@ export default function AdminStoresPage() {
   const totalPages = Math.ceil(filtered.length / perPage);
 
   const handleSuspend = async (id: string) => {
-    try { await suspendStore(id).unwrap(); toast.success("Store suspended"); setMenuOpen(null); }
+    try { await suspendStore(id).unwrap(); toast.success("Store suspended"); }
     catch { toast.error("Failed to suspend store"); }
   };
 
   const handleActivate = async (id: string) => {
-    try { await activateStore(id).unwrap(); toast.success("Store activated"); setMenuOpen(null); }
+    try { await activateStore(id).unwrap(); toast.success("Store activated"); }
     catch { toast.error("Failed to activate store"); }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this store permanently? This will also delete all products and orders.")) return;
-    try { await deleteStore(id).unwrap(); toast.success("Store deleted"); setMenuOpen(null); }
+    try { await deleteStore(id).unwrap(); toast.success("Store deleted"); }
     catch { toast.error("Failed to delete store"); }
   };
 
@@ -66,7 +66,6 @@ export default function AdminStoresPage() {
     try {
       await changePlan({ id: storeId, data: { planId } }).unwrap();
       toast.success(`Plan changed to ${planName}`);
-      setMenuOpen(null);
     } catch { toast.error("Failed to change plan"); }
   };
 
@@ -147,46 +146,35 @@ export default function AdminStoresPage() {
                   <td className="px-4 py-3 text-sm text-zinc-500">
                     {new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </td>
-                  <td className="relative px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => setMenuOpen(menuOpen === s._id ? null : s._id)}
-                      className="rounded-lg p-1.5 text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-100 hover:text-zinc-700 group-hover:opacity-100">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
-                    {menuOpen === s._id && (
-                      <>
-                        <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(null)} />
-                        <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
-                          <button onClick={() => { window.open(getStoreUrl(s.subdomain || s.slug), "_blank"); setMenuOpen(null); }}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">
-                            <ExternalLink className="h-4 w-4" /> Open Store
-                          </button>
-                          {s.status !== "suspended" ? (
-                            <button onClick={() => handleSuspend(s._id)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-amber-600 hover:bg-amber-50">
-                              <Ban className="h-4 w-4" /> Suspend
-                            </button>
-                          ) : (
-                            <button onClick={() => handleActivate(s._id)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-emerald-600 hover:bg-emerald-50">
-                              <CheckCircle className="h-4 w-4" /> Activate
-                            </button>
-                          )}
-                          <div className="border-t border-zinc-100 my-1" />
-                          <div className="px-3 py-1.5 text-xs font-medium text-zinc-400 uppercase">Change Plan</div>
-                          {plans.filter((p) => p._id !== s.planId).map((p) => (
-                            <button key={p._id} onClick={() => handleChangePlan(s._id, p._id, p.name)}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-50">
-                              <RefreshCw className="h-4 w-4" /> {p.name}
-                            </button>
-                          ))}
-                          <div className="border-t border-zinc-100 my-1" />
-                          <button onClick={() => handleDelete(s._id)}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">
-                            <Trash2 className="h-4 w-4" /> Delete
-                          </button>
-                        </div>
-                      </>
-                    )}
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    {/* Portal-based DropdownMenu — escapes overflow-x-auto table stacking context */}
+                    <DropdownMenu
+                      placement="bottom-end"
+                      minWidth={176}
+                      trigger={
+                        <button
+                          className="rounded-lg p-1.5 text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-100 hover:text-zinc-700 group-hover:opacity-100"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      }
+                      items={[
+                        { label: "Open Store",   icon: ExternalLink, onClick: () => window.open(getStoreUrl(s.subdomain || s.slug), "_blank") },
+                        ...(s.status !== "suspended"
+                          ? [{ label: "Suspend", icon: Ban,         onClick: () => handleSuspend(s._id), warning: true }]
+                          : [{ label: "Activate",icon: CheckCircle, onClick: () => handleActivate(s._id) }]
+                        ),
+                        { divider: true },
+                        { label: "Change Plan",  icon: RefreshCw,   onClick: () => {}, disabled: true },
+                        ...plans.filter((p) => p._id !== s.planId).map((p) => ({
+                          label: p.name,
+                          icon: RefreshCw,
+                          onClick: () => handleChangePlan(s._id, p._id, p.name),
+                        })),
+                        { divider: true },
+                        { label: "Delete",       icon: Trash2,      onClick: () => handleDelete(s._id), danger: true },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))}

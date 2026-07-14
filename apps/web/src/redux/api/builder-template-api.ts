@@ -26,6 +26,7 @@ export type BuilderTemplate = {
 type ApiEnvelope<T> = { success?: boolean; data?: T; message?: string };
 
 export const builderTemplateApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     getTemplates: builder.query<
       ApiEnvelope<{ templates: BuilderTemplate[] }>,

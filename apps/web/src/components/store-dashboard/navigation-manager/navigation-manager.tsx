@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import {
   Menu, Plus, GripVertical, Trash2, Pencil, ExternalLink, EyeOff,
   ChevronRight, ChevronDown, Link, FileText,
@@ -577,7 +578,6 @@ function SortableMenuItemRow({
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item._id });
   const [expanded, setExpanded] = useState(true);
-  const [showMenu, setShowMenu] = useState(false);
   const hasChildren = item.children && item.children.length > 0;
 
   const style = {
@@ -651,47 +651,25 @@ function SortableMenuItemRow({
         </div>
 
         {!bulkMode && (
-          <div className="relative shrink-0">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="flex h-6 w-6 items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600 transition-all"
-            >
-              <MoreHorizontal className="h-3.5 w-3.5" />
-            </button>
-            {showMenu && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="absolute right-0 top-full z-50 mt-0.5 w-36 rounded-xl border border-zinc-200 bg-white py-1 shadow-lg"
-              >
+          <div className="shrink-0">
+            {/* Portal-based DropdownMenu — escapes DnD scroll container stacking context */}
+            <DropdownMenu
+              placement="bottom-end"
+              minWidth={144}
+              trigger={
                 <button
-                  onClick={() => { onEdit(); setShowMenu(false); }}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                  className="flex h-6 w-6 items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600 transition-all"
                 >
-                  <Pencil className="h-3 w-3" />
-                  Edit
+                  <MoreHorizontal className="h-3.5 w-3.5" />
                 </button>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(item.link ?? "/");
-                    toast.success("Link copied");
-                    setShowMenu(false);
-                  }}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
-                >
-                  <Copy className="h-3 w-3" />
-                  Copy Link
-                </button>
-                <div className="my-1 border-t border-zinc-100" />
-                <button
-                  onClick={() => { onDelete(); setShowMenu(false); }}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="h-3 w-3" />
-                  Delete
-                </button>
-              </motion.div>
-            )}
+              }
+              items={[
+                { label: "Edit",      icon: Pencil, onClick: onEdit },
+                { label: "Copy Link", icon: Copy,   onClick: () => { navigator.clipboard.writeText(item.link ?? "/"); toast.success("Link copied"); } },
+                { divider: true },
+                { label: "Delete",   icon: Trash2, onClick: onDelete, danger: true },
+              ]}
+            />
           </div>
         )}
       </div>

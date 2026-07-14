@@ -45,8 +45,29 @@ import { TrafficSourceModel } from "../analytics/traffic-source.model.js";
 import { DailyAnalyticModel } from "../analytics/daily-analytic.model.js";
 import { MonthlyAnalyticModel } from "../analytics/monthly-analytic.model.js";
 import { VisitorStatisticModel } from "../analytics/visitor-statistic.model.js";
-import fs from "node:fs/promises";
-import path from "node:path";
+
+
+// Cascade models
+import { ProductVariantModel } from "../products/variants/product-variant.model.js";
+import { ProductOptionModel } from "../products/variants/product-option.model.js";
+import { ProductOptionValueModel } from "../products/variants/product-option-value.model.js";
+import { VariantAttributesModel } from "../products/variants/variant-attributes.model.js";
+import { VariantImageModel } from "../products/variants/variant-image.model.js";
+import { VariantInventoryModel } from "../products/variants/variant-inventory.model.js";
+import { VariantPriceModel } from "../products/variants/variant-price.model.js";
+import { ProductQuestionModel } from "../products/product-question.model.js";
+import { StockLogModel } from "../inventory/stock-log.model.js";
+import { StorePageModel } from "../pages/store-page.model.js";
+import { PageHistoryModel } from "../pages/page-history.model.js";
+import { PageVersionModel } from "../pages/page-version.model.js";
+import { BuilderTemplateModel } from "../builder/builder-template.model.js";
+import { GlobalSectionModel } from "../builder/global-section.model.js";
+import { NavigationModel } from "../navigation/navigation.model.js";   // ← was missing
+import { MenuItemModel } from "../navigation/menu-item.model.js";
+import { StoreUsageModel } from "../features/store-usage.model.js";
+import { deleteStoreUploadFolder } from "../media/store-upload-cleanup.js";
+import { MediaReferenceModel } from "../media/media-reference.model.js";
+
 
 function safeId(id: string): mongoose.Types.ObjectId | null {
   return requireObjectId(id).ok ? new mongoose.Types.ObjectId(id) : null;
@@ -320,88 +341,221 @@ export async function clearStoreBrandAsset(
   return { ok: true as const, data: { branding: store, store } };
 }
 
-export async function deleteStore(storeId: string, userId: string): Promise<{ ok: false; message: string } | { ok: true; data: { storeName: string; storeSlug: string; tenantId: string } }> {
+export async function deleteStore(
+  storeId: string,
+  userId: string,
+  onProgress?: (step: string, status: "pending" | "success" | "failed", error?: string) => void
+): Promise<{ ok: false; message: string; code?: number } | { ok: true; data: { storeName: string; storeSlug: string; tenantId: string } }> {
   const id = safeId(storeId);
-  if (!id) return { ok: false as const, message: "Invalid store ID" };
+  if (!id) return { ok: false as const, message: "Invalid store ID", code: 400 };
 
   await connectDatabase();
 
-  const store = await StoreModel.findOne({ _id: id, userId }).lean() as { _id: mongoose.Types.ObjectId; tenantId: mongoose.Types.ObjectId; name: string; slug: string } | null;
-  if (!store) return { ok: false as const, message: "Store not found" };
+  // ── Pre-flight: load the store BEFORE the transaction so we have its
+  //    metadata even if the transaction rolls back.
+  const store = await StoreModel.findOne({ _id: id }).lean() as {
+    _id: mongoose.Types.ObjectId;
+    tenantId: mongoose.Types.ObjectId;
+    userId: mongoose.Types.ObjectId;
+    name: string;
+    slug: string;
+  } | null;
 
-  const tenantId = store.tenantId;
-  const storeObjectId = store._id;
+  if (!store) return { ok: false as const, message: "Store not found", code: 404 };
 
-  const session = await mongoose.startSession();
+  if (store.userId.toString() !== userId) {
+    return { ok: false as const, message: "Unauthorized: You do not own this store", code: 403 };
+  }
+
+  const tenantId    = store.tenantId;
+  const storeObj    = store._id;
+  const storeName   = store.name;
+  const storeSlug   = store.slug;
+
+  // ── Helper: log + notify progress for a named step ──────────────────
+  const step = async (label: string, fn: () => Promise<void>): Promise<void> => {
+    if (onProgress) onProgress(label, "pending");
+    console.log(`[deleteStore] Deleting ${label}...`);
+    try {
+      await fn();
+      if (onProgress) onProgress(label, "success");
+      console.log(`[deleteStore] ✓ ${label}`);
+    } catch (err: any) {
+      const msg: string = err?.message ?? String(err);
+      console.error(`[deleteStore] ✗ ${label}: ${msg}`);
+      if (onProgress) onProgress(label, "failed", msg);
+      throw err; // re-throw so the transaction catch block fires
+    }
+  };
+
+  // ── Single transaction, single session ──────────────────────────────
+  // CRITICAL: every Model operation inside must be SEQUENTIAL (no
+  // Promise.all).  Running concurrent ops on the same Mongoose session
+  // inside a transaction causes:
+  //   "MongoServerError: Given transaction number X does not match any
+  //    in-progress transactions"
+  // because the driver re-uses the same server connection and the ops
+  // race to set/read the internal txnNumber field.
+    const session = await mongoose.startSession();
   try {
     session.startTransaction();
+    console.log(`[deleteStore] ── Transaction started for "${storeName}" (${storeObj}) ──`);
 
-    // ── 1. Delete all store-associated data in parallel ──────────────
-    await Promise.all([
-      ProductModel.deleteMany({ storeId: storeObjectId }).session(session),
-      OrderModel.deleteMany({ storeId: storeObjectId }).session(session),
-      CategoryModel.deleteMany({ storeId: storeObjectId }).session(session),
-      CouponModel.deleteMany({ storeId: storeObjectId }).session(session),
-      ReviewModel.deleteMany({ storeId: storeObjectId }).session(session),
-      CustomerModel.deleteMany({ storeId: storeObjectId }).session(session),
-      CartModel.deleteMany({ storeId: storeObjectId }).session(session),
-      WishlistModel.deleteMany({ storeId: storeObjectId }).session(session),
-      CollectionModel.deleteMany({ storeId: storeObjectId }).session(session),
-      PageModel.deleteMany({ storeId: storeObjectId }).session(session),
-      HomepageSliderModel.deleteMany({ storeId: storeObjectId }).session(session),
-      PaymentMethodModel.deleteMany({ storeId: storeObjectId }).session(session),
-      DeliveryZoneModel.deleteMany({ storeId: storeObjectId }).session(session),
-      StoreSettingsModel.deleteMany({ storeId: storeObjectId }).session(session),
-      StoreSubscriptionModel.deleteMany({ storeId: storeObjectId }).session(session),
-      InvoiceModel.deleteMany({ storeId: storeObjectId }).session(session),
-      SubscriptionPaymentModel.deleteMany({ storeId: storeObjectId }).session(session),
-      CampaignModel.deleteMany({ storeId: storeObjectId }).session(session),
-      TaxClassModel.deleteMany({ storeId: storeObjectId }).session(session),
-      ShippingZoneModel.deleteMany({ storeId: storeObjectId }).session(session),
-      CmsPageModel.deleteMany({ storeId: storeObjectId }).session(session),
-      FaqModel.deleteMany({ storeId: storeObjectId }).session(session),
-      BillingNotificationModel.deleteMany({ storeId: storeObjectId }).session(session),
-      MediaFileModel.deleteMany({ storeId: storeObjectId }).session(session),
-      StorageUsageModel.deleteMany({ storeId: storeObjectId }).session(session),
-      NewsletterModel.deleteMany({ storeId: storeObjectId }).session(session),
-      AuditLogModel.deleteMany({ storeId: storeObjectId }).session(session),
-      // Analytics data
-      VisitorSessionModel.deleteMany({ storeId: storeObjectId }).session(session),
-      PageViewModel.deleteMany({ storeId: storeObjectId }).session(session),
-      TrafficSourceModel.deleteMany({ storeId: storeObjectId }).session(session),
-      DailyAnalyticModel.deleteMany({ storeId: storeObjectId }).session(session),
-      MonthlyAnalyticModel.deleteMany({ storeId: storeObjectId }).session(session),
-      VisitorStatisticModel.deleteMany({ storeId: storeObjectId }).session(session),
-    ]);
+    // 1. Delete Products
+    await step("Products", async () => {
+      await ProductModel.deleteMany({ storeId: storeObj }).session(session);
+      await ProductVariantModel.deleteMany({ storeId: storeObj }).session(session);
+      await ProductOptionModel.deleteMany({ storeId: storeObj }).session(session);
+      await ProductOptionValueModel.deleteMany({ storeId: storeObj }).session(session);
+      await VariantAttributesModel.deleteMany({ storeId: storeObj }).session(session);
+      await VariantImageModel.deleteMany({ storeId: storeObj }).session(session);
+      await VariantInventoryModel.deleteMany({ storeId: storeObj }).session(session);
+      await VariantPriceModel.deleteMany({ storeId: storeObj }).session(session);
+      await ProductQuestionModel.deleteMany({ storeId: storeObj }).session(session);
+    });
 
-    // ── 2. Delete the store itself ──────────────────────────────────
-    await StoreModel.deleteOne({ _id: storeObjectId }).session(session);
+    // 2. Delete Categories
+    await step("Categories", async () => {
+      await CategoryModel.deleteMany({ storeId: storeObj }).session(session);
+      await CollectionModel.deleteMany({ storeId: storeObj }).session(session);
+    });
 
+    // 3. Delete Inventory
+    await step("Inventory", async () => {
+      await StockLogModel.deleteMany({ storeId: storeObj }).session(session);
+    });
+
+    // 4. Delete Customers
+    await step("Customers", async () => {
+      await CustomerModel.deleteMany({ storeId: storeObj }).session(session);
+      await CartModel.deleteMany({ storeId: storeObj }).session(session);
+      await WishlistModel.deleteMany({ storeId: storeObj }).session(session);
+    });
+
+    // 5. Delete Orders
+    await step("Orders", async () => {
+      await OrderModel.deleteMany({ storeId: storeObj }).session(session);
+    });
+
+    // 6. Delete Reviews
+    await step("Reviews", async () => {
+      await ReviewModel.deleteMany({ storeId: storeObj }).session(session);
+    });
+
+    // 7. Delete Coupons
+    await step("Coupons", async () => {
+      await CouponModel.deleteMany({ storeId: storeObj }).session(session);
+    });
+
+    // 8. Delete Pages
+    await step("Pages", async () => {
+      await StorePageModel.deleteMany({ storeId: storeObj }).session(session);
+      await PageHistoryModel.deleteMany({ storeId: storeObj }).session(session);
+      await PageVersionModel.deleteMany({ storeId: storeObj }).session(session);
+      await CmsPageModel.deleteMany({ storeId: storeObj }).session(session);
+      await FaqModel.deleteMany({ storeId: storeObj }).session(session);
+    });
+
+    // 9. Delete Navigation
+    await step("Navigation", async () => {
+      await NavigationModel.deleteMany({ storeId: storeObj }).session(session);
+      await MenuItemModel.deleteMany({ storeId: storeObj }).session(session);
+    });
+
+    // 10. Delete Builder Data
+    await step("Builder Data", async () => {
+      await BuilderTemplateModel.deleteMany({ storeId: storeObj }).session(session);
+      await GlobalSectionModel.deleteMany({ storeId: storeObj }).session(session);
+      await HomepageSliderModel.deleteMany({ storeId: storeObj }).session(session);
+      await PageModel.deleteMany({ storeId: storeObj }).session(session);
+    });
+
+    // 11. Delete Theme (includes theme settings, billing, marketing, analytics, activity logs)
+    await step("Theme", async () => {
+      // Theme Settings / general Settings
+      await StoreSettingsModel.deleteMany({ storeId: storeObj }).session(session);
+      await PaymentMethodModel.deleteMany({ storeId: storeObj }).session(session);
+      await DeliveryZoneModel.deleteMany({ storeId: storeObj }).session(session);
+      await ShippingZoneModel.deleteMany({ storeId: storeObj }).session(session);
+      await TaxClassModel.deleteMany({ storeId: storeObj }).session(session);
+
+      // Billing / Subscriptions
+      await StoreSubscriptionModel.deleteMany({ storeId: storeObj }).session(session);
+      await InvoiceModel.deleteMany({ storeId: storeObj }).session(session);
+      await SubscriptionPaymentModel.deleteMany({ storeId: storeObj }).session(session);
+      await BillingNotificationModel.deleteMany({ storeId: storeObj }).session(session);
+
+      // Marketing
+      await CampaignModel.deleteMany({ storeId: storeObj }).session(session);
+      await NewsletterModel.deleteMany({ storeId: storeObj }).session(session);
+
+      // Analytics
+      await VisitorSessionModel.deleteMany({ storeId: storeObj }).session(session);
+      await PageViewModel.deleteMany({ storeId: storeObj }).session(session);
+      await TrafficSourceModel.deleteMany({ storeId: storeObj }).session(session);
+      await DailyAnalyticModel.deleteMany({ storeId: storeObj }).session(session);
+      await MonthlyAnalyticModel.deleteMany({ storeId: storeObj }).session(session);
+      await VisitorStatisticModel.deleteMany({ storeId: storeObj }).session(session);
+
+      // Activity Logs
+      await AuditLogModel.deleteMany({ storeId: storeObj }).session(session);
+    });
+
+    // 12. Delete Media records (MongoDB)
+    await step("Media Records", async () => {
+      await MediaFileModel.deleteMany({ storeId: storeObj }).session(session);
+      await MediaReferenceModel.deleteMany({ storeId: storeObj }).session(session);
+      await StorageUsageModel.deleteMany({ storeId: storeObj }).session(session);
+      await StoreUsageModel.deleteMany({ storeId: storeObj }).session(session);
+    });
+
+    // 13. Delete Store document
+    await step("Store", async () => {
+      await StoreModel.deleteOne({ _id: storeObj }).session(session);
+    });
+
+    // ── Commit — called exactly once, only after all steps succeed ──
     await session.commitTransaction();
+    console.log("[deleteStore] ── Transaction Committed ──");
 
-    // ── 3. Delete files from disk (outside transaction) ────────────
-    try {
-      const mediaDir = path.resolve(process.cwd(), "public/uploads", store.slug);
-      await fs.rm(mediaDir, { recursive: true, force: true });
-    } catch {
-      // non-critical — files may already be gone or stored on S3
-    }
+    // 14. Delete physical upload folder (Non-blocking background task)
+    // We run this after the transaction has committed so that filesystem/S3 slowness or failures
+    // do not roll back the database transaction or cause request timeouts.
+    if (onProgress) onProgress("Upload Folder", "pending");
+    deleteStoreUploadFolder(storeSlug)
+      .then((cleanupResult) => {
+        if (cleanupResult.ok === false) {
+          console.error(`[deleteStore] S3/Filesystem cleanup failed: ${cleanupResult.error}`);
+          if (onProgress) onProgress("Upload Folder", "failed", cleanupResult.error);
+        } else {
+          console.log(`[deleteStore] S3/Filesystem cleanup succeeded: ${cleanupResult.skipped ? 'skipped' : 'deleted'}`);
+          if (onProgress) onProgress("Upload Folder", "success");
+        }
+      })
+      .catch((err) => {
+        const msg = err?.message ?? String(err);
+        console.error(`[deleteStore] S3/Filesystem cleanup error:`, msg);
+        if (onProgress) onProgress("Upload Folder", "failed", msg);
+      });
 
-    return {
-      ok: true as const,
-      data: {
-        storeName: store.name,
-        storeSlug: store.slug,
-        tenantId: String(tenantId),
-      },
-    };
-  } catch (error) {
+  } catch (err: any) {
+    // ── Abort — called exactly once, only on failure ──────────────────
     await session.abortTransaction();
-    console.error("[store.service] deleteStore transaction failed:", error);
-    return { ok: false as const, message: "Failed to delete store. All changes have been rolled back." };
+    console.error("[deleteStore] ── Transaction Aborted ──", err?.message ?? err);
+    return {
+      ok: false as const,
+      code: 500,
+      message: `Failed to delete store: ${err?.message ?? "Unknown database error"}. All changes have been rolled back.`,
+    };
   } finally {
+    // ── End session — called exactly once, always ─────────────────────
     session.endSession();
   }
+
+  return {
+    ok: true as const,
+    data: { storeName, storeSlug, tenantId: String(tenantId) },
+  };
 }
 
 export async function changeStoreTheme(storeId: string, userId: string, payload: { templateId?: string; theme?: Record<string, unknown> }) {

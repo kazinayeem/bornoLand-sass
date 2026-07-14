@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import {
@@ -17,6 +17,7 @@ import {
 } from "@/redux/slices/builder-slice";
 import { Copy, Eye, EyeOff, Lock, LockOpen, MoreHorizontal, MoveDown, MoveUp, PanelLeft, Star, Trash2 } from "lucide-react";
 import { getSectionDef, normalizeSectionType } from "@/lib/section-registry";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
 
 function getLayerChildren(type: string, props: Record<string, string>) {
   const normalized = normalizeSectionType(type);
@@ -42,8 +43,6 @@ export function LayersPanel() {
   const sections = useSelector((s: RootState) => s.builder.sections);
   const selectedSectionId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const clipboardSection = useSelector((s: RootState) => s.builder.clipboardSection);
-  const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
-
   const sortedSections = useMemo(() => {
     return [...sections].sort((a, b) => Number(Boolean(b.favorite)) - Number(Boolean(a.favorite)));
   }, [sections]);
@@ -106,28 +105,36 @@ export function LayersPanel() {
                   )}
                 </div>
                 <div className="relative">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setMenuOpenFor((current) => (current === section.id ? null : section.id));
-                    }}
-                    className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </button>
-                  {menuOpenFor === section.id && (
-                    <div className="absolute right-0 top-8 z-20 w-44 rounded-xl border border-zinc-200 bg-white p-1 shadow-xl">
-                      <button onClick={() => { dispatch(duplicateSection(section.id)); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50"><Copy className="h-3.5 w-3.5" /> Duplicate</button>
-                      <button onClick={() => { dispatch(copySection(section.id)); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50"><Copy className="h-3.5 w-3.5" /> Copy</button>
-                      <button onClick={() => { dispatch(pasteSection(section.id)); setMenuOpenFor(null); }} disabled={!clipboardSection} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-40"><Copy className="h-3.5 w-3.5" /> Paste</button>
-                      <button onClick={() => { dispatch(toggleSection(section.id)); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50">{section.visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}{section.visible ? "Hide" : "Show"}</button>
-                      <button onClick={() => { dispatch(toggleSectionLock(section.id)); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50">{section.locked ? <LockOpen className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}{section.locked ? "Unlock" : "Lock"}</button>
-                      <button onClick={() => { if (currentIndex > 0) dispatch(moveSection({ from: currentIndex, to: currentIndex - 1 })); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50"><MoveUp className="h-3.5 w-3.5" /> Move Up</button>
-                      <button onClick={() => { if (currentIndex < sections.length - 1) dispatch(moveSection({ from: currentIndex, to: currentIndex + 1 })); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50"><MoveDown className="h-3.5 w-3.5" /> Move Down</button>
-                      <button onClick={() => { dispatch(removeSection(section.id)); setMenuOpenFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /> Delete</button>
-                    </div>
-                  )}
+                  <DropdownMenu
+                    placement="bottom-end"
+                    trigger={
+                      <button
+                        type="button"
+                        onClick={(event) => event.stopPropagation()}
+                        className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                        aria-label="Section actions"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                    }
+                    items={[
+                      { label: "Duplicate", icon: Copy,    onClick: () => dispatch(duplicateSection(section.id)) },
+                      { label: "Copy",      icon: Copy,    onClick: () => dispatch(copySection(section.id)) },
+                      { label: "Paste",     icon: Copy,    onClick: () => dispatch(pasteSection(section.id)), disabled: !clipboardSection },
+                      { divider: true },
+                      section.visible
+                        ? { label: "Hide",   icon: EyeOff,   onClick: () => dispatch(toggleSection(section.id)) }
+                        : { label: "Show",   icon: Eye,      onClick: () => dispatch(toggleSection(section.id)) },
+                      section.locked
+                        ? { label: "Unlock", icon: LockOpen, onClick: () => dispatch(toggleSectionLock(section.id)) }
+                        : { label: "Lock",   icon: Lock,     onClick: () => dispatch(toggleSectionLock(section.id)) },
+                      { divider: true },
+                      { label: "Move Up",   icon: MoveUp,   onClick: () => { if (currentIndex > 0) dispatch(moveSection({ from: currentIndex, to: currentIndex - 1 })); }, disabled: currentIndex === 0 },
+                      { label: "Move Down", icon: MoveDown, onClick: () => { if (currentIndex < sections.length - 1) dispatch(moveSection({ from: currentIndex, to: currentIndex + 1 })); }, disabled: currentIndex === sections.length - 1 },
+                      { divider: true },
+                      { label: "Delete",    icon: Trash2,   onClick: () => dispatch(removeSection(section.id)), danger: true },
+                    ]}
+                  />
                 </div>
               </div>
             </div>

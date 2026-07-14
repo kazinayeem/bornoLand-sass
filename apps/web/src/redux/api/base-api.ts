@@ -37,7 +37,14 @@ const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown,
     const status = result.error.status;
     let message = "Request failed.";
 
-    if (status === 401) {
+    const backendMessage =
+      result.error.data && typeof result.error.data === "object" && "message" in result.error.data
+        ? (result.error.data as { message?: string }).message
+        : undefined;
+
+    if (backendMessage) {
+      message = backendMessage;
+    } else if (status === 401) {
       message = "Session expired. Please sign in again.";
       api.dispatch(clearAuthState());
     } else if (status === 403) {

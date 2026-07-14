@@ -515,6 +515,9 @@ export const {
   toggleSectionLock, toggleSectionFavorite, copySection, pasteSection,
   restoreHistorySnapshot, undoBuilder, redoBuilder,
   markSaved, setSaving, setSaveError, setPublishing, loadSections,
+  openSectionLibrary, closeSectionLibrary,
+  setSectionLibrarySearch, setSectionLibraryCategory,
+  toggleFavoriteSection, addToRecentlyUsed, clearRecentlyUsed,
 } = builderSlice.actions;
 
 export const builderReducer = builderSlice.reducer;

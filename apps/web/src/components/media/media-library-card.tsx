@@ -26,6 +26,7 @@ import {
   mediaDownloadHref,
   mediaThumbnailSrc,
 } from "@/lib/media-file-helpers";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
 
 function FileTypeIcon({ file }: { file: MediaFile }) {
   const ext = (file.extension ?? "").toLowerCase();
@@ -65,7 +66,6 @@ export const MediaLibraryCard = memo(function MediaLibraryCard({
   onSelect,
   copied,
 }: MediaLibraryCardProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const thumb = mediaThumbnailSrc(file);
   const name = file.displayName || file.originalName;
@@ -81,7 +81,6 @@ export const MediaLibraryCard = memo(function MediaLibraryCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => {
         setHovered(false);
-        setMenuOpen(false);
       }}
     >
       <div className="relative aspect-square overflow-hidden bg-zinc-50">
@@ -112,7 +111,7 @@ export const MediaLibraryCard = memo(function MediaLibraryCard({
           />
         )}
 
-        {(hovered || menuOpen) && (
+        {hovered && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -130,31 +129,26 @@ export const MediaLibraryCard = memo(function MediaLibraryCard({
             </a>
             <ActionIcon icon={Pencil} label="Rename" onClick={onRename} />
             <ActionIcon icon={Trash2} label="Delete" onClick={onDelete} danger />
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setMenuOpen((v) => !v)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/95 text-zinc-800 shadow-sm backdrop-blur transition hover:bg-white"
-                title="More"
-              >
-                <MoreHorizontal className="h-3.5 w-3.5" />
-              </button>
-              {menuOpen && (
-                <div className="absolute bottom-full right-0 z-20 mb-1 w-36 rounded-xl border border-zinc-200 bg-white py-1 shadow-xl">
-                  {onSelect && (
-                    <button type="button" onClick={onSelect} className="block w-full px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50">
-                      Select file
-                    </button>
-                  )}
-                  <button type="button" onClick={onRename} className="block w-full px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50">
-                    Rename
-                  </button>
-                  <button type="button" onClick={onDelete} className="block w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50">
-                    Delete
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Portal-based DropdownMenu — never clipped by overflow:hidden parent */}
+            <DropdownMenu
+              placement="top-end"
+              minWidth={144}
+              trigger={
+                <button
+                  type="button"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/95 text-zinc-800 shadow-sm backdrop-blur transition hover:bg-white"
+                  title="More"
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </button>
+              }
+              items={[
+                ...(onSelect ? [{ label: "Select file", onClick: onSelect }] : []),
+                { label: "Rename", icon: Pencil, onClick: onRename },
+                { divider: true as const },
+                { label: "Delete", icon: Trash2, onClick: onDelete, danger: true },
+              ]}
+            />
           </motion.div>
         )}
       </div>

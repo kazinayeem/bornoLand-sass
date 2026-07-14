@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { AnimatePresence } from "framer-motion";
 import { Loader2, Plus, RefreshCw, Store } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/workspace/page-header";
@@ -43,7 +44,7 @@ export default function StoresPage() {
     setShowDeleteModal(true);
   };
 
-  const openWorkspace = (s: StoreType) => {
+  const openWorkspace = (s: StoreType, tab?: "overview" | "billing" | "theme") => {
     setWorkspaceStore(s);
     setWorkspaceOpen(true);
   };
@@ -117,17 +118,19 @@ export default function StoresPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {activeStores.map((store, idx) => (
-            <StoreCard
-              key={store._id}
-              store={store}
-              plans={plans}
-              index={idx}
-              onManage={(s) => openWorkspace(s)}
-              onDelete={requestDelete}
-            />
-          ))}
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          <AnimatePresence mode="popLayout">
+            {activeStores.map((store, idx) => (
+              <StoreCard
+                key={store._id}
+                store={store}
+                plans={plans}
+                index={idx}
+                onManage={(s, tab) => openWorkspace(s, tab)}
+                onDelete={requestDelete}
+              />
+            ))}
+          </AnimatePresence>
         </div>
       )}
 

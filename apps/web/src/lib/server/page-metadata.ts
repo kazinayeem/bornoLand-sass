@@ -206,3 +206,28 @@ export function generateAdminPageMetadata(args: {
     canonicalPath: args.canonicalPath,
   });
 }
+
+export async function generateStorefrontPageMetadata(args: {
+  storeSlug: string;
+  pageSlug: string;
+}): Promise<Metadata> {
+  const data = await fetchTenantSite(args.storeSlug, args.pageSlug);
+  const store = data?.store as any;
+  const page = data?.page as any;
+  const storeName = store?.shortName || store?.name || "Store";
+  const pageTitle = page?.title || (args.pageSlug === "home" ? "Home" : args.pageSlug);
+  const seoTitle = page?.seo?.title || `${pageTitle} • ${storeName}`;
+  const seoDescription = page?.seo?.description || store?.description || `${pageTitle} at ${storeName}.`;
+  
+  const siteUrl = getMetadataBaseUrl();
+  const canonicalPath = `/store/${args.storeSlug}/${args.pageSlug === "home" ? "" : args.pageSlug}`;
+
+  return buildPageMetadata({
+    title: seoTitle,
+    description: seoDescription,
+    canonicalPath: canonicalPath,
+    iconUrl: store?.faviconUrl || store?.logoUrl,
+    keywords: [pageTitle, storeName, "online store", "shop"].filter(Boolean).join(", "),
+    ogImage: store?.logoUrl,
+  });
+}

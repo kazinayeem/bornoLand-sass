@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { StoreLink as Link } from "./store-link";
 import { ChevronLeft, ChevronRight, Play, ShoppingBag, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTenant } from "@/providers/tenant-provider";

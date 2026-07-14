@@ -17,9 +17,12 @@ export type TenantSiteData = {
 
 const apiUrl = getApiUrl();
 
-async function fetchTenantSiteRemote(slug: string): Promise<TenantSiteData | null> {
+async function fetchTenantSiteRemote(slug: string, pageSlug?: string): Promise<TenantSiteData | null> {
   try {
-    const res = await fetch(`${apiUrl}/public/tenant/${slug}`, { cache: "no-store" });
+    const url = pageSlug
+      ? `${apiUrl}/public/tenant/${slug}?page=${pageSlug}`
+      : `${apiUrl}/public/tenant/${slug}`;
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return null;
     const json = await res.json();
     return json.data ?? null;
@@ -32,16 +35,16 @@ async function fetchTenantSiteRemote(slug: string): Promise<TenantSiteData | nul
  * Public storefront loader — ISR via unstable_cache + request memoization.
  * Invalidated by revalidateTag(`tenant-${slug}`) on publish/product/CMS/theme updates.
  */
-const getCachedTenantSite = (slug: string) =>
+const getCachedTenantSite = (slug: string, pageSlug?: string) =>
   unstable_cache(
-    () => fetchTenantSiteRemote(slug),
-    ["tenant-site", slug],
+    () => fetchTenantSiteRemote(slug, pageSlug),
+    ["tenant-site", slug, pageSlug ?? "home"],
     {
       revalidate: CACHE_REVALIDATE.storefront,
       tags: [cacheTags.tenant(slug), cacheTags.tenantTheme(slug)],
     },
   )();
 
-export const fetchTenantSite = cache(async (slug: string): Promise<TenantSiteData | null> => {
-  return getCachedTenantSite(slug);
+export const fetchTenantSite = cache(async (slug: string, pageSlug?: string): Promise<TenantSiteData | null> => {
+  return getCachedTenantSite(slug, pageSlug);
 });

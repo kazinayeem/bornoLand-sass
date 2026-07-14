@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { StoreLink as Link } from "./store-link";
 import { ShoppingCart, Star, Heart, Eye } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";

@@ -13,7 +13,8 @@ export async function resolveTenantFromSubdomainController(
   const slug = request.subdomain;
   if (!slug) return sendFailure(response, "No subdomain found");
 
-  const result = await resolveBySubdomain(slug);
+  const pageSlug = typeof request.query.page === "string" ? request.query.page : undefined;
+  const result = await resolveBySubdomain(slug, pageSlug);
   return result.ok
     ? sendSuccess(response, result.data)
     : sendFailure(response, result.message ?? "Not found", 404);
@@ -26,7 +27,8 @@ export async function resolveTenantBySlugController(
   const slug = request.params.subdomain as string;
   if (!slug) return sendFailure(response, "Subdomain slug required");
 
-  const result = await resolveBySubdomain(slug);
+  const pageSlug = typeof request.query.page === "string" ? request.query.page : undefined;
+  const result = await resolveBySubdomain(slug, pageSlug);
   return result.ok
     ? sendSuccess(response, result.data)
     : sendFailure(response, result.message ?? "Not found", 404);
@@ -42,7 +44,8 @@ export async function resolveTenantByHostController(
       : request.subdomain;
   if (!slug) return sendFailure(response, "No subdomain found");
 
-  const result = await resolveBySubdomain(slug);
+  const pageSlug = typeof request.query.page === "string" ? request.query.page : undefined;
+  const result = await resolveBySubdomain(slug, pageSlug);
   return result.ok
     ? sendSuccess(response, result.data)
     : sendFailure(response, result.message ?? "Not found", 404);

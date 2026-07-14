@@ -17,27 +17,35 @@ export type TenantStoreResponse = {
   sliders: Record<string, unknown>[];
 };
 
-/**
- * Resolves a store + tenant + home page by subdomain slug.
- * Used by the public-facing site renderer and the Next.js middleware.
- */
-export async function resolveBySubdomain(slug: string): Promise<{
+export async function resolveBySubdomain(
+  slug: string,
+  pageSlug: string = "home"
+): Promise<{
   ok: boolean;
   data?: TenantStoreResponse;
   message?: string;
 }> {
   await connectDatabase();
 
-  const store = await StoreModel.findOne({ subdomain: slug, status: "active" }).lean() as any;
+  let store = await StoreModel.findOne({ subdomain: slug, status: "active" }).lean() as any;
+  if (!store) {
+    store = await StoreModel.findOne({ slug: slug, status: "active" }).lean() as any;
+  }
   if (!store) {
     return { ok: false, message: "Store not found" };
   }
 
   const tenant = await TenantModel.findById(store.tenantId).lean() as any;
-  let page = await PageModel.findOne({ storeId: store._id, slug: "home", status: "published" }).lean() as any;
+  const page = await PageModel.findOne({
+    storeId: store._id,
+    slug: pageSlug.toLowerCase(),
+    status: "published"
+  }).lean() as any;
+
   if (!page) {
-    page = await PageModel.findOne({ storeId: store._id, slug: "home" }).sort({ createdAt: -1 }).lean() as any;
+    return { ok: false, message: `Page '${pageSlug}' not found or not published` };
   }
+
   const products = await ProductModel.find({ storeId: store._id, status: "active" }).sort({ createdAt: -1 }).limit(20).lean() as any[];
   const categories = await CategoryModel.find({ storeId: store._id, active: true }).sort({ sortOrder: 1, name: 1 }).lean() as any[];
   const settings = await StoreSettingsModel.findOne({ storeId: store._id }).lean() as any;

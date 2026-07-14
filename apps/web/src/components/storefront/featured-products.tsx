@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { StoreLink as Link } from "./store-link";
 import { ProductCard } from "./product-card";
 import { useTenant } from "@/providers/tenant-provider";
 import type { StorefrontSectionLike } from "./storefront-types";

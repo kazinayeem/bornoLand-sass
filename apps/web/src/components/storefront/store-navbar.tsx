@@ -4,14 +4,14 @@ import dynamic from "next/dynamic";
 import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Search, ShoppingCart, Menu, X, User, LogIn, Package, LogOut, Heart, Home, Grid3X3, Info, Mail, ChevronRight } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { clearCustomer } from "@/redux/slices/customer-slice";
 import { openCart } from "@/redux/slices/cart-slice";
 import { useTenant } from "@/providers/tenant-provider";
 import { SmartImage } from "@/components/ui/smart-image";
+import { StoreLink as Link } from "./store-link";
 
 const CartDrawer = dynamic(
   () => import("./cart-drawer").then((module) => module.CartDrawer),
@@ -21,6 +21,7 @@ const CartDrawer = dynamic(
 export function StoreNavbar() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname() || "";
   const { store, theme } = useTenant();
   const itemCount = useSelector((state: RootState) => state.cart.items.reduce((sum, i) => sum + i.quantity, 0));
   const customer = useSelector((state: RootState) => state.customer);
@@ -58,17 +59,31 @@ export function StoreNavbar() {
 
   const stickyClass = navbarStyle === "fixed" ? "fixed" : navbarStyle === "sticky" ? "sticky" : "static";
 
+  const getStorefrontLink = (href: string) => {
+    if (href.startsWith("/") && !href.startsWith("//")) {
+      if (pathname.startsWith("/store/")) {
+        const parts = pathname.split("/");
+        const storeSlug = parts[2];
+        const prefix = `/store/${storeSlug}`;
+        if (!href.startsWith(prefix)) {
+          return href === "/" ? prefix : `${prefix}${href}`;
+        }
+      }
+    }
+    return href;
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("customer_token");
     dispatch(clearCustomer());
     window.dispatchEvent(new Event("auth-change"));
-    router.push("/");
+    router.push(getStorefrontLink("/"));
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(getStorefrontLink(`/shop?search=${encodeURIComponent(searchQuery.trim())}`));
       setSearchOpen(false);
       setSearchQuery("");
     }
@@ -76,7 +91,7 @@ export function StoreNavbar() {
 
   const handleNavClick = (href: string) => {
     setMobileOpen(false);
-    router.push(href);
+    router.push(getStorefrontLink(href));
   };
 
   const initials = customer.customer?.name?.charAt(0).toUpperCase() ?? "?";

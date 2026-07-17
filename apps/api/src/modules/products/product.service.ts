@@ -289,6 +289,8 @@ export async function deleteVariant(productId: string, variantId: string, storeI
 
 export async function duplicateProduct(productId: string, storeId: string) {
   await connectDatabase();
+  const limitCheck = await checkLimit("products", storeId);
+  if (!limitCheck.allowed) return { ok: false as const, message: "Product limit reached for your plan" };
   const original: any = await ProductModel.findOne({ _id: productId, storeId }).lean();
   if (!original) return { ok: false as const, message: "Product not found" };
   const hydratedOriginal = await hydrateProduct(original as Record<string, unknown>);

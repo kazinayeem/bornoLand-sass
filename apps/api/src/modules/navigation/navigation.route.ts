@@ -3,6 +3,7 @@ import type { Response } from "express";
 import { requireAuth } from "../../common/middleware/auth.middleware.js";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
 import { sendSuccess, sendFailure } from "../../common/utils/api-response.js";
+import { requireFeatureAccess } from "../../common/middleware/feature.middleware.js";
 import {
   listNavigations,
   getNavigation,
@@ -39,7 +40,7 @@ navigationRouter.get("/:id", async (request: AuthRequest, response: Response) =>
 
 // ─── Update navigation ───────────────────────────────────────────────────────
 
-navigationRouter.put("/:id", async (request: AuthRequest, response: Response) => {
+navigationRouter.put("/:id", requireFeatureAccess("navigation", { getStoreId: (req) => String(req.body.storeId) }), async (request: AuthRequest, response: Response) => {
   const storeId = request.body.storeId as string;
   if (!storeId) return sendFailure(response, "storeId is required");
   const result = await updateNavigation(request.params.id as string, storeId, request.body);
@@ -48,7 +49,7 @@ navigationRouter.put("/:id", async (request: AuthRequest, response: Response) =>
 
 // ─── Add menu item ───────────────────────────────────────────────────────────
 
-navigationRouter.post("/:id/items", async (request: AuthRequest, response: Response) => {
+navigationRouter.post("/:id/items", requireFeatureAccess("navigation", { getStoreId: (req) => String(req.body.storeId) }), async (request: AuthRequest, response: Response) => {
   const storeId = request.body.storeId as string;
   if (!storeId) return sendFailure(response, "storeId is required");
   const result = await addMenuItem(request.params.id as string, storeId, request.body);
@@ -59,7 +60,7 @@ navigationRouter.post("/:id/items", async (request: AuthRequest, response: Respo
 
 // ─── Update menu item ────────────────────────────────────────────────────────
 
-navigationRouter.put("/items/:itemId", async (request: AuthRequest, response: Response) => {
+navigationRouter.put("/items/:itemId", requireFeatureAccess("navigation", { getStoreId: (req) => String(req.body.storeId) }), async (request: AuthRequest, response: Response) => {
   const storeId = request.body.storeId as string;
   if (!storeId) return sendFailure(response, "storeId is required");
   const result = await updateMenuItem(request.params.itemId as string, storeId, request.body);
@@ -68,7 +69,7 @@ navigationRouter.put("/items/:itemId", async (request: AuthRequest, response: Re
 
 // ─── Delete menu item ────────────────────────────────────────────────────────
 
-navigationRouter.delete("/items/:itemId", async (request: AuthRequest, response: Response) => {
+navigationRouter.delete("/items/:itemId", requireFeatureAccess("navigation", { getStoreId: (req) => String(req.query.storeId) }), async (request: AuthRequest, response: Response) => {
   const storeId = request.query.storeId as string;
   if (!storeId) return sendFailure(response, "storeId is required");
   const result = await deleteMenuItem(request.params.itemId as string, storeId);
@@ -77,7 +78,7 @@ navigationRouter.delete("/items/:itemId", async (request: AuthRequest, response:
 
 // ─── Reorder menu items ──────────────────────────────────────────────────────
 
-navigationRouter.put("/:id/items/reorder", async (request: AuthRequest, response: Response) => {
+navigationRouter.put("/:id/items/reorder", requireFeatureAccess("navigation", { getStoreId: (req) => String(req.body.storeId) }), async (request: AuthRequest, response: Response) => {
   const storeId = request.body.storeId as string;
   if (!storeId) return sendFailure(response, "storeId is required");
   const { orderedIds } = request.body as { orderedIds: string[] };
@@ -110,7 +111,7 @@ navigationRouter.get("/header-settings/:storeId", async (request: AuthRequest, r
   return sendSuccess(response, result.data);
 });
 
-navigationRouter.put("/header-settings/:storeId", async (request: AuthRequest, response: Response) => {
+navigationRouter.put("/header-settings/:storeId", requireFeatureAccess("navigation", { getStoreId: (req) => String(req.params.storeId) }), async (request: AuthRequest, response: Response) => {
   const result = await updateHeaderSettings(request.params.storeId as string, request.body);
   return sendSuccess(response, result.data);
 });
@@ -122,7 +123,7 @@ navigationRouter.get("/footer-settings/:storeId", async (request: AuthRequest, r
   return sendSuccess(response, result.data);
 });
 
-navigationRouter.put("/footer-settings/:storeId", async (request: AuthRequest, response: Response) => {
+navigationRouter.put("/footer-settings/:storeId", requireFeatureAccess("navigation", { getStoreId: (req) => String(req.params.storeId) }), async (request: AuthRequest, response: Response) => {
   const result = await updateFooterSettings(request.params.storeId as string, request.body);
   return sendSuccess(response, result.data);
 });

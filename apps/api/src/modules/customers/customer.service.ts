@@ -3,7 +3,13 @@ import { CustomerModel } from "../../models/customer.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "bornoland-customer-secret";
+function getCustomerJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET environment variable is required");
+  }
+  return secret;
+}
 
 export async function registerCustomer(storeId: string, payload: { name: string; email: string; password: string }) {
   await connectDatabase();
@@ -21,7 +27,7 @@ export async function registerCustomer(storeId: string, payload: { name: string;
 
   const token = jwt.sign(
     { customerId: customer._id, storeId, email: customer.email },
-    JWT_SECRET,
+    getCustomerJwtSecret(),
     { expiresIn: "7d" }
   );
 
@@ -47,7 +53,7 @@ export async function loginCustomer(storeId: string, payload: { email: string; p
 
   const token = jwt.sign(
     { customerId: customer._id, storeId, email: customer.email },
-    JWT_SECRET,
+    getCustomerJwtSecret(),
     { expiresIn: "7d" }
   );
 

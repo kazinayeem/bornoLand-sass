@@ -131,14 +131,16 @@ export function StoreNavbar() {
 
           <div className="flex items-center gap-2">
             <button onClick={() => setSearchOpen(true)}
+              aria-label="Open search"
               className="hidden rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 sm:block">
               <Search className="h-5 w-5" />
             </button>
-            <Link href="/account"
+            <Link href="/account" aria-label="Wishlist"
               className="hidden rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 sm:block">
               <Heart className="h-5 w-5" />
             </Link>
             <button onClick={() => dispatch(openCart())}
+              aria-label="View cart"
               className="relative rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600">
               <ShoppingCart className="h-5 w-5" />
               {itemCount > 0 && (
@@ -154,6 +156,7 @@ export function StoreNavbar() {
                   <Package className="h-4 w-4" /> Orders
                 </Link>
                 <button onClick={handleLogout}
+                  aria-label="Sign out"
                   className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-red-500">
                   <LogOut className="h-4 w-4" />
                 </button>
@@ -165,6 +168,9 @@ export function StoreNavbar() {
               </Link>
             )}
             <button onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+              aria-expanded={mobileOpen}
+              aria-controls="store-mobile-menu"
               className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 md:hidden">
               <Menu className="h-5 w-5" />
             </button>
@@ -219,7 +225,7 @@ export function StoreNavbar() {
       {/* Mobile full-screen menu */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          <motion.div id="store-mobile-menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm md:hidden"
             onClick={() => setMobileOpen(false)}>
             <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
@@ -235,6 +241,7 @@ export function StoreNavbar() {
                   <span className="text-lg font-bold text-zinc-900">{store.name}</span>
                 </div>
                 <button onClick={() => setMobileOpen(false)}
+                  aria-label="Close menu"
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100">
                   <X className="h-5 w-5" />
                 </button>

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../../common/middleware/auth.middleware.js";
+import { requireFeatureAccess } from "../../common/middleware/feature.middleware.js";
 import {
   createCollectionController,
   deleteCollectionController,
@@ -11,6 +12,6 @@ export const collectionRouter: Router = Router({ mergeParams: true });
 
 collectionRouter.use(requireAuth);
 collectionRouter.get("/", listCollectionsController);
-collectionRouter.post("/", createCollectionController);
-collectionRouter.put("/:id", updateCollectionController);
-collectionRouter.delete("/:id", deleteCollectionController);
+collectionRouter.post("/", requireFeatureAccess("collections", { checkLimit: true }), createCollectionController);
+collectionRouter.put("/:id", requireFeatureAccess("collections"), updateCollectionController);
+collectionRouter.delete("/:id", requireFeatureAccess("collections"), deleteCollectionController);

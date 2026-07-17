@@ -27,6 +27,7 @@ const categorySchema = new Schema(
 categorySchema.index({ storeId: 1, slug: 1 }, { unique: true });
 categorySchema.index({ storeId: 1, sortOrder: 1 });
 categorySchema.index({ storeId: 1, parentId: 1, sortOrder: 1 });
+categorySchema.index({ name: "text", description: "text" });
 
 export type CategoryDocument = InferSchemaType<typeof categorySchema>;
 export const CategoryModel = models.Category ?? model("Category", categorySchema);

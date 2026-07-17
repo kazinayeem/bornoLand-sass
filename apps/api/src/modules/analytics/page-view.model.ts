@@ -48,6 +48,7 @@ pageViewSchema.index({ storeId: 1, categoryId: 1 });
 pageViewSchema.index({ storeId: 1, visitorId: 1 });
 pageViewSchema.index({ storeId: 1, sessionId: 1 });
 pageViewSchema.index({ createdAt: -1 });
+pageViewSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 
 export type PageViewDocument = InferSchemaType<typeof pageViewSchema>;
 export const PageViewModel = models.PageView ?? model("PageView", pageViewSchema);

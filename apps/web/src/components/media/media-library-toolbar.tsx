@@ -68,6 +68,8 @@ type MediaLibraryToolbarProps = {
   totalCount?: number;
   compact?: boolean;
   showTitle?: boolean;
+  uploadDisabled?: boolean;
+  uploadDisabledReason?: string;
 };
 
 export function MediaLibraryToolbar({
@@ -84,6 +86,8 @@ export function MediaLibraryToolbar({
   totalCount,
   compact,
   showTitle = true,
+  uploadDisabled,
+  uploadDisabledReason,
 }: MediaLibraryToolbarProps) {
   return (
     <div className="space-y-4">
@@ -142,14 +146,27 @@ export function MediaLibraryToolbar({
               ))}
             </select>
 
-            <button
-              type="button"
-              onClick={onUploadClick}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 shrink-0"
-            >
-              <Upload className="h-4 w-4" />
-              <span className="hidden sm:inline">Upload</span>
-            </button>
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={uploadDisabled ? undefined : onUploadClick}
+                disabled={uploadDisabled}
+                title={uploadDisabledReason}
+                className={`inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold shadow-sm transition shrink-0 ${
+                  uploadDisabled
+                    ? "cursor-not-allowed bg-zinc-300 text-zinc-500"
+                    : "bg-zinc-900 text-white hover:bg-zinc-800"
+                }`}
+              >
+                <Upload className="h-4 w-4" />
+                <span className="hidden sm:inline">Upload</span>
+              </button>
+              {uploadDisabled && uploadDisabledReason && (
+                <span className="absolute -bottom-5 left-0 whitespace-nowrap text-[11px] text-zinc-400">
+                  {uploadDisabledReason}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

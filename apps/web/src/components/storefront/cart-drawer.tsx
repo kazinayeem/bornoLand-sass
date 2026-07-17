@@ -65,7 +65,7 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                 <ShoppingBag className="h-5 w-5" style={{ color: primaryColor }} />
                 <span className="font-semibold text-zinc-900">Cart ({itemCount})</span>
               </div>
-              <button onClick={() => dispatch(closeCart())} className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100">
+              <button onClick={() => dispatch(closeCart())} aria-label="Close cart" className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -94,7 +94,7 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                               <p className="text-sm font-medium text-zinc-900 truncate max-w-[180px]">{item.name}</p>
                               {item.variantTitle && <p className="text-xs text-zinc-500">{item.variantTitle}</p>}
                             </div>
-                            <button onClick={() => handleRemove(item.productId, item.variantId)} className="text-zinc-300 hover:text-red-400">
+                            <button onClick={() => handleRemove(item.productId, item.variantId)} aria-label={`Remove ${item.name}`} className="text-zinc-300 hover:text-red-400">
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
@@ -103,11 +103,13 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                           </p>
                           <div className="flex items-center gap-2">
                             <button onClick={() => handleQuantity(item.productId, item.variantId, item.quantity - 1)}
+                              aria-label="Decrease quantity"
                               className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-200 text-zinc-500 hover:bg-zinc-50">
                               <Minus className="h-3 w-3" />
                             </button>
                             <span className="w-6 text-center text-xs font-medium text-zinc-700">{item.quantity}</span>
                             <button onClick={() => handleQuantity(item.productId, item.variantId, item.quantity + 1)}
+                              aria-label="Increase quantity"
                               className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-200 text-zinc-500 hover:bg-zinc-50">
                               <Plus className="h-3 w-3" />
                             </button>

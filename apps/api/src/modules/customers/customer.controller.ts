@@ -4,7 +4,13 @@ import { registerCustomer, loginCustomer, getCustomerById } from "./customer.ser
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "bornoland-customer-secret";
+function getCustomerJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET environment variable is required");
+  }
+  return secret;
+}
 
 export async function registerController(request: SubdomainRequest, response: Response) {
   const storeId = request.store?._id;
@@ -37,12 +43,12 @@ export async function meController(request: SubdomainRequest, response: Response
   if (!authHeader?.startsWith("Bearer ")) return sendFailure(response, "Not authenticated", 401);
 
   try {
-    const decoded = jwt.verify(authHeader.split(" ")[1], JWT_SECRET) as { customerId: string };
+    const decoded = jwt.verify(authHeader.split(" ")[1], getCustomerJwtSecret()) as { customerId: string };
     const result = await getCustomerById(decoded.customerId);
     return result.ok
       ? sendSuccess(response, result.data)
       : sendFailure(response, result.message, 404);
   } catch {
-    return sendFailure(response, "Invalid token", 401);
+    return sendFailure(response, "Invalid or expired token", 401);
   }
 }

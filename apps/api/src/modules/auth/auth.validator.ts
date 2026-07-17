@@ -24,6 +24,10 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(8).max(128)
 });
 
+export const verifyEmailSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+});
+
 export const googleOAuthSchema = z.object({
   code: z.string().min(1),
   state: z.string().optional()

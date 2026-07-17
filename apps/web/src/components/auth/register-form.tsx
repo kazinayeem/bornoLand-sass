@@ -75,7 +75,7 @@ export function RegisterForm() {
       </div>
       <div className="space-y-2">
         <Label htmlFor="register-password">Password</Label>
-        <PasswordInput {...register("password")} />
+        <PasswordInput id="register-password" {...register("password")} />
         {errors.password ? <p className="text-xs text-red-500">{errors.password.message}</p> : null}
       </div>
       <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">

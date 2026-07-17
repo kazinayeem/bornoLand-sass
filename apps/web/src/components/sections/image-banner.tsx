@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { SectionWrapper, type SectionData } from "./section-renderer";
 
 const hMap: Record<string, string> = { sm: "h-48 md:h-64", md: "h-64 md:h-80", lg: "h-80 md:h-96" };
@@ -13,7 +14,7 @@ export function ImageBanner({ section }: { section: SectionData }) {
     <SectionWrapper section={section}>
       <Link href={p.link || "#"} className={`relative block ${height} overflow-hidden`}>
         {p.imageUrl ? (
-          <img src={p.imageUrl} alt={p.alt || "Banner"} className="h-full w-full object-cover" />
+          <Image src={p.imageUrl} alt={p.alt || "Banner"} fill className="object-cover" />
         ) : (
           <div className="h-full w-full bg-zinc-100 flex items-center justify-center text-zinc-300">Banner Image</div>
         )}

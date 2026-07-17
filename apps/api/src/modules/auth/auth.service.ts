@@ -19,6 +19,7 @@ import { recordAudit } from "../audit/audit.service.js";
 import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
 import { AUDIT_MODULES } from "../audit/audit.constants.js";
 import { sendEmail } from "../../common/integrations/email.js";
+import { getWebUrl } from "../../common/utils/app-url.js";
 import {
   signAccessToken,
   signSessionToken,
@@ -87,6 +88,7 @@ export async function registerUser(payload: unknown) {
   const user = await UserModel.create({
     name: parsed.data.name,
     email: parsed.data.email,
+    emailVerifiedAt: null,
     passwordHash,
     role: "admin",
     tenantId: tenant._id,
@@ -108,7 +110,7 @@ export async function registerUser(payload: unknown) {
   await sendEmail({
     to: parsed.data.email,
     subject: "Verify your BornoLand account",
-    html: `<p>Welcome to BornoLand. Verify your email token: <strong>${verificationToken}</strong></p>`,
+    html: `<p>Welcome to BornoLand. Click the link below to verify your email:</p><p><a href="${getWebUrl()}/verify-email/${verificationToken}">Verify your email</a></p>`,
   });
 
   return {
@@ -327,7 +329,7 @@ export async function forgotPassword(payload: unknown) {
   await sendEmail({
     to: parsed.data.email,
     subject: "Reset your BornoLand password",
-    html: `<p>Reset token: <strong>${token}</strong></p>`,
+    html: `<p>Click the link below to reset your password:</p><p><a href="${getWebUrl()}/reset-password/${token}">Reset your password</a></p>`,
   });
 
   return { ok: true as const, message: "If the email exists, a reset link has been sent." };

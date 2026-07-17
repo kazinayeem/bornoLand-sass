@@ -81,7 +81,7 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
 
       <div className="space-y-2">
         <Label htmlFor="login-password">Password</Label>
-        <PasswordInput placeholder="••••••••" {...register("password")} />
+        <PasswordInput id="login-password" placeholder="••••••••" {...register("password")} />
         {errors.password ? <p className="text-xs text-red-500">{errors.password.message}</p> : null}
       </div>
 

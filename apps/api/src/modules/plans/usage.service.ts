@@ -11,6 +11,7 @@ import { CollectionModel } from "../../models/collection.model.js";
 import { ReviewModel } from "../../models/review.model.js";
 import { MediaFileModel } from "../../models/media-file.model.js";
 import { StorageUsageModel } from "../../models/storage-usage.model.js";
+import { resolveStorageLimitMB } from "../stores/store-override.service.js";
 
 export type StoreUsageReport = {
   products: number;
@@ -62,7 +63,11 @@ export async function getStoreUsageReport(storeId: string): Promise<StoreUsageRe
   ]);
 
   const usedBytes = (storageUsage as { usedBytes?: number } | null)?.usedBytes ?? 0;
-  const limitBytes = (storageUsage as { limitBytes?: number } | null)?.limitBytes ?? 0;
+  let limitBytes = (storageUsage as { limitBytes?: number } | null)?.limitBytes ?? 0;
+  if (limitBytes <= 0) {
+    const resolved = await resolveStorageLimitMB(storeId);
+    limitBytes = resolved.unlimited ? 0 : Math.round(resolved.limitMB * 1024 * 1024);
+  }
   const storageMB = Math.round(usedBytes / (1024 * 1024));
   const limitMB = Math.round(limitBytes / (1024 * 1024));
   const percent = limitMB > 0 ? Math.min(100, Math.round((storageMB / limitMB) * 100)) : 0;

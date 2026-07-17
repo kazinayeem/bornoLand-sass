@@ -70,8 +70,13 @@ export async function validateUpload(storeId: string, mimeType: string, size: nu
   }
 
   const stats = await getStorageStats(storeId);
-  if (!stats.unlimited && stats.limitBytes > 0 && stats.usedBytes + size > stats.limitBytes) {
-    return { ok: false as const, message: "Storage limit reached. Upgrade your plan to upload more files." };
+  if (!stats.unlimited) {
+    if (stats.limitBytes <= 0) {
+      return { ok: false as const, message: "Storage is not included in your current plan. Upgrade to upload files." };
+    }
+    if (stats.usedBytes + size > stats.limitBytes) {
+      return { ok: false as const, message: "Storage limit reached. Upgrade your plan to upload more files." };
+    }
   }
 
   const storageLimit = await checkLimit(storeId, "storage");

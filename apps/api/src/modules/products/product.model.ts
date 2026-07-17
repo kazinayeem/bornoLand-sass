@@ -94,6 +94,7 @@ productSchema.index({ storeId: 1, featured: 1 });
 productSchema.index({ storeId: 1, productType: 1 });
 productSchema.index({ storeId: 1, featured: 1, createdAt: -1 });
 productSchema.index({ storeId: 1, category: 1 });
+productSchema.index({ name: "text", description: "text", tags: "text" });
 
 export type ProductDocument = InferSchemaType<typeof productSchema>;
 export const ProductModel = models.Product ?? model("Product", productSchema);

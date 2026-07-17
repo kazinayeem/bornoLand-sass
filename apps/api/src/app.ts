@@ -3,6 +3,10 @@ import helmet from "helmet";
 import cors, { type CorsOptions } from "cors";
 import dotenv from "dotenv";
 import path from "path";
+import crypto from "crypto";
+import mongoose from "mongoose";
+import pino from "pino";
+import pinoHttpModule from "pino-http";
 import { connectDatabase } from "./common/database/connection.js";
 import { authRouter } from "./modules/auth/auth.route.js";
 import { adminRouter } from "./modules/settings/admin.route.js";
@@ -96,25 +100,53 @@ const corsOptions: CorsOptions = {
 export const app: Express = express();
 
 app.set("trust proxy", 1);
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://picsum.photos", "https://placehold.co"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+}));
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
 app.use(globalRateLimit);
 app.use(subdomainDetector);
 
-app.use("/uploads", express.static(getUploadRoot()));
+const logger = pino({ level: process.env.LOG_LEVEL ?? "info" });
+const pinoHttp = (pinoHttpModule as any).default ?? (pinoHttpModule as any).pinoHttp ?? pinoHttpModule;
+app.use(pinoHttp({ logger }));
 
-app.get("/health", (_request, response) => {
-  response.json({ ok: true, service: "bornoland-api" });
+app.use((req, res, next) => {
+  (req as any).requestId = crypto.randomUUID();
+  res.setHeader("X-Request-Id", (req as any).requestId);
+  next();
 });
 
-app.get("/health/database", async (_request, response) => {
-  try {
-    const connection = await connectDatabase();
-    response.json({ ok: true, connected: connection.readyState === 1 });
-  } catch (error) {
-    response.status(503).json({ ok: false, connected: false, message: error instanceof Error ? error.message : "Database unavailable" });
-  }
+app.use("/uploads", express.static(getUploadRoot()));
+
+app.get(["/health", "/api/health"], (_req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = dbState === 1 ? "connected" : dbState === 2 ? "connecting" : "disconnected";
+
+  res.json({
+    status: dbState === 1 ? "healthy" : "unhealthy",
+    service: "bornoland-api",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    services: {
+      database: dbStatus,
+      redis: "unknown",
+    },
+    memory: process.memoryUsage(),
+  });
 });
 
 app.use("/auth", authRateLimit, authRouter);

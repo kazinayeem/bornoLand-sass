@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import {
   useBulkDeleteMediaMutation,
   useDeleteMediaFileMutation,
@@ -47,7 +47,6 @@ export function MediaLibrary({
   onSelect?: (file: MediaFile) => void;
   selectable?: boolean;
   pickerMode?: boolean;
-  /** @deprecated Folder sidebar removed — kept for API compatibility */
   showFolderNav?: boolean;
 }) {
   const [search, setSearch] = useState("");
@@ -91,137 +90,64 @@ export function MediaLibrary({
     ...filterQuery,
   });
 
-  // Get storage plan from store
-  const storePlan = store?.planId ? {
-    planId: store.planId,
-    storagePlan: { limitBytes: 0, uploadsSuspended: false }, // Will be updated from API
-    features: { media: { enabled: true, limit: 0 } }
-  } : null;
+  const storageLimit = data?.data?.globalStats?.limitBytes ?? 0;
+  const storageUsed = data?.data?.globalStats?.usedBytes ?? 0;
+  const uploadsSuspended = data?.data?.globalStats?.uploadsSuspended ?? false;
+  const unlimited = data?.data?.globalStats?.unlimited ?? false;
 
-  const storageLimit = data?.data?.globalStats?.limitBytes || 0;
-  const storageUsed = data?.data?.globalStats?.usedBytes || 0;
-  const storageRemaining = storageLimit > 0 ? Math.max(0, storageLimit - storageUsed) : 0;
+  const filesCount = data?.data?.globalStats?.fileCount ?? 0;
 
-  const hasMediaFeature = true; // We'll check actual limit via API
-  const featureLimit = data?.data?.globalStats?.fileCount || 0; // Using fileCount as a proxy for limit
-  const filesCount = data?.data?.globalStats?.fileCount || 0;
-  const filesRemaining = featureLimit > 0 ? Math.max(0, featureLimit - filesCount) : Infinity;
+  const limitType = useMemo<"no-storage" | "storage-full" | "feature-disabled" | "none">(() => {
+    if (data?.data?.globalStats == null) return "none";
+    if (unlimited) return "none";
+    if (storageLimit <= 0) return "no-storage";
+    if (storageUsed >= storageLimit) return "storage-full";
+    return "none";
+  }, [data, storageLimit, storageUsed, unlimited]);
 
-  const canUpload = hasMediaFeature && storageUsed < storageLimit && filesCount < featureLimit && !(data?.data?.globalStats?.uploadsSuspended);
+  const canUpload = !pickerMode && limitType === "none" && !uploadsSuspended;
 
-  const getStorageUsedFormatted = () => {
-    if (storageUsed >= 1024 * 1024 * 1024) {
-      return `${(storageUsed / (1024 * 1024 * 1024)).toFixed(1)} GB`; // 1 GB
+  const getLimitMessage = useCallback(() => {
+    switch (limitType) {
+      case "no-storage":
+        return "Your current plan does not include media storage. Upgrade to upload files.";
+      case "storage-full":
+        return `You have used all available media storage (${formatStorage(storageUsed)} / ${formatStorage(storageLimit)}).`;
+      case "feature-disabled":
+        return "Media library is not available on your current plan.";
+      default:
+        return null;
     }
-    if (storageUsed >= 1024 * 1024) {
-      return `${Math.round(storageUsed / (1024 * 1024))} MB`; // 1 MB
-    }
-    return `${storageUsed} KB`;
-  };
+  }, [limitType, storageUsed, storageLimit]);
 
-  const getStorageLimitFormatted = () => {
-    if (storageLimit >= 1024 * 1024 * 1024) {
-      return `${(storageLimit / (1024 * 1024 * 1024)).toFixed(0)} GB`; // 1 GB
-    }
-    if (storageLimit >= 1024 * 1024) {
-      return `${Math.round(storageLimit / (1024 * 1024))} MB`; // 1 MB
-    }
-    return `${storageLimit} KB`;
-  };
-
-  const formatFilesUsed = () => {
-    return `${filesCount} / ${featureLimit}`;
-  };
-
-  const getUploadLimitReason = () => {
-    if (storageUsed >= storageLimit) {
-      return `Storage limit reached (${getStorageUsedFormatted()} / ${getStorageLimitFormatted()}).`;
-    }
-    if (filesCount >= featureLimit) {
-      return `File limit reached (${formatFilesUsed()}).`;
-    }
-    if (storePlan?.storagePlan?.uploadsSuspended) {
-      return "Uploads are currently suspended for this store.";
-    }
-    if (!hasMediaFeature) {
-      return "Media feature not available on your plan.";
-    }
+  const getUploadLimitReason = useCallback(() => {
+    if (uploadsSuspended) return "Uploads are currently suspended for this store.";
+    if (limitType === "no-storage") return "Storage not included in your plan.";
+    if (limitType === "storage-full") return `Storage limit reached (${formatStorage(storageUsed)} / ${formatStorage(storageLimit)}).`;
     return "Upload limit reached.";
-  };
+  }, [limitType, storageUsed, storageLimit, uploadsSuspended]);
 
-  const getUploadLimitActionMessage = () => {
-    if (storageUsed >= storageLimit) {
-      return "Delete existing files or upgrade your plan to upload more media.";
-    }
-    if (filesCount >= featureLimit) {
-      return "Delete existing files or upgrade your plan to upload more files.";
+  const getUploadLimitActionMessage = useCallback(() => {
+    if (limitType === "no-storage" || limitType === "storage-full") {
+      return "Upgrade your plan to continue uploading.";
     }
     return "Upgrade your plan to continue uploading.";
-  };
+  }, [limitType]);
 
-  const checkUploadLimit = () => {
+  const checkUploadLimit = useCallback(() => {
     if (!canUpload) {
       const message = getUploadLimitReason();
       const actionMessage = getUploadLimitActionMessage();
-
-      let toastContent = `${message} ${actionMessage}`;
-
-      if (storageUsed >= storageLimit && filesCount >= featureLimit) {
-        toastContent = `${message} Delete files or upgrade your plan to continue.`;
-      }
-
-      toast.error(toastContent, {
+      toast.error(`${message} ${actionMessage}`, {
         action: {
           label: "Upgrade Plan",
-          onClick: () => window.open(`/store/${storeId}/billing`, "_blank"),
+          onClick: () => window.open(billingHref, "_blank"),
         },
       });
       return false;
     }
     return true;
-  };
-
-  const UploadLimitEmptyState = () => {
-    if (storageUsed >= storageLimit || filesCount >= featureLimit) {
-      const isStorage = storageUsed >= storageLimit;
-      const used = isStorage ? getStorageUsedFormatted() : formatFilesUsed();
-      const limit = isStorage ? getStorageLimitFormatted() : `${featureLimit} files`;
-      const actionMsg = isStorage
-        ? "Delete existing files or upgrade your plan to upload more media."
-        : "Delete existing files or upgrade your plan to upload more files.";
-
-      return (
-        <div className="flex min-h-[320px] flex-col items-center justify-center p-8">
-          <div className="text-center space-y-4">
-            <div className="text-6xl mb-4">📁</div>
-            <h3 className="text-xl font-semibold">Media limit reached</h3>
-            <p className="text-muted-foreground max-w-md">
-              {isStorage
-                ? "You have used all available media storage for your current plan."
-                : "You have reached the maximum number of files allowed on your plan."}
-            </p>
-            <div className="text-sm text-muted-foreground">
-              {isStorage && <div>Storage: {used} / {limit}</div>}
-              {!isStorage && <div>Files: {formatFilesUsed()}</div>}
-            </div>
-            <p className="text-xs text-muted-foreground">{actionMsg}</p>
-            <Button
-              onClick={() => window.open(`/store/${storeId}/billing`, "_blank")}
-              className="rounded-xl"
-            >
-              Upgrade Plan
-            </Button>
-            {!isStorage && (
-              <div className="text-xs text-muted-foreground">
-                Delete existing files to free up space
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
+  }, [canUpload, getUploadLimitReason, getUploadLimitActionMessage, billingHref]);
 
   const files = data?.data?.files ?? [];
   const totalCount = data?.data?.total ?? 0;
@@ -241,6 +167,7 @@ export function MediaLibrary({
 
   const handleUpload = useCallback(
     async (fileList: FileList | File[]) => {
+      if (pickerMode) return;
       if (!checkUploadLimit()) return;
 
       const arr = Array.from(fileList);
@@ -265,7 +192,6 @@ export function MediaLibrary({
         if (errorCount > 0) {
           toast.error(`${errorCount} file${errorCount === 1 ? "" : "s"} failed`);
         }
-        // Auto-close queue panel after a brief delay since files are in the grid
         if (errorCount === 0) {
           setTimeout(() => {
             setUploads([]);
@@ -276,7 +202,7 @@ export function MediaLibrary({
         toast.error("Upload failed");
       }
     },
-    [storeId, folder, canUpload, checkUploadLimit],
+    [storeId, folder, canUpload, checkUploadLimit, pickerMode],
   );
 
   const handleReplaceUpload = async (fileList: FileList | null) => {
@@ -351,7 +277,8 @@ export function MediaLibrary({
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    if (e.dataTransfer.files?.length) void handleUpload(e.dataTransfer.files);
+    if (pickerMode) return;
+    if (e.dataTransfer.files?.length && canUpload) void handleUpload(e.dataTransfer.files);
   };
 
   const toggleSelect = (id: string) => {
@@ -370,14 +297,15 @@ export function MediaLibrary({
     toast.success("Files deleted");
   };
 
-  const showEmpty = !isLoading && files.length === 0;
+  const showLimitState = limitType !== "none" && !isLoading && files.length === 0;
+  const showEmpty = !isLoading && files.length === 0 && limitType === "none";
   const showGrid = files.length > 0;
 
   return (
     <div
       className="space-y-5"
       onDragOver={(e) => {
-        if (pickerMode) return;
+        if (pickerMode || !canUpload) return;
         e.preventDefault();
         setDragOver(true);
       }}
@@ -397,6 +325,8 @@ export function MediaLibrary({
         onSortChange={setSortOption}
         onUploadClick={() => inputRef.current?.click()}
         totalCount={totalCount}
+        uploadDisabled={!canUpload}
+        uploadDisabledReason={!canUpload ? getUploadLimitReason() : undefined}
       />
 
       <MediaUploadQueuePanel
@@ -453,6 +383,12 @@ export function MediaLibrary({
             <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading your media...</p>
           </div>
         </div>
+      ) : showLimitState ? (
+        <MediaEmptyState
+          limitType={limitType}
+          limitMessage={getLimitMessage() ?? undefined}
+          billingHref={billingHref}
+        />
       ) : showEmpty ? (
         <MediaEmptyState
           dragOver={dragOver}
@@ -552,4 +488,17 @@ export function MediaLibrary({
       />
     </div>
   );
+}
+
+function formatStorage(bytes: number): string {
+  if (bytes >= 1024 * 1024 * 1024) {
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  }
+  if (bytes >= 1024 * 1024) {
+    return `${Math.round(bytes / (1024 * 1024))} MB`;
+  }
+  if (bytes >= 1024) {
+    return `${Math.round(bytes / 1024)} KB`;
+  }
+  return `${bytes} B`;
 }

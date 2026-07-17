@@ -1,14 +1,24 @@
+import crypto from "crypto";
 import type { Response } from "express";
 import type { SubdomainRequest } from "../../common/middleware/subdomain.middleware.js";
 import { createOrder, getCustomerOrders, getOrderById } from "./order.service.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
+import jwt from "jsonwebtoken";
+
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET environment variable is required");
+  }
+  return secret;
+}
 
 function getCustomerId(request: SubdomainRequest): string | null {
   const header = request.headers.authorization;
   if (!header?.startsWith("Bearer ")) return null;
   try {
-    const jwt = JSON.parse(atob(header.split(" ")[1].split(".")[1]));
-    return jwt.customerId ?? null;
+    const decoded = jwt.verify(header.split(" ")[1], getJwtSecret()) as { customerId?: string };
+    return decoded.customerId ?? null;
   } catch {
     return null;
   }
@@ -21,7 +31,7 @@ export async function createOrderController(request: SubdomainRequest, response:
   const customerId = getCustomerId(request);
   if (!customerId) return sendFailure(response, "Not authenticated", 401);
 
-  const sessionId = (request.headers["x-session-id"] as string) ?? `sess-${request.ip}`;
+  const sessionId = (request.headers["x-session-id"] as string) ?? crypto.randomUUID();
 
   const result = await createOrder(storeId, customerId, sessionId, request.body);
   return result.ok
@@ -41,11 +51,13 @@ export async function listOrdersController(request: SubdomainRequest, response: 
 }
 
 export async function getOrderController(request: SubdomainRequest, response: Response) {
+  const storeId = request.store?._id?.toString();
+  if (!storeId) return sendFailure(response, "Store not found", 404);
+
   const customerId = getCustomerId(request);
   if (!customerId) return sendFailure(response, "Not authenticated", 401);
 
-  const orderId = request.params.id as string;
-  const result = await getOrderById(orderId, customerId);
+  const result = await getOrderById(request.params.id as string, customerId);
   return result.ok
     ? sendSuccess(response, result.data)
     : sendFailure(response, result.message, 404);

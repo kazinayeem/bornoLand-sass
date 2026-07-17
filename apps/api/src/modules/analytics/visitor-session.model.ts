@@ -44,6 +44,7 @@ visitorSessionSchema.index({ storeId: 1, isActive: 1 });
 visitorSessionSchema.index({ sessionId: 1 }, { unique: true });
 visitorSessionSchema.index({ storeId: 1, isReturning: 1 });
 visitorSessionSchema.index({ createdAt: -1 });
+visitorSessionSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 
 export type VisitorSessionDocument = InferSchemaType<typeof visitorSessionSchema>;
 export const VisitorSessionModel = models.VisitorSession ?? model("VisitorSession", visitorSessionSchema);

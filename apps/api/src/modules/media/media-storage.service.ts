@@ -9,6 +9,7 @@ import { StorageUsageModel } from "./storage-usage.model.js";
 import { StoragePlanModel } from "./storage-plan.model.js";
 import { UploadLogModel } from "./upload-log.model.js";
 import { getMediaCategory } from "./media.constants.js";
+import { resolveStorageLimitMB } from "../stores/store-override.service.js";
 
 export function hashBuffer(buffer: Buffer) {
   return crypto.createHash("sha256").update(buffer).digest("hex");
@@ -32,20 +33,20 @@ export async function getStoragePlanSettings(planId: string): Promise<StoragePla
     return existing as unknown as StoragePlanSettings;
   }
 
-  const plan = (await PlanModel.findById(planId).lean()) as { limits?: { storageGB?: number } } | null;
+  const plan = (await PlanModel.findById(planId).lean()) as { limits?: { storage?: number } } | null;
   const storageFeature = (await PlanFeatureModel.findOne({ planId, featureKey: "storage" }).lean()) as
     | { limit?: number }
     | null;
-  const limitGB = storageFeature?.limit ?? plan?.limits?.storageGB ?? 1;
+  const limitMB = storageFeature?.limit ?? plan?.limits?.storage ?? 512;
   return {
     planId,
-    storageLimitMB: limitGB === 0 ? 0 : limitGB * 1024,
+    storageLimitMB: limitMB,
     maxFileSizeMB: 10,
     allowedMimeTypes: [],
     maxUploads: 0,
     maxImages: 0,
     maxDocuments: 0,
-    unlimited: limitGB === 0,
+    unlimited: limitMB === 0,
   };
 }
 
@@ -123,10 +124,12 @@ export async function getStorageStats(storeId: string) {
     uploadsSuspended: boolean;
   } | null;
 
-  // If no StorageUsage record exists yet, return zeros (no full resync).
-  // The first upload will create it.
   const usedBytes = usage?.usedBytes ?? 0;
-  const limitBytes = usage?.unlimited ? 0 : usage?.limitBytes ?? 0;
+  let limitBytes = usage?.unlimited ? 0 : usage?.limitBytes ?? 0;
+  if (limitBytes <= 0) {
+    const resolved = await resolveStorageLimitMB(storeId);
+    limitBytes = resolved.unlimited ? 0 : Math.round(resolved.limitMB * 1024 * 1024);
+  }
   const percentUsed = limitBytes > 0 ? Math.min(100, Math.round((usedBytes / limitBytes) * 100)) : 0;
 
   return {

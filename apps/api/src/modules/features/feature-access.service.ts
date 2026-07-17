@@ -403,7 +403,23 @@ export async function checkLimit(storeId: string, featureKey: string): Promise<F
   } | null;
   const unit = feature.unit || limitMeta?.unit || "";
   const max = resolveLimitValue(assignment?.limit ?? 0, unit);
-  if (max === 0) return { allowed: true, featureKey, featureName: feature.name, limit: 0 };
+  if (max === 0) {
+    if (assignment?.enabled) {
+      return { allowed: true, featureKey, featureName: feature.name, limit: 0, current: 0 };
+    }
+    const currentPlan = store?.planId
+      ? ((await PlanModel.findById(store.planId).lean()) as { slug: string; name: string } | null)
+      : null;
+    return {
+      allowed: false,
+      reason: "feature_disabled",
+      message: `${feature.name} is not available on your current plan`,
+      featureKey,
+      featureName: feature.name,
+      currentPlan: currentPlan ? { slug: currentPlan.slug, name: currentPlan.name } : undefined,
+      requiredPlan: await findMinimumPlanForFeature(featureKey),
+    };
+  }
 
   let usage = await StoreUsageModel.findOne({ storeId }).lean() as Record<string, number> | null;
   if (!usage) {

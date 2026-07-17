@@ -12,6 +12,8 @@ const verificationTokenSchema = new Schema(
   { timestamps: true, collection: "verification_tokens" }
 );
 
+verificationTokenSchema.index({ expires: 1 }, { expireAfterSeconds: 0 });
+
 export type VerificationTokenDocument = InferSchemaType<typeof verificationTokenSchema>;
 
 export const VerificationTokenModel = models.VerificationToken ?? model("VerificationToken", verificationTokenSchema);

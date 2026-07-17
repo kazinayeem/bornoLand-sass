@@ -25,6 +25,7 @@ import {
   resetPassword,
 } from "./auth.service.js";
 import { RefreshTokenModel } from "./refresh-token.model.js";
+import { VerificationTokenModel } from "./verification-token.model.js";
 import { recordAuditFromRequest } from "../audit/audit.service.js";
 import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
 import { AUDIT_MODULES } from "../audit/audit.constants.js";
@@ -143,6 +144,34 @@ export async function resetPasswordController(request: Request, response: Respon
     });
   }
   return result.ok ? sendSuccess(response, undefined, result.message) : sendFailure(response, result.message ?? "Reset password failed");
+}
+
+export async function verifyEmailController(request: Request, response: Response) {
+  const { token } = request.body as { token: string };
+
+  const doc = await VerificationTokenModel.findOne({
+    token,
+    purpose: "email-verification",
+    expires: { $gt: new Date() },
+  });
+
+  if (!doc) {
+    return sendFailure(response, "Invalid or expired verification token", 400);
+  }
+
+  const user = await UserModel.findOneAndUpdate(
+    { email: doc.identifier },
+    { $set: { emailVerifiedAt: new Date() } },
+    { new: true }
+  );
+
+  if (!user) {
+    return sendFailure(response, "User not found", 404);
+  }
+
+  await VerificationTokenModel.deleteMany({ identifier: doc.identifier });
+
+  return sendSuccess(response, null, "Email verified successfully");
 }
 
 export async function meController(request: Request, response: Response) {

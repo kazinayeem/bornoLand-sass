@@ -26,6 +26,7 @@ export function PasswordInput({ value, onChange, placeholder = "Password", class
       <button
         type="button"
         onClick={() => setShow(!show)}
+        aria-label={show ? "Hide password" : "Show password"}
         className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
       >
         {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

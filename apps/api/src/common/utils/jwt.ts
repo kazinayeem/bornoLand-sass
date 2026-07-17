@@ -84,7 +84,7 @@ export function getSessionCookieOptions(maxAgeSeconds: number) {
   const options: Record<string, unknown> = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
+    sameSite: "strict" as const,
     path: "/",
     maxAge: maxAgeSeconds * 1000,
   };

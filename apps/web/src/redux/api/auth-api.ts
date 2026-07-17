@@ -48,6 +48,10 @@ type ResetPasswordRequest = {
   password: string;
 };
 
+type VerifyEmailRequest = {
+  token: string;
+};
+
 type LoginResponse = {
   user: SessionUser;
   session: SessionPayload;
@@ -101,6 +105,13 @@ export const authApi = baseApi.injectEndpoints({
         body
       })
     }),
+    verifyEmail: builder.mutation<ApiEnvelope<never>, VerifyEmailRequest>({
+      query: (body) => ({
+        url: "/auth/verify-email",
+        method: "POST",
+        body
+      })
+    }),
     me: builder.query<ApiEnvelope<MeResponse>, void>({
       query: () => ({ url: "/auth/me" }),
       transformResponse: (response: ApiEnvelope<MeResponse>) => {
@@ -142,6 +153,7 @@ export const {
   useLoginMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
+  useVerifyEmailMutation,
   useMeQuery,
   useRefreshMutation,
   useLogoutMutation

@@ -55,7 +55,7 @@ export function QuickViewModal({ product, onClose }: Props) {
       <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute right-3 top-3 z-10 rounded-lg bg-white/80 p-1.5 text-zinc-400 hover:bg-white hover:text-zinc-600 shadow-sm">
+        <button onClick={onClose} aria-label="Close" className="absolute right-3 top-3 z-10 rounded-lg bg-white/80 p-1.5 text-zinc-400 hover:bg-white hover:text-zinc-600 shadow-sm">
           <X className="h-5 w-5" />
         </button>
 
@@ -105,11 +105,13 @@ export function QuickViewModal({ product, onClose }: Props) {
           <div className="mt-4 flex items-center gap-3">
             <div className="flex items-center gap-2 rounded-xl border border-zinc-200 p-1">
               <button onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                aria-label="Decrease quantity"
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-50">
                 <Minus className="h-4 w-4" />
               </button>
               <span className="w-8 text-center text-sm font-medium text-zinc-700">{quantity}</span>
               <button onClick={() => setQuantity(quantity + 1)}
+                aria-label="Increase quantity"
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-50">
                 <Plus className="h-4 w-4" />
               </button>

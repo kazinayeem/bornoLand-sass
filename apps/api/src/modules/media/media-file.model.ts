@@ -34,6 +34,7 @@ mediaFileSchema.index({ storeId: 1, isDeleted: 1, createdAt: -1 });
 mediaFileSchema.index({ storeId: 1, folder: 1 });
 mediaFileSchema.index({ storeId: 1, folder: 1, createdAt: -1 });
 mediaFileSchema.index({ storeId: 1, isDeleted: 1 });
+mediaFileSchema.index({ storeId: 1, isDeleted: 1, fileType: 1 });
 
 export type MediaFileDocument = InferSchemaType<typeof mediaFileSchema>;
 export const MediaFileModel = models.MediaFile ?? model("MediaFile", mediaFileSchema);

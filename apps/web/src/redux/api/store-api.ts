@@ -196,7 +196,9 @@ export type Store = {
   orderCount?: number;
   revenueBDT?: number;
   staffCount?: number;
-  storageUsed?: number;
+  storageUsedBytes?: number;
+  storageLimitBytes?: number;
+  storageFileCount?: number;
   createdAt: string;
   updatedAt: string;
 };

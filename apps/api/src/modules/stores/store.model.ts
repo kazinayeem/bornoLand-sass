@@ -67,7 +67,10 @@ const storeSchema = new Schema(
       layoutWidth: { type: String, default: "1200px" },
       darkMode: { type: Boolean, default: false },
       navbarStyle: { type: String, default: "fixed" }
-    }
+    },
+    storageUsedBytes: { type: Number, default: 0, min: 0 },
+    storageLimitBytes: { type: Number, default: 0, min: 0 },
+    storageUpdatedAt: { type: Date }
   },
   { timestamps: true }
 );

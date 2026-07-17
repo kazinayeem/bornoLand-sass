@@ -6,6 +6,7 @@ import {
   loginController,
   logoutController,
   meController,
+  refreshController,
   registerController,
   resetPasswordController,
 } from "./auth.controller.js";
@@ -14,6 +15,7 @@ export const authRouter: Router = Router();
 
 authRouter.post("/register", registerController);
 authRouter.post("/login", loginController);
+authRouter.post("/refresh", refreshController);
 authRouter.post("/forgot-password", forgotPasswordController);
 authRouter.post("/reset-password", resetPasswordController);
 authRouter.get("/me", meController);

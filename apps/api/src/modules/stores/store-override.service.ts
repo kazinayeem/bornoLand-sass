@@ -31,7 +31,7 @@ export async function upsertStoreOverride(
 
 // ── Delete ────────────────────────────────────────────────────
 
-export async function deleteStoreOverride(storeId: string) {
+export async function deleteStoreOverride(storeId: string): Promise<{ deletedCount?: number }> {
   await connectDatabase();
   return StoreOverrideModel.deleteOne({ storeId });
 }

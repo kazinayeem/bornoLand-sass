@@ -24,13 +24,25 @@ function getSecret() {
   return new TextEncoder().encode(secret);
 }
 
+const REFRESH_TOKEN_RE = /^[a-f0-9]{64}$/;
+
 export async function getServerSession(): Promise<AppSession | null> {
   const cookieStore = await cookies();
-  const token = cookieStore.get(getSessionCookieName())?.value;
 
-  if (!token) {
-    return null;
+  // Try legacy JWT session cookie first
+  const legacyToken = cookieStore.get("bornoland.session.legacy")?.value;
+  if (legacyToken) {
+    try {
+      const result = await jwtVerify(legacyToken, getSecret());
+      return result.payload as unknown as AppSession;
+    } catch {
+      // expired or invalid — fall through
+    }
   }
+
+  // Then try the current session cookie (may be a legacy JWT stored directly)
+  const token = cookieStore.get(getSessionCookieName())?.value;
+  if (!token) return null;
 
   try {
     const result = await jwtVerify(token, getSecret());
@@ -38,4 +50,26 @@ export async function getServerSession(): Promise<AppSession | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * Returns true if any auth-related cookie exists (legacy JWT or opaque refresh token).
+ * Server layouts should use this alongside getServerSession() to avoid redirect loops:
+ * when a refresh token exists but the JWT hasn't been restored yet, the layout should
+ * NOT redirect to /login — the client-side SessionInit will restore the session.
+ */
+export async function hasAuthCookie(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const legacyToken = cookieStore.get("bornoland.session.legacy")?.value;
+  if (legacyToken) {
+    try {
+      await jwtVerify(legacyToken, getSecret());
+      return true;
+    } catch {
+      // expired legacy token alone is not enough — still return false
+      // so the user gets redirected to login to obtain a fresh session
+    }
+  }
+  const refreshToken = cookieStore.get(getSessionCookieName())?.value;
+  return !!refreshToken && REFRESH_TOKEN_RE.test(refreshToken);
 }

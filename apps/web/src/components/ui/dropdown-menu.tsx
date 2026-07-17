@@ -26,7 +26,6 @@ import {
   useCallback,
   useEffect,
   useId,
-  useRef,
   useState,
   type KeyboardEvent,
   type ReactNode,
@@ -38,7 +37,6 @@ import {
   offset,
   flip,
   shift,
-  arrow,
   useInteractions,
   useClick,
   useDismiss,
@@ -46,7 +44,6 @@ import {
   FloatingFocusManager,
   type Placement,
 } from "@floating-ui/react";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 // ─── Public Types ──────────────────────────────────────────────────────────────
@@ -96,14 +93,13 @@ export function DropdownMenu({
   disabled = false,
 }: DropdownMenuProps) {
   const [open, setOpen] = useState(false);
-  const arrowRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
 
-  const { refs, floatingStyles, context, middlewareData } = useFloating({
+  const { refs, floatingStyles, context } = useFloating({
     open,
-    onOpenChange: disabled ? undefined : setOpen,
+    onOpenChange: setOpen,
     placement,
-    whileElementsMounted: autoUpdate,
+    whileElementsMounted: open ? autoUpdate : undefined,
     middleware: [
       offset(6),
       flip({ fallbackAxisSideDirection: "start", padding: 8 }),
@@ -116,16 +112,13 @@ export function DropdownMenu({
   const role    = useRole(context, { role: "menu" });
   const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss, role]);
 
-  // Close on scroll of any ancestor (keeps position fresh while open via autoUpdate)
+  // Close on scroll
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
     window.addEventListener("scroll", close, { passive: true, capture: true });
     return () => window.removeEventListener("scroll", close, true);
   }, [open]);
-
-  // Actionable items only (skip dividers) for keyboard navigation
-  const actionItems = items.filter((i): i is Extract<DropdownItem, { label: string }> => !i.divider);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -167,19 +160,26 @@ export function DropdownMenu({
     []
   );
 
-  const panel = (
-    <AnimatePresence>
-      {open && (
+  return (
+    <>
+      <div
+        ref={refs.setReference}
+        {...getReferenceProps()}
+        className="inline-flex"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+      >
+        {trigger}
+      </div>
+
+      {typeof document !== "undefined" && open && createPortal(
         <FloatingFocusManager context={context} modal={false} initialFocus={-1}>
-          <motion.div
+          <div
             ref={refs.setFloating}
             id={menuId}
             style={{ ...floatingStyles, minWidth, zIndex: 9999 }}
             {...getFloatingProps({ onKeyDown: handleKeyDown })}
-            initial={{ opacity: 0, scale: 0.95, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -4 }}
-            transition={{ duration: 0.13, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
               "rounded-xl border border-zinc-200/80 bg-white py-1.5 shadow-2xl shadow-black/10 ring-1 ring-black/5 outline-none",
               className
@@ -238,28 +238,10 @@ export function DropdownMenu({
                 </button>
               );
             })}
-          </motion.div>
-        </FloatingFocusManager>
+          </div>
+        </FloatingFocusManager>,
+        document.body
       )}
-    </AnimatePresence>
-  );
-
-  return (
-    <>
-      {/* Trigger — we clone it to attach ref + aria props */}
-      <div
-        ref={refs.setReference}
-        {...getReferenceProps()}
-        className="inline-flex"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-      >
-        {trigger}
-      </div>
-
-      {/* Portal → document.body, so never clipped by overflow:hidden */}
-      {typeof document !== "undefined" && createPortal(panel, document.body)}
     </>
   );
 }

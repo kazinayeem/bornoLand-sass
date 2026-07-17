@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AuditFilters, AuditTimeline } from "@/components/audit/audit-center";
 import type { AuditLogFilters } from "@/redux/api/audit-api";
 import { getAuditExportUrl } from "@/redux/api/audit-api";
+import { getAccessToken } from "@/lib/access-token";
 
 type Scope = "admin" | "store" | "workspace";
 
@@ -22,7 +23,10 @@ type Props = {
 };
 
 async function downloadExport(url: string, filename: string) {
-  const response = await fetch(url, { credentials: "include" });
+  const headers: Record<string, string> = {};
+  const token = getAccessToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const response = await fetch(url, { credentials: "include", headers });
   if (!response.ok) throw new Error("Export failed");
   const blob = await response.blob();
   const objectUrl = URL.createObjectURL(blob);

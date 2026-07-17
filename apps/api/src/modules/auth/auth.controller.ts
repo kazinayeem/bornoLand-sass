@@ -7,13 +7,24 @@ import { TeamMemberModel } from "../team/team-member.model.js";
 import {
   signSessionToken,
   getSessionCookieName,
-  getSessionCookieMaxAge,
+  getRefreshTokenCookieMaxAge,
   getSessionCookieOptions,
-  verifySessionToken,
+  getSessionCookieMaxAge,
+  verifyAccessToken,
+  generateRefreshToken,
+  hashRefreshToken,
 } from "../../common/utils/jwt.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 import { getWebUrl } from "../../common/utils/app-url.js";
-import { forgotPassword, loginUser, registerUser, resetPassword } from "./auth.service.js";
+import {
+  forgotPassword,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  registerUser,
+  resetPassword,
+} from "./auth.service.js";
+import { RefreshTokenModel } from "./refresh-token.model.js";
 import { recordAuditFromRequest } from "../audit/audit.service.js";
 import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
 import { AUDIT_MODULES } from "../audit/audit.constants.js";
@@ -60,8 +71,60 @@ export async function loginController(request: Request, response: Response) {
     tenantId: result.data.user.tenantId,
   });
 
-  response.cookie(getSessionCookieName(), result.data.token, getSessionCookieOptions(getSessionCookieMaxAge(request.body?.rememberMe === true)));
-  return sendSuccess(response, { user: result.data.user, session: result.data.session }, "Signed in");
+  // Set Refresh Token as httpOnly cookie
+  const rtMaxAge = getRefreshTokenCookieMaxAge();
+  response.cookie(getSessionCookieName(), result.data.refreshToken, getSessionCookieOptions(rtMaxAge));
+
+  // Also set a legacy session cookie for middleware.ts backward compat
+  response.cookie("bornoland.session.legacy", result.data.sessionToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: rtMaxAge * 1000,
+  });
+
+  return sendSuccess(response, {
+    accessToken: result.data.accessToken,
+    session: result.data.session,
+    user: result.data.user,
+  }, "Signed in");
+}
+
+export async function refreshController(request: Request, response: Response) {
+  // Read refresh token from cookie (same cookie name for simplicity)
+  const rawCookie = request.header("cookie") ?? "";
+  const cookieName = getSessionCookieName();
+  const match = rawCookie.match(new RegExp(`${cookieName}=([^;]+)`));
+  const refreshTokenValue = match?.[1];
+
+  if (!refreshTokenValue) {
+    return sendFailure(response, "Refresh token not found", 401);
+  }
+
+  const result = await refreshAccessToken(refreshTokenValue);
+
+  if (!result.ok) {
+    response.clearCookie(getSessionCookieName(), { path: "/" });
+    response.clearCookie("bornoland.session.legacy", { path: "/" });
+    return sendFailure(response, result.message ?? "Refresh failed", 401);
+  }
+
+  // Rotate refresh token cookie
+  const rtMaxAge = getRefreshTokenCookieMaxAge();
+  response.cookie(getSessionCookieName(), result.data.refreshToken, getSessionCookieOptions(rtMaxAge));
+  response.cookie("bornoland.session.legacy", result.data.sessionToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: rtMaxAge * 1000,
+  });
+
+  return sendSuccess(response, {
+    accessToken: result.data.accessToken,
+    session: result.data.session,
+  }, "Token refreshed");
 }
 
 export async function forgotPasswordController(request: Request, response: Response) {
@@ -83,13 +146,40 @@ export async function resetPasswordController(request: Request, response: Respon
 }
 
 export async function meController(request: Request, response: Response) {
+  // Try to read access token from Authorization header first
+  const authHeader = request.header("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    try {
+      const payload = verifyAccessToken(authHeader.slice(7));
+      return sendSuccess(response, { session: payload, accessToken: authHeader.slice(7) }, "Session loaded");
+    } catch {
+      // Access token expired — fall through to try refresh token
+    }
+  }
+
+  // Fall back to refresh token from cookie
   const token = extractCookieToken(request);
 
   if (!token) {
     return sendSuccess(response, { session: null }, "Unauthenticated");
   }
 
+  // Check if it's an opaque refresh token (starts with hex 64 chars)
+  if (/^[a-f0-9]{64}$/.test(token)) {
+    // This is a refresh token — try to get a new access token
+    const result = await refreshAccessToken(token);
+    if (!result.ok) {
+      return sendSuccess(response, { session: null }, "Session expired");
+    }
+    return sendSuccess(response, {
+      session: result.data.session,
+      accessToken: result.data.accessToken,
+    }, "Session loaded");
+  }
+
+  // Legacy: try to verify as JWT session token (for backward compat)
   try {
+    const { verifySessionToken } = await import("../../common/utils/jwt.js");
     const session = verifySessionToken(token);
     return sendSuccess(response, { session }, "Session loaded");
   } catch {
@@ -99,23 +189,47 @@ export async function meController(request: Request, response: Response) {
 
 export async function logoutController(request: Request, response: Response) {
   const token = extractCookieToken(request);
+  let userId: string | undefined;
+
   if (token) {
-    try {
-      const session = verifySessionToken(token);
+    // Try to extract userId from the RT cookie by looking it up
+    if (/^[a-f0-9]{64}$/.test(token)) {
+      const tokenHash = hashRefreshToken(token);
+      const stored = await RefreshTokenModel.findOne({ tokenHash }).lean() as { userId?: unknown } | null;
+      if (stored?.userId) {
+        userId = String(stored.userId);
+      }
+    }
+
+    // Fallback: try to decode as JWT to get userId for audit
+    if (!userId) {
+      try {
+        const { verifySessionToken } = await import("../../common/utils/jwt.js");
+        const session = verifySessionToken(token);
+        userId = session.userId;
+      } catch {
+        // ignore
+      }
+    }
+
+    if (userId) {
       await recordAuditFromRequest(request, {
         action: AUDIT_ACTIONS.LOGOUT,
         module: AUDIT_MODULES.AUTH,
         entityType: "User",
-        entityId: session.userId,
-        actorId: session.userId,
-        actorRole: session.role,
-        tenantId: session.tenantId,
+        entityId: userId,
+        actorId: userId,
       });
-    } catch {
-      // ignore invalid session on logout
     }
   }
+
+  // Revoke all refresh tokens for this user
+  if (userId) {
+    await logoutUser(userId);
+  }
+
   response.clearCookie(getSessionCookieName(), { path: "/" });
+  response.clearCookie("bornoland.session.legacy", { path: "/" });
   return sendSuccess(response, undefined, "Signed out");
 }
 
@@ -213,7 +327,7 @@ export async function googleCallbackController(request: Request, response: Respo
     await TeamMemberModel.create({ tenantId: tenant._id, userId: user._id, role: "owner", status: "active" });
   }
 
-  const session = {
+  const sessionPayload = {
     userId: String(user._id),
     tenantId: String(user.tenantId ?? ""),
     role: user.role,
@@ -222,9 +336,33 @@ export async function googleCallbackController(request: Request, response: Respo
     loginType: "user" as const,
   };
 
-  const token = signSessionToken(session, "30d");
-  response.cookie(getSessionCookieName(), token, getSessionCookieOptions(60 * 60 * 24 * 30));
+  // Generate refresh token
+  const { generateRefreshToken, hashRefreshToken, generateRefreshTokenFamily, signAccessToken } = await import("../../common/utils/jwt.js");
+  const refreshToken = generateRefreshToken();
+  const refreshTokenHash = hashRefreshToken(refreshToken);
+  const family = generateRefreshTokenFamily();
+  const rtExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  await RefreshTokenModel.create({
+    userId: user._id,
+    tokenHash: refreshTokenHash,
+    family,
+    expiresAt: rtExpiresAt,
+  });
+
+  const accessToken = signAccessToken(sessionPayload);
+  const rtMaxAge = 7 * 24 * 60 * 60;
+
+  response.cookie(getSessionCookieName(), refreshToken, getSessionCookieOptions(rtMaxAge));
+  response.cookie("bornoland.session.legacy", signSessionToken(sessionPayload, "7d"), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: rtMaxAge * 1000,
+  });
 
   const callbackUrl = state ? JSON.parse(Buffer.from(state, "base64url").toString("utf8")).callbackUrl : "/dashboard";
-  return response.redirect(`${webUrl}${callbackUrl}`);
+  // Pass access token as hash fragment so the frontend can read it
+  return response.redirect(`${webUrl}${callbackUrl}#access_token=${accessToken}`);
 }

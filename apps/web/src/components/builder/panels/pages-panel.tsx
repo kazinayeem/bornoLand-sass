@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
@@ -97,19 +97,29 @@ export function PagesPanel() {
 
   const [ctxPos, setCtxPos] = useState({ x: 0, y: 0 });
 
-  useEffect(() => {
+  // Smart position: calculate immediately before paint using useLayoutEffect
+  useLayoutEffect(() => {
     if (!ctxMenu) return;
     const el = ctxRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+    const pad = 12;
     let x = ctxMenu.x;
     let y = ctxMenu.y;
-    if (x + rect.width > vw - 12) x = vw - rect.width - 12;
-    if (y + rect.height > vh - 12) y = vh - rect.height - 12;
-    if (x < 12) x = 12;
-    if (y < 12) y = 12;
+
+    // Flip left if no room on right
+    if (x + rect.width > vw - pad) x = x - rect.width;
+    // Flip up if no room below
+    if (y + rect.height > vh - pad) y = y - rect.height;
+
+    // Clamp to viewport
+    if (x < pad) x = pad;
+    if (x + rect.width > vw - pad) x = vw - rect.width - pad;
+    if (y < pad) y = pad;
+    if (y + rect.height > vh - pad) y = vh - rect.height - pad;
+
     setCtxPos({ x, y });
   }, [ctxMenu]);
 
@@ -331,7 +341,10 @@ export function PagesPanel() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setCtxMenu({ x: e.clientX, y: e.clientY, page });
+                  const x = e.clientX;
+                  const y = e.clientY;
+                  setCtxPos({ x, y });
+                  setCtxMenu({ x, y, page });
                 }}
                 className="flex h-7 w-7 items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 hover:bg-zinc-100 transition-all"
               >

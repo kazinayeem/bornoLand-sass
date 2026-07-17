@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/api/base-api";
+import { setAccessToken } from "@/lib/access-token";
 
 export type SessionUser = {
   id: string;
@@ -50,10 +51,17 @@ type ResetPasswordRequest = {
 type LoginResponse = {
   user: SessionUser;
   session: SessionPayload;
+  accessToken: string;
 };
 
 type MeResponse = {
   session: SessionPayload | null;
+  accessToken?: string;
+};
+
+type RefreshResponse = {
+  session: SessionPayload;
+  accessToken: string;
 };
 
 export const authApi = baseApi.injectEndpoints({
@@ -71,6 +79,12 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
         body
       }),
+      transformResponse: (response: ApiEnvelope<LoginResponse>) => {
+        if (response.data?.accessToken) {
+          setAccessToken(response.data.accessToken);
+        }
+        return response;
+      },
       invalidatesTags: ["Auth", "User", "Tenant", "Dashboard"]
     }),
     forgotPassword: builder.mutation<ApiEnvelope<never>, ForgotPasswordRequest>({
@@ -89,13 +103,35 @@ export const authApi = baseApi.injectEndpoints({
     }),
     me: builder.query<ApiEnvelope<MeResponse>, void>({
       query: () => ({ url: "/auth/me" }),
+      transformResponse: (response: ApiEnvelope<MeResponse>) => {
+        if (response.data?.accessToken) {
+          setAccessToken(response.data.accessToken);
+        }
+        return response;
+      },
       providesTags: ["Auth"]
+    }),
+    refresh: builder.mutation<ApiEnvelope<RefreshResponse>, void>({
+      query: () => ({
+        url: "/auth/refresh",
+        method: "POST",
+      }),
+      transformResponse: (response: ApiEnvelope<RefreshResponse>) => {
+        if (response.data?.accessToken) {
+          setAccessToken(response.data.accessToken);
+        }
+        return response;
+      },
     }),
     logout: builder.mutation<ApiEnvelope<never>, void>({
       query: () => ({
         url: "/auth/logout",
         method: "POST"
       }),
+      transformResponse: (response: ApiEnvelope<never>) => {
+        setAccessToken(null);
+        return response;
+      },
       invalidatesTags: ["Auth", "User", "Tenant", "Dashboard"]
     })
   })
@@ -107,5 +143,6 @@ export const {
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useMeQuery,
+  useRefreshMutation,
   useLogoutMutation
 } = authApi;

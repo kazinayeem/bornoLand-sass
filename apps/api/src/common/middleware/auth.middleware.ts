@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { getSessionCookieName, verifySessionToken } from "../utils/jwt.js";
+import { getSessionCookieName, verifyAccessToken, verifySessionToken } from "../utils/jwt.js";
 
 export type AuthRequest = Request & {
   user?: {
@@ -21,18 +21,47 @@ export function requireAuth(request: AuthRequest, response: Response, next: Next
   }
 
   try {
-    // Prefer session cookie over Bearer token so dashboard users
-    // aren't downgraded to customer-level auth by a stray customer_token.
+    // 1. Try Bearer token as Access Token first (short-lived JWT)
+    if (header?.startsWith("Bearer ")) {
+      const token = header.slice(7);
+
+      // Check if it's a short access token (verify with short expiry)
+      try {
+        const payload = verifyAccessToken(token);
+        request.user = payload;
+        return next();
+      } catch {
+        // Not a valid access token — fall through to cookie check
+        // (might be a customer_token from localStorage)
+      }
+
+      // Try as a regular JWT session token (for customer_token backward compat)
+      try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET ?? "") as AuthRequest["user"];
+        request.user = payload;
+        return next();
+      } catch {
+        return response.status(401).json({ message: "Invalid token" });
+      }
+    }
+
+    // 2. Fall back to session cookie (opaque refresh token or legacy JWT)
     if (cookieToken) {
+      // If it's an opaque refresh token (64 hex chars), we can't decode it directly.
+      // The client should use the access token for API calls.
+      // But we still try to verify it as a legacy JWT for backward compat.
+      if (/^[a-f0-9]{64}$/.test(cookieToken)) {
+        // This is a refresh token — cannot be used as an auth token directly.
+        // Return 401 so the client knows to refresh.
+        return response.status(401).json({ message: "Refresh token cannot be used for API access" });
+      }
+
       const payload = verifySessionToken(cookieToken);
       request.user = payload;
       return next();
     }
 
-    const token = header!.slice(7);
-    const payload = jwt.verify(token, process.env.JWT_SECRET ?? "") as AuthRequest["user"];
-    request.user = payload;
-    return next();
+    return response.status(401).json({ message: "Unauthorized" });
   } catch {
     return response.status(401).json({ message: "Invalid token" });
   }

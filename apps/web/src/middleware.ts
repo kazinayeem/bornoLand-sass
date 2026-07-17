@@ -147,22 +147,54 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  const rawSessionToken = request.cookies.get(sessionCookieName)?.value;
-  const token = rawSessionToken ? await verifySessionToken(rawSessionToken) : null;
+  // ── Auth check ────────────────────────────────────────────────
+  // Try legacy JWT session cookie first (backward compat + middleware edge runtime
+  // can't make API calls to verify opaque refresh tokens)
+  const rawLegacyToken = request.cookies.get("bornoland.session.legacy")?.value;
+  const rawRefreshToken = request.cookies.get(sessionCookieName)?.value;
 
+  // Verify the legacy JWT session token if present
+  let session: SessionToken | null = null;
+  if (rawLegacyToken) {
+    session = await verifySessionToken(rawLegacyToken);
+  }
+
+  // If no legacy token but refresh token exists, we still treat as "potentially authenticated"
+  // and let the client-side handle the actual auth check via /auth/refresh + /auth/me.
+  // The user won't see a flash of login page because the client will immediately refresh.
+  const hasRefreshToken = !!rawRefreshToken && /^[a-f0-9]{64}$/.test(rawRefreshToken);
+
+  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register");
   const isProtectedRoute = pathname.startsWith("/dashboard") || pathname.startsWith("/store");
   const isAdminRoute = pathname.startsWith("/admin");
 
+  // Redirect authenticated users away from login/register
+  if (isAuthPage && (session || hasRefreshToken)) {
+    const redirectTo = request.nextUrl.searchParams.get("redirect") || "/dashboard";
+    return NextResponse.redirect(new URL(redirectTo, request.url));
+  }
+
+  // Protected routes
   if (isAdminRoute || isProtectedRoute) {
-    if (!token) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
+    // If we have a valid JWT session, proceed
+    if (session) {
+      if (isAdminRoute && session.role !== "super_admin") {
+        return NextResponse.redirect(new URL("/unauthorized", request.url));
+      }
+      return NextResponse.next();
     }
 
-    if (isAdminRoute && token.role !== "super_admin") {
-      return NextResponse.redirect(new URL("/unauthorized", request.url));
+    // If we have a refresh token but no JWT, we can't verify in middleware.
+    // Let the request through — the client-side will verify and redirect if needed.
+    // This avoids false redirects to login when the user has a valid refresh token.
+    if (hasRefreshToken) {
+      return NextResponse.next();
     }
+
+    // No valid session at all — redirect to login
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

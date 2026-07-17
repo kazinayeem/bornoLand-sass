@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, Palette, Package, ShoppingBag, LayoutDashboard, X } from "lucide-react";
+import { ExternalLink, Palette, Package, ShoppingBag, LayoutDashboard, X } from "lucide-react";
+import { getStoreUrl } from "@/lib/urls";
+import { getAccessToken } from "@/lib/access-token";
 
 type FloatingAdminBarProps = {
   storeSlug: string;
@@ -17,7 +19,10 @@ export function FloatingAdminBar({ storeSlug, primaryColor }: FloatingAdminBarPr
   useEffect(() => {
     const check = async () => {
       try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
+        const headers: Record<string, string> = {};
+        const token = getAccessToken();
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const res = await fetch("/api/auth/me", { credentials: "include", headers });
         setIsAuthed(res.ok);
       } catch { setIsAuthed(false); }
     };
@@ -26,12 +31,13 @@ export function FloatingAdminBar({ storeSlug, primaryColor }: FloatingAdminBarPr
 
   if (!isAuthed) return null;
 
+  const storeUrl = getStoreUrl(storeSlug);
+
   const links = [
     { icon: LayoutDashboard, label: "Dashboard", href: `/store/${storeSlug}/dashboard` },
-    { icon: ShoppingBag, label: "Store", href: `/store/${storeSlug}/dashboard` },
-    { icon: LayoutTemplate, label: "Editor", href: `/store/${storeSlug}/builder` },
-    { icon: Palette, label: "Theme", href: `/store/${storeSlug}/theme` },
-    { icon: Package, label: "Products", href: `/store/${storeSlug}/products` },
+    { icon: ShoppingBag, label: "Open Store",   href: storeUrl, external: true },
+    { icon: Palette,      label: "Theme",        href: `/store/${storeSlug}/theme` },
+    { icon: Package,      label: "Products",     href: `/store/${storeSlug}/products` },
   ];
 
   return (
@@ -40,16 +46,30 @@ export function FloatingAdminBar({ storeSlug, primaryColor }: FloatingAdminBarPr
         {expanded && (
           <motion.div initial={{ opacity: 0, y: 10, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.9 }}
             className="flex flex-col gap-1 rounded-xl border bg-white p-2 shadow-lg">
-            {links.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                onClick={() => setExpanded(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900"
-              >
-                <link.icon className="h-3.5 w-3.5" /> {link.label}
-              </Link>
-            ))}
+            {links.map((link) =>
+              link.external ? (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setExpanded(false)}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900"
+                >
+                  <link.icon className="h-3.5 w-3.5" /> {link.label}
+                  <ExternalLink className="h-3 w-3 text-zinc-400" />
+                </a>
+              ) : (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setExpanded(false)}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900"
+                >
+                  <link.icon className="h-3.5 w-3.5" /> {link.label}
+                </Link>
+              )
+            )}
           </motion.div>
         )}
       </AnimatePresence>

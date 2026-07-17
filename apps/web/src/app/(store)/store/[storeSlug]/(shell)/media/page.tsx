@@ -29,7 +29,7 @@ export default function StoreMediaPage() {
         billingHref={billingHref}
         currentPlan={accessData?.data?.currentPlan?.name}
       >
-        <MediaLibrary storeId={storeId} billingHref={billingHref} />
+        <MediaLibrary storeId={storeId} store={store} billingHref={billingHref} />
       </EcommerceModuleShell>
     </StorePageCard>
   );

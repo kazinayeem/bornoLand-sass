@@ -80,13 +80,14 @@ async function ensurePlans() {
 }
 
 async function attachStoreMetrics(stores: any[]) {
-  const storeIds = stores.map((store) => store._id.toString());
-  if (storeIds.length === 0) return stores;
+  if (stores.length === 0) return stores;
+
+  const storeObjectIds = stores.map((store) => store._id);
 
   const [productCounts, orderCounts, orderRevenue] = await Promise.all([
-    ProductModel.aggregate([{ $match: { storeId: { $in: stores.map((store) => store._id) } } }, { $group: { _id: "$storeId", count: { $sum: 1 } } }]),
-    OrderModel.aggregate([{ $match: { storeId: { $in: stores.map((store) => store._id) } } }, { $group: { _id: "$storeId", count: { $sum: 1 } } }]),
-    OrderModel.aggregate([{ $match: { storeId: { $in: stores.map((store) => store._id) }, status: { $ne: "cancelled" } } }, { $group: { _id: "$storeId", revenue: { $sum: "$total" } } }])
+    ProductModel.aggregate([{ $match: { storeId: { $in: storeObjectIds } } }, { $group: { _id: "$storeId", count: { $sum: 1 } } }]),
+    OrderModel.aggregate([{ $match: { storeId: { $in: storeObjectIds } } }, { $group: { _id: "$storeId", count: { $sum: 1 } } }]),
+    OrderModel.aggregate([{ $match: { storeId: { $in: storeObjectIds }, status: { $ne: "cancelled" } } }, { $group: { _id: "$storeId", revenue: { $sum: "$total" } } }]),
   ]);
 
   const productCountMap = new Map(productCounts.map((entry: any) => [entry._id.toString(), entry.count]));
@@ -97,7 +98,10 @@ async function attachStoreMetrics(stores: any[]) {
     ...store,
     productCount: productCountMap.get(store._id.toString()) ?? 0,
     orderCount: orderCountMap.get(store._id.toString()) ?? 0,
-    revenueBDT: revenueMap.get(store._id.toString()) ?? 0
+    revenueBDT: revenueMap.get(store._id.toString()) ?? 0,
+    // Storage comes from cached Store model fields (updated atomically via $inc on upload/delete)
+    storageUsedBytes: store.storageUsedBytes ?? 0,
+    storageLimitBytes: store.storageLimitBytes ?? 0,
   }));
 }
 
@@ -232,17 +236,21 @@ export async function getUserStores(userId: string) {
   await connectDatabase();
   await ensurePlans();
   const stores = await StoreModel.find({ userId })
+    .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor selectedTemplateId theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
     .populate("selectedTemplateId", "name slug category preview")
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean();
 
-  for (const store of stores) {
-    await applyTrialExpiryToStore(store);
-    await applySubscriptionExpiryToStore(store);
-  }
+  // Fire-and-forget expiry checks (non-blocking)
+  Promise.all(stores.map((store) =>
+    Promise.all([
+      applyTrialExpiryToStore(store).catch(() => {}),
+      applySubscriptionExpiryToStore(store).catch(() => {}),
+    ])
+  )).catch(() => {});
 
-  const leanStores = stores.map((store) => store.toObject());
-  return { ok: true as const, data: { stores: await attachStoreMetrics(leanStores as any[]) } };
+  return { ok: true as const, data: { stores: await attachStoreMetrics(stores as any[]) } };
 }
 
 export async function getStoreById(storeId: string, userId: string) {
@@ -250,13 +258,15 @@ export async function getStoreById(storeId: string, userId: string) {
   if (!id) return { ok: false as const, message: "Invalid store ID" };
   await connectDatabase();
   const store = await StoreModel.findOne({ _id: id, userId })
+    .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor selectedTemplateId theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
     .populate("selectedTemplateId", "name slug category preview")
-    .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive");
+    .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
+    .lean();
   if (!store) return { ok: false as const, message: "Store not found" };
-  await applyTrialExpiryToStore(store);
-  await applySubscriptionExpiryToStore(store);
-  const leanStore = store.toObject();
-  const [hydrated] = await attachStoreMetrics([leanStore as any]);
+  // Fire-and-forget expiry
+  applyTrialExpiryToStore(store as any).catch(() => {});
+  applySubscriptionExpiryToStore(store as any).catch(() => {});
+  const [hydrated] = await attachStoreMetrics([store as any]);
   return { ok: true as const, data: { store: hydrated } };
 }
 
@@ -264,13 +274,15 @@ export async function getStoreBySlug(slug: string, userId: string) {
   if (!slug) return { ok: false as const, message: "Store slug is required" };
   await connectDatabase();
   const store = await StoreModel.findOne({ slug, userId })
+    .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor selectedTemplateId theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
     .populate("selectedTemplateId", "name slug category preview")
-    .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive");
+    .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
+    .lean();
   if (!store) return { ok: false as const, message: "Store not found" };
-  await applyTrialExpiryToStore(store);
-  await applySubscriptionExpiryToStore(store);
-  const leanStore = store.toObject();
-  const [hydrated] = await attachStoreMetrics([leanStore as any]);
+  // Fire-and-forget expiry
+  applyTrialExpiryToStore(store as any).catch(() => {});
+  applySubscriptionExpiryToStore(store as any).catch(() => {});
+  const [hydrated] = await attachStoreMetrics([store as any]);
   return { ok: true as const, data: { store: hydrated } };
 }
 

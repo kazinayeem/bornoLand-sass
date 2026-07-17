@@ -16,7 +16,7 @@ export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
   }
 
   const { store, products, settings, sliders, page } = data as any;
-  const categories = data.categories ?? [];
+  const categories: CategoryData[] = (data.categories ?? []) as CategoryData[];
   const pageSections = (page?.sections as any[]) ?? [];
   const theme: ThemeData = store.theme ?? {
     primaryColor: "#2563eb",

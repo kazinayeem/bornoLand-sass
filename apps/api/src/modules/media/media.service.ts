@@ -302,13 +302,18 @@ export async function listMediaFiles(
       break;
   }
 
-  const [files, total, imageCount, documentCount, videoCount] = await Promise.all([
+  const [files, countsResult] = await Promise.all([
     MediaFileModel.find(query).sort({ [sortField]: sortDir }).skip(skip).limit(limit).lean(),
-    MediaFileModel.countDocuments(query),
-    MediaFileModel.countDocuments({ ...query, fileType: "image" }),
-    MediaFileModel.countDocuments({ ...query, fileType: "document" }),
-    MediaFileModel.countDocuments({ ...query, fileType: "video" }),
+    MediaFileModel.aggregate<{ fileType: string | null; count: number }>([
+      { $match: query },
+      { $group: { _id: "$fileType", count: { $sum: 1 } } },
+    ]),
   ]);
+
+  const total = countsResult.reduce((s, r) => s + r.count, 0);
+  const imageCount = countsResult.find((r) => r.fileType === "image")?.count ?? 0;
+  const documentCount = countsResult.find((r) => r.fileType === "document")?.count ?? 0;
+  const videoCount = countsResult.find((r) => r.fileType === "video")?.count ?? 0;
 
   const referenceCounts = await getReferenceCounts(
     storeId,

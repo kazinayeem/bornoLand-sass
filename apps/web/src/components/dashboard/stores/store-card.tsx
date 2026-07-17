@@ -63,11 +63,12 @@ function formatDate(value?: string | null) {
   });
 }
 
-function formatBytes(bytes: number) {
-  if (!bytes) return { text: "0 MB", percent: 0 };
-  const mb = bytes / (1024 * 1024);
-  if (mb >= 1024) return { text: `${(mb / 1024).toFixed(1)} GB`, percent: Math.min(100, (mb / 1024) * 10) };
-  return { text: `${Math.round(mb)} MB`, percent: Math.min(100, (mb / 500) * 100) };
+function formatBytes(usedBytes: number, limitBytes: number) {
+  if (usedBytes <= 0) return { text: "0 MB", percent: 0 };
+  const mb = usedBytes / (1024 * 1024);
+  const text = mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
+  const percent = limitBytes > 0 ? Math.min(100, Math.round((usedBytes / limitBytes) * 100)) : 0;
+  return { text, percent };
 }
 
 function getStoreTypeLabel(storeType?: string) {
@@ -205,7 +206,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
   const isExpired = status === "expired";
   const isPending = status === "pending_payment" || status === "pending_approval";
   const domain = store.subdomain ? `${store.subdomain}.bornoland.com` : `${store.slug}.bornoland.com`;
-  const storage = formatBytes(store.storageUsed ?? 0);
+  const storage = formatBytes(store.storageUsedBytes ?? 0, store.storageLimitBytes ?? 0);
 
   const copyUrl = () => {
     navigator.clipboard.writeText(storeUrl);
@@ -383,7 +384,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
             </button>
             <button
               type="button"
-              onClick={() => router.push(`/store/${store.slug}`)}
+              onClick={() => router.push(`/store/${store.slug}/dashboard`)}
               className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-xs font-semibold text-zinc-700 transition-all hover:bg-zinc-50 active:scale-95"
             >
               <LayoutGrid className="h-3.5 w-3.5" /> Dashboard

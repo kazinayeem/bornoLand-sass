@@ -14,11 +14,19 @@ import { UserModel } from "../users/user.model.js";
 import { TeamMemberModel } from "../team/team-member.model.js";
 import { SubscriptionModel } from "../subscriptions/subscription.model.js";
 import { VerificationTokenModel } from "./verification-token.model.js";
+import { RefreshTokenModel } from "./refresh-token.model.js";
 import { recordAudit } from "../audit/audit.service.js";
 import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
 import { AUDIT_MODULES } from "../audit/audit.constants.js";
 import { sendEmail } from "../../common/integrations/email.js";
-import { signSessionToken, type SessionPayload } from "../../common/utils/jwt.js";
+import {
+  signAccessToken,
+  signSessionToken,
+  generateRefreshToken,
+  hashRefreshToken,
+  generateRefreshTokenFamily,
+  type SessionPayload,
+} from "../../common/utils/jwt.js";
 
 function getTenantSlug(tenantName?: string) {
   return (tenantName ?? "demo").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -112,6 +120,7 @@ export async function registerUser(payload: unknown) {
   };
 }
 
+// ── Login: generate Access Token + Refresh Token ─────────────────
 export async function loginUser(payload: unknown) {
   const parsed = loginSchema.safeParse(payload);
 
@@ -152,7 +161,23 @@ export async function loginUser(payload: unknown) {
 
   const session = buildSessionPayload(user, isAdminLogin ? "admin" : "user");
 
-  const token = signSessionToken(session, parsed.data.rememberMe ? "30d" : "7d");
+  // Generate Access Token (15min) — returned in response body
+  const accessToken = signAccessToken(session);
+
+  // Generate Refresh Token (7d) — stored in httpOnly cookie
+  const refreshToken = generateRefreshToken();
+  const refreshTokenHash = hashRefreshToken(refreshToken);
+  const family = generateRefreshTokenFamily();
+  const rtExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  await RefreshTokenModel.create({
+    userId: user._id,
+    tokenHash: refreshTokenHash,
+    family,
+    expiresAt: rtExpiresAt,
+    userAgent: (payload as Record<string, unknown>)?.userAgent ?? "",
+    ipAddress: (payload as Record<string, unknown>)?.ipAddress ?? "",
+  });
 
   await UserModel.updateOne(
     { _id: user._id },
@@ -179,7 +204,11 @@ export async function loginUser(payload: unknown) {
   return {
     ok: true as const,
     data: {
-      token,
+      accessToken,
+      // Session token for backward compat (read by middleware.ts)
+      sessionToken: signSessionToken(session, "7d"),
+      refreshToken,
+      refreshTokenExpiresAt: rtExpiresAt.toISOString(),
       session,
       user: {
         id: String(user._id),
@@ -190,6 +219,87 @@ export async function loginUser(payload: unknown) {
       },
     },
   };
+}
+
+// ── Refresh: validate Refresh Token, issue new Access Token ──────
+export async function refreshAccessToken(rawRefreshToken: string) {
+  await connectDatabase();
+
+  const tokenHash = hashRefreshToken(rawRefreshToken);
+  const stored = (await RefreshTokenModel.findOne({ tokenHash })) as {
+    _id: unknown;
+    userId: unknown;
+    expiresAt: Date;
+    revokedAt: Date | null;
+  } | null;
+
+  if (!stored) {
+    return { ok: false as const, message: "Refresh token not found" };
+  }
+
+  if (stored.revokedAt) {
+    return { ok: false as const, message: "Refresh token revoked" };
+  }
+
+  if (new Date() > stored.expiresAt) {
+    return { ok: false as const, message: "Refresh token expired" };
+  }
+
+  const user = (await UserModel.findById(stored.userId).lean()) as {
+    _id: unknown;
+    tenantId: unknown;
+    role: string;
+    email: string;
+    name: string;
+  } | null;
+
+  if (!user) {
+    // User was deleted — clean up their tokens
+    await RefreshTokenModel.deleteMany({ userId: stored.userId });
+    return { ok: false as const, message: "User not found" };
+  }
+
+  const session = buildSessionPayload(user, user.role === "super_admin" ? "admin" : "user");
+  const newAccessToken = signAccessToken(session);
+
+  // Rotate refresh token (issue new one, revoke old)
+  const newRefreshToken = generateRefreshToken();
+  const newTokenHash = hashRefreshToken(newRefreshToken);
+  const newFamily = generateRefreshTokenFamily();
+  const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  // Revoke the old token
+  await RefreshTokenModel.updateOne({ _id: stored._id }, { $set: { revokedAt: new Date() } });
+
+  // Insert new token in the same family
+  await RefreshTokenModel.create({
+    userId: user._id,
+    tokenHash: newTokenHash,
+    family: newFamily,
+    expiresAt: newExpiresAt,
+  });
+
+  return {
+    ok: true as const,
+    data: {
+      accessToken: newAccessToken,
+      sessionToken: signSessionToken(session, "7d"),
+      refreshToken: newRefreshToken,
+      refreshTokenExpiresAt: newExpiresAt.toISOString(),
+      session,
+    },
+  };
+}
+
+// ── Logout: revoke all refresh tokens for user ──────────────────
+export async function logoutUser(userId?: string) {
+  if (userId) {
+    // Revoke all refresh tokens for this user
+    await RefreshTokenModel.updateMany(
+      { userId, revokedAt: null },
+      { $set: { revokedAt: new Date() } }
+    );
+  }
 }
 
 export async function forgotPassword(payload: unknown) {

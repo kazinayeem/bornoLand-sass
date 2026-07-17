@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { getServerSession } from "@/lib/auth-session";
+import { getServerSession, hasAuthCookie } from "@/lib/auth-session";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
 import { buildPageMetadata } from "@/lib/server/page-metadata";
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const session = await getServerSession();
-  if (!session) redirect("/login");
+  const [session, hasPendingAuth] = await Promise.all([getServerSession(), hasAuthCookie()]);
+  if (!session && !hasPendingAuth) redirect("/login");
   return <WorkspaceShell>{children}</WorkspaceShell>;
 }

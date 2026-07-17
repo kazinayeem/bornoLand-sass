@@ -405,7 +405,11 @@ export async function checkLimit(storeId: string, featureKey: string): Promise<F
   const max = resolveLimitValue(assignment?.limit ?? 0, unit);
   if (max === 0) return { allowed: true, featureKey, featureName: feature.name, limit: 0 };
 
-  const usage = await syncStoreUsage(storeId);
+  let usage = await StoreUsageModel.findOne({ storeId }).lean() as Record<string, number> | null;
+  if (!usage) {
+    usage = await syncStoreUsage(storeId) as Record<string, number> | null;
+    if (!usage) return { allowed: true, featureKey, featureName: feature.name, limit: max };
+  }
   const counterKey = feature.usageCounterKey || featureKey;
   const current = resolveUsageValue(usage, counterKey, unit);
 

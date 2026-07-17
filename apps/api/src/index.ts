@@ -2,6 +2,7 @@ import { app } from "./app.js";
 import { connectDatabase } from "./common/database/connection.js";
 import { CartModel } from "./modules/cart/cart.model.js";
 import { startBillingCronScheduler } from "./modules/subscriptions/billing-cron.service.js";
+import { startStorageCronScheduler } from "./modules/media/storage-cron.service.js";
 import { runSafeMigration } from "./bootstrap/safe-migrate.js";
 import mongoose from "mongoose";
 
@@ -13,6 +14,7 @@ async function startServer() {
     await CartModel.syncIndexes();
 
     startBillingCronScheduler();
+    startStorageCronScheduler();
     const server = app.listen(port, () => {
       console.log(`BornoLand API listening on port ${port}`);
       console.log("MongoDB connection established");

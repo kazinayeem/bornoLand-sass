@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useCallback, useRef, useState, createElement } from "react";
+import { useMemo, useCallback, useRef, useState, useEffect, createElement } from "react";
+import { createPortal } from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import {
@@ -17,15 +18,19 @@ import {
   updateSectionMeta,
   setEditingZone,
 } from "@/redux/slices/builder-slice";
+import type { BuilderSection } from "@/redux/slices/builder-slice";
 import {
   Copy, Eye, EyeOff, Lock, LockOpen, MoreHorizontal, MoveDown, MoveUp,
   Star, Trash2, GripVertical, ChevronRight, ChevronDown,
   PanelLeft, PanelRightOpen, PanelBottom, Layers, Filter,
   Menu, Search, ShoppingCart, User, Image,
   Type, Grid3x3, LayoutList, Sparkles, X,
+  ArrowUpToLine, ArrowDownToLine, Bookmark, Download,
 } from "lucide-react";
 import { getSectionDef, normalizeSectionType } from "@/lib/section-registry";
-import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, type DropdownItem } from "@/components/ui/dropdown-menu";
+import { useCreateBuilderTemplateMutation } from "@/redux/api/builder-template-api";
+import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
 
 function getLayerChildren(type: string, props: Record<string, string>) {
@@ -75,6 +80,192 @@ type DragItem = {
   zone: "header" | "body" | "footer";
 };
 
+type ContextMenuState = {
+  open: boolean;
+  x: number;
+  y: number;
+  sectionId: string;
+  zone: "header" | "body" | "footer";
+  index: number;
+  totalCount: number;
+};
+
+// ─── Context Menu (right-click, positioned at cursor) ─────────────────────────
+
+function SectionContextMenu({
+  items,
+  x,
+  y,
+  onClose,
+}: {
+  items: DropdownItem[];
+  x: number;
+  y: number;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  const menuX = Math.min(x, window.innerWidth - 220);
+  const menuY = Math.min(y, window.innerHeight - 480);
+
+  return createPortal(
+    <div
+      ref={ref}
+      className="fixed z-[100] w-56 rounded-xl border border-zinc-200/80 bg-white py-1.5 shadow-2xl shadow-black/10 ring-1 ring-black/5"
+      style={{ left: menuX, top: menuY }}
+    >
+      {items.map((item, index) => {
+        if ("divider" in item && item.divider) {
+          return <div key={item.key ?? `div-${index}`} className="my-1 border-t border-zinc-100" />;
+        }
+        const i = item as Extract<DropdownItem, { label: string }>;
+        const Icon = i.icon;
+        return (
+          <button
+            key={i.key ?? i.label}
+            type="button"
+            disabled={i.disabled}
+            onClick={() => {
+              if (!i.disabled) {
+                i.onClick();
+                onClose();
+              }
+            }}
+            className={cn(
+              "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm font-medium outline-none transition-colors",
+              i.disabled && "cursor-not-allowed opacity-40",
+              !i.disabled && i.danger && "text-red-600 hover:bg-red-50",
+              !i.disabled && !i.danger && "text-zinc-700 hover:bg-zinc-50"
+            )}
+          >
+            {Icon && (
+              <Icon className={cn(
+                "h-4 w-4 shrink-0",
+                i.danger ? "text-red-500" : "text-zinc-400"
+              )} />
+            )}
+            <span className="truncate">{i.label}</span>
+          </button>
+        );
+      })}
+    </div>,
+    document.body
+  );
+}
+
+// ─── Menu Items Builder ──────────────────────────────────────────────────────
+
+function buildMenuItems(
+  section: BuilderSection,
+  zone: "header" | "body" | "footer",
+  index: number,
+  totalCount: number,
+  clipboardSection: BuilderSection | null,
+  dispatch: ReturnType<typeof useDispatch>,
+  createTemplate: ReturnType<typeof useCreateBuilderTemplateMutation>[0],
+  storeId: string,
+): DropdownItem[] {
+  return [
+    {
+      label: "Duplicate",
+      icon: Copy,
+      onClick: () => dispatch(duplicateSection(section.id)),
+    },
+    {
+      label: "Copy",
+      icon: Copy,
+      onClick: () => dispatch(copySection(section.id)),
+    },
+    {
+      label: "Paste",
+      icon: Copy,
+      onClick: () => dispatch(pasteSection(section.id)),
+      disabled: !clipboardSection,
+    },
+    { divider: true },
+    section.visible
+      ? { label: "Hide", icon: EyeOff, onClick: () => dispatch(toggleSection(section.id)) }
+      : { label: "Show", icon: Eye, onClick: () => dispatch(toggleSection(section.id)) },
+    section.locked
+      ? { label: "Unlock", icon: LockOpen, onClick: () => dispatch(toggleSectionLock(section.id)) }
+      : { label: "Lock", icon: Lock, onClick: () => dispatch(toggleSectionLock(section.id)) },
+    { divider: true },
+    {
+      label: "Move Up",
+      icon: MoveUp,
+      onClick: () => { if (index > 0) dispatch(moveSection({ from: index, to: index - 1 })); },
+      disabled: index === 0,
+    },
+    {
+      label: "Move Down",
+      icon: MoveDown,
+      onClick: () => { if (index < totalCount - 1) dispatch(moveSection({ from: index, to: index + 1 })); },
+      disabled: index >= totalCount - 1,
+    },
+    {
+      label: "Move to Top",
+      icon: ArrowUpToLine,
+      onClick: () => { if (index > 0) dispatch(moveSection({ from: index, to: 0 })); },
+      disabled: index === 0,
+    },
+    {
+      label: "Move to Bottom",
+      icon: ArrowDownToLine,
+      onClick: () => { if (index < totalCount - 1) dispatch(moveSection({ from: index, to: totalCount - 1 })); },
+      disabled: index >= totalCount - 1,
+    },
+    { divider: true },
+    {
+      label: "Save as Template",
+      icon: Bookmark,
+      onClick: () => {
+        createTemplate({
+          storeId,
+          name: section.label,
+          description: `Section template from "${section.label}"`,
+          category: section.type,
+          templateType: "section",
+          sections: [section],
+        });
+      },
+    },
+    {
+      label: "Export Section",
+      icon: Download,
+      onClick: () => {
+        const json = JSON.stringify(section, null, 2);
+        navigator.clipboard.writeText(json);
+      },
+    },
+    { divider: true },
+    {
+      label: "Delete",
+      icon: Trash2,
+      onClick: () => dispatch(removeSection(section.id)),
+      danger: true,
+    },
+  ];
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export function LayersPanel() {
   const dispatch = useDispatch();
   const sections = useSelector((s: RootState) => s.builder.sections);
@@ -84,17 +275,29 @@ export function LayersPanel() {
   const selectedSectionId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const clipboardSection = useSelector((s: RootState) => s.builder.clipboardSection);
 
+  const { storeId } = useRequiredStore();
+  const [createTemplate] = useCreateBuilderTemplateMutation();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [collapsedRegions, setCollapsedRegions] = useState<Record<string, boolean>>({
     header: false,
     footer: false,
   });
   const [dragOver, setDragOver] = useState<{ zone: string; index: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    open: false, x: 0, y: 0, sectionId: "", zone: "body", index: 0, totalCount: 0,
+  });
   const dragItem = useRef<DragItem | null>(null);
 
   const toggleRegion = (region: string) => {
     setCollapsedRegions((prev) => ({ ...prev, [region]: !prev[region] }));
   };
+
+  const closeContextMenu = useCallback(() => {
+    setContextMenu((prev) => ({ ...prev, open: false }));
+  }, []);
+
+  // ─── Drag & Drop ─────────────────────────────────────────────────────────────
 
   const handleDragStart = useCallback((sectionId: string, index: number, zone: "header" | "body" | "footer") => {
     dragItem.current = { id: sectionId, fromIndex: index, zone };
@@ -116,21 +319,13 @@ export function LayersPanel() {
     const { fromIndex, zone: fromZone } = dragItem.current;
     if (fromZone !== targetZone || fromIndex !== toIndex) {
       if (fromZone === targetZone) {
-        // Same zone move
         dispatch(moveSection({ from: fromIndex, to: toIndex }));
       } else {
-        // Cross-zone move: remove from source, add to target
         const sourceList = getZoneSections(fromZone);
-        const targetList = getZoneSections(targetZone);
         const item = sourceList[fromIndex];
         if (item) {
           dispatch(removeSection(item.id));
-          // We need a way to add to a different zone. Use a sequence:
-          // Remove from source first, then set editing zone and add
           dispatch(setEditingZone(targetZone));
-          // The section was already added as a new section with addSection
-          // But we can't easily do cross-zone in one action without another redux action
-          // For now, dispatch multiple actions
           setTimeout(() => {
             dispatch(addSection({
               ...item,
@@ -168,6 +363,32 @@ export function LayersPanel() {
     dragItem.current = null;
   }, []);
 
+  // ─── Right-click handler ─────────────────────────────────────────────────────
+
+  const handleContextMenu = useCallback((
+    e: React.MouseEvent,
+    sectionId: string,
+    zone: "header" | "body" | "footer",
+    index: number,
+    totalCount: number,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dispatch(setEditingZone(zone));
+    dispatch(setSelectedSection(sectionId));
+    setContextMenu({
+      open: true,
+      x: e.clientX,
+      y: e.clientY,
+      sectionId,
+      zone,
+      index,
+      totalCount,
+    });
+  }, [dispatch]);
+
+  // ─── Zone helpers ────────────────────────────────────────────────────────────
+
   const getZoneSections = (zone: "header" | "body" | "footer") => {
     if (zone === "header") return headerSections;
     if (zone === "footer") return footerSections;
@@ -178,6 +399,8 @@ export function LayersPanel() {
     return [...sections].sort((a, b) => Number(Boolean(b.favorite)) - Number(Boolean(a.favorite)));
   }, [sections]);
 
+  // ─── Render section item ─────────────────────────────────────────────────────
+
   const renderSectionItem = (section: typeof sections[0], index: number, zone: "header" | "body" | "footer", totalCount: number) => {
     const def = getSectionDef(section.type);
     const children = getLayerChildren(section.type, section.props);
@@ -186,8 +409,17 @@ export function LayersPanel() {
     const zoneSections = getZoneSections(zone);
     const Icon = getSectionIcon(section.type);
 
+    const menuItems = buildMenuItems(
+      section, zone, currentIndex, totalCount,
+      clipboardSection, dispatch, createTemplate, storeId,
+    );
+
     return (
-      <div key={section.id} className="group relative">
+      <div
+        key={section.id}
+        className="group relative"
+        onContextMenu={(e) => handleContextMenu(e, section.id, zone, currentIndex, totalCount)}
+      >
         {/* Drop indicator */}
         {dragOver?.zone === zone && dragOver.index === index && (
           <div className="flex items-center gap-1 px-2 py-0.5">
@@ -263,30 +495,13 @@ export function LayersPanel() {
                 trigger={
                   <button
                     type="button"
-                    onClick={(e) => e.stopPropagation()}
                     className="flex h-6 w-6 items-center justify-center rounded-md text-zinc-400 opacity-0 group-hover/section:opacity-100 hover:bg-zinc-100 hover:text-zinc-600 transition-all"
                     aria-label="Section actions"
                   >
                     <MoreHorizontal className="h-3.5 w-3.5" />
                   </button>
                 }
-                items={[
-                  { label: "Duplicate", icon: Copy, onClick: () => dispatch(duplicateSection(section.id)) },
-                  { label: "Copy", icon: Copy, onClick: () => dispatch(copySection(section.id)) },
-                  { label: "Paste", icon: Copy, onClick: () => dispatch(pasteSection(section.id)), disabled: !clipboardSection },
-                  { divider: true },
-                  section.visible
-                    ? { label: "Hide", icon: EyeOff, onClick: () => dispatch(toggleSection(section.id)) }
-                    : { label: "Show", icon: Eye, onClick: () => dispatch(toggleSection(section.id)) },
-                  section.locked
-                    ? { label: "Unlock", icon: LockOpen, onClick: () => dispatch(toggleSectionLock(section.id)) }
-                    : { label: "Lock", icon: Lock, onClick: () => dispatch(toggleSectionLock(section.id)) },
-                  { divider: true },
-                  { label: "Move Up", icon: MoveUp, onClick: () => { if (currentIndex > 0) dispatch(moveSection({ from: currentIndex, to: currentIndex - 1 })); }, disabled: currentIndex === 0 },
-                  { label: "Move Down", icon: MoveDown, onClick: () => { if (currentIndex < totalCount - 1) dispatch(moveSection({ from: currentIndex, to: currentIndex + 1 })); }, disabled: currentIndex >= totalCount - 1 },
-                  { divider: true },
-                  { label: "Delete", icon: Trash2, onClick: () => dispatch(removeSection(section.id)), danger: true },
-                ]}
+                items={menuItems}
               />
             </div>
           </div>
@@ -309,6 +524,8 @@ export function LayersPanel() {
       </div>
     );
   };
+
+  // ─── Render region ───────────────────────────────────────────────────────────
 
   const renderRegion = (
     label: string,
@@ -376,6 +593,19 @@ export function LayersPanel() {
     );
   };
 
+  // ─── Build context menu items for right-click ────────────────────────────────
+
+  const contextMenuItems = useMemo(() => {
+    if (!contextMenu.open || !contextMenu.sectionId) return [];
+    const allSections = getZoneSections(contextMenu.zone);
+    const section = allSections.find((s) => s.id === contextMenu.sectionId);
+    if (!section) return [];
+    return buildMenuItems(
+      section, contextMenu.zone, contextMenu.index, contextMenu.totalCount,
+      clipboardSection, dispatch, createTemplate, storeId,
+    );
+  }, [contextMenu, clipboardSection, dispatch, createTemplate, storeId, sections, headerSections, footerSections]);
+
   return (
     <aside className="flex h-full flex-col bg-white">
       <div className="border-b border-zinc-100 px-4 py-3">
@@ -421,6 +651,16 @@ export function LayersPanel() {
           );
         })()}
       </div>
+
+      {/* Right-click context menu */}
+      {contextMenu.open && contextMenuItems.length > 0 && (
+        <SectionContextMenu
+          items={contextMenuItems}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={closeContextMenu}
+        />
+      )}
     </aside>
   );
 }

@@ -1,7 +1,7 @@
 import { connectDatabase } from "../../common/database/connection.js";
 import { StoreModel } from "../../models/store.model.js";
 import { TenantModel } from "../../models/tenant.model.js";
-import { PageModel } from "../../models/page.model.js";
+import { StorePageModel } from "../pages/store-page.model.js";
 import { ProductModel } from "../../models/product.model.js";
 import { CategoryModel } from "../../models/category.model.js";
 import { StoreSettingsModel } from "../../models/store-settings.model.js";
@@ -36,10 +36,13 @@ export async function resolveBySubdomain(
   }
 
   const tenant = await TenantModel.findById(store.tenantId).lean() as any;
-  const page = await PageModel.findOne({
+  // StorePageModel uses leading "/" for slugs
+  const normalizedSlug = pageSlug.startsWith("/") ? pageSlug : `/${pageSlug}`;
+  const page = await StorePageModel.findOne({
     storeId: store._id,
-    slug: pageSlug.toLowerCase(),
-    status: "published"
+    slug: normalizedSlug.toLowerCase(),
+    status: "published",
+    deletedAt: null,
   }).lean() as any;
 
   if (!page) {

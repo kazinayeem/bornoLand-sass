@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback, memo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
-import { useGetPagesQuery, useCreatePageMutation, useSavePageMutation } from "@/redux/api/builder-api";
+import { useGetStorePagesQuery, useCreateStorePageMutation, useSaveStorePageDraftMutation } from "@/redux/api/store-page-api";
 import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
 import { setTheme } from "@/redux/slices/theme-slice";
 import { setStoreSettings } from "@/redux/slices/store-settings-slice";
@@ -157,7 +157,7 @@ export function BuilderEditor() {
 
   // ─── Only fetch what the builder needs ─────────────────────────────────────
   // Pages: essential for loading/managing builder pages
-  const { data: pagesData, isLoading: pagesLoading } = useGetPagesQuery(storeId, {
+  const { data: pagesData, isLoading: pagesLoading } = useGetStorePagesQuery(storeId, {
     skip: !storeId || !store,
   });
 
@@ -166,8 +166,8 @@ export function BuilderEditor() {
     skip: !storeId || !store,
   });
 
-  const [createPage] = useCreatePageMutation();
-  const [savePage] = useSavePageMutation();
+  const [createPage] = useCreateStorePageMutation();
+  const [savePageDraft] = useSaveStorePageDraftMutation();
 
   const settings = settingsData?.data?.settings ?? defaultSettings;
 
@@ -291,7 +291,9 @@ export function BuilderEditor() {
     if (!pages || loadedRef.current === loadKey) return;
 
     const redirectToPage = (targetSlug: string) => {
-      router.replace(`/store/${storeSlug}/builder/${targetSlug}`);
+      // StorePageModel uses leading "/" for slugs, but builder routes don't have it
+      const routeSlug = targetSlug.startsWith("/") ? targetSlug.slice(1) : targetSlug;
+      router.replace(`/store/${storeSlug}/builder/${routeSlug}`);
     };
 
     const isMongoId = (value: string) => /^[a-f\d]{24}$/i.test(value);
@@ -299,33 +301,38 @@ export function BuilderEditor() {
     loadedRef.current = loadKey;
 
     if (pages.length > 0) {
+      // StorePageModel slugs have leading "/", route slugs don't — normalize for matching
+      const normalizedRouteSlug = routePageSlug.startsWith("/") ? routePageSlug : `/${routePageSlug}`;
       const matchedPage =
-        pages.find((page) => page.slug === routePageSlug) ??
+        pages.find((page) => page.slug === normalizedRouteSlug || page.slug === routePageSlug) ??
         (routePageSlug && isMongoId(routePageSlug) ? pages.find((page) => page._id === routePageSlug) : undefined) ??
-        pages.find((page) => page.slug === "home") ??
+        pages.find((page) => page.slug === "/" || page.slug === "home") ??
         pages[0];
 
       const resolvedPageType = derivePageType(matchedPage);
       const pageDefaults = getDefaultSectionsForPageType(resolvedPageType);
       const bodySections = (matchedPage.sections?.length ? matchedPage.sections : pageDefaults) as BuilderSection[];
-      const headerSections = (matchedPage.headerSections?.length ? matchedPage.headerSections : getDefaultHeaderSections()) as BuilderSection[];
-      const footerSections = (matchedPage.footerSections?.length ? matchedPage.footerSections : getDefaultFooterSections()) as BuilderSection[];
+      const headerSecs = (matchedPage.headerSections?.length ? matchedPage.headerSections : getDefaultHeaderSections()) as BuilderSection[];
+      const footerSecs = (matchedPage.footerSections?.length ? matchedPage.footerSections : getDefaultFooterSections()) as BuilderSection[];
       dispatch(loadPage({
-        page: { id: matchedPage._id, title: matchedPage.title, slug: matchedPage.slug, pageType: resolvedPageType as any, isSystem: false, description: "", status: (matchedPage.status || "draft") as any },
+        page: { id: matchedPage._id, title: matchedPage.title, slug: matchedPage.slug, pageType: resolvedPageType as any, isSystem: matchedPage.isSystem ?? false, description: matchedPage.description ?? "", status: (matchedPage.status || "draft") as any },
         sections: bodySections,
-        headerSections,
-        footerSections,
+        headerSections: headerSecs,
+        footerSections: footerSecs,
+        headerSettings: (matchedPage.headerSettings as any) ?? {},
+        footerSettings: (matchedPage.footerSettings as any) ?? {},
       }));
 
       const canonicalSlug = matchedPage.slug;
-      if (!routePageSlug || routePageSlug !== canonicalSlug || isMongoId(routePageSlug)) {
-        redirectToPage(canonicalSlug);
+      const canonicalRouteSlug = canonicalSlug.startsWith("/") ? canonicalSlug.slice(1) : canonicalSlug;
+      if (!routePageSlug || routePageSlug !== canonicalRouteSlug || isMongoId(routePageSlug)) {
+        redirectToPage(canonicalRouteSlug);
       }
       return;
     }
 
     if (pages.length === 0) {
-      createPage({ storeId, data: { title: "Home", slug: "home" } })
+      createPage({ storeId, title: "Home", slug: "/" })
         .unwrap()
         .then((res) => {
           const createdPage = res.data?.page;
@@ -350,13 +357,13 @@ export function BuilderEditor() {
     if (!isDirty || !pageId) return;
     const timer = setTimeout(() => {
       dispatch(setSaving(true));
-      savePage({ storeId, pageId, data: { sections, headerSections, footerSections, headerSettings, footerSettings, theme: currentTheme, settings } })
+      savePageDraft({ id: pageId, storeId, sections, headerSections, footerSections, headerSettings, footerSettings, theme: currentTheme, settings })
         .unwrap()
         .then(() => dispatch(markSaved(new Date().toISOString())))
         .catch(() => dispatch(setSaveError("Save failed — check your connection")));
     }, 10000);
     return () => clearTimeout(timer);
-  }, [isDirty, pageId, sections, currentTheme, settings, storeId, dispatch, savePage]);
+  }, [isDirty, pageId, sections, currentTheme, settings, storeId, dispatch, savePageDraft]);
 
   // ─── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
@@ -374,7 +381,7 @@ export function BuilderEditor() {
         event.preventDefault();
         if (!pageId) return;
         dispatch(setSaving(true));
-        savePage({ storeId, pageId, data: { sections, headerSections, footerSections, headerSettings, footerSettings, theme: currentTheme, settings } })
+        savePageDraft({ id: pageId, storeId, sections, headerSections, footerSections, headerSettings, footerSettings, theme: currentTheme, settings })
           .unwrap()
           .then(() => dispatch(markSaved(new Date().toISOString())))
           .catch(() => dispatch(setSaveError("Save failed")));
@@ -419,7 +426,7 @@ export function BuilderEditor() {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [clipboardSection, currentTheme, dispatch, pageId, savePage, sections, selectedSectionId, settings, storeId]);
+  }, [clipboardSection, currentTheme, dispatch, pageId, savePageDraft, sections, selectedSectionId, settings, storeId]);
 
   // ─── Loading state ─────────────────────────────────────────────────────────
   if (pagesLoading) {

@@ -18,6 +18,10 @@ export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
   const { store, products, settings, sliders, page } = data as any;
   const categories: CategoryData[] = (data.categories ?? []) as CategoryData[];
   const pageSections = (page?.sections as any[]) ?? [];
+  const headerSections = (page?.headerSections as any[]) ?? [];
+  const footerSections = (page?.footerSections as any[]) ?? [];
+  const headerSettings = (page?.headerSettings as Record<string, unknown>) ?? {};
+  const footerSettings = (page?.footerSettings as Record<string, unknown>) ?? {};
   const theme: ThemeData = store.theme ?? {
     primaryColor: "#2563eb",
     secondaryColor: "#0f172a",
@@ -49,6 +53,10 @@ export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
       settings={currencySettings}
       sliders={sliders ?? []}
       pageSections={pageSections}
+      headerSections={headerSections}
+      footerSections={footerSections}
+      headerSettings={headerSettings}
+      footerSettings={footerSettings}
       footerSection={footerSection}
       showAdminBar
     >

@@ -7,7 +7,7 @@ import type { RootState } from "@/redux/store";
 import { setDevice, setZoom, toggleGuides, toggleGrid, setFullscreen } from "@/redux/slices/preview-slice";
 import { markSaved, setSaving, setPublishing, undoBuilder, redoBuilder, restoreHistorySnapshot, updateSectionProps, loadSections, toggleLeftPanel, toggleRightPanel, setSaveError, setEditingZone } from "@/redux/slices/builder-slice";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
-import { useSavePageMutation, usePublishPageMutation } from "@/redux/api/builder-api";
+import { useSaveStorePageDraftMutation, usePublishStorePageMutation } from "@/redux/api/store-page-api";
 import { toast } from "sonner";
 import { Drawer } from "@/components/ui/drawer";
 import { ThemePanel } from "@/components/builder/panels/theme-panel";
@@ -59,8 +59,8 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
   const showGuides = useSelector((s: RootState) => s.preview.showGuides);
   const showGrid = useSelector((s: RootState) => s.preview.showGrid);
 
-  const [savePage] = useSavePageMutation();
-  const [publishPage] = usePublishPageMutation();
+  const [savePageDraft] = useSaveStorePageDraftMutation();
+  const [publishPage] = usePublishStorePageMutation();
   const [importPageSections] = useImportPageSectionsMutation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stylesOpen, setStylesOpen] = useState(false);
@@ -88,9 +88,9 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
     if (!pageId) { toast.error("No page selected"); return; }
     dispatch(setSaving(true));
     try {
-      await savePage({
-        storeId, pageId,
-        data: { sections, headerSections, footerSections, headerSettings, footerSettings, theme, settings: storeSettings },
+      await savePageDraft({
+        id: pageId, storeId,
+        sections, headerSections, footerSections, headerSettings, footerSettings, theme, settings: storeSettings,
       }).unwrap();
       dispatch(markSaved(new Date().toISOString()));
       toast.success("Saved");
@@ -104,11 +104,11 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
     if (!pageId) { toast.error("No page selected"); return; }
     dispatch(setPublishing(true));
     try {
-      await savePage({
-        storeId, pageId,
-        data: { sections, headerSections, footerSections, headerSettings, footerSettings, theme, settings: storeSettings },
+      await savePageDraft({
+        id: pageId, storeId,
+        sections, headerSections, footerSections, headerSettings, footerSettings, theme, settings: storeSettings,
       }).unwrap();
-      await publishPage({ storeId, pageId, status: "published" }).unwrap();
+      await publishPage({ id: pageId, storeId }).unwrap();
       await revalidateStorefrontAction({ tenantSlug: store.subdomain || store.slug, storeId, scope: "all" });
       dispatch(markSaved(new Date().toISOString()));
       toast.success("Published!");

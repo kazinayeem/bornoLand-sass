@@ -8,7 +8,7 @@ import { CategoryModel } from "../../models/category.model.js";
 import { CouponModel } from "../../models/coupon.model.js";
 import { ReviewModel } from "../../models/review.model.js";
 import { CustomerModel } from "../../models/customer.model.js";
-import { PageModel } from "../../models/page.model.js";
+import { StorePageModel } from "../../modules/pages/store-page.model.js";
 import { TeamMemberModel } from "../../models/team-member.model.js";
 import { CollectionModel } from "../../models/collection.model.js";
 import { StorageUsageModel } from "../../models/storage-usage.model.js";
@@ -32,7 +32,7 @@ const COUNTER_MAP: Record<string, (storeId: string) => Promise<number>> = {
     if (!store?.tenantId) return 0;
     return TeamMemberModel.countDocuments({ tenantId: store.tenantId });
   },
-  pages: (sid) => PageModel.countDocuments({ storeId: sid }),
+  pages: (sid) => StorePageModel.countDocuments({ storeId: sid, deletedAt: null }),
   collections: (sid) => CollectionModel.countDocuments({ storeId: sid }),
   reviews: (sid) => ReviewModel.countDocuments({ storeId: sid }),
   coupons: (sid) => CouponModel.countDocuments({ storeId: sid }),

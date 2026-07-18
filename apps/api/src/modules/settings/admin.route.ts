@@ -11,6 +11,7 @@ import { CouponModel } from "../../models/coupon.model.js";
 import { ReviewModel } from "../../models/review.model.js";
 import { CustomerModel } from "../../models/customer.model.js";
 import { PageModel } from "../../models/page.model.js";
+import { StorePageModel } from "../pages/store-page.model.js";
 import { HomepageSliderModel } from "../../models/homepage-slider.model.js";
 import { PaymentMethodModel } from "../../models/payment-method.model.js";
 import { DeliveryZoneModel } from "../../models/delivery-zone.model.js";
@@ -265,6 +266,7 @@ adminRouter.delete("/stores/:id", async (request, response) => {
       ReviewModel.deleteMany({ storeId }),
       CustomerModel.deleteMany({ storeId }),
       PageModel.deleteMany({ storeId }),
+      StorePageModel.deleteMany({ storeId }),
       HomepageSliderModel.deleteMany({ storeId }),
       PaymentMethodModel.deleteMany({ storeId }),
       DeliveryZoneModel.deleteMany({ storeId }),

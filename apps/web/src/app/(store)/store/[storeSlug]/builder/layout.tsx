@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { BuilderModeProvider } from "@/lib/builder-mode";
 import { BuilderShell } from "@/components/builder/builder-shell";
 import { generateStorePageMetadata } from "@/lib/server/page-metadata";
 
@@ -18,5 +19,9 @@ export async function generateMetadata({ params }: { params: Promise<{ storeSlug
 }
 
 export default function BuilderLayout({ children }: { children: ReactNode }) {
-  return <BuilderShell>{children}</BuilderShell>;
+  return (
+    <BuilderModeProvider>
+      <BuilderShell>{children}</BuilderShell>
+    </BuilderModeProvider>
+  );
 }

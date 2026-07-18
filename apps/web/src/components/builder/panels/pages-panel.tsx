@@ -7,17 +7,18 @@ import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { loadSections, setPageMetadata } from "@/redux/slices/builder-slice";
 import {
-  useGetPagesQuery,
-  useCreatePageMutation,
-  useDeletePageMutation,
-  useDuplicatePageMutation,
-  useRenamePageMutation,
-  useArchivePageMutation,
-  useRestorePageMutation,
-  useUpdatePageMutation,
-  usePublishPageMutation,
-  type PageData,
-} from "@/redux/api/builder-api";
+  useGetStorePagesQuery,
+  useCreateStorePageMutation,
+  useDeleteStorePageMutation,
+  useDuplicateStorePageMutation,
+  useRenameStorePageMutation,
+  useArchiveStorePageMutation,
+  useRestoreStorePageMutation,
+  useUpdateStorePageMutation,
+  usePublishStorePageMutation,
+  useSaveStorePageDraftMutation,
+  type StorePage as PageData,
+} from "@/redux/api/store-page-api";
 import { useGetBuilderTemplatesQuery, type BuilderTemplate } from "@/redux/api/builder-template-api";
 import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
@@ -55,15 +56,15 @@ export function PagesPanel() {
   const { storeId, storeSlug } = useRequiredStore();
   const currentPageId = useSelector((s: RootState) => s.builder.page.id);
 
-  const { data: pagesData, isLoading, refetch } = useGetPagesQuery(storeId);
-  const [createPage] = useCreatePageMutation();
-  const [deletePage] = useDeletePageMutation();
-  const [duplicatePage] = useDuplicatePageMutation();
-  const [renamePageMutation] = useRenamePageMutation();
-  const [updatePage] = useUpdatePageMutation();
-  const [archivePage] = useArchivePageMutation();
-  const [restorePage] = useRestorePageMutation();
-  const [publishPage] = usePublishPageMutation();
+  const { data: pagesData, isLoading, refetch } = useGetStorePagesQuery(storeId, { skip: !storeId });
+  const [createPage] = useCreateStorePageMutation();
+  const [deletePage] = useDeleteStorePageMutation();
+  const [duplicatePage] = useDuplicateStorePageMutation();
+  const [renamePageMutation] = useRenameStorePageMutation();
+  const [updatePage] = useUpdateStorePageMutation();
+  const [archivePage] = useArchiveStorePageMutation();
+  const [restorePage] = useRestoreStorePageMutation();
+  const [publishPage] = usePublishStorePageMutation();
 
   // Templates for "New Page" picker
   const { data: templatesData } = useGetBuilderTemplatesQuery({ storeId, templateType: "page" });
@@ -90,8 +91,8 @@ export function PagesPanel() {
     return filtered.filter((p) => showArchived || p.status !== "archived");
   }, [pagesData, search, showArchived]);
 
-  const homePage = useMemo(() => pages.find((p) => p.isHome), [pages]);
-  const customPages = useMemo(() => pages.filter((p) => !p.isHome), [pages]);
+  const homePage = useMemo(() => pages.find((p) => p.isHomePage), [pages]);
+  const customPages = useMemo(() => pages.filter((p) => !p.isHomePage), [pages]);
   const archivedPages = useMemo(() => pages.filter((p) => p.status === "archived"), [pages]);
   const sortedCustom = useMemo(() => [...customPages].sort((a, b) => a.title.localeCompare(b.title)), [customPages]);
 
@@ -144,7 +145,7 @@ export function PagesPanel() {
   const handleOpenPage = useCallback((page: PageData) => {
     dispatch(setPageMetadata({ id: page._id, title: page.title, slug: page.slug }));
     dispatch(loadSections([]));
-    router.push(`/store/${storeSlug}/builder/${page.slug}`);
+    router.push(`/store/${storeSlug}/builder/${page.slug.startsWith('/') ? page.slug.slice(1) : page.slug}`);
     setCtxMenu(null);
   }, [dispatch, router, storeSlug]);
 
@@ -154,12 +155,12 @@ export function PagesPanel() {
     try {
       const payload: { title: string; slug: string; templateId?: string } = {
         title: newPageTitle.trim(),
-        slug: newPageSlug.trim(),
+        slug: newPageSlug.trim().startsWith("/") ? newPageSlug.trim() : `/${newPageSlug.trim()}`,
       };
       if (newPageTemplateId && newPageTemplateId !== "blank") {
         payload.templateId = newPageTemplateId;
       }
-      const result = await createPage({ storeId, data: payload }).unwrap();
+      const result = await createPage({ storeId, ...payload }).unwrap();
       toast.success("Page created");
       setNewPageOpen(false);
       setNewPageTitle("");
@@ -169,7 +170,7 @@ export function PagesPanel() {
       if (page) {
         dispatch(setPageMetadata({ id: page._id, title: page.title, slug: page.slug }));
         dispatch(loadSections((page as any).sections ?? []));
-        router.push(`/store/${storeSlug}/builder/${page.slug}`);
+        router.push(`/store/${storeSlug}/builder/${page.slug.startsWith('/') ? page.slug.slice(1) : page.slug}`);
       } else {
         refetch();
       }
@@ -182,7 +183,7 @@ export function PagesPanel() {
   const handleRename = async (pageId: string) => {
     if (!renameValue.trim()) return;
     try {
-      await renamePageMutation({ pageId, title: renameValue.trim() }).unwrap();
+      await renamePageMutation({ id: pageId, storeId, title: renameValue.trim() }).unwrap();
       toast.success("Renamed");
       setRenamingId(null);
       refetch();
@@ -193,7 +194,7 @@ export function PagesPanel() {
 
   const handleDuplicate = async (page: PageData) => {
     try {
-      await duplicatePage({ pageId: page._id, storeId }).unwrap();
+      await duplicatePage({ id: page._id, storeId }).unwrap();
       toast.success("Duplicated");
       setCtxMenu(null);
       refetch();
@@ -202,7 +203,7 @@ export function PagesPanel() {
 
   const handleArchive = async (page: PageData) => {
     try {
-      await archivePage({ pageId: page._id, storeId }).unwrap();
+      await archivePage({ id: page._id, storeId }).unwrap();
       toast.success("Archived");
       setCtxMenu(null);
       refetch();
@@ -211,7 +212,7 @@ export function PagesPanel() {
 
   const handleRestore = async (page: PageData) => {
     try {
-      await restorePage({ pageId: page._id, storeId }).unwrap();
+      await restorePage({ id: page._id, storeId }).unwrap();
       toast.success("Restored");
       setCtxMenu(null);
       refetch();
@@ -220,10 +221,10 @@ export function PagesPanel() {
 
   const handleDelete = async (page: PageData) => {
     try {
-      await deletePage(page._id).unwrap();
+      await deletePage({ id: page._id, storeId }).unwrap();
       toast.success("Deleted");
       if (currentPageId === page._id) {
-        router.push(`/store/${storeSlug}/builder/home`);
+        router.push(`/store/${storeSlug}/builder/`);
       }
       setCtxMenu(null);
       refetch();
@@ -232,7 +233,7 @@ export function PagesPanel() {
 
   const handleToggle = async (page: PageData, field: "showHeader" | "showFooter" | "navigationVisible") => {
     try {
-      await updatePage({ pageId: page._id, data: { [field]: !(page as any)[field] } as any }).unwrap();
+      await updatePage({ id: page._id, storeId, data: { [field]: !(page as any)[field] } }).unwrap();
       refetch();
     } catch { toast.error("Failed to update"); }
   };
@@ -240,16 +241,16 @@ export function PagesPanel() {
   const handlePublish = async (page: PageData) => {
     try {
       if (page.status === "published") {
-        await updatePage({ pageId: page._id, data: { status: "draft" } as any }).unwrap();
+        await updatePage({ id: page._id, storeId, data: { status: "draft" } }).unwrap();
       } else {
-        await publishPage({ pageId: page._id, storeId }).unwrap();
+        await publishPage({ id: page._id, storeId }).unwrap();
       }
       refetch();
       setCtxMenu(null);
     } catch { toast.error("Failed to update status"); }
   };
 
-  const isHome = (p: PageData) => p.isHome;
+  const isHome = (p: PageData) => p.isHomePage;
 
   const renderPageCard = (page: PageData, home: boolean) => {
     const isActive = currentPageId === page._id;
@@ -407,7 +408,7 @@ export function PagesPanel() {
             </button>
             {showArchived && (
               <div className="mt-1 space-y-0.5">
-                {archivedPages.filter((p) => !p.isHome).map((p) => renderPageCard(p, false))}
+                {archivedPages.filter((p) => !p.isHomePage).map((p) => renderPageCard(p, false))}
               </div>
             )}
           </div>
@@ -443,7 +444,7 @@ export function PagesPanel() {
               ) : (
                 <>
                   <CtxBtn icon={Eye} label="Open" onClick={() => handleOpenPage(ctxMenu.page)} />
-                  <CtxBtn icon={ExternalLink} label="Preview" onClick={() => window.open(`/preview/${storeSlug}/${ctxMenu.page.slug}`, "_blank")} />
+                  <CtxBtn icon={ExternalLink} label="Preview" onClick={() => window.open(`/preview/${storeSlug}/${ctxMenu.page.slug.startsWith("/") ? ctxMenu.page.slug.slice(1) : ctxMenu.page.slug}`, "_blank")} />
                   <div className="border-t border-zinc-100 my-1" />
                   <CtxBtn icon={Settings} label="Page Settings" onClick={() => { setSettingsPage(ctxMenu.page); setCtxMenu(null); }} />
                   <CtxBtn icon={Edit3} label="Rename" onClick={() => { setRenamingId(ctxMenu.page._id); setRenameValue(ctxMenu.page.title); setCtxMenu(null); }} />
@@ -599,7 +600,7 @@ function CtxBtn({ icon: Icon, label, onClick, danger }: { icon: any; label: stri
 function PageSettingsDrawer({ page, storeId, onClose, onSaved, isHome }: {
   page: PageData; storeId: string; onClose: () => void; onSaved: () => void; isHome: boolean;
 }) {
-  const [updatePage] = useUpdatePageMutation();
+  const [updatePage] = useUpdateStorePageMutation();
   const [title, setTitle] = useState(page.title);
   const [slug, setSlug] = useState(page.slug);
   const [seoTitle, setSeoTitle] = useState(page.seo?.title ?? "");
@@ -616,13 +617,14 @@ function PageSettingsDrawer({ page, storeId, onClose, onSaved, isHome }: {
     setSaving(true);
     try {
       await updatePage({
-        pageId: page._id,
+        id: page._id,
+        storeId,
         data: {
           title, slug,
           seo: { title: seoTitle, description: seoDesc },
           showHeader, showFooter, navigationVisible: navVisible,
           password, customCss, customJs,
-        } as any,
+        },
       }).unwrap();
       toast.success("Settings saved");
       onSaved();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { useIsBuilderMode } from "@/lib/builder-mode";
 import { useDispatch } from "react-redux";
 import { hydrateCart, mergeServerCart } from "@/redux/slices/cart-slice";
 import { useGetCartQuery } from "@/redux/api/cart-api";
@@ -32,6 +33,8 @@ function CartInitializer() {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const isBuilderMode = useIsBuilderMode();
+  if (isBuilderMode) return <>{children}</>;
   useEffect(() => {
     if (typeof window === "undefined") return;
     const existing = localStorage.getItem("session_id");

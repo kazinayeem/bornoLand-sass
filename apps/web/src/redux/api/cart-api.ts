@@ -43,7 +43,10 @@ export const cartApi = baseApi.injectEndpoints({
         url: "/cart",
         headers: getSessionHeaders()
       }),
-      providesTags: ["Cart"]
+      providesTags: ["Cart"],
+      // The cart preview is mounted inside the builder canvas and re-renders often.
+      // Avoid re-fetching on every mount — the cache lives for the session.
+      refetchOnMountOrArgChange: false,
     }),
     addToCart: builder.mutation<ApiResponse<CartResponse>, { productId: string; quantity?: number; variantId?: string }>({
       query: (body) => ({

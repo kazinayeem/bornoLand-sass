@@ -3,7 +3,7 @@ import type { Request, Response } from "express";
 import { connectDatabase } from "../../common/database/connection.js";
 import { requireAuth, type AuthRequest } from "../../common/middleware/auth.middleware.js";
 import { requireTenantScope } from "../../common/middleware/tenant.middleware.js";
-import { PageModel } from "../../models/page.model.js";
+import { StorePageModel } from "../pages/store-page.model.js";
 import { publishPage } from "./publish.service.js";
 
 export const pageRouter: Router = Router();
@@ -13,7 +13,7 @@ pageRouter.use(requireAuth);
 pageRouter.get("/:tenantId", requireTenantScope, async (request: Request, response: Response) => {
   await connectDatabase();
 
-  const pages = await PageModel.find({ tenantId: request.params.tenantId }).sort({ updatedAt: -1 }).lean();
+  const pages = await StorePageModel.find({ tenantId: request.params.tenantId, deletedAt: null }).sort({ updatedAt: -1 }).lean();
   return response.json({ pages });
 });
 

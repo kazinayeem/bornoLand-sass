@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
 import { loadSections, setSaving } from "@/redux/slices/builder-slice";
-import { useResetPageMutation } from "@/redux/api/builder-api";
+import { useSaveStorePageDraftMutation } from "@/redux/api/store-page-api";
 import { motion } from "framer-motion";
 import { RefreshCw, Loader2 } from "lucide-react";
 
@@ -27,7 +27,7 @@ const DEFAULT_TEMPLATE = [
 
 export function ResetPageDialog({ open, onClose, storeId, pageId, title, isHome, onSuccess }: Props) {
   const dispatch = useDispatch();
-  const [resetPage] = useResetPageMutation();
+  const [saveDraft] = useSaveStorePageDraftMutation();
   const [resetting, setResetting] = useState(false);
 
   if (!open) return null;
@@ -35,7 +35,7 @@ export function ResetPageDialog({ open, onClose, storeId, pageId, title, isHome,
   const handleReset = async () => {
     setResetting(true);
     try {
-      await resetPage({ storeId, pageId }).unwrap();
+      await saveDraft({ id: pageId, storeId, sections: DEFAULT_TEMPLATE.map((s) => ({ ...s, id: `${s.type}-${Date.now()}` })) }).unwrap();
       dispatch(setSaving(false));
       dispatch(loadSections(DEFAULT_TEMPLATE.map((s) => ({ ...s, id: `${s.type}-${Date.now()}` })) as unknown as BuilderSection[]));
       onSuccess?.();

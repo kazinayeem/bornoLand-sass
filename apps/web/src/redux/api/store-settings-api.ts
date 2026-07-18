@@ -43,7 +43,8 @@ export const storeSettingsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getStoreSettings: builder.query<ApiEnvelope<StoreSettingsResponse>, string>({
       query: (storeId) => ({ url: `/stores/${storeId}/settings` }),
-      providesTags: (_result, _error, storeId) => [{ type: "StoreSettings", id: storeId }]
+      providesTags: (_result, _error, storeId) => [{ type: "StoreSettings", id: storeId }],
+      refetchOnMountOrArgChange: false,
     }),
     updateStoreSettings: builder.mutation<ApiEnvelope<StoreSettingsResponse>, { storeId: string; data: Partial<StoreSettings> }>({
       query: ({ storeId, data }) => ({ url: `/stores/${storeId}/settings`, method: "PUT", body: data }),

@@ -245,17 +245,20 @@ export function BuilderEditor() {
     return () => window.removeEventListener("keydown", handler);
   }, [dispatch, fullscreen]);
 
-  // ─── Dispatch theme from store ─────────────────────────────────────────────
+  // ─── Dispatch theme from store (once per actual theme identity) ────────────
+  const themeRef = useRef<string>("");
   useEffect(() => {
-    if (store.theme) {
-      dispatch(setTheme({
-        primaryColor: store.theme.primaryColor, secondaryColor: store.theme.secondaryColor,
-        font: store.theme.font, buttonStyle: store.theme.buttonStyle,
-        layoutWidth: store.theme.layoutWidth, darkMode: store.theme.darkMode,
-        navbarStyle: store.theme.navbarStyle,
-      }));
-    }
-  }, [store, dispatch]);
+    if (!store.theme) return;
+    const signature = JSON.stringify(store.theme);
+    if (signature === themeRef.current) return;
+    themeRef.current = signature;
+    dispatch(setTheme({
+      primaryColor: store.theme.primaryColor, secondaryColor: store.theme.secondaryColor,
+      font: store.theme.font, buttonStyle: store.theme.buttonStyle,
+      layoutWidth: store.theme.layoutWidth, darkMode: store.theme.darkMode,
+      navbarStyle: store.theme.navbarStyle,
+    }));
+  }, [store.theme, dispatch]);
 
   // ─── Derive pageType from slug when backend doesn't provide it ────────────
   const derivePageType = useCallback((page: { slug: string; pageType?: string }): string => {
@@ -272,71 +275,52 @@ export function BuilderEditor() {
     return slugToType[page.slug.replace(/^\/+/, "")] || "custom";
   }, []);
 
-  // ─── Dispatch settings ─────────────────────────────────────────────────────
+  // ─── Dispatch settings (once per actual settings identity) ──────────────────
+  const settingsRef = useRef<string>("");
   useEffect(() => {
-    if (settings) {
-      dispatch(setStoreSettings({
-        currencyCode: settings.currencyCode, currencySymbol: settings.currencySymbol,
-        currencyPosition: settings.currencyPosition, locale: settings.locale,
-        decimalPlaces: settings.decimalPlaces,
-        dateFormat: settings.dateFormat, timezone: settings.timezone, language: settings.language,
-      }));
-    }
+    if (!settings) return;
+    const signature = JSON.stringify(settings);
+    if (signature === settingsRef.current) return;
+    settingsRef.current = signature;
+    dispatch(setStoreSettings({
+      currencyCode: settings.currencyCode, currencySymbol: settings.currencySymbol,
+      currencyPosition: settings.currencyPosition, locale: settings.locale,
+      decimalPlaces: settings.decimalPlaces,
+      dateFormat: settings.dateFormat, timezone: settings.timezone, language: settings.language,
+    }));
   }, [settings, dispatch]);
 
   // ─── Load / redirect to page ────────────────────────────────────────────────
+  // Maps a stored page slug ("/" or "home") to the route segment the builder uses.
+  // The home page is stored with slug "/" but is served at route "/builder/home".
+  const toRouteSlug = useCallback((slug: string): string => {
+    const trimmed = slug.replace(/^\/+/, "");
+    return trimmed === "" || trimmed === "home" ? "home" : trimmed;
+  }, []);
+
   useEffect(() => {
     const pages = pagesData?.data?.pages;
-    const loadKey = `${storeId}:${routePageSlug || "root"}`;
-    if (!pages || loadedRef.current === loadKey) return;
-
-    const redirectToPage = (targetSlug: string) => {
-      // StorePageModel uses leading "/" for slugs, but builder routes don't have it
-      const routeSlug = targetSlug.startsWith("/") ? targetSlug.slice(1) : targetSlug;
-      router.replace(`/store/${storeSlug}/builder/${routeSlug}`);
-    };
+    if (!pages) return;
 
     const isMongoId = (value: string) => /^[a-f\d]{24}$/i.test(value);
 
-    loadedRef.current = loadKey;
+    // Resolve the page the current route is addressing.
+    const normalizedRouteSlug = routePageSlug.startsWith("/") ? routePageSlug : `/${routePageSlug}`;
+    const matchedPage =
+      pages.find((page) => page.slug === normalizedRouteSlug || page.slug === routePageSlug) ??
+      (routePageSlug && isMongoId(routePageSlug) ? pages.find((page) => page._id === routePageSlug) : undefined) ??
+      pages.find((page) => page.slug === "/" || page.slug === "home") ??
+      pages[0];
 
-    if (pages.length > 0) {
-      // StorePageModel slugs have leading "/", route slugs don't — normalize for matching
-      const normalizedRouteSlug = routePageSlug.startsWith("/") ? routePageSlug : `/${routePageSlug}`;
-      const matchedPage =
-        pages.find((page) => page.slug === normalizedRouteSlug || page.slug === routePageSlug) ??
-        (routePageSlug && isMongoId(routePageSlug) ? pages.find((page) => page._id === routePageSlug) : undefined) ??
-        pages.find((page) => page.slug === "/" || page.slug === "home") ??
-        pages[0];
-
-      const resolvedPageType = derivePageType(matchedPage);
-      const pageDefaults = getDefaultSectionsForPageType(resolvedPageType);
-      const bodySections = (matchedPage.sections?.length ? matchedPage.sections : pageDefaults) as BuilderSection[];
-      const headerSecs = (matchedPage.headerSections?.length ? matchedPage.headerSections : getDefaultHeaderSections()) as BuilderSection[];
-      const footerSecs = (matchedPage.footerSections?.length ? matchedPage.footerSections : getDefaultFooterSections()) as BuilderSection[];
-      dispatch(loadPage({
-        page: { id: matchedPage._id, title: matchedPage.title, slug: matchedPage.slug, pageType: resolvedPageType as any, isSystem: matchedPage.isSystem ?? false, description: matchedPage.description ?? "", status: (matchedPage.status || "draft") as any },
-        sections: bodySections,
-        headerSections: headerSecs,
-        footerSections: footerSecs,
-        headerSettings: (matchedPage.headerSettings as any) ?? {},
-        footerSettings: (matchedPage.footerSettings as any) ?? {},
-      }));
-
-      const canonicalSlug = matchedPage.slug;
-      const canonicalRouteSlug = canonicalSlug.startsWith("/") ? canonicalSlug.slice(1) : canonicalSlug;
-      if (!routePageSlug || routePageSlug !== canonicalRouteSlug || isMongoId(routePageSlug)) {
-        redirectToPage(canonicalRouteSlug);
-      }
-      return;
-    }
-
-    if (pages.length === 0) {
+    if (!matchedPage) {
+      // No pages yet — create the home page exactly once.
+      if (loadedRef.current === `create:${storeId}`) return;
+      loadedRef.current = `create:${storeId}`;
       createPage({ storeId, title: "Home", slug: "/" })
         .unwrap()
         .then((res) => {
           const createdPage = res.data?.page;
-          if (!createdPage?.slug) return;
+          if (!createdPage?._id) return;
           const bodySections = getDefaultSectionsForPageType("home");
           const headerSections = getDefaultHeaderSections();
           const footerSections = getDefaultFooterSections();
@@ -346,11 +330,42 @@ export function BuilderEditor() {
             headerSections,
             footerSections,
           }));
-          redirectToPage(createdPage.slug);
+          if (toRouteSlug(createdPage.slug) !== routePageSlug) {
+            router.replace(`/store/${storeSlug}/builder/home`);
+          }
         })
-        .catch(() => {});
+        .catch(() => {
+          loadedRef.current = "";
+        });
+      return;
     }
-  }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug]);
+
+    // Guard: load a given page exactly once. Keyed by store + page id so the
+    // home-page route alternation ("/" <-> "home") never re-triggers a load.
+    const loadKey = `${storeId}:${matchedPage._id}`;
+    if (loadedRef.current === loadKey) return;
+    loadedRef.current = loadKey;
+
+    const resolvedPageType = derivePageType(matchedPage);
+    const pageDefaults = getDefaultSectionsForPageType(resolvedPageType);
+    const bodySections = (matchedPage.sections?.length ? matchedPage.sections : pageDefaults) as BuilderSection[];
+    const headerSecs = (matchedPage.headerSections?.length ? matchedPage.headerSections : getDefaultHeaderSections()) as BuilderSection[];
+    const footerSecs = (matchedPage.footerSections?.length ? matchedPage.footerSections : getDefaultFooterSections()) as BuilderSection[];
+    dispatch(loadPage({
+      page: { id: matchedPage._id, title: matchedPage.title, slug: matchedPage.slug, pageType: resolvedPageType as any, isSystem: matchedPage.isSystem ?? false, description: matchedPage.description ?? "", status: (matchedPage.status || "draft") as any },
+      sections: bodySections,
+      headerSections: headerSecs,
+      footerSections: footerSecs,
+      headerSettings: (matchedPage.headerSettings as any) ?? {},
+      footerSettings: (matchedPage.footerSettings as any) ?? {},
+    }));
+
+    // Redirect only when the route segment genuinely does not match the page.
+    const canonicalRouteSlug = toRouteSlug(matchedPage.slug);
+    if (routePageSlug !== canonicalRouteSlug && !isMongoId(routePageSlug)) {
+      router.replace(`/store/${storeSlug}/builder/${canonicalRouteSlug}`);
+    }
+  }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug, derivePageType, toRouteSlug]);
 
   // ─── Autosave every 10s ────────────────────────────────────────────────────
   useEffect(() => {

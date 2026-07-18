@@ -7,7 +7,7 @@ import { addSection, loadSections, setPageMetadata } from "@/redux/slices/builde
 import { Modal } from "@/components/ui/modal";
 import { useGetBuilderTemplatesQuery, type BuilderTemplate } from "@/redux/api/builder-template-api";
 import { useRequiredStore } from "@/providers/store-context";
-import { useCreatePageMutation } from "@/redux/api/builder-api";
+import { useCreateStorePageMutation } from "@/redux/api/store-page-api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -44,7 +44,7 @@ export function TemplatesPanel() {
   const { storeId, storeSlug } = useRequiredStore();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [createPage] = useCreatePageMutation();
+  const [createPage] = useCreateStorePageMutation();
   const [applying, setApplying] = useState<string | null>(null);
 
   const { data: templatesData, isLoading, error } = useGetBuilderTemplatesQuery({
@@ -98,7 +98,9 @@ export function TemplatesPanel() {
           const slug = template.slug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
           const result = await createPage({
             storeId,
-            data: { title, slug, templateId: template._id },
+            title,
+            slug: slug.startsWith("/") ? slug : `/${slug}`,
+            templateId: template._id,
           }).unwrap();
           toast.success(`Page "${template.name}" created`);
           setOpen(false);
@@ -106,7 +108,7 @@ export function TemplatesPanel() {
           if (page) {
             dispatch(setPageMetadata({ id: page._id, title: page.title, slug: page.slug }));
             dispatch(loadSections(page.sections ?? []));
-            router.push(`/store/${storeSlug}/builder/${page.slug}`);
+            router.push(`/store/${storeSlug}/builder/${page.slug.startsWith('/') ? page.slug.slice(1) : page.slug}`);
           }
         } else {
           const sections = (template.sections ?? []) as any[];

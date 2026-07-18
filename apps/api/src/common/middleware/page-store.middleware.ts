@@ -1,7 +1,7 @@
 import type { NextFunction, Response } from "express";
 import { connectDatabase } from "../../common/database/connection.js";
 import type { AuthRequest } from "./auth.middleware.js";
-import { PageModel } from "../../models/page.model.js";
+import { StorePageModel } from "../../modules/pages/store-page.model.js";
 import { resolveStoreIdFromRequest } from "../../modules/features/feature-access.service.js";
 
 type RequestWithResolvedStore = AuthRequest & { resolvedStoreId?: string };
@@ -21,7 +21,7 @@ export async function attachStoreIdFromPage(
   }
 
   await connectDatabase();
-  const page = (await PageModel.findById(pageId).select("storeId").lean()) as { storeId?: unknown } | null;
+  const page = (await StorePageModel.findById(pageId).select("storeId").lean()) as { storeId?: unknown } | null;
   if (!page?.storeId) {
     return response.status(404).json({ success: false, message: "Page not found" });
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
+import { useIsBuilderMode } from "@/lib/builder-mode";
 import { usePathname } from "next/navigation";
 import { useTenant } from "@/providers/tenant-provider";
 
@@ -41,13 +42,14 @@ export function useAnalyticsTracker(pageType: PageType, opts?: {
   searchQuery?: string;
   title?: string;
 }) {
+  const isBuilderMode = useIsBuilderMode();
   const tenant = useTenant();
   const storeId = tenant?.store?._id;
   const pathname = usePathname();
   const trackedPath = useRef<string>("");
 
   const track = useCallback(() => {
-    if (!storeId || !API_BASE) return;
+    if (isBuilderMode || !storeId || !API_BASE) return;
     const path = pathname || window.location.pathname;
     if (trackedPath.current === path) return;
     trackedPath.current = path;

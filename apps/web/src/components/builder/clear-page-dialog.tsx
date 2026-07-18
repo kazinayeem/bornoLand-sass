@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { loadSections, setSaving } from "@/redux/slices/builder-slice";
-import { useClearPageMutation } from "@/redux/api/builder-api";
+import { useSaveStorePageDraftMutation } from "@/redux/api/store-page-api";
 import { useRequiredStore } from "@/providers/store-context";
 import { motion } from "framer-motion";
 import { AlertTriangle, Loader2 } from "lucide-react";
@@ -19,7 +19,7 @@ export function ClearPageDialog({ open, onClose }: Props) {
   const { storeId } = useRequiredStore();
   const pageId = useSelector((s: RootState) => s.builder.page.id);
   const sections = useSelector((s: RootState) => s.builder.sections);
-  const [clearPage] = useClearPageMutation();
+  const [saveDraft] = useSaveStorePageDraftMutation();
   const [clearing, setClearing] = useState(false);
 
   if (!open) return null;
@@ -28,7 +28,7 @@ export function ClearPageDialog({ open, onClose }: Props) {
     if (!pageId || !storeId) return;
     setClearing(true);
     try {
-      await clearPage({ storeId, pageId }).unwrap();
+      await saveDraft({ id: pageId, storeId, sections: [], headerSections: [], footerSections: [] }).unwrap();
       dispatch(setSaving(false));
       dispatch(loadSections([]));
       onClose();

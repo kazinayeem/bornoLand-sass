@@ -2,14 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { FileText, Loader2, Plus, ExternalLink } from "lucide-react";
-import { useCreatePageMutation, useGetPagesQuery } from "@/redux/api/builder-api";
+import { useCreateStorePageMutation, useGetStorePagesQuery } from "@/redux/api/store-page-api";
 import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-page";
 
 export function StorePagesPanel() {
   const router = useRouter();
   const { store, storeId, isLoading } = useStorePage();
-  const { data, isLoading: pagesLoading } = useGetPagesQuery(storeId ?? "", { skip: !storeId });
-  const [createPage, { isLoading: creating }] = useCreatePageMutation();
+  const { data, isLoading: pagesLoading } = useGetStorePagesQuery(storeId ?? "", { skip: !storeId });
+  const [createPage, { isLoading: creating }] = useCreateStorePageMutation();
   const pages = data?.data?.pages ?? [];
 
   if (isLoading || !store || !storeId) {
@@ -34,7 +34,8 @@ export function StorePagesPanel() {
             onClick={async () => {
               const created = await createPage({
                 storeId,
-                data: { title: "New Page", slug: `page-${Date.now()}` },
+                title: "New Page",
+                slug: `/page-${Date.now()}`,
               }).unwrap();
               const page = created.data?.page;
               if (page?.slug) openBuilder(page.slug);

@@ -1,6 +1,6 @@
 import { connectDatabase } from "../../common/database/connection.js";
 import { TemplateModel } from "../../models/template.model.js";
-import { PageModel } from "../../models/page.model.js";
+import { StorePageModel } from "../pages/store-page.model.js";
 
 export async function getAllTemplates() {
   await connectDatabase();
@@ -60,7 +60,7 @@ export async function applyTemplateToStore(storeId: string, templateId: string) 
 
   if (!store) return { ok: false as const, message: "Store not found" };
 
-  await PageModel.deleteMany({ storeId });
+  await StorePageModel.deleteMany({ storeId, isHomePage: true });
   await PageModel.create({
     storeId,
     title: "Home",

@@ -7,7 +7,7 @@ import { OrderModel } from "../../models/order.model.js";
 import { CategoryModel } from "../../models/category.model.js";
 import { CustomerModel } from "../../models/customer.model.js";
 import { TeamMemberModel } from "../../models/team-member.model.js";
-import { PageModel } from "../../models/page.model.js";
+import { StorePageModel } from "../pages/store-page.model.js";
 import { FeatureModel } from "./feature.model.js";
 import { FeatureTierModel } from "./feature-tier.model.js";
 import { FeatureLimitModel } from "./feature-limit.model.js";
@@ -124,7 +124,7 @@ export async function syncStoreUsage(storeId: string) {
     OrderModel.countDocuments({ storeId, createdAt: { $gte: startOfMonth } }),
     CustomerModel.countDocuments({ storeId }),
     CategoryModel.countDocuments({ storeId }),
-    PageModel.countDocuments({ storeId: store._id }),
+    StorePageModel.countDocuments({ storeId: store._id, deletedAt: null }),
     TeamMemberModel.countDocuments({ tenantId: store.tenantId }),
   ]);
 

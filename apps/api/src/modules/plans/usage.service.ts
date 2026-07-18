@@ -4,7 +4,7 @@ import { ProductModel } from "../../models/product.model.js";
 import { CategoryModel } from "../../models/category.model.js";
 import { OrderModel } from "../../models/order.model.js";
 import { CustomerModel } from "../../models/customer.model.js";
-import { PageModel } from "../../models/page.model.js";
+import { StorePageModel } from "../pages/store-page.model.js";
 import { TeamMemberModel } from "../../models/team-member.model.js";
 import { CouponModel } from "../../models/coupon.model.js";
 import { CollectionModel } from "../../models/collection.model.js";
@@ -53,7 +53,7 @@ export async function getStoreUsageReport(storeId: string): Promise<StoreUsageRe
     CategoryModel.countDocuments({ storeId: storeObjectId }),
     OrderModel.countDocuments({ storeId: storeObjectId }),
     CustomerModel.countDocuments({ storeId: storeObjectId }),
-    PageModel.countDocuments({ storeId: storeObjectId }),
+    StorePageModel.countDocuments({ storeId: storeObjectId, deletedAt: null }),
     CollectionModel.countDocuments({ storeId: storeObjectId }),
     ReviewModel.countDocuments({ storeId: storeObjectId }),
     CouponModel.countDocuments({ storeId: storeObjectId }),
@@ -98,7 +98,7 @@ export async function getStoreUsageForPlan(storeId: string): Promise<Record<stri
     CategoryModel.countDocuments({ storeId: storeObjectId }),
     OrderModel.countDocuments({ storeId: storeObjectId }),
     CustomerModel.countDocuments({ storeId: storeObjectId }),
-    PageModel.countDocuments({ storeId: storeObjectId }),
+    StorePageModel.countDocuments({ storeId: storeObjectId, deletedAt: null }),
     CollectionModel.countDocuments({ storeId: storeObjectId }),
     ReviewModel.countDocuments({ storeId: storeObjectId }),
     CouponModel.countDocuments({ storeId: storeObjectId }),

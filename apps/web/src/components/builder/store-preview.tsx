@@ -252,6 +252,7 @@ export function StorePreview({ store, theme, products = [], categories = [], set
           headerSettings={headerSettings}
           footerSettings={footerSettings}
           footerSection={footerSection}
+          builderMode
         >
           <StorefrontCanvas
             sections={activeNavSections}

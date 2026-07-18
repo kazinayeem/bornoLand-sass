@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { BuilderLink as Link } from "./builder-link";
 import { SectionWrapper, type SectionData } from "./section-renderer";
 
 export function DealOfDay({ section }: { section: SectionData }) {

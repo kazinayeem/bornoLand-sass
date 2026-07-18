@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SectionRenderer, type SectionData } from "@/components/sections/section-renderer";
+import { BuilderProvider } from "@/components/sections/builder-link";
 import type { StorefrontSectionLike } from "./storefront-types";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -108,7 +109,8 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
     );
   };
 
-  return (
+  const isBuilderMode = !!onSelectSection;
+  const canvasContent = (
     <main>
       {onQuickInsert && <InsertionBar index={0} />}
       {visibleSections.map((section, i) => (
@@ -155,4 +157,9 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
       ))}
     </main>
   );
+
+  if (isBuilderMode) {
+    return <BuilderProvider>{canvasContent}</BuilderProvider>;
+  }
+  return canvasContent;
 }

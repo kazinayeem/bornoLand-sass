@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { BuilderLink as Link } from "./builder-link";
 import { ChevronDown } from "lucide-react";
 import { SectionWrapper, type SectionData } from "./section-renderer";
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { SectionWrapper, type SectionData } from "./section-renderer";
+import { BuilderIconButton } from "./builder-link";
 import { Search, ShoppingCart, Heart, User } from "lucide-react";
 
 export function HeaderIcons({ section }: { section: SectionData }) {
@@ -16,10 +17,26 @@ export function HeaderIcons({ section }: { section: SectionData }) {
   return (
     <SectionWrapper section={section}>
       <div className={`flex items-center gap-${gap}`} style={{ fontFamily: p.font || "Inter" }}>
-        {showSearch && <Search style={{ color: iconColor, width: iconSize, height: iconSize }} className="cursor-pointer" />}
-        {showWishlist && <Heart style={{ color: iconColor, width: iconSize, height: iconSize }} className="cursor-pointer" />}
-        {showCart && <ShoppingCart style={{ color: iconColor, width: iconSize, height: iconSize }} className="cursor-pointer" />}
-        {showAccount && <User style={{ color: iconColor, width: iconSize, height: iconSize }} className="cursor-pointer" />}
+        {showSearch && (
+          <BuilderIconButton href="/search" aria-label="Search">
+            <Search style={{ color: iconColor, width: iconSize, height: iconSize }} />
+          </BuilderIconButton>
+        )}
+        {showWishlist && (
+          <BuilderIconButton href="/wishlist" aria-label="Wishlist">
+            <Heart style={{ color: iconColor, width: iconSize, height: iconSize }} />
+          </BuilderIconButton>
+        )}
+        {showCart && (
+          <BuilderIconButton href="/cart" aria-label="Cart">
+            <ShoppingCart style={{ color: iconColor, width: iconSize, height: iconSize }} />
+          </BuilderIconButton>
+        )}
+        {showAccount && (
+          <BuilderIconButton href="/account" aria-label="Account">
+            <User style={{ color: iconColor, width: iconSize, height: iconSize }} />
+          </BuilderIconButton>
+        )}
       </div>
     </SectionWrapper>
   );

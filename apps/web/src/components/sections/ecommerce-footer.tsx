@@ -1,12 +1,32 @@
 "use client";
 
 import { SectionWrapper, type SectionData } from "./section-renderer";
+import { BuilderLink } from "./builder-link";
 
 const linkColumns = [
-  { title: "Shop", links: ["All Products", "New Arrivals", "Best Sellers", "Sale"] },
-  { title: "Support", links: ["Contact Us", "FAQ", "Shipping Info", "Returns"] },
-  { title: "Company", links: ["About Us", "Careers", "Press", "Blog"] },
-  { title: "Legal", links: ["Privacy Policy", "Terms of Service", "Cookie Policy"] },
+  { title: "Shop", links: [
+    { text: "All Products", url: "/shop" },
+    { text: "New Arrivals", url: "/shop?sort=newest" },
+    { text: "Best Sellers", url: "/shop?sort=popular" },
+    { text: "Sale", url: "/shop?sale=true" },
+  ]},
+  { title: "Support", links: [
+    { text: "Contact Us", url: "/contact" },
+    { text: "FAQ", url: "/faq" },
+    { text: "Shipping Info", url: "/shipping" },
+    { text: "Returns", url: "/returns" },
+  ]},
+  { title: "Company", links: [
+    { text: "About Us", url: "/about" },
+    { text: "Careers", url: "/about" },
+    { text: "Press", url: "/about" },
+    { text: "Blog", url: "/about" },
+  ]},
+  { title: "Legal", links: [
+    { text: "Privacy Policy", url: "/privacy" },
+    { text: "Terms of Service", url: "/terms" },
+    { text: "Cookie Policy", url: "/privacy" },
+  ]},
 ];
 
 export function EcommerceFooter({ section }: { section: SectionData }) {
@@ -34,8 +54,10 @@ export function EcommerceFooter({ section }: { section: SectionData }) {
               <h3 className="text-xs font-semibold mb-3 uppercase tracking-wider opacity-60">{col.title}</h3>
               <ul className="space-y-2">
                 {col.links.map((link) => (
-                  <li key={link}>
-                    <a href="#" className="text-xs opacity-70 hover:opacity-100 transition-opacity">{link}</a>
+                  <li key={link.text}>
+                    <BuilderLink href={link.url} className="text-xs opacity-70 hover:opacity-100 transition-opacity">
+                      {link.text}
+                    </BuilderLink>
                   </li>
                 ))}
               </ul>

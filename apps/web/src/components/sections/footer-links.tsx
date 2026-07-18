@@ -1,6 +1,7 @@
 "use client";
 
 import { SectionWrapper, type SectionData } from "./section-renderer";
+import { BuilderLink } from "./builder-link";
 
 export function FooterLinks({ section }: { section: SectionData }) {
   const p = section.props;
@@ -35,12 +36,13 @@ export function FooterLinks({ section }: { section: SectionData }) {
             <ul key={colIdx} className="space-y-2">
               {links.slice(colIdx * chunkSize, (colIdx + 1) * chunkSize).map((link) => (
                 <li key={link.text}>
-                  <span
-                    className="cursor-pointer text-sm transition-colors hover:text-zinc-900"
+                  <BuilderLink
+                    href={link.url}
+                    className="text-sm transition-colors hover:text-zinc-900"
                     style={{ color: linkColor }}
                   >
                     {link.text}
-                  </span>
+                  </BuilderLink>
                 </li>
               ))}
             </ul>

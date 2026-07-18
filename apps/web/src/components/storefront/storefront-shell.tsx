@@ -8,6 +8,7 @@ import { FloatingAdminBar } from "@/components/storefront/floating-admin-bar";
 import { StoreFooter } from "@/components/storefront/store-footer";
 import { StoreNavbar } from "@/components/storefront/store-navbar";
 import { SectionRenderer, type SectionData } from "@/components/sections/section-renderer";
+import { BuilderProvider } from "@/components/sections/builder-link";
 
 const CartDrawer = dynamic(
   () => import("./cart-drawer").then((module) => module.CartDrawer),
@@ -41,6 +42,7 @@ type StorefrontShellProps = {
   footerSettings?: Record<string, unknown>;
   navLinksOverride?: Array<{ name: string; href: string }>;
   showAdminBar?: boolean;
+  builderMode?: boolean;
   children: ReactNode;
 };
 
@@ -69,6 +71,7 @@ export function StorefrontShell({
   footerSettings: _footerSettings,
   navLinksOverride,
   showAdminBar = false,
+  builderMode = false,
   children,
 }: StorefrontShellProps) {
   const tenantValue = useMemo<TenantContextType>(
@@ -93,9 +96,17 @@ export function StorefrontShell({
         <AuthInit />
         {hasBuilderHeader ? (
           <header>
-            {visibleHeaderSections.map((s) => (
-              <SectionRenderer key={s.id} section={toSectionData(s)} />
-            ))}
+            {builderMode ? (
+              <BuilderProvider>
+                {visibleHeaderSections.map((s) => (
+                  <SectionRenderer key={s.id} section={toSectionData(s)} />
+                ))}
+              </BuilderProvider>
+            ) : (
+              visibleHeaderSections.map((s) => (
+                <SectionRenderer key={s.id} section={toSectionData(s)} />
+              ))
+            )}
           </header>
         ) : (
           <StoreNavbar navLinksOverride={navLinksOverride} />
@@ -106,9 +117,17 @@ export function StorefrontShell({
         </CartProvider>
         {hasBuilderFooter ? (
           <footer>
-            {visibleFooterSections.map((s) => (
-              <SectionRenderer key={s.id} section={toSectionData(s)} />
-            ))}
+            {builderMode ? (
+              <BuilderProvider>
+                {visibleFooterSections.map((s) => (
+                  <SectionRenderer key={s.id} section={toSectionData(s)} />
+                ))}
+              </BuilderProvider>
+            ) : (
+              visibleFooterSections.map((s) => (
+                <SectionRenderer key={s.id} section={toSectionData(s)} />
+              ))
+            )}
           </footer>
         ) : (
           <StoreFooter section={footerSection ?? undefined} footerSections={footerSections} />

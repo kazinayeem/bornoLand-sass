@@ -1,6 +1,7 @@
 "use client";
 
 import { SectionWrapper, type SectionData } from "./section-renderer";
+import { BuilderLink } from "./builder-link";
 
 export function HeaderNav({ section }: { section: SectionData }) {
   const p = section.props;
@@ -23,15 +24,16 @@ export function HeaderNav({ section }: { section: SectionData }) {
         style={{ fontFamily: p.font || "Inter" }}
       >
         {links.map((link) => (
-          <span
+          <BuilderLink
             key={link.text}
-            className="cursor-pointer font-medium transition-colors hover:text-zinc-900"
+            href={link.url}
+            className="font-medium transition-colors hover:text-zinc-900"
             style={{ color: linkColor, fontSize: `${fontSize}px` }}
             onMouseEnter={(e) => { e.currentTarget.style.color = hoverColor; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = linkColor; }}
           >
             {link.text}
-          </span>
+          </BuilderLink>
         ))}
       </div>
     </SectionWrapper>

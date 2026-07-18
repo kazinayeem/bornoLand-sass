@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { BuilderLink as Link } from "./builder-link";
 import { SectionWrapper, ColumnGrid, SectionTitle, type SectionData } from "./section-renderer";
 import { useTenant } from "@/providers/tenant-provider";
 import { ImageIcon } from "lucide-react";

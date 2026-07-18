@@ -28,6 +28,7 @@ type StorefrontFrameProps = {
   navLinksOverride?: Array<{ name: string; href: string }>;
   adminBarStoreId?: string;
   showAdminBar?: boolean;
+  builderMode?: boolean;
   children: ReactNode;
 };
 
@@ -46,6 +47,7 @@ export function StorefrontFrame({
   footerSettings,
   navLinksOverride,
   showAdminBar = false,
+  builderMode = false,
   children,
 }: StorefrontFrameProps) {
   const stableProducts = useMemo(() => products, [products]);
@@ -69,6 +71,7 @@ export function StorefrontFrame({
       footerSettings={footerSettings}
       navLinksOverride={navLinksOverride}
       showAdminBar={showAdminBar}
+      builderMode={builderMode}
     >
       {children}
     </StorefrontShell>

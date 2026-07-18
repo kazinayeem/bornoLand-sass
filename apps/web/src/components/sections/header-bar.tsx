@@ -1,6 +1,7 @@
 "use client";
 
 import { SectionWrapper, type SectionData } from "./section-renderer";
+import { BuilderLink, BuilderIconButton } from "./builder-link";
 import { Search, ShoppingCart, Heart, User, Menu } from "lucide-react";
 
 export function HeaderBar({ section }: { section: SectionData }) {
@@ -17,10 +18,10 @@ export function HeaderBar({ section }: { section: SectionData }) {
   const iconColor = p.iconColor || "#71717a";
 
   const navLinks = [
-    { text: p.link1Text || "Home", url: "/" },
-    { text: p.link2Text || "Shop", url: "/shop" },
-    { text: p.link3Text || "About", url: "/about" },
-    { text: p.link4Text || "Contact", url: "/contact" },
+    { text: p.link1Text || "Home", url: p.link1Url || "/" },
+    { text: p.link2Text || "Shop", url: p.link2Url || "/shop" },
+    { text: p.link3Text || "About", url: p.link3Url || "/about" },
+    { text: p.link4Text || "Contact", url: p.link4Url || "/contact" },
   ].filter((l) => l.text);
 
   return (
@@ -31,28 +32,52 @@ export function HeaderBar({ section }: { section: SectionData }) {
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            {logoUrl ? (
-              <img src={logoUrl} alt={storeName} className="h-8 w-8 rounded-lg object-contain" />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ backgroundColor: p.primaryColor || "#2563eb" }}>
-                {storeName[0]}
-              </div>
-            )}
-            {showName && <span className="text-lg font-bold text-zinc-900">{storeName}</span>}
+            <BuilderLink href="/" className="flex items-center gap-2">
+              {logoUrl ? (
+                <img src={logoUrl} alt={storeName} className="h-8 w-8 rounded-lg object-contain" />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ backgroundColor: p.primaryColor || "#2563eb" }}>
+                  {storeName[0]}
+                </div>
+              )}
+              {showName && <span className="text-lg font-bold text-zinc-900">{storeName}</span>}
+            </BuilderLink>
           </div>
           <div className="hidden items-center gap-6 md:flex">
             {navLinks.map((link) => (
-              <span key={link.text} className="text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900 cursor-pointer">
+              <BuilderLink
+                key={link.text}
+                href={link.url}
+                className="text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900"
+              >
                 {link.text}
-              </span>
+              </BuilderLink>
             ))}
           </div>
           <div className="flex items-center gap-1">
-            {showSearch && <Search className="h-5 w-5 p-1" style={{ color: iconColor }} />}
-            {showWishlist && <Heart className="h-5 w-5 p-1" style={{ color: iconColor }} />}
-            {showCart && <ShoppingCart className="h-5 w-5 p-1" style={{ color: iconColor }} />}
-            {showAccount && <User className="h-5 w-5 p-1" style={{ color: iconColor }} />}
-            <Menu className="h-5 w-5 p-1 md:hidden" style={{ color: iconColor }} />
+            {showSearch && (
+              <BuilderIconButton href="/search" aria-label="Search">
+                <Search className="h-5 w-5 p-1" style={{ color: iconColor }} />
+              </BuilderIconButton>
+            )}
+            {showWishlist && (
+              <BuilderIconButton href="/wishlist" aria-label="Wishlist">
+                <Heart className="h-5 w-5 p-1" style={{ color: iconColor }} />
+              </BuilderIconButton>
+            )}
+            {showCart && (
+              <BuilderIconButton href="/cart" aria-label="Cart">
+                <ShoppingCart className="h-5 w-5 p-1" style={{ color: iconColor }} />
+              </BuilderIconButton>
+            )}
+            {showAccount && (
+              <BuilderIconButton href="/account" aria-label="Account">
+                <User className="h-5 w-5 p-1" style={{ color: iconColor }} />
+              </BuilderIconButton>
+            )}
+            <span className="cursor-default md:hidden">
+              <Menu className="h-5 w-5 p-1" style={{ color: iconColor }} />
+            </span>
           </div>
         </div>
       </nav>

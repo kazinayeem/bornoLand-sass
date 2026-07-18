@@ -28,7 +28,7 @@ export function BuilderSidebar() {
   const dispatch = useDispatch();
   const { storeSlug } = useRequiredStore();
   const activeTab = useSelector((s: RootState) => s.builder.activeTab);
-  const sectionCount = useSelector((s: RootState) => s.builder.sections.length);
+  const sectionCount = useSelector((s: RootState) => s.builder.sections.length + s.builder.headerSections.length + s.builder.footerSections.length);
 
   const tabs: TabDef[] = useMemo(() => [
     { key: "layers", icon: Layers3, label: "Layers", meta: `${sectionCount}` },

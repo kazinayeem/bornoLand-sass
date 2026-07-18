@@ -492,17 +492,65 @@ export function PropertiesPanel() {
     );
   };
 
-  const renderAnimationTab = () => (
-    <div className="p-6 text-center">
-      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-50">
-        <Sparkles className="h-5 w-5 text-zinc-300" />
+  const renderAnimationTab = () => {
+    const animStyle = style;
+    const animOptions = [
+      { label: "None", value: "none" },
+      { label: "Fade In", value: "fade-in" },
+      { label: "Fade Up", value: "fade-up" },
+      { label: "Fade Down", value: "fade-down" },
+      { label: "Slide Up", value: "slide-up" },
+      { label: "Slide Down", value: "slide-down" },
+      { label: "Slide Left", value: "slide-left" },
+      { label: "Slide Right", value: "slide-right" },
+      { label: "Zoom In", value: "zoom-in" },
+      { label: "Zoom Out", value: "zoom-out" },
+      { label: "Flip", value: "flip" },
+      { label: "Bounce", value: "bounce" },
+    ];
+    return (
+      <div className="divide-y divide-zinc-100">
+        <CollapsibleGroup label="Entrance" icon={<Sparkles className="h-3 w-3" />}
+          collapsed={collapsedGroups.has("entrance")} onToggle={() => toggleGroup("entrance")}>
+          <ControlRow label="Animation">
+            <select value={animStyle.animation ?? "none"}
+              onChange={(e) => handleStyleChange("animation", e.target.value)}
+              className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none">
+              {animOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+          </ControlRow>
+          {animStyle.animation && animStyle.animation !== "none" && (
+            <>
+              <ControlRow label="Duration (ms)">
+                <RangeInput value={animStyle.animationDuration ?? "500"} onChange={(v) => handleStyleChange("animationDuration", v)} min={100} max={5000} step={100} />
+              </ControlRow>
+              <ControlRow label="Delay (ms)">
+                <RangeInput value={animStyle.animationDelay ?? "0"} onChange={(v) => handleStyleChange("animationDelay", v)} min={0} max={5000} step={100} />
+              </ControlRow>
+              <ControlRow label="Trigger">
+                <select value={animStyle.animationTrigger ?? "on-scroll"}
+                  onChange={(e) => handleStyleChange("animationTrigger", e.target.value)}
+                  className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none">
+                  <option value="on-load">On Load</option>
+                  <option value="on-scroll">On Scroll</option>
+                  <option value="on-hover">On Hover</option>
+                </select>
+              </ControlRow>
+            </>
+          )}
+        </CollapsibleGroup>
+        <CollapsibleGroup label="Motion" icon={<Maximize2 className="h-3 w-3" />}
+          collapsed={collapsedGroups.has("motion")} onToggle={() => toggleGroup("motion")}>
+          <ControlRow label="Parallax speed">
+            <RangeInput value={animStyle.parallaxSpeed ?? "0"} onChange={(v) => handleStyleChange("parallaxSpeed", v)} min={-100} max={100} step={10} />
+          </ControlRow>
+          <ControlRow label="Sticky">
+            <ToggleInput value={animStyle.sticky ? "true" : "false"} onChange={(v) => handleStyleChange("sticky", v === "true")} />
+          </ControlRow>
+        </CollapsibleGroup>
       </div>
-      <p className="text-sm font-medium text-zinc-700">Animation Controls</p>
-      <p className="mt-1 text-xs text-zinc-500">
-        Select a section and configure entrance animations, scroll triggers, and motion presets.
-      </p>
-    </div>
-  );
+    );
+  };
 
   const renderSeoTab = () => {
     const seo = section.props;

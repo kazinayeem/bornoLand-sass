@@ -12,13 +12,20 @@ import { openCart } from "@/redux/slices/cart-slice";
 import { useTenant } from "@/providers/tenant-provider";
 import { SmartImage } from "@/components/ui/smart-image";
 import { StoreLink as Link } from "./store-link";
+import type { StorefrontSectionLike } from "./storefront-types";
 
 const CartDrawer = dynamic(
   () => import("./cart-drawer").then((module) => module.CartDrawer),
   { loading: () => null }
 );
 
-export function StoreNavbar() {
+type StoreNavbarProps = {
+  headerSections?: StorefrontSectionLike[];
+  headerSettings?: Record<string, unknown>;
+  navLinksOverride?: Array<{ name: string; href: string }>;
+};
+
+export function StoreNavbar({ headerSections: _headerSections, headerSettings: _headerSettings, navLinksOverride }: StoreNavbarProps = {}) {
   const dispatch = useDispatch();
   const router = useRouter();
   const pathname = usePathname() || "";
@@ -49,15 +56,29 @@ export function StoreNavbar() {
     if (searchOpen && searchInputRef.current) searchInputRef.current.focus();
   }, [searchOpen]);
 
-  const navLinks = [
+  const defaultNavLinks = [
     { name: "Home", href: "/", icon: Home },
     { name: "Shop", href: "/shop", icon: Grid3X3 },
     { name: "Categories", href: "/categories", icon: Grid3X3 },
     { name: "About", href: "/about", icon: Info },
     { name: "Contact", href: "/contact", icon: Mail },
   ];
+  const navLinks = navLinksOverride
+    ? navLinksOverride.map((l) => ({ ...l, icon: Home }))
+    : defaultNavLinks;
 
-  const stickyClass = navbarStyle === "fixed" ? "fixed" : navbarStyle === "sticky" ? "sticky" : "static";
+  const hs = _headerSettings as any;
+  const sticky = hs?.sticky ?? (navbarStyle === "fixed" || navbarStyle === "sticky");
+  const transparent = hs?.transparent ?? false;
+  const navHeight = hs?.height ?? "64";
+  const navBg = hs?.background ?? "";
+  const navPadding = hs?.padding ?? "";
+  const showSearch = hs?.showSearch !== false;
+  const showWishlist = hs?.showWishlist !== false;
+  const showCart = hs?.showCart !== false;
+  const showProfile = hs?.showProfile !== false;
+
+  const stickyClass = sticky ? "fixed" : "static";
 
   const getStorefrontLink = (href: string) => {
     if (href.startsWith("/") && !href.startsWith("//")) {
@@ -98,8 +119,15 @@ export function StoreNavbar() {
 
   return (
     <>
-      <nav className={`${stickyClass} top-0 z-40 w-full border-b border-zinc-100 bg-white/80 backdrop-blur-xl`} style={{ fontFamily: font }}>
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <nav className={`${stickyClass} top-0 z-40 w-full transition-all`}
+        style={{
+          fontFamily: font,
+          borderBottom: transparent ? "none" : "1px solid #e4e4e7",
+          backgroundColor: navBg || (transparent ? "transparent" : "rgba(255,255,255,0.8)"),
+          backdropFilter: transparent ? "none" : "blur(12px)",
+        }}>
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+          style={{ height: `${navHeight}px`, padding: navPadding }}>
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
               {store.logoUrl ? (
@@ -130,26 +158,32 @@ export function StoreNavbar() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button onClick={() => setSearchOpen(true)}
-              aria-label="Open search"
-              className="hidden rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 sm:block">
-              <Search className="h-5 w-5" />
-            </button>
-            <Link href="/account" aria-label="Wishlist"
-              className="hidden rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 sm:block">
-              <Heart className="h-5 w-5" />
-            </Link>
-            <button onClick={() => dispatch(openCart())}
-              aria-label="View cart"
-              className="relative rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600">
-              <ShoppingCart className="h-5 w-5" />
-              {itemCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: primaryColor }}>
-                  {itemCount}
-                </span>
-              )}
-            </button>
-            {customer.isAuthenticated ? (
+            {showSearch && (
+              <button onClick={() => setSearchOpen(true)}
+                aria-label="Open search"
+                className="hidden rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 sm:block">
+                <Search className="h-5 w-5" />
+              </button>
+            )}
+            {showWishlist && (
+              <Link href="/account" aria-label="Wishlist"
+                className="hidden rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 sm:block">
+                <Heart className="h-5 w-5" />
+              </Link>
+            )}
+            {showCart && (
+              <button onClick={() => dispatch(openCart())}
+                aria-label="View cart"
+                className="relative rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600">
+                <ShoppingCart className="h-5 w-5" />
+                {itemCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: primaryColor }}>
+                    {itemCount}
+                  </span>
+                )}
+              </button>
+            )}
+            {showProfile && customer.isAuthenticated ? (
               <div className="hidden items-center gap-1 sm:flex">
                 <Link href="/orders"
                   className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100">
@@ -161,12 +195,12 @@ export function StoreNavbar() {
                   <LogOut className="h-4 w-4" />
                 </button>
               </div>
-            ) : (
+            ) : showProfile ? (
               <Link href="/account/login"
                 className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 sm:flex">
                 <LogIn className="h-4 w-4" /> Sign In
               </Link>
-            )}
+            ) : null}
             <button onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
               aria-expanded={mobileOpen}

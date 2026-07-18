@@ -4,6 +4,7 @@ import { useMemo, useCallback, useRef, useState, createElement } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import {
+  addSection,
   copySection,
   duplicateSection,
   moveSection,
@@ -19,9 +20,9 @@ import {
 import {
   Copy, Eye, EyeOff, Lock, LockOpen, MoreHorizontal, MoveDown, MoveUp,
   Star, Trash2, GripVertical, ChevronRight, ChevronDown,
-  PanelLeft, PanelRightOpen, PanelBottom, Layers,
+  PanelLeft, PanelRightOpen, PanelBottom, Layers, Filter,
   Menu, Search, ShoppingCart, User, Image,
-  Type, Grid3x3, LayoutList, Sparkles,
+  Type, Grid3x3, LayoutList, Sparkles, X,
 } from "lucide-react";
 import { getSectionDef, normalizeSectionType } from "@/lib/section-registry";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
@@ -83,6 +84,7 @@ export function LayersPanel() {
   const selectedSectionId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const clipboardSection = useSelector((s: RootState) => s.builder.clipboardSection);
 
+  const [searchQuery, setSearchQuery] = useState("");
   const [collapsedRegions, setCollapsedRegions] = useState<Record<string, boolean>>({
     header: false,
     footer: false,
@@ -113,8 +115,30 @@ export function LayersPanel() {
     if (!dragItem.current) return;
     const { fromIndex, zone: fromZone } = dragItem.current;
     if (fromZone !== targetZone || fromIndex !== toIndex) {
-      if (fromZone === targetZone && targetZone === "body") {
+      if (fromZone === targetZone) {
+        // Same zone move
         dispatch(moveSection({ from: fromIndex, to: toIndex }));
+      } else {
+        // Cross-zone move: remove from source, add to target
+        const sourceList = getZoneSections(fromZone);
+        const targetList = getZoneSections(targetZone);
+        const item = sourceList[fromIndex];
+        if (item) {
+          dispatch(removeSection(item.id));
+          // We need a way to add to a different zone. Use a sequence:
+          // Remove from source first, then set editing zone and add
+          dispatch(setEditingZone(targetZone));
+          // The section was already added as a new section with addSection
+          // But we can't easily do cross-zone in one action without another redux action
+          // For now, dispatch multiple actions
+          setTimeout(() => {
+            dispatch(addSection({
+              ...item,
+              id: `${item.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              label: `${item.label}`,
+            }));
+          }, 0);
+        }
       }
     }
     dragItem.current = null;
@@ -124,6 +148,23 @@ export function LayersPanel() {
     e.preventDefault();
     setDragOver(null);
     if (!dragItem.current) return;
+    const { zone: fromZone } = dragItem.current;
+    if (fromZone !== zone) {
+      const sourceList = getZoneSections(fromZone);
+      const item = sourceList[dragItem.current.fromIndex];
+      if (item) {
+        dispatch(removeSection(item.id));
+        dispatch(setEditingZone(zone));
+        setTimeout(() => {
+          dispatch(addSection({
+            ...item,
+            id: `${item.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            label: `${item.label}`,
+          }));
+        }, 0);
+      }
+    }
+    setDragOver(null);
     dragItem.current = null;
   }, []);
 
@@ -349,14 +390,36 @@ export function LayersPanel() {
         </div>
       </div>
 
+      {/* Search */}
+      <div className="px-3 pb-1 pt-0">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-zinc-400" />
+          <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Filter sections..."
+            className="h-8 w-full rounded-lg border border-zinc-200 bg-zinc-50 pl-7 pr-7 text-[11px] text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:bg-white" />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2">
-        {renderRegion("Header", "header", Menu, headerSections, "bg-blue-500")}
-        <div className="border-t border-zinc-100 pt-2">
-          {renderRegion("Body", "body", Layers, sections, "bg-zinc-800")}
-        </div>
-        <div className="border-t border-zinc-100 pt-2">
-          {renderRegion("Footer", "footer", PanelBottom, footerSections, "bg-purple-500")}
-        </div>
+        {(() => {
+          const q = searchQuery.toLowerCase();
+          const filterFn = (s: typeof sections[0]) => !q || s.label.toLowerCase().includes(q) || s.type.toLowerCase().includes(q);
+          return (
+            <>
+              {renderRegion("Header", "header", Menu, headerSections.filter(filterFn), "bg-blue-500")}
+              <div className="border-t border-zinc-100 pt-2">
+                {renderRegion("Body", "body", Layers, sections.filter(filterFn), "bg-zinc-800")}
+              </div>
+              <div className="border-t border-zinc-100 pt-2">
+                {renderRegion("Footer", "footer", PanelBottom, footerSections.filter(filterFn), "bg-purple-500")}
+              </div>
+            </>
+          );
+        })()}
       </div>
     </aside>
   );

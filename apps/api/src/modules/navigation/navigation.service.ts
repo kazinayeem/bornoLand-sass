@@ -240,6 +240,52 @@ export async function reorderMenuItems(
   return { ok: true as const, message: "Menu items reordered" };
 }
 
+// ─── Sync: update nav items when a page is renamed ──────────────────────────
+
+export async function syncPageRename(storeId: string, oldSlug: string, newSlug: string) {
+  await connectDatabase();
+  const oldLink = oldSlug.startsWith("/") ? oldSlug : `/${oldSlug}`;
+  const newLink = newSlug.startsWith("/") ? newSlug : `/${newSlug}`;
+
+  const result = await MenuItemModel.updateMany(
+    { storeId, linkType: "page", referenceId: oldSlug },
+    { $set: { referenceId: newSlug, link: newLink } },
+  );
+
+  if (result.modifiedCount > 0) {
+    console.log(`[nav-sync] Updated ${result.modifiedCount} menu item(s) referencing page "${oldSlug}" → "${newSlug}"`);
+  }
+  return { ok: true as const, data: { modifiedCount: result.modifiedCount } };
+}
+
+// ─── Sync: handle nav items when a page is deleted ─────────────────────────
+
+export async function syncPageDelete(storeId: string, slug: string) {
+  await connectDatabase();
+  const link = slug.startsWith("/") ? slug : `/${slug}`;
+
+  const referencedItems = await MenuItemModel.find({ storeId, linkType: "page", referenceId: slug })
+    .select("_id title navigationId")
+    .lean();
+
+  if (referencedItems.length === 0) {
+    return { ok: true as const, data: { removedCount: 0 } };
+  }
+
+  // Option 1: Remove orphaned menu items
+  const itemIds = referencedItems.map((i) => i._id);
+  await MenuItemModel.deleteMany({ _id: { $in: itemIds } });
+
+  // Reparent children of deleted items
+  await MenuItemModel.updateMany(
+    { storeId, parentId: { $in: itemIds.map(String) } },
+    { $set: { parentId: null } },
+  );
+
+  console.log(`[nav-sync] Removed ${referencedItems.length} orphaned menu item(s) linking to deleted page "${slug}"`);
+  return { ok: true as const, data: { removedCount: referencedItems.length, items: referencedItems } };
+}
+
 // ─── Get available pages for navigation linking ───────────────────────────────
 
 export async function getAvailableNavPages(storeId: string) {

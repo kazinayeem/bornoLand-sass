@@ -1,7 +1,7 @@
 export type SectionCategory =
   | "hero" | "products" | "category" | "promotions" | "trust"
   | "content" | "media" | "social" | "marketing" | "advanced"
-  | "layout" | "footer";
+  | "layout" | "header" | "footer";
 
 export type PropType =
   | "text" | "textarea" | "select" | "color" | "image" | "number"
@@ -784,6 +784,36 @@ export const sectionRegistry: SectionDef[] = [
     ),
   },
 
+  // ════════ HEADER ════════
+  {
+    type: "header-logo", label: "Logo", category: "header", icon: "Image", description: "Store logo and name",
+    props: merge(
+      { logoUrl: G.image("logoUrl", "Logo Image"), storeName: G.text("storeName", "Store Name", "My Store"), logoHeight: G.select("logoHeight", "Logo Height", "32", [{ value: "24", label: "24px" }, { value: "28", label: "28px" }, { value: "32", label: "32px" }, { value: "36", label: "36px" }, { value: "40", label: "40px" }], "layout"), showName: G.toggle("showName", "Show Store Name", "true") },
+      layout,
+    ),
+  },
+  {
+    type: "header-nav", label: "Navigation", category: "header", icon: "Menu", description: "Navigation menu links",
+    props: merge(
+      { link1Text: G.text("link1Text", "Link 1 Text", "Home"), link1Url: G.text("link1Url", "Link 1 URL", "/"), link2Text: G.text("link2Text", "Link 2 Text", "Shop"), link2Url: G.text("link2Url", "Link 2 URL", "/shop"), link3Text: G.text("link3Text", "Link 3 Text", "About"), link3Url: G.text("link3Url", "Link 3 URL", "/about"), link4Text: G.text("link4Text", "Link 4 Text", "Contact"), link4Url: G.text("link4Url", "Link 4 URL", "/contact"), link5Text: G.text("link5Text", "Link 5 Text", ""), link5Url: G.text("link5Url", "Link 5 URL", ""), menuStyle: G.select("menuStyle", "Menu Style", "horizontal", [{ value: "horizontal", label: "Horizontal" }, { value: "centered", label: "Centered" }], "layout"), gap: G.select("gap", "Link Gap", "24", [{ value: "16", label: "Small" }, { value: "24", label: "Medium" }, { value: "32", label: "Large" }], "layout") },
+      layout, typography,
+    ),
+  },
+  {
+    type: "header-icons", label: "Header Icons", category: "header", icon: "Heart", description: "Search, wishlist, cart, and account icons",
+    props: merge(
+      { showSearch: G.toggle("showSearch", "Show Search", "true"), showWishlist: G.toggle("showWishlist", "Show Wishlist", "true"), showCart: G.toggle("showCart", "Show Cart", "true"), showAccount: G.toggle("showAccount", "Show Account", "true"), iconSize: G.select("iconSize", "Icon Size", "20", [{ value: "16", label: "16px" }, { value: "18", label: "18px" }, { value: "20", label: "20px" }, { value: "24", label: "24px" }], "layout"), iconColor: G.color("iconColor", "Icon Color", "#71717a", "typography") },
+      layout,
+    ),
+  },
+  {
+    type: "header-bar", label: "Header Bar", category: "header", icon: "Layout", description: "Complete header bar with logo, nav, and icons",
+    props: merge(
+      { logoUrl: G.image("logoUrl", "Logo Image"), storeName: G.text("storeName", "Store Name", "My Store"), showName: G.toggle("showName", "Show Store Name", "true"), layout: G.select("layout", "Header Layout", "logo-nav-icons", [{ value: "logo-nav-icons", label: "Logo | Nav | Icons" }, { value: "logo-icons-nav", label: "Logo | Icons | Nav" }, { value: "nav-logo-icons", label: "Nav | Logo | Icons" }], "layout"), navPosition: G.select("navPosition", "Nav Position", "center", [{ value: "left", label: "Left" }, { value: "center", label: "Center" }, { value: "right", label: "Right" }], "layout"), showSearch: G.toggle("showSearch", "Search Icon", "true"), showWishlist: G.toggle("showWishlist", "Wishlist Icon", "true"), showCart: G.toggle("showCart", "Cart Icon", "true"), showAccount: G.toggle("showAccount", "Account Icon", "true"), sticky: G.toggle("sticky", "Sticky Header", "true"), transparent: G.toggle("transparent", "Transparent", "false"), headerBg: G.color("headerBg", "Background", "#ffffff", "background"), headerHeight: G.select("headerHeight", "Height", "64", [{ value: "48", label: "48px" }, { value: "56", label: "56px" }, { value: "64", label: "64px" }, { value: "72", label: "72px" }, { value: "80", label: "80px" }], "layout") },
+      layout, typography,
+    ),
+  },
+
   // ════════ FOOTER ════════
   {
     type: "simple-footer", label: "Simple Footer", category: "footer", icon: "Minimize", description: "Minimal footer with copyright",
@@ -813,6 +843,27 @@ export const sectionRegistry: SectionDef[] = [
       layout, typography,
     ),
   },
+  {
+    type: "footer-links", label: "Footer Links", category: "footer", icon: "Link", description: "Multi-column link list for footer",
+    props: merge(
+      { title: G.text("title", "Section Title", "Quick Links"), columns: G.select("columns", "Columns", "3", [{ value: "1", label: "1" }, { value: "2", label: "2" }, { value: "3", label: "3" }, { value: "4", label: "4" }], "layout"), link1Text: G.text("link1Text", "Link 1 Text", "Home"), link1Url: G.text("link1Url", "Link 1 URL", "/"), link2Text: G.text("link2Text", "Link 2 Text", "Shop"), link2Url: G.text("link2Url", "Link 2 URL", "/shop"), link3Text: G.text("link3Text", "Link 3 Text", "About"), link3Url: G.text("link3Url", "Link 3 URL", "/about"), link4Text: G.text("link4Text", "Link 4 Text", "Contact"), link4Url: G.text("link4Url", "Link 4 URL", "/contact"), link5Text: G.text("link5Text", "Link 5 Text", "FAQ"), link5Url: G.text("link5Url", "Link 5 URL", "/faq"), link6Text: G.text("link6Text", "Link 6 Text", "Privacy"), link6Url: G.text("link6Url", "Link 6 URL", "/privacy"), link7Text: G.text("link7Text", "Link 7 Text", "Terms"), link7Url: G.text("link7Url", "Link 7 URL", "/terms"), link8Text: G.text("link8Text", "Link 8 Text", "Shipping"), link8Url: G.text("link8Url", "Link 8 URL", "/shipping"), link9Text: G.text("link9Text", "Link 9 Text", "Returns"), link9Url: G.text("link9Url", "Link 9 URL", "/returns"), linkColor: G.color("linkColor", "Link Color", "#71717a", "typography"), headingColor: G.color("headingColor", "Heading Color", "#18181b", "typography") },
+      layout, typography,
+    ),
+  },
+  {
+    type: "footer-social", label: "Footer Social", category: "footer", icon: "Share2", description: "Social media icon links for footer",
+    props: merge(
+      { label: G.text("label", "Section Label", "Follow Us"), showFacebook: G.toggle("showFacebook", "Show Facebook", "true"), showTwitter: G.toggle("showTwitter", "Show Twitter", "true"), showInstagram: G.toggle("showInstagram", "Show Instagram", "true"), showYoutube: G.toggle("showYoutube", "Show Youtube", "true"), iconColor: G.color("iconColor", "Icon Color", "#71717a", "typography"), hoverColor: G.color("hoverColor", "Hover Color", "#2563eb", "typography"), iconSize: G.number("iconSize", "Icon Size", "18", "layout"), headingColor: G.color("headingColor", "Heading Color", "#18181b", "typography") },
+      layout, typography,
+    ),
+  },
+  {
+    type: "footer-copyright", label: "Footer Copyright", category: "footer", icon: "Copyright", description: "Copyright notice for footer bottom bar",
+    props: merge(
+      { text: G.text("text", "Copyright Text", "© 2026 All rights reserved."), textColor: G.color("textColor", "Text Color", "#a1a1aa", "typography"), fontSize: G.number("fontSize", "Font Size", "12", "typography"), alignment: G.select("alignment", "Alignment", "center", [{ value: "left", label: "Left" }, { value: "center", label: "Center" }, { value: "right", label: "Right" }], "layout") },
+      layout, typography,
+    ),
+  },
 ];
 
 // ─── BUILD MAP ────────────────────────────────────────────────────
@@ -834,6 +885,7 @@ export const sectionCategories: { id: SectionCategory; label: string }[] = [
   { id: "marketing", label: "Marketing" },
   { id: "advanced", label: "Advanced" },
   { id: "layout", label: "Layout" },
+  { id: "header", label: "Header" },
   { id: "footer", label: "Footer" },
 ];
 

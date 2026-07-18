@@ -10,6 +10,7 @@ import { setTheme } from "@/redux/slices/theme-slice";
 import { setStoreSettings } from "@/redux/slices/store-settings-slice";
 import {
   loadSections,
+  loadPage,
   setPageMetadata,
   markSaved,
   setSaveError,
@@ -99,6 +100,22 @@ function getDefaultSectionsForPageType(pageType: string): BuilderSection[] {
 
 const defaultSections: BuilderSection[] = getDefaultSectionsForPageType("home");
 
+function getDefaultHeaderSections(): BuilderSection[] {
+  const id = (type: string) => `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const shared = { visible: true };
+  return [
+    { id: id("header-bar"), type: "header-bar", label: "Header Bar", ...shared, props: { logoUrl: "", storeName: "My Store", showName: "true", layout: "logo-nav-icons", navPosition: "center", showSearch: "true", showWishlist: "true", showCart: "true", showAccount: "true", sticky: "true", transparent: "false", headerBg: "#ffffff", headerHeight: "64", link1Text: "Home", link1Url: "/", link2Text: "Shop", link2Url: "/shop", link3Text: "About", link3Url: "/about", link4Text: "Contact", link4Url: "/contact", font: "Inter" } },
+  ];
+}
+
+function getDefaultFooterSections(): BuilderSection[] {
+  const id = (type: string) => `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const shared = { visible: true };
+  return [
+    { id: id("simple-footer"), type: "simple-footer", label: "Footer", ...shared, props: { copyright: `© ${new Date().getFullYear()} Your Store. All rights reserved.`, showSocial: "true", bgColor: "#09090b", textColor: "#fafafa", layout: "split" } },
+  ];
+}
+
 const defaultSettings = {
   currencyCode: "USD" as const, currencySymbol: "$", currencyPosition: "before" as const,
   locale: "en-US", decimalPlaces: 2, taxRate: 0,
@@ -160,6 +177,8 @@ export function BuilderEditor() {
   const sections = useSelector((s: RootState) => s.builder.sections);
   const headerSections = useSelector((s: RootState) => s.builder.headerSections);
   const footerSections = useSelector((s: RootState) => s.builder.footerSections);
+  const headerSettings = useSelector((s: RootState) => s.builder.headerSettings);
+  const footerSettings = useSelector((s: RootState) => s.builder.footerSettings);
 
   const selectedSectionId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const editingZone = useSelector((s: RootState) => s.builder.editingZone);
@@ -288,8 +307,15 @@ export function BuilderEditor() {
 
       const resolvedPageType = derivePageType(matchedPage);
       const pageDefaults = getDefaultSectionsForPageType(resolvedPageType);
-      dispatch(loadSections((matchedPage.sections?.length ? matchedPage.sections : pageDefaults) as BuilderSection[]));
-      dispatch(setPageMetadata({ id: matchedPage._id, title: matchedPage.title, slug: matchedPage.slug, pageType: resolvedPageType as any }));
+      const bodySections = (matchedPage.sections?.length ? matchedPage.sections : pageDefaults) as BuilderSection[];
+      const headerSections = (matchedPage.headerSections?.length ? matchedPage.headerSections : getDefaultHeaderSections()) as BuilderSection[];
+      const footerSections = (matchedPage.footerSections?.length ? matchedPage.footerSections : getDefaultFooterSections()) as BuilderSection[];
+      dispatch(loadPage({
+        page: { id: matchedPage._id, title: matchedPage.title, slug: matchedPage.slug, pageType: resolvedPageType as any, isSystem: false, description: "", status: (matchedPage.status || "draft") as any },
+        sections: bodySections,
+        headerSections,
+        footerSections,
+      }));
 
       const canonicalSlug = matchedPage.slug;
       if (!routePageSlug || routePageSlug !== canonicalSlug || isMongoId(routePageSlug)) {
@@ -304,8 +330,15 @@ export function BuilderEditor() {
         .then((res) => {
           const createdPage = res.data?.page;
           if (!createdPage?.slug) return;
-          dispatch(loadSections(defaultSections));
-          dispatch(setPageMetadata({ id: createdPage._id, title: createdPage.title, slug: createdPage.slug }));
+          const bodySections = getDefaultSectionsForPageType("home");
+          const headerSections = getDefaultHeaderSections();
+          const footerSections = getDefaultFooterSections();
+          dispatch(loadPage({
+            page: { id: createdPage._id, title: createdPage.title, slug: createdPage.slug, pageType: "home" as any, isSystem: false, description: "", status: "draft" as any },
+            sections: bodySections,
+            headerSections,
+            footerSections,
+          }));
           redirectToPage(createdPage.slug);
         })
         .catch(() => {});
@@ -317,7 +350,7 @@ export function BuilderEditor() {
     if (!isDirty || !pageId) return;
     const timer = setTimeout(() => {
       dispatch(setSaving(true));
-      savePage({ storeId, pageId, data: { sections, theme: currentTheme, settings } })
+      savePage({ storeId, pageId, data: { sections, headerSections, footerSections, headerSettings, footerSettings, theme: currentTheme, settings } })
         .unwrap()
         .then(() => dispatch(markSaved(new Date().toISOString())))
         .catch(() => dispatch(setSaveError("Save failed — check your connection")));
@@ -341,7 +374,7 @@ export function BuilderEditor() {
         event.preventDefault();
         if (!pageId) return;
         dispatch(setSaving(true));
-        savePage({ storeId, pageId, data: { sections, theme: currentTheme, settings } })
+        savePage({ storeId, pageId, data: { sections, headerSections, footerSections, headerSettings, footerSettings, theme: currentTheme, settings } })
           .unwrap()
           .then(() => dispatch(markSaved(new Date().toISOString())))
           .catch(() => dispatch(setSaveError("Save failed")));

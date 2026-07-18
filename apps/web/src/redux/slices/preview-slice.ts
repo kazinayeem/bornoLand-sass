@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 type PreviewState = {
-  device: "desktop" | "tablet" | "mobile";
+  device: "desktop" | "laptop" | "tablet" | "mobile";
   zoom: number;
   showGuides: boolean;
   showGrid: boolean;

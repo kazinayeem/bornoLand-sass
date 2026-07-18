@@ -11,7 +11,7 @@ import {
   toggleSection,
   toggleSectionLock,
   moveSection,
-  setActiveTab,
+  setActiveRightTab, setActiveTab,
 } from "@/redux/slices/builder-slice";
 import { useCreateTemplateFromPageMutation } from "@/redux/api/builder-template-api";
 import { useRequiredStore } from "@/providers/store-context";
@@ -123,8 +123,7 @@ export function FloatingSectionToolbar() {
   };
 
   const handleOpenSettings = () => {
-    // Ensure right panel is visible and on the content tab
-    dispatch(setActiveTab("layers")); // bring focus back, right panel opens automatically on selection
+    dispatch(setActiveRightTab("content"));
   };
 
   return (

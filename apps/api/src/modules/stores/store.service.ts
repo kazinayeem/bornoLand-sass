@@ -174,40 +174,68 @@ export async function createStore(userId: string, payload: unknown) {
 
     const storeId = store._id;
 
-    // ── Auto-create default homepage ──────────────────────────────
-    await StorePageModel.create([{
-      storeId,
-      tenantId,
-      title: "Home",
-      slug: "/",
-      pageType: "home",
-      isSystem: true,
-      isHomePage: true,
-      status: "published",
-      description: "Your store homepage",
-      sortOrder: 0,
-      sections: [],
-      settings: { layoutWidth: "1200px" },
-      seo: { title: parsed.data.name, description: parsed.data.description ?? "" },
-    }], { session });
-
-    // ── Create other system pages (shop, about, contact) ──────────
-    const systemPages = [
-      { title: "Shop", slug: "/shop", pageType: "shop" as const, description: "Browse all products" },
-      { title: "About Us", slug: "/about", pageType: "about" as const, description: "Learn about our store" },
-      { title: "Contact", slug: "/contact", pageType: "contact" as const, description: "Get in touch with us" },
-      { title: "FAQ", slug: "/faq", pageType: "faq" as const, description: "Frequently asked questions" },
+    // ── Auto-create default pages (StorePageModel + PageModel) ────
+    const ALL_DEFAULT_PAGES: Array<{ title: string; slug: string; pageType: string; description: string; sortOrder: number; isSystem: boolean; isHomePage?: boolean; status: string; hasSections: boolean }> = [
+      { title: "Home", slug: "home", pageType: "home", description: "Your store homepage", sortOrder: 0, isSystem: true, isHomePage: true, status: "published", hasSections: true },
+      { title: "Shop", slug: "shop", pageType: "shop", description: "Browse all products", sortOrder: 1, isSystem: true, status: "draft", hasSections: true },
+      { title: "Categories", slug: "categories", pageType: "category", description: "Browse by category", sortOrder: 2, isSystem: true, status: "draft", hasSections: true },
+      { title: "Product Template", slug: "product", pageType: "product", description: "Product detail layout", sortOrder: 3, isSystem: true, status: "draft", hasSections: false },
+      { title: "Collection Template", slug: "collection", pageType: "collection", description: "Collection layout", sortOrder: 4, isSystem: true, status: "draft", hasSections: true },
+      { title: "About Us", slug: "about", pageType: "about", description: "Learn about our store", sortOrder: 5, isSystem: true, status: "draft", hasSections: true },
+      { title: "Contact", slug: "contact", pageType: "contact", description: "Get in touch", sortOrder: 6, isSystem: true, status: "draft", hasSections: true },
+      { title: "FAQ", slug: "faq", pageType: "faq", description: "Frequently asked questions", sortOrder: 7, isSystem: true, status: "draft", hasSections: true },
+      { title: "Blog", slug: "blog", pageType: "blog", description: "Latest news & articles", sortOrder: 8, isSystem: true, status: "draft", hasSections: true },
+      { title: "Cart", slug: "cart", pageType: "cart", description: "Shopping cart", sortOrder: 9, isSystem: true, status: "draft", hasSections: false },
+      { title: "Checkout", slug: "checkout", pageType: "checkout", description: "Checkout", sortOrder: 10, isSystem: true, status: "draft", hasSections: false },
+      { title: "Wishlist", slug: "wishlist", pageType: "wishlist", description: "Your wishlist", sortOrder: 11, isSystem: true, status: "draft", hasSections: false },
+      { title: "Account", slug: "account", pageType: "account", description: "My account", sortOrder: 12, isSystem: true, status: "draft", hasSections: false },
+      { title: "Search", slug: "search", pageType: "search", description: "Search results", sortOrder: 13, isSystem: true, status: "draft", hasSections: false },
+      { title: "404", slug: "404", pageType: "custom", description: "Page not found", sortOrder: 14, isSystem: true, status: "draft", hasSections: false },
+      { title: "Privacy Policy", slug: "privacy-policy", pageType: "privacy_policy", description: "Privacy policy", sortOrder: 15, isSystem: true, status: "draft", hasSections: false },
+      { title: "Terms & Conditions", slug: "terms-conditions", pageType: "terms_conditions", description: "Terms & conditions", sortOrder: 16, isSystem: true, status: "draft", hasSections: false },
     ];
+
+    // StorePageModel docs (storefront-facing)
     await StorePageModel.create(
-      systemPages.map((p) => ({
+      ALL_DEFAULT_PAGES.map((p) => ({
         storeId,
         tenantId,
-        ...p,
-        isSystem: true,
-        status: "draft",
-        sortOrder: 1,
+        title: p.title,
+        slug: p.isHomePage ? "/" : `/${p.slug}`,
+        pageType: p.pageType,
+        isSystem: p.isSystem,
+        isHomePage: p.isHomePage ?? false,
+        status: p.status,
+        description: p.description,
+        sortOrder: p.sortOrder,
         sections: [],
-        seo: { title: p.title },
+        settings: { layoutWidth: "1200px" },
+        seo: { title: p.title, description: p.description },
+      })),
+      { session }
+    );
+
+    // PageModel docs (builder-facing)
+    const homeSections = [
+      { id: "hero-banner-1", type: "hero-banner", label: "Hero Banner", visible: true, props: { headline: "Welcome to Our Store", subheadline: "Discover amazing products curated just for you", buttonText: "Shop Now", buttonLink: "/shop", imageUrl: "", overlayColor: "rgba(15, 23, 42, 0.45)", textAlignment: "left", heroHeight: "md", kicker: "Welcome" } },
+      { id: "category-grid-1", type: "category-grid", label: "Categories", visible: true, props: { title: "Shop by Category", subtitle: "Browse our collections", gridColumns: "4" } },
+      { id: "featured-products-1", type: "featured-products", label: "Featured Products", visible: true, props: { title: "Featured Products", subtitle: "Our best selling items", gridColumns: "4", showBadges: "true", showRatings: "true" } },
+      { id: "testimonials-1", type: "testimonials", label: "Testimonials", visible: true, props: { title: "What Customers Say", subtitle: "Hear from our happy customers", layout: "grid", cardStyle: "default", avatarStyle: "circle" } },
+      { id: "newsletter-1", type: "newsletter", label: "Newsletter", visible: true, props: { headline: "Stay in the Loop", subheadline: "Subscribe to get exclusive deals.", buttonText: "Subscribe", placeholderText: "Enter your email" } },
+    ];
+
+    await PageModel.create(
+      ALL_DEFAULT_PAGES.map((p) => ({
+        storeId,
+        title: p.title,
+        slug: p.slug,
+        pageType: p.pageType,
+        isHome: p.isHomePage ?? false,
+        showHeader: true,
+        showFooter: true,
+        status: p.status,
+        sections: p.hasSections && p.pageType === "home" ? homeSections : [],
+        theme: store.theme ?? {},
       })),
       { session }
     );
@@ -229,11 +257,15 @@ export async function createStore(userId: string, payload: unknown) {
     // ── Add default menu items for primary nav ────────────────────
     const primaryNav = await NavigationModel.findOne({ storeId, key: "primary" }).session(session).lean();
     if (primaryNav) {
+      const primaryNavId = (primaryNav as { _id: unknown })._id;
       await MenuItemModel.insertMany([
-        { navigationId: primaryNav._id, storeId, title: "Home", link: "/", linkType: "page", sortOrder: 0 },
-        { navigationId: primaryNav._id, storeId, title: "Shop", link: "/shop", linkType: "page", sortOrder: 1 },
-        { navigationId: primaryNav._id, storeId, title: "About", link: "/about", linkType: "page", sortOrder: 2 },
-        { navigationId: primaryNav._id, storeId, title: "Contact", link: "/contact", linkType: "page", sortOrder: 3 },
+        { navigationId: primaryNavId, storeId, title: "Home", link: "/", linkType: "page", sortOrder: 0 },
+        { navigationId: primaryNavId, storeId, title: "Shop", link: "/shop", linkType: "page", sortOrder: 1 },
+        { navigationId: primaryNavId, storeId, title: "Categories", link: "/categories", linkType: "page", sortOrder: 2 },
+        { navigationId: primaryNavId, storeId, title: "About", link: "/about", linkType: "page", sortOrder: 3 },
+        { navigationId: primaryNavId, storeId, title: "Contact", link: "/contact", linkType: "page", sortOrder: 4 },
+        { navigationId: primaryNavId, storeId, title: "Blog", link: "/blog", linkType: "page", sortOrder: 5 },
+        { navigationId: primaryNavId, storeId, title: "FAQ", link: "/faq", linkType: "page", sortOrder: 6 },
       ], { session });
     }
 
@@ -627,7 +659,8 @@ export async function changeStoreTheme(storeId: string, userId: string, payload:
   if (!store) return { ok: false as const, message: "Store not found" };
 
   if (payload.templateId) {
-    const template = await TemplateModel.findById(payload.templateId).lean() as any;
+    const { BuilderTemplateModel } = await import("../builder/builder-template.model.js");
+    const template = await BuilderTemplateModel.findById(payload.templateId).lean() as any;
     if (!template) return { ok: false as const, message: "Template not found" };
 
     if (template.theme) {

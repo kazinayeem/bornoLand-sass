@@ -20,7 +20,12 @@ type StorefrontFrameProps = {
   settings: StoreSettingsData;
   sliders: HomepageSliderData[];
   pageSections: StorefrontSectionLike[];
+  headerSections?: StorefrontSectionLike[];
+  footerSections?: StorefrontSectionLike[];
   footerSection?: StorefrontSectionLike | null;
+  headerSettings?: Record<string, unknown>;
+  footerSettings?: Record<string, unknown>;
+  navLinksOverride?: Array<{ name: string; href: string }>;
   adminBarStoreId?: string;
   showAdminBar?: boolean;
   children: ReactNode;
@@ -34,7 +39,12 @@ export function StorefrontFrame({
   settings,
   sliders,
   pageSections,
+  headerSections,
+  footerSections,
   footerSection,
+  headerSettings,
+  footerSettings,
+  navLinksOverride,
   showAdminBar = false,
   children,
 }: StorefrontFrameProps) {
@@ -52,7 +62,12 @@ export function StorefrontFrame({
       settings={settings}
       sliders={stableSliders}
       pageSections={stableSections}
+      headerSections={headerSections}
+      footerSections={footerSections}
       footerSection={footerSection}
+      headerSettings={headerSettings}
+      footerSettings={footerSettings}
+      navLinksOverride={navLinksOverride}
       showAdminBar={showAdminBar}
     >
       {children}

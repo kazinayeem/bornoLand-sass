@@ -21,6 +21,10 @@ export async function savePage(
   payload: {
     storeId?: string;
     sections?: unknown[];
+    headerSections?: unknown[];
+    footerSections?: unknown[];
+    headerSettings?: Record<string, unknown>;
+    footerSettings?: Record<string, unknown>;
     theme?: Record<string, unknown>;
     settings?: Record<string, unknown>;
     metadata?: Record<string, unknown>;
@@ -35,6 +39,10 @@ export async function savePage(
 
   const update: Record<string, unknown> = {};
   if (payload.sections) update.sections = payload.sections;
+  if (payload.headerSections) update.headerSections = payload.headerSections;
+  if (payload.footerSections) update.footerSections = payload.footerSections;
+  if (payload.headerSettings) update.headerSettings = payload.headerSettings;
+  if (payload.footerSettings) update.footerSettings = payload.footerSettings;
   if (payload.theme) update.theme = payload.theme;
   if (payload.settings) update.settings = payload.settings;
   if (payload.metadata) update.metadata = payload.metadata;

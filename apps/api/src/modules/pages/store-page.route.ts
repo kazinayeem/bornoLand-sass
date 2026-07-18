@@ -14,8 +14,6 @@ import {
   softDeleteStorePage,
   restoreSoftDeletedPage,
   duplicateStorePage,
-  publishStorePage,
-  unpublishStorePage,
   scheduleStorePage,
   archiveStorePage,
   restoreStorePage,
@@ -39,6 +37,7 @@ import {
   exportPageSections,
   importPageSections,
 } from "./store-page.service.js";
+import { publishPage, unpublishPage } from "./publish.service.js";
 
 export const storePageRouter: Router = Router();
 
@@ -113,13 +112,16 @@ storePageRouter.post("/:id/duplicate", async (request: AuthRequest, response: Re
   return result.ok ? sendSuccess(response, result.data, "Page duplicated") : sendFailure(response, result.message);
 });
 
-// ─── Publish page ────────────────────────────────────────────────────────────
+// ─── Publish page (with diff + cache invalidation) ──────────────────────────
 
 storePageRouter.post("/:id/publish", async (request: AuthRequest, response: Response) => {
   const storeId = request.body.storeId as string;
   if (!storeId) return sendFailure(response, "storeId is required");
-  const result = await publishStorePage(request.params.id as string, storeId, request.user!.userId);
-  return result.ok ? sendSuccess(response, result.data, "Page published") : sendFailure(response, result.message);
+  const result = await publishPage(request.params.id as string, storeId, request.user!.userId);
+  if (result.ok) {
+    return sendSuccess(response, result.data, `Page published — ${result.data!.diff.summary}`);
+  }
+  return sendFailure(response, result.message || "Publish failed");
 });
 
 // ─── Unpublish page ──────────────────────────────────────────────────────────
@@ -127,8 +129,8 @@ storePageRouter.post("/:id/publish", async (request: AuthRequest, response: Resp
 storePageRouter.post("/:id/unpublish", async (request: AuthRequest, response: Response) => {
   const storeId = request.body.storeId as string;
   if (!storeId) return sendFailure(response, "storeId is required");
-  const result = await unpublishStorePage(request.params.id as string, storeId, request.user!.userId);
-  return result.ok ? sendSuccess(response, result.data, "Page unpublished") : sendFailure(response, result.message);
+  const result = await unpublishPage(request.params.id as string, storeId, request.user!.userId);
+  return result.ok ? sendSuccess(response, result.data, "Page unpublished") : sendFailure(response, result.message || "Failed to unpublish");
 });
 
 // ─── Schedule publish ────────────────────────────────────────────────────────

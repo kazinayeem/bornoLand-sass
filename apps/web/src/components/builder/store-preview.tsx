@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import type { StoreSettingsData, HomepageSliderData, ThemeData, StoreData, ProductData, CategoryData } from "@/providers/tenant-provider";
+import { BuilderDeviceProvider } from "@/lib/device-context";
 import { StorefrontCanvas } from "@/components/storefront/storefront-canvas";
 import type { StorefrontSectionLike } from "@/components/storefront/storefront-types";
 import { StorefrontFrame } from "@/components/storefront/storefront-frame";
@@ -32,13 +33,37 @@ export function StorePreview({ store, theme, products = [], categories = [], set
   const editingZone = useSelector((s: RootState) => s.builder.editingZone);
   const selectedSectionId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const hoveredSectionId = useSelector((s: RootState) => s.builder.hoveredSectionId);
-  const selectedSection = useSelector((s: RootState) => s.builder.sections.find((section) => section.id === selectedSectionId));
-  const selectedSectionIndex = useSelector((s: RootState) => s.builder.sections.findIndex((section) => section.id === selectedSectionId));
-  const totalSections = useSelector((s: RootState) => s.builder.sections.length);
-  const previewWidth = device === "mobile" ? 390 : device === "tablet" ? 820 : 1280;
+  const headerSettings = useSelector((s: RootState) => s.builder.headerSettings);
+  const footerSettings = useSelector((s: RootState) => s.builder.footerSettings);
+  const allSections = sections;
+  const activeZoneSections = editingZone === "header" ? headerSections
+    : editingZone === "footer" ? footerSections
+    : sections;
+
+  const selectedSection = useSelector((s: RootState) => {
+    const zone = s.builder.editingZone;
+    const list = zone === "header" ? s.builder.headerSections : zone === "footer" ? s.builder.footerSections : s.builder.sections;
+    return list.find((section) => section.id === selectedSectionId);
+  });
+  const selectedSectionIndex = useSelector((s: RootState) => {
+    const zone = s.builder.editingZone;
+    const list = zone === "header" ? s.builder.headerSections : zone === "footer" ? s.builder.footerSections : s.builder.sections;
+    return list.findIndex((section) => section.id === selectedSectionId);
+  });
+  const totalSections = useSelector((s: RootState) => {
+    const zone = s.builder.editingZone;
+    const list = zone === "header" ? s.builder.headerSections : zone === "footer" ? s.builder.footerSections : s.builder.sections;
+    return list.length;
+  });
+  const previewWidth = device === "mobile" ? 390 : device === "tablet" ? 820 : device === "laptop" ? 1024 : 1280;
   const [quickEditMode, setQuickEditMode] = useState<"text" | "image" | "button" | null>(null);
 
-  const footerSection = sections.find((s) => ["footer", "simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer"].includes(normalizeSectionType(s.type))) ?? null;
+  // Footer from footerSections when editing footer, or from body sections as fallback
+  const footerSection = editingZone === "footer"
+    ? (footerSections.find((s) => ["footer", "simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer"].includes(normalizeSectionType(s.type))) ?? null)
+    : (footerSections.find((s) => ["footer", "simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer"].includes(normalizeSectionType(s.type)))
+        ?? sections.find((s) => ["footer", "simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer"].includes(normalizeSectionType(s.type)))
+        ?? null);
   const navSections = sections.filter((s) => !["footer", "simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer"].includes(normalizeSectionType(s.type)));
   const selectedSectionDef = selectedSection ? getSectionDef(selectedSection.type) : null;
 
@@ -111,16 +136,23 @@ export function StorePreview({ store, theme, products = [], categories = [], set
 
   const activeNavSections = editingZone === "footer"
     ? []
-    : activeSections.filter((s) => !["footer", "simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer"].includes(normalizeSectionType(s.type)));
+    : editingZone === "header"
+    ? []
+    : activeSections.filter((s) => !["footer", "simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer", "header-bar", "header-logo", "header-nav", "header-icons"].includes(normalizeSectionType(s.type)));
+
+  // When editing header or footer, render only the zone's sections directly
+  const isZoneMode = editingZone === "header" || editingZone === "footer";
+  const zoneSections = editingZone === "header" ? headerSections : footerSections;
 
   return (
+    <BuilderDeviceProvider device={device}>
     <div className="flex items-start justify-center overflow-x-hidden overflow-y-auto p-6 sm:p-8"
       style={{ backgroundColor: theme.darkMode ? "#09090b" : "#f4f4f5", minHeight: "100%" }}>
       <div
         className="relative overflow-hidden rounded-[2rem] border border-white/60 bg-white shadow-[0_24px_80px_-40px_rgba(0,0,0,0.32)] transition-all duration-300"
         style={{ width: previewWidth, maxWidth: "100%", transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}>
         {renderZoneLabel()}
-        {selectedSection && (
+        {!isZoneMode && selectedSection && (
           <div className="sticky top-4 z-30 mx-auto flex w-fit max-w-[calc(100vw-2rem)] items-center gap-1 rounded-full border border-zinc-200/80 bg-white/95 px-2 py-1 shadow-lg backdrop-blur overflow-x-auto">
             <span className="shrink-0 px-2 text-[11px] font-medium text-zinc-700 truncate max-w-[100px]">{selectedSection.label}</span>
             <button onClick={() => dispatch(duplicateSection(selectedSection.id))} className="shrink-0 rounded-full p-1.5 text-zinc-500 hover:bg-zinc-100"><Copy className="h-3.5 w-3.5" /></button>
@@ -147,7 +179,7 @@ export function StorePreview({ store, theme, products = [], categories = [], set
             <button onClick={() => dispatch(removeSection(selectedSection.id))} className="shrink-0 rounded-full p-1.5 text-red-500 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>
           </div>
         )}
-        {selectedSection && quickEditFields && (
+        {!isZoneMode && selectedSection && quickEditFields && (
           <div className="sticky top-16 z-20 mx-4 mb-4 w-auto sm:w-80 rounded-3xl border border-zinc-200/80 bg-white/95 p-4 shadow-xl backdrop-blur">
             <div className="flex items-center justify-between">
               <div>
@@ -190,6 +222,23 @@ export function StorePreview({ store, theme, products = [], categories = [], set
             </div>
           </div>
         )}
+        {isZoneMode ? (
+          /* Zone editing mode: render header or footer sections directly */
+          <div className="min-h-[200px] p-4">
+            <StorefrontCanvas
+              sections={zoneSections}
+              selectedSectionId={selectedSectionId}
+              hoveredSectionId={hoveredSectionId}
+              onSelectSection={(sectionId) => dispatch(setSelectedSection(sectionId))}
+              onHoverSection={(sectionId) => dispatch(setHoveredSection(sectionId))}
+              onQuickEditRequest={({ sectionId, mode }) => {
+                dispatch(setSelectedSection(sectionId));
+                setQuickEditMode(mode);
+              }}
+              onQuickInsert={onQuickInsert}
+            />
+          </div>
+        ) : (
         <StorefrontFrame
           store={store}
           theme={theme}
@@ -198,7 +247,11 @@ export function StorePreview({ store, theme, products = [], categories = [], set
           settings={settings}
           sliders={sliders}
           pageSections={activeSections}
-          footerSection={editingZone !== "footer" ? footerSection : null}
+          headerSections={headerSections}
+          footerSections={footerSections}
+          headerSettings={headerSettings}
+          footerSettings={footerSettings}
+          footerSection={footerSection}
         >
           <StorefrontCanvas
             sections={activeNavSections}
@@ -213,7 +266,9 @@ export function StorePreview({ store, theme, products = [], categories = [], set
             onQuickInsert={onQuickInsert}
           />
         </StorefrontFrame>
+        )}
       </div>
     </div>
+    </BuilderDeviceProvider>
   );
 }

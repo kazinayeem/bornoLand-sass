@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { baseApi } from "@/redux/api/base-api";
+import { builderHistoryMiddleware } from "@/redux/middleware/builder-history-middleware";
 import { authReducer } from "@/redux/slices/auth-slice";
 import { userReducer } from "@/redux/slices/user-slice";
 import { tenantReducer } from "@/redux/slices/tenant-slice";
@@ -41,7 +42,8 @@ export const store = configureStore({
     currentStore: currentStoreReducer,
     ui: uiReducer,
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(baseApi.middleware),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(baseApi.middleware).concat(builderHistoryMiddleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

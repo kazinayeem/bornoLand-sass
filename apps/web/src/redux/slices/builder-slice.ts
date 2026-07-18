@@ -3,6 +3,19 @@ import type { PageType, HeaderSettings, FooterSettings } from "@/redux/api/store
 
 export type SectionProps = Record<string, string>;
 
+// ─── Per-breakpoint device style overrides ──────────────────────────
+
+export type DeviceStyle = {
+  paddingTop?: string; paddingBottom?: string; paddingLeft?: string; paddingRight?: string;
+  marginTop?: string; marginBottom?: string; marginLeft?: string; marginRight?: string;
+  borderRadius?: string; width?: string; maxWidth?: string; minHeight?: string;
+  fontSize?: string; lineHeight?: string; textAlign?: string;
+};
+
+export const BREAKPOINTS = ["desktop", "laptop", "tablet", "mobile"] as const;
+
+// ─── Section style with responsive overrides ───────────────────────
+
 export type SectionStyle = {
   paddingTop?: string; paddingBottom?: string; paddingLeft?: string; paddingRight?: string;
   marginTop?: string; marginBottom?: string; marginLeft?: string; marginRight?: string;
@@ -12,7 +25,11 @@ export type SectionStyle = {
   width?: string; maxWidth?: string; minHeight?: string;
   hideOnDesktop?: boolean; hideOnTablet?: boolean; hideOnMobile?: boolean;
   customCss?: string;
-  animation?: string; animationDuration?: string; animationDelay?: string;
+  animation?: string; animationDuration?: string; animationDelay?: string; animationTrigger?: string;
+  parallaxSpeed?: string; sticky?: boolean;
+
+  // Responsive overrides per breakpoint (overrides flat values for specific devices)
+  responsive?: Partial<Record<"desktop" | "laptop" | "tablet" | "mobile", DeviceStyle>>;
 };
 
 export type BuilderSection = {
@@ -104,9 +121,9 @@ type BuilderState = {
     anchorPosition: { top: number; left: number } | null; // Position for popover
   };
 
-  // Undo/redo
-  past: BuilderSection[][];
-  future: BuilderSection[][];
+  // Undo/redo (global snapshots across all three zones)
+  past: GlobalSnapshot[];
+  future: GlobalSnapshot[];
 };
 
 const initialState: BuilderState = {
@@ -172,12 +189,49 @@ function setSectionsForZone(state: BuilderState, sections: BuilderSection[]): vo
   else state.sections = sections;
 }
 
-function pushHistory(state: BuilderState) {
-  const current = getSections(state);
-  state.past.push(current.map((section) => ({ ...section, props: { ...section.props } })));
-  if (state.past.length > 50) state.past.shift();
-  state.future = [];
+// ─── Global snapshot: captures all three zones for undo/redo ──────────────
+
+export type GlobalSnapshot = {
+  sections: BuilderSection[];
+  headerSections: BuilderSection[];
+  footerSections: BuilderSection[];
+};
+
+function cloneSections(list: BuilderSection[]): BuilderSection[] {
+  return list.map((section) => ({ ...section, props: { ...section.props } }));
 }
+
+function takeSnapshot(state: BuilderState): GlobalSnapshot {
+  return {
+    sections: cloneSections(state.sections),
+    headerSections: cloneSections(state.headerSections),
+    footerSections: cloneSections(state.footerSections),
+  };
+}
+
+function applySnapshot(state: BuilderState, snapshot: GlobalSnapshot): void {
+  state.sections = snapshot.sections;
+  state.headerSections = snapshot.headerSections;
+  state.footerSections = snapshot.footerSections;
+}
+
+/** Action types that should automatically push history. Keep in sync with builderHistoryMiddleware. */
+export const BUILDER_HISTORY_ACTIONS = new Set([
+  'builder/setSections',
+  'builder/addSection',
+  'builder/removeSection',
+  'builder/toggleSection',
+  'builder/updateSectionProps',
+  'builder/updateSectionStyle',
+  'builder/updateSectionResponsive',
+  'builder/updateSectionStyleResponsive',
+  'builder/updateSectionMeta',
+  'builder/moveSection',
+  'builder/duplicateSection',
+  'builder/toggleSectionLock',
+  'builder/pasteSection',
+  'builder/restoreHistorySnapshot',
+]);
 
 const builderSlice = createSlice({
   name: "builder",
@@ -247,15 +301,21 @@ const builderSlice = createSlice({
       state.isDirty = true;
     },
 
+    // ─── History auto-committed via builderHistoryMiddleware ─────────────
+
+    commitHistory(state, action: PayloadAction<GlobalSnapshot>) {
+      state.past.push(action.payload);
+      state.future = [];
+      if (state.past.length > 50) state.past.shift();
+    },
+
     // ─── Section CRUD ──────────────────────────────────────────────────────
     setSections(state, action: PayloadAction<BuilderSection[]>) {
-      pushHistory(state);
       setSectionsForZone(state, action.payload);
       state.isDirty = true;
     },
 
     addSection(state, action: PayloadAction<BuilderSection & { index?: number }>) {
-      pushHistory(state);
       const sections = getSections(state);
       const { index, ...section } = action.payload;
       if (index != null && index >= 0 && index <= sections.length) {
@@ -268,32 +328,27 @@ const builderSlice = createSlice({
     },
 
     removeSection(state, action: PayloadAction<string>) {
-      pushHistory(state);
       const sections = getSections(state).filter((s) => s.id !== action.payload);
       setSectionsForZone(state, sections);
       state.isDirty = true;
     },
 
     toggleSection(state, action: PayloadAction<string>) {
-      pushHistory(state);
       const s = getSections(state).find((s) => s.id === action.payload);
       if (s) { s.visible = !s.visible; state.isDirty = true; }
     },
 
     updateSectionProps(state, action: PayloadAction<{ id: string; props: SectionProps }>) {
-      pushHistory(state);
       const s = getSections(state).find((s) => s.id === action.payload.id);
       if (s) { s.props = action.payload.props; state.isDirty = true; }
     },
 
     updateSectionStyle(state, action: PayloadAction<{ id: string; style: SectionStyle }>) {
-      pushHistory(state);
       const s = getSections(state).find((s) => s.id === action.payload.id);
       if (s) { s.style = { ...s.style, ...action.payload.style }; state.isDirty = true; }
     },
 
-    updateSectionResponsive(state, action: PayloadAction<{ id: string; device: "desktop" | "tablet" | "mobile"; hide: boolean }>) {
-      pushHistory(state);
+    updateSectionResponsive(state, action: PayloadAction<{ id: string; device: "desktop" | "laptop" | "tablet" | "mobile"; hide: boolean }>) {
       const s = getSections(state).find((s) => s.id === action.payload.id);
       if (s) {
         if (action.payload.device === "desktop") s.style = { ...s.style, hideOnDesktop: action.payload.hide };
@@ -303,8 +358,24 @@ const builderSlice = createSlice({
       }
     },
 
+    updateSectionStyleResponsive(state, action: PayloadAction<{ id: string; device: "desktop" | "laptop" | "tablet" | "mobile"; key: keyof DeviceStyle; value: string }>) {
+      const s = getSections(state).find((s) => s.id === action.payload.id);
+      if (s) {
+        const { device, key, value } = action.payload;
+        const currentResponsive = s.style?.responsive ?? {};
+        const currentDevice = currentResponsive[device] ?? {};
+        s.style = {
+          ...s.style,
+          responsive: {
+            ...currentResponsive,
+            [device]: { ...currentDevice, [key]: value },
+          },
+        };
+        state.isDirty = true;
+      }
+    },
+
     updateSectionMeta(state, action: PayloadAction<{ id: string; label?: string; visible?: boolean }>) {
-      pushHistory(state);
       const s = getSections(state).find((sec) => sec.id === action.payload.id);
       if (s) {
         if (typeof action.payload.label === "string") s.label = action.payload.label;
@@ -317,7 +388,6 @@ const builderSlice = createSlice({
       const { from, to } = action.payload;
       const sections = getSections(state);
       if (to < 0 || to >= sections.length) return;
-      pushHistory(state);
       const copy = [...sections];
       const [item] = copy.splice(from, 1);
       copy.splice(to, 0, item);
@@ -329,7 +399,6 @@ const builderSlice = createSlice({
       const sections = getSections(state);
       const idx = sections.findIndex((s) => s.id === action.payload);
       if (idx < 0) return;
-      pushHistory(state);
       const original = sections[idx];
       const dup: BuilderSection = {
         ...original,
@@ -390,7 +459,6 @@ const builderSlice = createSlice({
 
     // ─── Section utilities ─────────────────────────────────────────────────
     toggleSectionLock(state, action: PayloadAction<string>) {
-      pushHistory(state);
       const s = getSections(state).find((sec) => sec.id === action.payload);
       if (s) { s.locked = !s.locked; state.isDirty = true; }
     },
@@ -407,7 +475,6 @@ const builderSlice = createSlice({
 
     pasteSection(state, action: PayloadAction<string | null | undefined>) {
       if (!state.clipboardSection) return;
-      pushHistory(state);
       const sections = getSections(state);
       const base = state.clipboardSection;
       const pasted: BuilderSection = {
@@ -428,11 +495,11 @@ const builderSlice = createSlice({
       state.isDirty = true;
     },
 
-    restoreHistorySnapshot(state, action: PayloadAction<BuilderSection[]>) {
-      pushHistory(state);
-      state.sections = action.payload.map((section) => ({ ...section, props: { ...section.props } }));
+    restoreHistorySnapshot(state, action: PayloadAction<GlobalSnapshot>) {
+      applySnapshot(state, action.payload);
       state.isDirty = true;
-      state.selectedSectionId = action.payload[0]?.id ?? null;
+      state.selectedSectionId = action.payload.sections[0]?.id ?? action.payload.headerSections[0]?.id ?? action.payload.footerSections[0]?.id ?? null;
+      state.editingZone = "body";
     },
 
     // ─── Section Library Modal ─────────────────────────────────────────────
@@ -478,20 +545,20 @@ const builderSlice = createSlice({
 
     // ─── Undo/redo ─────────────────────────────────────────────────────────
     undoBuilder(state) {
-      const previous = state.past.pop();
+      const previous = state.past.pop() as GlobalSnapshot | undefined;
       if (!previous) return;
-      const current = getSections(state);
-      state.future.unshift(current.map((section) => ({ ...section, props: { ...section.props } })));
-      setSectionsForZone(state, previous);
+      const currentSnapshot = takeSnapshot(state);
+      state.future.unshift(currentSnapshot);
+      applySnapshot(state, previous);
       state.isDirty = true;
     },
 
     redoBuilder(state) {
-      const next = state.future.shift();
+      const next = state.future.shift() as GlobalSnapshot | undefined;
       if (!next) return;
-      const current = getSections(state);
-      state.past.push(current.map((section) => ({ ...section, props: { ...section.props } })));
-      setSectionsForZone(state, next);
+      const currentSnapshot = takeSnapshot(state);
+      state.past.push(currentSnapshot);
+      applySnapshot(state, next);
       state.isDirty = true;
     },
 
@@ -540,8 +607,9 @@ export const {
   setGlobalSectionIds,
   addGlobalSectionId,
   removeGlobalSectionId,
+  commitHistory,
   setSections, addSection, removeSection, toggleSection,
-  updateSectionProps, updateSectionStyle, updateSectionResponsive,
+  updateSectionProps, updateSectionStyle, updateSectionResponsive, updateSectionStyleResponsive,
   moveSection, duplicateSection,
   updateSectionMeta, setSelectedSection, setHoveredSection, setEditingSection,
   setActiveTab, setActiveRightTab,

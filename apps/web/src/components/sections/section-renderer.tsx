@@ -1,9 +1,12 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { getSectionComponent } from "./section-component-registry";
 import { getSectionDef, normalizeSectionType } from "@/lib/section-registry";
 import { motion } from "framer-motion";
 import type { SectionStyle } from "@/components/storefront/storefront-types";
+import { useDevice } from "@/lib/device-context";
+import { computeSectionStyle, applyResponsiveVisibility } from "@/lib/responsive-styles";
+import type { Breakpoint } from "@/lib/builder-types";
 
 export type SectionData = {
   id: string;
@@ -34,39 +37,45 @@ function animationStyle(animation: string) {
 }
 
 export function SectionWrapper({ section, children, className = "" }: WrapperProps) {
+  const device = useDevice();
   const p = section.props;
   const s = section.style;
+
+  // Compute responsive-aware style for the current device
+  const responsiveStyle = computeSectionStyle(s, device);
+  const computedVisibility = applyResponsiveVisibility({}, s, device);
+  const isHidden = computedVisibility.display === "none";
 
   // Derived values: prefer section.style over section.props for backward compat
   const visibility = s?.hideOnDesktop ? "desktop-only"
     : s?.hideOnTablet ? "tablet-only"
     : s?.hideOnMobile ? "mobile-only"
     : p.visibility || "all";
-  const bgColor = s?.backgroundColor || p.bgColor || "";
+  const bgColor = responsiveStyle.backgroundColor || s?.backgroundColor || p.bgColor || "";
   const bgGradient = s?.backgroundGradient || p.bgGradient || "";
   const bgImage = p.bgImage || "";
-  const paddingTop = s?.paddingTop ?? p.paddingTop ?? "0";
-  const paddingBottom = s?.paddingBottom ?? p.paddingBottom ?? "0";
-  const paddingLeft = s?.paddingLeft ?? p.paddingLeft ?? "0";
-  const paddingRight = s?.paddingRight ?? p.paddingRight ?? "0";
-  const marginTop = s?.marginTop ?? p.marginTop ?? "0";
-  const marginBottom = s?.marginBottom ?? p.marginBottom ?? "0";
-  const marginLeft = s?.marginLeft ?? "auto";
-  const marginRight = s?.marginRight ?? "auto";
-  const maxWidth = s?.maxWidth || p.maxWidth || "1200px";
-  const borderRadius = s?.borderRadius ?? p.borderRadius ?? "0";
+  const paddingTop = responsiveStyle.paddingTop ?? s?.paddingTop ?? p.paddingTop ?? "0";
+  const paddingBottom = responsiveStyle.paddingBottom ?? s?.paddingBottom ?? p.paddingBottom ?? "0";
+  const paddingLeft = responsiveStyle.paddingLeft ?? s?.paddingLeft ?? p.paddingLeft ?? "0";
+  const paddingRight = responsiveStyle.paddingRight ?? s?.paddingRight ?? p.paddingRight ?? "0";
+  const marginTop = responsiveStyle.marginTop ?? s?.marginTop ?? p.marginTop ?? "0";
+  const marginBottom = responsiveStyle.marginBottom ?? s?.marginBottom ?? p.marginBottom ?? "0";
+  const marginLeft = responsiveStyle.marginLeft ?? s?.marginLeft ?? "auto";
+  const marginRight = responsiveStyle.marginRight ?? s?.marginRight ?? "auto";
+  const maxWidth = responsiveStyle.maxWidth || s?.maxWidth || p.maxWidth || "1200px";
+  const borderRadius = responsiveStyle.borderRadius ?? s?.borderRadius ?? p.borderRadius ?? "0";
   const shadow = s?.shadow || p.shadow || "none";
   const borderWidth = s?.borderWidth ?? p.borderWidth ?? "0";
   const borderColor = s?.borderColor || p.borderColor || "";
   const borderStyle = s?.borderStyle || (borderWidth !== "0" ? "solid" : undefined);
-  const opacity = s?.opacity || "";
-  const width = s?.width || p.width || "";
-  const minHeight = s?.minHeight || p.minHeight || "";
+  const opacity = responsiveStyle.opacity !== undefined ? String(responsiveStyle.opacity) : s?.opacity || "";
+  const width = responsiveStyle.width || s?.width || p.width || "";
+  const minHeight = responsiveStyle.minHeight || s?.minHeight || p.minHeight || "";
   const animation = s?.animation || p.animation || "none";
   const customCss = s?.customCss || p.customCss || "";
 
   const shadowClass = shadow === "sm" ? "shadow-sm" : shadow === "md" ? "shadow-md" : shadow === "lg" ? "shadow-lg" : "";
-  const hiddenClass = visibility === "desktop-only" ? "hidden lg:block" : visibility === "tablet-only" ? "hidden md:block lg:hidden" : visibility === "mobile-only" ? "block md:hidden" : "";
+  const hiddenClass = isHidden ? "hidden" : visibility === "desktop-only" ? "hidden lg:block" : visibility === "tablet-only" ? "hidden md:block lg:hidden" : visibility === "mobile-only" ? "block md:hidden" : "";
 
   const bg = bgGradient
     ? `linear-gradient(135deg, ${bgGradient.split(",").map((s: string) => s.trim()).join(", ")})`
@@ -98,6 +107,9 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
         opacity: opacity || undefined,
         width: width || undefined,
         minHeight: minHeight || undefined,
+        fontSize: responsiveStyle.fontSize,
+        lineHeight: responsiveStyle.lineHeight,
+        textAlign: responsiveStyle.textAlign,
         overflow: "hidden",
       }}
       {...animProps}
@@ -170,46 +182,7 @@ export function ColumnGrid({ children, columns = "4", gap = "4", className = "" 
   );
 }
 
-// ─── Lazy-loaded section components ──────────────────────────────
-
-const HeroBanner = dynamic(() => import("./hero-banner").then((m) => ({ default: m.HeroBanner })), { ssr: false });
-const SplitHero = dynamic(() => import("./split-hero").then((m) => ({ default: m.SplitHero })), { ssr: false });
-const VideoHero = dynamic(() => import("./video-hero").then((m) => ({ default: m.VideoHero })), { ssr: false });
-const SliderHero = dynamic(() => import("./slider-hero").then((m) => ({ default: m.SliderHero })), { ssr: false });
-const ImageHero = dynamic(() => import("./image-hero").then((m) => ({ default: m.ImageHero })), { ssr: false });
-const FullscreenHero = dynamic(() => import("./fullscreen-hero").then((m) => ({ default: m.FullscreenHero })), { ssr: false });
-const CountdownHero = dynamic(() => import("./countdown-hero").then((m) => ({ default: m.CountdownHero })), { ssr: false });
-const FlashSaleHero = dynamic(() => import("./flash-sale-hero").then((m) => ({ default: m.FlashSaleHero })), { ssr: false });
-const ProductHero = dynamic(() => import("./product-hero").then((m) => ({ default: m.ProductHero })), { ssr: false });
-const FeaturedProducts = dynamic(() => import("./featured-products").then((m) => ({ default: m.FeaturedProducts })), { ssr: false });
-const NewArrivals = dynamic(() => import("./new-arrivals").then((m) => ({ default: m.NewArrivals })), { ssr: false });
-const BestSellers = dynamic(() => import("./best-sellers").then((m) => ({ default: m.BestSellers })), { ssr: false });
-const TrendingProducts = dynamic(() => import("./trending-products").then((m) => ({ default: m.TrendingProducts })), { ssr: false });
-const FlashSale = dynamic(() => import("./flash-sale").then((m) => ({ default: m.FlashSale })), { ssr: false });
-const ProductGrid = dynamic(() => import("./product-grid").then((m) => ({ default: m.ProductGrid })), { ssr: false });
-const ProductCarousel = dynamic(() => import("./product-carousel").then((m) => ({ default: m.ProductCarousel })), { ssr: false });
-const ProductTabs = dynamic(() => import("./product-tabs").then((m) => ({ default: m.ProductTabs })), { ssr: false });
-const CategoryGrid = dynamic(() => import("./category-grid").then((m) => ({ default: m.CategoryGrid })), { ssr: false });
-const Testimonials = dynamic(() => import("./testimonials").then((m) => ({ default: m.Testimonials })), { ssr: false });
-const Newsletter = dynamic(() => import("./newsletter").then((m) => ({ default: m.Newsletter })), { ssr: false });
-const FAQSection = dynamic(() => import("./faq-section").then((m) => ({ default: m.FAQSection })), { ssr: false });
-const Accordion = dynamic(() => import("./accordion").then((m) => ({ default: m.Accordion })), { ssr: false });
-const RichText = dynamic(() => import("./rich-text").then((m) => ({ default: m.RichText })), { ssr: false });
-const ImageBanner = dynamic(() => import("./image-banner").then((m) => ({ default: m.ImageBanner })), { ssr: false });
-const DiscountBanner = dynamic(() => import("./discount-banner").then((m) => ({ default: m.DiscountBanner })), { ssr: false });
-const TrustBadges = dynamic(() => import("./trust-badges").then((m) => ({ default: m.TrustBadges })), { ssr: false });
-const WhyChooseUs = dynamic(() => import("./why-choose-us").then((m) => ({ default: m.WhyChooseUs })), { ssr: false });
-const TeamMembers = dynamic(() => import("./team-members").then((m) => ({ default: m.TeamMembers })), { ssr: false });
-const AnnouncementBar = dynamic(() => import("./announcement-bar").then((m) => ({ default: m.AnnouncementBar })), { ssr: false });
-const CountdownTimer = dynamic(() => import("./countdown-timer").then((m) => ({ default: m.CountdownTimer })), { ssr: false });
-const InstagramFeed = dynamic(() => import("./instagram-feed").then((m) => ({ default: m.InstagramFeed })), { ssr: false });
-const SimpleFooter = dynamic(() => import("./simple-footer").then((m) => ({ default: m.SimpleFooter })), { ssr: false });
-const EcommerceFooter = dynamic(() => import("./ecommerce-footer").then((m) => ({ default: m.EcommerceFooter })), { ssr: false });
-const CategorySlider = dynamic(() => import("./category-slider").then((m) => ({ default: m.CategorySlider })), { ssr: false });
-const ProductSlider = dynamic(() => import("./product-slider").then((m) => ({ default: m.ProductSlider })), { ssr: false });
-const DealOfDay = dynamic(() => import("./deal-of-day").then((m) => ({ default: m.DealOfDay })), { ssr: false });
-const Gallery = dynamic(() => import("./gallery").then((m) => ({ default: m.Gallery })), { ssr: false });
-const VideoSection = dynamic(() => import("./video-section").then((m) => ({ default: m.VideoSection })), { ssr: false });
+// ─── Lazy-loaded section components are now registered in section-component-registry.ts ──
 
 // ─── Placeholder for unimplemented sections ──────────────────────
 
@@ -234,77 +207,8 @@ export function SectionRenderer({ section }: { section: SectionData }) {
   const def = getSectionDef(normalizedSection.type);
   if (!def) return null;
 
-  // Hero sections
-  if (normalizedSection.type === "hero-banner") return <HeroBanner section={normalizedSection} />;
-  if (normalizedSection.type === "split-hero") return <SplitHero section={normalizedSection} />;
-  if (normalizedSection.type === "video-hero") return <VideoHero section={normalizedSection} />;
-  if (normalizedSection.type === "slider-hero") return <SliderHero section={normalizedSection} />;
-  if (normalizedSection.type === "image-hero") return <ImageHero section={normalizedSection} />;
-  if (normalizedSection.type === "fullscreen-hero") return <FullscreenHero section={normalizedSection} />;
-  if (normalizedSection.type === "countdown-hero") return <CountdownHero section={normalizedSection} />;
-  if (normalizedSection.type === "flash-sale-hero") return <FlashSaleHero section={normalizedSection} />;
-  if (normalizedSection.type === "product-hero") return <ProductHero section={normalizedSection} />;
-
-  // Products
-  if (normalizedSection.type === "featured-products") return <FeaturedProducts section={normalizedSection} />;
-  if (normalizedSection.type === "new-arrivals") return <NewArrivals section={normalizedSection} />;
-  if (normalizedSection.type === "best-sellers") return <BestSellers section={normalizedSection} />;
-  if (normalizedSection.type === "trending-products") return <TrendingProducts section={normalizedSection} />;
-  if (normalizedSection.type === "flash-sale") return <FlashSale section={normalizedSection} />;
-  if (normalizedSection.type === "product-grid") return <ProductGrid section={normalizedSection} />;
-  if (normalizedSection.type === "product-carousel") return <ProductCarousel section={normalizedSection} />;
-  if (normalizedSection.type === "product-slider") return <ProductSlider section={normalizedSection} />;
-  if (normalizedSection.type === "product-tabs") return <ProductTabs section={normalizedSection} />;
-
-  // Categories
-  if (normalizedSection.type === "category-grid" || normalizedSection.type === "featured-categories" || normalizedSection.type === "mega-category-grid")
-    return <CategoryGrid section={normalizedSection} />;
-  if (normalizedSection.type === "category-slider") return <CategorySlider section={normalizedSection} />;
-
-  // Promotions
-  if (normalizedSection.type === "discount-banner" || normalizedSection.type === "offer-banner" || normalizedSection.type === "bogo")
-    return <DiscountBanner section={normalizedSection} />;
-  if (normalizedSection.type === "deal-of-day") return <DealOfDay section={normalizedSection} />;
-
-  // Trust
-  if (normalizedSection.type === "testimonials") return <Testimonials section={normalizedSection} />;
-  if (normalizedSection.type === "trust-badges" || normalizedSection.type === "guarantee-section")
-    return <TrustBadges section={normalizedSection} />;
-  if (normalizedSection.type === "why-choose-us") return <WhyChooseUs section={normalizedSection} />;
-
-  // Content
-  if (normalizedSection.type === "rich-text") return <RichText section={normalizedSection} />;
-  if (normalizedSection.type === "faq") return <FAQSection section={normalizedSection} />;
-  if (normalizedSection.type === "accordion") return <Accordion section={normalizedSection} />;
-  if (normalizedSection.type === "team-members") return <TeamMembers section={normalizedSection} />;
-
-  // Media
-  if (normalizedSection.type === "image-banner") return <ImageBanner section={normalizedSection} />;
-  if (normalizedSection.type === "gallery" || normalizedSection.type === "image-grid" || normalizedSection.type === "masonry-gallery")
-    return <Gallery section={normalizedSection} />;
-  if (normalizedSection.type === "video-section" || normalizedSection.type === "youtube-embed" || normalizedSection.type === "vimeo-embed")
-    return <VideoSection section={normalizedSection} />;
-
-  // Social
-  if (normalizedSection.type === "instagram-feed") return <InstagramFeed section={normalizedSection} />;
-
-  // Marketing
-  if (normalizedSection.type === "newsletter" || normalizedSection.type === "email-capture")
-    return <Newsletter section={normalizedSection} />;
-  if (normalizedSection.type === "announcement-bar") return <AnnouncementBar section={normalizedSection} />;
-
-  // Advanced
-  if (normalizedSection.type === "countdown-timer") return <CountdownTimer section={normalizedSection} />;
-
-  // Footer
-  if (normalizedSection.type === "simple-footer") return <SimpleFooter section={normalizedSection} />;
-  if (normalizedSection.type === "ecommerce-footer" || normalizedSection.type === "mega-footer" || normalizedSection.type === "multi-column-footer")
-    return <EcommerceFooter section={normalizedSection} />;
-
-  // Layout sections - render as wrapping divs
-  if (normalizedSection.type === "full-width" || normalizedSection.type === "container" || normalizedSection.type === "one-column" || normalizedSection.type === "two-column" || normalizedSection.type === "three-column" || normalizedSection.type === "four-column" || normalizedSection.type === "grid-layout" || normalizedSection.type === "masonry-layout" || normalizedSection.type === "tabs-layout") {
-    return <PlaceholderSection section={normalizedSection} />;
-  }
+  const Component = getSectionComponent(normalizedSection.type);
+  if (Component) return <Component section={normalizedSection} />;
 
   return <PlaceholderSection section={normalizedSection} />;
 }

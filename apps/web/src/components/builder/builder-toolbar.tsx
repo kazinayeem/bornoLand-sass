@@ -17,6 +17,15 @@ import { revalidateStorefrontAction } from "@/lib/actions/revalidate-storefront"
 import { useImportPageSectionsMutation } from "@/redux/api/store-page-api";
 import { cn } from "@/lib/utils";
 
+function timeAgo(dateStr: string | null): string {
+  if (!dateStr) return "";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  if (diff < 30000) return "Just now";
+  if (diff < 60000) return `${Math.floor(diff / 1000)}s ago`;
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  return `${Math.floor(diff / 3600000)}h ago`;
+}
+
 type Props = {
   onBack: () => void;
   saving: boolean;
@@ -57,6 +66,12 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
   const [stylesOpen, setStylesOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -133,9 +148,10 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
   };
 
   const devices = [
-    { key: "desktop" as const, icon: Monitor, label: "Desktop" },
-    { key: "tablet" as const, icon: Tablet, label: "Tablet" },
-    { key: "mobile" as const, icon: Smartphone, label: "Mobile" },
+    { key: "desktop" as const, icon: Monitor, label: "Desktop (1280)" },
+    { key: "laptop" as const, icon: Monitor, label: "Laptop (1024)" },
+    { key: "tablet" as const, icon: Tablet, label: "Tablet (820)" },
+    { key: "mobile" as const, icon: Smartphone, label: "Mobile (390)" },
   ];
 
   return (
@@ -160,7 +176,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
           {!saving && !lastSaveError && lastSaved && !isDirty && (
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600 border border-emerald-200/50">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              Saved
+              Saved {timeAgo(lastSaved)}
             </span>
           )}
           {!saving && !lastSaveError && isDirty && (
@@ -308,12 +324,13 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
           )}
           {[...historySnapshots].reverse().map((snapshot, index) => {
             const originalIndex = historySnapshots.length - 1 - index;
+            const totalSections = (snapshot.sections?.length ?? 0) + (snapshot.headerSections?.length ?? 0) + (snapshot.footerSections?.length ?? 0);
             return (
               <div key={originalIndex} className="rounded-xl border border-zinc-200 bg-white p-3.5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-zinc-900">Snapshot {historySnapshots.length - index}</p>
-                    <p className="mt-0.5 text-xs text-zinc-500">{snapshot.length} sections</p>
+                    <p className="mt-0.5 text-xs text-zinc-500">{totalSections} sections</p>
                   </div>
                   <button onClick={() => { dispatch(restoreHistorySnapshot(snapshot)); setHistoryOpen(false); }}
                     className="rounded-lg bg-zinc-900 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-zinc-800">

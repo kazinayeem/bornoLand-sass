@@ -7,6 +7,7 @@ import { PageHistoryModel } from "./page-history.model.js";
 import { StoreModel } from "../../models/store.model.js";
 import { checkLimit } from "../features/feature-access.service.js";
 import { DEFAULT_PAGES, type DefaultPageDef } from "./default-pages.js";
+import { syncPageRename, syncPageDelete } from "../navigation/navigation.service.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -318,7 +319,13 @@ export async function updateStorePage(
   if (payload.title !== undefined) update.title = payload.title;
   if (payload.description !== undefined) update.description = payload.description;
   if (payload.slug !== undefined && !existing.isHomePage) {
+    const oldSlug = existing.slug;
     update.slug = await generateUniqueSlug(storeId, String(payload.slug));
+    if (oldSlug !== update.slug) {
+      await syncPageRename(storeId, oldSlug, update.slug as string).catch((err) =>
+        console.error("[nav-sync] Failed to update nav items after page rename:", err)
+      );
+    }
   }
   if (payload.pageIcon !== undefined) update.pageIcon = payload.pageIcon;
   if (payload.featuredImage !== undefined) update.featuredImage = payload.featuredImage;
@@ -372,6 +379,10 @@ export async function softDeleteStorePage(pageId: string, storeId: string, userI
   await StorePageModel.updateMany(
     { storeId, parentId: pageId },
     { $set: { parentId: null } }
+  );
+
+  await syncPageDelete(storeId, slug).catch((err) =>
+    console.error("[nav-sync] Failed to remove nav items after page delete:", err)
   );
 
   await recordHistory(storeId, "deleted", userId, {

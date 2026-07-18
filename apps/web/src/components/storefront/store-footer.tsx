@@ -5,11 +5,20 @@ import { ShoppingBag, Mail, MapPin, Phone, Facebook, Twitter, Instagram, Youtube
 import { useTenant } from "@/providers/tenant-provider";
 import type { StorefrontSectionLike } from "./storefront-types";
 
-export function StoreFooter({ section }: { section?: StorefrontSectionLike }) {
+type StoreFooterProps = {
+  section?: StorefrontSectionLike;
+  footerSections?: StorefrontSectionLike[];
+};
+
+export function StoreFooter({ section, footerSections: _footerSections }: StoreFooterProps = {}) {
   const { store, theme, pageSections } = useTenant();
   const { primaryColor, font, darkMode } = theme;
   const isDark = darkMode;
-  const footerSection = section?.props ? section : pageSections.find((entry) => entry.type === "footer") ?? null;
+  const footerSection = section?.props
+    ? section
+    : _footerSections?.find((s) => s.type?.includes?.("footer"))
+    ?? pageSections.find((entry) => entry.type === "footer")
+    ?? null;
   const footerProps: Record<string, string | number | boolean | null | undefined> = footerSection?.props ?? {};
 
   const bgColor = (footerProps.backgroundColor as string) || "";

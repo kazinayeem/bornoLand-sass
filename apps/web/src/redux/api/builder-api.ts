@@ -5,6 +5,7 @@ export type PageData = {
   storeId: string;
   title: string;
   slug: string;
+  pageType?: string;
   isHome: boolean;
   showHeader: boolean;
   showFooter: boolean;

@@ -7,6 +7,7 @@ const pageSchema = new Schema(
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, index: true },
     title: { type: String, required: true, trim: true },
     slug: { type: String, required: true, lowercase: true, trim: true },
+    pageType: { type: String, default: "custom" },
     isHome: { type: Boolean, default: false },
     showHeader: { type: Boolean, default: true },
     showFooter: { type: Boolean, default: true },

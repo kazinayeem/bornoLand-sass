@@ -40,14 +40,64 @@ import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
 import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Maximize, Minimize, GripVertical } from "lucide-react";
 
-const defaultSections: BuilderSection[] = [
-  { id: "hero-banner-1", type: "hero-banner", label: "Hero Banner", visible: true, props: { headline: "Welcome to Our Store", subheadline: "Discover amazing products curated just for you", buttonText: "Shop Now", buttonLink: "/shop", imageUrl: "", overlayColor: "rgba(15, 23, 42, 0.45)", textAlignment: "left", heroHeight: "md", kicker: "Welcome" } },
-  { id: "category-grid-1", type: "category-grid", label: "Categories", visible: true, props: { title: "Shop by Category", subtitle: "Browse our collections", gridColumns: "4" } },
-  { id: "featured-products-1", type: "featured-products", label: "Featured Products", visible: true, props: { title: "Featured Products", subtitle: "Our best selling items", gridColumns: "4", showBadges: "true", showRatings: "true" } },
-  { id: "testimonials-1", type: "testimonials", label: "Testimonials", visible: true, props: { title: "What Customers Say", subtitle: "Hear from our happy customers", layout: "grid", cardStyle: "default", avatarStyle: "circle" } },
-  { id: "newsletter-1", type: "newsletter", label: "Newsletter", visible: true, props: { headline: "Stay in the Loop", subheadline: "Subscribe to get special offers, free giveaways, and exclusive deals.", buttonText: "Subscribe", placeholderText: "Enter your email" } },
-  { id: "simple-footer-1", type: "simple-footer", label: "Footer", visible: true, props: { copyright: "© 2026 Your Store. All rights reserved.", showSocial: "true" } },
-];
+function getDefaultSectionsForPageType(pageType: string): BuilderSection[] {
+  const id = (type: string) => `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const shared = { visible: true };
+  const home: BuilderSection[] = [
+    { id: id("hero-banner"), type: "hero-banner", label: "Hero Banner", ...shared, props: { headline: "Welcome to Our Store", subheadline: "Discover amazing products curated just for you", buttonText: "Shop Now", buttonLink: "/shop", imageUrl: "", overlayColor: "rgba(15, 23, 42, 0.45)", textAlignment: "left", heroHeight: "md", kicker: "Welcome" } },
+    { id: id("category-grid"), type: "category-grid", label: "Categories", ...shared, props: { title: "Shop by Category", subtitle: "Browse our collections", gridColumns: "4" } },
+    { id: id("featured-products"), type: "featured-products", label: "Featured Products", ...shared, props: { title: "Featured Products", subtitle: "Our best selling items", gridColumns: "4", showBadges: "true", showRatings: "true" } },
+    { id: id("testimonials"), type: "testimonials", label: "Testimonials", ...shared, props: { title: "What Customers Say", subtitle: "Hear from our happy customers", layout: "grid", cardStyle: "default", avatarStyle: "circle" } },
+    { id: id("newsletter"), type: "newsletter", label: "Newsletter", ...shared, props: { headline: "Stay in the Loop", subheadline: "Subscribe to get special offers, free giveaways, and exclusive deals.", buttonText: "Subscribe", placeholderText: "Enter your email" } },
+  ];
+  const productPage: BuilderSection[] = [
+    { id: id("category-banner"), type: "category-banner", label: "Category Banner", ...shared, props: { title: "Shop Our Collection", subtitle: "Find the perfect item for you", bgImage: "", height: "300px", overlayColor: "rgba(15, 23, 42, 0.4)" } },
+    { id: id("product-grid"), type: "product-grid", label: "Product Grid", ...shared, props: { title: "All Products", subtitle: "Browse our full catalog", gridColumns: "4", showBadges: "true", showRatings: "true" } },
+  ];
+  const minimal: BuilderSection[] = [
+    { id: id("rich-text"), type: "rich-text", label: "Content", ...shared, props: { content: "<h2>Page Content</h2><p>Edit this content in the builder.</p>", alignment: "left" } },
+  ];
+  const faq: BuilderSection[] = [
+    { id: id("faq"), type: "faq", label: "FAQ", ...shared, props: { title: "Frequently Asked Questions", subtitle: "Find answers to common questions", layout: "accordion", columns: "1" } },
+  ];
+  const contact: BuilderSection[] = [
+    { id: id("contact-form"), type: "feature-list", label: "Contact", ...shared, props: { title: "Get in Touch", subtitle: "We'd love to hear from you", columns: "2", headline: "Contact Us", description: "Reach out to our team" } },
+  ];
+  const form: BuilderSection[] = [
+    { id: id("one-column"), type: "one-column", label: "Form Container", ...shared, props: { maxWidth: "480px", alignment: "center", padding: "40px 24px", bgColor: "#ffffff", borderRadius: "16px", shadow: "0 4px 24px rgba(0,0,0,0.08)" } },
+  ];
+  const blog: BuilderSection[] = [
+    { id: id("blog-grid"), type: "blog", label: "Blog Posts", ...shared, props: { title: "Latest Posts", subtitle: "Read our latest articles", layout: "grid", columns: "3", showExcerpt: "true", showDate: "true", showAuthor: "true" } },
+  ];
+  const checkout: BuilderSection[] = [
+    { id: id("one-column"), type: "one-column", label: "Checkout Container", ...shared, props: { maxWidth: "800px", alignment: "center", padding: "40px 24px" } },
+  ];
+
+  switch (pageType) {
+    case "home": return home;
+    case "shop": case "category": case "collection": return productPage;
+    case "product": case "product-details": return productPage;
+    case "cart": return checkout;
+    case "checkout": return checkout;
+    case "wishlist": return checkout;
+    case "search": return productPage;
+    case "about": return [
+      { id: id("hero-banner"), type: "hero-banner", label: "About Hero", ...shared, props: { headline: "About Us", subheadline: "Our story and mission", buttonText: "Learn More", buttonLink: "#story", heroHeight: "sm", imageUrl: "", overlayColor: "rgba(15, 23, 42, 0.4)", textAlignment: "center" } },
+      { id: id("company-story"), type: "company-story", label: "Our Story", ...shared, props: { title: "Our Journey", description: "Edit this section to tell your brand story.", imageUrl: "", layout: "alternating" } },
+      { id: id("team-members"), type: "team-members", label: "Team", ...shared, props: { title: "Meet the Team", subtitle: "The people behind the brand", columns: "4", showSocial: "true" } },
+    ];
+    case "contact": return contact;
+    case "faq": return faq;
+    case "blog": case "blog-details": return blog;
+    case "privacy_policy": case "terms_conditions": case "shipping_policy": case "returns_policy": return [
+      { id: id("rich-text"), type: "rich-text", label: "Policy Content", ...shared, props: { content: "<h1>Policy Page</h1><p>Edit this content in the builder.</p>", alignment: "left" } },
+    ];
+    case "login": case "register": case "forgot_password": case "account": return form;
+    default: return minimal;
+  }
+}
+
+const defaultSections: BuilderSection[] = getDefaultSectionsForPageType("home");
 
 const defaultSettings = {
   currencyCode: "USD" as const, currencySymbol: "$", currencyPosition: "before" as const,
@@ -188,6 +238,21 @@ export function BuilderEditor() {
     }
   }, [store, dispatch]);
 
+  // ─── Derive pageType from slug when backend doesn't provide it ────────────
+  const derivePageType = useCallback((page: { slug: string; pageType?: string }): string => {
+    if (page.pageType) return page.pageType;
+    const slugToType: Record<string, string> = {
+      home: "home", shop: "shop", cart: "cart", checkout: "checkout",
+      about: "about", contact: "contact", faq: "faq", blog: "blog",
+      login: "login", register: "register", account: "account",
+      wishlist: "wishlist", search: "search", "privacy-policy": "privacy_policy",
+      "terms-conditions": "terms_conditions", "shipping-policy": "shipping_policy",
+      "returns-policy": "returns_policy", product: "product", category: "category",
+      collection: "collection",
+    };
+    return slugToType[page.slug.replace(/^\/+/, "")] || "custom";
+  }, []);
+
   // ─── Dispatch settings ─────────────────────────────────────────────────────
   useEffect(() => {
     if (settings) {
@@ -221,8 +286,10 @@ export function BuilderEditor() {
         pages.find((page) => page.slug === "home") ??
         pages[0];
 
-      dispatch(loadSections((matchedPage.sections?.length ? matchedPage.sections : defaultSections) as BuilderSection[]));
-      dispatch(setPageMetadata({ id: matchedPage._id, title: matchedPage.title, slug: matchedPage.slug }));
+      const resolvedPageType = derivePageType(matchedPage);
+      const pageDefaults = getDefaultSectionsForPageType(resolvedPageType);
+      dispatch(loadSections((matchedPage.sections?.length ? matchedPage.sections : pageDefaults) as BuilderSection[]));
+      dispatch(setPageMetadata({ id: matchedPage._id, title: matchedPage.title, slug: matchedPage.slug, pageType: resolvedPageType as any }));
 
       const canonicalSlug = matchedPage.slug;
       if (!routePageSlug || routePageSlug !== canonicalSlug || isMongoId(routePageSlug)) {

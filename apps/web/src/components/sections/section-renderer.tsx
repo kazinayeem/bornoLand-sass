@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { getSectionDef, normalizeSectionType } from "@/lib/section-registry";
 import { motion } from "framer-motion";
+import type { SectionStyle } from "@/components/storefront/storefront-types";
 
 export type SectionData = {
   id: string;
@@ -10,6 +11,7 @@ export type SectionData = {
   label?: string;
   visible?: boolean;
   props: Record<string, string>;
+  style?: SectionStyle;
 };
 
 // ─── Section wrapper (common styles) ────────────────────────────
@@ -33,20 +35,35 @@ function animationStyle(animation: string) {
 
 export function SectionWrapper({ section, children, className = "" }: WrapperProps) {
   const p = section.props;
-  const visibility = p.visibility || "all";
-  const bgColor = p.bgColor || "";
-  const bgGradient = p.bgGradient || "";
+  const s = section.style;
+
+  // Derived values: prefer section.style over section.props for backward compat
+  const visibility = s?.hideOnDesktop ? "desktop-only"
+    : s?.hideOnTablet ? "tablet-only"
+    : s?.hideOnMobile ? "mobile-only"
+    : p.visibility || "all";
+  const bgColor = s?.backgroundColor || p.bgColor || "";
+  const bgGradient = s?.backgroundGradient || p.bgGradient || "";
   const bgImage = p.bgImage || "";
-  const paddingY = p.paddingY || "48";
-  const paddingX = p.paddingX || "16";
-  const marginTop = p.marginTop || "0";
-  const marginBottom = p.marginBottom || "0";
-  const maxWidth = p.maxWidth || "1200px";
-  const borderRadius = p.borderRadius || "0";
-  const shadow = p.shadow || "none";
-  const borderWidth = p.borderWidth || "0";
-  const borderColor = p.borderColor || "";
-  const animation = p.animation || "none";
+  const paddingTop = s?.paddingTop ?? p.paddingTop ?? "0";
+  const paddingBottom = s?.paddingBottom ?? p.paddingBottom ?? "0";
+  const paddingLeft = s?.paddingLeft ?? p.paddingLeft ?? "0";
+  const paddingRight = s?.paddingRight ?? p.paddingRight ?? "0";
+  const marginTop = s?.marginTop ?? p.marginTop ?? "0";
+  const marginBottom = s?.marginBottom ?? p.marginBottom ?? "0";
+  const marginLeft = s?.marginLeft ?? "auto";
+  const marginRight = s?.marginRight ?? "auto";
+  const maxWidth = s?.maxWidth || p.maxWidth || "1200px";
+  const borderRadius = s?.borderRadius ?? p.borderRadius ?? "0";
+  const shadow = s?.shadow || p.shadow || "none";
+  const borderWidth = s?.borderWidth ?? p.borderWidth ?? "0";
+  const borderColor = s?.borderColor || p.borderColor || "";
+  const borderStyle = s?.borderStyle || (borderWidth !== "0" ? "solid" : undefined);
+  const opacity = s?.opacity || "";
+  const width = s?.width || p.width || "";
+  const minHeight = s?.minHeight || p.minHeight || "";
+  const animation = s?.animation || p.animation || "none";
+  const customCss = s?.customCss || p.customCss || "";
 
   const shadowClass = shadow === "sm" ? "shadow-sm" : shadow === "md" ? "shadow-md" : shadow === "lg" ? "shadow-lg" : "";
   const hiddenClass = visibility === "desktop-only" ? "hidden lg:block" : visibility === "tablet-only" ? "hidden md:block lg:hidden" : visibility === "mobile-only" ? "block md:hidden" : "";
@@ -64,17 +81,23 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
     <motion.section
       className={`relative ${hiddenClass} ${shadowClass} ${className}`}
       style={{
-        padding: `${paddingY}px ${paddingX}px`,
-        marginTop: `${marginTop}px`,
-        marginBottom: `${marginBottom}px`,
-        marginLeft: "auto",
-        marginRight: "auto",
+        paddingTop,
+        paddingBottom,
+        paddingLeft,
+        paddingRight,
+        marginTop,
+        marginBottom,
+        marginLeft,
+        marginRight,
         maxWidth: maxWidth === "100%" ? "100%" : maxWidth,
         background: isImageBg ? undefined : bg,
-        borderRadius: `${borderRadius}px`,
-        borderWidth: `${borderWidth}px`,
-        borderStyle: borderWidth !== "0" ? "solid" : undefined,
+        borderRadius,
+        borderWidth,
+        borderStyle,
         borderColor: borderColor || undefined,
+        opacity: opacity || undefined,
+        width: width || undefined,
+        minHeight: minHeight || undefined,
         overflow: "hidden",
       }}
       {...animProps}

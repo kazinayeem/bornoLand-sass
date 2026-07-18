@@ -23,7 +23,7 @@ function toSectionData(s: StorefrontSectionLike): SectionData {
       props[key] = value == null ? "" : String(value);
     }
   }
-  return { id: s.id, type: s.type, visible: s.visible, props };
+  return { id: s.id, type: s.type, visible: s.visible, props, style: s.style };
 }
 
 export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId, onSelectSection, onHoverSection, onQuickEditRequest, onQuickInsert }: StorefrontCanvasProps) {

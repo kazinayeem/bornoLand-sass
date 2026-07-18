@@ -3,6 +3,18 @@ import type { PageType, HeaderSettings, FooterSettings } from "@/redux/api/store
 
 export type SectionProps = Record<string, string>;
 
+export type SectionStyle = {
+  paddingTop?: string; paddingBottom?: string; paddingLeft?: string; paddingRight?: string;
+  marginTop?: string; marginBottom?: string; marginLeft?: string; marginRight?: string;
+  backgroundColor?: string; backgroundGradient?: string;
+  borderColor?: string; borderWidth?: string; borderRadius?: string; borderStyle?: string;
+  shadow?: string; opacity?: string;
+  width?: string; maxWidth?: string; minHeight?: string;
+  hideOnDesktop?: boolean; hideOnTablet?: boolean; hideOnMobile?: boolean;
+  customCss?: string;
+  animation?: string; animationDuration?: string; animationDelay?: string;
+};
+
 export type BuilderSection = {
   id: string;
   type: string;
@@ -12,6 +24,7 @@ export type BuilderSection = {
   favorite?: boolean;
   collapsed?: boolean;
   props: SectionProps;
+  style?: SectionStyle;
 };
 
 export type LeftTab = "layers" | "pages" | "components" | "templates" | "media" | "navigator" | "history" | "theme" | "assets";
@@ -273,6 +286,23 @@ const builderSlice = createSlice({
       if (s) { s.props = action.payload.props; state.isDirty = true; }
     },
 
+    updateSectionStyle(state, action: PayloadAction<{ id: string; style: SectionStyle }>) {
+      pushHistory(state);
+      const s = getSections(state).find((s) => s.id === action.payload.id);
+      if (s) { s.style = { ...s.style, ...action.payload.style }; state.isDirty = true; }
+    },
+
+    updateSectionResponsive(state, action: PayloadAction<{ id: string; device: "desktop" | "tablet" | "mobile"; hide: boolean }>) {
+      pushHistory(state);
+      const s = getSections(state).find((s) => s.id === action.payload.id);
+      if (s) {
+        if (action.payload.device === "desktop") s.style = { ...s.style, hideOnDesktop: action.payload.hide };
+        if (action.payload.device === "tablet") s.style = { ...s.style, hideOnTablet: action.payload.hide };
+        if (action.payload.device === "mobile") s.style = { ...s.style, hideOnMobile: action.payload.hide };
+        state.isDirty = true;
+      }
+    },
+
     updateSectionMeta(state, action: PayloadAction<{ id: string; label?: string; visible?: boolean }>) {
       pushHistory(state);
       const s = getSections(state).find((sec) => sec.id === action.payload.id);
@@ -511,7 +541,8 @@ export const {
   addGlobalSectionId,
   removeGlobalSectionId,
   setSections, addSection, removeSection, toggleSection,
-  updateSectionProps, moveSection, duplicateSection,
+  updateSectionProps, updateSectionStyle, updateSectionResponsive,
+  moveSection, duplicateSection,
   updateSectionMeta, setSelectedSection, setHoveredSection, setEditingSection,
   setActiveTab, setActiveRightTab,
   toggleLeftPanel, toggleRightPanel, setRightPanelPinned,

@@ -10,6 +10,7 @@ export type DeviceStyle = {
   marginTop?: string; marginBottom?: string; marginLeft?: string; marginRight?: string;
   borderRadius?: string; width?: string; maxWidth?: string; minHeight?: string;
   fontSize?: string; lineHeight?: string; textAlign?: string;
+  hidden?: boolean;
 };
 
 export const BREAKPOINTS = ["desktop", "laptop", "tablet", "mobile"] as const;

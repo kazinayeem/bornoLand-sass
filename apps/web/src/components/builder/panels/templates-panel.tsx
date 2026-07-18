@@ -7,7 +7,7 @@ import { addSection, loadSections, setPageMetadata } from "@/redux/slices/builde
 import { Modal } from "@/components/ui/modal";
 import { useGetBuilderTemplatesQuery, type BuilderTemplate } from "@/redux/api/builder-template-api";
 import { useRequiredStore } from "@/providers/store-context";
-import { useCreateStorePageMutation } from "@/redux/api/store-page-api";
+import { useCreateStorePageMutation, useSaveStorePageDraftMutation } from "@/redux/api/store-page-api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -45,6 +45,7 @@ export function TemplatesPanel() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [createPage] = useCreateStorePageMutation();
+  const [saveDraft] = useSaveStorePageDraftMutation();
   const [applying, setApplying] = useState<string | null>(null);
 
   const { data: templatesData, isLoading, error } = useGetBuilderTemplatesQuery({
@@ -100,14 +101,16 @@ export function TemplatesPanel() {
             storeId,
             title,
             slug: slug.startsWith("/") ? slug : `/${slug}`,
-            templateId: template._id,
           }).unwrap();
+          const page = result.data?.page;
+          if (page && template.sections?.length) {
+            await saveDraft({ id: page._id, storeId, sections: template.sections }).unwrap();
+          }
           toast.success(`Page "${template.name}" created`);
           setOpen(false);
-          const page = result.data?.page;
           if (page) {
             dispatch(setPageMetadata({ id: page._id, title: page.title, slug: page.slug }));
-            dispatch(loadSections(page.sections ?? []));
+            dispatch(loadSections((template.sections ?? []) as any));
             router.push(`/store/${storeSlug}/builder/${page.slug.startsWith('/') ? page.slug.slice(1) : page.slug}`);
           }
         } else {
@@ -129,7 +132,7 @@ export function TemplatesPanel() {
       }
       setApplying(null);
     },
-    [dispatch, createPage, storeId, storeSlug, router],
+    [dispatch, createPage, saveDraft, storeId, storeSlug, router],
   );
 
   return (

@@ -21,7 +21,8 @@ function resolveBreakpointValue(
     const bp = breakpointOrder[i];
     const deviceStyle = responsive[bp];
     if (deviceStyle && deviceStyle[key] !== undefined) {
-      return deviceStyle[key];
+      const val = deviceStyle[key];
+      if (typeof val === "string") return val;
     }
   }
 

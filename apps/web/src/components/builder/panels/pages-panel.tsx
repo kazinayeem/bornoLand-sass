@@ -254,9 +254,9 @@ export function PagesPanel() {
 
   const renderPageCard = (page: PageData, home: boolean) => {
     const isActive = currentPageId === page._id;
-    const showHeader = page.showHeader !== false;
-    const showFooter = page.showFooter !== false;
-    const navVisible = !!page.navigationVisible;
+    const showHeader = (page as any).showHeader !== false && (page as any).settings?.showHeader !== false;
+    const showFooter = (page as any).showFooter !== false && (page as any).settings?.showFooter !== false;
+    const navVisible = !!(page as any).navigationVisible;
 
     return (
       <div key={page._id} className="group relative">
@@ -302,11 +302,11 @@ export function PagesPanel() {
                 {home && <span className="rounded-full bg-zinc-900 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-white">Home</span>}
                 {statusBadge(page.status)}
               </div>
-              <p className="mt-0.5 text-[11px] text-zinc-400">/{page.slug}</p>
+              <p className="mt-0.5 text-[11px] text-zinc-400">{page.slug}</p>
               {!home && (
                 <div className="mt-1.5 flex items-center gap-2 text-[10px] text-zinc-400">
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleToggle(page, "showHeader"); }}
+                    onClick={(e) => { e.stopPropagation(); handleToggle(page, "showHeader" as any); }}
                     className={cn("inline-flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors",
                       showHeader ? "bg-zinc-100 text-zinc-700" : "text-zinc-400 hover:text-zinc-600"
                     )}
@@ -315,7 +315,7 @@ export function PagesPanel() {
                     Header
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleToggle(page, "showFooter"); }}
+                    onClick={(e) => { e.stopPropagation(); handleToggle(page, "showFooter" as any); }}
                     className={cn("inline-flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors",
                       showFooter ? "bg-zinc-100 text-zinc-700" : "text-zinc-400 hover:text-zinc-600"
                     )}
@@ -603,14 +603,14 @@ function PageSettingsDrawer({ page, storeId, onClose, onSaved, isHome }: {
   const [updatePage] = useUpdateStorePageMutation();
   const [title, setTitle] = useState(page.title);
   const [slug, setSlug] = useState(page.slug);
-  const [seoTitle, setSeoTitle] = useState(page.seo?.title ?? "");
-  const [seoDesc, setSeoDesc] = useState(page.seo?.description ?? "");
-  const [showHeader, setShowHeader] = useState(page.showHeader !== false);
-  const [showFooter, setShowFooter] = useState(page.showFooter !== false);
-  const [navVisible, setNavVisible] = useState(!!page.navigationVisible);
-  const [password, setPassword] = useState(page.password ?? "");
-  const [customCss, setCustomCss] = useState(page.customCss ?? "");
-  const [customJs, setCustomJs] = useState(page.customJs ?? "");
+  const [seoTitle, setSeoTitle] = useState((page as any).seo?.title ?? "");
+  const [seoDesc, setSeoDesc] = useState((page as any).seo?.description ?? "");
+  const [showHeader, setShowHeader] = useState((page as any).showHeader !== false && (page as any).settings?.showHeader !== false);
+  const [showFooter, setShowFooter] = useState((page as any).showFooter !== false && (page as any).settings?.showFooter !== false);
+  const [navVisible, setNavVisible] = useState(!!(page as any).navigationVisible);
+  const [password, setPassword] = useState((page as any).settings?.password ?? "");
+  const [customCss, setCustomCss] = useState((page as any).settings?.customCss ?? "");
+  const [customJs, setCustomJs] = useState((page as any).settings?.customJs ?? "");
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {

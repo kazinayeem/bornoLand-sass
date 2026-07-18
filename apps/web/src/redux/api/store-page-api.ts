@@ -187,7 +187,6 @@ export const storePageApi = baseApi.injectEndpoints({
     >({
       query: (storeId) => ({ url: `/store-pages/stores/${storeId}` }),
       providesTags: (_r, _e, storeId) => [{ type: "StorePages", id: storeId }],
-      refetchOnMountOrArgChange: false,
     }),
 
     searchStorePages: builder.query<

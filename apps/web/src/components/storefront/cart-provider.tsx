@@ -7,14 +7,17 @@ import { hydrateCart, mergeServerCart } from "@/redux/slices/cart-slice";
 import { useGetCartQuery } from "@/redux/api/cart-api";
 
 function CartInitializer() {
+  const isBuilderMode = useIsBuilderMode();
   const dispatch = useDispatch();
-  const { data } = useGetCartQuery();
+  const { data } = useGetCartQuery(undefined, { skip: isBuilderMode });
 
   useEffect(() => {
+    if (isBuilderMode) return;
     dispatch(hydrateCart());
-  }, [dispatch]);
+  }, [dispatch, isBuilderMode]);
 
   useEffect(() => {
+    if (isBuilderMode) return;
     if (data?.data?.cart?.items) {
       const serverItems = data.data.cart.items.map((item) => ({
         productId: typeof item.productId === "object" ? (item.productId as any)._id ?? item.productId : item.productId,
@@ -27,14 +30,12 @@ function CartInitializer() {
       }));
       dispatch(mergeServerCart(serverItems));
     }
-  }, [data, dispatch]);
+  }, [data, dispatch, isBuilderMode]);
 
   return null;
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const isBuilderMode = useIsBuilderMode();
-  if (isBuilderMode) return <>{children}</>;
   useEffect(() => {
     if (typeof window === "undefined") return;
     const existing = localStorage.getItem("session_id");

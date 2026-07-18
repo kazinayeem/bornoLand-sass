@@ -62,6 +62,10 @@ export default async function TenantLayout({ params, children }: { params: Promi
     language: "en",
   };
   const footerSection = pageSections.find((section) => section.type === "footer") ?? null;
+  const headerSections = (data.page?.headerSections as any[]) ?? [];
+  const footerSections = (data.page?.footerSections as any[]) ?? [];
+  const headerSettings = (data.page?.headerSettings as Record<string, unknown>) ?? {};
+  const footerSettings = (data.page?.footerSettings as Record<string, unknown>) ?? {};
 
   return (
     <StorefrontShell
@@ -72,6 +76,10 @@ export default async function TenantLayout({ params, children }: { params: Promi
       settings={currencySettings}
       sliders={sliders ?? []}
       pageSections={pageSections}
+      headerSections={headerSections}
+      footerSections={footerSections}
+      headerSettings={headerSettings}
+      footerSettings={footerSettings}
       footerSection={footerSection}
       showAdminBar
     >

@@ -36,8 +36,13 @@ export async function resolveBySubdomain(
   }
 
   const tenant = await TenantModel.findById(store.tenantId).lean() as any;
-  // StorePageModel uses leading "/" for slugs
-  const normalizedSlug = pageSlug.startsWith("/") ? pageSlug : `/${pageSlug}`;
+  // StorePageModel uses "/" for home, "/shop" for shop, etc.
+  let normalizedSlug: string;
+  if (pageSlug === "home" || pageSlug === "/") {
+    normalizedSlug = "/";
+  } else {
+    normalizedSlug = pageSlug.startsWith("/") ? pageSlug : `/${pageSlug}`;
+  }
   const page = await StorePageModel.findOne({
     storeId: store._id,
     slug: normalizedSlug.toLowerCase(),

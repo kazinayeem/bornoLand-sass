@@ -58,7 +58,6 @@ const storeSchema = new Schema(
     faviconMediaId: { type: Schema.Types.ObjectId, ref: "MediaFile", default: null },
     brandColor: { type: String, default: "#2563eb" },
     accentColor: { type: String, default: "#0f172a" },
-    selectedTemplateId: { type: Schema.Types.ObjectId, ref: "Template" },
     theme: {
       primaryColor: { type: String, default: "#2563eb" },
       secondaryColor: { type: String, default: "#0f172a" },

@@ -64,11 +64,12 @@ function formatDate(value?: string | null) {
 }
 
 function formatBytes(usedBytes: number, limitBytes: number) {
-  if (usedBytes <= 0) return { text: "0 MB", percent: 0 };
-  const mb = usedBytes / (1024 * 1024);
-  const text = mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
+  const usedMB = usedBytes / (1024 * 1024);
+  const limitMB = limitBytes / (1024 * 1024);
+  const usedText = usedMB >= 1024 ? `${(usedMB / 1024).toFixed(1)} GB` : `${Math.round(usedMB)} MB`;
+  const limitText = limitMB >= 1024 ? `${(limitMB / 1024).toFixed(1)} GB` : `${Math.round(limitMB)} MB`;
   const percent = limitBytes > 0 ? Math.min(100, Math.round((usedBytes / limitBytes) * 100)) : 0;
-  return { text, percent };
+  return { text: `${usedText} / ${limitText}`, percent };
 }
 
 function getStoreTypeLabel(storeType?: string) {
@@ -206,7 +207,9 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
   const isExpired = status === "expired";
   const isPending = status === "pending_payment" || status === "pending_approval";
   const domain = store.subdomain ? `${store.subdomain}.bornoland.com` : `${store.slug}.bornoland.com`;
-  const storage = formatBytes(store.storageUsedBytes ?? 0, store.storageLimitBytes ?? 0);
+  const limitBytes = store.storageLimitBytes ?? 0;
+  const storage = formatBytes(store.storageUsedBytes ?? 0, limitBytes);
+  const showStorage = limitBytes > 0;
 
   const copyUrl = () => {
     navigator.clipboard.writeText(storeUrl);
@@ -328,25 +331,27 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
         </div>
 
         {/* Storage bar */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
-              <HardDrive className="h-3 w-3" /> Storage
-            </span>
-            <span className="text-[11px] font-semibold text-zinc-700">{storage.text}</span>
+        {showStorage && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
+                <HardDrive className="h-3 w-3" /> Storage
+              </span>
+              <span className="text-[11px] font-semibold text-zinc-700">{storage.text}</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${storage.percent}%` }}
+                transition={{ delay: index * 0.04 + 0.3, duration: 0.6, ease: "easeOut" }}
+                className={`h-full rounded-full ${
+                  storage.percent > 80 ? "bg-red-500" :
+                  storage.percent > 60 ? "bg-amber-500" : "bg-emerald-500"
+                }`}
+              />
+            </div>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${storage.percent}%` }}
-              transition={{ delay: index * 0.04 + 0.3, duration: 0.6, ease: "easeOut" }}
-              className={`h-full rounded-full ${
-                storage.percent > 80 ? "bg-red-500" :
-                storage.percent > 60 ? "bg-amber-500" : "bg-emerald-500"
-              }`}
-            />
-          </div>
-        </div>
+        )}
 
         {/* Date info */}
         <div className="grid grid-cols-2 gap-x-2 gap-y-1">

@@ -51,7 +51,6 @@ export async function applyTemplateToStore(storeId: string, templateId: string) 
     storeId,
     {
       $set: {
-        selectedTemplateId: template._id,
         theme: template.theme,
         category: template.category
       }

@@ -190,7 +190,6 @@ export type Store = {
   faviconMediaId?: string | null;
   brandColor?: string;
   accentColor?: string;
-  selectedTemplateId?: { _id: string; name: string; slug: string; category: string; preview: string } | string;
   theme: ThemeSettings;
   productCount?: number;
   orderCount?: number;
@@ -214,7 +213,6 @@ type CreateStoreRequest = {
   category?: string;
   storeType?: string;
   plan?: string;
-  selectedTemplateId?: string;
   logoUrl?: string;
   logoMediaId?: string | null;
   faviconUrl?: string;

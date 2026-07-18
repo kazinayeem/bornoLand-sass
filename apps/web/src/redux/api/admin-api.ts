@@ -62,7 +62,6 @@ export type AdminStore = {
   category: string; plan: string; planId: string | null;
   billingStatus: string; subscriptionStatus: string; renewalDate: string | null;
   status: string; logoUrl: string;
-  selectedTemplateId?: { _id: string; name: string; slug: string } | string;
   productCount: number; orderCount: number; revenueBDT: number;
   createdAt: string; updatedAt: string;
 };

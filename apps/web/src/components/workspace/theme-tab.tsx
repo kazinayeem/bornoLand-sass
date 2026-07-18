@@ -39,9 +39,6 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
       setNavbarStyle(store.theme.navbarStyle || "fixed");
       setDarkMode(store.theme.darkMode || false);
     }
-    if (store?.selectedTemplateId && typeof store.selectedTemplateId === "object") {
-      setTemplateId(store.selectedTemplateId._id);
-    }
   }, [store]);
 
   const handleSave = async () => {

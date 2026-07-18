@@ -36,7 +36,6 @@ export const createStoreSchema = z.object({
     .default("ecommerce"),
   plan: z.enum(["free", "starter", "growth", "enterprise"]).optional().default("free"),
   planId: z.string().optional(),
-  selectedTemplateId: z.string().optional(),
   logoUrl: z.string().optional(),
   logoMediaId: z.string().optional(),
   faviconUrl: z.string().optional(),
@@ -64,7 +63,6 @@ export const updateStoreSchema = z.object({
   brandColor: z.string().optional(),
   accentColor: z.string().optional(),
   slug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens").optional(),
-  selectedTemplateId: z.string().optional(),
   theme: themeSchema.optional()
 });
 

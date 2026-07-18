@@ -82,7 +82,6 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
     setBillingStatus(store.billingStatus ?? "trial");
     setSubscriptionStatus(store.subscriptionStatus ?? "trialing");
     setRenewalDate(store.renewalDate ? store.renewalDate.slice(0, 10) : "");
-    setTemplateId(typeof store.selectedTemplateId === "object" && store.selectedTemplateId !== null ? (store.selectedTemplateId._id ?? "") : "");
     setPrimaryColor(store.theme?.primaryColor ?? "#2563eb");
     setSecondaryColor(store.theme?.secondaryColor ?? "#0f172a");
     setFont(store.theme?.font ?? "Inter");

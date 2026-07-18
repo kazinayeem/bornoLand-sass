@@ -4,7 +4,6 @@ import { StoreModel } from "../../models/store.model.js";
 import { PlanModel } from "../../models/plan.model.js";
 import { TenantModel } from "../../models/tenant.model.js";
 import { TeamMemberModel } from "../../models/team-member.model.js";
-import { TemplateModel } from "../../models/template.model.js";
 import { PageModel } from "../../models/page.model.js";
 import { ensureDefaultStoreSettings } from "./store-settings.service.js";
 import { HomepageSliderModel } from "../../models/homepage-slider.model.js";
@@ -94,15 +93,26 @@ async function attachStoreMetrics(stores: any[]) {
   const orderCountMap = new Map(orderCounts.map((entry: any) => [entry._id.toString(), entry.count]));
   const revenueMap = new Map(orderRevenue.map((entry: any) => [entry._id.toString(), entry.revenue]));
 
-  return stores.map((store) => ({
-    ...store,
-    productCount: productCountMap.get(store._id.toString()) ?? 0,
-    orderCount: orderCountMap.get(store._id.toString()) ?? 0,
-    revenueBDT: revenueMap.get(store._id.toString()) ?? 0,
-    // Storage comes from cached Store model fields (updated atomically via $inc on upload/delete)
-    storageUsedBytes: store.storageUsedBytes ?? 0,
-    storageLimitBytes: store.storageLimitBytes ?? 0,
-  }));
+  return stores.map((store) => {
+    // Resolve storage limit from the populated plan if the cached field is 0
+    let limitBytes = store.storageLimitBytes ?? 0;
+    if (limitBytes <= 0) {
+      const populatedPlan = store.planId && typeof store.planId === "object" ? store.planId as Record<string, unknown> : null;
+      const planStorageMB = (populatedPlan?.limits as Record<string, unknown> | undefined)?.storage as number | undefined;
+      if (planStorageMB != null && planStorageMB > 0) {
+        limitBytes = planStorageMB * 1024 * 1024;
+      }
+    }
+
+    return {
+      ...store,
+      productCount: productCountMap.get(store._id.toString()) ?? 0,
+      orderCount: orderCountMap.get(store._id.toString()) ?? 0,
+      revenueBDT: revenueMap.get(store._id.toString()) ?? 0,
+      storageUsedBytes: store.storageUsedBytes ?? 0,
+      storageLimitBytes: limitBytes,
+    };
+  });
 }
 
 export async function createStore(userId: string, payload: unknown) {
@@ -139,16 +149,6 @@ export async function createStore(userId: string, payload: unknown) {
       await TeamMemberModel.create([{ tenantId, userId, role: "owner", status: "active", invitedAt: new Date(), acceptedAt: new Date() }], { session });
     }
 
-    let themeFromTemplate;
-    let templateId;
-    if (parsed.data.selectedTemplateId) {
-      const template = await TemplateModel.findById(parsed.data.selectedTemplateId).session(session).lean() as any;
-      if (template) {
-        themeFromTemplate = template.theme;
-        templateId = template._id;
-      }
-    }
-
     const trialFields = await buildTrialFields();
     const [store] = await StoreModel.create([{
       tenantId,
@@ -170,20 +170,71 @@ export async function createStore(userId: string, payload: unknown) {
       faviconMediaId: parsed.data.faviconMediaId ?? null,
       brandColor: parsed.data.brandColor ?? "#2563eb",
       accentColor: parsed.data.accentColor ?? "#0f172a",
-      ...(templateId ? { selectedTemplateId: templateId } : {}),
-      ...(themeFromTemplate ? { theme: themeFromTemplate } : {}),
     }], { session });
 
-    if (templateId && themeFromTemplate) {
-      await PageModel.deleteMany({ storeId: store._id }).session(session);
-      await PageModel.create([{
-        storeId: store._id,
-        title: "Home",
-        slug: "home",
-        status: "published",
+    const storeId = store._id;
+
+    // ── Auto-create default homepage ──────────────────────────────
+    await StorePageModel.create([{
+      storeId,
+      tenantId,
+      title: "Home",
+      slug: "/",
+      pageType: "home",
+      isSystem: true,
+      isHomePage: true,
+      status: "published",
+      description: "Your store homepage",
+      sortOrder: 0,
+      sections: [],
+      settings: { layoutWidth: "1200px" },
+      seo: { title: parsed.data.name, description: parsed.data.description ?? "" },
+    }], { session });
+
+    // ── Create other system pages (shop, about, contact) ──────────
+    const systemPages = [
+      { title: "Shop", slug: "/shop", pageType: "shop" as const, description: "Browse all products" },
+      { title: "About Us", slug: "/about", pageType: "about" as const, description: "Learn about our store" },
+      { title: "Contact", slug: "/contact", pageType: "contact" as const, description: "Get in touch with us" },
+      { title: "FAQ", slug: "/faq", pageType: "faq" as const, description: "Frequently asked questions" },
+    ];
+    await StorePageModel.create(
+      systemPages.map((p) => ({
+        storeId,
+        tenantId,
+        ...p,
+        isSystem: true,
+        status: "draft",
+        sortOrder: 1,
         sections: [],
-        theme: themeFromTemplate
-      }], { session });
+        seo: { title: p.title },
+      })),
+      { session }
+    );
+
+    // ── Auto-create default navigations ───────────────────────────
+    const NAV_KEYS = ["primary", "footer", "mobile", "top_bar", "account", "sidebar"] as const;
+    const NAV_LABELS: Record<string, string> = {
+      primary: "Primary Navigation", footer: "Footer Navigation", mobile: "Mobile Navigation",
+      top_bar: "Top Bar Navigation", account: "Account Navigation", sidebar: "Sidebar Navigation",
+    };
+    for (const key of NAV_KEYS) {
+      await NavigationModel.findOneAndUpdate(
+        { storeId, key },
+        { $setOnInsert: { storeId, key, label: NAV_LABELS[key] ?? key, isActive: key === "primary" || key === "footer" || key === "mobile", sortOrder: NAV_KEYS.indexOf(key) } },
+        { new: true, upsert: true, session }
+      ).lean();
+    }
+
+    // ── Add default menu items for primary nav ────────────────────
+    const primaryNav = await NavigationModel.findOne({ storeId, key: "primary" }).session(session).lean();
+    if (primaryNav) {
+      await MenuItemModel.insertMany([
+        { navigationId: primaryNav._id, storeId, title: "Home", link: "/", linkType: "page", sortOrder: 0 },
+        { navigationId: primaryNav._id, storeId, title: "Shop", link: "/shop", linkType: "page", sortOrder: 1 },
+        { navigationId: primaryNav._id, storeId, title: "About", link: "/about", linkType: "page", sortOrder: 2 },
+        { navigationId: primaryNav._id, storeId, title: "Contact", link: "/contact", linkType: "page", sortOrder: 3 },
+      ], { session });
     }
 
     await ensureDefaultStoreSettings(store._id.toString(), session);
@@ -236,8 +287,7 @@ export async function getUserStores(userId: string) {
   await connectDatabase();
   await ensurePlans();
   const stores = await StoreModel.find({ userId })
-    .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor selectedTemplateId theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
-    .populate("selectedTemplateId", "name slug category preview")
+    .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
     .sort({ createdAt: -1 })
     .lean();
@@ -258,8 +308,7 @@ export async function getStoreById(storeId: string, userId: string) {
   if (!id) return { ok: false as const, message: "Invalid store ID" };
   await connectDatabase();
   const store = await StoreModel.findOne({ _id: id, userId })
-    .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor selectedTemplateId theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
-    .populate("selectedTemplateId", "name slug category preview")
+    .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
     .lean();
   if (!store) return { ok: false as const, message: "Store not found" };
@@ -274,8 +323,8 @@ export async function getStoreBySlug(slug: string, userId: string) {
   if (!slug) return { ok: false as const, message: "Store slug is required" };
   await connectDatabase();
   const store = await StoreModel.findOne({ slug, userId })
-    .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor selectedTemplateId theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
-    .populate("selectedTemplateId", "name slug category preview")
+    .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
+    .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
     .lean();
   if (!store) return { ok: false as const, message: "Store not found" };
@@ -581,7 +630,6 @@ export async function changeStoreTheme(storeId: string, userId: string, payload:
     const template = await TemplateModel.findById(payload.templateId).lean() as any;
     if (!template) return { ok: false as const, message: "Template not found" };
 
-    store.selectedTemplateId = template._id;
     if (template.theme) {
       store.theme = { ...store.theme.toObject?.() ?? store.theme, ...template.theme };
     }
@@ -593,8 +641,6 @@ export async function changeStoreTheme(storeId: string, userId: string, payload:
   }
 
   await store.save();
-  const updated = await StoreModel.findById(store._id)
-    .populate("selectedTemplateId", "name slug category preview")
-    .lean();
+  const updated = await StoreModel.findById(store._id).lean();
   return { ok: true as const, data: { store: updated } };
 }

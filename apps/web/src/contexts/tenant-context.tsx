@@ -43,7 +43,6 @@ type HomepageSliderData = {
 type StoreData = {
   _id: string; name: string; slug: string; subdomain: string;
   description: string; theme: ThemeData; logoUrl?: string;
-  selectedTemplateId?: Record<string, unknown>;
 };
 
 type TenantContextType = {

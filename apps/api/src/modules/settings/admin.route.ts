@@ -165,7 +165,6 @@ adminRouter.get("/stores", async (_request, response) => {
   try {
     const stores = await StoreModel.find()
       .populate("userId", "name email")
-      .populate("selectedTemplateId", "name slug")
       .sort({ createdAt: -1 }).lean();
 
     const storeIds = stores.map((s) => s._id);

@@ -15,46 +15,39 @@ import type { DemoTestimonial, DemoBlog, DemoCollection } from "@/lib/demo-data"
 
 const BUILDER_MIN_COUNT = 6;
 
-function padTo<T>(items: T[], demos: T[], min: number): T[] {
-  if (items.length >= min) return items.slice(0, min);
-  return [...items, ...demos].slice(0, min);
-}
-
+/**
+ * In Builder mode: ALWAYS return demo data (6 items).
+ * In Published mode: return real data only.
+ * This ensures Builder is a pixel-perfect preview using demo content.
+ */
 export function useBuilderProducts(realProducts: ProductData[]): ProductData[] {
   const isBuilder = useIsBuilder();
   const demoData = useBuilderDemoData();
   return useMemo(() => {
     if (!isBuilder) return realProducts;
-    const active = realProducts.filter((p) => p.status === "active");
-    const demos = demoData?.products ?? DEMO_PRODUCTS;
-    let result: ProductData[];
-    if (active.length >= BUILDER_MIN_COUNT) {
-      result = active.slice(0, BUILDER_MIN_COUNT);
-    } else {
-      result = padTo(active, demos, BUILDER_MIN_COUNT);
-    }
-    if (result.length === 0) {
-      result = demos.slice(0, BUILDER_MIN_COUNT);
-    }
-    if (process.env.NODE_ENV === "development") {
-      console.log("[useBuilderProducts]", { isBuilder, realProducts: realProducts.length, active: active.length, demos: demos.length, result: result.length });
-    }
-    return result;
-  }, [realProducts, isBuilder, demoData?.products]);
+    // Builder ALWAYS uses demo products for consistent preview
+    return (demoData?.products ?? DEMO_PRODUCTS).slice(0, BUILDER_MIN_COUNT);
+  }, [isBuilder, demoData?.products]);
 }
 
+/**
+ * In Builder mode: ALWAYS return demo categories (6 items).
+ * In Published mode: return real categories only.
+ */
 export function useBuilderCategories(realCategories: CategoryData[]): CategoryData[] {
   const isBuilder = useIsBuilder();
   const demoData = useBuilderDemoData();
   return useMemo(() => {
     if (!isBuilder) return realCategories;
-    const active = realCategories.filter((c) => c.active);
-    if (active.length >= BUILDER_MIN_COUNT) return active.slice(0, BUILDER_MIN_COUNT);
-    const demos = demoData?.categories ?? DEMO_CATEGORIES;
-    return padTo(active, demos, BUILDER_MIN_COUNT);
-  }, [realCategories, isBuilder, demoData?.categories]);
+    // Builder ALWAYS uses demo categories for consistent preview
+    return (demoData?.categories ?? DEMO_CATEGORIES).slice(0, BUILDER_MIN_COUNT);
+  }, [isBuilder, demoData?.categories]);
 }
 
+/**
+ * In Builder mode: ALWAYS return demo testimonials (6 items).
+ * In Published mode: return real testimonials only.
+ */
 export function useBuilderTestimonials(
   realTestimonials: DemoTestimonial[],
 ): DemoTestimonial[] {
@@ -62,23 +55,28 @@ export function useBuilderTestimonials(
   const demoData = useBuilderDemoData();
   return useMemo(() => {
     if (!isBuilder) return realTestimonials;
-    if (realTestimonials.length >= BUILDER_MIN_COUNT) return realTestimonials.slice(0, BUILDER_MIN_COUNT);
-    const demos = demoData?.testimonials ?? DEMO_TESTIMONIALS;
-    return padTo(realTestimonials, demos, BUILDER_MIN_COUNT);
-  }, [realTestimonials, isBuilder, demoData?.testimonials]);
+    // Builder ALWAYS uses demo testimonials for consistent preview
+    return (demoData?.testimonials ?? DEMO_TESTIMONIALS).slice(0, BUILDER_MIN_COUNT);
+  }, [isBuilder, demoData?.testimonials]);
 }
 
+/**
+ * In Builder mode: ALWAYS return demo blogs (6 items).
+ * In Published mode: return real blogs only.
+ */
 export function useBuilderBlogs(realBlogs: DemoBlog[]): DemoBlog[] {
   const isBuilder = useIsBuilder();
   const demoData = useBuilderDemoData();
   return useMemo(() => {
     if (!isBuilder) return realBlogs;
-    if (realBlogs.length >= BUILDER_MIN_COUNT) return realBlogs.slice(0, BUILDER_MIN_COUNT);
-    const demos = demoData?.blogs ?? DEMO_BLOGS;
-    return padTo(realBlogs, demos, BUILDER_MIN_COUNT);
-  }, [realBlogs, isBuilder, demoData?.blogs]);
+    return (demoData?.blogs ?? DEMO_BLOGS).slice(0, BUILDER_MIN_COUNT);
+  }, [isBuilder, demoData?.blogs]);
 }
 
+/**
+ * In Builder mode: ALWAYS return demo collections (6 items).
+ * In Published mode: return real collections only.
+ */
 export function useBuilderCollections(
   realCollections: DemoCollection[],
 ): DemoCollection[] {
@@ -86,8 +84,6 @@ export function useBuilderCollections(
   const demoData = useBuilderDemoData();
   return useMemo(() => {
     if (!isBuilder) return realCollections;
-    if (realCollections.length >= BUILDER_MIN_COUNT) return realCollections.slice(0, BUILDER_MIN_COUNT);
-    const demos = demoData?.collections ?? DEMO_COLLECTIONS;
-    return padTo(realCollections, demos, BUILDER_MIN_COUNT);
-  }, [realCollections, isBuilder, demoData?.collections]);
+    return (demoData?.collections ?? DEMO_COLLECTIONS).slice(0, BUILDER_MIN_COUNT);
+  }, [isBuilder, demoData?.collections]);
 }

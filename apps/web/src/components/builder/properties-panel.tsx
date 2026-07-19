@@ -290,6 +290,70 @@ export function PropertiesPanel() {
     advanced: ["advanced"],
   };
 
+  const repeaterConfigs: Record<string, { field: keyof SectionStyle; title: string; addLabel: string; fields: RepeaterField[] }> = {
+    faq: {
+      field: "faqItems", title: "FAQ Items", addLabel: "Add Question",
+      fields: [
+        { key: "question", label: "Question", type: "text", placeholder: "Enter question..." },
+        { key: "answer", label: "Answer", type: "textarea", placeholder: "Enter answer..." },
+      ],
+    },
+    accordion: {
+      field: "accordionItems", title: "Accordion Items", addLabel: "Add Item",
+      fields: [
+        { key: "title", label: "Title", type: "text", placeholder: "Section title..." },
+        { key: "content", label: "Content", type: "textarea", placeholder: "Section content..." },
+      ],
+    },
+    "team-members": {
+      field: "teamMembers", title: "Team Members", addLabel: "Add Member",
+      fields: [
+        { key: "name", label: "Name", type: "text", placeholder: "Full name..." },
+        { key: "role", label: "Role", type: "text", placeholder: "Job title..." },
+        { key: "bio", label: "Bio", type: "textarea", placeholder: "Short bio..." },
+        { key: "image", label: "Image URL", type: "url", placeholder: "https://..." },
+        { key: "twitter", label: "Twitter URL", type: "url", placeholder: "https://twitter.com/..." },
+        { key: "linkedin", label: "LinkedIn URL", type: "url", placeholder: "https://linkedin.com/..." },
+      ],
+    },
+    "trust-badges": {
+      field: "trustBadgeItems", title: "Trust Badges", addLabel: "Add Badge",
+      fields: [
+        { key: "title", label: "Title", type: "text", placeholder: "Badge title..." },
+        { key: "description", label: "Description", type: "text", placeholder: "Badge description..." },
+        { key: "icon", label: "Icon (emoji)", type: "text", placeholder: "🔒" },
+      ],
+    },
+    testimonials: {
+      field: "testimonialItems", title: "Testimonials", addLabel: "Add Testimonial",
+      fields: [
+        { key: "name", label: "Name", type: "text", placeholder: "Customer name..." },
+        { key: "role", label: "Role", type: "text", placeholder: "Verified Buyer" },
+        { key: "text", label: "Review Text", type: "textarea", placeholder: "Customer review..." },
+        { key: "rating", label: "Rating (1-5)", type: "number", placeholder: "5" },
+        { key: "avatar", label: "Avatar URL", type: "url", placeholder: "https://..." },
+        { key: "badge", label: "Badge", type: "text", placeholder: "Verified Purchase" },
+      ],
+    },
+    gallery: {
+      field: "galleryItems", title: "Gallery Images", addLabel: "Add Image",
+      fields: [
+        { key: "image", label: "Image URL", type: "url", placeholder: "https://..." },
+        { key: "title", label: "Title", type: "text", placeholder: "Image title..." },
+        { key: "alt", label: "Alt Text", type: "text", placeholder: "Image description..." },
+        { key: "link", label: "Link URL", type: "url", placeholder: "https://..." },
+      ],
+    },
+  };
+
+  const activeRepeater = repeaterConfigs[section.type];
+  const repeaterItems = activeRepeater ? (section.style?.[activeRepeater.field] as Record<string, string>[] | undefined) ?? [] : [];
+
+  const handleRepeaterUpdate = useCallback((items: Record<string, string>[]) => {
+    if (!activeRepeater) return;
+    dispatch(updateSectionStyle({ id: section.id, style: { [activeRepeater.field]: items } as Partial<SectionStyle> }));
+  }, [dispatch, section.id, activeRepeater]);
+
   const renderContentTab = () => (
     <div className="divide-y divide-zinc-100">
       {groupOrder.filter((g) => grouped[g]?.length && tabGroups.content?.includes(g)).map((group) => {
@@ -325,6 +389,18 @@ export function PropertiesPanel() {
           </div>
         );
       })}
+
+      {activeRepeater && (
+        <div className="px-3 py-2">
+          <RepeaterEditor
+            items={repeaterItems}
+            fields={activeRepeater.fields}
+            title={activeRepeater.title}
+            addLabel={activeRepeater.addLabel}
+            onUpdate={handleRepeaterUpdate}
+          />
+        </div>
+      )}
     </div>
   );
 

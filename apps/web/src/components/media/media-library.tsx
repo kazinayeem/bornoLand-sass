@@ -232,6 +232,16 @@ export function MediaLibrary({
     const url = importUrlValue.trim();
     if (!url) return;
     try {
+      new URL(url);
+    } catch {
+      toast.error("Invalid URL format. Please enter a valid URL.");
+      return;
+    }
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      toast.error("URL must start with http:// or https://");
+      return;
+    }
+    try {
       const result = await importMediaFromUrl({ storeId, url, folder }).unwrap();
       if (result.data?.file) {
         toast.success("Image imported from URL");

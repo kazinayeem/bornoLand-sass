@@ -1,8 +1,7 @@
 "use client";
-import { getProductImageUrl } from "@/lib/product-media";
 
-import { BuilderLink as Link } from "./builder-link";
 import { TrendingUp } from "lucide-react";
+import { ProductCard } from "@/components/storefront/product-card";
 import { SectionWrapper, ColumnGrid, SectionTitle, type SectionData } from "./section-renderer";
 import { useTenant } from "@/providers/tenant-provider";
 import { useBuilderProducts } from "@/lib/use-builder-demo";
@@ -13,9 +12,7 @@ export function BestSellers({ section }: { section: SectionData }) {
   const p = section.props;
   const count = Number(p.productCount) || 8;
   const cols = p.gridColumns || "4";
-  const display = products.filter((pr) => pr.status === "active").slice(0, count);
-
-  if (display.length === 0) return null;
+  const display = products.slice(0, count);
 
   return (
     <SectionWrapper section={section}>
@@ -23,19 +20,15 @@ export function BestSellers({ section }: { section: SectionData }) {
         <SectionTitle title={p.title || "Best Sellers"} subtitle={p.subtitle || ""} textColor={p.textColor} textAlignment={p.textAlignment} />
         <ColumnGrid columns={cols}>
           {display.map((pr) => (
-            <Link key={pr._id} href={`/products/${pr.slug}`}
-              className="group rounded-xl border border-zinc-200 bg-white p-3 transition-all hover:shadow-md hover:-translate-y-0.5">
-              <div className="mb-3 relative aspect-square overflow-hidden rounded-lg bg-zinc-50">
-                {getProductImageUrl(pr) ? (
-                  <img src={getProductImageUrl(pr)} alt={pr.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-zinc-300 text-xs">No Image</div>
-                )}
-                <span className="absolute right-2 top-2 rounded-full bg-amber-100 p-1"><TrendingUp className="h-3 w-3 text-amber-600" /></span>
-              </div>
-              <h3 className="text-sm font-semibold text-zinc-900 truncate">{pr.name}</h3>
-              <p className="mt-1 text-sm font-bold text-zinc-900">${pr.price}</p>
-            </Link>
+            <ProductCard
+              key={pr._id}
+              product={pr}
+              badge={
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100">
+                  <TrendingUp className="h-3.5 w-3.5 text-amber-600" />
+                </span>
+              }
+            />
           ))}
         </ColumnGrid>
       </div>

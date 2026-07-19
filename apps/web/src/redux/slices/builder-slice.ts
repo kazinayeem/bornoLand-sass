@@ -314,7 +314,7 @@ export type GlobalSnapshot = {
 };
 
 function cloneSections(list: BuilderSection[]): BuilderSection[] {
-  return list.map((section) => ({ ...section, props: { ...section.props } }));
+  return JSON.parse(JSON.stringify(list));
 }
 
 function takeSnapshot(state: BuilderState): GlobalSnapshot {
@@ -422,7 +422,7 @@ const builderSlice = createSlice({
     commitHistory(state, action: PayloadAction<GlobalSnapshot>) {
       state.past.push(action.payload);
       state.future = [];
-      if (state.past.length > 50) state.past.shift();
+      if (state.past.length > 100) state.past.shift();
     },
 
     // ─── Section CRUD ──────────────────────────────────────────────────────
@@ -740,4 +740,5 @@ export const {
 } = builderSlice.actions;
 
 export const builderReducer = builderSlice.reducer;
+export { cloneSections };
 

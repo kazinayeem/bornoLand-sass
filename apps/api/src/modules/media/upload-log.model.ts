@@ -7,7 +7,7 @@ const uploadLogSchema = new Schema(
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, index: true },
     mediaFileId: { type: Schema.Types.ObjectId, ref: "MediaFile" },
     uploaderId: { type: Schema.Types.ObjectId, ref: "User" },
-    action: { type: String, enum: ["upload", "delete", "replace", "bulk_delete", "admin_delete", "cleanup"], required: true },
+    action: { type: String, enum: ["upload", "delete", "replace", "bulk_delete", "admin_delete", "cleanup", "import-url"], required: true },
     fileName: { type: String, default: "" },
     size: { type: Number, default: 0 },
     status: { type: String, enum: ["success", "failed"], default: "success" },

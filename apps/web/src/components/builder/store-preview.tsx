@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import type { StoreSettingsData, HomepageSliderData, ThemeData, StoreData, ProductData, CategoryData } from "@/providers/tenant-provider";
 import { BuilderDeviceProvider } from "@/lib/device-context";
+import { BuilderDemoDataProvider } from "@/lib/builder-demo-provider";
 import { StorefrontCanvas } from "@/components/storefront/storefront-canvas";
 import type { StorefrontSectionLike } from "@/components/storefront/storefront-types";
 import { StorefrontFrame } from "@/components/storefront/storefront-frame";
@@ -146,6 +147,7 @@ export function StorePreview({ store, theme, products = [], categories = [], set
 
   return (
     <BuilderDeviceProvider device={device}>
+    <BuilderDemoDataProvider>
     <div className="flex items-start justify-center overflow-x-hidden overflow-y-auto p-6 sm:p-8"
       style={{ backgroundColor: theme.darkMode ? "#09090b" : "#f4f4f5", minHeight: "100%" }}>
       <div
@@ -270,6 +272,7 @@ export function StorePreview({ store, theme, products = [], categories = [], set
         )}
       </div>
     </div>
+    </BuilderDemoDataProvider>
     </BuilderDeviceProvider>
   );
 }

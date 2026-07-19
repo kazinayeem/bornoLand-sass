@@ -10,7 +10,7 @@ export function CategorySlider({ section }: { section: SectionData }) {
   const { categories: realCategories } = useTenant();
   const categories = useBuilderCategories(realCategories);
   const p = section.props;
-  const display = categories.filter((c) => c.active);
+  const display = categories;
   if (display.length === 0) return null;
 
   return (

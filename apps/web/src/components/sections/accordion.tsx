@@ -4,18 +4,20 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { SectionWrapper, SectionTitle, type SectionData } from "./section-renderer";
 
-const sampleItems = [
-  { title: "Product Details", content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore." },
-  { title: "Shipping Information", content: "Free shipping on orders over $50. Standard delivery takes 5-7 business days." },
-  { title: "Care Instructions", content: "Machine wash cold. Tumble dry low. Do not bleach. Iron on low heat if needed." },
-  { title: "Warranty", content: "All products come with a 1-year manufacturer warranty against defects." },
-];
-
 export function Accordion({ section }: { section: SectionData }) {
   const p = section.props;
   const [open, setOpen] = useState<number>(p.openFirst !== "false" ? 0 : -1);
-  const count = Number(p.items) || 4;
-  const items = sampleItems.slice(0, count);
+  const items = (section.style?.accordionItems ?? []) as { id: string; title: string; content: string }[];
+  if (items.length === 0) {
+    return (
+      <SectionWrapper section={section}>
+        <div className="mx-auto max-w-2xl px-4 py-12 text-center">
+          <SectionTitle title={p.title || "Details"} subtitle="" textColor={p.textColor} textAlignment={p.textAlignment} />
+          <p className="mt-4 text-sm text-zinc-400">No accordion items yet. Add them in the Content tab.</p>
+        </div>
+      </SectionWrapper>
+    );
+  }
 
   return (
     <SectionWrapper section={section}>

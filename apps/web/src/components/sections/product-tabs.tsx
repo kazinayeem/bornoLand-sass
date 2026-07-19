@@ -1,8 +1,7 @@
 "use client";
-import { getProductImageUrl } from "@/lib/product-media";
 
 import { useState } from "react";
-import { BuilderLink as Link } from "./builder-link";
+import { ProductCard } from "@/components/storefront/product-card";
 import { SectionWrapper, ColumnGrid, SectionTitle, type SectionData } from "./section-renderer";
 import { useTenant } from "@/providers/tenant-provider";
 import { useBuilderProducts } from "@/lib/use-builder-demo";
@@ -15,11 +14,10 @@ export function ProductTabs({ section }: { section: SectionData }) {
   const [activeTab, setActiveTab] = useState(0);
   const tabs = [
     { label: p.tab1Label || "Featured", filter: (pr: any) => pr.featured },
-    { label: p.tab2Label || "New Arrivals", filter: (pr: any) => pr.status === "active" },
-    { label: p.tab3Label || "Best Sellers", filter: (pr: any) => pr.status === "active" },
+    { label: p.tab2Label || "New Arrivals", filter: (_pr: any) => true },
+    { label: p.tab3Label || "Best Sellers", filter: (_pr: any) => true },
   ];
-  const filtered = products.filter((pr) => pr.status === "active" && tabs[activeTab]?.filter(pr)).slice(0, count);
-  if (products.length === 0) return null;
+  const filtered = products.filter(tabs[activeTab]?.filter ?? (() => true)).slice(0, count);
 
   return (
     <SectionWrapper section={section}>
@@ -35,18 +33,7 @@ export function ProductTabs({ section }: { section: SectionData }) {
         </div>
         <ColumnGrid columns="4">
           {filtered.map((pr) => (
-            <Link key={pr._id} href={`/products/${pr.slug}`}
-              className="group rounded-xl border border-zinc-200 bg-white p-3 transition-all hover:shadow-md">
-              <div className="mb-3 aspect-square overflow-hidden rounded-lg bg-zinc-50">
-                {getProductImageUrl(pr) ? (
-                  <img src={getProductImageUrl(pr)} alt={pr.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-zinc-300 text-xs">No Image</div>
-                )}
-              </div>
-              <h3 className="text-sm font-semibold text-zinc-900 truncate">{pr.name}</h3>
-              <p className="mt-1 text-sm font-bold text-zinc-900">${pr.price}</p>
-            </Link>
+            <ProductCard key={pr._id} product={pr} />
           ))}
         </ColumnGrid>
       </div>

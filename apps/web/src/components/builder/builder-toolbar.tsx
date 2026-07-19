@@ -5,7 +5,7 @@ import { Monitor, Smartphone, Tablet, ArrowLeft, Save, Send, Undo2, Redo2, ZoomI
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setDevice, setZoom, toggleGuides, toggleGrid, setFullscreen } from "@/redux/slices/preview-slice";
-import { markSaved, setSaving, setPublishing, undoBuilder, redoBuilder, restoreHistorySnapshot, updateSectionProps, loadSections, toggleLeftPanel, toggleRightPanel, setSaveError, setEditingZone } from "@/redux/slices/builder-slice";
+import { markSaved, setSaving, setPublishing, undoBuilder, redoBuilder, restoreHistorySnapshot, updateSectionProps, loadPage, toggleLeftPanel, toggleRightPanel, setSaveError, setEditingZone } from "@/redux/slices/builder-slice";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
 import { useSaveStorePageDraftMutation, usePublishStorePageMutation } from "@/redux/api/store-page-api";
 import { toast } from "sonner";
@@ -14,7 +14,6 @@ import { ThemePanel } from "@/components/builder/panels/theme-panel";
 import { BuilderCommandPalette } from "@/components/builder/builder-command-palette";
 import { useRequiredStore } from "@/providers/store-context";
 import { revalidateStorefrontAction } from "@/lib/actions/revalidate-storefront";
-import { useImportPageSectionsMutation } from "@/redux/api/store-page-api";
 import { cn } from "@/lib/utils";
 
 function timeAgo(dateStr: string | null): string {
@@ -48,7 +47,9 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
   const headerSettings = useSelector((s: RootState) => s.builder.headerSettings);
   const footerSettings = useSelector((s: RootState) => s.builder.footerSettings);
   const editingZone = useSelector((s: RootState) => s.builder.editingZone);
-  const pageId = useSelector((s: RootState) => s.builder.page.id);
+  const page = useSelector((s: RootState) => s.builder.page);
+  const pageId = page.id;
+  const globalSectionIds = useSelector((s: RootState) => s.builder.globalSectionIds);
   const lastSaved = useSelector((s: RootState) => s.builder.lastSaved);
   const lastSaveError = useSelector((s: RootState) => s.builder.lastSaveError);
   const pastCount = useSelector((s: RootState) => s.builder.past.length);
@@ -61,7 +62,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
 
   const [savePageDraft] = useSaveStorePageDraftMutation();
   const [publishPage] = usePublishStorePageMutation();
-  const [importPageSections] = useImportPageSectionsMutation();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stylesOpen, setStylesOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -121,7 +122,20 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
   const handleExport = async () => {
     if (!pageId) { toast.error("No page selected"); return; }
     try {
-      const blob = new Blob([JSON.stringify({ version: "1.0", exportedAt: new Date().toISOString(), sections, theme, settings: storeSettings }, null, 2)], { type: "application/json" });
+      const data = {
+        version: "1.0",
+        exportedAt: new Date().toISOString(),
+        page,
+        sections,
+        headerSections,
+        footerSections,
+        headerSettings,
+        footerSettings,
+        globalSectionIds,
+        theme,
+        settings: storeSettings,
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url; a.download = `page-export.json`; a.click();
@@ -137,11 +151,39 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
     reader.onload = async (e) => {
       try {
         const data = JSON.parse(e.target?.result as string);
-        if (!data.sections || !Array.isArray(data.sections)) { toast.error("Invalid import file"); return; }
-        if (pageId) await importPageSections({ pageId, storeId, sections: data.sections, theme: data.theme, settings: data.settings }).unwrap();
-        dispatch(loadSections(data.sections.map((s: BuilderSection) => ({ ...s, id: `${s.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` }))));
-        toast.success(`${data.sections.length} sections imported`);
-      } catch { toast.error("Import failed"); }
+        if (!data.sections || !Array.isArray(data.sections)) { toast.error("Invalid import file: missing sections"); return; }
+        if (data.headerSections && !Array.isArray(data.headerSections)) { toast.error("Invalid import file: headerSections must be an array"); return; }
+        if (data.footerSections && !Array.isArray(data.footerSections)) { toast.error("Invalid import file: footerSections must be an array"); return; }
+
+        // Restore full state locally — preserves all IDs so media references stay intact
+        dispatch(loadPage({
+          page: data.page ?? { id: pageId, title: "Imported Page", slug: "/imported", pageType: "custom" as any, isSystem: false, description: "", status: "draft" as any },
+          sections: data.sections ?? [],
+          headerSections: data.headerSections ?? [],
+          footerSections: data.footerSections ?? [],
+          globalSectionIds: data.globalSectionIds ?? [],
+          headerSettings: data.headerSettings ?? {},
+          footerSettings: data.footerSettings ?? {},
+        }));
+
+        // Persist to backend immediately so the import survives a refresh
+        if (pageId) {
+          await savePageDraft({
+            id: pageId, storeId,
+            sections: data.sections ?? [],
+            headerSections: data.headerSections ?? [],
+            footerSections: data.footerSections ?? [],
+            headerSettings: data.headerSettings ?? {},
+            footerSettings: data.footerSettings ?? {},
+            globalSectionIds: data.globalSectionIds ?? [],
+            theme: data.theme,
+            settings: data.settings ?? storeSettings,
+          }).unwrap();
+          dispatch(markSaved(new Date().toISOString()));
+        }
+
+        toast.success(`Imported ${data.sections.length} sections`);
+      } catch { toast.error("Import failed: invalid JSON"); }
     };
     reader.readAsText(file);
     event.target.value = "";

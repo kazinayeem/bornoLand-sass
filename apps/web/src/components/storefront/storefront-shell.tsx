@@ -89,8 +89,7 @@ export function StorefrontShell({
     ? footerSections.filter((s) => s.visible !== false)
     : [];
 
-  return (
-    <StorefrontDeviceProvider>
+  const shellContent = (
     <div style={{ fontFamily: theme.font, backgroundColor: theme.darkMode ? "#000000" : "#ffffff" }}>
       <TenantProvider value={tenantValue}>
         <AuthInit />
@@ -137,6 +136,11 @@ export function StorefrontShell({
         ) : null}
       </TenantProvider>
     </div>
-    </StorefrontDeviceProvider>
   );
+
+  // In builder mode, skip StorefrontDeviceProvider so the outer
+  // BuilderDeviceProvider (isBuilder: true, device from Redux) flows through.
+  // In live mode, wrap with StorefrontDeviceProvider for auto-detected device.
+  if (builderMode) return shellContent;
+  return <StorefrontDeviceProvider>{shellContent}</StorefrontDeviceProvider>;
 }

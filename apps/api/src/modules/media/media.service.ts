@@ -235,14 +235,31 @@ export async function importMediaFromUrl(
   const store = (await StoreModel.findById(storeId).lean()) as { slug: string; tenantId?: unknown } | null;
   if (!store) return { ok: false as const, message: "Store not found" };
 
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return { ok: false as const, message: "Invalid URL format. Please enter a valid URL starting with http:// or https://" };
+  }
+  if (!["http:", "https:"].includes(parsed.protocol)) {
+    return { ok: false as const, message: "Only http and https URLs are supported" };
+  }
+
   const targetFolder = options?.folder ?? "products";
   const folder = MEDIA_FOLDERS.includes(targetFolder as MediaFolder) ? (targetFolder as MediaFolder) : "products";
 
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
-    if (!response.ok) return { ok: false as const, message: `Failed to fetch URL: ${response.statusText}` };
+    if (!response.ok) {
+      const status = response.status;
+      const text = status === 404 ? "URL not found (404)" : status === 403 ? "URL access forbidden (403)" : `Failed to fetch URL: ${response.statusText} (${status})`;
+      return { ok: false as const, message: text };
+    }
 
-    const contentType = response.headers.get("content-type") ?? "application/octet-stream";
+    const contentType = (response.headers.get("content-type") ?? "application/octet-stream").split(";")[0].trim();
+    if (!contentType.startsWith("image/") || !ALLOWED_MIME_TYPES.includes(contentType as (typeof ALLOWED_MIME_TYPES)[number])) {
+      return { ok: false as const, message: `URL does not point to a supported image type. Got "${contentType}"` };
+    }
     const contentLength = response.headers.get("content-length");
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -273,7 +290,7 @@ export async function importMediaFromUrl(
 
     const urlPath = new URL(url).pathname;
     const originalName = path.basename(urlPath) || "imported-file";
-    const ext = MIME_TO_EXTENSION[processedMime] ?? path.extname(originalName).replace(".", "") ?? "bin";
+    const ext = MIME_TO_EXTENSION[processedMime] || path.extname(originalName).replace(".", "") || "bin";
     const storedName = uniqueStoredName(originalName, ext);
     const fileType = getMediaCategory(processedMime);
 

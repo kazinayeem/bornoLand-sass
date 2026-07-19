@@ -1,5 +1,5 @@
 import type { Middleware } from "@reduxjs/toolkit";
-import { BUILDER_HISTORY_ACTIONS, commitHistory } from "@/redux/slices/builder-slice";
+import { BUILDER_HISTORY_ACTIONS, commitHistory, cloneSections } from "@/redux/slices/builder-slice";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
 
 type GlobalSnapshot = {
@@ -7,10 +7,6 @@ type GlobalSnapshot = {
   headerSections: BuilderSection[];
   footerSections: BuilderSection[];
 };
-
-function clone(list: BuilderSection[]): BuilderSection[] {
-  return list.map((s) => ({ ...s, props: { ...s.props } }));
-}
 
 /** Automatically captures a before-snapshot and commits history for section-mutating actions. */
 export const builderHistoryMiddleware: Middleware = (api) => (next) => (action) => {
@@ -21,9 +17,9 @@ export const builderHistoryMiddleware: Middleware = (api) => (next) => (action) 
       footerSections: BuilderSection[];
     };
     const snapshot: GlobalSnapshot = {
-      sections: clone(builder.sections),
-      headerSections: clone(builder.headerSections),
-      footerSections: clone(builder.footerSections),
+      sections: cloneSections(builder.sections),
+      headerSections: cloneSections(builder.headerSections),
+      footerSections: cloneSections(builder.footerSections),
     };
     const result = next(action);
     api.dispatch(commitHistory(snapshot));

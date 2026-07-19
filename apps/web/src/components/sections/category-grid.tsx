@@ -12,7 +12,7 @@ export function CategoryGrid({ section }: { section: SectionData }) {
   const products = useBuilderProducts(realProducts);
   const p = section.props;
   const cols = p.gridColumns || "4";
-  const display = categories.filter((c) => c.active);
+  const display = categories;
 
   if (display.length === 0) return null;
 

@@ -52,7 +52,6 @@ export function StorefrontDeviceProvider({
   useEffect(() => {
     function detectDevice() {
       const w = window.innerWidth;
-      // Walk breakpoints from smallest to find the matching device
       let detected: Breakpoint = "desktop";
       for (let i = BREAKPOINT_ORDER.length - 1; i >= 0; i--) {
         const bp = BREAKPOINT_ORDER[i];

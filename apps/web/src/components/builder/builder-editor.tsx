@@ -367,18 +367,18 @@ export function BuilderEditor() {
     }
   }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug, derivePageType, toRouteSlug]);
 
-  // ─── Autosave every 10s ────────────────────────────────────────────────────
+  // ─── Autosave 3s after last change ────────────────────────────────────────
   useEffect(() => {
-    if (!isDirty || !pageId) return;
+    if (!isDirty || !pageId || saving) return;
     const timer = setTimeout(() => {
       dispatch(setSaving(true));
       savePageDraft({ id: pageId, storeId, sections, headerSections, footerSections, headerSettings, footerSettings, theme: currentTheme, settings })
         .unwrap()
         .then(() => dispatch(markSaved(new Date().toISOString())))
         .catch(() => dispatch(setSaveError("Save failed — check your connection")));
-    }, 10000);
+    }, 3000);
     return () => clearTimeout(timer);
-  }, [isDirty, pageId, sections, currentTheme, settings, storeId, dispatch, savePageDraft]);
+  }, [isDirty, pageId, saving, sections, currentTheme, settings, storeId, dispatch, savePageDraft]);
 
   // ─── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {

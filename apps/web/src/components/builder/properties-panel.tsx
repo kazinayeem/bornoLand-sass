@@ -223,8 +223,12 @@ export function PropertiesPanel() {
   const dispatch = useDispatch();
   const { storeId, storeSlug } = useRequiredStore();
   const selectedId = useSelector((s: RootState) => s.builder.selectedSectionId);
-  const section = useSelector((s: RootState) => s.builder.sections.find((sec) => sec.id === selectedId));
   const editingZone = useSelector((s: RootState) => s.builder.editingZone);
+  const section = useSelector((s: RootState) => {
+    if (editingZone === "header") return s.builder.headerSections.find((sec) => sec.id === selectedId);
+    if (editingZone === "footer") return s.builder.footerSections.find((sec) => sec.id === selectedId);
+    return s.builder.sections.find((sec) => sec.id === selectedId);
+  });
   const activeRightTab = useSelector((s: RootState) => s.builder.activeRightTab);
   const rightPanelPinned = useSelector((s: RootState) => s.builder.rightPanelPinned);
   const device = useSelector((s: RootState) => s.preview.device);

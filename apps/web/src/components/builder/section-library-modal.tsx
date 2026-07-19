@@ -224,10 +224,10 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ duration: 0.15 }}
           onClick={(e) => e.stopPropagation()}
-          className="flex h-[90vh] w-full max-w-7xl overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl"
+          className="flex h-[90vh] w-[90vw] max-w-[1600px] overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl"
         >
           {/* ── Left Sidebar ───────────────────────────────────────────────── */}
-          <div className="flex w-60 shrink-0 flex-col border-r border-zinc-100 bg-zinc-50/80">
+          <div className="flex w-64 shrink-0 flex-col border-r border-zinc-100 bg-zinc-50/80">
             <div className="border-b border-zinc-200 p-4">
               <h3 className="text-sm font-semibold text-zinc-900">Browse</h3>
             </div>
@@ -484,7 +484,7 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
 
                   {/* Flat grid */}
                   {filteredSections.length > 0 && (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(340px, 100%), 1fr))" }}>
                       {filteredSections.map((section) => (
                         <SectionCard
                           key={section.type}
@@ -536,7 +536,7 @@ function SectionGroup({
         {title}
         <span className="ml-1 text-xs font-normal text-zinc-400">({sections.length})</span>
       </h3>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(340px, 100%), 1fr))" }}>
         {sections.map((section) => (
           <SectionCard
             key={section.type}
@@ -583,7 +583,7 @@ function SectionCard({
       onClick={() => onAdd(section)}
     >
       {/* Preview area */}
-      <div className="relative flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-50 to-zinc-100">
+      <div className="relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-50 to-zinc-100">
         <div className="flex flex-col items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
           <SectionIcon icon={section.icon} className="h-8 w-8 text-zinc-400" />
           <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">

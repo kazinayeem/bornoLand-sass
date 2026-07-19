@@ -77,15 +77,65 @@ export const DEMO_PRODUCTS: ProductData[] = [
     sku: "DEMO-006", imageUrl: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&q=80", thumbnailUrl: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&q=80", galleryImageUrls: [], images: [], featured: false,
     categoryIds: [], createdAt: "2025-01-06T00:00:00Z", updatedAt: "2025-01-06T00:00:00Z",
   },
+  {
+    _id: "demo-prod-7", storeId: "", name: "Ceramic Pour-Over Coffee Set", slug: "ceramic-coffee-set",
+    description: "Handmade ceramic dripper with thermal carafe. Brews 4 cups of perfectly extracted coffee.",
+    price: 59.99, comparePrice: 79.99,
+    category: "Home & Living", stock: 90, status: "active",
+    sku: "DEMO-007", imageUrl: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&q=80", thumbnailUrl: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&q=80", galleryImageUrls: [], images: [], featured: true,
+    categoryIds: [], createdAt: "2025-01-07T00:00:00Z", updatedAt: "2025-01-07T00:00:00Z",
+  },
+  {
+    _id: "demo-prod-8", storeId: "", name: "Ultralight Running Shoes", slug: "ultralight-running-shoes",
+    description: "Breathable mesh upper with responsive cushioning. Weighs only 220g for effortless running.",
+    price: 149.99, comparePrice: 189.99,
+    category: "Sports & Outdoors", stock: 75, status: "active",
+    sku: "DEMO-008", imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80", thumbnailUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80", galleryImageUrls: [], images: [], featured: true,
+    categoryIds: [], createdAt: "2025-01-08T00:00:00Z", updatedAt: "2025-01-08T00:00:00Z",
+  },
+  {
+    _id: "demo-prod-9", storeId: "", name: "Scented Soy Candle Collection", slug: "scented-soy-candles",
+    description: "Set of 3 hand-poured soy wax candles: Lavender Fields, Ocean Breeze, and Vanilla Bean.",
+    price: 44.99, comparePrice: undefined,
+    category: "Home & Living", stock: 120, status: "active",
+    sku: "DEMO-009", imageUrl: "https://images.unsplash.com/photo-1602607718885-e7f1d76677e7?w=600&q=80", thumbnailUrl: "https://images.unsplash.com/photo-1602607718885-e7f1d76677e7?w=600&q=80", galleryImageUrls: [], images: [], featured: false,
+    categoryIds: [], createdAt: "2025-01-09T00:00:00Z", updatedAt: "2025-01-09T00:00:00Z",
+  },
+  {
+    _id: "demo-prod-10", storeId: "", name: "Vintage Polaroid Sunglasses", slug: "vintage-polaroid-sunglasses",
+    description: "Retro-style acetate frame sunglasses with UV400 polarized lenses and carrying case.",
+    price: 69.99, comparePrice: 99.99,
+    category: "Accessories", stock: 60, status: "active",
+    sku: "DEMO-010", imageUrl: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=600&q=80", thumbnailUrl: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=600&q=80", galleryImageUrls: [], images: [], featured: true,
+    categoryIds: [], createdAt: "2025-01-10T00:00:00Z", updatedAt: "2025-01-10T00:00:00Z",
+  },
+  {
+    _id: "demo-prod-11", storeId: "", name: "Minimalist Desk Lamp", slug: "minimalist-desk-lamp",
+    description: "Adjustable LED desk lamp with touch dimming, warm/cool light modes, and USB charging port.",
+    price: 89.99, comparePrice: 119.99,
+    category: "Home & Living", stock: 40, status: "active",
+    sku: "DEMO-011", imageUrl: "https://images.unsplash.com/photo-1507473885765-e6ed057ab788?w=600&q=80", thumbnailUrl: "https://images.unsplash.com/photo-1507473885765-e6ed057ab788?w=600&q=80", galleryImageUrls: [], images: [], featured: false,
+    categoryIds: [], createdAt: "2025-01-11T00:00:00Z", updatedAt: "2025-01-11T00:00:00Z",
+  },
+  {
+    _id: "demo-prod-12", storeId: "", name: "Bamboo Travel Mug", slug: "bamboo-travel-mug",
+    description: "Eco-friendly bamboo travel mug with double-wall vacuum insulation. Keeps drinks hot 6 hours.",
+    price: 29.99, comparePrice: undefined,
+    category: "Stationery", stock: 200, status: "active",
+    sku: "DEMO-012", imageUrl: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600&q=80", thumbnailUrl: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600&q=80", galleryImageUrls: [], images: [], featured: false,
+    categoryIds: [], createdAt: "2025-01-12T00:00:00Z", updatedAt: "2025-01-12T00:00:00Z",
+  },
 ];
 
 export const DEMO_CATEGORIES: CategoryData[] = [
   { _id: "demo-cat-1", storeId: "", name: "Electronics", slug: "electronics", imageUrl: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&q=80", description: "Latest gadgets and devices", parentId: null, active: true, featured: true, sortOrder: 1 },
   { _id: "demo-cat-2", storeId: "", name: "Clothing", slug: "clothing", imageUrl: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&q=80", description: "Trendy fashion and apparel", parentId: null, active: true, featured: true, sortOrder: 2 },
   { _id: "demo-cat-3", storeId: "", name: "Accessories", slug: "accessories", imageUrl: "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=600&q=80", description: "Complete your look", parentId: null, active: true, featured: true, sortOrder: 3 },
-  { _id: "demo-cat-4", storeId: "", name: "Home & Living", slug: "home-living", imageUrl: "https://images.unsplash.com/photo-1513161455079-7dc1de15ef3e?w=600&q=80", description: "Beautiful home essentials", parentId: null, active: true, featured: false, sortOrder: 4 },
+  { _id: "demo-cat-4", storeId: "", name: "Home & Living", slug: "home-living", imageUrl: "https://images.unsplash.com/photo-1513161455079-7dc1de15ef3e?w=600&q=80", description: "Beautiful home essentials", parentId: null, active: true, featured: true, sortOrder: 4 },
   { _id: "demo-cat-5", storeId: "", name: "Sports & Outdoors", slug: "sports-outdoors", imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80", description: "Gear for an active lifestyle", parentId: null, active: true, featured: false, sortOrder: 5 },
   { _id: "demo-cat-6", storeId: "", name: "Books & Media", slug: "books-media", imageUrl: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=600&q=80", description: "Curated reading and media", parentId: null, active: true, featured: false, sortOrder: 6 },
+  { _id: "demo-cat-7", storeId: "", name: "Beauty & Skincare", slug: "beauty-skincare", imageUrl: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&q=80", description: "Premium beauty products", parentId: null, active: true, featured: true, sortOrder: 7 },
+  { _id: "demo-cat-8", storeId: "", name: "Jewelry", slug: "jewelry", imageUrl: "https://images.unsplash.com/photo-1515562141589-67f0d569b6f5?w=600&q=80", description: "Elegant jewelry collection", parentId: null, active: true, featured: false, sortOrder: 8 },
 ];
 
 export const DEMO_TESTIMONIALS: DemoTestimonial[] = [

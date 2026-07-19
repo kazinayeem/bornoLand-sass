@@ -16,19 +16,27 @@ const categoryIcons: Record<string, string> = {
   ecommerce: "🛍️",
   fashion: "👗",
   electronics: "💻",
+  furniture: "🛋️",
+  grocery: "🥬",
+  cosmetics: "💄",
+  jewelry: "💎",
   restaurant: "🍽️",
   landing: "🚀",
 };
 
 const categoryLabels: Record<string, string> = {
   ecommerce: "Ecommerce",
-  fashion: "Fashion",
+  fashion: "Fashion & Beauty",
   electronics: "Electronics",
+  furniture: "Furniture",
+  grocery: "Grocery",
+  cosmetics: "Cosmetics",
+  jewelry: "Jewelry",
   restaurant: "Restaurant",
-  landing: "Landing Page",
+  landing: "Landing & Portfolio",
 };
 
-const categoryOrder = ["ecommerce", "fashion", "electronics", "restaurant", "landing"];
+const categoryOrder = ["ecommerce", "fashion", "electronics", "furniture", "grocery", "cosmetics", "jewelry", "restaurant", "landing"];
 
 const templateGradients = [
   "from-violet-500 via-purple-500 to-pink-500",
@@ -146,7 +154,7 @@ export function TemplatesPanel() {
             <LayoutTemplate className="h-5 w-5 text-zinc-400" />
             <div>
               <p className="text-sm font-medium text-zinc-900">Template Gallery</p>
-              <p className="text-xs text-zinc-500">5 starter templates included.</p>
+              <p className="text-xs text-zinc-500">10 starter templates included.</p>
             </div>
           </div>
           <button
@@ -214,8 +222,8 @@ export function TemplatesPanel() {
                 <span className="text-[10px] text-zinc-400 font-medium">{group.templates.length} template{group.templates.length !== 1 ? "s" : ""}</span>
               </div>
               <div
-                className="grid gap-4"
-                style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))" }}
+                className="grid gap-5"
+                style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(340px, 100%), 1fr))" }}
               >
                 {group.templates.map((template, ti) => (
                   <TemplateCard
@@ -253,6 +261,9 @@ function TemplateCard({
     <div className="group relative rounded-[1.75rem] border border-zinc-100 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-zinc-200 hover:shadow-sm">
       {/* Thumbnail */}
       <div className={`aspect-[16/10] rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center relative overflow-hidden`}>
+        {template.thumbnail ? (
+          <img src={template.thumbnail} alt={template.name} className="absolute inset-0 h-full w-full object-cover" />
+        ) : null}
         <div className="absolute inset-0 bg-black/10" />
         <div className="relative flex flex-col items-center gap-1">
           <span className="text-4xl">{categoryIcons[template.category] || "📄"}</span>

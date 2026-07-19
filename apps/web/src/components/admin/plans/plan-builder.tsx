@@ -118,6 +118,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
       { key: "realtimeVisitors", label: "Real-time Visitors", description: "Live visitor dashboard" },
       { key: "analyticsExport", label: "Analytics Export", description: "Export analytics reports" },
       { key: "advancedAnalytics", label: "Advanced Analytics", description: "Advanced analytics and reports" },
+      { key: "reports", label: "Reports", description: "Sales, revenue, and business reports", alwaysEnabled: true },
     ],
   },
   {
@@ -298,6 +299,7 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     visitorAnalytics: plan.featureToggles?.visitorAnalytics ?? false,
     realtimeVisitors: plan.featureToggles?.realtimeVisitors ?? false,
     analyticsExport: plan.featureToggles?.analyticsExport ?? false,
+    reports: plan.featureToggles?.reports ?? false,
   }));
 
   const [featureText, setFeatureText] = useState(plan.features?.join("\n") ?? "");

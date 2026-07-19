@@ -105,6 +105,10 @@ const appearanceLinks = [
   { href: "/appearance/seo", label: "SEO", icon: Search, comingSoon: true },
 ];
 
+const reportsLinks = [
+  { href: "/reports", label: "Reports", icon: BarChart3, featureKey: "reports" },
+];
+
 const bottomLinks = [
   { href: "/settings", label: "Settings", icon: Settings },
   { href: "/activity", label: "Activity", icon: ScrollText },
@@ -371,6 +375,26 @@ export function StoreSidebar({ store }: { store: Store }) {
                 })}
               </ul>
             )}
+          </div>
+
+          {/* Reports */}
+          <div className="mt-2">
+            <ul className="space-y-0.5">
+              {reportsLinks.map((link) => {
+                const meta = resolveLink(link);
+                return (
+                  <li key={link.href}>
+                    <NavItem
+                      {...link}
+                      basePath={basePath}
+                      locked={meta.locked}
+                      requiredPlan={meta.requiredPlan}
+                      comingSoon={meta.comingSoon}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
           {/* Appearance */}

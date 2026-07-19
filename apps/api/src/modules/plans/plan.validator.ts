@@ -122,6 +122,7 @@ const planFeatureSchema = z.object({
   visitorAnalytics: z.boolean().optional().default(false),
   realtimeVisitors: z.boolean().optional().default(false),
   analyticsExport: z.boolean().optional().default(false),
+  reports: z.boolean().optional().default(false),
 });
 
 const planPricingSchema = z.object({

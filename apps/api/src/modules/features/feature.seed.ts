@@ -52,6 +52,7 @@ export const SEED_FEATURES: SeedFeature[] = [
 
   // Platform
   { key: "analytics", name: "Analytics", description: "Store analytics and insights", type: "tier", groupKey: "platform", sortOrder: 20, defaultTier: "basic" },
+  { key: "reports", name: "Reports", description: "Sales, revenue, and business reports", type: "boolean", groupKey: "platform", sortOrder: 21, defaultEnabled: true },
   { key: "staff", name: "Staff Members", description: "Team member accounts", type: "limit", groupKey: "platform", sortOrder: 21, usageCounterKey: "staff", defaultLimit: 1 },
   { key: "storage", name: "Storage", description: "File storage space", type: "limit", groupKey: "platform", sortOrder: 22, usageCounterKey: "storageMB", unit: "GB", defaultLimit: 1 },
   { key: "billing", name: "Billing", description: "Billing and subscription management", type: "boolean", groupKey: "platform", sortOrder: 23, defaultEnabled: true },

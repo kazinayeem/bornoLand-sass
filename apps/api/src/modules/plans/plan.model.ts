@@ -123,6 +123,7 @@ const planFeatureSchema = new Schema({
   visitorAnalytics: { type: Boolean, default: true },
   realtimeVisitors: { type: Boolean, default: true },
   analyticsExport: { type: Boolean, default: true },
+  reports: { type: Boolean, default: true },
 }, { _id: false });
 
 const planPricingSchema = new Schema({

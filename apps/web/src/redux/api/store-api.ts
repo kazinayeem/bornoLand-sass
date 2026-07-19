@@ -131,6 +131,7 @@ export type PlanFeatureToggles = {
   visitorAnalytics: boolean;
   realtimeVisitors: boolean;
   analyticsExport: boolean;
+  reports: boolean;
 };
 
 export type Plan = {

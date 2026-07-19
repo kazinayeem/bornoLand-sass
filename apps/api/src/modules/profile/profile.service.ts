@@ -37,10 +37,12 @@ function profileShape(user: Record<string, any>, fallbackStoreName = "") {
 
 export async function getProfile(userId: string) {
   await connectDatabase();
-  const [user, store] = await Promise.all([
+  const [userResult, storeResult] = await Promise.all([
     UserModel.findById(userId).select("-passwordHash").lean(),
     StoreModel.findOne({ userId, status: { $ne: "archived" } }).sort({ createdAt: 1 }).select("name").lean(),
   ]);
+  const user = userResult as Record<string, any> | null;
+  const store = storeResult as { name?: string } | null;
   if (!user) return { ok: false as const, message: "Profile not found" };
   return { ok: true as const, data: { profile: profileShape(user as Record<string, any>, store?.name ?? "") } };
 }
@@ -52,7 +54,7 @@ export async function updateProfile(userId: string, payload: unknown) {
   const duplicate = await UserModel.findOne({
     _id: { $ne: userId },
     $or: [{ email: parsed.data.email }, { username: parsed.data.username }],
-  }).select("email username").lean();
+  }).select("email username").lean() as { email?: string; username?: string } | null;
   if (duplicate) {
     return { ok: false as const, message: duplicate.email === parsed.data.email ? "Email is already in use" : "Username is already taken" };
   }

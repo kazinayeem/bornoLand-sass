@@ -56,6 +56,7 @@ function buildSessionPayload(
     email: string;
     name: string;
     sessionVersion?: number;
+    status?: string;
   },
   loginType: SessionPayload["loginType"]
 ): SessionPayload {
@@ -261,12 +262,18 @@ export async function refreshAccessToken(rawRefreshToken: string) {
     email: string;
     name: string;
     sessionVersion?: number;
+    status?: string;
   } | null;
 
   if (!user) {
     // User was deleted — clean up their tokens
     await RefreshTokenModel.deleteMany({ userId: stored.userId });
     return { ok: false as const, message: "User not found" };
+  }
+
+  if (user.status && user.status !== "active") {
+    await RefreshTokenModel.updateMany({ userId: user._id, revokedAt: null }, { $set: { revokedAt: new Date() } });
+    return { ok: false as const, message: `Account ${user.status}` };
   }
 
   const session = buildSessionPayload(user, user.role === "super_admin" ? "admin" : "user");
@@ -370,7 +377,7 @@ export async function resetPassword(payload: unknown) {
     { email: tokenRecord.identifier },
     { $set: { passwordHash, passwordChangedAt: new Date() }, $inc: { sessionVersion: 1 } },
     { new: true },
-  ).lean();
+  ).lean() as { _id: unknown } | null;
   if (user) await RefreshTokenModel.updateMany({ userId: user._id, revokedAt: null }, { $set: { revokedAt: new Date() } });
   await VerificationTokenModel.deleteMany({ token: parsed.data.token });
 

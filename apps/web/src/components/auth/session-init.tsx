@@ -7,6 +7,7 @@ import { setAccessToken } from "@/lib/access-token";
 import { setAuthState } from "@/redux/slices/auth-slice";
 import { setUserProfile } from "@/redux/slices/user-slice";
 import { setTenantContext } from "@/redux/slices/tenant-slice";
+import { clearRedirectAfterLogin } from "@/lib/auth-redirect-client";
 
 export function SessionInit() {
   const dispatch = useAppDispatch();
@@ -22,6 +23,7 @@ export function SessionInit() {
         const token = params.get("access_token");
         if (token) {
           setAccessToken(token);
+          clearRedirectAfterLogin();
           // Clean the hash from URL without triggering a reload
           window.history.replaceState(null, "", window.location.pathname + window.location.search);
         }

@@ -378,7 +378,21 @@ export function BuilderEditor() {
         .catch(() => dispatch(setSaveError("Save failed — check your connection")));
     }, 3000);
     return () => clearTimeout(timer);
-  }, [isDirty, pageId, saving, sections, currentTheme, settings, storeId, dispatch, savePageDraft]);
+  }, [
+    isDirty,
+    pageId,
+    saving,
+    sections,
+    headerSections,
+    footerSections,
+    headerSettings,
+    footerSettings,
+    currentTheme,
+    settings,
+    storeId,
+    dispatch,
+    savePageDraft,
+  ]);
 
   // ─── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
@@ -441,7 +455,21 @@ export function BuilderEditor() {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [clipboardSection, currentTheme, dispatch, pageId, savePageDraft, sections, selectedSectionId, settings, storeId]);
+  }, [
+    clipboardSection,
+    currentTheme,
+    dispatch,
+    pageId,
+    savePageDraft,
+    sections,
+    headerSections,
+    footerSections,
+    headerSettings,
+    footerSettings,
+    selectedSectionId,
+    settings,
+    storeId,
+  ]);
 
   // ─── Loading state ─────────────────────────────────────────────────────────
   if (pagesLoading) {

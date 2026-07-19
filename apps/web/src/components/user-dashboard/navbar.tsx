@@ -3,7 +3,6 @@
 import { useState, useCallback } from "react";
 import { Search as SearchIcon, Command } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useAppSelector } from "@/hooks/redux";
 import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,7 +12,6 @@ import { ProfileDropdown } from "@/components/user/profile-dropdown";
 export function UserNavbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const user = useAppSelector((s) => s.user.profile);
   const { currentStoreId } = useCurrentStore();
   const { data: storesData } = useGetMyStoresQuery();
   const stores = storesData?.data?.stores ?? [];

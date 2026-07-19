@@ -36,6 +36,34 @@ function extractCookieToken(request: Request) {
   return match?.[1] ?? null;
 }
 
+function clearSessionCookies(response: Response) {
+  response.clearCookie(getSessionCookieName(), { path: "/" });
+  response.clearCookie("bornoland.session.legacy", { path: "/" });
+}
+
+function safeOAuthCallbackPath(value: unknown) {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//") || value.includes("\\") || value.length > 2048) return "/dashboard";
+  try {
+    const base = new URL("https://bornoland.internal");
+    const parsed = new URL(value, base);
+    if (parsed.origin !== base.origin) return "/dashboard";
+    const path = parsed.pathname.toLowerCase();
+    const blocked = ["/login", "/register", "/forgot-password", "/reset-password", "/logout", "/auth", "/admin/login"];
+    if (blocked.some((route) => path === route || path.startsWith(`${route}/`))) return "/dashboard";
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return "/dashboard";
+  }
+}
+
+async function isSessionPayloadActive(payload: { userId: string; sessionVersion?: number }) {
+  await connectDatabase();
+  const user = await UserModel.findById(payload.userId).select("status sessionVersion").lean() as
+    | { status?: string; sessionVersion?: number }
+    | null;
+  return Boolean(user && user.status === "active" && (user.sessionVersion ?? 0) === (payload.sessionVersion ?? 0));
+}
+
 export async function registerController(request: Request, response: Response) {
   const result = await registerUser(request.body);
 
@@ -184,7 +212,9 @@ export async function meController(request: Request, response: Response) {
   if (authHeader?.startsWith("Bearer ")) {
     try {
       const payload = verifyAccessToken(authHeader.slice(7));
-      return sendSuccess(response, { session: payload, accessToken: authHeader.slice(7) }, "Session loaded");
+      if (await isSessionPayloadActive(payload)) {
+        return sendSuccess(response, { session: payload, accessToken: authHeader.slice(7) }, "Session loaded");
+      }
     } catch {
       // Access token expired — fall through to try refresh token
     }
@@ -202,6 +232,7 @@ export async function meController(request: Request, response: Response) {
     // This is a refresh token — try to get a new access token
     const result = await refreshAccessToken(token);
     if (!result.ok) {
+      clearSessionCookies(response);
       return sendSuccess(response, { session: null }, "Session expired");
     }
     return sendSuccess(response, {
@@ -214,8 +245,11 @@ export async function meController(request: Request, response: Response) {
   try {
     const { verifySessionToken } = await import("../../common/utils/jwt.js");
     const session = verifySessionToken(token);
-    return sendSuccess(response, { session }, "Session loaded");
+    if (await isSessionPayloadActive(session)) return sendSuccess(response, { session }, "Session loaded");
+    clearSessionCookies(response);
+    return sendSuccess(response, { session: null }, "Session expired");
   } catch {
+    clearSessionCookies(response);
     return sendSuccess(response, { session: null }, "Session expired");
   }
 }
@@ -269,7 +303,7 @@ export async function logoutController(request: Request, response: Response) {
 export async function googleStartController(request: Request, response: Response) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI;
-  const callbackUrl = typeof request.query.redirectUrl === "string" ? request.query.redirectUrl : "/dashboard";
+  const callbackUrl = safeOAuthCallbackPath(request.query.redirectUrl);
 
   if (!clientId || !redirectUri) {
     return sendFailure(response, "Google OAuth is not configured", 503);
@@ -367,6 +401,7 @@ export async function googleCallbackController(request: Request, response: Respo
     email: user.email,
     name: user.name,
     loginType: "user" as const,
+    sessionVersion: user.sessionVersion ?? 0,
   };
 
   // Generate refresh token
@@ -395,7 +430,12 @@ export async function googleCallbackController(request: Request, response: Respo
     maxAge: rtMaxAge * 1000,
   });
 
-  const callbackUrl = state ? JSON.parse(Buffer.from(state, "base64url").toString("utf8")).callbackUrl : "/dashboard";
-  // Pass access token as hash fragment so the frontend can read it
-  return response.redirect(`${webUrl}${callbackUrl}#access_token=${accessToken}`);
+  let callbackUrl = "/dashboard";
+  if (state) {
+    try { callbackUrl = safeOAuthCallbackPath(JSON.parse(Buffer.from(state, "base64url").toString("utf8")).callbackUrl); } catch { callbackUrl = "/dashboard"; }
+  }
+  // Pass access token as a fragment; fragments never reach the server or logs.
+  const destination = new URL(callbackUrl, `${webUrl}/`);
+  destination.hash = `access_token=${accessToken}`;
+  return response.redirect(destination.toString());
 }

@@ -232,6 +232,17 @@ export async function approveSubscriptionPayment(
     title: "Payment approved",
     message: `Your subscription payment was approved. Invoice ${invoice.invoiceNumber} has been generated.`,
     metadata: { paymentId: String(payment._id), invoiceId: String(invoice._id) },
+    actionUrl: "/dashboard/billing",
+  });
+
+  await createBillingNotification({
+    userId: String(payment.userId),
+    storeId: String(payment.storeId),
+    type: "invoice_generated",
+    title: `Invoice ${invoice.invoiceNumber} generated`,
+    message: "Your paid subscription invoice is ready to view or download.",
+    actionUrl: "/dashboard/billing",
+    metadata: { invoiceId: String(invoice._id), invoiceNumber: invoice.invoiceNumber },
   });
 
   return { ok: true as const, data: { payment: payment.toObject(), invoice } };

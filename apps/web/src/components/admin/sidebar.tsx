@@ -25,6 +25,9 @@ import {
   ScrollText,
   FileText,
 } from "lucide-react";
+import { useLogoutMutation } from "@/redux/api/auth-api";
+import { getLoginUrlForCurrentPage } from "@/lib/auth-redirect-client";
+import { toast } from "sonner";
 
 const primaryNav = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -51,6 +54,7 @@ export function Sidebar() {
   const [moreOpen, setMoreOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const [logout] = useLogoutMutation();
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
@@ -168,7 +172,7 @@ export function Sidebar() {
         </button>
         <button
           type="button"
-          onClick={() => router.push("/login")}
+          onClick={async () => { try { await logout().unwrap(); router.replace(getLoginUrlForCurrentPage("/admin/login")); } catch { toast.error("Failed to sign out"); } }}
           className={cn(
             "flex items-center gap-2 rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600",
             collapsed ? "w-full justify-center" : "w-full"

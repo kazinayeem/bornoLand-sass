@@ -681,10 +681,19 @@ export function LayersPanel() {
     return (
       <div className={cn("mb-2 rounded-xl border transition-all duration-150", isActive ? "border-zinc-200 bg-zinc-50/50" : "border-transparent")}>
         {/* Region header */}
-        <button
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => { toggleRegion(zone); dispatch(setEditingZone(zone)); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggleRegion(zone);
+              dispatch(setEditingZone(zone));
+            }
+          }}
           className={cn(
-            "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition-all",
+            "group flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition-all outline-none",
             isActive ? "bg-zinc-100/80" : "hover:bg-zinc-50"
           )}
         >
@@ -707,7 +716,7 @@ export function LayersPanel() {
             <Plus className="h-3.5 w-3.5" />
           </button>
           {isCollapsed ? <ChevronRight className="h-3.5 w-3.5 text-zinc-400" /> : <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />}
-        </button>
+        </div>
 
         {/* Region sections */}
         {!isCollapsed && (

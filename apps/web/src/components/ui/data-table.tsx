@@ -184,17 +184,17 @@ export function DataTable<T>({
                   {action.label}
                 </button>
               ))}
-              <button onClick={clearSelection} className="text-sm text-zinc-400 hover:text-zinc-600 ml-2">Cancel</button>
+              <button onClick={clearSelection} className="ml-2 text-sm text-zinc-400 hover:text-zinc-600">Cancel</button>
             </div>
           )}
         </div>
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
-        <table className="w-full min-w-[600px]">
+      <div className="overflow-x-auto rounded-[1.5rem] border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_16px_48px_-30px_rgba(15,23,42,0.24)]">
+        <table className="w-full min-w-[640px]">
           <thead>
-            <tr className={cn("border-b border-zinc-100 bg-zinc-50/50", stickyHeader && "sticky top-0 z-10")}>
+            <tr className={cn("border-b border-zinc-100/80 bg-zinc-50/80", stickyHeader && "sticky top-0 z-10 backdrop-blur-sm")}>
               {bulkActions && (
                 <th className="w-10 px-3 py-3">
                   <input

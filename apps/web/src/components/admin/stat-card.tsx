@@ -39,7 +39,7 @@ export function StatCard({ title, value, change, icon: Icon, variant = "default"
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
       className={cn(
-        "group relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5",
+        "group relative overflow-hidden rounded-[1.5rem] border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_48px_-28px_rgba(15,23,42,0.32)]",
         variants[variant]
       )}
     >
@@ -49,7 +49,7 @@ export function StatCard({ title, value, change, icon: Icon, variant = "default"
           <p className="text-sm font-medium tracking-wide text-zinc-500">{title}</p>
           <div className="flex items-baseline gap-1.5">
             {prefix && <span className="text-sm text-zinc-400">{prefix}</span>}
-            <span className="text-3xl font-bold tracking-tight text-zinc-900">{value}</span>
+            <span className="text-3xl font-semibold tracking-tight text-zinc-950">{value}</span>
             {suffix && <span className="text-sm text-zinc-400">{suffix}</span>}
           </div>
           {change !== undefined && (

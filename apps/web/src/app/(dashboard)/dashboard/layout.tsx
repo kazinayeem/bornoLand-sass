@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getServerSession, hasAuthCookie } from "@/lib/auth-session";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
 import { buildPageMetadata } from "@/lib/server/page-metadata";
+import { ProtectedSessionBoundary } from "@/components/auth/protected-session-boundary";
 
 export const dynamic = "force-dynamic";
 
@@ -16,5 +17,5 @@ export const metadata: Metadata = buildPageMetadata({
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const [session, hasPendingAuth] = await Promise.all([getServerSession(), hasAuthCookie()]);
   if (!session && !hasPendingAuth) redirect("/login");
-  return <WorkspaceShell>{children}</WorkspaceShell>;
+  return <ProtectedSessionBoundary><WorkspaceShell>{children}</WorkspaceShell></ProtectedSessionBoundary>;
 }

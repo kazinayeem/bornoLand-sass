@@ -15,6 +15,7 @@ import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
 import { AUDIT_MODULES } from "../audit/audit.constants.js";
 import { sendEmail } from "../../common/integrations/email.js";
 import { changePassword, getProfile, listProfileActivity, listSessions, revokeAllSessions, revokeSession, setAvatar, updateProfile } from "./profile.service.js";
+import { createBillingNotification } from "../notifications/billing-notification.service.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -29,6 +30,13 @@ export const avatarUpload = (request: AuthRequest, response: Response, next: Nex
 function cookieToken(request: AuthRequest) {
   const match = (request.header("cookie") ?? "").match(new RegExp(`${getSessionCookieName()}=([^;]+)`));
   return match?.[1] ?? "";
+}
+
+async function removeLocalAvatar(avatarUrl?: string) {
+  if (!avatarUrl) return;
+  const fileName = avatarUrl.split("/uploads/avatars/")[1];
+  if (!fileName || fileName.includes("/") || fileName.includes("..")) return;
+  try { await fs.unlink(path.join(getUploadRoot(), "avatars", fileName)); } catch { /* already removed or externally hosted */ }
 }
 
 export async function getProfileController(request: AuthRequest, response: Response) {
@@ -49,6 +57,8 @@ export async function uploadAvatarController(request: AuthRequest, response: Res
     const metadata = await sharp(request.file.buffer).metadata();
     if (!metadata.width || !metadata.height || metadata.width < 128 || metadata.height < 128) return sendFailure(response, "Image must be at least 128 × 128 pixels", 400);
     if (metadata.width > 6000 || metadata.height > 6000) return sendFailure(response, "Image dimensions are too large", 400);
+    const previous = await getProfile(request.user!.userId);
+    const previousAvatar = previous.ok ? previous.data.profile.avatarUrl : "";
     const fileName = `${request.user!.userId}-${crypto.randomUUID()}.webp`;
     const directory = path.join(getUploadRoot(), "avatars");
     await fs.mkdir(directory, { recursive: true });
@@ -56,6 +66,7 @@ export async function uploadAvatarController(request: AuthRequest, response: Res
     const avatarUrl = `${getApiUrl()}/uploads/avatars/${fileName}`;
     const result = await setAvatar(request.user!.userId, avatarUrl);
     if (!result.ok) return sendFailure(response, result.message, 404);
+    await removeLocalAvatar(previousAvatar);
     await recordAuditFromRequest(request, { action: AUDIT_ACTIONS.USER_UPDATED, module: AUDIT_MODULES.USERS, entityType: "User", entityId: request.user!.userId, actorId: request.user!.userId, description: "Profile photo updated" });
     return sendSuccess(response, result.data, "Profile photo updated");
   } catch {
@@ -64,8 +75,11 @@ export async function uploadAvatarController(request: AuthRequest, response: Res
 }
 
 export async function removeAvatarController(request: AuthRequest, response: Response) {
+  const previous = await getProfile(request.user!.userId);
   const result = await setAvatar(request.user!.userId, "");
-  return result.ok ? sendSuccess(response, result.data, "Profile photo removed") : sendFailure(response, result.message, 404);
+  if (!result.ok) return sendFailure(response, result.message, 404);
+  if (previous.ok) await removeLocalAvatar(previous.data.profile.avatarUrl);
+  return sendSuccess(response, result.data, "Profile photo removed");
 }
 
 export async function changePasswordController(request: AuthRequest, response: Response) {
@@ -79,7 +93,10 @@ export async function changePasswordController(request: AuthRequest, response: R
   response.cookie(getSessionCookieName(), refreshToken, getSessionCookieOptions(maxAge));
   response.cookie("bornoland.session.legacy", signSessionToken(session, "7d"), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: maxAge * 1000 });
   await recordAuditFromRequest(request, { action: AUDIT_ACTIONS.PASSWORD_CHANGED, module: AUDIT_MODULES.AUTH, entityType: "User", entityId: user.id, actorId: user.id, description: "Password changed and previous sessions invalidated" });
-  await sendEmail({ to: user.email, subject: "Your BornoLand password was changed", html: `<p>Your password was changed successfully.</p><p>If this wasn't you, contact support immediately and reset your password.</p>` });
+  await Promise.allSettled([
+    createBillingNotification({ userId: user.id, type: "security_alert", title: "Password changed", message: "Your password was changed and other sessions were signed out.", actionUrl: "/dashboard/security", metadata: { event: "password_changed" } }),
+    sendEmail({ to: user.email, subject: "Your BornoLand password was changed", html: `<p>Your password was changed successfully.</p><p>If this wasn't you, contact support immediately and reset your password.</p>` }),
+  ]);
   return sendSuccess(response, { accessToken: signAccessToken(session) }, "Password changed. Other sessions have been signed out.");
 }
 

@@ -22,6 +22,7 @@ export const NOTIFICATION_TYPES = [
   "subscription_expiring",
   "subscription_expired",
 ] as const;
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 const notificationSchema = new Schema(
   {

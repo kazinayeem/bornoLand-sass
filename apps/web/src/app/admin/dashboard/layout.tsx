@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getServerSession, hasAuthCookie } from "@/lib/auth-session";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { buildPageMetadata } from "@/lib/server/page-metadata";
+import { ProtectedSessionBoundary } from "@/components/auth/protected-session-boundary";
 
 export const dynamic = "force-dynamic";
 
@@ -17,5 +18,5 @@ export default async function AdminDashboardLayout({ children }: { children: Rea
   const [session, hasPendingAuth] = await Promise.all([getServerSession(), hasAuthCookie()]);
   if (!session && !hasPendingAuth) redirect("/login");
   if (session && session.role !== "super_admin") redirect("/unauthorized");
-  return <AdminShell>{children}</AdminShell>;
+  return <ProtectedSessionBoundary requiredRole="super_admin" loginPath="/admin/login"><AdminShell>{children}</AdminShell></ProtectedSessionBoundary>;
 }

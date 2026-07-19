@@ -1,5 +1,6 @@
 import { baseApi } from "@/redux/api/base-api";
 import { setAccessToken } from "@/lib/access-token";
+import { rememberRedirectAfterLogin } from "@/lib/auth-redirect-client";
 
 export type UserPreferences = {
   theme: "light" | "dark" | "system";
@@ -62,11 +63,13 @@ export const profileApi = baseApi.injectEndpoints({
     logoutCurrentSession: builder.mutation<Envelope<never>, void>({
       query: () => ({ url: "/profile/sessions/current", method: "DELETE" }),
       transformResponse: (response: Envelope<never>) => { setAccessToken(null); return response; },
+      onQueryStarted: () => { rememberRedirectAfterLogin(); },
       invalidatesTags: ["Auth"],
     }),
     logoutAllSessions: builder.mutation<Envelope<never>, void>({
       query: () => ({ url: "/profile/sessions", method: "DELETE" }),
       transformResponse: (response: Envelope<never>) => { setAccessToken(null); return response; },
+      onQueryStarted: () => { rememberRedirectAfterLogin(); },
       invalidatesTags: ["Auth"],
     }),
     getProfileActivity: builder.query<Envelope<{ activities: ProfileActivity[]; pagination: Pagination }>, { page?: number; limit?: number }>({

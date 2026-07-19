@@ -23,6 +23,7 @@ import {
   Globe,
   FileText,
   ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppSelector, useAppDispatch } from "@/hooks/redux";
@@ -30,6 +31,7 @@ import { toggleSidebarCollapsed, setMobileSidebarOpen } from "@/redux/slices/ui-
 import { useLogoutMutation } from "@/redux/api/auth-api";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { toast } from "sonner";
+import { getLoginUrlForCurrentPage } from "@/lib/auth-redirect-client";
 
 const mainNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -38,7 +40,8 @@ const mainNav = [
   { href: "/dashboard/team", label: "Team", icon: Users },
   { href: "/dashboard/activity", label: "Activity", icon: ScrollText },
   { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
-  { href: "/dashboard/account", label: "Settings", icon: Settings },
+  { href: "/dashboard/account", label: "Profile & settings", icon: Settings },
+  { href: "/dashboard/security", label: "Security", icon: ShieldCheck },
   { href: "/dashboard/help", label: "Help", icon: HelpCircle },
 ];
 
@@ -114,7 +117,7 @@ export function PlatformSidebar() {
   const handleLogout = async () => {
     try {
       await logout().unwrap();
-      router.push("/login");
+      router.replace(getLoginUrlForCurrentPage());
     } catch {
       toast.error("Failed to sign out");
     }

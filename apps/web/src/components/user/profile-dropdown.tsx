@@ -11,6 +11,7 @@ import { clearUserProfile } from "@/redux/slices/user-slice";
 import { useLogoutMutation } from "@/redux/api/auth-api";
 import { useGetProfileQuery } from "@/redux/api/profile-api";
 import { cn } from "@/lib/utils";
+import { getLoginUrlForCurrentPage } from "@/lib/auth-redirect-client";
 
 const items = [
   { label: "Profile", href: "/dashboard/account", icon: UserRound },
@@ -49,7 +50,7 @@ export function ProfileDropdown({ compact = false }: { compact?: boolean }) {
   }, [open]);
 
   const handleLogout = async () => {
-    try { await logout().unwrap(); dispatch(clearUserProfile()); router.replace("/login"); router.refresh(); }
+    try { await logout().unwrap(); dispatch(clearUserProfile()); router.replace(getLoginUrlForCurrentPage()); router.refresh(); }
     catch { toast.error("Could not sign out. Please try again."); }
   };
 

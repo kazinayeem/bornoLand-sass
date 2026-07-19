@@ -9,6 +9,7 @@ import { setAuthState } from "@/redux/slices/auth-slice";
 import { setUserProfile } from "@/redux/slices/user-slice";
 import { setTenantContext } from "@/redux/slices/tenant-slice";
 import { toast } from "sonner";
+import { consumeRedirectAfterLogin } from "@/lib/auth-redirect-client";
 
 type QuickLoginButtonProps = {
   label: string;
@@ -57,7 +58,8 @@ export function QuickLoginButton({ label, email, password, loginType, callbackUr
         dispatch(setAuthState({ session: payload.session, user: payload.user }));
         dispatch(setUserProfile(payload.user));
         dispatch(setTenantContext({ tenantId: payload.user.tenantId }));
-        window.location.href = callbackUrl;
+        const queryRedirect = new URLSearchParams(window.location.search).get("redirect");
+        window.location.replace(consumeRedirectAfterLogin(queryRedirect, callbackUrl));
       }}
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}

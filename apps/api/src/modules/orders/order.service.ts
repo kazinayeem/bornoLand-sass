@@ -7,6 +7,7 @@ import { StoreSettingsModel } from "../../models/store-settings.model.js";
 import { StoreModel } from "../../models/store.model.js";
 import { checkLimit } from "../features/feature-access.service.js";
 import { incrementCouponUsage } from "../coupons/coupon.service.js";
+import { createBillingNotification } from "../notifications/billing-notification.service.js";
 
 function generateOrderNumber(prefix = "ORD"): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -65,7 +66,7 @@ export async function createOrder(
 ) {
   await connectDatabase();
 
-  const store = (await StoreModel.findById(storeId).lean()) as { planId?: string; allowNewOrders?: boolean } | null;
+  const store = (await StoreModel.findById(storeId).lean()) as { planId?: string; allowNewOrders?: boolean; userId?: unknown; slug?: string } | null;
   if (store && store.allowNewOrders === false) {
     return { ok: false as const, message: "This store is not accepting new orders. Please upgrade your subscription." };
   }
@@ -172,6 +173,22 @@ export async function createOrder(
   }
 
   await CartModel.deleteOne({ _id: cart._id });
+
+  if (store?.userId) {
+    try {
+      await createBillingNotification({
+        userId: String(store.userId),
+        storeId,
+        type: "new_order",
+        title: `New order ${orderNumber}`,
+        message: `${payload.shippingAddress.fullName} placed an order for ${currencyCode} ${total.toFixed(2)}.`,
+        actionUrl: store.slug ? `/store/${store.slug}/orders` : "/dashboard/orders",
+        metadata: { orderId: String(order._id), orderNumber, total, currencyCode },
+      });
+    } catch (error) {
+      console.error("[notifications] Failed to create order notification", error);
+    }
+  }
 
   return { ok: true as const, data: { order: order.toObject() } };
 }

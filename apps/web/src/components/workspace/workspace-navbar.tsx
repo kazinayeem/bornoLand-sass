@@ -32,7 +32,6 @@ export function WorkspaceNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const user = useAppSelector((s) => s.user.profile);
   const currentStore = useAppSelector((s) => s.currentStore);
   const { data } = useGetMyStoresQuery();
   const stores = data?.data?.stores ?? [];
@@ -49,6 +48,8 @@ export function WorkspaceNavbar() {
     "/dashboard/billing": "Billing",
     "/dashboard/team": "Team",
     "/dashboard/account": "Account",
+    "/dashboard/security": "Security",
+    "/dashboard/activity": "Activity Log",
     "/dashboard/orders": "Orders",
     "/dashboard/products": "Products",
     "/dashboard/categories": "Categories",
@@ -116,8 +117,8 @@ export function WorkspaceNavbar() {
             <Menu className="h-4 w-4" />
           </button>
           <div>
-            <h1 className="text-lg font-semibold tracking-tight text-zinc-900">{pageTitle}</h1>
-            <p className="hidden text-xs text-zinc-500 sm:block">
+            <h1 className="text-lg font-semibold tracking-tight text-zinc-950">{pageTitle}</h1>
+            <p className="hidden text-xs leading-5 text-zinc-500 sm:block">
               <span>{contextTitle}</span>
               <span className="mx-1 text-zinc-300">/</span>
               {segments.map((s, i) => (
@@ -134,7 +135,7 @@ export function WorkspaceNavbar() {
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="hidden items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50/80 px-3.5 py-2 text-sm text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-white sm:inline-flex w-52 lg:w-64"
+            className="hidden w-52 items-center gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-3.5 py-2 text-sm text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-white sm:inline-flex lg:w-64"
           >
             <Search className="h-4 w-4 shrink-0" />
             <span className="flex-1 text-left">Search...</span>
@@ -156,7 +157,7 @@ export function WorkspaceNavbar() {
             <button
               type="button"
               onClick={() => setQuickOpen(!quickOpen)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-zinc-900 px-3 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-zinc-950 px-3 text-sm font-medium text-white shadow-[0_10px_24px_-16px_rgba(15,23,42,0.75)] transition-colors hover:bg-zinc-800"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Quick Create</span>
@@ -164,7 +165,7 @@ export function WorkspaceNavbar() {
             {quickOpen && (
               <>
                 <button type="button" className="fixed inset-0 z-40" onClick={() => setQuickOpen(false)} aria-label="Close menu" />
-                <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-52 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-xl">
+                <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-52 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white py-1 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.5)]">
                   {quickActions.map((action) =>
                     action.disabled ? (
                       <span
@@ -210,7 +211,7 @@ export function WorkspaceNavbar() {
               initial={{ opacity: 0, scale: 0.96, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: -10 }}
-              className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl"
+              className="relative w-full max-w-lg overflow-hidden rounded-[1.5rem] border border-zinc-200/80 bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.5)]"
             >
               <div className="flex items-center gap-3 border-b border-zinc-100 px-4 py-3">
                 <Search className="h-5 w-5 shrink-0 text-zinc-400" />

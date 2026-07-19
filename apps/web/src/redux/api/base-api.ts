@@ -86,6 +86,7 @@ const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown,
       setAccessToken(null);
       api.dispatch(clearAuthState());
       emitApiError({ status: 401, message: "Session expired. Please sign in again." });
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("app:auth-expired"));
     }
   }
 

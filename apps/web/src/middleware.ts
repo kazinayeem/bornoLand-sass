@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 import { extractSubdomainFromHost, getApiUrl, getAppOrigin, isRootHost } from "@/lib/urls";
+import { buildLoginUrl, isAuthenticationPath, validateInternalRedirect } from "@/lib/auth-redirect";
 
 const PUBLIC_FILE = /\.(.*)$/;
 const authSecret = process.env.JWT_SECRET ?? "bornoland-dev-secret";
@@ -164,15 +165,17 @@ export default async function middleware(request: NextRequest) {
   // The user won't see a flash of login page because the client will immediately refresh.
   const hasRefreshToken = !!rawRefreshToken && /^[a-f0-9]{64}$/.test(rawRefreshToken);
 
-  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register");
+  const isAuthPage = isAuthenticationPath(pathname);
   const isProtectedRoute = pathname.startsWith("/dashboard") || pathname.startsWith("/store");
   const isAdminRoute = pathname.startsWith("/admin");
 
   // Redirect authenticated users away from login/register
   if (isAuthPage && (session || hasRefreshToken)) {
-    const redirectTo = request.nextUrl.searchParams.get("redirect") || "/dashboard";
+    const defaultDestination = pathname.startsWith("/admin/login") ? "/admin/dashboard" : "/dashboard";
+    const redirectTo = validateInternalRedirect(request.nextUrl.searchParams.get("redirect")) ?? defaultDestination;
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
+  if (isAuthPage) return NextResponse.next();
 
   // Protected routes
   if (isAdminRoute || isProtectedRoute) {
@@ -192,9 +195,9 @@ export default async function middleware(request: NextRequest) {
     }
 
     // No valid session at all — redirect to login
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+    const destination = `${pathname}${request.nextUrl.search}`;
+    const loginPath = pathname.startsWith("/admin") ? "/admin/login" : "/login";
+    return NextResponse.redirect(new URL(buildLoginUrl(destination, loginPath), request.url));
   }
 
   return NextResponse.next();

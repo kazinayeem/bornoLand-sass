@@ -35,13 +35,13 @@ export function Navbar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           <button
             type="button"
             onClick={onToggleSidebar}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 lg:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 lg:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="text-lg font-semibold tracking-tight text-zinc-900">{pageTitle}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-zinc-500">
+            <h1 className="text-lg font-semibold tracking-tight text-zinc-950">{pageTitle}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-1 text-xs leading-5 text-zinc-500">
               {breadcrumbs.map((item, index) => (
                 <span key={`${item.label}-${index}`} className="inline-flex items-center gap-1">
                   {index > 0 && <ChevronRight className="h-3 w-3 text-zinc-300" />}
@@ -63,7 +63,7 @@ export function Navbar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             <input
               type="text"
               placeholder="Search platform..."
-              className="h-9 w-56 rounded-xl border border-zinc-200 bg-zinc-50/80 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="h-9 w-56 rounded-xl border border-zinc-200/80 bg-zinc-50/80 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
           <button

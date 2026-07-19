@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
 import { connectDatabase } from "../../common/database/connection.js";
 import { NotificationModel } from "./notification.model.js";
-import type { BillingNotificationType } from "../subscriptions/subscription.constants.js";
+import type { NotificationType } from "./notification.model.js";
 
 export async function createBillingNotification(input: {
   userId: string;
   storeId?: string;
-  type: BillingNotificationType;
+  type: NotificationType;
   title: string;
   message: string;
   metadata?: Record<string, unknown>;

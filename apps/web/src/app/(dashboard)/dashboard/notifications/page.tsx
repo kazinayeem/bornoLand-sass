@@ -1,104 +1,29 @@
 "use client";
 
-import { Bell, CheckCheck, Loader2 } from "lucide-react";
-import { PageHeader } from "@/components/workspace/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import {
-  useGetNotificationsQuery,
-  useMarkAllNotificationsReadMutation,
-  useMarkNotificationReadMutation,
-} from "@/redux/api/billing-api";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import Link from "next/link";
+import { Bell, Check, CheckCheck, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/workspace/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Pagination } from "@/components/ui/pagination";
+import { ListSkeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { useClearNotificationsMutation, useDeleteNotificationMutation, useGetNotificationsQuery, useMarkAllNotificationsReadMutation, useMarkNotificationReadMutation } from "@/redux/api/billing-api";
+import { getNotificationStyle, timeAgo } from "@/components/user/notification-ui";
 
 export default function NotificationsPage() {
-  const { data, isLoading } = useGetNotificationsQuery();
-  const [markRead] = useMarkNotificationReadMutation();
-  const [markAllRead, { isLoading: markingAll }] = useMarkAllNotificationsReadMutation();
-
-  const notifications = data?.data?.notifications ?? [];
-
-  const handleMarkRead = async (id: string) => {
-    try {
-      await markRead(id).unwrap();
-    } catch {
-      toast.error("Failed to mark notification as read");
-    }
-  };
-
-  const handleMarkAllRead = async () => {
-    try {
-      await markAllRead().unwrap();
-      toast.success("All notifications marked as read");
-    } catch {
-      toast.error("Failed to mark all as read");
-    }
-  };
-
-  return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Notifications"
-        description="Stay updated on payments, trials, orders, and workspace activity."
-        actions={
-          notifications.some((n) => !n.read) ? (
-            <button
-              type="button"
-              onClick={handleMarkAllRead}
-              disabled={markingAll}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-            >
-              {markingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCheck className="h-4 w-4" />}
-              Mark all read
-            </button>
-          ) : undefined
-        }
-      />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>All Notifications</CardTitle>
-          <CardDescription>Your recent alerts and updates.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-            </div>
-          ) : notifications.length === 0 ? (
-            <EmptyState
-              icon={Bell}
-              title="No notifications yet"
-              description="When you receive orders, payment updates, or trial reminders, they'll appear here."
-            />
-          ) : (
-            <div className="space-y-2">
-              {notifications.map((notification) => (
-                <button
-                  key={notification._id}
-                  type="button"
-                  onClick={() => !notification.read && handleMarkRead(notification._id)}
-                  className={`w-full rounded-xl border px-4 py-3 text-left transition-colors ${
-                    notification.read ? "border-zinc-100 bg-white" : "border-blue-100 bg-blue-50/50"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium text-zinc-900">{notification.title}</p>
-                      <p className="mt-0.5 text-sm text-zinc-600">{notification.message}</p>
-                      <p className="mt-1 text-xs text-zinc-400">
-                        {new Date(notification.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    {!notification.read && <Badge variant="primary">New</Badge>}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
+  const [page, setPage] = useState(1); const [filter, setFilter] = useState<"all" | "unread">("all");
+  const { data, isLoading, isFetching } = useGetNotificationsQuery({ page, limit: 10, unreadOnly: filter === "unread" }, { pollingInterval: 15000, refetchOnFocus: true });
+  const [markRead] = useMarkNotificationReadMutation(); const [markAll, { isLoading: markingAll }] = useMarkAllNotificationsReadMutation();
+  const [remove] = useDeleteNotificationMutation(); const [clearAll, { isLoading: clearing }] = useClearNotificationsMutation();
+  const notifications = data?.data?.notifications ?? []; const pagination = data?.data?.pagination; const unread = data?.data?.unreadCount ?? 0;
+  const allRead = async () => { try { await markAll().unwrap(); toast.success("All notifications marked as read"); } catch { toast.error("Could not update notifications"); } };
+  const clear = async () => { if (!window.confirm("Permanently clear every notification?")) return; try { await clearAll().unwrap(); setPage(1); toast.success("Notifications cleared"); } catch { toast.error("Could not clear notifications"); } };
+  return <div className="mx-auto max-w-5xl space-y-7 pb-16"><PageHeader title="Notification center" description="Stay current on orders, payments, subscriptions, security, and system activity." actions={<div className="flex flex-wrap gap-2">{unread > 0 && <button type="button" onClick={() => void allRead()} disabled={markingAll} className="inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50">{markingAll ? <Loader2 className="h-4 w-4 animate-spin"/> : <CheckCheck className="h-4 w-4"/>}Mark all read</button>}<button type="button" onClick={() => void clear()} disabled={clearing || (!isLoading && (pagination?.total ?? 0) === 0)} className="inline-flex h-10 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50">{clearing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4"/>}Clear all</button></div>}/>
+    <section className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm"><div className="flex flex-col gap-3 border-b border-zinc-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex rounded-xl bg-zinc-100 p-1">{(["all","unread"] as const).map((value) => <button type="button" key={value} onClick={() => { setFilter(value); setPage(1); }} className={cn("rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition", filter === value ? "bg-white text-zinc-950 shadow-sm" : "text-zinc-500")}>{value}{value === "unread" && unread > 0 ? ` (${unread})` : ""}</button>)}</div>{isFetching && !isLoading && <span className="inline-flex items-center gap-1.5 text-xs text-zinc-400"><Loader2 className="h-3 w-3 animate-spin"/>Updating</span>}</div>
+      <div className="p-3 sm:p-4">{isLoading ? <ListSkeleton rows={6}/> : notifications.length === 0 ? <EmptyState icon={Bell} title={filter === "unread" ? "No unread notifications" : "No notifications yet"} description={filter === "unread" ? "You're all caught up." : "New orders, payments, alerts, and updates will appear here."}/> : <div className="space-y-2">{notifications.map((notification) => { const style = getNotificationStyle(notification.type); const Icon = style.icon; return <div key={notification._id} className={cn("group flex items-start gap-3 rounded-2xl border p-4 transition hover:border-zinc-300 hover:shadow-sm", notification.isRead ? "border-zinc-100 bg-white" : "border-blue-100 bg-blue-50/50")}><div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl", style.className)}><Icon className="h-4 w-4"/></div><Link href={notification.actionUrl || "#"} onClick={() => { if (!notification.isRead) void markRead(notification._id); }} className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="text-sm font-semibold text-zinc-950">{notification.title}</h2>{!notification.isRead && <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">Unread</span>}</div><p className="mt-1 text-sm leading-6 text-zinc-600">{notification.message}</p><div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-400"><span className="capitalize">{style.label}</span><span>•</span><time title={new Date(notification.createdAt).toLocaleString()}>{timeAgo(notification.createdAt)}</time></div></Link><div className="flex shrink-0 gap-1">{!notification.isRead && <button type="button" onClick={async () => { try { await markRead(notification._id).unwrap(); } catch { toast.error("Could not mark as read"); } }} title="Mark as read" className="rounded-xl p-2 text-zinc-400 hover:bg-white hover:text-zinc-800"><Check className="h-4 w-4"/></button>}<button type="button" title="Delete" onClick={async () => { try { await remove(notification._id).unwrap(); toast.success("Notification deleted"); } catch { toast.error("Could not delete notification"); } }} className="rounded-xl p-2 text-zinc-400 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-4 w-4"/></button></div></div>; })}</div>}</div>
+      {pagination && pagination.total > 0 && <div className="border-t border-zinc-100 px-5 pb-4"><Pagination page={pagination.page} totalPages={pagination.pages} total={pagination.total} pageSize={pagination.limit} onPageChange={setPage}/></div>}
+    </section>
+  </div>;
 }

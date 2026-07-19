@@ -1,5 +1,6 @@
 import { baseApi } from "@/redux/api/base-api";
 import { setAccessToken } from "@/lib/access-token";
+import { rememberRedirectAfterLogin } from "@/lib/auth-redirect-client";
 
 export type SessionUser = {
   id: string;
@@ -144,6 +145,7 @@ export const authApi = baseApi.injectEndpoints({
         setAccessToken(null);
         return response;
       },
+      onQueryStarted: () => { rememberRedirectAfterLogin(); },
       invalidatesTags: ["Auth", "User", "Tenant", "Dashboard"]
     })
   })

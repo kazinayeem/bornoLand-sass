@@ -17,6 +17,7 @@ import { useAppDispatch } from "@/hooks/redux";
 import { setAuthState } from "@/redux/slices/auth-slice";
 import { setUserProfile } from "@/redux/slices/user-slice";
 import { setTenantContext } from "@/redux/slices/tenant-slice";
+import { consumeRedirectAfterLogin } from "@/lib/auth-redirect-client";
 
 export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin" }) {
   const router = useRouter();
@@ -61,7 +62,9 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
     dispatch(setUserProfile(payload.user));
     dispatch(setTenantContext({ tenantId: payload.user.tenantId }));
 
-    router.push(loginType === "admin" ? "/admin/dashboard" : "/dashboard");
+    const queryRedirect = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect") : null;
+    const destination = consumeRedirectAfterLogin(queryRedirect, loginType === "admin" ? "/admin/dashboard" : "/dashboard");
+    router.replace(destination);
     router.refresh();
   });
 

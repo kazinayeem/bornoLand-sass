@@ -12,6 +12,9 @@ import {
 import { useState, useEffect } from "react";
 import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
+import { useLogoutMutation } from "@/redux/api/auth-api";
+import { getLoginUrlForCurrentPage } from "@/lib/auth-redirect-client";
+import { toast } from "sonner";
 
 const mainLinks = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -42,6 +45,7 @@ export function UserSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [showStorePicker, setShowStorePicker] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [logout] = useLogoutMutation();
   useEffect(() => { setHydrated(true); }, []);
 
   const currentStore = stores.find((s) => s._id === currentStoreId);
@@ -179,7 +183,7 @@ export function UserSidebar() {
               <p className="truncate text-xs text-zinc-500">{user?.email ?? ""}</p>
             </div>
           </div>
-          <button onClick={() => router.push("/login")}
+          <button onClick={async () => { try { await logout().unwrap(); router.replace(getLoginUrlForCurrentPage()); } catch { toast.error("Failed to sign out"); } }}
             className="flex w-full items-center gap-2 rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600">
             <LogOut className="h-4 w-4" />
             <span className="text-sm">Sign out</span>

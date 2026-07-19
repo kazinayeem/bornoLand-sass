@@ -15,6 +15,8 @@ import { DEFAULT_PLANS } from "./defaults/plan.defaults.js";
 import { DEFAULT_PLAN_FEATURE_MATRIX } from "./defaults/plan-feature.defaults.js";
 import { DEFAULT_STORAGE_BY_PLAN_SLUG } from "./defaults/storage-plan.defaults.js";
 import { BOOTSTRAP_MIGRATION_VERSION, MigrationStateModel } from "./migration-state.model.js";
+import mongoose from "mongoose";
+import { NotificationModel } from "../modules/notifications/notification.model.js";
 
 const PLATFORM_SETTINGS_DEFAULTS = {
   key: "global",
@@ -329,6 +331,32 @@ export async function ensureSuperAdminIfMissing() {
   console.log(`[bootstrap] Created default Super Admin (${email}) — change password after first login.`);
 }
 
+export async function ensureNotificationsMigratedSafe() {
+  await connectDatabase();
+  const legacy = await mongoose.connection.collection("billingnotifications").find({}).toArray();
+  if (legacy.length === 0) return;
+  await NotificationModel.bulkWrite(legacy.map((item) => ({
+    updateOne: {
+      filter: { _id: item._id },
+      update: {
+        $setOnInsert: {
+          userId: item.userId,
+          storeId: item.storeId ?? null,
+          title: item.title,
+          message: item.message,
+          type: item.type,
+          isRead: Boolean(item.isRead ?? item.read),
+          actionUrl: item.actionUrl ?? "",
+          metadata: item.metadata ?? {},
+          createdAt: item.createdAt ?? new Date(),
+          updatedAt: item.updatedAt ?? item.createdAt ?? new Date(),
+        },
+      },
+      upsert: true,
+    },
+  })), { ordered: false });
+}
+
 export async function runSafeMigration() {
   await connectDatabase();
 
@@ -342,6 +370,7 @@ export async function runSafeMigration() {
     ["storage-plans", ensureDefaultStoragePlansSafe],
     ["platform-settings", ensurePlatformSettingsSafe],
     ["payment-methods", ensurePlatformPaymentMethodsSafe],
+    ["notifications", ensureNotificationsMigratedSafe],
     ["super-admin", ensureSuperAdminIfMissing],
   ];
 

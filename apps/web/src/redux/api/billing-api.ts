@@ -38,17 +38,23 @@ export type BillingNotification = {
 export type Invoice = {
   _id: string;
   invoiceNumber: string;
-  storeId: string;
+  storeId: string | { _id: string; name: string; slug: string; subdomain?: string };
   planId: { name: string; slug: string };
+  userId?: string | { _id: string; name: string; email: string };
   duration: SubscriptionDuration;
   subtotal: number;
+  discount: number;
   vatAmount: number;
   taxAmount: number;
   total: number;
   currency: string;
   status: string;
-  paidAt: string;
+  gateway?: string;
+  transactionId?: string;
+  senderNumber?: string;
+  paidAt?: string;
   createdAt: string;
+  verificationCode?: string;
 };
 
 type ApiEnvelope<T> = { success?: boolean; data?: T; message?: string };
@@ -112,6 +118,46 @@ export const billingApi = baseApi.injectEndpoints({
       query: (body) => ({ url: "/plans/checkout/callback", method: "POST", body }),
       invalidatesTags: ["Subscriptions", "Notifications", "Stores", "SubscriptionPayments", "Invoices"],
     }),
+    // Admin invoice endpoints
+    getAdminInvoices: builder.query<
+      ApiEnvelope<{ invoices: Invoice[]; total: number; page: number; totalPages: number }>,
+      { status?: string; storeId?: string; planId?: string; gateway?: string; search?: string; page?: number; limit?: number } | void
+    >({
+      query: (params) => ({
+        url: "/invoices/admin/search",
+        params: params ? Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== "")) : undefined,
+      }),
+      providesTags: ["Invoices"],
+    }),
+    getAdminInvoice: builder.query<ApiEnvelope<{ invoice: Invoice }>, string>({
+      query: (id) => ({ url: `/invoices/${id}` }),
+      providesTags: (_r, _e, id) => [{ type: "Invoices", id }],
+    }),
+    updateInvoiceStatus: builder.mutation<
+      ApiEnvelope<{ invoice: Invoice }>,
+      { id: string; status: "paid" | "pending" | "rejected" | "refunded" }
+    >({
+      query: ({ id, status }) => ({
+        url: `/invoices/${id}/status`,
+        method: "PATCH",
+        body: { status },
+      }),
+      invalidatesTags: ["Invoices"],
+    }),
+    regenerateInvoiceToken: builder.mutation<ApiEnvelope<{ invoice: Invoice }>, string>({
+      query: (id) => ({
+        url: `/invoices/${id}/regenerate-token`,
+        method: "POST",
+      }),
+      invalidatesTags: ["Invoices"],
+    }),
+    emailInvoice: builder.mutation<ApiEnvelope<{ sent: boolean }>, { id: string; email?: string }>({
+      query: ({ id, ...body }) => ({
+        url: `/invoices/${id}/email`,
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -127,4 +173,9 @@ export const {
   useRunBillingCronMutation,
   useInitiateCheckoutMutation,
   useCheckoutCallbackMutation,
+  useGetAdminInvoicesQuery,
+  useGetAdminInvoiceQuery,
+  useUpdateInvoiceStatusMutation,
+  useRegenerateInvoiceTokenMutation,
+  useEmailInvoiceMutation,
 } = billingApi;

@@ -214,3 +214,69 @@ export async function updateInvoiceStatus(
   await invoice.save();
   return { ok: true as const, data: { invoice: invoice.toObject() } };
 }
+
+// ─── Regenerate verification token (admin) ──────────────────────────────────
+
+export async function regenerateVerificationToken(invoiceId: string) {
+  await connectDatabase();
+  const invoice = await InvoiceModel.findById(invoiceId);
+  if (!invoice) return { ok: false as const, message: "Invoice not found" };
+
+  invoice.verificationCode = crypto.randomBytes(16).toString("hex");
+  await invoice.save();
+  return { ok: true as const, data: { invoice: invoice.toObject() } };
+}
+
+// ─── Search invoices (admin) ────────────────────────────────────────────────
+
+export async function searchInvoices(params: {
+  status?: string;
+  storeId?: string;
+  planId?: string;
+  gateway?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}) {
+  await connectDatabase();
+
+  const filter: Record<string, unknown> = {};
+  if (params.status) filter.status = params.status;
+  if (params.storeId) filter.storeId = params.storeId;
+  if (params.planId) filter.planId = params.planId;
+  if (params.gateway) filter.gateway = params.gateway;
+  if (params.search) {
+    filter.$or = [
+      { invoiceNumber: { $regex: params.search, $options: "i" } },
+      { transactionId: { $regex: params.search, $options: "i" } },
+    ];
+  }
+
+  const page = Math.max(1, params.page || 1);
+  const limit = Math.min(100, Math.max(1, params.limit || 20));
+  const skip = (page - 1) * limit;
+
+  const [invoices, total] = await Promise.all([
+    InvoiceModel.find(filter)
+      .populate("planId", "name slug")
+      .populate("storeId", "name slug subdomain")
+      .populate("userId", "name email")
+      .populate("approvedBy", "name email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    InvoiceModel.countDocuments(filter),
+  ]);
+
+  return {
+    ok: true as const,
+    data: {
+      invoices,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}

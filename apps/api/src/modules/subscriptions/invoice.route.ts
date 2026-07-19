@@ -10,7 +10,10 @@ import {
   listAllInvoices,
   verifyInvoice,
   updateInvoiceStatus,
+  regenerateVerificationToken,
+  searchInvoices,
 } from "./invoice.service.js";
+import { sendEmail } from "../../common/integrations/email.js";
 import { generateInvoicePdf } from "./invoice-pdf.service.js";
 import { InvoiceModel } from "./invoice.model.js";
 import { sendSuccess, sendFailure } from "../../common/utils/api-response.js";
@@ -126,6 +129,99 @@ invoiceRouter.post("/:id/regenerate-pdf", requireRole("super_admin"), async (req
     return response.send(pdfBuffer);
   } catch (error) {
     console.error("[PDF Regeneration Error]", error);
+    return sendFailure(response, "Failed to generate PDF", 500);
+  }
+});
+
+// ─── Admin: Search invoices with filters ─────────────────────────────────────
+
+invoiceRouter.get("/admin/search", requireRole("super_admin"), async (request: AuthRequest, response: Response) => {
+  const { status, storeId, planId, gateway, search, page, limit } = request.query as Record<string, string>;
+  const result = await searchInvoices({
+    status,
+    storeId,
+    planId,
+    gateway,
+    search,
+    page: page ? parseInt(page) : undefined,
+    limit: limit ? parseInt(limit) : undefined,
+  });
+  return sendSuccess(response, result.data);
+});
+
+// ─── Admin: Regenerate verification token ────────────────────────────────────
+
+invoiceRouter.post("/:id/regenerate-token", requireRole("super_admin"), async (request: AuthRequest, response: Response) => {
+  const result = await regenerateVerificationToken(String(request.params.id));
+  return result.ok ? sendSuccess(response, result.data) : sendFailure(response, result.message, 404);
+});
+
+// ─── Admin: Email invoice ────────────────────────────────────────────────────
+
+invoiceRouter.post("/:id/email", requireRole("super_admin"), async (request: AuthRequest, response: Response) => {
+  try {
+    const { email } = request.body as { email?: string };
+    const invoiceDoc = await InvoiceModel.findById(String(request.params.id))
+      .populate("planId", "name slug")
+      .populate("storeId", "name slug subdomain")
+      .populate("userId", "name email phone")
+      .lean();
+
+    if (!invoiceDoc) return sendFailure(response, "Invoice not found", 404);
+
+    const inv = invoiceDoc as Record<string, unknown>;
+    const toEmail = email || String((inv.userId as Record<string, unknown>)?.email || "");
+    if (!toEmail) return sendFailure(response, "No email address found", 400);
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "http://localhost:3000";
+    const verificationUrl = `${baseUrl}/invoices/verify/${inv.verificationCode}`;
+    const planName = typeof inv.planId === "object" ? (inv.planId as Record<string, unknown>)?.name : "Plan";
+
+    await sendEmail({
+      to: toEmail,
+      subject: `Invoice ${inv.invoiceNumber} - BornoLand`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1e293b;">Invoice ${inv.invoiceNumber}</h2>
+          <p>Your invoice for <strong>${planName}</strong> is ready.</p>
+          <p><strong>Amount:</strong> ${inv.currency} ${inv.total}</p>
+          <p><strong>Status:</strong> ${inv.status}</p>
+          <p><a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px;">View Invoice</a></p>
+          <p style="color: #64748b; font-size: 12px; margin-top: 24px;">Powered by BornoLand</p>
+        </div>
+      `,
+    });
+
+    return sendSuccess(response, { sent: true }, "Invoice emailed successfully");
+  } catch (error) {
+    console.error("[Invoice Email Error]", error);
+    return sendFailure(response, "Failed to send email", 500);
+  }
+});
+
+// ─── Admin: Download PDF (any invoice) ──────────────────────────────────────
+
+invoiceRouter.get("/admin/:id/pdf", requireRole("super_admin"), async (request: AuthRequest, response: Response) => {
+  try {
+    const invoiceDoc = await InvoiceModel.findById(String(request.params.id))
+      .populate("planId", "name slug")
+      .populate("storeId", "name slug subdomain")
+      .populate("userId", "name email phone")
+      .populate("approvedBy", "name email")
+      .populate("paymentId")
+      .lean();
+
+    if (!invoiceDoc) return sendFailure(response, "Invoice not found", 404);
+
+    const inv = invoiceDoc as Record<string, unknown>;
+    const pdfBuffer = await generateInvoicePdf(inv as never);
+
+    response.setHeader("Content-Type", "application/pdf");
+    response.setHeader("Content-Disposition", `attachment; filename="${String(inv.invoiceNumber)}.pdf"`);
+    response.setHeader("Content-Length", pdfBuffer.length);
+    return response.send(pdfBuffer);
+  } catch (error) {
+    console.error("[Admin PDF Error]", error);
     return sendFailure(response, "Failed to generate PDF", 500);
   }
 });

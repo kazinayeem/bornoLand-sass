@@ -40,6 +40,7 @@ import {
   platformStoreStorageListController,
   updatePlanStorageController,
   updateStoreStorageController,
+  recalculateAllStorageLimitsController,
 } from "../media/admin-storage.controller.js";
 import { adminAuditRouter } from "../audit/audit.route.js";
 import { recordAuditFromRequest } from "../audit/audit.service.js";
@@ -576,6 +577,7 @@ adminRouter.put("/storage/stores/:storeId", updateStoreStorageController);
 adminRouter.post("/storage/stores/:storeId/cleanup", adminForceCleanupController);
 adminRouter.delete("/storage/stores/:storeId/files/:fileId", adminDeleteMediaController);
 adminRouter.put("/storage/plans/:planId", updatePlanStorageController);
+adminRouter.post("/storage/recalculate", recalculateAllStorageLimitsController);
 
 // ── Overview (legacy - keep for backward compat) ──────────────────
 adminRouter.get("/overview", async (_request, response) => {

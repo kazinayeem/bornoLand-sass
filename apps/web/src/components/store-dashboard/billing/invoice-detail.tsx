@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Download, Printer, FileText, CheckCircle2, CreditCard } from "lucide-react";
+import { X, Download, Printer, FileText, CheckCircle2, CreditCard, Loader2 } from "lucide-react";
 import type { Invoice } from "@/redux/api/billing-api";
 import { formatBDT } from "@/lib/store-status";
 import { Badge } from "@/components/ui/badge";
+import { getAccessToken } from "@/lib/access-token";
+import { getApiUrl } from "@/lib/urls";
+import { toast } from "sonner";
 
 type Props = {
   invoice: Invoice;
@@ -13,8 +17,80 @@ type Props = {
   ownerName?: string;
 };
 
+async function downloadInvoicePdf(invoiceId: string, invoiceNumber: string) {
+  const apiBase = getApiUrl();
+  const token = getAccessToken();
+  const url = `${apiBase}/invoices/${invoiceId}/pdf`;
+
+  const response = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to download PDF");
+  }
+
+  const blob = await response.blob();
+  const blobUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = `${invoiceNumber}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(blobUrl);
+}
+
+async function printInvoicePdf(invoiceId: string) {
+  const apiBase = getApiUrl();
+  const token = getAccessToken();
+  const url = `${apiBase}/invoices/${invoiceId}/pdf`;
+
+  const response = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to load PDF for printing");
+  }
+
+  const blob = await response.blob();
+  const blobUrl = window.URL.createObjectURL(blob);
+  const printWindow = window.open(blobUrl, "_blank");
+  if (printWindow) {
+    printWindow.onload = () => {
+      printWindow.print();
+    };
+  }
+}
+
 export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props) {
+  const [downloading, setDownloading] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const planName = typeof invoice.planId === "object" ? invoice.planId.name : "—";
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      await downloadInvoicePdf(invoice._id, invoice.invoiceNumber);
+      toast.success("Invoice downloaded successfully");
+    } catch {
+      toast.error("Failed to download invoice. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    setPrinting(true);
+    try {
+      await printInvoicePdf(invoice._id);
+    } catch {
+      toast.error("Failed to open print dialog. Please try again.");
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   return (
     <motion.div
@@ -40,7 +116,7 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
               <p className="text-sm text-zinc-500">{invoice.invoiceNumber}</p>
             </div>
           </div>
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-zinc-100">
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-zinc-100 transition-colors">
             <X className="h-4 w-4 text-zinc-500" />
           </button>
         </div>
@@ -129,13 +205,29 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
 
         {/* Actions */}
         <div className="border-t border-zinc-100 px-6 py-4 flex gap-3">
-          <button className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50">
-            <Download className="h-4 w-4" />
-            Download PDF
+          <button
+            onClick={handleDownload}
+            disabled={downloading}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-all duration-200 disabled:opacity-50"
+          >
+            {downloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {downloading ? "Downloading..." : "Download PDF"}
           </button>
-          <button className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50">
-            <Printer className="h-4 w-4" />
-            Print
+          <button
+            onClick={handlePrint}
+            disabled={printing}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-all duration-200 disabled:opacity-50"
+          >
+            {printing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Printer className="h-4 w-4" />
+            )}
+            {printing ? "Opening..." : "Print"}
           </button>
         </div>
       </motion.div>

@@ -111,6 +111,7 @@ export async function syncStorageUsage(storeId: string) {
 }
 
 // ── Read stats from database (NO filesystem scanning) ────────────────
+// Auto-syncs limitBytes from current plan when a mismatch is detected.
 export async function getStorageStats(storeId: string) {
   await connectDatabase();
   const usage = (await StorageUsageModel.findOne({ storeId }).lean()) as {
@@ -129,6 +130,35 @@ export async function getStorageStats(storeId: string) {
   if (limitBytes <= 0) {
     const resolved = await resolveStorageLimitMB(storeId);
     limitBytes = resolved.unlimited ? 0 : Math.round(resolved.limitMB * 1024 * 1024);
+    // Persist the resolved limit so future reads are fast
+    if (limitBytes > 0 || resolved.unlimited) {
+      await StorageUsageModel.findOneAndUpdate(
+        { storeId },
+        { $set: { limitBytes: resolved.unlimited ? 0 : limitBytes, unlimited: resolved.unlimited } },
+        { upsert: true }
+      );
+    }
+  } else {
+    // Check if the plan's limit has changed since last sync
+    const resolved = await resolveStorageLimitMB(storeId);
+    const currentPlanLimitBytes = resolved.unlimited ? 0 : Math.round(resolved.limitMB * 1024 * 1024);
+    if (currentPlanLimitBytes !== limitBytes || resolved.unlimited !== (usage?.unlimited ?? false)) {
+      // Plan limit changed — update cached value
+      limitBytes = currentPlanLimitBytes;
+      await StorageUsageModel.findOneAndUpdate(
+        { storeId },
+        { $set: { limitBytes: currentPlanLimitBytes, unlimited: resolved.unlimited } },
+        { upsert: true }
+      );
+      // Also sync the Store model denormalized field
+      const store = await StoreModel.findById(storeId).select("_id").lean();
+      if (store) {
+        await StoreModel.updateOne(
+          { _id: storeId },
+          { $set: { storageLimitBytes: currentPlanLimitBytes, storageUpdatedAt: new Date() } }
+        );
+      }
+    }
   }
   const percentUsed = limitBytes > 0 ? Math.min(100, Math.round((usedBytes / limitBytes) * 100)) : 0;
 

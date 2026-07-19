@@ -8,7 +8,7 @@ import { PlanModel } from "../plans/plan.model.js";
 import { StorageUsageModel } from "./storage-usage.model.js";
 import { StoragePlanModel } from "./storage-plan.model.js";
 import { MediaFileModel } from "./media-file.model.js";
-import { getStorageStats, syncStorageUsage } from "./media-storage.service.js";
+import { getStorageStats, syncStorageUsage, recalculateAllStoreStorage } from "./media-storage.service.js";
 import { deleteMediaFile } from "./media.service.js";
 import { getStorageProvider } from "./providers/index.js";
 
@@ -112,4 +112,9 @@ export async function adminDeleteMediaController(request: AuthRequest, response:
   const fileId = String(request.params.fileId);
   const result = await deleteMediaFile(storeId, fileId, request.user?.userId);
   return result.ok ? sendSuccess(response, result.data, "File deleted") : sendFailure(response, result.message, 404);
+}
+
+export async function recalculateAllStorageLimitsController(_request: AuthRequest, response: Response) {
+  const results = await recalculateAllStoreStorage();
+  return sendSuccess(response, results, `Recalculated storage for ${results.processed} stores (${results.failed} failed)`);
 }

@@ -64,9 +64,40 @@ export async function getStoreUsageReport(storeId: string): Promise<StoreUsageRe
 
   const usedBytes = (storageUsage as { usedBytes?: number } | null)?.usedBytes ?? 0;
   let limitBytes = (storageUsage as { limitBytes?: number } | null)?.limitBytes ?? 0;
+  const cachedUnlimited = (storageUsage as { unlimited?: boolean } | null)?.unlimited ?? false;
   if (limitBytes <= 0) {
     const resolved = await resolveStorageLimitMB(storeId);
     limitBytes = resolved.unlimited ? 0 : Math.round(resolved.limitMB * 1024 * 1024);
+    // Persist resolved limit for future reads
+    if (limitBytes > 0 || resolved.unlimited) {
+      const { StorageUsageModel: SUM } = await import("../../models/storage-usage.model.js");
+      await SUM.findOneAndUpdate(
+        { storeId: storeObjectId },
+        { $set: { limitBytes: resolved.unlimited ? 0 : limitBytes, unlimited: resolved.unlimited } },
+        { upsert: true }
+      );
+    }
+  } else {
+    // Check if plan limit changed since last sync
+    const resolved = await resolveStorageLimitMB(storeId);
+    const currentPlanLimitBytes = resolved.unlimited ? 0 : Math.round(resolved.limitMB * 1024 * 1024);
+    if (currentPlanLimitBytes !== limitBytes || resolved.unlimited !== cachedUnlimited) {
+      limitBytes = currentPlanLimitBytes;
+      const { StorageUsageModel: SUM } = await import("../../models/storage-usage.model.js");
+      await SUM.findOneAndUpdate(
+        { storeId: storeObjectId },
+        { $set: { limitBytes: currentPlanLimitBytes, unlimited: resolved.unlimited } },
+        { upsert: true }
+      );
+      // Also sync Store model
+      const store = await StoreModel.findById(storeObjectId).select("_id").lean();
+      if (store) {
+        await StoreModel.updateOne(
+          { _id: storeObjectId },
+          { $set: { storageLimitBytes: currentPlanLimitBytes, storageUpdatedAt: new Date() } }
+        );
+      }
+    }
   }
   const storageMB = Math.round(usedBytes / (1024 * 1024));
   const limitMB = Math.round(limitBytes / (1024 * 1024));

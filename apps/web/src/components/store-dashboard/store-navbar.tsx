@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { Bell, ChevronRight, Search } from "lucide-react";
+import { Bell, ChevronRight, Search, Command } from "lucide-react";
 import type { Store } from "@/redux/api/store-api";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useGetProductQuery } from "@/redux/api/product-api";
-import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 
 function titleCase(value: string) {
   return value.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
@@ -60,24 +59,20 @@ export function StoreNavbar({ store }: { store: Store }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-zinc-200/80 bg-white/90 px-4 py-3 backdrop-blur-xl sm:px-6">
+    <header className="sticky top-0 z-30 hidden border-b border-[#ececec] bg-white/80 px-8 py-4 backdrop-blur-xl lg:block">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <StoreBrandMark store={store} size={28} roundedClassName="rounded-lg" />
-            <p className="truncate text-xs font-medium uppercase tracking-wider text-zinc-400">{store.shortName || store.name}</p>
-          </div>
-          <h1 className="truncate text-lg font-semibold text-zinc-900">{pageTitle}</h1>
-          <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-zinc-500">
+          <h1 className="text-lg font-bold tracking-tight text-zinc-900">{pageTitle}</h1>
+          <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-zinc-400">
             {breadcrumbs.map((item, index) => (
               <span key={`${item.label}-${index}`} className="inline-flex items-center gap-1">
                 {index > 0 && <ChevronRight className="h-3 w-3 text-zinc-300" />}
                 {item.href ? (
-                  <Link href={item.href} className="hover:text-zinc-700">
+                  <Link href={item.href} className="transition-colors hover:text-zinc-700">
                     {item.label}
                   </Link>
                 ) : (
-                  <span>{item.label}</span>
+                  <span className="text-zinc-600">{item.label}</span>
                 )}
               </span>
             ))}
@@ -86,14 +81,18 @@ export function StoreNavbar({ store }: { store: Store }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="hidden h-9 w-52 items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-500 sm:inline-flex"
+            className="hidden h-9 items-center gap-2 rounded-xl border border-[#ececec] bg-zinc-50/80 px-3 text-sm text-zinc-400 transition-all duration-200 hover:border-zinc-300 hover:bg-white sm:inline-flex"
           >
-            <Search className="h-4 w-4" />
-            Search store...
+            <Search className="h-3.5 w-3.5" />
+            <span>Search</span>
+            <kbd className="ml-2 inline-flex items-center gap-0.5 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+              <Command className="h-2.5 w-2.5" />K
+            </kbd>
           </button>
           <Link
             href="/dashboard/notifications"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-50"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#ececec] text-zinc-400 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-600"
+            aria-label="Notifications"
           >
             <Bell className="h-4 w-4" />
           </Link>

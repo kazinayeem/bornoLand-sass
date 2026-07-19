@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Loader2,
@@ -13,6 +13,8 @@ import {
   ChevronRight,
   Banknote,
   ShieldCheck,
+  Tag,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -92,6 +94,10 @@ export function PaymentSubmissionFlow({
   const [notes, setNotes] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
   const enabledDurations = useMemo(() => {
     const config = billingConfig?.enabledDurations ?? {
@@ -107,6 +113,37 @@ export function PaymentSubmissionFlow({
   const selectedMethod = methods.find((m) => m.type === paymentMethod);
   const paymentAmount = selectedPlan ? getPlanAmount(selectedPlan, duration) : 0;
   const totalMonths = DURATION_MONTHS[duration];
+
+  // Coupon / Discount / Tax calculations
+  const discountAmount = couponApplied ? couponDiscount : 0;
+  const subtotalAfterDiscount = Math.max(0, paymentAmount - discountAmount);
+  const taxRate = 0; // Tax can be configured per plan
+  const taxAmount = Math.round(subtotalAfterDiscount * taxRate);
+  const finalTotal = subtotalAfterDiscount + taxAmount;
+
+  const handleApplyCoupon = useCallback(() => {
+    if (!couponCode.trim()) return;
+    setApplyingCoupon(true);
+    // Simulate coupon validation — in production this calls a backend endpoint
+    setTimeout(() => {
+      // For demo: any 3+ char code gives 10% discount
+      if (couponCode.trim().length >= 3) {
+        const discount = Math.round(paymentAmount * 0.1);
+        setCouponDiscount(discount);
+        setCouponApplied(true);
+        toast.success(`Coupon applied! You save ${formatBDT(discount)}`);
+      } else {
+        toast.error("Invalid coupon code");
+      }
+      setApplyingCoupon(false);
+    }, 800);
+  }, [couponCode, paymentAmount]);
+
+  const handleRemoveCoupon = useCallback(() => {
+    setCouponCode("");
+    setCouponDiscount(0);
+    setCouponApplied(false);
+  }, []);
 
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

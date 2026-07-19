@@ -75,6 +75,13 @@ export const adminStorageApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Media"],
     }),
+    recalculateAllStorageLimits: builder.mutation<ApiEnvelope<{ processed: number; failed: number }>, void>({
+      query: () => ({
+        url: "/admin/storage/recalculate",
+        method: "POST",
+      }),
+      invalidatesTags: ["Media", "Stores"],
+    }),
   }),
 });
 
@@ -84,4 +91,5 @@ export const {
   useUpdateStoreStorageMutation,
   useUpdatePlanStorageMutation,
   useCleanupStoreStorageMutation,
+  useRecalculateAllStorageLimitsMutation,
 } = adminStorageApi;

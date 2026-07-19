@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useCallback, createContext, useContext } from "react";
 import {
   LayoutDashboard,
   Package,
@@ -28,26 +28,42 @@ import {
   Lock,
   ScrollText,
   Eye,
-  TrendingUp,
-  Wallet,
   Activity,
   Monitor,
-  Smartphone,
   MapPin,
   Building,
   ExternalLink,
   Link2,
   Target,
   FileSpreadsheet,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
-import { Badge } from "@/components/ui/badge";
 import { resolveStoreStatus, storeStatusConfig, getTrialDaysRemaining } from "@/lib/store-status";
 import { useGetStoreFeatureAccessQuery, NAV_FEATURE_MAP, getFeatureByKey } from "@/redux/api/feature-api";
 import { ComingSoonBadge } from "@/components/ecommerce/coming-soon-badge";
 import { useGetMediaStatsQuery } from "@/redux/api/media-api";
 import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
+
+/* ── Sidebar Collapse Context ─────────────────────────────────── */
+
+type SidebarContextValue = {
+  collapsed: boolean;
+  setCollapsed: (v: boolean) => void;
+};
+
+const SidebarContext = createContext<SidebarContextValue>({
+  collapsed: false,
+  setCollapsed: () => {},
+});
+
+export function useSidebar() {
+  return useContext(SidebarContext);
+}
+
+/* ── Navigation Data ──────────────────────────────────────────── */
 
 const mainLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -61,6 +77,7 @@ const mainLinks = [
   { href: "/cms", label: "CMS", icon: FileText, featureKey: "cms" },
   { href: "/pages", label: "Pages", icon: FileText, featureKey: "cms" },
   { href: "/media", label: "Media", icon: Image, featureKey: "media" },
+  { href: "/builder", label: "Builder", icon: Sparkles, featureKey: "builder" },
   { href: "/theme", label: "Theme", icon: Palette },
   { href: "/marketing", label: "Marketing", icon: Megaphone, featureKey: "marketing", comingSoon: true },
   { href: "/apps", label: "Apps", icon: Blocks, featureKey: "apps", comingSoon: true },
@@ -78,7 +95,7 @@ const analyticsSubLinks = [
   { href: "/analytics/pages", label: "Pages", icon: ExternalLink },
   { href: "/analytics/referrers", label: "Referrers", icon: Link2 },
   { href: "/analytics/campaigns", label: "Campaigns", icon: Target },
-  { href: "/analytics/conversion", label: "Conversion", icon: TrendingUp },
+  { href: "/analytics/conversion", label: "Conversion", icon: BarChart3 },
   { href: "/analytics/reports", label: "Reports", icon: FileSpreadsheet },
 ];
 
@@ -89,11 +106,12 @@ const appearanceLinks = [
 ];
 
 const bottomLinks = [
-  { href: "/activity", label: "Activity", icon: ScrollText },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/activity", label: "Activity", icon: ScrollText },
   { href: "/billing", label: "Billing", icon: CreditCard },
-  { href: "/builder", label: "Builder", icon: Sparkles },
 ];
+
+/* ── Nav Item ─────────────────────────────────────────────────── */
 
 function NavItem({
   href,
@@ -115,6 +133,7 @@ function NavItem({
   comingSoon?: boolean;
 }) {
   const pathname = usePathname();
+  const { collapsed } = useSidebar();
   const fullHref = `${basePath}${href}`;
   const active = exact
     ? pathname === fullHref
@@ -123,27 +142,57 @@ function NavItem({
   return (
     <Link
       href={fullHref}
-      title={locked ? `Available in ${requiredPlan ?? "a higher plan"}` : undefined}
+      title={collapsed ? label : locked ? `Available in ${requiredPlan ?? "a higher plan"}` : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all",
-        active ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
-        locked && !active && "opacity-70"
+        "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+        active
+          ? "bg-blue-50/80 text-blue-700"
+          : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900",
+        locked && !active && "opacity-60",
+        collapsed && "justify-center px-0"
       )}
     >
-      <Icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-white" : "text-zinc-400")} />
-      <span className="flex-1 truncate">{label}</span>
-      {comingSoon && !locked && <ComingSoonBadge className="scale-90" />}
-      {locked && <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />}
+      {/* Active indicator */}
+      {active && (
+        <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-600" />
+      )}
+      <Icon className={cn(
+        "h-[18px] w-[18px] shrink-0 transition-colors duration-200",
+        active ? "text-blue-600" : "text-zinc-400 group-hover:text-zinc-600"
+      )} />
+      {!collapsed && (
+        <>
+          <span className="flex-1 truncate">{label}</span>
+          {comingSoon && !locked && <ComingSoonBadge className="scale-90" />}
+          {locked && <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />}
+        </>
+      )}
     </Link>
   );
 }
 
+/* ── Section Label ────────────────────────────────────────────── */
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  const { collapsed } = useSidebar();
+  if (collapsed) return <div className="mx-3 my-2 h-px bg-zinc-100" />;
+  return (
+    <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+      {children}
+    </p>
+  );
+}
+
+/* ── Main Sidebar Component ───────────────────────────────────── */
+
 export function StoreSidebar({ store }: { store: Store }) {
   const basePath = `/store/${store.slug}`;
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
   const [analyticsOpen, setAnalyticsOpen] = useState(
     pathname.startsWith(`${basePath}/analytics`)
   );
+
   const status = resolveStoreStatus(store);
   const statusConfig = storeStatusConfig[status];
   const trialDays = getTrialDaysRemaining(store.trialEndsAt);
@@ -153,7 +202,7 @@ export function StoreSidebar({ store }: { store: Store }) {
   const stats = storageData?.data?.stats;
   const currentPlan = typeof store.planId === "object" && store.planId ? store.planId.name : store.plan;
 
-  const resolveLink = (link: { label: string; featureKey?: string; comingSoon?: boolean }) => {
+  const resolveLink = useCallback((link: { label: string; featureKey?: string; comingSoon?: boolean }) => {
     const key = link.featureKey ?? NAV_FEATURE_MAP[link.label];
     if (!key) return { locked: false, comingSoon: link.comingSoon };
     const feature = getFeatureByKey(features, key);
@@ -162,107 +211,232 @@ export function StoreSidebar({ store }: { store: Store }) {
       requiredPlan: feature?.requiredPlan?.name,
       comingSoon: link.comingSoon || feature?.comingSoon,
     };
-  };
+  }, [features]);
+
+  const storagePercent = Math.min(stats?.percentUsed ?? 0, 100);
+  const storageLabel = stats?.unlimited
+    ? "Unlimited"
+    : stats?.limitMB != null && stats.limitMB >= 1024
+      ? `${(stats.limitMB / 1024).toFixed(0)} GB`
+      : `${stats?.limitMB ?? 0} MB`;
+  const usedLabel = stats?.usedMB != null
+    ? stats.usedMB >= 1024
+      ? `${(stats.usedMB / 1024).toFixed(2)} GB`
+      : `${stats.usedMB.toFixed(1)} MB`
+    : "0 B";
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-zinc-200/80 bg-white">
-      <div className="border-b border-zinc-100 p-4">
-        <Link
-          href="/dashboard/stores"
-          className="mb-3 inline-flex items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-800"
-        >
-          <ChevronLeft className="h-3.5 w-3.5" />
-          All Stores
-        </Link>
-        <div className="flex items-center gap-3">
-          <StoreBrandMark store={store} size={40} />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-zinc-900">{store.shortName || store.name}</p>
-            <p className="truncate text-xs text-zinc-500">{store.tagline || store.slug}</p>
-          </div>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
-          <Badge variant="slate">{currentPlan}</Badge>
-          {status === "trial" && trialDays !== null && (
-            <Badge variant="primary">{trialDays}d trial</Badge>
-          )}
-        </div>
-        <div className="mt-3 rounded-xl bg-zinc-50 p-3">
-          <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500">
-            <span>Storage</span>
-            <span>{stats?.usedMB?.toFixed?.(1) ?? "0.0"} / {stats?.unlimited ? "Unlimited" : `${stats?.limitMB ?? 0} MB`}</span>
-          </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-200">
-            <div className="h-full rounded-full bg-zinc-900" style={{ width: `${Math.min(stats?.percentUsed ?? 0, 100)}%` }} />
-          </div>
-        </div>
-      </div>
-
-      <nav className="flex-1 space-y-4 overflow-y-auto p-3">
-        <ul className="space-y-0.5">
-          {mainLinks.map((link) => {
-            const meta = resolveLink(link);
-            return (
-              <li key={link.href + link.label}>
-                <NavItem {...link} basePath={basePath} locked={meta.locked} requiredPlan={meta.requiredPlan} comingSoon={meta.comingSoon} />
-              </li>
-            );
-          })}
-        </ul>
-
-        {/* Analytics Sub Menu */}
-        <div>
-          <button onClick={() => setAnalyticsOpen(!analyticsOpen)}
+    <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
+      <aside
+        className={cn(
+          "sticky top-0 flex h-screen flex-col border-r border-[#ececec] bg-white transition-all duration-300 ease-in-out",
+          collapsed ? "w-[72px]" : "w-[280px]"
+        )}
+        role="navigation"
+        aria-label="Store navigation"
+      >
+        {/* ── Store Card ──────────────────────────────────────── */}
+        <div className={cn("shrink-0 border-b border-[#ececec]", collapsed ? "px-2 py-3" : "px-4 py-4")}>
+          <Link
+            href="/dashboard/stores"
             className={cn(
-              "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all",
-              pathname.startsWith(`${basePath}/analytics`)
-                ? "bg-zinc-900 text-white shadow-sm"
-                : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-            )}>
-            <BarChart3 className={cn("h-[18px] w-[18px] shrink-0", pathname.startsWith(`${basePath}/analytics`) ? "text-white" : "text-zinc-400")} />
-            <span className="flex-1 text-left">Analytics</span>
-            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", analyticsOpen && "rotate-180")} />
-          </button>
-          {analyticsOpen && (
-            <ul className="mt-0.5 space-y-0.5 pl-3">
-              {analyticsSubLinks.map((link) => {
-                const meta = resolveLink({ label: link.label, featureKey: "analytics" });
-                return (
-                  <li key={link.href}>
-                    <NavItem {...link} basePath={basePath} locked={meta.locked} requiredPlan={meta.requiredPlan} comingSoon={meta.comingSoon} />
-                  </li>
-                );
-              })}
-            </ul>
+              "mb-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-400 transition-colors hover:text-zinc-700",
+              collapsed && "mx-auto justify-center"
+            )}
+            title="All Stores"
+          >
+            <ChevronLeft className="h-3 w-3" />
+            {!collapsed && "All Stores"}
+          </Link>
+
+          <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-3")}>
+            <StoreBrandMark store={store} size={collapsed ? 36 : 40} />
+            {!collapsed && (
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold text-zinc-900">
+                  {store.shortName || store.name}
+                </p>
+                <p className="truncate text-[11px] text-zinc-400">
+                  {store.subdomain}.bornoland.com
+                </p>
+              </div>
+            )}
+          </div>
+
+          {!collapsed && (
+            <>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                <span className={cn(
+                  "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                  status === "active" ? "bg-emerald-50 text-emerald-700" :
+                  status === "trial" ? "bg-blue-50 text-blue-700" :
+                  "bg-amber-50 text-amber-700"
+                )}>
+                  {statusConfig.label}
+                </span>
+                <span className="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+                  {currentPlan}
+                </span>
+                {status === "trial" && trialDays !== null && (
+                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                    {trialDays}d
+                  </span>
+                )}
+              </div>
+
+              {/* Storage */}
+              <div className="mt-3 rounded-lg bg-zinc-50 p-2.5">
+                <div className="flex items-center justify-between text-[10px] font-medium text-zinc-500">
+                  <span>Storage</span>
+                  <span className="tabular-nums">{usedLabel} / {storageLabel}</span>
+                </div>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-200">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all duration-500",
+                      storagePercent >= 80 ? "bg-gradient-to-r from-amber-500 to-orange-500" : "bg-gradient-to-r from-blue-500 to-indigo-500"
+                    )}
+                    style={{ width: `${storagePercent}%` }}
+                  />
+                </div>
+              </div>
+            </>
           )}
         </div>
 
-        <div>
-          <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Appearance</p>
+        {/* ── Scrollable Navigation ───────────────────────────── */}
+        <nav className="sidebar-scroll flex-1 overflow-y-auto px-3 py-3" aria-label="Main navigation">
           <ul className="space-y-0.5">
-            {appearanceLinks.map((link) => {
-              const meta = resolveLink({ label: link.label, comingSoon: link.comingSoon });
+            {mainLinks.map((link) => {
+              const meta = resolveLink(link);
               return (
-                <li key={link.href}>
-                  <NavItem {...link} basePath={basePath} locked={meta.locked} requiredPlan={meta.requiredPlan} comingSoon={meta.comingSoon} />
+                <li key={link.href + link.label}>
+                  <NavItem
+                    {...link}
+                    basePath={basePath}
+                    locked={meta.locked}
+                    requiredPlan={meta.requiredPlan}
+                    comingSoon={meta.comingSoon}
+                  />
                 </li>
               );
             })}
           </ul>
-        </div>
 
-        <ul className="space-y-0.5 border-t border-zinc-100 pt-3">
-          {bottomLinks.map((link) => {
-            const meta = resolveLink({ label: link.label, featureKey: link.label === "Builder" ? "builder" : undefined });
-            return (
-              <li key={link.href}>
-                <NavItem {...link} basePath={basePath} locked={meta.locked} requiredPlan={meta.requiredPlan} comingSoon={meta.comingSoon} />
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </aside>
+          {/* Analytics */}
+          <div className="mt-2">
+            <button
+              onClick={() => setAnalyticsOpen(!analyticsOpen)}
+              className={cn(
+                "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+                pathname.startsWith(`${basePath}/analytics`)
+                  ? "bg-blue-50/80 text-blue-700"
+                  : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900",
+                collapsed && "justify-center px-0"
+              )}
+              title={collapsed ? "Analytics" : undefined}
+            >
+              {pathname.startsWith(`${basePath}/analytics`) && (
+                <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-600" />
+              )}
+              <BarChart3 className={cn(
+                "h-[18px] w-[18px] shrink-0 transition-colors duration-200",
+                pathname.startsWith(`${basePath}/analytics`) ? "text-blue-600" : "text-zinc-400 group-hover:text-zinc-600"
+              )} />
+              {!collapsed && (
+                <>
+                  <span className="flex-1 text-left">Analytics</span>
+                  <ChevronDown className={cn(
+                    "h-3.5 w-3.5 transition-transform duration-200",
+                    analyticsOpen && "rotate-180"
+                  )} />
+                </>
+              )}
+            </button>
+            {!collapsed && analyticsOpen && (
+              <ul className="mt-0.5 space-y-0.5 pl-3">
+                {analyticsSubLinks.map((link) => {
+                  const meta = resolveLink({ label: link.label, featureKey: "analytics" });
+                  return (
+                    <li key={link.href}>
+                      <NavItem
+                        {...link}
+                        basePath={basePath}
+                        locked={meta.locked}
+                        requiredPlan={meta.requiredPlan}
+                        comingSoon={meta.comingSoon}
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
+          {/* Appearance */}
+          <div className="mt-4">
+            <SectionLabel>Appearance</SectionLabel>
+            <ul className="space-y-0.5">
+              {appearanceLinks.map((link) => {
+                const meta = resolveLink({ label: link.label, comingSoon: link.comingSoon });
+                return (
+                  <li key={link.href}>
+                    <NavItem
+                      {...link}
+                      basePath={basePath}
+                      locked={meta.locked}
+                      requiredPlan={meta.requiredPlan}
+                      comingSoon={meta.comingSoon}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          {/* Bottom Links */}
+          <div className="mt-4 border-t border-zinc-100 pt-3">
+            <ul className="space-y-0.5">
+              {bottomLinks.map((link) => {
+                const meta = resolveLink(link);
+                return (
+                  <li key={link.href}>
+                    <NavItem
+                      {...link}
+                      basePath={basePath}
+                      locked={meta.locked}
+                      requiredPlan={meta.requiredPlan}
+                      comingSoon={meta.comingSoon}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </nav>
+
+        {/* ── Bottom: Collapse + Profile ──────────────────────── */}
+        <div className="shrink-0 border-t border-[#ececec] p-3">
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-zinc-500 transition-all duration-200 hover:bg-zinc-50 hover:text-zinc-700",
+              collapsed && "justify-center px-0"
+            )}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? (
+              <ChevronsRight className="h-[18px] w-[18px] shrink-0" />
+            ) : (
+              <>
+                <ChevronsLeft className="h-[18px] w-[18px] shrink-0" />
+                <span>Collapse</span>
+              </>
+            )}
+          </button>
+        </div>
+      </aside>
+    </SidebarContext.Provider>
   );
 }

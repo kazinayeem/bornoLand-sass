@@ -1,18 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Loader2, FileText, Eye, Download } from "lucide-react";
 import { useGetStoreInvoicesQuery, type Invoice } from "@/redux/api/billing-api";
 import { formatBDT } from "@/lib/store-status";
 import { Badge } from "@/components/ui/badge";
 import { InvoiceDetail } from "./invoice-detail";
+import { getAccessToken } from "@/lib/access-token";
+import { getApiUrl } from "@/lib/urls";
+import { toast } from "sonner";
 
 export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
   const { data, isLoading } = useGetStoreInvoicesQuery(storeId);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const invoices = data?.data?.invoices ?? [];
+
+  const handleQuickDownload = useCallback(async (invoice: Invoice) => {
+    setDownloadingId(invoice._id);
+    try {
+      const apiBase = getApiUrl();
+      const token = getAccessToken();
+      const response = await fetch(`${apiBase}/invoices/${invoice._id}/pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) throw new Error("Download failed");
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${invoice.invoiceNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+      toast.success("Invoice downloaded");
+    } catch {
+      toast.error("Failed to download invoice");
+    } finally {
+      setDownloadingId(null);
+    }
+  }, []);
 
   if (isLoading) {
     return (
@@ -77,13 +107,27 @@ export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setSelectedInvoice(inv)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                      View
-                    </button>
+                    <div className="inline-flex items-center gap-1">
+                      <button
+                        onClick={() => setSelectedInvoice(inv)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        View
+                      </button>
+                      <button
+                        onClick={() => handleQuickDownload(inv)}
+                        disabled={downloadingId === inv._id}
+                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                        title="Download PDF"
+                      >
+                        {downloadingId === inv._id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Download className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    </div>
                   </td>
                 </motion.tr>
               );

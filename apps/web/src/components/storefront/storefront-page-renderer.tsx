@@ -2,12 +2,16 @@ import { notFound } from "next/navigation";
 import { fetchTenantSite } from "@/lib/server/tenant-site";
 import { StorefrontShell } from "@/components/storefront/storefront-shell";
 import { StorefrontCanvas } from "@/components/storefront/storefront-canvas";
+import { normalizeSectionType } from "@/lib/section-registry";
 import type { ThemeData, StoreData, StoreSettingsData, ProductData, CategoryData, HomepageSliderData } from "@/providers/tenant-provider";
 
 type Props = {
   storeSlug: string;
   pageSlug: string;
 };
+
+const HEADER_TYPES = new Set(["header-bar", "header-logo", "header-nav", "header-icons"]);
+const FOOTER_TYPES = new Set(["simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer", "footer-links", "footer-copyright", "footer-social"]);
 
 export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
   const data = await fetchTenantSite(storeSlug, pageSlug);
@@ -44,6 +48,12 @@ export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
   };
   const footerSection = pageSections.find((section) => section.type === "footer") ?? null;
 
+  // Filter out header/footer sections from body sections to prevent double rendering
+  const bodySections = pageSections.filter((s: any) => {
+    const normalized = normalizeSectionType(s.type);
+    return !HEADER_TYPES.has(normalized) && !FOOTER_TYPES.has(normalized);
+  });
+
   return (
     <StorefrontShell
       store={store}
@@ -52,7 +62,7 @@ export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
       categories={categories}
       settings={currencySettings}
       sliders={sliders ?? []}
-      pageSections={pageSections}
+      pageSections={bodySections}
       headerSections={headerSections}
       footerSections={footerSections}
       headerSettings={headerSettings}
@@ -60,7 +70,7 @@ export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
       footerSection={footerSection}
       showAdminBar
     >
-      <StorefrontCanvas sections={pageSections} />
+      <StorefrontCanvas sections={bodySections} />
     </StorefrontShell>
   );
 }

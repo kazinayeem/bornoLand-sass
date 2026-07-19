@@ -11,9 +11,84 @@ export type DeviceStyle = {
   borderRadius?: string; width?: string; maxWidth?: string; minHeight?: string;
   fontSize?: string; lineHeight?: string; textAlign?: string;
   hidden?: boolean;
+  height?: string; maxHeight?: string; minWidth?: string;
+  gap?: string; flexDirection?: string; alignItems?: string; justifyContent?: string;
+  top?: string; right?: string; bottom?: string; left?: string;
 };
 
 export const BREAKPOINTS = ["desktop", "laptop", "tablet", "mobile"] as const;
+
+// ─── Slide data for slider sections ────────────────────────────────
+
+export type SlideData = {
+  id: string;
+  image?: string;
+  imageMediaId?: string;
+  mobileImage?: string;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  buttonText?: string;
+  buttonLink?: string;
+  button2Text?: string;
+  button2Link?: string;
+  overlayColor?: string;
+  overlayOpacity?: string;
+  textPosition?: string;
+};
+
+// ─── Dynamic repeater item types ──────────────────────────────────
+
+export type FaqItemData = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
+export type AccordionItemData = {
+  id: string;
+  title: string;
+  content: string;
+};
+
+export type TeamMemberData = {
+  id: string;
+  name: string;
+  role: string;
+  bio: string;
+  image: string;
+  imageMediaId: string;
+  twitter: string;
+  linkedin: string;
+  instagram: string;
+};
+
+export type TrustBadgeData = {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+};
+
+export type TestimonialItemData = {
+  id: string;
+  name: string;
+  role: string;
+  text: string;
+  rating: string;
+  avatar: string;
+  avatarMediaId: string;
+  badge: string;
+};
+
+export type GalleryItemData = {
+  id: string;
+  image: string;
+  imageMediaId: string;
+  title: string;
+  alt: string;
+  link: string;
+};
 
 // ─── Section style with responsive overrides ───────────────────────
 
@@ -21,13 +96,53 @@ export type SectionStyle = {
   paddingTop?: string; paddingBottom?: string; paddingLeft?: string; paddingRight?: string;
   marginTop?: string; marginBottom?: string; marginLeft?: string; marginRight?: string;
   backgroundColor?: string; backgroundGradient?: string;
+  backgroundImage?: string;
+  backgroundImageMediaId?: string;
+  backgroundSize?: string; backgroundPosition?: string; backgroundRepeat?: string; backgroundAttachment?: string;
+  overlayColor?: string; overlayOpacity?: string; blur?: string; backdropBlur?: string;
   borderColor?: string; borderWidth?: string; borderRadius?: string; borderStyle?: string;
   shadow?: string; opacity?: string;
   width?: string; maxWidth?: string; minHeight?: string;
+  height?: string; maxHeight?: string; minWidth?: string;
   hideOnDesktop?: boolean; hideOnTablet?: boolean; hideOnMobile?: boolean;
   customCss?: string;
   animation?: string; animationDuration?: string; animationDelay?: string; animationTrigger?: string;
   parallaxSpeed?: string; sticky?: boolean;
+
+  // Typography
+  fontFamily?: string; fontSize?: string; fontWeight?: string; letterSpacing?: string;
+  textTransform?: string; textDecoration?: string; color?: string; textAlign?: string;
+
+  // Flex
+  display?: string; flexDirection?: string; alignItems?: string; justifyContent?: string;
+  flexWrap?: string; gap?: string; order?: string;
+
+  // Position
+  position?: string; top?: string; right?: string; bottom?: string; left?: string;
+  zIndex?: string;
+
+  // Transform
+  transform?: string; transformOrigin?: string;
+
+  // Video background
+  backgroundVideoUrl?: string;
+  backgroundVideoPoster?: string;
+  backgroundVideoMuted?: string;
+  backgroundVideoLoop?: string;
+
+  // Dynamic repeater items
+  faqItems?: FaqItemData[];
+  accordionItems?: AccordionItemData[];
+  teamMembers?: TeamMemberData[];
+  trustBadgeItems?: TrustBadgeData[];
+  testimonialItems?: TestimonialItemData[];
+  galleryItems?: GalleryItemData[];
+
+  // Slider
+  slides?: SlideData[];
+  sliderAutoplay?: string; sliderLoop?: string; sliderDelay?: string;
+  sliderTransitionSpeed?: string; sliderTransition?: string;
+  sliderShowArrows?: string; sliderShowDots?: string;
 
   // Responsive overrides per breakpoint (overrides flat values for specific devices)
   responsive?: Partial<Record<"desktop" | "laptop" | "tablet" | "mobile", DeviceStyle>>;

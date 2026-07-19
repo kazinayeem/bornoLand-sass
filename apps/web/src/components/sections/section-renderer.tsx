@@ -25,15 +25,31 @@ type WrapperProps = {
   className?: string;
 };
 
-function animationStyle(animation: string) {
+function animationStyle(animation: string, duration = "600", delay = "0", _trigger = "on-scroll") {
+  const dur = Number(duration) / 1000;
+  const del = Number(delay) / 1000;
+  const base = { transition: { duration: dur, delay: del } };
+  const vpOnce = { viewport: { once: true } };
   switch (animation) {
-    case "fadeIn": return { initial: { opacity: 0 }, whileInView: { opacity: 1 }, viewport: { once: true }, transition: { duration: 0.6 } };
-    case "slideUp": return { initial: { opacity: 0, y: 40 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true }, transition: { duration: 0.6 } };
-    case "slideInLeft": return { initial: { opacity: 0, x: -40 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true }, transition: { duration: 0.6 } };
-    case "slideInRight": return { initial: { opacity: 0, x: 40 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true }, transition: { duration: 0.6 } };
-    case "zoomIn": return { initial: { opacity: 0, scale: 0.9 }, whileInView: { opacity: 1, scale: 1 }, viewport: { once: true }, transition: { duration: 0.6 } };
+    case "fade-in": case "fadeIn": return { initial: { opacity: 0 }, whileInView: { opacity: 1 }, ...base, ...vpOnce };
+    case "fade-up": return { initial: { opacity: 0, y: 30 }, whileInView: { opacity: 1, y: 0 }, ...base, ...vpOnce };
+    case "fade-down": return { initial: { opacity: 0, y: -30 }, whileInView: { opacity: 1, y: 0 }, ...base, ...vpOnce };
+    case "slide-up": case "slideUp": return { initial: { opacity: 0, y: 50 }, whileInView: { opacity: 1, y: 0 }, ...base, ...vpOnce };
+    case "slide-down": return { initial: { opacity: 0, y: -50 }, whileInView: { opacity: 1, y: 0 }, ...base, ...vpOnce };
+    case "slide-left": case "slideInLeft": return { initial: { opacity: 0, x: -50 }, whileInView: { opacity: 1, x: 0 }, ...base, ...vpOnce };
+    case "slide-right": case "slideInRight": return { initial: { opacity: 0, x: 50 }, whileInView: { opacity: 1, x: 0 }, ...base, ...vpOnce };
+    case "zoom-in": case "zoomIn": return { initial: { opacity: 0, scale: 0.9 }, whileInView: { opacity: 1, scale: 1 }, ...base, ...vpOnce };
+    case "zoom-out": return { initial: { opacity: 0, scale: 1.1 }, whileInView: { opacity: 1, scale: 1 }, ...base, ...vpOnce };
+    case "flip": return { initial: { opacity: 0, rotateX: -90 }, whileInView: { opacity: 1, rotateX: 0 }, ...base, ...vpOnce };
+    case "bounce": return { initial: { opacity: 0, y: 60 }, whileInView: { opacity: 1, y: 0 }, ...vpOnce, transition: { duration: dur, delay: del, type: "spring" as const, stiffness: 200, damping: 12 } };
     default: return {};
   }
+}
+
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".gif"];
+
+function isImageUrl(url: string) {
+  return IMAGE_EXTENSIONS.some((ext) => url.toLowerCase().includes(ext)) || url.includes("media") || url.includes("cloudinary") || url.includes("amazonaws");
 }
 
 export function SectionWrapper({ section, children, className = "" }: WrapperProps) {
@@ -41,19 +57,27 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
   const p = section.props;
   const s = section.style;
 
-  // Compute responsive-aware style for the current device
   const responsiveStyle = computeSectionStyle(s, device);
   const computedVisibility = applyResponsiveVisibility({}, s, device);
   const isHidden = computedVisibility.display === "none";
 
-  // Derived values: prefer section.style over section.props for backward compat
   const visibility = s?.hideOnDesktop ? "desktop-only"
     : s?.hideOnTablet ? "tablet-only"
     : s?.hideOnMobile ? "mobile-only"
     : p.visibility || "all";
-  const bgColor = responsiveStyle.backgroundColor || s?.backgroundColor || p.bgColor || "";
+
+  const bgColor = s?.backgroundColor || p.bgColor || "";
   const bgGradient = s?.backgroundGradient || p.bgGradient || "";
-  const bgImage = p.bgImage || "";
+  const bgImage = s?.backgroundImage || p.bgImage || "";
+  const bgSize = s?.backgroundSize || p.backgroundSize || "cover";
+  const bgPos = s?.backgroundPosition || p.backgroundPosition || "center";
+  const bgRepeat = s?.backgroundRepeat || p.backgroundRepeat || "no-repeat";
+  const bgAttachment = s?.backgroundAttachment || p.backgroundAttachment || "scroll";
+  const overlayColor = s?.overlayColor || p.bgOverlayColor || "";
+  const overlayOpacity = s?.overlayOpacity || p.bgOverlayOpacity || "";
+  const blurAmt = s?.blur || p.blur || "";
+  const backdropBlur = s?.backdropBlur || "";
+
   const paddingTop = responsiveStyle.paddingTop ?? s?.paddingTop ?? p.paddingTop ?? "0";
   const paddingBottom = responsiveStyle.paddingBottom ?? s?.paddingBottom ?? p.paddingBottom ?? "0";
   const paddingLeft = responsiveStyle.paddingLeft ?? s?.paddingLeft ?? p.paddingLeft ?? "0";
@@ -70,21 +94,40 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
   const borderStyle = s?.borderStyle || (borderWidth !== "0" ? "solid" : undefined);
   const opacity = responsiveStyle.opacity !== undefined ? String(responsiveStyle.opacity) : s?.opacity || "";
   const width = responsiveStyle.width || s?.width || p.width || "";
+  const height = responsiveStyle.height || s?.height || p.height || "";
   const minHeight = responsiveStyle.minHeight || s?.minHeight || p.minHeight || "";
   const animation = s?.animation || p.animation || "none";
-  const customCss = s?.customCss || p.customCss || "";
+  const animDuration = s?.animationDuration || "600";
+  const animDelay = s?.animationDelay || "0";
+  const animTrigger = s?.animationTrigger || "on-scroll";
+  const parallaxSpeed = s?.parallaxSpeed || "0";
+
+  const hasBgImage = bgImage && isImageUrl(bgImage);
+  const isGradient = bgGradient && bgGradient.trim().length > 0 && bgGradient !== "none";
 
   const shadowClass = shadow === "sm" ? "shadow-sm" : shadow === "md" ? "shadow-md" : shadow === "lg" ? "shadow-lg" : "";
   const hiddenClass = isHidden ? "hidden" : visibility === "desktop-only" ? "hidden lg:block" : visibility === "tablet-only" ? "hidden md:block lg:hidden" : visibility === "mobile-only" ? "block md:hidden" : "";
 
-  const bg = bgGradient
-    ? `linear-gradient(135deg, ${bgGradient.split(",").map((s: string) => s.trim()).join(", ")})`
-    : bgImage
-    ? `url(${bgImage})`
-    : bgColor || "transparent";
-  const isImageBg = bgImage && !bgGradient && !bgColor;
+  const animProps = animationStyle(animation, animDuration, animDelay, animTrigger);
 
-  const animProps = animationStyle(animation);
+  const finalBg = isGradient
+    ? bgGradient
+    : bgColor || "transparent";
+
+  const bgStyle: React.CSSProperties = {};
+  if (hasBgImage) {
+    bgStyle.backgroundImage = `url(${bgImage})`;
+    bgStyle.backgroundSize = bgSize;
+    bgStyle.backgroundPosition = bgPos;
+    bgStyle.backgroundRepeat = bgRepeat;
+    bgStyle.backgroundAttachment = bgAttachment;
+  }
+
+  const parallaxStyle: React.CSSProperties = {};
+  if (Number(parallaxSpeed) !== 0 && hasBgImage) {
+    parallaxStyle.backgroundAttachment = "fixed";
+    parallaxStyle.backgroundPosition = bgPos;
+  }
 
   return (
     <motion.section
@@ -99,37 +142,50 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
         marginLeft,
         marginRight,
         maxWidth: maxWidth === "100%" ? "100%" : maxWidth,
-        background: isImageBg ? undefined : bg,
+        background: hasBgImage || isGradient ? finalBg : finalBg,
         borderRadius,
-        borderWidth,
+        borderWidth: borderWidth ? `${Number(borderWidth) > 0 ? borderWidth + "px" : "0"}` : undefined,
         borderStyle,
         borderColor: borderColor || undefined,
-        opacity: opacity || undefined,
+        opacity: opacity ? String(Number(opacity) / 100) : undefined,
         width: width || undefined,
+        height: height || undefined,
         minHeight: minHeight || undefined,
-        fontSize: responsiveStyle.fontSize,
-        lineHeight: responsiveStyle.lineHeight,
-        textAlign: responsiveStyle.textAlign,
         overflow: "hidden",
+        position: (s?.position || "relative") as React.CSSProperties["position"],
+        zIndex: s?.zIndex ? Number(s.zIndex) : undefined,
+        transform: s?.transform,
+        transformOrigin: s?.transformOrigin,
+        ...responsiveStyle,
       }}
       {...animProps}
     >
-      {isImageBg && (
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: bg, zIndex: 0 }}
-        />
-      )}
-      {p.bgOverlayColor && (
+      {/* Background image layer */}
+      {(hasBgImage) && (
         <div
           className="absolute inset-0"
           style={{
-            background: p.bgOverlayColor,
-            opacity: Number(p.bgOverlayOpacity || 40) / 100,
+            ...bgStyle,
+            ...parallaxStyle,
+            zIndex: 0,
+            filter: blurAmt ? `blur(${blurAmt}px)` : undefined,
+          }}
+        />
+      )}
+
+      {/* Overlay */}
+      {overlayColor && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: overlayColor,
+            opacity: Number(overlayOpacity || 40) / 100,
             zIndex: 1,
           }}
         />
       )}
+
+      {/* Content */}
       <div className="relative" style={{ zIndex: 2 }}>
         {children}
       </div>

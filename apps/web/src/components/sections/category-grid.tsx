@@ -3,10 +3,13 @@
 import { BuilderLink as Link } from "./builder-link";
 import { SectionWrapper, ColumnGrid, SectionTitle, type SectionData } from "./section-renderer";
 import { useTenant } from "@/providers/tenant-provider";
+import { useBuilderCategories, useBuilderProducts } from "@/lib/use-builder-demo";
 import { ImageIcon } from "lucide-react";
 
 export function CategoryGrid({ section }: { section: SectionData }) {
-  const { categories, products } = useTenant();
+  const { categories: realCategories, products: realProducts } = useTenant();
+  const categories = useBuilderCategories(realCategories);
+  const products = useBuilderProducts(realProducts);
   const p = section.props;
   const cols = p.gridColumns || "4";
   const display = categories.filter((c) => c.active);

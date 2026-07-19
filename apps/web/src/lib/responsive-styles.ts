@@ -1,10 +1,6 @@
 import type { Breakpoint } from "./builder-types";
 import type { SectionStyle, DeviceStyle } from "@/redux/slices/builder-slice";
 
-/**
- * Resolves a style value for the current breakpoint.
- * Falls back through smaller breakpoints, then to the flat value.
- */
 function resolveBreakpointValue(
   responsive: Partial<Record<Breakpoint, DeviceStyle>> | undefined,
   device: Breakpoint,
@@ -16,7 +12,6 @@ function resolveBreakpointValue(
   const breakpointOrder: Breakpoint[] = ["desktop", "laptop", "tablet", "mobile"];
   const currentIdx = breakpointOrder.indexOf(device);
 
-  // Walk backwards from current breakpoint to find the nearest override
   for (let i = currentIdx; i >= 0; i--) {
     const bp = breakpointOrder[i];
     const deviceStyle = responsive[bp];
@@ -29,22 +24,16 @@ function resolveBreakpointValue(
   return flatValue;
 }
 
-/**
- * Computes visibility for the current device.
- * Falls back through responsive.hidden → hideOnDesktop/Tablet/Mobile → visible.
- */
 export function isSectionHidden(
   style: SectionStyle | undefined,
   device: Breakpoint,
 ): boolean {
   if (!style) return false;
 
-  // Check responsive hidden
   if (style.responsive?.[device]?.hidden !== undefined) {
     return style.responsive[device]!.hidden as unknown as boolean;
   }
 
-  // Fallback to flat hideOn flags
   if (device === "mobile" && style.hideOnMobile) return true;
   if (device === "tablet" && style.hideOnTablet) return true;
   if (device === "desktop" && style.hideOnDesktop) return true;
@@ -52,52 +41,85 @@ export function isSectionHidden(
   return false;
 }
 
-/**
- * Computes the final style object for a section given the current breakpoint.
- * Merges flat values with resolved responsive overrides.
- */
+const BP_ORDER: Breakpoint[] = ["desktop", "laptop", "tablet", "mobile"];
+
+function resolve<T>(
+  responsive: Partial<Record<Breakpoint, DeviceStyle>> | undefined,
+  device: Breakpoint,
+  key: keyof DeviceStyle,
+  flat?: T,
+): T | string | undefined {
+  if (!responsive) return flat as any;
+  const idx = BP_ORDER.indexOf(device);
+  for (let i = idx; i >= 0; i--) {
+    const ds = responsive[BP_ORDER[i]];
+    if (ds && (ds as any)[key] !== undefined) {
+      return (ds as any)[key] as string;
+    }
+  }
+  return flat as any;
+}
+
 export function computeSectionStyle(
   style: SectionStyle | undefined,
   device: Breakpoint,
 ): React.CSSProperties {
   if (!style) return {};
 
-  const responsive = style.responsive;
-
-  const resolve = (key: keyof DeviceStyle, flatKey?: keyof SectionStyle): string | undefined => {
-    return resolveBreakpointValue(responsive, device, key, flatKey ? style[flatKey] as string | undefined : undefined);
-  };
+  const r = style.responsive;
+  const res = (key: keyof DeviceStyle, fallback?: string) => resolve(r, device, key, fallback ?? (style as any)[key]);
 
   return {
-    paddingTop: resolve("paddingTop", "paddingTop"),
-    paddingBottom: resolve("paddingBottom", "paddingBottom"),
-    paddingLeft: resolve("paddingLeft", "paddingLeft"),
-    paddingRight: resolve("paddingRight", "paddingRight"),
-    marginTop: resolve("marginTop", "marginTop"),
-    marginBottom: resolve("marginBottom", "marginBottom"),
-    marginLeft: resolve("marginLeft", "marginLeft"),
-    marginRight: resolve("marginRight", "marginRight"),
-    borderRadius: resolve("borderRadius", "borderRadius"),
-    width: resolve("width", "width"),
-    maxWidth: resolve("maxWidth", "maxWidth"),
-    minHeight: resolve("minHeight", "minHeight"),
-    fontSize: resolve("fontSize"),
-    lineHeight: resolve("lineHeight"),
-    textAlign: resolve("textAlign") as React.CSSProperties["textAlign"],
+    paddingTop: res("paddingTop"),
+    paddingBottom: res("paddingBottom"),
+    paddingLeft: res("paddingLeft"),
+    paddingRight: res("paddingRight"),
+    marginTop: res("marginTop"),
+    marginBottom: res("marginBottom"),
+    marginLeft: res("marginLeft"),
+    marginRight: res("marginRight"),
+    borderRadius: res("borderRadius"),
+    width: res("width"),
+    maxWidth: res("maxWidth"),
+    minHeight: res("minHeight"),
+    height: res("height"),
+    maxHeight: res("maxHeight"),
+    minWidth: res("minWidth"),
+    fontSize: res("fontSize"),
+    lineHeight: res("lineHeight"),
+    textAlign: res("textAlign") as React.CSSProperties["textAlign"],
+    gap: res("gap"),
+    flexDirection: res("flexDirection") as React.CSSProperties["flexDirection"],
+    alignItems: res("alignItems") as React.CSSProperties["alignItems"],
+    justifyContent: res("justifyContent") as React.CSSProperties["justifyContent"],
+    top: res("top"),
+    right: res("right"),
+    bottom: res("bottom"),
+    left: res("left"),
 
     backgroundColor: style.backgroundColor,
-    background: style.backgroundGradient ? style.backgroundGradient : undefined,
     borderColor: style.borderColor,
-    borderWidth: style.borderWidth ? `${style.borderWidth}px` : undefined,
+    borderWidth: style.borderWidth ? `${Number(style.borderWidth) > 0 ? style.borderWidth + "px" : style.borderWidth}` : undefined,
     borderStyle: style.borderStyle,
     boxShadow: style.shadow,
     opacity: style.opacity ? Number(style.opacity) / 100 : undefined,
+    fontFamily: style.fontFamily,
+    fontWeight: style.fontWeight,
+    letterSpacing: style.letterSpacing,
+    textTransform: style.textTransform as React.CSSProperties["textTransform"],
+    textDecoration: style.textDecoration as React.CSSProperties["textDecoration"],
+    color: style.color,
+    display: style.display as React.CSSProperties["display"],
+    flexWrap: style.flexWrap as React.CSSProperties["flexWrap"],
+    order: style.order ? Number(style.order) : undefined,
+    position: style.position as React.CSSProperties["position"],
+    zIndex: style.zIndex ? Number(style.zIndex) : undefined,
+    transform: style.transform,
+    transformOrigin: style.transformOrigin,
+    backdropFilter: style.backdropBlur ? `blur(${style.backdropBlur}px)` : undefined,
   };
 }
 
-/**
- * Applies responsive visibility as 'display: none' when hidden.
- */
 export function applyResponsiveVisibility(
   baseStyle: React.CSSProperties,
   style: SectionStyle | undefined,

@@ -5,9 +5,11 @@ import { useState } from "react";
 import { BuilderLink as Link } from "./builder-link";
 import { SectionWrapper, ColumnGrid, SectionTitle, type SectionData } from "./section-renderer";
 import { useTenant } from "@/providers/tenant-provider";
+import { useBuilderProducts } from "@/lib/use-builder-demo";
 
 export function ProductTabs({ section }: { section: SectionData }) {
-  const { products } = useTenant();
+  const { products: realProducts } = useTenant();
+  const products = useBuilderProducts(realProducts);
   const p = section.props;
   const count = Number(p.productCount) || 4;
   const [activeTab, setActiveTab] = useState(0);

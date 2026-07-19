@@ -6,6 +6,7 @@ import {
   useDeleteMediaFileMutation,
   useGetMediaFilesQuery,
   useGetMediaUsageQuery,
+  useImportMediaFromUrlMutation,
   useRenameMediaFileMutation,
   useReplaceMediaFileMutation,
   type MediaFile,
@@ -24,7 +25,7 @@ import { MediaPreviewViewer } from "@/components/media/media-preview-viewer";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2 } from "lucide-react";
+import { Link, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const PAGE_SIZE = 24;
@@ -66,9 +67,12 @@ export function MediaLibrary({
   const [sortOption, setSortOption] = useState<MediaSortOption>("newest");
   const [page, setPage] = useState(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showImportUrl, setShowImportUrl] = useState(false);
+  const [importUrlValue, setImportUrlValue] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
+  const [importMediaFromUrl, { isLoading: isImporting }] = useImportMediaFromUrlMutation();
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
@@ -167,8 +171,7 @@ export function MediaLibrary({
 
   const handleUpload = useCallback(
     async (fileList: FileList | File[]) => {
-      if (pickerMode) return;
-      if (!checkUploadLimit()) return;
+      if (!pickerMode && !checkUploadLimit()) return;
 
       const arr = Array.from(fileList);
       if (arr.length === 0) return;
@@ -188,6 +191,9 @@ export function MediaLibrary({
         if (successCount > 0) {
           toast.success(`Uploaded ${successCount} file${successCount === 1 ? "" : "s"}`);
           await refetchMediaFiles();
+          if (onSelect && result.files[0]) {
+            onSelect(result.files[0] as MediaFile);
+          }
         }
         if (errorCount > 0) {
           toast.error(`${errorCount} file${errorCount === 1 ? "" : "s"} failed`);
@@ -202,7 +208,7 @@ export function MediaLibrary({
         toast.error("Upload failed");
       }
     },
-    [storeId, folder, canUpload, checkUploadLimit, pickerMode],
+    [storeId, folder, canUpload, checkUploadLimit, pickerMode, onSelect],
   );
 
   const handleReplaceUpload = async (fileList: FileList | null) => {
@@ -221,6 +227,25 @@ export function MediaLibrary({
       toast.error(error instanceof Error ? error.message : "Replace failed");
     }
   };
+
+  const handleImportUrlAction = useCallback(async () => {
+    const url = importUrlValue.trim();
+    if (!url) return;
+    try {
+      const result = await importMediaFromUrl({ storeId, url, folder }).unwrap();
+      if (result.data?.file) {
+        toast.success("Image imported from URL");
+        setImportUrlValue("");
+        setShowImportUrl(false);
+        await refetchMediaFiles();
+        if (onSelect) {
+          onSelect(result.data.file as MediaFile);
+        }
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Import failed");
+    }
+  }, [importUrlValue, importMediaFromUrl, storeId, folder, refetchMediaFiles, onSelect]);
 
   const copyUrl = useCallback((file: MediaFile) => {
     void navigator.clipboard.writeText(mediaCopyUrl(file));
@@ -327,7 +352,31 @@ export function MediaLibrary({
         totalCount={totalCount}
         uploadDisabled={!canUpload}
         uploadDisabledReason={!canUpload ? getUploadLimitReason() : undefined}
+        onImportUrlClick={() => setShowImportUrl(!showImportUrl)}
+        importDisabled={!canUpload}
       />
+
+      {showImportUrl && (
+        <div className="flex gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+          <input
+            type="url"
+            value={importUrlValue}
+            onChange={(e) => setImportUrlValue(e.target.value)}
+            placeholder="https://example.com/image.jpg"
+            className="min-w-0 flex-1 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm outline-none focus:border-zinc-900"
+            onKeyDown={(e) => e.key === "Enter" && void handleImportUrlAction()}
+          />
+          <button
+            type="button"
+            onClick={handleImportUrlAction}
+            disabled={isImporting || !importUrlValue.trim()}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+          >
+            {isImporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link className="h-3.5 w-3.5" />}
+            Import
+          </button>
+        </div>
+      )}
 
       <MediaUploadQueuePanel
         uploads={uploads}

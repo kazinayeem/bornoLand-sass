@@ -8,6 +8,7 @@ import {
   getMediaFileController,
   getMediaStatsController,
   getMediaUsageController,
+  importMediaFromUrlController,
   listMediaController,
   mediaUploadMiddleware,
   renameMediaController,
@@ -28,6 +29,7 @@ mediaRouter.post(
   mediaUploadMiddleware,
   uploadMediaController
 );
+mediaRouter.post("/import-url", requireFeatureAccess("media", { getStoreId: storeId }), importMediaFromUrlController);
 mediaRouter.post("/bulk-delete", requireFeatureAccess("media", { getStoreId: storeId }), bulkDeleteMediaController);
 mediaRouter.get("/", requireFeatureAccess("media", { getStoreId: storeId }), listMediaController);
 mediaRouter.get("/:id/usage", requireFeatureAccess("media", { getStoreId: storeId }), getMediaUsageController);

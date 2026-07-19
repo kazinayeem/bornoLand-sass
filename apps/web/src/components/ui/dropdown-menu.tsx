@@ -37,10 +37,7 @@ import {
   offset,
   flip,
   shift,
-  useInteractions,
-  useClick,
   useDismiss,
-  useRole,
   FloatingFocusManager,
   type Placement,
 } from "@floating-ui/react";
@@ -99,7 +96,7 @@ export function DropdownMenu({
     open,
     onOpenChange: setOpen,
     placement,
-    whileElementsMounted: open ? autoUpdate : undefined,
+    whileElementsMounted: autoUpdate,
     middleware: [
       offset(6),
       flip({ fallbackAxisSideDirection: "start", padding: 8 }),
@@ -107,10 +104,16 @@ export function DropdownMenu({
     ],
   });
 
-  const click   = useClick(context, { enabled: !disabled });
   const dismiss = useDismiss(context, { outsidePressEvent: "mousedown" });
-  const role    = useRole(context, { role: "menu" });
-  const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss, role]);
+
+  // Manual click toggle with stopPropagation so parent onClick never interferes.
+  // We use useDismiss for outside-click dismissal but manually control
+  // the open state via handleTriggerClick instead of useClick.
+  const handleTriggerClick = useCallback((e: React.MouseEvent) => {
+    if (disabled) return;
+    e.stopPropagation();
+    setOpen((prev) => !prev);
+  }, [disabled]);
 
   // Close on scroll
   useEffect(() => {
@@ -164,11 +167,11 @@ export function DropdownMenu({
     <>
       <div
         ref={refs.setReference}
-        {...getReferenceProps()}
         className="inline-flex"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
+        onClick={handleTriggerClick}
       >
         {trigger}
       </div>
@@ -179,7 +182,7 @@ export function DropdownMenu({
             ref={refs.setFloating}
             id={menuId}
             style={{ ...floatingStyles, minWidth, zIndex: 9999 }}
-            {...getFloatingProps({ onKeyDown: handleKeyDown })}
+            onKeyDown={handleKeyDown}
             className={cn(
               "rounded-xl border border-zinc-200/80 bg-white py-1.5 shadow-2xl shadow-black/10 ring-1 ring-black/5 outline-none",
               className

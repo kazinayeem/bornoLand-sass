@@ -3,9 +3,11 @@ import { getProductImageUrl } from "@/lib/product-media";
 
 import { SectionWrapper, SectionTitle, type SectionData } from "./section-renderer";
 import { useTenant } from "@/providers/tenant-provider";
+import { useBuilderProducts } from "@/lib/use-builder-demo";
 
 export function ProductSlider({ section }: { section: SectionData }) {
-  const { products } = useTenant();
+  const { products: realProducts } = useTenant();
+  const products = useBuilderProducts(realProducts);
   const p = section.props;
   const count = Number(p.productCount) || 6;
   const display = products.filter((pr) => pr.status === "active").slice(0, count);

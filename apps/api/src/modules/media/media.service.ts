@@ -226,6 +226,129 @@ export async function uploadMediaFiles(
   };
 }
 
+export async function importMediaFromUrl(
+  storeId: string,
+  url: string,
+  options?: { folder?: string; displayName?: string; uploaderId?: string }
+) {
+  await connectDatabase();
+  const store = (await StoreModel.findById(storeId).lean()) as { slug: string; tenantId?: unknown } | null;
+  if (!store) return { ok: false as const, message: "Store not found" };
+
+  const targetFolder = options?.folder ?? "products";
+  const folder = MEDIA_FOLDERS.includes(targetFolder as MediaFolder) ? (targetFolder as MediaFolder) : "products";
+
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+    if (!response.ok) return { ok: false as const, message: `Failed to fetch URL: ${response.statusText}` };
+
+    const contentType = response.headers.get("content-type") ?? "application/octet-stream";
+    const contentLength = response.headers.get("content-length");
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const size = contentLength ? Number(contentLength) : buffer.length;
+
+    const validation = await validateUpload(storeId, contentType, size);
+    if (!validation.ok) return { ok: false as const, message: validation.message };
+
+    const hash = hashBuffer(buffer);
+    const duplicate = await findDuplicateByHash(storeId, hash);
+    if (duplicate) {
+      return { ok: true as const, data: { file: serializeMediaFile(duplicate as Record<string, unknown>) } };
+    }
+
+    let processedBuffer: Buffer = buffer;
+    let processedMime = contentType;
+    let width = 0;
+    let height = 0;
+    let thumbnailUrl = "";
+
+    const processed = await processImageBuffer(buffer, contentType);
+    if (processed) {
+      processedBuffer = processed.buffer;
+      processedMime = processed.mimeType;
+      width = processed.width;
+      height = processed.height;
+    }
+
+    const urlPath = new URL(url).pathname;
+    const originalName = path.basename(urlPath) || "imported-file";
+    const ext = MIME_TO_EXTENSION[processedMime] ?? path.extname(originalName).replace(".", "") ?? "bin";
+    const storedName = uniqueStoredName(originalName, ext);
+    const fileType = getMediaCategory(processedMime);
+
+    const provider = getStorageProvider();
+    const result = await provider.upload({
+      buffer: processedBuffer,
+      mimeType: processedMime,
+      storeSlug: store.slug,
+      folder,
+      storedName,
+    });
+
+    if (processed?.thumbnailBuffer && provider.name === "local") {
+      const thumbPath = await saveThumbnail(result.storagePath, processed.thumbnailBuffer);
+      thumbnailUrl = thumbnailPublicUrl(result.publicUrl);
+      void thumbPath;
+    } else if (processed?.thumbnailBuffer && provider.name === "s3") {
+      const thumbName = storedName.replace(`.${ext}`, `-thumb.webp`);
+      const thumbResult = await provider.upload({
+        buffer: processed.thumbnailBuffer,
+        mimeType: "image/webp",
+        storeSlug: store.slug,
+        folder,
+        storedName: thumbName,
+      });
+      thumbnailUrl = thumbResult.publicUrl;
+    }
+
+    const mediaFile = await MediaFileModel.create({
+      storeId,
+      folder,
+      originalName,
+      displayName: options?.displayName ?? originalName,
+      fileType,
+      mimeType: processedMime,
+      extension: ext,
+      size: result.size ?? processedBuffer.length,
+      width,
+      height,
+      storagePath: result.storagePath,
+      publicUrl: result.publicUrl,
+      thumbnailUrl: thumbnailUrl || "",
+      hash,
+      uploadedBy: options?.uploaderId,
+      tags: [],
+    });
+
+    await adjustStorageOnUpload(storeId, result.size ?? processedBuffer.length, fileType);
+
+    await logUploadAction({
+      storeId,
+      uploaderId: options?.uploaderId,
+      action: "import-url",
+      fileName: originalName,
+      size: result.size ?? processedBuffer.length,
+      status: "success",
+      message: `Imported from URL: ${url}`,
+    });
+
+    return { ok: true as const, data: { file: serializeMediaFile(mediaFile.toObject() as Record<string, unknown>) } };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    await logUploadAction({
+      storeId,
+      uploaderId: options?.uploaderId,
+      action: "import-url",
+      fileName: url,
+      size: 0,
+      status: "failed",
+      message,
+    });
+    return { ok: false as const, message };
+  }
+}
+
 export async function listMediaFiles(
   storeId: string,
   filters?: {

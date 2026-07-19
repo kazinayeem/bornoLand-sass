@@ -4,9 +4,11 @@ import { BuilderLink as Link } from "./builder-link";
 import { ImageIcon } from "lucide-react";
 import { SectionWrapper, SectionTitle, type SectionData } from "./section-renderer";
 import { useTenant } from "@/providers/tenant-provider";
+import { useBuilderCategories } from "@/lib/use-builder-demo";
 
 export function CategorySlider({ section }: { section: SectionData }) {
-  const { categories } = useTenant();
+  const { categories: realCategories } = useTenant();
+  const categories = useBuilderCategories(realCategories);
   const p = section.props;
   const display = categories.filter((c) => c.active);
   if (display.length === 0) return null;

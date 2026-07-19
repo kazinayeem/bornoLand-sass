@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, SlidersHorizontal, Upload } from "lucide-react";
+import { Link, Search, SlidersHorizontal, Upload } from "lucide-react";
 import { StorageUsageBar } from "@/components/media/storage-usage-bar";
 import type { StorageStats } from "@/redux/api/media-api";
 
@@ -70,6 +70,8 @@ type MediaLibraryToolbarProps = {
   showTitle?: boolean;
   uploadDisabled?: boolean;
   uploadDisabledReason?: string;
+  onImportUrlClick?: () => void;
+  importDisabled?: boolean;
 };
 
 export function MediaLibraryToolbar({
@@ -88,6 +90,8 @@ export function MediaLibraryToolbar({
   showTitle = true,
   uploadDisabled,
   uploadDisabledReason,
+  onImportUrlClick,
+  importDisabled,
 }: MediaLibraryToolbarProps) {
   return (
     <div className="space-y-4">
@@ -146,26 +150,37 @@ export function MediaLibraryToolbar({
               ))}
             </select>
 
-            <div className="relative shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={uploadDisabled ? undefined : onUploadClick}
+                  disabled={uploadDisabled}
+                  title={uploadDisabledReason}
+                  className={`inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold shadow-sm transition ${
+                    uploadDisabled
+                      ? "cursor-not-allowed bg-zinc-300 text-zinc-500"
+                      : "bg-zinc-900 text-white hover:bg-zinc-800"
+                  }`}
+                >
+                  <Upload className="h-4 w-4" />
+                  <span className="hidden sm:inline">Upload</span>
+                </button>
+                {uploadDisabled && uploadDisabledReason && (
+                  <span className="absolute -bottom-5 left-0 whitespace-nowrap text-[11px] text-zinc-400">
+                    {uploadDisabledReason}
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={uploadDisabled ? undefined : onUploadClick}
-                disabled={uploadDisabled}
-                title={uploadDisabledReason}
-                className={`inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold shadow-sm transition shrink-0 ${
-                  uploadDisabled
-                    ? "cursor-not-allowed bg-zinc-300 text-zinc-500"
-                    : "bg-zinc-900 text-white hover:bg-zinc-800"
-                }`}
+                onClick={onImportUrlClick}
+                disabled={importDisabled}
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 px-3 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50"
               >
-                <Upload className="h-4 w-4" />
-                <span className="hidden sm:inline">Upload</span>
+                <Link className="h-4 w-4" />
+                <span className="hidden sm:inline">Import URL</span>
               </button>
-              {uploadDisabled && uploadDisabledReason && (
-                <span className="absolute -bottom-5 left-0 whitespace-nowrap text-[11px] text-zinc-400">
-                  {uploadDisabledReason}
-                </span>
-              )}
             </div>
           </div>
         </div>

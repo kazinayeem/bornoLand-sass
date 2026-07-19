@@ -142,6 +142,20 @@ export const mediaApi = baseApi.injectEndpoints({
         { type: "Media", id: `stats-${storeId}` },
       ],
     }),
+    importMediaFromUrl: builder.mutation<
+      ApiEnvelope<{ file: MediaFile }>,
+      { storeId: string; url: string; folder?: string; displayName?: string }
+    >({
+      query: ({ storeId, url, folder, displayName }) => ({
+        url: `/stores/${storeId}/media/import-url`,
+        method: "POST",
+        body: { url, folder, displayName },
+      }),
+      invalidatesTags: (_r, _e, { storeId }) => [
+        { type: "Media", id: storeId },
+        { type: "Media", id: `stats-${storeId}` },
+      ],
+    }),
   }),
 });
 
@@ -154,6 +168,7 @@ export const {
   useRenameMediaFileMutation,
   useDeleteMediaFileMutation,
   useBulkDeleteMediaMutation,
+  useImportMediaFromUrlMutation,
 } = mediaApi;
 
 export function formatBytes(bytes: number) {

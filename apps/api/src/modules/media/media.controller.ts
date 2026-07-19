@@ -10,6 +10,7 @@ import {
   getMediaFile,
   getMediaFileUsage,
   getStorageStats,
+  importMediaFromUrl,
   listMediaFiles,
   renameMediaFile,
   replaceMediaFile,
@@ -206,6 +207,31 @@ export async function downloadMediaController(request: AuthRequest, response: Re
     `attachment; filename="${encodeURIComponent(result.data.fileName)}"`
   );
   return response.sendFile(result.data.path);
+}
+
+export async function importMediaFromUrlController(request: AuthRequest, response: Response) {
+  const storeId = String(request.params.storeId);
+  const { url, folder, displayName } = request.body as { url?: string; folder?: string; displayName?: string };
+  if (!url || typeof url !== "string") return sendFailure(response, "url is required", 400);
+  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+    return sendFailure(response, "Store not found", 404);
+  }
+  const result = await importMediaFromUrl(storeId, url, { folder, displayName, uploaderId: request.user?.userId });
+  if (result.ok && result.data?.file) {
+    const file = result.data.file as { _id?: string; displayName?: string; originalName?: string };
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.MEDIA_UPLOADED,
+      module: AUDIT_MODULES.MEDIA,
+      entityType: "MediaFile",
+      entityId: file._id ?? "",
+      entityName: file.displayName ?? file.originalName,
+      storeId,
+      metadata: { method: "import-url", url },
+    });
+    return sendSuccess(response, result.data, "Imported from URL");
+  }
+  if (result.ok) return sendSuccess(response, result.data, "Imported from URL");
+  return sendFailure(response, result.message, 400);
 }
 
 export async function bulkDeleteMediaController(request: AuthRequest, response: Response) {

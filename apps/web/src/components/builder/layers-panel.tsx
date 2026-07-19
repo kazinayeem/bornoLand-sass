@@ -26,6 +26,7 @@ import {
   Menu, Search, ShoppingCart, User, Image,
   Type, Grid3x3, LayoutList, Sparkles, X,
   ArrowUpToLine, ArrowDownToLine, Bookmark, Download,
+  Pencil,
 } from "lucide-react";
 import { getSectionDef, normalizeSectionType } from "@/lib/section-registry";
 import { DropdownMenu, type DropdownItem } from "@/components/ui/dropdown-menu";
@@ -183,6 +184,18 @@ function buildMenuItems(
   storeId: string,
 ): DropdownItem[] {
   return [
+    {
+      label: "Rename",
+      icon: Pencil,
+      onClick: () => {
+        dispatch(setSelectedSection(section.id));
+        setTimeout(() => {
+          const input = document.querySelector<HTMLInputElement>(`[data-layer-input-id="${section.id}"]`);
+          input?.focus();
+          input?.select();
+        }, 50);
+      },
+    },
     {
       label: "Duplicate",
       icon: Copy,
@@ -462,6 +475,7 @@ export function LayersPanel() {
             <div className="min-w-0 flex-1">
               <input
                 value={section.label}
+                data-layer-input-id={section.id}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => dispatch(updateSectionMeta({ id: section.id, label: e.target.value }))}
                 className="w-full truncate bg-transparent text-xs font-semibold text-zinc-900 outline-none"

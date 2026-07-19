@@ -118,7 +118,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
       { key: "realtimeVisitors", label: "Real-time Visitors", description: "Live visitor dashboard" },
       { key: "analyticsExport", label: "Analytics Export", description: "Export analytics reports" },
       { key: "advancedAnalytics", label: "Advanced Analytics", description: "Advanced analytics and reports" },
-      { key: "reports", label: "Reports", description: "Sales, revenue, and business reports", alwaysEnabled: true },
+      { key: "reports", label: "Reports", description: "Advanced business reports, analytics, exports and insights" },
     ],
   },
   {

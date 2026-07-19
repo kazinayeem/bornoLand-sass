@@ -55,6 +55,7 @@ function buildSessionPayload(
     role: string;
     email: string;
     name: string;
+    sessionVersion?: number;
   },
   loginType: SessionPayload["loginType"]
 ): SessionPayload {
@@ -65,6 +66,7 @@ function buildSessionPayload(
     email: user.email,
     name: user.name,
     loginType,
+    sessionVersion: user.sessionVersion ?? 0,
   };
 }
 
@@ -141,6 +143,7 @@ export async function loginUser(payload: unknown) {
     passwordHash?: string;
     status: string;
     loginCount?: number;
+    sessionVersion?: number;
   } | null;
 
   if (!user || !user.passwordHash) {
@@ -188,6 +191,7 @@ export async function loginUser(payload: unknown) {
         lastLoginAt: new Date(),
         rememberMe: parsed.data.rememberMe,
         loginCount: (user.loginCount ?? 0) + 1,
+        lastLoginIp: String((payload as Record<string, unknown>)?.ipAddress ?? ""),
       },
     }
   );
@@ -233,6 +237,9 @@ export async function refreshAccessToken(rawRefreshToken: string) {
     userId: unknown;
     expiresAt: Date;
     revokedAt: Date | null;
+    userAgent?: string;
+    ipAddress?: string;
+    deviceInfo?: string;
   } | null;
 
   if (!stored) {
@@ -253,6 +260,7 @@ export async function refreshAccessToken(rawRefreshToken: string) {
     role: string;
     email: string;
     name: string;
+    sessionVersion?: number;
   } | null;
 
   if (!user) {
@@ -279,6 +287,9 @@ export async function refreshAccessToken(rawRefreshToken: string) {
     tokenHash: newTokenHash,
     family: newFamily,
     expiresAt: newExpiresAt,
+    userAgent: stored.userAgent ?? "",
+    ipAddress: stored.ipAddress ?? "",
+    deviceInfo: stored.deviceInfo ?? "",
   });
 
   return {
@@ -355,7 +366,12 @@ export async function resetPassword(payload: unknown) {
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
-  await UserModel.updateOne({ email: tokenRecord.identifier }, { $set: { passwordHash } });
+  const user = await UserModel.findOneAndUpdate(
+    { email: tokenRecord.identifier },
+    { $set: { passwordHash, passwordChangedAt: new Date() }, $inc: { sessionVersion: 1 } },
+    { new: true },
+  ).lean();
+  if (user) await RefreshTokenModel.updateMany({ userId: user._id, revokedAt: null }, { $set: { revokedAt: new Date() } });
   await VerificationTokenModel.deleteMany({ token: parsed.data.token });
 
   return { ok: true as const, message: "Password updated" };
@@ -369,6 +385,7 @@ export async function getSessionByEmail(email: string, loginType: "user" | "admi
     role: string;
     email: string;
     name: string;
+    sessionVersion?: number;
   } | null;
 
   if (!user) {

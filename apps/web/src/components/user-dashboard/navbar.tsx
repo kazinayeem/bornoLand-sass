@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Bell, Search as SearchIcon, Command } from "lucide-react";
+import { Search as SearchIcon, Command } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAppSelector } from "@/hooks/redux";
 import { useCurrentStore } from "@/hooks/use-current-store";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
 import { motion, AnimatePresence } from "framer-motion";
+import { NotificationDropdown } from "@/components/user/notification-dropdown";
+import { ProfileDropdown } from "@/components/user/profile-dropdown";
 
 export function UserNavbar() {
   const pathname = usePathname();
@@ -78,12 +80,8 @@ export function UserNavbar() {
               <Command className="h-2.5 w-2.5" />K
             </kbd>
           </button>
-          <button className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-500 transition-colors hover:bg-zinc-50">
-            <Bell className="h-4 w-4" />
-          </button>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-sm font-semibold text-white shadow-sm">
-            {user?.name?.split(" ").map((n) => n[0]).join("") ?? "U"}
-          </div>
+          <NotificationDropdown />
+          <ProfileDropdown />
         </div>
       </header>
 

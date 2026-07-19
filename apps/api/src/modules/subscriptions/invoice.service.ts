@@ -187,7 +187,8 @@ export async function verifyInvoice(verificationCode: string) {
   await connectDatabase();
   const invoice = await InvoiceModel.findOne({ verificationCode })
     .populate("planId", "name slug")
-    .populate("storeId", "name slug")
+    .populate("storeId", "name slug subdomain")
+    .populate("userId", "name email")
     .populate("approvedBy", "name")
     .lean();
   if (!invoice) return { ok: false as const, message: "Invoice not found or invalid verification code" };

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { Bell, ChevronRight, Search, Command } from "lucide-react";
+import { ChevronRight, Search, Command } from "lucide-react";
 import type { Store } from "@/redux/api/store-api";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useGetProductQuery } from "@/redux/api/product-api";
+import { NotificationDropdown } from "@/components/user/notification-dropdown";
+import { ProfileDropdown } from "@/components/user/profile-dropdown";
 
 function titleCase(value: string) {
   return value.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
@@ -89,16 +91,11 @@ export function StoreNavbar({ store }: { store: Store }) {
               <Command className="h-2.5 w-2.5" />K
             </kbd>
           </button>
-          <Link
-            href="/dashboard/notifications"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#ececec] text-zinc-400 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-600"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4 w-4" />
-          </Link>
+          <NotificationDropdown compact />
           <div className="hidden w-48 xl:block">
             <WorkspaceSwitcher />
           </div>
+          <ProfileDropdown />
         </div>
       </div>
     </header>

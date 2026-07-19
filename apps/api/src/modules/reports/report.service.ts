@@ -106,7 +106,7 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
     ProductModel.countDocuments({ storeId }),
     CustomerModel.countDocuments({ storeId }),
     CategoryModel.countDocuments({ storeId }),
-    StorageUsageModel.findOne({ storeId }).lean(),
+    StorageUsageModel.findOne({ storeId }).lean() as Promise<Record<string, unknown> | null>,
     StorePageModel.countDocuments({ storeId, deletedAt: null }),
     CouponModel.countDocuments({ storeId }),
     ReviewModel.countDocuments({ storeId }),
@@ -396,7 +396,7 @@ export async function getCouponReport(storeId: string, range: DateRange) {
 export async function getMediaReport(storeId: string) {
   await connectDatabase();
 
-  const storage = await StorageUsageModel.findOne({ storeId }).lean();
+  const storage = await StorageUsageModel.findOne({ storeId }).lean() as Record<string, unknown> | null;
   const filesByType = await MediaFileModel.aggregate([
     { $match: { storeId, isDeleted: { $ne: true } } },
     { $group: { _id: "$fileType", count: { $sum: 1 }, totalSize: { $sum: "$size" } } },

@@ -7,6 +7,7 @@ export type SessionUser = {
   email: string;
   role: string;
   tenantId: string;
+  avatarUrl?: string;
 };
 
 export type SessionPayload = {

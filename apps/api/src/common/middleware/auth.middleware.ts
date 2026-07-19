@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { getSessionCookieName, verifyAccessToken, verifySessionToken } from "../utils/jwt.js";
+import { UserModel } from "../../modules/users/user.model.js";
 
 export type AuthRequest = Request & {
   user?: {
@@ -10,7 +11,18 @@ export type AuthRequest = Request & {
   };
 };
 
-export function requireAuth(request: AuthRequest, response: Response, next: NextFunction) {
+async function acceptActiveSession(request: AuthRequest, response: Response, next: NextFunction, payload: NonNullable<AuthRequest["user"]> & { sessionVersion?: number }) {
+  const user = await UserModel.findById(payload.userId).select("sessionVersion status").lean() as
+    | { sessionVersion?: number; status?: string }
+    | null;
+  if (!user || user.status !== "active" || (user.sessionVersion ?? 0) !== (payload.sessionVersion ?? 0)) {
+    return response.status(401).json({ message: "Session expired" });
+  }
+  request.user = payload;
+  return next();
+}
+
+export async function requireAuth(request: AuthRequest, response: Response, next: NextFunction) {
   const header = request.header("authorization");
   const cookieHeader = request.header("cookie") ?? "";
   const cookieMatch = cookieHeader.match(new RegExp(`${getSessionCookieName()}=([^;]+)`));
@@ -28,8 +40,7 @@ export function requireAuth(request: AuthRequest, response: Response, next: Next
       // Check if it's a short access token (verify with short expiry)
       try {
         const payload = verifyAccessToken(token);
-        request.user = payload;
-        return next();
+        return await acceptActiveSession(request, response, next, payload);
       } catch {
         // Not a valid access token — fall through to cookie check
         // (might be a customer_token from localStorage)
@@ -38,8 +49,7 @@ export function requireAuth(request: AuthRequest, response: Response, next: Next
       // Try as a regular JWT session token (for customer_token backward compat)
       try {
         const payload = jwt.verify(token, process.env.JWT_SECRET ?? "") as AuthRequest["user"];
-        request.user = payload;
-        return next();
+        return await acceptActiveSession(request, response, next, payload!);
       } catch {
         return response.status(401).json({ message: "Invalid token" });
       }
@@ -57,8 +67,7 @@ export function requireAuth(request: AuthRequest, response: Response, next: Next
       }
 
       const payload = verifySessionToken(cookieToken);
-      request.user = payload;
-      return next();
+      return await acceptActiveSession(request, response, next, payload);
     }
 
     return response.status(401).json({ message: "Unauthorized" });

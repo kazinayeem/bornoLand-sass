@@ -8,6 +8,7 @@ export type SessionPayload = {
   email: string;
   name: string;
   loginType: "user" | "admin";
+  sessionVersion?: number;
 };
 
 const sessionCookieName = process.env.SESSION_COOKIE_NAME ?? "bornoland.session";

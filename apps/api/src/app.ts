@@ -40,6 +40,8 @@ import { featureRouter } from "./modules/features/feature.route.js";
 import { auditRouter } from "./modules/audit/audit.route.js";
 import { analyticsRouter } from "./modules/analytics/analytics.route.js";
 import { adminAnalyticsRouter } from "./modules/analytics/admin-analytics.route.js";
+import { reportRouter } from "./modules/reports/report.route.js";
+import { profileRouter } from "./modules/profile/profile.route.js";
 import { globalSectionRouter } from "./modules/builder/global-section.route.js";
 import { builderTemplateRouter } from "./modules/builder/builder-template.route.js";
 import { getUploadRoot } from "./modules/media/providers/local-storage.provider.js";
@@ -150,6 +152,7 @@ app.get(["/health", "/api/health"], (_req, res) => {
 });
 
 app.use("/auth", authRateLimit, authRouter);
+app.use("/profile", profileRouter);
 app.use("/tenants", tenantRouter);
 app.use("/pages", pageRouter);
 app.use("/admin", adminRouter);
@@ -183,6 +186,7 @@ app.use("/features", featureRouter);
 app.use("/audit", auditRouter);
 app.use("/analytics", analyticsRouter);
 app.use("/admin/analytics", adminAnalyticsRouter);
+app.use("/reports", reportRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -25,12 +25,15 @@ export type StoreSubscription = {
 };
 
 export type BillingNotification = {
+  id: string;
   _id: string;
   type: string;
   title: string;
   message: string;
   storeId?: string;
   read: boolean;
+  isRead: boolean;
+  actionUrl?: string;
   metadata?: Record<string, unknown>;
   createdAt: string;
 };
@@ -71,8 +74,8 @@ export const billingApi = baseApi.injectEndpoints({
       query: (storeId) => ({ url: `/subscriptions/stores/${storeId}` }),
       providesTags: (_r, _e, storeId) => [{ type: "Subscriptions", id: storeId }],
     }),
-    getNotifications: builder.query<ApiEnvelope<{ notifications: BillingNotification[] }>, void>({
-      query: () => ({ url: "/notifications" }),
+    getNotifications: builder.query<ApiEnvelope<{ notifications: BillingNotification[]; unreadCount: number; pagination: { page: number; limit: number; total: number; pages: number } }>, { page?: number; limit?: number; unreadOnly?: boolean } | void>({
+      query: (params) => ({ url: "/notifications", params: params || undefined }),
       providesTags: ["Notifications"],
     }),
     getUnreadNotificationCount: builder.query<ApiEnvelope<{ count: number }>, void>({
@@ -85,6 +88,14 @@ export const billingApi = baseApi.injectEndpoints({
     }),
     markAllNotificationsRead: builder.mutation<ApiEnvelope<unknown>, void>({
       query: () => ({ url: "/notifications/read-all", method: "PUT" }),
+      invalidatesTags: ["Notifications"],
+    }),
+    deleteNotification: builder.mutation<ApiEnvelope<unknown>, string>({
+      query: (id) => ({ url: `/notifications/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Notifications"],
+    }),
+    clearNotifications: builder.mutation<ApiEnvelope<{ deletedCount: number }>, void>({
+      query: () => ({ url: "/notifications", method: "DELETE" }),
       invalidatesTags: ["Notifications"],
     }),
     getStoreInvoices: builder.query<ApiEnvelope<{ invoices: Invoice[] }>, string>({
@@ -168,6 +179,8 @@ export const {
   useGetUnreadNotificationCountQuery,
   useMarkNotificationReadMutation,
   useMarkAllNotificationsReadMutation,
+  useDeleteNotificationMutation,
+  useClearNotificationsMutation,
   useGetStoreInvoicesQuery,
   useGetPlanPriceQuery,
   useRunBillingCronMutation,

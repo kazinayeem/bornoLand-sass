@@ -47,7 +47,11 @@ export async function registerController(request: Request, response: Response) {
 }
 
 export async function loginController(request: Request, response: Response) {
-  const result = await loginUser(request.body);
+  const result = await loginUser({
+    ...request.body,
+    userAgent: request.header("user-agent") ?? "",
+    ipAddress: request.ip ?? "",
+  });
 
   if (!result.ok) {
     await recordAuditFromRequest(request, {

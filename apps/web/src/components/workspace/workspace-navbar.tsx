@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Bell,
   Search,
   Command,
   Menu,
@@ -19,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { useAppSelector, useAppDispatch } from "@/hooks/redux";
 import { toggleMobileSidebar } from "@/redux/slices/ui-slice";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
+import { NotificationDropdown } from "@/components/user/notification-dropdown";
+import { ProfileDropdown } from "@/components/user/profile-dropdown";
 
 const quickActions = [
   { label: "New Store", href: "/dashboard/stores/create", icon: Store },
@@ -190,17 +191,8 @@ export function WorkspaceNavbar() {
             )}
           </div>
 
-          <Link
-            href="/dashboard/notifications"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-500 transition-colors hover:bg-zinc-50"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4 w-4" />
-          </Link>
-
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-zinc-800 to-zinc-950 text-sm font-semibold text-white shadow-sm">
-            {user?.name?.split(" ").map((n) => n[0]).join("") ?? "U"}
-          </div>
+          <NotificationDropdown />
+          <ProfileDropdown />
         </div>
       </header>
 

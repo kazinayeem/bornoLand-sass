@@ -23,6 +23,7 @@ import {
   Package,
   ShoppingCart,
   ScrollText,
+  FileText,
 } from "lucide-react";
 
 const primaryNav = [
@@ -30,6 +31,7 @@ const primaryNav = [
   { href: "/admin/dashboard/users", label: "Users", icon: Users },
   { href: "/admin/dashboard/stores", label: "Stores", icon: Store },
   { href: "/admin/dashboard/subscriptions", label: "Subscriptions", icon: Layers },
+  { href: "/admin/dashboard/invoices", label: "Invoices", icon: FileText },
   { href: "/admin/dashboard/plans", label: "Plans", icon: Sparkles },
   { href: "/admin/dashboard/payments", label: "Payments & Review", icon: Wallet },
   { href: "/admin/dashboard/analytics", label: "Analytics", icon: BarChart3 },

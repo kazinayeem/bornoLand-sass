@@ -162,11 +162,11 @@ export function PaymentSubmissionFlow({
         storeId,
         planId: selectedPlan._id,
         duration,
-        amount: paymentAmount,
+        amount: finalTotal,
         paymentMethod: paymentMethod as any,
         senderNumber,
         transactionId,
-        notes,
+        notes: couponApplied ? `${notes ? notes + " | " : ""}Coupon: ${couponCode}` : notes,
       }).unwrap();
       setStep("success");
       toast.success("Payment submitted for approval");
@@ -337,7 +337,8 @@ export function PaymentSubmissionFlow({
             <div className="text-center mb-4">
               <h2 className="text-xl font-bold text-zinc-900">Payment Details</h2>
               <p className="text-sm text-zinc-500 mt-1">
-                Pay {formatBDT(paymentAmount)} for {DURATION_LABELS[duration]} of <strong>{selectedPlan?.name}</strong>
+                Pay {formatBDT(finalTotal)} for {DURATION_LABELS[duration]} of <strong>{selectedPlan?.name}</strong>
+                {couponApplied && <span className="text-emerald-600 ml-1">(with discount)</span>}
               </p>
             </div>
 
@@ -477,6 +478,69 @@ export function PaymentSubmissionFlow({
               </div>
             </div>
 
+            {/* Coupon Code */}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-zinc-700">Coupon Code (optional)</label>
+              {couponApplied ? (
+                <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-emerald-600" />
+                    <span className="text-sm font-medium text-emerald-700">{couponCode}</span>
+                    <span className="text-xs text-emerald-600">(-{formatBDT(couponDiscount)})</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="flex h-5 w-5 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-100"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    placeholder="Enter coupon code"
+                    className="h-11 flex-1 rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={!couponCode.trim() || applyingCoupon}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-40 transition-colors"
+                  >
+                    {applyingCoupon ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Tag className="h-3.5 w-3.5" />}
+                    Apply
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Pricing Summary */}
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-500">Subtotal</span>
+                <span className="text-zinc-900">{formatBDT(paymentAmount)}</span>
+              </div>
+              {couponApplied && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-emerald-600">Discount</span>
+                  <span className="text-emerald-600">-{formatBDT(discountAmount)}</span>
+                </div>
+              )}
+              {taxAmount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-500">Tax</span>
+                  <span className="text-zinc-900">{formatBDT(taxAmount)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-base font-bold border-t border-zinc-200 pt-2">
+                <span className="text-zinc-900">Total</span>
+                <span className="text-zinc-900">{formatBDT(finalTotal)}</span>
+              </div>
+            </div>
+
             <div>
               <label className="mb-1.5 block text-sm font-medium text-zinc-700">Notes (optional)</label>
               <textarea
@@ -525,8 +589,24 @@ export function PaymentSubmissionFlow({
                 <span className="text-sm font-semibold text-zinc-900 capitalize">{DURATION_LABELS[duration]}</span>
               </div>
               <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
-                <span className="text-sm text-zinc-600">Amount</span>
-                <span className="text-lg font-bold text-zinc-900">{formatBDT(paymentAmount)}</span>
+                <span className="text-sm text-zinc-600">Subtotal</span>
+                <span className="text-sm text-zinc-900">{formatBDT(paymentAmount)}</span>
+              </div>
+              {couponApplied && (
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+                  <span className="text-sm text-emerald-600">Coupon Discount</span>
+                  <span className="text-sm font-medium text-emerald-600">-{formatBDT(discountAmount)}</span>
+                </div>
+              )}
+              {taxAmount > 0 && (
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+                  <span className="text-sm text-zinc-600">Tax</span>
+                  <span className="text-sm text-zinc-900">{formatBDT(taxAmount)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+                <span className="text-sm font-semibold text-zinc-900">Total</span>
+                <span className="text-lg font-bold text-zinc-900">{formatBDT(finalTotal)}</span>
               </div>
               <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
                 <span className="text-sm text-zinc-600">Payment Method</span>

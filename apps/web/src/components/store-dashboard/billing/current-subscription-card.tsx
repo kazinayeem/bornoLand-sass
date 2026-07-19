@@ -2,9 +2,18 @@
 
 import type { SubscriptionDashboardResponse } from "@/redux/api/subscription-api";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, CalendarDays, Zap } from "lucide-react";
-import { useState } from "react";
+import { CreditCard, CalendarDays, Zap, Info } from "lucide-react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
+const DURATION_LABELS: Record<string, string> = {
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  half_yearly: "Semi-Annual",
+  yearly: "Annual",
+  lifetime: "Lifetime",
+};
 
 export function CurrentSubscriptionCard({
   subscription,
@@ -13,12 +22,32 @@ export function CurrentSubscriptionCard({
 }) {
   const store = subscription?.store;
   const plan = subscription?.plan;
-  const [autoRenew, setAutoRenew] = useState(true);
+  const [autoRenew, setAutoRenew] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(`auto_renew_${store?.slug}`);
+      return stored !== null ? stored === "true" : true;
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    if (store?.slug) {
+      localStorage.setItem(`auto_renew_${store.slug}`, String(autoRenew));
+    }
+  }, [autoRenew, store?.slug]);
 
   if (!store || !plan) return null;
 
   const isTrial = store.subscriptionStatus === "trialing";
   const isExpired = store.billingStatus === "past_due" || store.billingStatus === "cancelled";
+  const isActive = store.billingStatus === "active";
+
+  const renewalDate = store.renewalDate || store.trialEndsAt;
+  const daysRemaining = renewalDate
+    ? Math.max(0, Math.ceil((new Date(renewalDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
+
+  const billingCycle = store.subscriptionDuration || "monthly";
 
   return (
     <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
@@ -27,13 +56,15 @@ export function CurrentSubscriptionCard({
           <h2 className="text-lg font-semibold text-zinc-900">Current Subscription</h2>
           <p className="mt-1 text-sm text-zinc-500">Manage your current plan and billing cycle.</p>
         </div>
-        <div>
+        <div className="flex items-center gap-2">
           {isTrial ? (
             <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Trial Active</Badge>
           ) : isExpired ? (
             <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Expired</Badge>
+          ) : isActive ? (
+            <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Active</Badge>
           ) : (
-            <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Active</Badge>
+            <Badge className="bg-zinc-100 text-zinc-800 hover:bg-zinc-100">{store.billingStatus || "Unknown"}</Badge>
           )}
         </div>
       </div>
@@ -45,38 +76,61 @@ export function CurrentSubscriptionCard({
           </div>
           <div>
             <h3 className="text-xl font-bold text-zinc-900">{plan.name} Plan</h3>
-            <p className="text-sm font-medium text-zinc-600">{plan.priceBDT} ৳ / month</p>
+            <p className="text-sm font-medium text-zinc-600">
+              {plan.priceBDT ? `${plan.priceBDT.toLocaleString()} ৳ / ${DURATION_LABELS[billingCycle]?.toLowerCase() || "month"}` : "Free"}
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:flex sm:items-center sm:gap-8">
           <div>
             <p className="text-xs font-medium text-zinc-500">Billing Cycle</p>
-            <p className="mt-1 text-sm font-semibold text-zinc-900">Monthly</p>
+            <p className="mt-1 text-sm font-semibold text-zinc-900">{DURATION_LABELS[billingCycle] || "Monthly"}</p>
           </div>
           <div>
             <p className="text-xs font-medium text-zinc-500">Next Renewal</p>
             <div className="mt-1 flex items-center gap-1">
               <CalendarDays className="h-4 w-4 text-zinc-400" />
               <p className="text-sm font-semibold text-zinc-900">
-                {store.trialEndsAt ? new Date(store.trialEndsAt).toLocaleDateString() : "-"}
+                {renewalDate
+                  ? new Date(renewalDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                  : "—"}
               </p>
             </div>
           </div>
+          {daysRemaining !== null && (
+            <div>
+              <p className="text-xs font-medium text-zinc-500">Days Remaining</p>
+              <p className={cn(
+                "mt-1 text-sm font-semibold",
+                daysRemaining <= 7 ? "text-red-600" : daysRemaining <= 30 ? "text-amber-600" : "text-emerald-600"
+              )}>
+                {daysRemaining} days
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="mt-6 flex items-center justify-between border-t border-zinc-100 pt-6">
-        <div>
-          <h4 className="text-sm font-medium text-zinc-900">Auto Renewal</h4>
-          <p className="mt-1 text-sm text-zinc-500">Automatically renew your subscription at the end of the billing cycle.</p>
+        <div className="flex items-start gap-3">
+          <div>
+            <h4 className="text-sm font-medium text-zinc-900">Auto Renewal</h4>
+            <p className="mt-1 text-sm text-zinc-500">Automatically renew your subscription at the end of the billing cycle.</p>
+          </div>
         </div>
         <button
-          onClick={() => setAutoRenew(!autoRenew)}
+          onClick={() => {
+            setAutoRenew(!autoRenew);
+            toast.success(autoRenew ? "Auto-renewal disabled" : "Auto-renewal enabled");
+          }}
           className={cn(
             "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2",
             autoRenew ? "bg-indigo-600" : "bg-zinc-200"
           )}
+          role="switch"
+          aria-checked={autoRenew}
+          aria-label="Toggle auto-renewal"
         >
           <span
             className={cn(

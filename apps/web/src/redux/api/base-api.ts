@@ -3,6 +3,7 @@ import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolk
 import { clearAuthState } from "@/redux/slices/auth-slice";
 import { getApiUrl } from "@/lib/urls";
 import { getAccessToken, setAccessToken, setRefreshPromise, getRefreshPromise, clearRefreshPromise } from "@/lib/access-token";
+import { broadcastAuthEvent } from "@/lib/auth-tab-sync";
 
 const apiBaseUrl = getApiUrl();
 
@@ -86,6 +87,7 @@ const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown,
       setAccessToken(null);
       api.dispatch(clearAuthState());
       emitApiError({ status: 401, message: "Session expired. Please sign in again." });
+      broadcastAuthEvent("expired");
       if (typeof window !== "undefined") window.dispatchEvent(new Event("app:auth-expired"));
     }
   }

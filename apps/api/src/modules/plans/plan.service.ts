@@ -17,6 +17,16 @@ export async function listPlans(includeHidden = false) {
   return { ok: true as const, data: { plans } };
 }
 
+/** Public marketing payload: never exposes hidden or inactive plan configurations. */
+export async function listPublicPlans() {
+  await connectDatabase();
+  const plans = await PlanModel.find({ isActive: true, visible: { $ne: false } })
+    .select("name slug description priceBDT priceYearly isCustomPrice trialDays features limits featureToggles pricing customDomain prioritySupport sortOrder isRecommended isPopular")
+    .sort({ sortOrder: 1, priceBDT: 1 })
+    .lean();
+  return { ok: true as const, data: { plans } };
+}
+
 export async function createPlan(payload: unknown) {
   const parsed = planSchema.safeParse(payload);
   if (!parsed.success) return { ok: false as const, message: "Invalid plan data" };

@@ -108,14 +108,16 @@ const IMG = {
   nlJewelry: "https://images.unsplash.com/photo-1515562141589-67f0d569b6f5?w=1200&q=80",
 };
 
-// Common section prop defaults
-const S = (extra: Record<string, string>) => ({
+// Common section prop defaults. Keeping defaults in a separate value avoids
+// duplicate literal keys when an individual starter section intentionally
+// overrides a default such as animation or background color.
+const DEFAULT_SECTION_PROPS: Record<string, string> = {
   maxWidth: "1200px", shadow: "none", borderRadius: "12", borderWidth: "0", borderColor: "",
   visibility: "all", animation: "none", paddingY: "64", paddingX: "16",
   marginTop: "0", marginBottom: "0", bgColor: "#ffffff", bgGradient: "", bgImage: "",
   bgOverlayColor: "", bgOverlayOpacity: "40", textColor: "#18181b", fontSize: "lg", textAlignment: "center",
-  ...extra,
-});
+};
+const S = (extra: Record<string, string>) => ({ ...DEFAULT_SECTION_PROPS, ...extra });
 
 const STARTER_TEMPLATES = [
   // ═══════════════════════════════════════════════════════════════════════════
@@ -411,9 +413,9 @@ export async function listTemplates(storeId: string, category?: string, template
 
 // ─── Get single template ─────────────────────────────────────────────────────
 
-export async function getTemplate(templateId: string) {
+export async function getTemplate(templateId: string, storeId: string) {
   await connectDatabase();
-  const template = await BuilderTemplateModel.findById(templateId)
+  const template = await BuilderTemplateModel.findOne({ _id: templateId, storeId })
     .populate("createdBy", "name email")
     .lean();
   if (!template) return { ok: false as const, message: "Template not found" };
@@ -434,6 +436,12 @@ export async function createTemplate(
     seo?: Record<string, unknown>;
     settings?: Record<string, unknown>;
     thumbnail?: string;
+    tags?: string[];
+    industry?: string;
+    colorTheme?: string;
+    notes?: string;
+    folder?: string;
+    visibility?: "private" | "team" | "public";
     createdBy?: string;
   }
 ) {
@@ -454,6 +462,13 @@ export async function createTemplate(
     seo: payload.seo ?? {},
     settings: payload.settings ?? {},
     thumbnail: payload.thumbnail ?? "",
+    tags: payload.tags ?? [],
+    industry: payload.industry ?? "",
+    colorTheme: payload.colorTheme ?? "",
+    notes: payload.notes ?? "",
+    folder: payload.folder ?? "",
+    visibility: payload.visibility ?? "private",
+    isShared: payload.visibility === "team" || payload.visibility === "public",
     status: "draft",
     createdBy: payload.createdBy,
     sortOrder: count,
@@ -473,6 +488,12 @@ export async function createTemplateFromPage(
     category?: string;
     thumbnail?: string;
     createdBy?: string;
+    tags?: string[];
+    industry?: string;
+    colorTheme?: string;
+    notes?: string;
+    folder?: string;
+    visibility?: "private" | "team" | "public";
   }
 ) {
   await connectDatabase();
@@ -495,6 +516,13 @@ export async function createTemplateFromPage(
     seo: (page as any).seo ?? {},
     settings: (page as any).settings ?? {},
     thumbnail: payload.thumbnail ?? "",
+    tags: payload.tags ?? [],
+    industry: payload.industry ?? "",
+    colorTheme: payload.colorTheme ?? "",
+    notes: payload.notes ?? "",
+    folder: payload.folder ?? "",
+    visibility: payload.visibility ?? "private",
+    isShared: payload.visibility === "team" || payload.visibility === "public",
     status: "draft",
     createdBy: payload.createdBy,
     sortOrder: count,
@@ -526,6 +554,15 @@ export async function updateTemplate(
   if (payload.thumbnail !== undefined) update.thumbnail = payload.thumbnail;
   if (payload.status !== undefined) update.status = payload.status;
   if (payload.sortOrder !== undefined) update.sortOrder = payload.sortOrder;
+  if (payload.tags !== undefined) update.tags = payload.tags;
+  if (payload.industry !== undefined) update.industry = payload.industry;
+  if (payload.colorTheme !== undefined) update.colorTheme = payload.colorTheme;
+  if (payload.notes !== undefined) update.notes = payload.notes;
+  if (payload.folder !== undefined) update.folder = payload.folder;
+  if (payload.visibility !== undefined) {
+    update.visibility = payload.visibility;
+    update.isShared = payload.visibility === "team" || payload.visibility === "public";
+  }
 
   const template = await BuilderTemplateModel.findOneAndUpdate(
     { _id: templateId, storeId },
@@ -581,6 +618,12 @@ export async function duplicateTemplate(templateId: string, storeId: string) {
     seo: (original as any).seo,
     settings: (original as any).settings,
     thumbnail: (original as any).thumbnail,
+    tags: (original as any).tags ?? [],
+    industry: (original as any).industry ?? "",
+    colorTheme: (original as any).colorTheme ?? "",
+    notes: (original as any).notes ?? "",
+    folder: (original as any).folder ?? "",
+    visibility: "private",
     status: "draft",
     sortOrder: ((original as any).sortOrder ?? 0) + 1,
   });
@@ -607,6 +650,11 @@ export async function exportTemplate(templateId: string, storeId: string) {
     theme: template.theme,
     seo: template.seo,
     settings: template.settings,
+    thumbnail: template.thumbnail,
+    tags: template.tags ?? [],
+    industry: template.industry ?? "",
+    colorTheme: template.colorTheme ?? "",
+    notes: template.notes ?? "",
   };
 
   return { ok: true as const, data: exportData };
@@ -626,6 +674,13 @@ export async function importTemplate(
     seo?: Record<string, unknown>;
     settings?: Record<string, unknown>;
     createdBy?: string;
+    thumbnail?: string;
+    tags?: string[];
+    industry?: string;
+    colorTheme?: string;
+    notes?: string;
+    folder?: string;
+    visibility?: "private" | "team" | "public";
   }
 ) {
   await connectDatabase();
@@ -644,6 +699,14 @@ export async function importTemplate(
     theme: payload.theme ?? {},
     seo: payload.seo ?? {},
     settings: payload.settings ?? {},
+    thumbnail: payload.thumbnail ?? "",
+    tags: payload.tags ?? [],
+    industry: payload.industry ?? "",
+    colorTheme: payload.colorTheme ?? "",
+    notes: payload.notes ?? "",
+    folder: payload.folder ?? "",
+    visibility: payload.visibility ?? "private",
+    isShared: payload.visibility === "team" || payload.visibility === "public",
     status: "draft",
     createdBy: payload.createdBy,
     sortOrder: count,

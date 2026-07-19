@@ -349,7 +349,6 @@ export async function ensureNotificationsMigratedSafe() {
           actionUrl: item.actionUrl ?? "",
           metadata: item.metadata ?? {},
           createdAt: item.createdAt ?? new Date(),
-          updatedAt: item.updatedAt ?? item.createdAt ?? new Date(),
         },
       },
       upsert: true,

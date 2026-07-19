@@ -10,6 +10,12 @@ const builderTemplateSchema = new Schema(
     slug: { type: String, required: true, lowercase: true, trim: true },
     description: { type: String, default: "" },
     category: { type: String, default: "custom" },
+    tags: [{ type: String, trim: true }],
+    industry: { type: String, default: "" },
+    colorTheme: { type: String, default: "" },
+    notes: { type: String, default: "" },
+    folder: { type: String, default: "" },
+    visibility: { type: String, enum: ["private", "team", "public"], default: "private" },
 
     // Template type
     templateType: {
@@ -47,6 +53,7 @@ const builderTemplateSchema = new Schema(
 
 builderTemplateSchema.index({ storeId: 1, slug: 1 }, { unique: true });
 builderTemplateSchema.index({ storeId: 1, category: 1 });
+builderTemplateSchema.index({ storeId: 1, folder: 1 });
 
 export type BuilderTemplateDocument = InferSchemaType<typeof builderTemplateSchema>;
 export const BuilderTemplateModel = models.BuilderTemplate ?? model("BuilderTemplate", builderTemplateSchema);

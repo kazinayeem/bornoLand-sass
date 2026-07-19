@@ -91,8 +91,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       settings={data.settings}
       sliders={data.sliders ?? []}
       pageSections={[]}
-      adminBarStoreId={data.store._id}
-      showAdminBar
+      showAdminBar={false}
     >
       <main className="pb-24 lg:pb-10">
         <ProductDetailClient product={data.product} />

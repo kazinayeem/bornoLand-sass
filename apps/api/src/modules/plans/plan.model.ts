@@ -151,6 +151,7 @@ const planSchema = new Schema({
   sortOrder: { type: Number, default: 0 },
   visible: { type: Boolean, default: true },
   isRecommended: { type: Boolean, default: false },
+  isPopular: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 

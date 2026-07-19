@@ -81,7 +81,7 @@ export default async function TenantLayout({ params, children }: { params: Promi
       headerSettings={headerSettings}
       footerSettings={footerSettings}
       footerSection={footerSection}
-      showAdminBar
+      showAdminBar={false}
     >
       {children}
     </StorefrontShell>

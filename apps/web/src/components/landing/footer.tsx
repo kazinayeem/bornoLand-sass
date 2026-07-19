@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Store } from "lucide-react";
+import Image from "next/image";
 
 const footerLinks = [
   {
@@ -46,12 +46,8 @@ export function Footer() {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600">
-                <Store className="h-3.5 w-3.5 text-white" />
-              </div>
-              <span className="text-sm font-bold tracking-tight text-zinc-900">
-                Borno<span className="text-blue-600">Land</span>
-              </span>
+              <Image src="/logo.png" alt="BornoLand" width={32} height={32} className="h-7 w-7 rounded-lg object-contain" />
+              <span className="text-sm font-bold tracking-tight text-zinc-900">BornoLand</span>
             </Link>
             <p className="text-xs leading-relaxed text-zinc-500 max-w-xs">
               The complete ecommerce platform for building, managing, and growing your online store.

@@ -152,6 +152,7 @@ export const planSchema = z.object({
   sortOrder: z.number().int().min(0).optional().default(0),
   visible: z.boolean().optional().default(true),
   isRecommended: z.boolean().optional().default(false),
+  isPopular: z.boolean().optional().default(false),
   isActive: z.boolean().optional().default(true),
 });
 

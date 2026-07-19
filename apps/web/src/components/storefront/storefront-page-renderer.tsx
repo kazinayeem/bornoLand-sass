@@ -68,7 +68,7 @@ export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
       headerSettings={headerSettings}
       footerSettings={footerSettings}
       footerSection={footerSection}
-      showAdminBar
+      showAdminBar={false}
     >
       <StorefrontCanvas sections={bodySections} />
     </StorefrontShell>

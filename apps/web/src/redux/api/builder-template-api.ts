@@ -8,6 +8,12 @@ export type BuilderTemplate = {
   slug: string;
   description?: string;
   category: string;
+  tags?: string[];
+  industry?: string;
+  colorTheme?: string;
+  notes?: string;
+  folder?: string;
+  visibility?: "private" | "team" | "public";
   templateType: "section" | "page" | "header" | "footer" | "global";
   thumbnail?: string;
   sections?: unknown[];
@@ -44,17 +50,18 @@ export const builderTemplateApi = baseApi.injectEndpoints({
 
     getBuilderTemplate: builder.query<
       ApiEnvelope<{ template: BuilderTemplate }>,
-      string
+      { id: string; storeId: string }
     >({
-      query: (id) => ({ url: `/builder-templates/${id}` }),
-      providesTags: (_r, _e, id) => [{ type: "BuilderTemplate", id }],
+      query: ({ id, storeId }) => ({ url: `/builder-templates/${id}?storeId=${storeId}` }),
+      providesTags: (_r, _e, { id }) => [{ type: "BuilderTemplate", id }],
     }),
 
     createBuilderTemplate: builder.mutation<
       ApiEnvelope<{ template: BuilderTemplate }>,
       {
         storeId: string; name: string; description?: string; category?: string;
-        templateType?: string; sections?: unknown[]; thumbnail?: string;
+        templateType?: string; sections?: unknown[]; thumbnail?: string; tags?: string[];
+        industry?: string; colorTheme?: string; notes?: string; folder?: string; visibility?: "private" | "team" | "public";
       }
     >({
       query: ({ storeId, ...body }) => ({ url: `/builder-templates/stores/${storeId}`, method: "POST", body }),
@@ -63,7 +70,7 @@ export const builderTemplateApi = baseApi.injectEndpoints({
 
     createTemplateFromPage: builder.mutation<
       ApiEnvelope<{ template: BuilderTemplate }>,
-      { storeId: string; pageId: string; name: string; description?: string; category?: string; thumbnail?: string }
+      { storeId: string; pageId: string; name: string; description?: string; category?: string; thumbnail?: string; tags?: string[]; industry?: string; colorTheme?: string; notes?: string; folder?: string; visibility?: "private" | "team" | "public" }
     >({
       query: ({ storeId, pageId, ...body }) => ({
         url: `/builder-templates/from-page/${pageId}`,
@@ -125,7 +132,8 @@ export const builderTemplateApi = baseApi.injectEndpoints({
       {
         storeId: string; name: string; description?: string; category?: string;
         templateType?: string; sections?: unknown[]; theme?: Record<string, unknown>;
-        seo?: Record<string, unknown>; settings?: Record<string, unknown>;
+        seo?: Record<string, unknown>; settings?: Record<string, unknown>; thumbnail?: string; tags?: string[];
+        industry?: string; colorTheme?: string; notes?: string; folder?: string; visibility?: "private" | "team" | "public";
       }
     >({
       query: ({ storeId, ...body }) => ({ url: `/builder-templates/stores/${storeId}/import`, method: "POST", body }),

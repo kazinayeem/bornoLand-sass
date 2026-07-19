@@ -281,6 +281,27 @@ export function PropertiesPanel() {
         { key: "badge", label: "Badge", type: "text", placeholder: "Verified Purchase" },
       ],
     },
+    "image-carousel": {
+      field: "slides", title: "Carousel Slides", addLabel: "Add Slide",
+      fields: [
+        { key: "image", label: "Image URL", type: "url", placeholder: "https://..." },
+        { key: "mobileImage", label: "Mobile Image URL", type: "url", placeholder: "https://..." },
+        { key: "alt", label: "Alt Text", type: "text", placeholder: "Describe the image..." },
+        { key: "badge", label: "Badge", type: "text", placeholder: "New" },
+        { key: "title", label: "Title", type: "text", placeholder: "Slide title..." },
+        { key: "subtitle", label: "Subtitle", type: "text", placeholder: "Slide subtitle..." },
+        { key: "description", label: "Description", type: "textarea", placeholder: "Slide description..." },
+        { key: "buttonText", label: "Button Text", type: "text", placeholder: "Shop Now" },
+        { key: "buttonUrl", label: "Button URL", type: "url", placeholder: "/shop" },
+        { key: "textAlignment", label: "Text Alignment", type: "text", placeholder: "left" },
+        { key: "textColor", label: "Text Color", type: "text", placeholder: "#ffffff" },
+        { key: "imageFit", label: "Image Fit", type: "text", placeholder: "cover" },
+        { key: "imagePosition", label: "Image Position", type: "text", placeholder: "center" },
+        { key: "overlay", label: "Overlay", type: "text", placeholder: "rgba(0,0,0,0.35)" },
+        { key: "backgroundOverlay", label: "Background Overlay", type: "text", placeholder: "rgba(0,0,0,0.35)" },
+        { key: "gradientOverlay", label: "Gradient Overlay", type: "text", placeholder: "linear-gradient(...)" },
+      ],
+    },
     gallery: {
       field: "galleryItems", title: "Gallery Images", addLabel: "Add Image",
       fields: [
@@ -923,7 +944,7 @@ export function PropertiesPanel() {
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <div className="sticky top-0 z-10 border-b border-zinc-100 bg-white/95 px-3 py-3 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
@@ -970,7 +991,7 @@ export function PropertiesPanel() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {renderTabContent()}
 
         {controls.length === 0 && activeRightTab === "content" && (

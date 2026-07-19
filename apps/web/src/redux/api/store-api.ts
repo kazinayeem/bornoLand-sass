@@ -158,6 +158,7 @@ export type Plan = {
   sortOrder?: number;
   visible?: boolean;
   isRecommended: boolean;
+  isPopular?: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

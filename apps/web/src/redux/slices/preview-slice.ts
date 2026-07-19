@@ -26,7 +26,8 @@ const previewSlice = createSlice({
       state.device = action.payload;
     },
     setZoom(state, action: PayloadAction<number>) {
-      state.zoom = Math.max(10, Math.min(200, action.payload));
+      // Builder-only zoom. This never reaches the storefront theme or published CSS.
+      state.zoom = Math.max(25, Math.min(400, action.payload));
     },
     toggleGuides(state) {
       state.showGuides = !state.showGuides;

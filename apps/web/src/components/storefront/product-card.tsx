@@ -88,7 +88,7 @@ export function ProductCard({ product, badge }: ProductCardProps) {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="group relative flex flex-col rounded-xl border bg-white p-3 transition-all hover:shadow-md hover:-translate-y-0.5"
+        className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border bg-white p-3 transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_48px_-28px_rgba(15,23,42,0.28)]"
         style={{
           borderColor: isDark ? "#27272a" : "#e4e4e7",
           fontFamily: font,
@@ -142,22 +142,6 @@ export function ProductCard({ product, badge }: ProductCardProps) {
               </div>
             )}
 
-            {/* Hover actions */}
-            <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-              <button onClick={handleAddToCart}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg transition-transform hover:scale-110"
-                style={{ color: primaryColor }}>
-                <ShoppingCart className="h-5 w-5" />
-              </button>
-              <button onClick={handleQuickView}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg transition-transform hover:scale-110 text-zinc-600">
-                <Eye className="h-5 w-5" />
-              </button>
-              <button onClick={handleWishlist}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg transition-transform hover:scale-110 text-zinc-600 hover:text-red-400">
-                <Heart className="h-5 w-5" />
-              </button>
-            </div>
           </div>
 
           {/* ── Content ──────────────────────────────────── */}
@@ -189,9 +173,40 @@ export function ProductCard({ product, badge }: ProductCardProps) {
           </div>
         </Link>
 
+        {/* Hover actions */}
+        <div className="pointer-events-none absolute inset-3 flex items-center justify-center gap-2 rounded-[1.25rem] bg-black/40 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg transition-transform hover:scale-110"
+            style={{ color: primaryColor }}
+            aria-label={`Add ${product.name} to cart`}
+          >
+            <ShoppingCart className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleQuickView}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-zinc-600 shadow-lg transition-transform hover:scale-110"
+            aria-label={`Quick view ${product.name}`}
+          >
+            <Eye className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleWishlist}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-zinc-600 shadow-lg transition-transform hover:scale-110 hover:text-red-400"
+            aria-label={`Save ${product.name} to wishlist`}
+          >
+            <Heart className="h-5 w-5" />
+          </button>
+        </div>
+
         {/* Add to Cart button */}
         {!isOutOfStock && (
-          <button onClick={handleAddToCart}
+          <button
+            type="button"
+            onClick={handleAddToCart}
             className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
             style={{ borderRadius: buttonStyle, backgroundColor: primaryColor }}>
             <ShoppingCart className="h-3.5 w-3.5" /> Add to Cart

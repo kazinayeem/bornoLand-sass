@@ -1,10 +1,11 @@
  "use client";
 
-import { useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { SectionRenderer, type SectionData } from "@/components/sections/section-renderer";
 import { BuilderProvider } from "@/components/sections/builder-link";
 import type { StorefrontSectionLike } from "./storefront-types";
-import { Plus } from "lucide-react";
+import { Copy, EyeOff, Lock, Pencil, Plus, Trash2 } from "lucide-react";
+import { getSectionDef } from "@/lib/section-registry";
 import { cn } from "@/lib/utils";
 
 type StorefrontCanvasProps = {
@@ -15,6 +16,9 @@ type StorefrontCanvasProps = {
   onHoverSection?: (sectionId: string | null) => void;
   onQuickEditRequest?: (payload: { sectionId: string; mode: "text" | "image" | "button" }) => void;
   onQuickInsert?: (index: number, event: React.MouseEvent) => void;
+  /** Updates made by the canvas are immediately reflected in the draft (and autosaved by the editor). */
+  onInlineTextChange?: (payload: { sectionId: string; key: string; value: string }) => void;
+  onSectionAction?: (payload: { sectionId: string; action: "duplicate" | "delete" | "hide" | "lock" | "copy" }) => void;
 };
 
 function toSectionData(s: StorefrontSectionLike): SectionData {
@@ -27,10 +31,48 @@ function toSectionData(s: StorefrontSectionLike): SectionData {
   return { id: s.id, type: s.type, visible: s.visible, props, style: s.style };
 }
 
-export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId, onSelectSection, onHoverSection, onQuickEditRequest, onQuickInsert }: StorefrontCanvasProps) {
+// The canvas wrapper must update for selection, hover and insertion affordances,
+// but a section's rendered storefront should update only when that section's
+// record changes. Builder reducers preserve untouched section references, so
+// this comparator cuts full-canvas rendering work on single-section edits.
+const CanvasSectionRenderer = memo(function CanvasSectionRenderer({ section }: { section: StorefrontSectionLike }) {
+  return <SectionRenderer section={toSectionData(section)} />;
+}, (previous, next) => previous.section === next.section);
+
+type HoverCard = { sectionId: string; label: string; rect: DOMRect };
+
+const EDITABLE_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "small", "li", "figcaption"]);
+const TEXT_KEYS = ["headline", "title", "kicker", "subheadline", "subtitle", "description", "text", "content", "buttonText", "badge", "copyright", "placeholderText"];
+
+function findEditableProp(section: StorefrontSectionLike, target: HTMLElement) {
+  const text = target.innerText?.trim();
+  if (!text || text.length > 800) return null;
+  const entries = Object.entries(section.props ?? {});
+  const exact = entries.find(([, value]) => String(value).trim() === text);
+  if (exact) return exact[0];
+  const normalized = text.replace(/\s+/g, " ").trim();
+  const partial = entries.find(([key, value]) => TEXT_KEYS.includes(key) && String(value).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim() === normalized);
+  return partial?.[0] ?? null;
+}
+
+export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId, onSelectSection, onHoverSection, onQuickEditRequest, onQuickInsert, onInlineTextChange, onSectionAction }: StorefrontCanvasProps) {
   const visibleSections = sections.filter((section) => section.visible !== false);
   const [hoveredInsertIndex, setHoveredInsertIndex] = useState<number | null>(null);
   const [clickedInsertIndex, setClickedInsertIndex] = useState<number | null>(null);
+  const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ sectionId: string; x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    const close = () => setContextMenu(null);
+    window.addEventListener("click", close);
+    window.addEventListener("scroll", close, true);
+    return () => { window.removeEventListener("click", close); window.removeEventListener("scroll", close, true); };
+  }, []);
+
+  const selectedLabel = useMemo(() => {
+    const section = sections.find((item) => item.id === selectedSectionId);
+    return section ? (getSectionDef(section.type)?.label ?? section.type) : null;
+  }, [sections, selectedSectionId]);
 
   if (visibleSections.length === 0) {
     return <main />;
@@ -118,6 +160,7 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
           <div
             data-builder-section-id={section.id}
             onClick={(event) => {
+              if ((event.target as HTMLElement)?.dataset.builderInline === "true") return;
               onSelectSection?.(section.id);
               if (!onQuickEditRequest) return;
               const target = event.target as HTMLElement | null;
@@ -130,27 +173,67 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
               }
             }}
             onDoubleClick={(event) => {
-              if (!onQuickEditRequest) return;
               const target = event.target as HTMLElement | null;
               if (!target) return;
               const tagName = target.tagName.toLowerCase();
-              if (["h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "small"].includes(tagName)) {
+              const key = EDITABLE_TAGS.has(tagName) ? findEditableProp(section, target) : null;
+              if (key && onInlineTextChange) {
+                event.preventDefault();
+                event.stopPropagation();
+                target.dataset.builderInline = "true";
+                target.dataset.builderProp = key;
+                target.dataset.builderOriginal = target.innerText;
+                target.contentEditable = "true";
+                target.spellcheck = true;
+                target.focus();
+                const range = document.createRange();
+                range.selectNodeContents(target);
+                const selection = window.getSelection();
+                selection?.removeAllRanges();
+                selection?.addRange(range);
+              } else if (onQuickEditRequest && EDITABLE_TAGS.has(tagName)) {
                 onQuickEditRequest({ sectionId: section.id, mode: "text" });
               }
             }}
-            onMouseEnter={onHoverSection ? () => onHoverSection(section.id) : undefined}
-            onMouseLeave={onHoverSection ? () => onHoverSection(null) : undefined}
+            onKeyDown={(event) => {
+              const target = event.target as HTMLElement;
+              if (target.dataset.builderInline !== "true") return;
+              if (event.key === "Enter") { event.preventDefault(); target.blur(); }
+              if (event.key === "Escape") { event.preventDefault(); target.innerText = target.dataset.builderOriginal ?? ""; target.blur(); }
+            }}
+            onBlur={(event) => {
+              const target = event.target as HTMLElement;
+              const key = target.dataset.builderProp;
+              if (target.dataset.builderInline !== "true" || !key) return;
+              target.contentEditable = "false";
+              target.spellcheck = false;
+              delete target.dataset.builderInline;
+              delete target.dataset.builderProp;
+              delete target.dataset.builderOriginal;
+              onInlineTextChange?.({ sectionId: section.id, key, value: target.innerText.trim() });
+            }}
+            onContextMenu={(event) => {
+              if (!onSectionAction) return;
+              event.preventDefault();
+              onSelectSection?.(section.id);
+              setContextMenu({ sectionId: section.id, x: event.clientX, y: event.clientY });
+            }}
+            onMouseEnter={(event) => {
+              onHoverSection?.(section.id);
+              setHoverCard({ sectionId: section.id, label: getSectionDef(section.type)?.label ?? section.type, rect: event.currentTarget.getBoundingClientRect() });
+            }}
+            onMouseLeave={() => { onHoverSection?.(null); setHoverCard(null); }}
             className={`relative transition-all ${
               onSelectSection ? "cursor-pointer" : ""
             } ${
               selectedSectionId === section.id
-                ? "ring-2 ring-blue-500/70 ring-offset-2 ring-offset-zinc-100"
+                ? "ring-1 ring-blue-500 ring-offset-1 ring-offset-zinc-100"
                 : hoveredSectionId === section.id
-                  ? "ring-2 ring-blue-300/60 ring-offset-2 ring-offset-zinc-100"
+                  ? "ring-1 ring-blue-300/80 ring-offset-1 ring-offset-zinc-100"
                   : ""
             }`}
           >
-            <SectionRenderer section={toSectionData(section)} />
+            <CanvasSectionRenderer section={section} />
           </div>
           {onQuickInsert && <InsertionBar index={i + 1} />}
         </div>
@@ -159,7 +242,30 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
   );
 
   if (isBuilderMode) {
-    return <BuilderProvider>{canvasContent}</BuilderProvider>;
+    return <BuilderProvider>
+      {canvasContent}
+      {hoverCard && hoverCard.sectionId !== selectedSectionId && (
+        <div className="pointer-events-none fixed z-[70] rounded-lg bg-blue-600 px-2 py-1 text-[10px] font-semibold text-white shadow-lg" style={{ top: Math.max(6, hoverCard.rect.top + 6), left: Math.max(6, hoverCard.rect.left + 6) }}>
+          {hoverCard.label} · {Math.round(hoverCard.rect.width)} × {Math.round(hoverCard.rect.height)}
+        </div>
+      )}
+      {contextMenu && (
+        <div className="fixed z-[80] w-44 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-2xl" style={{ top: contextMenu.y, left: contextMenu.x }} onClick={(event) => event.stopPropagation()}>
+          <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{selectedLabel ?? "Section"}</p>
+          <CanvasMenuItem icon={<Pencil />} label="Edit" onClick={() => { onQuickEditRequest?.({ sectionId: contextMenu.sectionId, mode: "text" }); setContextMenu(null); }} />
+          <CanvasMenuItem icon={<Copy />} label="Duplicate" onClick={() => { onSectionAction?.({ sectionId: contextMenu.sectionId, action: "duplicate" }); setContextMenu(null); }} />
+          <CanvasMenuItem icon={<Copy />} label="Copy" onClick={() => { onSectionAction?.({ sectionId: contextMenu.sectionId, action: "copy" }); setContextMenu(null); }} />
+          <CanvasMenuItem icon={<EyeOff />} label="Hide" onClick={() => { onSectionAction?.({ sectionId: contextMenu.sectionId, action: "hide" }); setContextMenu(null); }} />
+          <CanvasMenuItem icon={<Lock />} label="Lock" onClick={() => { onSectionAction?.({ sectionId: contextMenu.sectionId, action: "lock" }); setContextMenu(null); }} />
+          <div className="my-1 border-t border-zinc-100" />
+          <CanvasMenuItem icon={<Trash2 />} label="Delete" destructive onClick={() => { onSectionAction?.({ sectionId: contextMenu.sectionId, action: "delete" }); setContextMenu(null); }} />
+        </div>
+      )}
+    </BuilderProvider>;
   }
   return canvasContent;
+}
+
+function CanvasMenuItem({ icon, label, onClick, destructive = false }: { icon: React.ReactNode; label: string; onClick: () => void; destructive?: boolean }) {
+  return <button type="button" onClick={onClick} className={cn("flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs font-medium hover:bg-zinc-100", destructive ? "text-red-600 hover:bg-red-50" : "text-zinc-700")}><span className="h-3.5 w-3.5">{icon}</span>{label}</button>;
 }

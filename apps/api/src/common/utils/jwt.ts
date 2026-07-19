@@ -72,13 +72,14 @@ export function getSessionCookieName() {
 }
 
 export function getSessionCookieMaxAge(rememberMe = false) {
-  // 7 days default, 14 days if rememberMe (refresh token max rotation window)
-  return rememberMe ? 60 * 60 * 24 * 14 : 60 * 60 * 24 * 7;
+  // Sliding session lifetime. The refresh-token rotation endpoint renews this
+  // window only after a valid, active session has proved possession of its
+  // HttpOnly token.
+  return rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 7;
 }
 
-export function getRefreshTokenCookieMaxAge() {
-  // 7 days — matches refresh token lifetime
-  return 60 * 60 * 24 * 7;
+export function getRefreshTokenCookieMaxAge(rememberMe = false) {
+  return getSessionCookieMaxAge(rememberMe);
 }
 
 export function getSessionCookieOptions(maxAgeSeconds: number) {

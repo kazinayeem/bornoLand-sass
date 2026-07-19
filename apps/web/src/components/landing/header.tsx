@@ -2,13 +2,17 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Store } from "lucide-react";
+import Image from "next/image";
+import { Menu, X } from "lucide-react";
 
 const navLinks = [
   { label: "Features", href: "#features" },
+  { label: "Templates", href: "#templates" },
   { label: "Builder", href: "#builder" },
   { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+  { label: "Demo", href: "#platform" },
+  { label: "Docs", href: "/docs" },
+  { label: "Contact", href: "#contact" },
 ];
 
 export function Header() {
@@ -31,18 +35,14 @@ export function Header() {
         }`}
       >
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 shadow-md">
-            <Store className="h-4 w-4 text-white" />
-          </div>
-          <span className="text-base font-bold tracking-tight text-zinc-900">
-            Borno<span className="text-blue-600">Land</span>
-          </span>
+          <Image src="/logo.png" alt="BornoLand" width={36} height={36} priority className="h-8 w-8 rounded-lg object-contain shadow-sm" />
+          <span className="text-base font-bold tracking-tight text-zinc-950">BornoLand</span>
         </Link>
 
         <div className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => (
             <Link
-              key={link.href}
+              key={link.label}
               href={link.href}
               className="rounded-lg px-3.5 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
             >
@@ -82,7 +82,7 @@ export function Header() {
           <div className="flex flex-col gap-1">
             {navLinks.map((link) => (
               <Link
-                key={link.href}
+                key={link.label}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
                 className="rounded-lg px-3.5 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900"

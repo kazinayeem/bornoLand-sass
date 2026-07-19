@@ -302,7 +302,7 @@ function buildMenuItems(
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function LayersPanel() {
+export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigator" }) {
   const dispatch = useDispatch();
   const sections = useSelector((s: RootState) => s.builder.sections);
   const headerSections = useSelector((s: RootState) => s.builder.headerSections);
@@ -803,7 +803,7 @@ export function LayersPanel() {
   }, [contextMenu, clipboardSection, dispatch, createTemplate, storeId, sections, headerSections, footerSections]);
 
   return (
-    <aside className="flex h-full flex-col bg-white">
+    <aside className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="border-b border-zinc-100 px-3 py-2.5">
         <div className="flex items-center justify-between">
@@ -812,7 +812,7 @@ export function LayersPanel() {
               <PanelLeft className="h-3.5 w-3.5" />
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Layers</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{title}</p>
               <p className="text-xs font-semibold text-zinc-900">Page Structure</p>
             </div>
           </div>
@@ -891,7 +891,7 @@ export function LayersPanel() {
       </div>
 
       {/* ── Section List ────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-3 space-y-1">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-2 pb-3 space-y-1">
         {(() => {
           return (
             <>

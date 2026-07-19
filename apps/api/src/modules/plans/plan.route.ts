@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { requireAuth } from "../../common/middleware/auth.middleware.js";
-import { createPlanController, deletePlanController, duplicatePlanController, getPlanPriceController, listPlansController, updatePlanController } from "./plan.controller.js";
+import { createPlanController, deletePlanController, duplicatePlanController, getPlanPriceController, listPlansController, listPublicPlansController, updatePlanController } from "./plan.controller.js";
 import { getStoreSubscriptionDashboardController, getStoreDashboardStatsController, initiateCheckoutController, checkoutCallbackController } from "./subscription.controller.js";
 
 export const planRouter: Router = Router();
 
+planRouter.get("/public", listPublicPlansController);
 planRouter.use(requireAuth);
 
 planRouter.post("/store/:storeId/checkout", initiateCheckoutController);

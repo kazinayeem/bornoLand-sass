@@ -359,7 +359,7 @@ export function PagesPanel() {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       {/* Header */}
       <div className="border-b border-zinc-100 px-4 py-4">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Pages</p>
@@ -383,7 +383,7 @@ export function PagesPanel() {
       </div>
 
       {/* Page list */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-1">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 space-y-1">
         {homePage && renderPageCard(homePage, true)}
 
         {sortedCustom.length > 0 && (

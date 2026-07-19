@@ -164,6 +164,7 @@ export function PlanBuilder({ plan, initialTab }: Props) {
   const [sortOrder, setSortOrder] = useState(plan.sortOrder ?? 0);
   const [visible, setVisible] = useState(plan.visible ?? true);
   const [isRecommended, setIsRecommended] = useState(plan.isRecommended);
+  const [isPopular, setIsPopular] = useState(plan.isPopular ?? false);
   const [isActive, setIsActive] = useState(plan.isActive);
   const [customDomain, setCustomDomain] = useState(plan.customDomain ?? false);
   const [prioritySupport, setPrioritySupport] = useState(plan.prioritySupport ?? false);
@@ -324,6 +325,7 @@ export function PlanBuilder({ plan, initialTab }: Props) {
       sortOrder,
       visible,
       isRecommended,
+      isPopular,
       isActive,
       customDomain,
       prioritySupport,
@@ -592,6 +594,14 @@ export function PlanBuilder({ plan, initialTab }: Props) {
               <div>
                 <p className="text-sm font-medium text-zinc-900">Recommended</p>
                 <p className="text-xs text-zinc-500">Highlight as "Most Popular"</p>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4">
+              <input type="checkbox" checked={isPopular} onChange={(e) => setIsPopular(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+              <div>
+                <p className="text-sm font-medium text-zinc-900">Most Popular</p>
+                <p className="text-xs text-zinc-500">Show a separate popular badge on the public pricing page</p>
               </div>
             </label>
             <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4">

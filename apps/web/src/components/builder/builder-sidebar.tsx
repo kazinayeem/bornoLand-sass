@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
-import { setActiveTab, toggleLeftPanel } from "@/redux/slices/builder-slice";
+import { setActiveTab, toggleLeftPanel, openSectionLibrary } from "@/redux/slices/builder-slice";
 import type { LeftTab } from "@/redux/slices/builder-slice";
 import {
-  Layers3, FileText, AppWindow, ImagePlus,
+  Layers3, FileText, AppWindow, ImagePlus, Blocks, Network,
   Palette, ChevronLeft,
 } from "lucide-react";
 import { PagesPanel } from "./panels/pages-panel";
@@ -30,8 +30,23 @@ export function BuilderSidebar() {
   const activeTab = useSelector((s: RootState) => s.builder.activeTab);
   const sectionCount = useSelector((s: RootState) => s.builder.sections.length + s.builder.headerSections.length + s.builder.footerSections.length);
 
+  const sectionButton = (
+    <button
+      type="button"
+      onClick={() => dispatch(openSectionLibrary({ insertPosition: null }))}
+      className="mb-2 flex w-full items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-950 px-3 py-2.5 text-left text-white shadow-sm transition hover:bg-zinc-800"
+    >
+      <span className="flex items-center gap-2 text-sm font-medium">
+        <Blocks className="h-4 w-4" />
+        Sections
+      </span>
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Add</span>
+    </button>
+  );
+
   const tabs: TabDef[] = useMemo(() => [
     { key: "layers", icon: Layers3, label: "Layers", meta: `${sectionCount}` },
+    { key: "navigator", icon: Network, label: "Navigator" },
     { key: "pages", icon: FileText, label: "Pages" },
     { key: "templates", icon: AppWindow, label: "Templates" },
     { key: "media", icon: ImagePlus, label: "Media" },
@@ -45,6 +60,7 @@ export function BuilderSidebar() {
   const renderPanel = () => {
     switch (activeTab) {
       case "layers": return <LayersPanel />;
+      case "navigator": return <LayersPanel title="Navigator" />;
       case "pages": return <PagesPanel />;
       case "templates": return <TemplatesPanel />;
       case "media": return <MediaPanel billingHref={`/store/${storeSlug}/billing`} />;
@@ -54,16 +70,30 @@ export function BuilderSidebar() {
   };
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="border-b border-zinc-200/60 bg-zinc-50/80 p-3">
+        {sectionButton}
+        <div className="grid grid-cols-2 gap-2">
+          <button className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-left text-xs font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">
+            Pages
+            <div className="mt-0.5 text-[10px] font-normal text-zinc-400">Manage routes</div>
+          </button>
+          <button className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-left text-xs font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">
+            History
+            <div className="mt-0.5 text-[10px] font-normal text-zinc-400">Undo / redo stack</div>
+          </button>
+        </div>
+      </div>
       {/* Icon rail */}
-      <div className="flex w-12 flex-col items-center gap-1 border-r border-zinc-200/60 bg-zinc-50/80 py-2">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="flex min-h-0 w-14 flex-col items-center gap-1 border-r border-zinc-200/60 bg-zinc-50/80 py-2">
         {tabs.map(({ key, icon: Icon, label, meta }) => (
           <button
             key={key}
             title={label}
             onClick={() => handleTabClick(key)}
             className={cn(
-              "flex w-10 flex-col items-center justify-center rounded-xl px-1 py-1.5 text-[9px] font-medium transition-all",
+              "flex w-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[9px] font-medium transition-all",
               activeTab === key
                 ? "bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-200/50"
                 : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100/50"
@@ -77,17 +107,18 @@ export function BuilderSidebar() {
         <button
           type="button"
           onClick={() => dispatch(toggleLeftPanel())}
-          className="mt-auto flex w-10 flex-col items-center rounded-xl px-1 py-1.5 text-[9px] font-medium text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100/50 transition-all"
+          className="mt-auto flex w-11 flex-col items-center rounded-2xl px-1 py-2 text-[9px] font-medium text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100/50 transition-all"
           title="Close sidebar"
         >
           <ChevronLeft className="h-4 w-4" />
           <span className="mt-0.5 leading-none">Close</span>
         </button>
-      </div>
+        </div>
 
       {/* Panel content */}
-      <div className="flex-1 overflow-hidden bg-white">
+      <div className="min-h-0 flex-1 overflow-hidden bg-white">
         {renderPanel()}
+      </div>
       </div>
     </div>
   );

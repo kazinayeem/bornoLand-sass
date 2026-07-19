@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -34,19 +35,25 @@ export function Modal({ open, onClose, title, description, children, size = "md"
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
+    return () => {
+      document.removeEventListener("keydown", handler);
+      document.body.style.overflow = previousOverflow;
+    };
   }, [open, onClose]);
 
   const hasHeader = title || description;
 
-  return (
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 pt-8 sm:pt-12">
+        <div className="fixed inset-0 z-[300] flex items-start justify-center overflow-y-auto p-4 pt-8 sm:pt-12">
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 bg-zinc-950/75 backdrop-blur-md"
             onClick={onClose}
           />
           <motion.div
@@ -99,5 +106,6 @@ export function Modal({ open, onClose, title, description, children, size = "md"
         </div>
       )}
     </AnimatePresence>
+    , document.body,
   );
 }

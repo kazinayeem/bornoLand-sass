@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, memo } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
@@ -193,6 +194,14 @@ export function BuilderEditor() {
   const presentationMode = useSelector((s: RootState) => s.builder.presentationMode);
   const [resizing, setResizing] = useState<"left" | "right" | null>(null);
   const [clearPageOpen, setClearPageOpen] = useState(false);
+
+  const handleQuickInsert = useCallback((index: number, event: ReactMouseEvent) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    dispatch(openSectionLibrary({
+      insertPosition: index,
+      anchorPosition: { top: rect.top + window.scrollY, left: rect.left + rect.width / 2 },
+    }));
+  }, [dispatch]);
 
   const loadedRef = useRef<string>("");
 
@@ -484,7 +493,7 @@ export function BuilderEditor() {
     <div
       ref={containerRef}
       className={cn(
-        "flex h-screen flex-col bg-zinc-50 transition-all duration-200",
+        "flex h-dvh min-h-0 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.96),_rgba(244,244,245,0.9)_40%,_rgba(228,228,231,0.8))] transition-all duration-200",
         fullscreen && "fixed inset-0 z-50",
         presentationMode && "bg-black"
       )}
@@ -502,10 +511,10 @@ export function BuilderEditor() {
         />
       )}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {!presentationMode && leftPanelOpen && (
           <div
-            className="flex-shrink-0 overflow-hidden border-r border-zinc-200/60 bg-white/95 backdrop-blur-sm"
+            className="min-h-0 flex-shrink-0 overflow-hidden border-r border-zinc-200/60 bg-white/90 shadow-[8px_0_40px_-24px_rgba(0,0,0,0.25)] backdrop-blur-xl"
             style={{ width: leftPanelWidth }}
           >
             <BuilderSidebar />
@@ -517,29 +526,19 @@ export function BuilderEditor() {
         )}
 
         <div className={cn(
-          "flex-1 overflow-x-hidden overflow-y-auto bg-zinc-100 transition-all duration-200",
+          "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-transparent transition-all duration-200",
           presentationMode && "bg-black"
         )}>
+          <div className="mx-auto h-full max-w-[2200px] px-3 py-3 sm:px-4 sm:py-4">
           <StorePreview
             store={store}
             theme={currentTheme}
             sections={sections as never}
             headerSections={headerSections as never}
             footerSections={footerSections as never}
-            onQuickInsert={(index, event) => {
-              // Calculate anchor position from click event
-              const rect = event.currentTarget.getBoundingClientRect();
-              const anchorPosition = {
-                top: rect.top + window.scrollY,
-                left: rect.left + rect.width / 2,
-              };
-              
-              dispatch(openSectionLibrary({ 
-                insertPosition: index,
-                anchorPosition 
-              }));
-            }}
+            onQuickInsert={handleQuickInsert}
           />
+          </div>
         </div>
 
         {!presentationMode && rightPanelOpen && (selectedSectionId || editingZone !== "body") && (
@@ -548,7 +547,7 @@ export function BuilderEditor() {
 
         {!presentationMode && rightPanelOpen && (selectedSectionId || editingZone !== "body") && (
           <div
-            className="flex-shrink-0 overflow-y-auto border-l border-zinc-200/60 bg-white/95 backdrop-blur-sm"
+            className="min-h-0 flex-shrink-0 overflow-hidden border-l border-zinc-200/60 bg-white/90 shadow-[-8px_0_40px_-24px_rgba(0,0,0,0.25)] backdrop-blur-xl"
             style={{ width: rightPanelWidth }}
           >
             <PropertiesPanel />

@@ -26,6 +26,7 @@ import {
   generateRefreshToken,
   hashRefreshToken,
   generateRefreshTokenFamily,
+  getSessionCookieMaxAge,
   type SessionPayload,
 } from "../../common/utils/jwt.js";
 
@@ -170,16 +171,19 @@ export async function loginUser(payload: unknown) {
   // Generate Access Token (15min) — returned in response body
   const accessToken = signAccessToken(session);
 
-  // Generate Refresh Token (7d) — stored in httpOnly cookie
+  // Generate a rotating, HttpOnly refresh token. The selected lifetime is kept
+  // on the token record so a renewal cannot silently downgrade Remember Me.
   const refreshToken = generateRefreshToken();
   const refreshTokenHash = hashRefreshToken(refreshToken);
   const family = generateRefreshTokenFamily();
-  const rtExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const sessionMaxAge = getSessionCookieMaxAge(parsed.data.rememberMe);
+  const rtExpiresAt = new Date(Date.now() + sessionMaxAge * 1000);
 
   await RefreshTokenModel.create({
     userId: user._id,
     tokenHash: refreshTokenHash,
     family,
+    rememberMe: parsed.data.rememberMe,
     expiresAt: rtExpiresAt,
     userAgent: (payload as Record<string, unknown>)?.userAgent ?? "",
     ipAddress: (payload as Record<string, unknown>)?.ipAddress ?? "",
@@ -213,9 +217,10 @@ export async function loginUser(payload: unknown) {
     data: {
       accessToken,
       // Session token for backward compat (read by middleware.ts)
-      sessionToken: signSessionToken(session, "7d"),
+      sessionToken: signSessionToken(session, parsed.data.rememberMe ? "30d" : "7d"),
       refreshToken,
       refreshTokenExpiresAt: rtExpiresAt.toISOString(),
+      sessionMaxAge,
       session,
       user: {
         id: String(user._id),
@@ -241,6 +246,8 @@ export async function refreshAccessToken(rawRefreshToken: string) {
     userAgent?: string;
     ipAddress?: string;
     deviceInfo?: string;
+    family: string;
+    rememberMe?: boolean;
   } | null;
 
   if (!stored) {
@@ -248,6 +255,12 @@ export async function refreshAccessToken(rawRefreshToken: string) {
   }
 
   if (stored.revokedAt) {
+    // A revoked token presented again is a replay signal. Revoke its family so
+    // a stolen, rotated token cannot be used to keep the session alive.
+    await RefreshTokenModel.updateMany(
+      { userId: stored.userId, family: stored.family, revokedAt: null },
+      { $set: { revokedAt: new Date() } },
+    );
     return { ok: false as const, message: "Refresh token revoked" };
   }
 
@@ -282,8 +295,9 @@ export async function refreshAccessToken(rawRefreshToken: string) {
   // Rotate refresh token (issue new one, revoke old)
   const newRefreshToken = generateRefreshToken();
   const newTokenHash = hashRefreshToken(newRefreshToken);
-  const newFamily = generateRefreshTokenFamily();
-  const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const rememberMe = stored.rememberMe === true;
+  const sessionMaxAge = getSessionCookieMaxAge(rememberMe);
+  const newExpiresAt = new Date(Date.now() + sessionMaxAge * 1000);
 
   // Revoke the old token
   await RefreshTokenModel.updateOne({ _id: stored._id }, { $set: { revokedAt: new Date() } });
@@ -292,7 +306,8 @@ export async function refreshAccessToken(rawRefreshToken: string) {
   await RefreshTokenModel.create({
     userId: user._id,
     tokenHash: newTokenHash,
-    family: newFamily,
+    family: stored.family,
+    rememberMe,
     expiresAt: newExpiresAt,
     userAgent: stored.userAgent ?? "",
     ipAddress: stored.ipAddress ?? "",
@@ -303,9 +318,10 @@ export async function refreshAccessToken(rawRefreshToken: string) {
     ok: true as const,
     data: {
       accessToken: newAccessToken,
-      sessionToken: signSessionToken(session, "7d"),
+      sessionToken: signSessionToken(session, rememberMe ? "30d" : "7d"),
       refreshToken: newRefreshToken,
       refreshTokenExpiresAt: newExpiresAt.toISOString(),
+      sessionMaxAge,
       session,
     },
   };

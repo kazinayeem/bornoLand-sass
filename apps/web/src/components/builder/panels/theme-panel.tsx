@@ -81,7 +81,7 @@ export function ThemePanel() {
   const t = useSelector((s: RootState) => s.theme);
 
   return (
-    <div className="p-3 space-y-5">
+    <div className="h-full overflow-y-auto overscroll-contain p-3 space-y-5">
       <div>
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Colors</p>
         <div className="space-y-2.5">

@@ -71,6 +71,7 @@ registerSectionComponent("team-members", dynamic(() => import("./team-members").
 
 // ─── Media ──────────────────────────────────────────────────────────────────
 registerSectionComponent("image-banner", dynamic(() => import("./image-banner").then((m) => ({ default: m.ImageBanner })), { ssr: false }));
+registerSectionComponent("image-carousel", dynamic(() => import("./image-carousel").then((m) => ({ default: m.ImageCarousel })), { ssr: false }));
 registerSectionComponent(
   ["gallery", "image-grid", "masonry-gallery"],
   dynamic(() => import("./gallery").then((m) => ({ default: m.Gallery })), { ssr: false }),

@@ -11,7 +11,7 @@ export function MediaPanel({ billingHref }: { billingHref?: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="p-4">
+    <div className="h-full overflow-y-auto overscroll-contain p-4">
       <div className="mb-3 flex items-center justify-between">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Media</p>
         <button

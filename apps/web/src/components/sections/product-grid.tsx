@@ -17,11 +17,9 @@ export function ProductGrid({ section }: { section: SectionData }) {
     <SectionWrapper section={section}>
       <div className="px-4 sm:px-6 lg:px-8">
         <SectionTitle title={p.title || "Products"} subtitle={p.subtitle || ""} textColor={p.textColor} textAlignment={p.textAlignment} />
-        <ColumnGrid columns={cols}>
-          {display.map((pr) => (
-            <ProductCard key={pr._id} product={pr} />
-          ))}
-        </ColumnGrid>
+        {display.length ? <ColumnGrid columns={cols}>
+          {display.map((pr) => <ProductCard key={pr._id} product={pr} />)}
+        </ColumnGrid> : <div className="rounded-2xl border border-dashed border-zinc-200 px-5 py-10 text-center text-sm text-zinc-500">No products yet. Add products to see them in your storefront preview.</div>}
       </div>
     </SectionWrapper>
   );

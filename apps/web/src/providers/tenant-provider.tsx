@@ -64,7 +64,6 @@ export type TenantContextType = {
   categories: CategoryData[];
   settings: StoreSettingsData;
   sliders: HomepageSliderData[];
-  pageSections: { id: string; type: string; visible?: boolean; props?: Record<string, string | number | boolean | null | undefined> }[];
 };
 
 const TenantContext = createContext<TenantContextType | null>(null);
@@ -78,8 +77,7 @@ export function useTenant(): TenantContextType {
       products: [],
       categories: [],
       settings: { currencyCode: "USD", currencySymbol: "$", currencyPosition: "before", locale: "en-US", decimalPlaces: 2, taxRate: 0, taxEnabled: false, taxIncluded: false },
-      sliders: [],
-      pageSections: []
+      sliders: []
     } satisfies TenantContextType;
   }
   return ctx;

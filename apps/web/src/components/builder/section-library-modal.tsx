@@ -45,6 +45,7 @@ function SectionIcon({ icon, className }: { icon: string; className?: string }) 
 const POPULAR_TYPES = [
   "hero-banner", "featured-products", "category-grid", "testimonials",
   "newsletter", "featured-categories", "best-sellers", "discount-banner",
+  "image-carousel",
 ];
 
 // ─── Quick-filter type ─────────────────────────────────────────────────────────
@@ -189,6 +190,31 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
         label: section.label,
         visible: true,
         props: getDefaultProps(section.type),
+        ...(section.type === "image-carousel" ? {
+          style: {
+            slides: [
+              {
+                id: `${id}-slide-1`,
+                image: "",
+                mobileImage: "",
+                alt: "Featured slide",
+                title: "Featured collection",
+                subtitle: "Add your own imagery",
+                description: "Use this reusable carousel for banners, galleries, and product stories.",
+                buttonText: "Shop now",
+                buttonUrl: "/shop",
+                badge: "New",
+                imageFit: "cover",
+                imagePosition: "center",
+                textAlignment: "left",
+                textColor: "#ffffff",
+                overlay: "rgba(0,0,0,0.15)",
+                backgroundOverlay: "rgba(0,0,0,0.15)",
+                gradientOverlay: "linear-gradient(180deg, rgba(15,23,42,0.15), rgba(15,23,42,0.7))",
+              },
+            ],
+          },
+        } : {}),
         // Pass insertPosition so addSection reducer can splice at the right index
         ...(insertPosition != null ? { index: insertPosition + 1 } : {}),
       };

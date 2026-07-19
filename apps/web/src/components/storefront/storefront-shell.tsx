@@ -75,8 +75,8 @@ export function StorefrontShell({
   children,
 }: StorefrontShellProps) {
   const tenantValue = useMemo<TenantContextType>(
-    () => ({ store, theme, products, categories, settings, sliders, pageSections }),
-    [store._id, store.slug, theme, products, categories, settings, sliders, pageSections],
+    () => ({ store, theme, products, categories, settings, sliders }),
+    [store._id, store.slug, theme, products, categories, settings, sliders],
   );
 
   const hasBuilderHeader = headerSections && headerSections.length > 0;
@@ -110,8 +110,8 @@ export function StorefrontShell({
         ) : (
           <StoreNavbar navLinksOverride={navLinksOverride} />
         )}
-        {hasBuilderHeader && <CartDrawer primaryColor={theme.primaryColor} />}
         <CartProvider>
+          <CartDrawer primaryColor={theme.primaryColor} />
           {children}
         </CartProvider>
         {hasBuilderFooter ? (

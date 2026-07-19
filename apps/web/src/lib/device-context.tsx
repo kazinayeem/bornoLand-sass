@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Breakpoint } from "./builder-types";
 import { BREAKPOINT_WIDTHS, BREAKPOINT_ORDER } from "./builder-types";
 
@@ -32,8 +32,9 @@ export function BuilderDeviceProvider({
   device: Breakpoint;
   children: React.ReactNode;
 }) {
+  const value = useMemo(() => ({ device, isBuilder: true }), [device]);
   return (
-    <DeviceContext.Provider value={{ device, isBuilder: true }}>
+    <DeviceContext.Provider value={value}>
       {children}
     </DeviceContext.Provider>
   );
@@ -50,7 +51,9 @@ export function StorefrontDeviceProvider({
   const [device, setDevice] = useState<Breakpoint>("desktop");
 
   useEffect(() => {
+    let frame = 0;
     function detectDevice() {
+      frame = 0;
       const w = window.innerWidth;
       let detected: Breakpoint = "desktop";
       for (let i = BREAKPOINT_ORDER.length - 1; i >= 0; i--) {
@@ -59,16 +62,21 @@ export function StorefrontDeviceProvider({
           detected = bp;
         }
       }
-      setDevice(detected);
+      setDevice((current) => current === detected ? current : detected);
     }
 
     detectDevice();
-    window.addEventListener("resize", detectDevice);
-    return () => window.removeEventListener("resize", detectDevice);
+    const onResize = () => {
+      if (!frame) frame = window.requestAnimationFrame(detectDevice);
+    };
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => { window.removeEventListener("resize", onResize); if (frame) window.cancelAnimationFrame(frame); };
   }, []);
 
+  const value = useMemo(() => ({ device, isBuilder: false }), [device]);
+
   return (
-    <DeviceContext.Provider value={{ device, isBuilder: false }}>
+    <DeviceContext.Provider value={value}>
       {children}
     </DeviceContext.Provider>
   );

@@ -27,16 +27,19 @@ export const metadata: Metadata = {
     template: "%s | BornoLand",
   },
   description: "Build premium ecommerce storefronts, multi-tenant SaaS experiences, and AI-powered store builders with BornoLand.",
+  icons: { icon: "/logo.png", apple: "/logo.png" },
   openGraph: {
     title: "BornoLand",
     description: "Build premium ecommerce storefronts, multi-tenant SaaS experiences, and AI-powered store builders with BornoLand.",
     siteName: "BornoLand",
     type: "website",
+    images: [{ url: "/logo.png", width: 512, height: 512, alt: "BornoLand" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "BornoLand",
     description: "Build premium ecommerce storefronts, multi-tenant SaaS experiences, and AI-powered store builders with BornoLand.",
+    images: ["/logo.png"],
   },
 };
 

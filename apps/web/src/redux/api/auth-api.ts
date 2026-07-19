@@ -1,6 +1,8 @@
 import { baseApi } from "@/redux/api/base-api";
 import { setAccessToken } from "@/lib/access-token";
 import { rememberRedirectAfterLogin } from "@/lib/auth-redirect-client";
+import { broadcastAuthEvent } from "@/lib/auth-tab-sync";
+import { clearAuthState } from "@/redux/slices/auth-slice";
 
 export type SessionUser = {
   id: string;
@@ -143,9 +145,18 @@ export const authApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: ApiEnvelope<never>) => {
         setAccessToken(null);
+        broadcastAuthEvent("logout");
         return response;
       },
-      onQueryStarted: () => { rememberRedirectAfterLogin(); },
+      onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
+        rememberRedirectAfterLogin();
+        try {
+          await queryFulfilled;
+          dispatch(clearAuthState());
+        } catch {
+          // Keep the existing session state when a logout request fails.
+        }
+      },
       invalidatesTags: ["Auth", "User", "Tenant", "Dashboard"]
     })
   })

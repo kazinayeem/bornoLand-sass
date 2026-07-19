@@ -267,7 +267,8 @@ const initialState: BuilderState = {
   activeTab: "layers",
   activeRightTab: "content",
   leftPanelOpen: true,
-  rightPanelOpen: true,
+  // Advanced inspector is opt-in; selecting a canvas section should not shrink the editing surface.
+  rightPanelOpen: false,
   rightPanelPinned: true,
   leftPanelWidth: 280,
   rightPanelWidth: 320,
@@ -532,9 +533,6 @@ const builderSlice = createSlice({
     // ─── Selection ──────────────────────────────────────────────────────────
     setSelectedSection(state, action: PayloadAction<string | null>) {
       state.selectedSectionId = action.payload;
-      if (action.payload && !state.rightPanelOpen) {
-        state.rightPanelOpen = true;
-      }
     },
 
     setHoveredSection(state, action: PayloadAction<string | null>) {
@@ -745,4 +743,3 @@ export const {
 
 export const builderReducer = builderSlice.reducer;
 export { cloneSections };
-

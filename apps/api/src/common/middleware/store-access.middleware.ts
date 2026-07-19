@@ -9,7 +9,7 @@ export async function requireStoreAccess(request: AuthRequest, response: Respons
     return response.status(401).json({ success: false, message: "Unauthorized" });
   }
 
-  const storeId = request.params.storeId || request.params.id || request.body?.storeId;
+  const storeId = request.params.storeId || request.body?.storeId || request.query.storeId;
   if (!storeId) {
     return response.status(400).json({ success: false, message: "Store ID required" });
   }

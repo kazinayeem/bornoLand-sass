@@ -120,6 +120,31 @@ function merge(...sources: Record<string, SectionPropDef>[]): Record<string, Sec
 export const sectionRegistry: SectionDef[] = [
   // ════════ HERO ════════
   {
+    type: "image-carousel", label: "Image Carousel", category: "media", icon: "GalleryHorizontal", description: "Image carousel, slider, gallery slider, banner slider, and product slider with unlimited slides",
+    props: merge(
+      {
+        title: G.text("title", "Section Title", "Featured Gallery"),
+        subtitle: G.text("subtitle", "Subtitle", "Swipe through featured visuals"),
+        autoplay: G.toggle("autoplay", "Autoplay", "true"),
+        autoplaySpeed: G.number("autoplaySpeed", "Autoplay Speed (ms)", "5000"),
+        infiniteLoop: G.toggle("infiniteLoop", "Infinite Loop", "true"),
+        pauseOnHover: G.toggle("pauseOnHover", "Pause on Hover", "true"),
+        touchSwipe: G.toggle("touchSwipe", "Touch Swipe", "true"),
+        mouseDrag: G.toggle("mouseDrag", "Mouse Drag", "true"),
+        keyboardNavigation: G.toggle("keyboardNavigation", "Keyboard Navigation", "true"),
+        arrowNavigation: G.toggle("arrowNavigation", "Arrow Navigation", "true"),
+        dotNavigation: G.toggle("dotNavigation", "Dot Navigation", "true"),
+        transition: G.select("transition", "Transition", "slide", [{ value: "slide", label: "Slide" }, { value: "fade", label: "Fade" }], "layout"),
+        sliderHeight: G.select("sliderHeight", "Slider Height", "lg", [{ value: "sm", label: "Small" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }, { value: "xl", label: "Extra Large" }, { value: "full", label: "Full Screen" }], "layout"),
+        desktopHeight: G.text("desktopHeight", "Desktop Height", "560px", "layout"),
+        tabletHeight: G.text("tabletHeight", "Tablet Height", "420px", "layout"),
+        mobileHeight: G.text("mobileHeight", "Mobile Height", "320px", "layout"),
+        contentWidth: G.select("contentWidth", "Content Width", "boxed", [{ value: "full", label: "Full Width" }, { value: "boxed", label: "Boxed" }], "layout"),
+      },
+      layout, bg, typography,
+    ),
+  },
+  {
     type: "hero-banner", label: "Hero Banner", category: "hero", icon: "Layout", description: "Full-width banner with headline, CTA, and background image",
     props: merge(
       { kicker: G.text("kicker", "Kicker / Badge", "Welcome"), headline: G.text("headline", "Headline", "Welcome to Our Store"), subheadline: G.textarea("subheadline", "Subheadline", "Discover amazing products curated just for you"), buttonText: G.text("buttonText", "Button Text", "Shop Now"), buttonLink: G.text("buttonLink", "Button Link", "/shop"), secondaryButtonText: G.text("secondaryButtonText", "Secondary Button Text", "Learn More"), secondaryButtonLink: G.text("secondaryButtonLink", "Secondary Button Link", "/about"), heroHeight: G.select("heroHeight", "Height", "md", [{ value: "sm", label: "Small" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }, { value: "full", label: "Full Screen" }], "layout"), imageUrl: G.image("imageUrl", "Image"), mobileImageUrl: G.image("mobileImageUrl", "Mobile Image"), overlayColor: G.color("overlayColor", "Overlay Color", "rgba(15,23,42,0.45)"), overlayOpacity: G.range("overlayOpacity", "Overlay Opacity", "45", 0, 100, 5), showVideoModal: G.toggle("showVideoModal", "Show Video Modal", "false"), videoUrl: G.text("videoUrl", "Video URL", ""), videoButtonText: G.text("videoButtonText", "Video Button Text", "Watch Video") },

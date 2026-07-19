@@ -78,7 +78,12 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
                     className={`absolute inset-0 ${active ? "pointer-events-auto" : "pointer-events-none"}`}>
                     <picture>
                       <source media="(max-width: 768px)" srcSet={(slide as any).mobileImageUrl || slide.imageUrl} />
-                      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${slide.imageUrl})` }} />
+                      <img
+                        src={slide.imageUrl}
+                        alt={slide.title || store.name}
+                        loading={active ? "eager" : "lazy"}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
                     </picture>
                     <div className="absolute inset-0" style={{ background: slide.overlayColor, opacity: overlayOpacity }} />
                     <div className={`relative flex ${heroHeight} items-end lg:items-center`}>

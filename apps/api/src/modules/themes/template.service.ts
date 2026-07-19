@@ -1,6 +1,7 @@
 import { connectDatabase } from "../../common/database/connection.js";
 import { TemplateModel } from "../../models/template.model.js";
 import { StorePageModel } from "../pages/store-page.model.js";
+import { PageModel } from "../../models/page.model.js";
 
 export async function getAllTemplates() {
   await connectDatabase();

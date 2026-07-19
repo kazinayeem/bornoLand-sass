@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Monitor, Smartphone, Tablet, ArrowLeft, Save, Send, Undo2, Redo2, ZoomIn, Search, Plus, Download, Upload, History, Palette, Maximize, Eye, EyeOff, Layers, PanelRightOpen, Trash2 } from "lucide-react";
+import { Monitor, Smartphone, Tablet, ArrowLeft, Save, Send, Undo2, Redo2, ZoomIn, ZoomOut, Search, Plus, Download, Upload, History, Palette, Maximize, Eye, EyeOff, Layers, PanelRightOpen, Trash2, Sparkles, ExternalLink } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setDevice, setZoom, toggleGuides, toggleGrid, setFullscreen } from "@/redux/slices/preview-slice";
@@ -78,7 +78,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
     const handler = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setCommandPaletteOpen(true);
+        setCommandPaletteOpen((isOpen) => !isOpen);
       }
     };
     window.addEventListener("keydown", handler);
@@ -117,6 +117,10 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
       toast.error("Publish failed");
     }
     dispatch(setPublishing(false));
+  };
+
+  const handlePreview = () => {
+    window.open(`/store/${store.slug}`, "_blank", "noopener,noreferrer");
   };
 
   const handleExport = async () => {
@@ -197,15 +201,16 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
   ];
 
   return (
-    <header className="flex h-12 items-center justify-between border-b border-zinc-200 bg-white/95 backdrop-blur-sm px-3 gap-2">
+    <header className="sticky top-0 z-40 flex min-h-16 flex-col gap-2 border-b border-zinc-200/70 bg-white/90 px-3 py-2 shadow-[0_1px_0_rgba(255,255,255,0.75)] backdrop-blur-xl">
+      <div className="flex items-center justify-between gap-2">
       {/* Left */}
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <button onClick={onBack} className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="h-4 w-px bg-zinc-200" />
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-semibold text-zinc-900 truncate max-w-[140px]">{store.shortName || store.name}</span>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="max-w-[140px] truncate text-sm font-semibold text-zinc-900">{store.shortName || store.name}</span>
         </div>
         {/* Save status pill */}
         <div className="flex items-center gap-1.5 ml-2">
@@ -235,7 +240,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
       </div>
 
       {/* Center */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden items-center gap-1 md:flex">
         {/* Editing Zone Switcher */}
         <div className="flex rounded-lg border border-zinc-200 bg-white p-0.5">
           {[
@@ -278,11 +283,12 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
 
         {/* Zoom */}
         <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1">
-          <ZoomIn className="h-3 w-3 text-zinc-400" />
+          <button type="button" onClick={() => dispatch(setZoom(zoom - 25))} className="rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700" title="Zoom out"><ZoomOut className="h-3 w-3" /></button>
           <select value={zoom} onChange={(e) => dispatch(setZoom(Number(e.target.value)))}
             className="bg-transparent text-[11px] text-zinc-600 outline-none w-12">
-            {[25, 50, 75, 100, 125, 150, 200].map((v) => <option key={v} value={v}>{v}%</option>)}
+            {[25, 50, 75, 90, 100, 125, 150, 200, 300, 400].map((v) => <option key={v} value={v}>{v}%</option>)}
           </select>
+          <button type="button" onClick={() => dispatch(setZoom(zoom + 25))} className="rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700" title="Zoom in"><ZoomIn className="h-3 w-3" /></button>
         </div>
 
         <div className="h-4 w-px bg-zinc-200 mx-1" />
@@ -327,7 +333,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
       {/* Right */}
       <div className="flex items-center gap-1.5">
         {/* Search */}
-        <button onClick={() => setCommandPaletteOpen(true)}
+        <button onClick={() => setCommandPaletteOpen((isOpen) => !isOpen)}
           className="hidden lg:flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] text-zinc-500">
           <Search className="h-3 w-3" /> Search
           <span className="rounded bg-zinc-100 px-1 py-0.5 text-[9px] text-zinc-400">⌘K</span>
@@ -338,6 +344,17 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
         <button onClick={() => setStylesOpen(true)}
           className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50">
           <Palette className="h-3.5 w-3.5" /> Styles
+        </button>
+
+        <button onClick={handlePreview}
+          className="hidden items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50 lg:flex">
+          <ExternalLink className="h-3.5 w-3.5" /> Preview
+        </button>
+
+        <button disabled
+          className="hidden items-center gap-1 rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-[11px] font-medium text-zinc-400 lg:flex"
+          title="AI assistant coming soon">
+          <Sparkles className="h-3.5 w-3.5" /> AI Assistant
         </button>
 
         {/* Save */}
@@ -354,6 +371,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
           {publishing ? <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Send className="h-3.5 w-3.5" />}
           Publish
         </button>
+      </div>
       </div>
 
       <Drawer open={stylesOpen} onClose={() => setStylesOpen(false)} title="Global Styles" description="Theme, spacing, typography, and shared storefront presentation." side="right" size="lg" className="px-0 py-0">

@@ -7,6 +7,7 @@ const refreshTokenSchema = new Schema(
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     tokenHash: { type: String, required: true, unique: true, index: true },
     family: { type: String, required: true, index: true },
+    rememberMe: { type: Boolean, default: false },
     expiresAt: { type: Date, required: true, index: true },
     deviceInfo: { type: String, default: "" },
     userAgent: { type: String, default: "" },

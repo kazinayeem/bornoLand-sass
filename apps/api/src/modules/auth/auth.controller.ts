@@ -37,8 +37,8 @@ function extractCookieToken(request: Request) {
 }
 
 function clearSessionCookies(response: Response) {
-  response.clearCookie(getSessionCookieName(), { path: "/" });
-  response.clearCookie("bornoland.session.legacy", { path: "/" });
+  response.clearCookie(getSessionCookieName(), getSessionCookieOptions(0));
+  response.clearCookie("bornoland.session.legacy", getSessionCookieOptions(0));
 }
 
 function safeOAuthCallbackPath(value: unknown) {
@@ -105,7 +105,7 @@ export async function loginController(request: Request, response: Response) {
   });
 
   // Set Refresh Token as httpOnly cookie
-  const rtMaxAge = getRefreshTokenCookieMaxAge();
+  const rtMaxAge = result.data.sessionMaxAge ?? getRefreshTokenCookieMaxAge(Boolean(request.body?.rememberMe));
   response.cookie(getSessionCookieName(), result.data.refreshToken, getSessionCookieOptions(rtMaxAge));
 
   // Also set a legacy session cookie for middleware.ts backward compat
@@ -138,13 +138,12 @@ export async function refreshController(request: Request, response: Response) {
   const result = await refreshAccessToken(refreshTokenValue);
 
   if (!result.ok) {
-    response.clearCookie(getSessionCookieName(), { path: "/" });
-    response.clearCookie("bornoland.session.legacy", { path: "/" });
+    clearSessionCookies(response);
     return sendFailure(response, result.message ?? "Refresh failed", 401);
   }
 
   // Rotate refresh token cookie
-  const rtMaxAge = getRefreshTokenCookieMaxAge();
+  const rtMaxAge = result.data.sessionMaxAge ?? getRefreshTokenCookieMaxAge();
   response.cookie(getSessionCookieName(), result.data.refreshToken, getSessionCookieOptions(rtMaxAge));
   response.cookie("bornoland.session.legacy", result.data.sessionToken, {
     httpOnly: true,
@@ -295,8 +294,7 @@ export async function logoutController(request: Request, response: Response) {
     await logoutUser(userId);
   }
 
-  response.clearCookie(getSessionCookieName(), { path: "/" });
-  response.clearCookie("bornoland.session.legacy", { path: "/" });
+  clearSessionCookies(response);
   return sendSuccess(response, undefined, "Signed out");
 }
 

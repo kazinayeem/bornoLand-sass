@@ -30,7 +30,7 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
     formState: { errors }
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema) as any,
-    defaultValues: { email: "", password: "", rememberMe: true, loginType }
+    defaultValues: { email: "", password: "", rememberMe: false, loginType }
   });
 
   const onSubmit = handleSubmit(async (values) => {

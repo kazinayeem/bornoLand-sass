@@ -235,6 +235,7 @@ type BuilderState = {
     recentlyUsed: string[];
     insertPosition: number | null; // null = end, number = insert after index
     anchorPosition: { top: number; left: number } | null; // Position for popover
+    targetZone: "header" | "body" | "footer" | null; // Which zone the modal was opened from
   };
 
   // Undo/redo (global snapshots across all three zones)
@@ -286,6 +287,7 @@ const initialState: BuilderState = {
     recentlyUsed: [],
     insertPosition: null,
     anchorPosition: null,
+    targetZone: null,
   },
   past: [],
   future: [],
@@ -619,10 +621,11 @@ const builderSlice = createSlice({
     },
 
     // ─── Section Library Modal ─────────────────────────────────────────────
-    openSectionLibrary(state, action: PayloadAction<{ insertPosition?: number | null; anchorPosition?: { top: number; left: number } | null } | undefined>) {
+    openSectionLibrary(state, action: PayloadAction<{ insertPosition?: number | null; anchorPosition?: { top: number; left: number } | null; targetZone?: "header" | "body" | "footer" | null } | undefined>) {
       state.sectionLibrary.isOpen = true;
       state.sectionLibrary.insertPosition = action.payload?.insertPosition ?? null;
       state.sectionLibrary.anchorPosition = action.payload?.anchorPosition ?? null;
+      state.sectionLibrary.targetZone = action.payload?.targetZone ?? null;
     },
 
     closeSectionLibrary(state) {
@@ -631,6 +634,7 @@ const builderSlice = createSlice({
       state.sectionLibrary.activeCategory = "all";
       state.sectionLibrary.insertPosition = null;
       state.sectionLibrary.anchorPosition = null;
+      state.sectionLibrary.targetZone = null;
     },
 
     setSectionLibrarySearch(state, action: PayloadAction<string>) {

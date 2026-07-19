@@ -59,7 +59,7 @@ type SectionLibraryModalProps = {
 
 export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps) {
   const dispatch = useDispatch();
-  const { isOpen, searchTerm, activeCategory, favoriteSections, recentlyUsed, insertPosition, anchorPosition } =
+  const { isOpen, searchTerm, activeCategory, favoriteSections, recentlyUsed, insertPosition, anchorPosition, targetZone } =
     useSelector((s: RootState) => s.builder.sectionLibrary);
 
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
@@ -114,23 +114,35 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
     [],
   );
 
-  // ─── Filtered sections (respects quickFilter + category + search) ──────────
+  // ─── Zone-compatible section types ───────────────────────────────────────────
+
+  const HEADER_TYPES = new Set(["announcement-bar", "header-bar", "header-logo", "header-nav", "header-icons"]);
+  const FOOTER_TYPES = new Set(["simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer", "footer-links", "footer-copyright", "footer-social"]);
+
+  const isZoneCompatible = useCallback((section: SectionDef): boolean => {
+    if (!targetZone) return true;
+    if (targetZone === "header") return section.category === "header" || HEADER_TYPES.has(section.type);
+    if (targetZone === "footer") return section.category === "footer" || FOOTER_TYPES.has(section.type);
+    return true; // body shows all
+  }, [targetZone]);
+
+  // ─── Filtered sections (respects quickFilter + category + search + zone) ─────
 
   const filteredSections = useMemo(() => {
     let base: SectionDef[];
 
     switch (quickFilter) {
       case "recently-used":
-        base = recentlyUsedList;
+        base = recentlyUsedList.filter(isZoneCompatible);
         break;
       case "favorites":
-        base = favoriteSectionsList;
+        base = favoriteSectionsList.filter(isZoneCompatible);
         break;
       case "popular":
-        base = popularSections;
+        base = popularSections.filter(isZoneCompatible);
         break;
       default:
-        base = sectionRegistry;
+        base = sectionRegistry.filter(isZoneCompatible);
         // Apply category filter only when not in a quick-filter view
         if (activeCategory !== "all") {
           base = base.filter((s) => s.category === activeCategory);
@@ -150,7 +162,7 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
     }
 
     return base;
-  }, [quickFilter, activeCategory, searchTerm, recentlyUsedList, favoriteSectionsList, popularSections]);
+  }, [quickFilter, activeCategory, searchTerm, recentlyUsedList, favoriteSectionsList, popularSections, isZoneCompatible]);
 
   // ─── Show grouped sections only on the "all" home view ────────────────────
 
@@ -342,7 +354,9 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
                 <div>
                   <h2 className="text-xl font-bold text-zinc-900">Section Library</h2>
                   <p className="mt-0.5 text-sm text-zinc-500">
-                    {insertPosition != null
+                    {targetZone
+                      ? `Adding to ${targetZone.charAt(0).toUpperCase() + targetZone.slice(1)} — ${filteredSections.length} compatible section${filteredSections.length !== 1 ? "s" : ""}`
+                      : insertPosition != null
                       ? `Inserting after position ${insertPosition + 1}`
                       : `${sectionRegistry.length} sections across ${sectionCategories.length} categories`}
                   </p>

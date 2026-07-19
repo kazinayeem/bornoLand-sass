@@ -17,22 +17,26 @@ import {
   toggleSection,
   updateSectionMeta,
   setEditingZone,
+  openSectionLibrary,
 } from "@/redux/slices/builder-slice";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
 import {
   Copy, Eye, EyeOff, Lock, LockOpen, MoreHorizontal, MoveDown, MoveUp,
   Star, Trash2, GripVertical, ChevronRight, ChevronDown,
-  PanelLeft, PanelRightOpen, PanelBottom, Layers, Filter,
-  Menu, Search, ShoppingCart, User, Image,
+  PanelLeft, PanelBottom, Layers,
+  Menu, Search, ShoppingCart, Image,
   Type, Grid3x3, LayoutList, Sparkles, X,
   ArrowUpToLine, ArrowDownToLine, Bookmark, Download,
-  Pencil,
+  Pencil, Plus, ChevronsUpDown, ChevronsDownUp,
+  Filter, LayoutGrid,
 } from "lucide-react";
 import { getSectionDef, normalizeSectionType } from "@/lib/section-registry";
 import { DropdownMenu, type DropdownItem } from "@/components/ui/dropdown-menu";
 import { useCreateBuilderTemplateMutation } from "@/redux/api/builder-template-api";
 import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function getLayerChildren(type: string, props: Record<string, string>) {
   const normalized = normalizeSectionType(type);
@@ -58,6 +62,10 @@ function getLayerChildren(type: string, props: Record<string, string>) {
   if (normalized.includes("stat") || normalized.includes("counter")) children.push("Statistics");
   if (normalized.includes("timeline")) children.push("Timeline Items");
   if (normalized.includes("tab")) children.push("Tab Items");
+  if (normalized.includes("slider")) children.push("Slides");
+  if (normalized.includes("banner")) children.push("Banner Content");
+  if (normalized.includes("countdown")) children.push("Timer");
+  if (normalized.includes("instagram")) children.push("Posts Feed");
   return children;
 }
 
@@ -72,6 +80,7 @@ function getSectionIcon(type: string) {
   if (normalized.includes("testimonial") || normalized.includes("review")) return Star;
   if (normalized.includes("faq") || normalized.includes("accordion")) return LayoutList;
   if (normalized.includes("newsletter") || normalized.includes("form")) return Type;
+  if (normalized.includes("gallery") || normalized.includes("image")) return LayoutGrid;
   return Layers;
 }
 
@@ -91,7 +100,21 @@ type ContextMenuState = {
   totalCount: number;
 };
 
-// ─── Context Menu (right-click, positioned at cursor) ─────────────────────────
+// ─── Section type filter chips ──────────────────────────────────────────────
+
+const TYPE_FILTERS = [
+  { id: "all", label: "All", icon: Layers },
+  { id: "hero", label: "Hero", icon: Image },
+  { id: "product", label: "Products", icon: ShoppingCart },
+  { id: "category", label: "Categories", icon: Grid3x3 },
+  { id: "content", label: "Content", icon: Type },
+  { id: "trust", label: "Trust", icon: Star },
+  { id: "marketing", label: "Marketing", icon: Sparkles },
+] as const;
+
+type TypeFilterId = typeof TYPE_FILTERS[number]["id"];
+
+// ─── Context Menu (right-click, positioned at cursor) ─────────────────────
 
 function SectionContextMenu({
   items,
@@ -291,20 +314,48 @@ export function LayersPanel() {
   const { storeId } = useRequiredStore();
   const [createTemplate] = useCreateBuilderTemplateMutation();
 
+  // ─── State ──────────────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<TypeFilterId>("all");
   const [collapsedRegions, setCollapsedRegions] = useState<Record<string, boolean>>({
     header: false,
     footer: false,
   });
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [dragOver, setDragOver] = useState<{ zone: string; index: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     open: false, x: 0, y: 0, sectionId: "", zone: "body", index: 0, totalCount: 0,
   });
   const dragItem = useRef<DragItem | null>(null);
 
+  // ─── Derived state ──────────────────────────────────────────────────────────
+  const totalSections = sections.length + headerSections.length + footerSections.length;
+
   const toggleRegion = (region: string) => {
     setCollapsedRegions((prev) => ({ ...prev, [region]: !prev[region] }));
   };
+
+  const toggleExpand = (sectionId: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) next.delete(sectionId); else next.add(sectionId);
+      return next;
+    });
+  };
+
+  const expandAll = useCallback(() => {
+    const allIds = new Set<string>();
+    sections.forEach((s) => allIds.add(s.id));
+    headerSections.forEach((s) => allIds.add(s.id));
+    footerSections.forEach((s) => allIds.add(s.id));
+    setExpandedSections(allIds);
+  }, [sections, headerSections, footerSections]);
+
+  const collapseAll = useCallback(() => {
+    setExpandedSections(new Set());
+    setCollapsedRegions({ header: true, footer: true });
+  }, []);
 
   const closeContextMenu = useCallback(() => {
     setContextMenu((prev) => ({ ...prev, open: false }));
@@ -314,10 +365,18 @@ export function LayersPanel() {
 
   const handleDragStart = useCallback((sectionId: string, index: number, zone: "header" | "body" | "footer") => {
     dragItem.current = { id: sectionId, fromIndex: index, zone };
+    setIsDragging(true);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+    setDragOver(null);
+    dragItem.current = null;
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent, zone: "header" | "body" | "footer", index: number) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
     setDragOver({ zone, index });
   }, []);
 
@@ -328,6 +387,7 @@ export function LayersPanel() {
   const handleDrop = useCallback((e: React.DragEvent, targetZone: "header" | "body" | "footer", toIndex: number) => {
     e.preventDefault();
     setDragOver(null);
+    setIsDragging(false);
     if (!dragItem.current) return;
     const { fromIndex, zone: fromZone } = dragItem.current;
     if (fromZone !== targetZone || fromIndex !== toIndex) {
@@ -355,6 +415,7 @@ export function LayersPanel() {
   const handleDropZone = useCallback((e: React.DragEvent, zone: "header" | "body" | "footer") => {
     e.preventDefault();
     setDragOver(null);
+    setIsDragging(false);
     if (!dragItem.current) return;
     const { zone: fromZone } = dragItem.current;
     if (fromZone !== zone) {
@@ -408,19 +469,35 @@ export function LayersPanel() {
     return sections;
   };
 
-  const sortedSections = useMemo(() => {
-    return [...sections].sort((a, b) => Number(Boolean(b.favorite)) - Number(Boolean(a.favorite)));
-  }, [sections]);
+  // ─── Filter function ─────────────────────────────────────────────────────────
+
+  const filterSection = useCallback((s: BuilderSection): boolean => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = !q || s.label.toLowerCase().includes(q) || s.type.toLowerCase().includes(q);
+    if (!matchesSearch) return false;
+    if (typeFilter === "all") return true;
+    const normalized = normalizeSectionType(s.type);
+    switch (typeFilter) {
+      case "hero": return normalized.includes("hero") || normalized.includes("banner") || normalized.includes("slider");
+      case "product": return normalized.includes("product") || normalized.includes("shop") || normalized.includes("featured");
+      case "category": return normalized.includes("category");
+      case "content": return normalized.includes("text") || normalized.includes("faq") || normalized.includes("accordion") || normalized.includes("feature") || normalized.includes("team") || normalized.includes("gallery") || normalized.includes("timeline");
+      case "trust": return normalized.includes("testimonial") || normalized.includes("review") || normalized.includes("trust") || normalized.includes("badge");
+      case "marketing": return normalized.includes("newsletter") || normalized.includes("email") || normalized.includes("popup") || normalized.includes("announcement") || normalized.includes("countdown") || normalized.includes("discount") || normalized.includes("coupon");
+      default: return true;
+    }
+  }, [searchQuery, typeFilter]);
 
   // ─── Render section item ─────────────────────────────────────────────────────
 
-  const renderSectionItem = (section: typeof sections[0], index: number, zone: "header" | "body" | "footer", totalCount: number) => {
+  const renderSectionItem = (section: BuilderSection, index: number, zone: "header" | "body" | "footer", totalCount: number) => {
     const def = getSectionDef(section.type);
     const children = getLayerChildren(section.type, section.props);
     const selected = selectedSectionId === section.id;
     const currentIndex = zone === "body" ? sections.findIndex((s) => s.id === section.id) : index;
-    const zoneSections = getZoneSections(zone);
     const Icon = getSectionIcon(section.type);
+    const isExpanded = expandedSections.has(section.id);
+    const hasChildren = children.length > 0;
 
     const menuItems = buildMenuItems(
       section, zone, currentIndex, totalCount,
@@ -437,12 +514,15 @@ export function LayersPanel() {
         {dragOver?.zone === zone && dragOver.index === index && (
           <div className="flex items-center gap-1 px-2 py-0.5">
             <div className="h-0.5 flex-1 rounded-full bg-blue-500" />
+            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+            <div className="h-0.5 flex-1 rounded-full bg-blue-500" />
           </div>
         )}
 
         <div
           draggable
           onDragStart={() => handleDragStart(section.id, currentIndex, zone)}
+          onDragEnd={handleDragEnd}
           onDragOver={(e) => handleDragOver(e, zone, index)}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, zone, index)}
@@ -451,13 +531,31 @@ export function LayersPanel() {
             dispatch(setSelectedSection(section.id));
           }}
           className={cn(
-            "group/section mb-1 cursor-pointer rounded-xl border px-3 py-2.5 transition-all",
+            "group/section mb-1 cursor-pointer rounded-xl border px-2.5 py-2 transition-all duration-150",
             selected
-              ? "border-zinc-900/80 bg-zinc-50 shadow-sm"
-              : "border-transparent bg-white hover:border-zinc-200 hover:bg-zinc-50/50"
+              ? "border-blue-300 bg-blue-50/80 shadow-sm ring-1 ring-blue-200"
+              : "border-transparent bg-white hover:border-zinc-200 hover:bg-zinc-50/50",
+            isDragging && "opacity-50 scale-[0.98]"
           )}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {/* Expand/collapse toggle */}
+            <button
+              onClick={(e) => { e.stopPropagation(); if (hasChildren) toggleExpand(section.id); }}
+              className={cn(
+                "flex h-5 w-5 shrink-0 items-center justify-center rounded transition-all",
+                hasChildren
+                  ? "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                  : "text-transparent cursor-default"
+              )}
+            >
+              {hasChildren && (
+                isExpanded
+                  ? <ChevronDown className="h-3 w-3" />
+                  : <ChevronRight className="h-3 w-3" />
+              )}
+            </button>
+
             {/* Drag handle */}
             <div className="shrink-0 cursor-grab text-zinc-300 opacity-0 group-hover/section:opacity-100 transition-opacity active:cursor-grabbing">
               <GripVertical className="h-3.5 w-3.5" />
@@ -465,8 +563,8 @@ export function LayersPanel() {
 
             {/* Section type icon */}
             <div className={cn(
-              "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg",
-              selected ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-500"
+              "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition-all",
+              selected ? "bg-blue-500 text-white" : "bg-zinc-100 text-zinc-500"
             )}>
               <Icon className="h-3 w-3" />
             </div>
@@ -478,32 +576,60 @@ export function LayersPanel() {
                 data-layer-input-id={section.id}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => dispatch(updateSectionMeta({ id: section.id, label: e.target.value }))}
-                className="w-full truncate bg-transparent text-xs font-semibold text-zinc-900 outline-none"
+                className={cn(
+                  "w-full truncate bg-transparent text-xs font-semibold outline-none rounded px-1 -mx-1 py-0.5 transition-all",
+                  selected ? "text-blue-900" : "text-zinc-900",
+                  "focus:bg-white focus:ring-1 focus:ring-blue-200"
+                )}
               />
-              <p className="text-[10px] text-zinc-400 leading-tight">{def?.label || normalizeSectionType(section.type)}</p>
+              <p className="text-[10px] text-zinc-400 leading-tight px-1">{def?.label || normalizeSectionType(section.type)}</p>
             </div>
 
             {/* Action buttons */}
             <div className="flex items-center gap-0.5 shrink-0">
+              {/* Move up/down buttons (visible on hover) */}
+              <button
+                onClick={(e) => { e.stopPropagation(); if (currentIndex > 0) dispatch(moveSection({ from: currentIndex, to: currentIndex - 1 })); }}
+                disabled={currentIndex === 0}
+                className="rounded-md p-1 text-zinc-400 opacity-0 group-hover/section:opacity-100 hover:text-zinc-600 hover:bg-zinc-100 transition-all disabled:opacity-0 disabled:cursor-not-allowed"
+                title="Move up"
+              >
+                <MoveUp className="h-3 w-3" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); if (currentIndex < totalCount - 1) dispatch(moveSection({ from: currentIndex, to: currentIndex + 1 })); }}
+                disabled={currentIndex >= totalCount - 1}
+                className="rounded-md p-1 text-zinc-400 opacity-0 group-hover/section:opacity-100 hover:text-zinc-600 hover:bg-zinc-100 transition-all disabled:opacity-0 disabled:cursor-not-allowed"
+                title="Move down"
+              >
+                <MoveDown className="h-3 w-3" />
+              </button>
+
+              {/* Visibility toggle */}
               <button
                 onClick={(e) => { e.stopPropagation(); dispatch(toggleSection(section.id)); }}
                 className={cn(
                   "rounded-md p-1 opacity-0 group-hover/section:opacity-100 transition-all",
-                  section.visible ? "text-zinc-400 hover:text-zinc-600" : "text-red-400"
+                  section.visible ? "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100" : "text-red-400 hover:bg-red-50"
                 )}
                 title={section.visible ? "Hide section" : "Show section"}
               >
                 {section.visible ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
               </button>
 
+              {/* Lock toggle */}
               <button
                 onClick={(e) => { e.stopPropagation(); dispatch(toggleSectionLock(section.id)); }}
-                className="rounded-md p-1 text-zinc-400 opacity-0 group-hover/section:opacity-100 hover:text-zinc-600 transition-all"
+                className={cn(
+                  "rounded-md p-1 opacity-0 group-hover/section:opacity-100 transition-all",
+                  section.locked ? "text-amber-500" : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100"
+                )}
                 title={section.locked ? "Unlock section" : "Lock section"}
               >
                 {section.locked ? <Lock className="h-3 w-3" /> : <LockOpen className="h-3 w-3" />}
               </button>
 
+              {/* More menu */}
               <DropdownMenu
                 placement="bottom-end"
                 trigger={
@@ -520,13 +646,13 @@ export function LayersPanel() {
             </div>
           </div>
 
-          {/* Children list */}
-          {children.length > 0 && (
-            <div className="ml-9 mt-2 space-y-0.5 border-l-2 border-zinc-100 pl-3">
+          {/* Children list (expandable) */}
+          {hasChildren && isExpanded && (
+            <div className="ml-7 mt-1.5 space-y-0.5 border-l-2 border-zinc-100 pl-2">
               {children.map((child) => (
                 <div
                   key={child}
-                  className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] text-zinc-500 hover:bg-zinc-100"
+                  className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] text-zinc-500 hover:bg-zinc-100 transition-colors cursor-default"
                 >
                   <div className="h-1 w-1 rounded-full bg-zinc-300" />
                   {child}
@@ -545,60 +671,107 @@ export function LayersPanel() {
     label: string,
     zone: "header" | "body" | "footer",
     icon: typeof Layers,
-    sections: typeof headerSections,
+    sectionList: BuilderSection[],
     colorClass: string,
   ) => {
     const isCollapsed = collapsedRegions[zone] ?? false;
     const isActive = editingZone === zone;
+    const filteredSections = sectionList.filter(filterSection);
 
     return (
-      <div className={cn("mb-2 rounded-xl border transition-all", isActive ? "border-zinc-900/20 bg-zinc-50" : "border-transparent")}>
+      <div className={cn("mb-2 rounded-xl border transition-all duration-150", isActive ? "border-zinc-200 bg-zinc-50/50" : "border-transparent")}>
         {/* Region header */}
         <button
           onClick={() => { toggleRegion(zone); dispatch(setEditingZone(zone)); }}
           className={cn(
-            "flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-all",
-            isActive ? "bg-zinc-100" : "hover:bg-zinc-50"
+            "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition-all",
+            isActive ? "bg-zinc-100/80" : "hover:bg-zinc-50"
           )}
         >
-          <div className={cn("flex h-6 w-6 items-center justify-center rounded-lg text-white", colorClass)}>
-            {createElement(icon, { className: "h-3 w-3" })}
+          <div className={cn("flex h-5 w-5 items-center justify-center rounded-md text-white", colorClass)}>
+            {createElement(icon, { className: "h-2.5 w-2.5" })}
           </div>
-          <span className="flex-1 text-xs font-bold uppercase tracking-wider text-zinc-500">{label}</span>
-          <span className="text-[10px] font-medium text-zinc-400">{sections.length}</span>
+          <span className="flex-1 text-[11px] font-bold uppercase tracking-wider text-zinc-500">{label}</span>
+          <span className="text-[10px] font-medium text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded-full">
+            {filteredSections.length}
+          </span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              dispatch(setEditingZone(zone));
+              dispatch(openSectionLibrary({ insertPosition: null, targetZone: zone }));
+            }}
+            className="rounded-md p-1 text-blue-500 opacity-0 group-hover:opacity-100 hover:bg-blue-50 transition-all"
+            title={`Add ${label} section`}
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
           {isCollapsed ? <ChevronRight className="h-3.5 w-3.5 text-zinc-400" /> : <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />}
         </button>
 
         {/* Region sections */}
         {!isCollapsed && (
           <div className="px-2 pb-2">
-            {sections.length === 0 ? (
+            {filteredSections.length === 0 ? (
               <div className="px-3 py-4 text-center">
                 <p className="text-[11px] text-zinc-400">
-                  {zone === "header" ? "No header sections yet" :
-                   zone === "footer" ? "No footer sections yet" :
-                   "No sections on this page"}
+                  {searchQuery || typeFilter !== "all"
+                    ? "No matching sections"
+                    : zone === "header" ? "No header sections yet"
+                    : zone === "footer" ? "No footer sections yet"
+                    : "No sections on this page"}
                 </p>
-                <p className="mt-0.5 text-[10px] text-zinc-300">Add sections from the library</p>
+                {!searchQuery && typeFilter === "all" && (
+                  <>
+                    <p className="mt-0.5 text-[10px] text-zinc-300">Add sections from the library</p>
+                    <button
+                      onClick={() => {
+                        dispatch(setEditingZone(zone));
+                        dispatch(openSectionLibrary({ insertPosition: null, targetZone: zone }));
+                      }}
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-blue-500 px-3 py-1.5 text-[11px] font-medium text-white shadow-sm transition-all hover:bg-blue-600 hover:shadow-md active:scale-95"
+                      title="Add Section"
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add Section
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
-              sections.map((section, index) => renderSectionItem(section, index, zone, sections.length))
+              filteredSections.map((section, index) => renderSectionItem(section, index, zone, filteredSections.length))
             )}
 
             {/* Drop zone at end of region */}
             <div
-              onDragOver={(e) => handleDragOver(e, zone, sections.length)}
+              onDragOver={(e) => handleDragOver(e, zone, filteredSections.length)}
               onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, zone, sections.length)}
+              onDrop={(e) => handleDrop(e, zone, filteredSections.length)}
               className={cn(
-                "mt-1 rounded-lg border-2 border-dashed p-2 text-center transition-all",
-                dragOver?.zone === zone && dragOver.index === sections.length
-                  ? "border-blue-400 bg-blue-50"
-                  : "border-transparent"
+                "group/drop mt-1 rounded-lg border-2 border-dashed p-2 text-center transition-all duration-150",
+                dragOver?.zone === zone && dragOver.index === filteredSections.length
+                  ? "border-blue-400 bg-blue-50 scale-[1.02]"
+                  : "border-zinc-200 hover:border-blue-300 hover:bg-blue-50/50"
               )}
             >
-              {dragOver?.zone === zone && dragOver.index === sections.length && (
-                <p className="text-[10px] font-medium text-blue-600">Drop here</p>
+              {dragOver?.zone === zone && dragOver.index === filteredSections.length ? (
+                <div className="flex items-center justify-center gap-1.5">
+                  <div className="h-1 w-1 rounded-full bg-blue-500 animate-pulse" />
+                  <p className="text-[10px] font-medium text-blue-600">Drop here</p>
+                  <div className="h-1 w-1 rounded-full bg-blue-500 animate-pulse" />
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    dispatch(setEditingZone(zone));
+                    dispatch(openSectionLibrary({ insertPosition: null, targetZone: zone }));
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-medium text-blue-600 opacity-0 shadow-sm transition-all group-hover/drop:opacity-100 hover:bg-blue-100 hover:border-blue-300 hover:shadow active:scale-95"
+                  title="Add Section"
+                >
+                  <Plus className="h-3 w-3" />
+                  Add Section
+                </button>
               )}
             </div>
           </div>
@@ -622,44 +795,103 @@ export function LayersPanel() {
 
   return (
     <aside className="flex h-full flex-col bg-white">
-      <div className="border-b border-zinc-100 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-100 text-zinc-600">
-            <PanelLeft className="h-4 w-4" />
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
+      <div className="border-b border-zinc-100 px-3 py-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600">
+              <PanelLeft className="h-3.5 w-3.5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Layers</p>
+              <p className="text-xs font-semibold text-zinc-900">Page Structure</p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Layers</p>
-            <p className="text-xs font-semibold text-zinc-900">Page Structure</p>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] font-medium text-zinc-400 mr-1">{totalSections}</span>
           </div>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="px-3 pb-1 pt-0">
+      {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-1 border-b border-zinc-100 px-2 py-1.5">
+        <button
+          onClick={() => {
+            dispatch(setEditingZone("body"));
+            dispatch(openSectionLibrary({ insertPosition: null, targetZone: "body" }));
+          }}
+          className="flex items-center gap-1 rounded-lg bg-blue-500 px-2 py-1 text-[10px] font-medium text-white shadow-sm transition-all hover:bg-blue-600 hover:shadow active:scale-95"
+          title="Add Section"
+        >
+          <Plus className="h-3 w-3" />
+          Add
+        </button>
+        <div className="h-4 w-px bg-zinc-200 mx-0.5" />
+        <button
+          onClick={expandAll}
+          className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-all"
+          title="Expand all sections"
+        >
+          <ChevronsUpDown className="h-3 w-3" />
+        </button>
+        <button
+          onClick={collapseAll}
+          className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-all"
+          title="Collapse all sections"
+        >
+          <ChevronsDownUp className="h-3 w-3" />
+        </button>
+      </div>
+
+      {/* ── Search & Filter ─────────────────────────────────────────────────── */}
+      <div className="px-2.5 pb-1.5 pt-1.5 space-y-1.5">
+        {/* Search input */}
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-zinc-400" />
-          <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Filter sections..."
-            className="h-8 w-full rounded-lg border border-zinc-200 bg-zinc-50 pl-7 pr-7 text-[11px] text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:bg-white" />
+          <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-zinc-400" />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search sections..."
+            className="h-7 w-full rounded-lg border border-zinc-200 bg-zinc-50 pl-6 pr-6 text-[11px] text-zinc-700 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all"
+          />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
+            <button onClick={() => setSearchQuery("")} className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-all">
               <X className="h-3 w-3" />
             </button>
           )}
         </div>
+
+        {/* Type filter chips */}
+        <div className="flex flex-wrap gap-1">
+          {TYPE_FILTERS.map(({ id, label, icon: FilterIcon }) => (
+            <button
+              key={id}
+              onClick={() => setTypeFilter(id)}
+              className={cn(
+                "flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium transition-all",
+                typeFilter === id
+                  ? "bg-blue-500 text-white shadow-sm"
+                  : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700"
+              )}
+            >
+              <FilterIcon className="h-2.5 w-2.5" />
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2">
+      {/* ── Section List ────────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-3 space-y-1">
         {(() => {
-          const q = searchQuery.toLowerCase();
-          const filterFn = (s: typeof sections[0]) => !q || s.label.toLowerCase().includes(q) || s.type.toLowerCase().includes(q);
           return (
             <>
-              {renderRegion("Header", "header", Menu, headerSections.filter(filterFn), "bg-blue-500")}
-              <div className="border-t border-zinc-100 pt-2">
-                {renderRegion("Body", "body", Layers, sections.filter(filterFn), "bg-zinc-800")}
+              {renderRegion("Header", "header", Menu, headerSections, "bg-blue-500")}
+              <div className="border-t border-zinc-100 pt-1">
+                {renderRegion("Body", "body", Layers, sections, "bg-zinc-800")}
               </div>
-              <div className="border-t border-zinc-100 pt-2">
-                {renderRegion("Footer", "footer", PanelBottom, footerSections.filter(filterFn), "bg-purple-500")}
+              <div className="border-t border-zinc-100 pt-1">
+                {renderRegion("Footer", "footer", PanelBottom, footerSections, "bg-purple-500")}
               </div>
             </>
           );

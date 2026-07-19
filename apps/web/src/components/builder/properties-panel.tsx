@@ -235,65 +235,7 @@ export function PropertiesPanel() {
 
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-  const toggleGroup = (g: string) => {
-    setCollapsedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(g)) next.delete(g); else next.add(g);
-      return next;
-    });
-  };
-
-  if (!section) {
-    if (editingZone === "header") return <HeaderBuilderSettings />;
-    if (editingZone === "footer") return <FooterBuilderSettings />;
-    return (
-      <div className="flex h-full items-center justify-center p-4">
-        <div className="text-center">
-          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100">
-            <Layers className="h-5 w-5 text-zinc-400" />
-          </div>
-          <p className="text-sm font-medium text-zinc-600">Select a section</p>
-          <p className="mt-1 text-xs text-zinc-400">Click on any section in the canvas to edit its properties</p>
-        </div>
-      </div>
-    );
-  }
-
-  const handlePropChange = (key: string, value: string) => {
-    dispatch(updateSectionProps({ id: section.id, props: { ...section.props, [key]: value } }));
-  };
-
-  const handleStyleChange = (key: keyof SectionStyle, value: string | boolean) => {
-    dispatch(updateSectionStyle({ id: section.id, style: { [key]: value } as Partial<SectionStyle> }));
-  };
-
-  const handleSectionPropsChange = (props: Record<string, string | undefined>) => {
-    dispatch(updateSectionProps({ id: section.id, props: props as typeof section.props }));
-  };
-
-  const def = getSectionDef(section.type);
-  const allProps = def?.props ?? {};
-  const controls = Object.entries(allProps);
-
-  const grouped: Record<string, [string, SectionPropDef][]> = {};
-  for (const [key, propDef] of controls) {
-    const group = propDef.group || "content";
-    if (!grouped[group]) grouped[group] = [];
-    grouped[group].push([key, propDef]);
-  }
-
-  const style = section.style ?? {};
-
-  const tabGroups: Record<string, string[]> = {
-    content: ["content"],
-    style: ["background", "typography", "border", "shadow"],
-    layout: ["layout", "spacing"],
-    responsive: [],
-    animation: [],
-    seo: [],
-    advanced: ["advanced"],
-  };
-
+  // ─── Repeater configs (static, defined outside conditional) ─────────────────
   const repeaterConfigs: Record<string, { field: keyof SectionStyle; title: string; addLabel: string; fields: RepeaterField[] }> = {
     faq: {
       field: "faqItems", title: "FAQ Items", addLabel: "Add Question",
@@ -350,13 +292,75 @@ export function PropertiesPanel() {
     },
   };
 
-  const activeRepeater = repeaterConfigs[section.type];
-  const repeaterItems = activeRepeater ? (section.style?.[activeRepeater.field] as Record<string, string>[] | undefined) ?? [] : [];
+  const toggleGroup = (g: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(g)) next.delete(g); else next.add(g);
+      return next;
+    });
+  };
 
+  // ─── Stable callback for repeater updates (must be before any early return) ─
   const handleRepeaterUpdate = useCallback((items: Record<string, string>[]) => {
+    if (!section) return;
+    const activeRepeater = repeaterConfigs[section.type];
     if (!activeRepeater) return;
     dispatch(updateSectionStyle({ id: section.id, style: { [activeRepeater.field]: items } as Partial<SectionStyle> }));
-  }, [dispatch, section.id, activeRepeater]);
+  }, [dispatch, section]);
+
+  if (!section) {
+    if (editingZone === "header") return <HeaderBuilderSettings />;
+    if (editingZone === "footer") return <FooterBuilderSettings />;
+    return (
+      <div className="flex h-full items-center justify-center p-4">
+        <div className="text-center">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100">
+            <Layers className="h-5 w-5 text-zinc-400" />
+          </div>
+          <p className="text-sm font-medium text-zinc-600">Select a section</p>
+          <p className="mt-1 text-xs text-zinc-400">Click on any section in the canvas to edit its properties</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handlePropChange = (key: string, value: string) => {
+    dispatch(updateSectionProps({ id: section.id, props: { ...section.props, [key]: value } }));
+  };
+
+  const handleStyleChange = (key: keyof SectionStyle, value: string | boolean) => {
+    dispatch(updateSectionStyle({ id: section.id, style: { [key]: value } as Partial<SectionStyle> }));
+  };
+
+  const handleSectionPropsChange = (props: Record<string, string | undefined>) => {
+    dispatch(updateSectionProps({ id: section.id, props: props as typeof section.props }));
+  };
+
+  const def = getSectionDef(section.type);
+  const allProps = def?.props ?? {};
+  const controls = Object.entries(allProps);
+
+  const grouped: Record<string, [string, SectionPropDef][]> = {};
+  for (const [key, propDef] of controls) {
+    const group = propDef.group || "content";
+    if (!grouped[group]) grouped[group] = [];
+    grouped[group].push([key, propDef]);
+  }
+
+  const style = section.style ?? {};
+
+  const tabGroups: Record<string, string[]> = {
+    content: ["content"],
+    style: ["background", "typography", "border", "shadow"],
+    layout: ["layout", "spacing"],
+    responsive: [],
+    animation: [],
+    seo: [],
+    advanced: ["advanced"],
+  };
+
+  const activeRepeater = repeaterConfigs[section.type];
+  const repeaterItems = activeRepeater ? (section.style?.[activeRepeater.field] as Record<string, string>[] | undefined) ?? [] : [];
 
   const renderContentTab = () => (
     <div className="divide-y divide-zinc-100">

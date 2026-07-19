@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Loader2, Save, Zap, Shield, HardDrive, DollarSign, Eye, GripVertical, Clock } from "lucide-react";
+import { ChevronDown, Loader2, Save, Zap, Shield, HardDrive, DollarSign, Eye, Clock } from "lucide-react";
 import { toast } from "sonner";
 import type { Plan, PlanLimits, PlanFeatureToggles } from "@/redux/api/store-api";
 import { useUpdatePlanMutation } from "@/redux/api/store-api";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { PlanPreviewCard } from "@/components/admin/plans/plan-preview-card";
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
 
 const BUILDER_TABS = [
   { id: "general", label: "General", icon: "Zap" },
@@ -19,6 +21,8 @@ const BUILDER_TABS = [
   { id: "visibility", label: "Visibility", icon: "Eye" },
   { id: "preview", label: "Preview", icon: "Eye" },
 ];
+
+/* ── Implemented Limit Groups ─────────────────────────────────────────────── */
 
 type LimitGroup = {
   key: string;
@@ -32,8 +36,6 @@ const LIMIT_GROUPS: LimitGroup[] = [
     fields: [
       { key: "products", label: "Products" },
       { key: "categories", label: "Categories" },
-      { key: "collections", label: "Collections" },
-      { key: "brands", label: "Brands" },
       { key: "productVariants", label: "Product Variants" },
       { key: "productImages", label: "Images per Product" },
     ],
@@ -43,23 +45,23 @@ const LIMIT_GROUPS: LimitGroup[] = [
     fields: [
       { key: "orders", label: "Orders" },
       { key: "customers", label: "Customers" },
-      { key: "coupons", label: "Coupons" },
-      { key: "giftCards", label: "Gift Cards" },
-      { key: "returnRequests", label: "Return Requests" },
-      { key: "wishlistItems", label: "Wishlist Items" },
     ],
   },
   {
-    key: "content", label: "Content",
+    key: "content", label: "Content & Pages",
     fields: [
-      { key: "blogs", label: "Blogs" },
-      { key: "pages", label: "Pages" },
+      { key: "pages", label: "CMS Pages" },
       { key: "builderPages", label: "Builder Pages" },
-      { key: "builderTemplates", label: "Builder Templates" },
-      { key: "cmsBlocks", label: "CMS Blocks" },
-      { key: "dynamicSections", label: "Dynamic Sections" },
+      { key: "blogs", label: "Blog Posts" },
       { key: "menus", label: "Menus" },
       { key: "navItems", label: "Navigation Items" },
+    ],
+  },
+  {
+    key: "media", label: "Media & Storage",
+    fields: [
+      { key: "mediaUploads", label: "Media Uploads" },
+      { key: "storage", label: "Storage (MB)", suffix: "MB" },
     ],
   },
   {
@@ -67,176 +69,42 @@ const LIMIT_GROUPS: LimitGroup[] = [
     fields: [
       { key: "staff", label: "Staff Accounts" },
       { key: "staffRoles", label: "Staff Roles" },
-      { key: "apiKeys", label: "API Keys" },
-      { key: "webhooks", label: "Webhooks" },
-    ],
-  },
-  {
-    key: "marketing", label: "Marketing",
-    fields: [
-      { key: "campaigns", label: "Campaigns" },
-      { key: "emailTemplates", label: "Email Templates" },
-      { key: "automationRules", label: "Automation Rules" },
-      { key: "newsletterSubscribers", label: "Newsletter Subscribers" },
-      { key: "announcements", label: "Announcements" },
-      { key: "popups", label: "Popups" },
-      { key: "qrCodes", label: "QR Codes" },
-    ],
-  },
-  {
-    key: "reviews", label: "Social Proof",
-    fields: [
-      { key: "reviews", label: "Reviews" },
-      { key: "testimonials", label: "Testimonials" },
-      { key: "forms", label: "Forms" },
-    ],
-  },
-  {
-    key: "shipping", label: "Shipping & Fulfillment",
-    fields: [
-      { key: "shippingZones", label: "Shipping Zones" },
-      { key: "pickupLocations", label: "Pickup Locations" },
-      { key: "inventoryLocations", label: "Inventory Locations" },
-      { key: "warehouses", label: "Warehouses" },
-    ],
-  },
-  {
-    key: "payment", label: "Payment",
-    fields: [
-      { key: "paymentMethods", label: "Payment Methods" },
-      { key: "posDevices", label: "POS Devices" },
-    ],
-  },
-  {
-    key: "domains", label: "Domains & Themes",
-    fields: [
-      { key: "customDomains", label: "Custom Domains" },
-      { key: "activeThemes", label: "Active Themes" },
-    ],
-  },
-  {
-    key: "analytics", label: "Analytics & Reports",
-    fields: [
-      { key: "analyticsReports", label: "Analytics Reports" },
-      { key: "exportRequests", label: "Export Requests" },
-    ],
-  },
-  {
-    key: "advanced", label: "Advanced",
-    fields: [
-      { key: "mediaUploads", label: "Media Uploads" },
-      { key: "storage", label: "Storage (MB)", suffix: "MB" },
-      { key: "languages", label: "Languages" },
-      { key: "currencies", label: "Currencies" },
-      { key: "taxRules", label: "Tax Rules" },
-      { key: "integrations", label: "Integrations" },
-      { key: "redirectRules", label: "Redirect Rules" },
-      { key: "customCss", label: "Custom CSS" },
-      { key: "customJs", label: "Custom JS" },
-      { key: "customFonts", label: "Custom Fonts" },
     ],
   },
 ];
 
+/* ── Implemented Feature Groups ───────────────────────────────────────────── */
+
 type FeatureGroup = {
   key: string;
   label: string;
-  toggles: Array<{ key: keyof PlanFeatureToggles; label: string; description?: string }>;
+  toggles: Array<{ key: keyof PlanFeatureToggles; label: string; description?: string; alwaysEnabled?: boolean }>;
 };
 
 const FEATURE_GROUPS: FeatureGroup[] = [
   {
-    key: "products", label: "Products",
+    key: "products", label: "Products & Inventory",
     toggles: [
-      { key: "productVariants", label: "Product Variants", description: "Allow products with multiple variants (size, color, etc.)" },
-      { key: "inventory", label: "Inventory", description: "Track stock levels per product" },
-      { key: "advancedInventory", label: "Advanced Inventory", description: "Multi-location inventory tracking" },
-      { key: "digitalProducts", label: "Digital Products", description: "Sell downloads, software, licenses" },
+      { key: "productVariants", label: "Product Variants", description: "Multiple variants per product (size, color, etc.)" },
+      { key: "inventory", label: "Inventory Tracking", description: "Track stock levels per product", alwaysEnabled: true },
       { key: "physicalProducts", label: "Physical Products", description: "Sell physical goods with shipping" },
+      { key: "digitalProducts", label: "Digital Products", description: "Sell downloads, software, licenses" },
     ],
   },
   {
-    key: "commerce", label: "Commerce",
+    key: "content", label: "Content & Pages",
     toggles: [
-      { key: "subscriptions", label: "Subscriptions", description: "Recurring billing for products" },
-      { key: "bookings", label: "Bookings", description: "Appointment and reservation system" },
-      { key: "giftCards", label: "Gift Cards", description: "Sell store gift cards" },
-      { key: "coupons", label: "Coupons", description: "Discount coupon engine" },
-      { key: "wholesale", label: "Wholesale", description: "Wholesale pricing tiers" },
-      { key: "dropshipping", label: "Dropshipping", description: "Dropshipping integration" },
-    ],
-  },
-  {
-    key: "content", label: "Content Management",
-    toggles: [
-      { key: "blog", label: "Blog", description: "Blog engine with categories and comments" },
-      { key: "cms", label: "CMS", description: "Full content management system" },
-      { key: "pageBuilder", label: "Page Builder", description: "Drag-and-drop page building" },
+      { key: "cms", label: "CMS", description: "Content management system", alwaysEnabled: true },
+      { key: "blog", label: "Blog", description: "Blog posts with categories" },
+      { key: "pageBuilder", label: "Page Builder", description: "Visual page building" },
       { key: "dragDropBuilder", label: "Drag & Drop Builder", description: "Visual drag-and-drop editor" },
-      { key: "themeEditor", label: "Theme Editor", description: "Customize store theme" },
-      { key: "reviews", label: "Reviews", description: "Product review system" },
-    ],
-  },
-  {
-    key: "checkout", label: "Checkout & Sales",
-    toggles: [
-      { key: "customCheckout", label: "Custom Checkout", description: "Custom-branded checkout" },
-      { key: "checkoutFields", label: "Checkout Fields", description: "Custom checkout form fields" },
-      { key: "advancedCheckout", label: "Advanced Checkout", description: "Multi-step, upsells, cross-sells" },
-      { key: "abandonedCart", label: "Abandoned Cart", description: "Recover abandoned carts via email" },
-      { key: "invoiceGenerator", label: "Invoice Generator", description: "Generate PDF invoices" },
-      { key: "loyaltyPoints", label: "Loyalty Points", description: "Points-based loyalty program" },
-      { key: "referralSystem", label: "Referral System", description: "Customer referral program" },
-      { key: "affiliateSystem", label: "Affiliate System", description: "Affiliate marketing platform" },
-    ],
-  },
-  {
-    key: "marketing", label: "Marketing & Engagement",
-    toggles: [
-      { key: "emailMarketing", label: "Email Marketing", description: "Send email campaigns" },
-      { key: "smsMarketing", label: "SMS Marketing", description: "Send SMS campaigns" },
-      { key: "pushNotification", label: "Push Notification", description: "Browser/App push notifications" },
-      { key: "liveChat", label: "Live Chat", description: "Live chat with customers" },
-      { key: "seo", label: "SEO", description: "Search engine optimization tools" },
-      { key: "aiContent", label: "AI Content", description: "AI-powered content generation" },
-    ],
-  },
-  {
-    key: "domains", label: "Domain & Branding",
-    toggles: [
-      { key: "customDomain", label: "Custom Domain", description: "Use your own domain name" },
-      { key: "subdomain", label: "Subdomain", description: "Platform subdomain (store.bornoland.com)" },
-      { key: "whiteLabel", label: "White Label", description: "Remove platform branding" },
-      { key: "darkMode", label: "Dark Mode", description: "Dark mode toggle for storefront" },
-    ],
-  },
-  {
-    key: "integration", label: "Integrations & Access",
-    toggles: [
-      { key: "apiAccess", label: "API Access", description: "REST API access" },
-      { key: "webhooks", label: "Webhooks", description: "Webhook event system" },
-      { key: "googleLogin", label: "Google Login", description: "Sign in with Google" },
-      { key: "facebookLogin", label: "Facebook Login", description: "Sign in with Facebook" },
-      { key: "otpLogin", label: "OTP Login", description: "Phone OTP authentication" },
-    ],
-  },
-  {
-    key: "operations", label: "Operations",
-    toggles: [
-      { key: "shipping", label: "Shipping", description: "Shipping rate management" },
-      { key: "localPickup", label: "Local Pickup", description: "In-store pickup option" },
-      { key: "taxEngine", label: "Tax Engine", description: "Automated tax calculation" },
-      { key: "multiCurrency", label: "Multi Currency", description: "Multiple currency support" },
-      { key: "multiLanguage", label: "Multi Language", description: "Multiple language support" },
-      { key: "pos", label: "POS", description: "Point of sale system" },
-      { key: "marketplace", label: "Marketplace", description: "Multi-vendor marketplace" },
+      { key: "themeEditor", label: "Theme Editor", description: "Customize store theme", alwaysEnabled: true },
     ],
   },
   {
     key: "media", label: "Media & Files",
     toggles: [
-      { key: "mediaLibrary", label: "Media Library", description: "Central media and file manager" },
-      { key: "fileManager", label: "File Manager", description: "Advanced file management" },
+      { key: "mediaLibrary", label: "Media Library", description: "Central media and file manager", alwaysEnabled: true },
       { key: "bulkImport", label: "Bulk Import", description: "Import data in bulk" },
       { key: "bulkExport", label: "Bulk Export", description: "Export data in bulk" },
       { key: "csvImport", label: "CSV Import", description: "CSV file import" },
@@ -244,26 +112,36 @@ const FEATURE_GROUPS: FeatureGroup[] = [
     ],
   },
   {
-    key: "management", label: "Management",
-    toggles: [
-      { key: "staffManagement", label: "Staff Management", description: "Multi-user staff accounts" },
-      { key: "auditLogs", label: "Audit Logs", description: "Full activity audit trail" },
-      { key: "backupRestore", label: "Backup & Restore", description: "Automated backups" },
-      { key: "storeVerification", label: "Store Verification", description: "Verified store badge" },
-      { key: "developerMode", label: "Developer Mode", description: "Custom code and debug tools" },
-      { key: "maintenanceMode", label: "Maintenance Mode", description: "Put store in maintenance" },
-    ],
-  },
-  {
     key: "analytics", label: "Analytics & Insights",
     toggles: [
-      { key: "visitorAnalytics", label: "Visitor Analytics", description: "Visitor tracking and analytics dashboard" },
+      { key: "visitorAnalytics", label: "Visitor Analytics", description: "Visitor tracking and analytics", alwaysEnabled: true },
       { key: "realtimeVisitors", label: "Real-time Visitors", description: "Live visitor dashboard" },
-      { key: "analyticsExport", label: "Analytics Export", description: "Export analytics as CSV/Excel/PDF" },
+      { key: "analyticsExport", label: "Analytics Export", description: "Export analytics reports" },
       { key: "advancedAnalytics", label: "Advanced Analytics", description: "Advanced analytics and reports" },
     ],
   },
+  {
+    key: "management", label: "Management & Access",
+    toggles: [
+      { key: "staffManagement", label: "Staff Management", description: "Multi-user staff accounts" },
+      { key: "apiAccess", label: "API Access", description: "REST API access" },
+      { key: "subdomain", label: "Subdomain", description: "Platform subdomain (store.bornoland.com)", alwaysEnabled: true },
+      { key: "customDomain", label: "Custom Domain", description: "Use your own domain name" },
+      { key: "invoiceGenerator", label: "Invoice Generator", description: "Generate PDF invoices", alwaysEnabled: true },
+    ],
+  },
+  {
+    key: "operations", label: "Operations",
+    toggles: [
+      { key: "shipping", label: "Shipping", description: "Shipping rate management" },
+      { key: "taxEngine", label: "Tax Engine", description: "Automated tax calculation" },
+      { key: "maintenanceMode", label: "Maintenance Mode", description: "Put store in maintenance" },
+      { key: "developerMode", label: "Developer Mode", description: "Custom code and debug tools" },
+    ],
+  },
 ];
+
+/* ── Component ────────────────────────────────────────────────────────────── */
 
 type Props = {
   plan: Plan;
@@ -298,6 +176,7 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     lifetime: plan.pricing?.lifetime ?? 0,
   });
 
+  // Only initialized limits for implemented modules
   const [limits, setLimits] = useState<PlanLimits>(() => ({
     storage: plan.limits?.storage ?? 512,
     products: plan.limits?.products ?? 10,
@@ -592,6 +471,7 @@ export function PlanBuilder({ plan, initialTab }: Props) {
                       />
                       {field.suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">{field.suffix}</span>}
                     </div>
+                    <p className="mt-0.5 text-[10px] text-zinc-400">0 = unlimited</p>
                   </div>
                 ))}
               </div>
@@ -612,18 +492,22 @@ export function PlanBuilder({ plan, initialTab }: Props) {
                     key={feat.key}
                     className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors hover:bg-zinc-50 ${
                       toggles[feat.key] ? "border-blue-200 bg-blue-50/50" : "border-zinc-200"
-                    }`}
+                    } ${feat.alwaysEnabled ? "opacity-75" : ""}`}
                   >
                     <input
                       type="checkbox"
                       checked={toggles[feat.key]}
                       onChange={(e) => updateToggle(feat.key, e.target.checked)}
+                      disabled={feat.alwaysEnabled}
                       className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
                     />
                     <div>
                       <p className="text-sm font-medium text-zinc-900">{feat.label}</p>
                       {feat.description && (
                         <p className="mt-0.5 text-xs text-zinc-500">{feat.description}</p>
+                      )}
+                      {feat.alwaysEnabled && (
+                        <p className="mt-0.5 text-[10px] font-medium text-blue-600">Always enabled</p>
                       )}
                     </div>
                   </label>

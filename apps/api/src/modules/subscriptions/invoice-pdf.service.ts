@@ -480,9 +480,13 @@ export async function generateInvoicePdf(
 
       // ══════════════════════════════════════════════════════════════════════
       // SECTION 8: FOOTER (absolute position, always at bottom)
+      // IMPORTANT: Footer must be above the bottom margin boundary.
+      // PDFKit auto-creates new pages when text is placed at/below the
+      // bottom margin (doc.page.height - marginBottom). Position the footer
+      // ~62px from the bottom to stay safely above the margin line.
       // ══════════════════════════════════════════════════════════════════════
 
-      const footerY = doc.page.height - 36;
+      const footerY = doc.page.height - 62;
 
       doc.save();
       doc.moveTo(LM, footerY).lineTo(RM, footerY).lineWidth(0.5).strokeColor(C.border).stroke();

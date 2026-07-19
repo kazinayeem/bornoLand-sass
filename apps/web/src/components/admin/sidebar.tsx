@@ -168,7 +168,7 @@ export function Sidebar() {
         </button>
         <button
           type="button"
-          onClick={() => router.push("/admin/login")}
+          onClick={() => router.push("/login")}
           className={cn(
             "flex items-center gap-2 rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600",
             collapsed ? "w-full justify-center" : "w-full"

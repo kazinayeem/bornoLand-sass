@@ -3,12 +3,12 @@ import path from "path";
 import { fileURLToPath } from "url";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
-import { getUploadRoot } from "../media/providers/local-storage.provider.js";
+import { loadImageBufferForPdf } from "../stores/store-branding-logo.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-type CurrencyCode = "USD" | "BDT" | "EUR" | "INR" | "GBP" | string;
+type CurrencyCode = string;
 
 type OrderItem = {
   name?: string;
@@ -16,41 +16,46 @@ type OrderItem = {
   sku?: string;
   quantity?: number;
   price?: number;
-};
-
-type OrderTimelineEvent = {
-  status?: string;
-  note?: string;
-  createdAt?: Date | string;
+  image?: string;
+  discount?: number;
+  tax?: number;
 };
 
 type PopulatedCustomer = {
+  _id?: string;
   name?: string;
   email?: string;
   phone?: string;
 };
 
-type OrderInvoicePayload = {
+export type OrderInvoicePayload = {
   order: {
+    _id?: string;
     invoiceNumber?: string;
     orderNumber?: string;
     status?: string;
     paymentStatus?: string;
     paymentMethod?: string;
+    paymentGateway?: string;
     currencyCode?: CurrencyCode;
     subtotal?: number;
     discount?: number;
     shipping?: number;
     deliveryCharge?: number;
+    deliveryZone?: string;
     tax?: number;
     total?: number;
+    refundAmount?: number;
     notes?: string;
+    couponCode?: string;
     paymentVerification?: {
       transactionId?: string;
       status?: string;
       reviewedAt?: Date | string;
+      note?: string;
     };
     paidAt?: Date | string;
+    referenceNumber?: string;
     shippingAddress?: {
       fullName?: string;
       phone?: string;
@@ -61,7 +66,7 @@ type OrderInvoicePayload = {
       country?: string;
     };
     items?: OrderItem[];
-    timeline?: OrderTimelineEvent[];
+    timeline?: Array<{ status?: string; createdAt?: Date | string }>;
     customerId?: PopulatedCustomer | string;
     createdAt?: Date | string;
     updatedAt?: Date | string;
@@ -69,9 +74,13 @@ type OrderInvoicePayload = {
   store: {
     name?: string;
     shortName?: string;
+    slug?: string;
+    subdomain?: string;
     logoUrl?: string;
+    faviconUrl?: string;
     brandColor?: string;
     theme?: { primaryColor?: string };
+    websiteUrl?: string;
   };
   storeContact?: {
     businessName?: string;
@@ -81,6 +90,7 @@ type OrderInvoicePayload = {
     postalCode?: string;
     phone?: string;
     email?: string;
+    socialLinks?: Record<string, string>;
   } | null;
   storeSettings?: {
     locale?: string;
@@ -90,80 +100,90 @@ type OrderInvoicePayload = {
     currencyPosition?: "before" | "after";
     decimalPlaces?: number;
   } | null;
+  /** Pre-resolved Appearance → Branding logo (PNG buffer). Never use product images. */
+  storeLogoBuffer?: Buffer | null;
   verificationUrl?: string;
 };
 
 const C = {
-  text: "#0f172a",
-  muted: "#64748b",
-  border: "#e2e8f0",
-  borderLight: "#f1f5f9",
-  bgCard: "#ffffff",
-  bgTable: "#f8fafc",
-  bgTableAlt: "#f1f5f9",
+  text: "#1d1d1f",
+  muted: "#6e6e73",
+  border: "#e5e5ea",
+  borderLight: "#f5f5f7",
+  bg: "#ffffff",
+  bgSoft: "#f5f5f7",
   white: "#ffffff",
-  success: "#16a34a",
-  successLight: "#dcfce7",
-  warning: "#f59e0b",
-  warningLight: "#fef3c7",
-  danger: "#dc2626",
-  dangerLight: "#fee2e2",
-  neutral: "#64748b",
-  neutralLight: "#f1f5f9",
+  success: "#248a3d",
+  successLight: "#e4f6e8",
+  warning: "#b25e09",
+  warningLight: "#fff1de",
+  danger: "#d70015",
+  dangerLight: "#ffe5e8",
+  neutral: "#6e6e73",
+  neutralLight: "#f0f0f2",
 };
+
+function loadFont(name: string): string | null {
+  const fontPath = path.resolve(__dirname, "../../assets/fonts", name);
+  return fs.existsSync(fontPath) ? fontPath : null;
+}
 
 function formatDateTime(
   value: Date | string | undefined | null,
-  locale = "en-US",
   timezone = "UTC",
 ): string {
-  if (!value) return "—";
+  if (!value) return "";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString(locale, {
-    timeZone: timezone,
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-function formatCurrency(
-  amount: number,
-  currency: CurrencyCode,
-  settings?: { locale?: string; currencySymbol?: string; currencyPosition?: "before" | "after"; decimalPlaces?: number },
-): string {
-  const locale = settings?.locale ?? "en-US";
-  const decimals = settings?.decimalPlaces ?? 2;
-  const normalized = Number.isFinite(amount) ? amount : 0;
+  if (Number.isNaN(date.getTime())) return "";
   try {
-    if (settings?.currencySymbol) {
-      const value = normalized.toLocaleString(locale, {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals,
-      });
-      return settings.currencyPosition === "after"
-        ? `${value} ${settings.currencySymbol}`
-        : `${settings.currencySymbol} ${value}`;
-    }
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: currency || "USD",
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(normalized);
+    const day = new Intl.DateTimeFormat("en-GB", {
+      timeZone: timezone,
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+    const time = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(date);
+    if (!day || !time || day.includes("Invalid") || time.includes("Invalid")) return "";
+    return `${day} • ${time}`;
   } catch {
-    return `${currency || "USD"} ${normalized.toLocaleString(locale, {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    })}`;
+    return "";
   }
 }
 
-function titleCase(value: string | undefined | null): string {
-  if (!value) return "—";
+function formatMoney(
+  amount: number,
+  settings?: {
+    currencyCode?: string;
+    currencySymbol?: string;
+    currencyPosition?: "before" | "after";
+    decimalPlaces?: number;
+    locale?: string;
+  },
+): string {
+  const decimals = Number.isFinite(settings?.decimalPlaces) ? Number(settings?.decimalPlaces) : 2;
+  const value = Number.isFinite(amount) ? amount : 0;
+  const locale = settings?.locale?.startsWith("bn") ? "en-BD" : (settings?.locale || "en-US");
+  const formatted = value.toLocaleString(locale, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+    useGrouping: true,
+  });
+  const symbol = (settings?.currencySymbol || settings?.currencyCode || "").trim();
+  if (!symbol) return formatted;
+  // Non-breaking space keeps currency + amount on one line in PDF
+  const nbsp = "\u00A0";
+  return settings?.currencyPosition === "after"
+    ? `${formatted}${nbsp}${symbol}`
+    : `${symbol}${nbsp}${formatted}`;
+}
+
+function titleCase(value?: string | null): string {
+  if (!value?.trim()) return "";
   return value
     .split(/[_\s-]+/)
     .filter(Boolean)
@@ -176,44 +196,29 @@ function getPrimaryColor(store: OrderInvoicePayload["store"]): string {
   return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(candidate) ? candidate : "#0066cc";
 }
 
-function lightenHex(hex: string, amount = 0.14): string {
+function lightenHex(hex: string, amount = 0.86): string {
   const normalized = hex.replace("#", "");
-  const expanded = normalized.length === 3 ? normalized.split("").map((char) => char + char).join("") : normalized;
-  if (!/^[0-9a-f]{6}$/i.test(expanded)) return "#0066cc";
+  const expanded =
+    normalized.length === 3 ? normalized.split("").map((c) => c + c).join("") : normalized;
+  if (!/^[0-9a-f]{6}$/i.test(expanded)) return "#e8f1fb";
   const num = Number.parseInt(expanded, 16);
-  const r = Math.min(255, Math.round(((num >> 16) & 255) + 255 * amount));
-  const g = Math.min(255, Math.round(((num >> 8) & 255) + 255 * amount));
-  const b = Math.min(255, Math.round((num & 255) + 255 * amount));
-  return `#${[r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("")}`;
+  const mix = (channel: number) => Math.min(255, Math.round(channel + (255 - channel) * amount));
+  const r = mix((num >> 16) & 255);
+  const g = mix((num >> 8) & 255);
+  const b = mix(num & 255);
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 }
 
-function darkenHex(hex: string, amount = 0.16): string {
-  const normalized = hex.replace("#", "");
-  const expanded = normalized.length === 3 ? normalized.split("").map((char) => char + char).join("") : normalized;
-  if (!/^[0-9a-f]{6}$/i.test(expanded)) return "#0066cc";
-  const num = Number.parseInt(expanded, 16);
-  const r = Math.max(0, Math.round(((num >> 16) & 255) * (1 - amount)));
-  const g = Math.max(0, Math.round(((num >> 8) & 255) * (1 - amount)));
-  const b = Math.max(0, Math.round((num & 255) * (1 - amount)));
-  return `#${[r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("")}`;
-}
-
-function drawRoundedCard(
+function drawCard(
   doc: PDFKit.PDFDocument,
   x: number,
   y: number,
   w: number,
   h: number,
-  radius = 6,
-  fillColor = C.bgCard,
-  strokeColor?: string,
+  radius = 8,
 ) {
   doc.save();
-  if (strokeColor) {
-    doc.roundedRect(x, y, w, h, radius).fillAndStroke(fillColor, strokeColor);
-  } else {
-    doc.roundedRect(x, y, w, h, radius).fill(fillColor);
-  }
+  doc.roundedRect(x, y, w, h, radius).fillAndStroke(C.bg, C.border);
   doc.restore();
 }
 
@@ -227,128 +232,96 @@ function drawBadge(
   bg: string,
 ) {
   doc.save();
-  doc.font(font).fontSize(7);
-  const width = doc.widthOfString(text) + 14;
-  doc.roundedRect(x, y, width, 16, 3).fill(bg);
-  doc.fillColor(color).text(text, x + 7, y + 4, { width: width - 14, align: "center" });
+  doc.font(font).fontSize(7.5);
+  const width = Math.min(doc.widthOfString(text) + 16, 160);
+  doc.roundedRect(x, y, width, 18, 9).fill(bg);
+  doc.fillColor(color).text(text, x + 8, y + 4.5, {
+    width: width - 16,
+    align: "center",
+    lineBreak: false,
+  });
   doc.restore();
   return width;
 }
 
-function drawInfoRow(
+function fitText(
   doc: PDFKit.PDFDocument,
-  labelFont: string,
-  valueFont: string,
+  text: string,
+  font: string,
+  size: number,
+  maxWidth: number,
+): string {
+  const value = (text || "").trim();
+  if (!value) return "";
+  doc.font(font).fontSize(size);
+  if (doc.widthOfString(value) <= maxWidth) return value;
+  let truncated = value;
+  while (truncated.length > 1 && doc.widthOfString(`${truncated}…`) > maxWidth) {
+    truncated = truncated.slice(0, -1);
+  }
+  return `${truncated}…`;
+}
+
+function drawLabelValue(
+  doc: PDFKit.PDFDocument,
+  fonts: { regular: string; medium: string },
   label: string,
   value: string,
   x: number,
   y: number,
-  labelW: number,
-  valueW: number,
-  labelSize = 7,
-  valueSize = 8,
+  width: number,
 ) {
-  doc.font(labelFont).fontSize(labelSize).fillColor(C.muted);
-  doc.text(label, x, y, { width: labelW });
-  doc.font(valueFont).fontSize(valueSize).fillColor(C.text);
-  doc.text(value, x + labelW, y, { width: valueW });
+  if (!value) return 0;
+  doc.font(fonts.regular).fontSize(7).fillColor(C.muted);
+  doc.text(label, x, y, { width, lineBreak: false });
+  doc.font(fonts.medium).fontSize(9).fillColor(C.text);
+  const fitted = fitText(doc, value, fonts.medium, 9, width);
+  doc.text(fitted, x, y + 11, { width, lineBreak: false });
+  return 28;
 }
 
-function loadFont(name: string): string | null {
-  const fontPath = path.resolve(__dirname, "../../assets/fonts", name);
-  return fs.existsSync(fontPath) ? fontPath : null;
-}
-
-async function loadLogoBuffer(logoUrl: string | undefined | null): Promise<Buffer | null> {
-  if (!logoUrl) return null;
-
-  const source = logoUrl.trim();
-  if (!source) return null;
-
-  if (/^https?:\/\//i.test(source)) {
-    try {
-      const response = await fetch(source);
-      if (!response.ok) return null;
-      const arrayBuffer = await response.arrayBuffer();
-      return Buffer.from(arrayBuffer);
-    } catch {
-      return null;
-    }
-  }
-
-  const normalized = source.replace(/^file:\/\//i, "");
-  const relativeCandidates = [
-    normalized,
-    normalized.replace(/^\/+/, ""),
-    normalized.replace(/^\/+uploads\/+/i, ""),
-    normalized.replace(/^uploads\/+/i, ""),
-  ];
-
-  const candidatePaths = new Set<string>();
-  for (const candidate of relativeCandidates) {
-    if (!candidate) continue;
-    candidatePaths.add(candidate);
-    candidatePaths.add(path.join(getUploadRoot(), candidate));
-    candidatePaths.add(path.resolve(getUploadRoot(), candidate));
-  }
-
-  for (const candidate of candidatePaths) {
-    try {
-      if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-        return fs.readFileSync(candidate);
-      }
-    } catch {
-      // try next candidate
-    }
-  }
-
-  return null;
-}
-
-function formatAddressLine(address?: string, city?: string, country?: string, postalCode?: string): string {
-  return [address, city, country, postalCode].map((part) => part?.trim()).filter(Boolean).join(", ");
-}
-
-function mapPaymentStatus(status?: string): { label: string; color: string; bg: string } {
+function statusStyle(status?: string): { label: string; color: string; bg: string } {
   switch ((status ?? "").toLowerCase()) {
     case "paid":
-      return { label: "PAID", color: C.success, bg: C.successLight };
-    case "partial":
-      return { label: "PARTIAL", color: C.warning, bg: C.warningLight };
-    case "failed":
-      return { label: "FAILED", color: C.danger, bg: C.dangerLight };
-    case "refunded":
-      return { label: "REFUNDED", color: C.neutral, bg: C.neutralLight };
-    default:
-      return { label: "PENDING", color: C.warning, bg: C.warningLight };
-  }
-}
-
-function mapOrderStatus(status?: string): { label: string; color: string; bg: string } {
-  switch ((status ?? "").toLowerCase()) {
+    case "delivered":
     case "confirmed":
-      return { label: "CONFIRMED", color: C.success, bg: C.successLight };
+      return { label: titleCase(status).toUpperCase(), color: C.success, bg: C.successLight };
+    case "cancelled":
+    case "refunded":
+    case "failed":
+    case "partial_refund":
+      return { label: titleCase(status).toUpperCase(), color: C.danger, bg: C.dangerLight };
+    case "partial":
     case "processing":
     case "packed":
     case "shipped":
     case "out_for_delivery":
       return { label: titleCase(status).toUpperCase(), color: C.warning, bg: C.warningLight };
-    case "delivered":
-      return { label: "DELIVERED", color: C.success, bg: C.successLight };
-    case "cancelled":
-    case "refunded":
-    case "partial_refund":
-      return { label: titleCase(status).toUpperCase(), color: C.danger, bg: C.dangerLight };
     default:
-      return { label: "PENDING", color: C.warning, bg: C.warningLight };
+      return { label: titleCase(status || "Pending").toUpperCase(), color: C.warning, bg: C.warningLight };
   }
 }
 
-function generateInvoiceNumber(prefix: string): string {
-  const cleanPrefix = (prefix || "INV").trim().replace(/[^A-Za-z0-9_-]/g, "").toUpperCase() || "INV";
-  const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `${cleanPrefix}-${ts}-${rand}`;
+function completedAt(order: OrderInvoicePayload["order"]): Date | string | undefined {
+  if ((order.status || "").toLowerCase() === "delivered") {
+    const delivered = order.timeline?.find((e) => e.status === "delivered")?.createdAt;
+    return delivered || order.updatedAt || order.createdAt;
+  }
+  if ((order.status || "").toLowerCase() === "cancelled") {
+    const cancelled = order.timeline?.find((e) => e.status === "cancelled")?.createdAt;
+    return cancelled || order.updatedAt;
+  }
+  return undefined;
+}
+
+function paidAt(order: OrderInvoicePayload["order"]): Date | string | undefined {
+  if ((order.paymentStatus || "").toLowerCase() !== "paid") return undefined;
+  return (
+    order.paidAt ||
+    order.paymentVerification?.reviewedAt ||
+    order.timeline?.find((e) => e.status === "paid" || e.status === "confirmed")?.createdAt ||
+    order.updatedAt
+  );
 }
 
 export async function generateOrderInvoicePdf(payload: OrderInvoicePayload): Promise<Buffer> {
@@ -359,15 +332,15 @@ export async function generateOrderInvoicePdf(payload: OrderInvoicePayload): Pro
 
   const doc = new PDFDocument({
     size: "A4",
-    margins: { top: 40, bottom: 72, left: 44, right: 44 },
+    margins: { top: 36, bottom: 56, left: 40, right: 40 },
     autoFirstPage: true,
-    bufferPages: false,
+    bufferPages: true,
     info: {
-      Title: `Order Invoice ${payload.order.invoiceNumber ?? payload.order.orderNumber ?? ""}`,
-      Author: "BornoLand",
-      Subject: `Order Invoice ${payload.order.invoiceNumber ?? payload.order.orderNumber ?? ""}`,
-      Creator: "BornoLand Order Invoice System",
-      Keywords: "invoice, order, bornoland",
+      Title: `Invoice ${payload.order.invoiceNumber ?? payload.order.orderNumber ?? ""}`,
+      Author: payload.store.name || "Store",
+      Subject: `Order ${payload.order.orderNumber ?? ""}`,
+      Creator: "BornoLand",
+      Keywords: "invoice, order",
     },
   });
 
@@ -395,402 +368,471 @@ export async function generateOrderInvoicePdf(payload: OrderInvoicePayload): Pro
         const store = payload.store;
         const contact = payload.storeContact ?? null;
         const settings = payload.storeSettings ?? null;
-        const locale = settings?.locale ?? "en-US";
-        const timezone = settings?.timezone ?? "UTC";
+        const timezone = settings?.timezone || "UTC";
         const primary = getPrimaryColor(store);
-        const primaryDark = darkenHex(primary, 0.14);
-        const primaryLight = lightenHex(primary, 0.82);
-        const paymentBadge = mapPaymentStatus(order.paymentStatus);
-        const orderBadge = mapOrderStatus(order.status);
-        const orderNumber = order.orderNumber ?? "—";
-        const invoiceNumber = order.invoiceNumber || generateInvoiceNumber("INV");
-        const currency = order.currencyCode ?? settings?.currencyCode ?? "USD";
-        const currencySettings = {
-          locale,
+        const primaryLight = lightenHex(primary);
+        const moneySettings = {
+          currencyCode: order.currencyCode || settings?.currencyCode || "USD",
           currencySymbol: settings?.currencySymbol,
           currencyPosition: settings?.currencyPosition,
           decimalPlaces: settings?.decimalPlaces,
+          locale: settings?.locale,
         };
-        const subtotal = Number(order.subtotal ?? 0);
-        const discount = Number(order.discount ?? 0);
-        const shipping = Number(order.shipping ?? order.deliveryCharge ?? 0);
-        const tax = Number(order.tax ?? 0);
-        const total = Number(order.total ?? 0);
-        const generatedAt = new Date();
-        const storeDisplayName = contact?.businessName?.trim() || store.shortName?.trim() || store.name?.trim() || "Store";
-        const storeAddress = formatAddressLine(contact?.address, contact?.city, contact?.country, contact?.postalCode);
+
+        const storeName =
+          contact?.businessName?.trim() ||
+          store.shortName?.trim() ||
+          store.name?.trim() ||
+          "Store";
+        const storeAddress = [contact?.address, contact?.city, contact?.postalCode, contact?.country]
+          .map((v) => v?.trim())
+          .filter(Boolean)
+          .join(", ");
         const storePhone = contact?.phone?.trim() || "";
         const storeEmail = contact?.email?.trim() || "";
-        const customer = typeof order.customerId === "object" && order.customerId
-          ? order.customerId
-          : null;
-        const customerName = customer?.name?.trim() || order.shippingAddress?.fullName?.trim() || "—";
-        const customerEmail = customer?.email?.trim() || "—";
-        const customerPhone = customer?.phone?.trim() || order.shippingAddress?.phone?.trim() || "—";
-        const shippingLines = [
-          order.shippingAddress?.fullName,
-          order.shippingAddress?.phone,
-          order.shippingAddress?.street,
-          [order.shippingAddress?.city, order.shippingAddress?.state].filter(Boolean).join(", "),
-          [order.shippingAddress?.country, order.shippingAddress?.zip].filter(Boolean).join(" "),
-        ].map((line) => line?.trim()).filter(Boolean) as string[];
-        const logoBuffer = await loadLogoBuffer(store.logoUrl);
-        const headerLogoSize = 42;
+        const storeWebsite = store.websiteUrl?.trim() || "";
 
-        if (!order.invoiceNumber) {
-          order.invoiceNumber = invoiceNumber;
-          if (typeof (order as { save?: () => Promise<unknown> }).save === "function") {
-            await (order as { save: () => Promise<unknown> }).save();
-          }
-        }
+        const customer =
+          typeof order.customerId === "object" && order.customerId ? order.customerId : null;
+        const customerName = customer?.name?.trim() || order.shippingAddress?.fullName?.trim() || "";
+        const customerEmail = customer?.email?.trim() || "";
+        const customerPhone = customer?.phone?.trim() || order.shippingAddress?.phone?.trim() || "";
+        const customerId = customer?._id ? String(customer._id) : "";
 
-        let y = 40;
-        const LM = 44;
-        const RM = doc.page.width - 44;
+        const ship = order.shippingAddress;
+        const shippingMethod = order.deliveryZone?.trim() || "";
+        const shippingCharge = Number(order.shipping ?? order.deliveryCharge ?? 0);
+
+        const subtotal = Number(order.subtotal ?? 0);
+        const discount = Number(order.discount ?? 0);
+        const tax = Number(order.tax ?? 0);
+        const total = Number(order.total ?? 0);
+        const refund = Number(order.refundAmount ?? 0);
+        const paymentStatus = (order.paymentStatus || "").toLowerCase();
+        const paymentReceived =
+          paymentStatus === "paid" ? Math.max(0, total - refund) : 0;
+        const remainingDue =
+          paymentStatus === "paid" ? 0 : Math.max(0, total - refund);
+
+        const invoiceNo = order.invoiceNumber?.trim() || "";
+        const orderNo = order.orderNumber?.trim() || "";
+        const orderBadge = statusStyle(order.status);
+        const paymentBadge = statusStyle(order.paymentStatus);
+        const completedDate = formatDateTime(completedAt(order), timezone);
+        const paidDate = formatDateTime(paidAt(order), timezone);
+        const generatedDate = formatDateTime(new Date(), timezone);
+
+        const txnId = order.paymentVerification?.transactionId?.trim() || "";
+        const gateway = (order.paymentGateway || order.paymentMethod || "").trim();
+        const reference =
+          order.referenceNumber?.trim() ||
+          order.paymentVerification?.note?.trim() ||
+          "";
+
+        // Branding logo is resolved upstream from Appearance → Branding only.
+        const logoBuffer = payload.storeLogoBuffer ?? null;
+        const itemImages = await Promise.all(
+          (order.items ?? []).map((item) => loadImageBufferForPdf(item.image)),
+        );
+
+        const LM = 40;
+        const RM = doc.page.width - 40;
         const PW = RM - LM;
-        const bottomLimit = doc.page.height - 90;
+        let y = 36;
+        const bottomLimit = doc.page.height - 70;
 
-        const ensureSpace = (heightNeeded: number, redraw?: () => void) => {
-          if (y + heightNeeded <= bottomLimit) return;
+        const ensureSpace = (needed: number) => {
+          if (y + needed <= bottomLimit) return;
           doc.addPage();
-          y = 40;
-          if (redraw) redraw();
+          y = 36;
         };
 
-        const drawHeader = () => {
-          drawRoundedCard(doc, LM, y, PW, 90, 10, C.bgCard, C.border);
-          const logoX = LM + 14;
-          const logoY = y + 14;
-          if (logoBuffer) {
-            doc.image(logoBuffer, logoX, logoY, { width: headerLogoSize, height: headerLogoSize });
-          } else {
-            doc.save();
-            doc.roundedRect(logoX, logoY, headerLogoSize, headerLogoSize, 8).fill(primaryLight).stroke(primary);
-            doc.font(F.bold).fontSize(14).fillColor(primaryDark);
-            const initials = storeDisplayName
+        // ── Header ──────────────────────────────────────────────────────────
+        drawCard(doc, LM, y, PW, 96, 10);
+        const logoSize = 48;
+        const logoX = LM + 18;
+        const logoY = y + 24;
+        if (logoBuffer) {
+          doc.image(logoBuffer, logoX, logoY, {
+            fit: [logoSize, logoSize],
+            align: "center",
+            valign: "center",
+          });
+        } else {
+          doc.save();
+          doc.roundedRect(logoX, logoY, logoSize, logoSize, 10).fill(primaryLight);
+          doc.font(F.bold).fontSize(16).fillColor(primary);
+          const initials =
+            storeName
               .split(/\s+/)
               .filter(Boolean)
               .slice(0, 2)
-              .map((part) => part[0] ?? "")
+              .map((p) => p[0] ?? "")
               .join("")
-              .toUpperCase()
-              .slice(0, 2) || "S";
-            doc.text(initials, logoX, logoY + 11, { width: headerLogoSize, align: "center" });
-            doc.restore();
-          }
-
-          const textX = LM + 70;
-          doc.font(F.bold).fontSize(17).fillColor(C.text);
-          doc.text(storeDisplayName, textX, y + 14, { width: PW * 0.45 });
-          doc.font(F.regular).fontSize(8).fillColor(C.muted);
-          if (storeAddress) doc.text(storeAddress, textX, y + 34, { width: PW * 0.44 });
-          const contactLines = [storePhone ? `Phone: ${storePhone}` : "", storeEmail ? `Email: ${storeEmail}` : ""].filter(Boolean);
-          if (contactLines.length > 0) {
-            doc.text(contactLines.join(" | "), textX, y + 48, { width: PW * 0.44 });
-          }
-
-          const metaX = LM + PW * 0.58;
-          const metaW = PW * 0.38;
-          doc.font(F.bold).fontSize(24).fillColor(primary);
-          doc.text("INVOICE", metaX, y + 12, { width: metaW, align: "right" });
-          drawBadge(doc, F.bold, orderBadge.label, metaX + metaW - 84, y + 42, orderBadge.color, orderBadge.bg);
-          doc.font(F.regular).fontSize(8).fillColor(C.muted);
-          doc.text(`Invoice #: ${order.invoiceNumber || invoiceNumber}`, metaX, y + 62, { width: metaW, align: "right" });
-        };
-
-        drawHeader();
-        y += 104;
-
-        const renderSectionTitle = (title: string) => {
-          doc.font(F.semiBold).fontSize(8).fillColor(primary);
-          doc.text(title.toUpperCase(), LM + 4, y - 2);
-        };
-
-        const cardGap = 12;
-        const halfCardW = (PW - cardGap) / 2;
-
-        ensureSpace(82);
-        renderSectionTitle("Order Details");
-        drawRoundedCard(doc, LM, y, halfCardW, 70, 8, C.bgTable, C.border);
-        drawRoundedCard(doc, LM + halfCardW + cardGap, y, halfCardW, 70, 8, C.bgTable, C.border);
-        drawInfoRow(doc, F.regular, F.medium, "Order No.", orderNumber, LM + 12, y + 10, 64, halfCardW - 76);
-        drawInfoRow(doc, F.regular, F.medium, "Invoice No.", order.invoiceNumber || invoiceNumber, LM + 12, y + 24, 64, halfCardW - 76);
-        drawInfoRow(doc, F.regular, F.medium, "Generated", formatDateTime(generatedAt, locale, timezone), LM + 12, y + 38, 64, halfCardW - 76);
-        drawInfoRow(doc, F.regular, F.medium, "Payment", titleCase(order.paymentMethod), LM + halfCardW + cardGap + 12, y + 10, 56, halfCardW - 68);
-        drawInfoRow(doc, F.regular, F.medium, "Payment Status", paymentBadge.label, LM + halfCardW + cardGap + 12, y + 24, 56, halfCardW - 68);
-        drawInfoRow(doc, F.regular, F.medium, "Order Status", orderBadge.label, LM + halfCardW + cardGap + 12, y + 38, 56, halfCardW - 68);
-        y += 82;
-
-        const txnId = order.paymentVerification?.transactionId?.trim();
-        if (txnId || order.paymentStatus === "paid") {
-          ensureSpace(54);
-          renderSectionTitle("Payment Information");
-          drawRoundedCard(doc, LM, y, PW, 44, 8, C.bgTable, C.border);
-          drawInfoRow(doc, F.regular, F.medium, "Method", titleCase(order.paymentMethod), LM + 12, y + 8, 70, PW * 0.28);
-          drawInfoRow(doc, F.regular, F.medium, "Txn ID", txnId || "—", LM + 12, y + 22, 70, PW * 0.28);
-          drawInfoRow(
-            doc,
-            F.regular,
-            F.medium,
-            "Gateway",
-            titleCase(order.paymentMethod),
-            LM + PW * 0.42,
-            y + 8,
-            70,
-            PW * 0.28,
-          );
-          drawInfoRow(
-            doc,
-            F.regular,
-            F.medium,
-            "Paid Date",
-            formatDateTime(
-              order.paymentVerification?.reviewedAt || order.paidAt || (order.paymentStatus === "paid" ? order.updatedAt : undefined),
-              locale,
-              timezone,
-            ),
-            LM + PW * 0.42,
-            y + 22,
-            70,
-            PW * 0.28,
-          );
-          y += 56;
+              .toUpperCase() || "S";
+          doc.text(initials, logoX, logoY + 15, { width: logoSize, align: "center", lineBreak: false });
+          doc.restore();
         }
 
-        ensureSpace(92);
-        renderSectionTitle("Customer & Shipping");
-        drawRoundedCard(doc, LM, y, halfCardW, 82, 8, C.bgTable, C.border);
-        drawRoundedCard(doc, LM + halfCardW + cardGap, y, halfCardW, 82, 8, C.bgTable, C.border);
-        doc.font(F.semiBold).fontSize(7).fillColor(primary);
-        doc.text("CUSTOMER", LM + 12, y + 10);
-        doc.font(F.regular).fontSize(8).fillColor(C.text);
-        doc.text(customerName, LM + 12, y + 22, { width: halfCardW - 24 });
-        doc.font(F.regular).fontSize(7.5).fillColor(C.muted);
-        doc.text(customerEmail, LM + 12, y + 36, { width: halfCardW - 24 });
-        doc.text(customerPhone, LM + 12, y + 48, { width: halfCardW - 24 });
-
-        doc.font(F.semiBold).fontSize(7).fillColor(primary);
-        doc.text("SHIPPING ADDRESS", LM + halfCardW + cardGap + 12, y + 10);
-        doc.font(F.regular).fontSize(8).fillColor(C.text);
-        shippingLines.slice(0, 4).forEach((line, index) => {
-          doc.text(line, LM + halfCardW + cardGap + 12, y + 22 + index * 12, { width: halfCardW - 24 });
+        const headerTextX = LM + 80;
+        const headerTextW = PW * 0.42;
+        doc.font(F.bold).fontSize(16).fillColor(C.text);
+        doc.text(fitText(doc, storeName, F.bold, 16, headerTextW), headerTextX, y + 18, {
+          width: headerTextW,
+          lineBreak: false,
         });
-        y += 94;
-
-        const pipeline =
-          order.status === "cancelled" || order.status === "refunded"
-            ? [
-                { key: "pending", label: "Order Placed" },
-                { key: "cancelled", label: titleCase(order.status) },
-              ]
-            : [
-                { key: "pending", label: "Order Placed" },
-                { key: "paid", label: "Payment Received" },
-                { key: "processing", label: "Processing" },
-                { key: "packed", label: "Packed" },
-                { key: "shipped", label: "Shipped" },
-                { key: "out_for_delivery", label: "Out for Delivery" },
-                { key: "delivered", label: "Delivered" },
-              ];
-
-        const timelineEvents = Array.isArray(order.timeline) ? order.timeline : [];
-        const eventByStatus = new Map<string, OrderTimelineEvent>();
-        for (const event of timelineEvents) {
-          if (event.status) eventByStatus.set(event.status, event);
-        }
-        if (order.createdAt) {
-          eventByStatus.set("pending", eventByStatus.get("pending") || { status: "pending", createdAt: order.createdAt });
-        }
-        if (order.paymentStatus === "paid") {
-          eventByStatus.set(
-            "paid",
-            eventByStatus.get("paid") || {
-              status: "paid",
-              createdAt: order.paymentVerification?.reviewedAt || order.updatedAt || order.createdAt,
-            },
-          );
-        }
-
-        const statusOrder = [
-          "pending",
-          "confirmed",
-          "paid",
-          "processing",
-          "packed",
-          "shipped",
-          "out_for_delivery",
-          "delivered",
-          "cancelled",
-          "refunded",
-        ];
-        const currentIdx = Math.max(
-          0,
-          statusOrder.indexOf(order.status || "pending"),
-          order.paymentStatus === "paid" ? statusOrder.indexOf("paid") : -1,
-        );
-
-        ensureSpace(110);
-        renderSectionTitle("Tracking Timeline");
-        drawRoundedCard(doc, LM, y, PW, 98, 8, C.bgTable, C.border);
-        const availableWidth = PW - 24;
-        const itemWidth = availableWidth / pipeline.length;
-        pipeline.forEach((step, index) => {
-          const startX = LM + 12 + index * itemWidth;
-          const event = eventByStatus.get(step.key);
-          const stepIdx = statusOrder.indexOf(step.key === "paid" ? "paid" : step.key);
-          const completed =
-            Boolean(event) ||
-            (step.key === "paid"
-              ? order.paymentStatus === "paid"
-              : stepIdx >= 0 && currentIdx >= stepIdx && !(order.status === "cancelled" && step.key !== "cancelled" && step.key !== "pending"));
-          const isCurrent =
-            step.key === order.status ||
-            (step.key === "paid" && order.paymentStatus === "paid" && !["delivered", "shipped", "out_for_delivery"].includes(order.status || ""));
-          const badgeColor = completed ? C.success : isCurrent ? primary : C.muted;
-          const badgeBg = completed ? C.successLight : C.borderLight;
-          drawBadge(doc, F.bold, step.label.toUpperCase(), startX, y + 12, badgeColor, badgeBg);
-          doc.font(F.regular).fontSize(6.6).fillColor(C.muted);
-          doc.text(
-            event?.createdAt ? formatDateTime(event.createdAt, locale, timezone) : completed ? "Completed" : "Pending",
-            startX,
-            y + 34,
-            { width: itemWidth - 8 },
-          );
-          doc.font(F.semiBold).fontSize(6.4).fillColor(badgeColor);
-          doc.text(isCurrent ? "Current" : completed ? "Done" : "—", startX, y + 48, { width: itemWidth - 8 });
-          if (index < pipeline.length - 1) {
-            doc.font(F.regular).fontSize(10).fillColor(C.border);
-            doc.text("↓", startX + itemWidth - 14, y + 20);
-          }
-        });
-        y += 110;
-
-        ensureSpace(40);
-        renderSectionTitle("Items");
-        const tableColumns = [
-          { label: "NAME", width: PW * 0.28, align: "left" as const },
-          { label: "VARIANT", width: PW * 0.18, align: "left" as const },
-          { label: "SKU", width: PW * 0.12, align: "left" as const },
-          { label: "QTY", width: PW * 0.08, align: "center" as const },
-          { label: "UNIT PRICE", width: PW * 0.17, align: "right" as const },
-          { label: "LINE TOTAL", width: PW * 0.17, align: "right" as const },
-        ];
-
-        const tableX = LM;
-        const tableHeaderHeight = 22;
-        const drawTableHeader = () => {
-          drawRoundedCard(doc, tableX, y, PW, tableHeaderHeight, 6, primary);
-          let colX = tableX + 8;
-          doc.font(F.semiBold).fontSize(6.5).fillColor(C.white);
-          tableColumns.forEach((col) => {
-            doc.text(col.label, colX, y + 7, { width: col.width - 8, align: col.align });
-            colX += col.width;
+        doc.font(F.regular).fontSize(8).fillColor(C.muted);
+        let headerMetaY = y + 40;
+        if (storeAddress) {
+          doc.text(fitText(doc, storeAddress, F.regular, 8, headerTextW), headerTextX, headerMetaY, {
+            width: headerTextW,
+            lineBreak: false,
           });
-          y += tableHeaderHeight + 4;
+          headerMetaY += 12;
+        }
+        const contactBits = [storePhone, storeEmail, storeWebsite].filter(Boolean);
+        if (contactBits.length) {
+          doc.text(fitText(doc, contactBits.join("  ·  "), F.regular, 8, headerTextW), headerTextX, headerMetaY, {
+            width: headerTextW,
+            lineBreak: false,
+          });
+        }
+
+        const metaX = LM + PW * 0.58;
+        const metaW = PW * 0.38;
+        doc.font(F.bold).fontSize(22).fillColor(primary);
+        doc.text("INVOICE", metaX, y + 16, { width: metaW, align: "right", lineBreak: false });
+        drawBadge(doc, F.semiBold, orderBadge.label, metaX + metaW - 88, y + 44, orderBadge.color, orderBadge.bg);
+        doc.font(F.regular).fontSize(8).fillColor(C.muted);
+        if (invoiceNo) {
+          doc.text(`Invoice  ${invoiceNo}`, metaX, y + 68, {
+            width: metaW,
+            align: "right",
+            lineBreak: false,
+          });
+        }
+        y += 112;
+
+        // ── Status strip ────────────────────────────────────────────────────
+        ensureSpace(54);
+        drawCard(doc, LM, y, PW, 48, 8);
+        drawLabelValue(doc, F, "Order status", titleCase(order.status), LM + 16, y + 10, 110);
+        drawBadge(doc, F.semiBold, orderBadge.label, LM + 140, y + 15, orderBadge.color, orderBadge.bg);
+        if (completedDate) {
+          drawLabelValue(doc, F, "Completed", completedDate, LM + 250, y + 10, 160);
+        }
+        if (generatedDate) {
+          drawLabelValue(doc, F, "Generated", generatedDate, LM + 420, y + 10, 130);
+        }
+        y += 64;
+
+        // ── Meta cards: order / payment ─────────────────────────────────────
+        ensureSpace(100);
+        const gap = 12;
+        const half = (PW - gap) / 2;
+        drawCard(doc, LM, y, half, 92, 8);
+        drawCard(doc, LM + half + gap, y, half, 92, 8);
+
+        doc.font(F.semiBold).fontSize(8).fillColor(primary);
+        doc.text("ORDER", LM + 14, y + 12, { lineBreak: false });
+        let leftY = y + 28;
+        if (orderNo) {
+          doc.font(F.regular).fontSize(7).fillColor(C.muted).text("Order number", LM + 14, leftY, { lineBreak: false });
+          doc.font(F.medium).fontSize(9).fillColor(C.text).text(orderNo, LM + 14, leftY + 11, {
+            width: half - 28,
+            lineBreak: false,
+          });
+          leftY += 28;
+        }
+        if (invoiceNo) {
+          doc.font(F.regular).fontSize(7).fillColor(C.muted).text("Invoice number", LM + 14, leftY, { lineBreak: false });
+          doc.font(F.medium).fontSize(9).fillColor(C.text).text(invoiceNo, LM + 14, leftY + 11, {
+            width: half - 28,
+            lineBreak: false,
+          });
+        }
+
+        const payX = LM + half + gap;
+        doc.font(F.semiBold).fontSize(8).fillColor(primary);
+        doc.text("PAYMENT", payX + 14, y + 12, { lineBreak: false });
+        const payRows: Array<[string, string]> = [];
+        if (order.paymentMethod) payRows.push(["Method", titleCase(order.paymentMethod)]);
+        if (order.paymentStatus) payRows.push(["Status", titleCase(order.paymentStatus)]);
+        if (txnId) payRows.push(["Transaction ID", txnId]);
+        if (gateway) payRows.push(["Gateway", titleCase(gateway)]);
+        if (paidDate) payRows.push(["Paid at", paidDate]);
+        if (reference) payRows.push(["Reference", reference]);
+        payRows.slice(0, 4).forEach(([label, value], index) => {
+          const rowY = y + 28 + index * 14;
+          doc.font(F.regular).fontSize(7).fillColor(C.muted);
+          doc.text(label, payX + 14, rowY, { width: 78, lineBreak: false });
+          doc.font(F.medium).fontSize(8).fillColor(C.text);
+          doc.text(fitText(doc, value, F.medium, 8, half - 110), payX + 94, rowY, {
+            width: half - 110,
+            lineBreak: false,
+          });
+        });
+        if (order.paymentStatus) {
+          drawBadge(
+            doc,
+            F.semiBold,
+            paymentBadge.label,
+            payX + half - 90,
+            y + 10,
+            paymentBadge.color,
+            paymentBadge.bg,
+          );
+        }
+        y += 108;
+
+        // ── Customer / Shipping ─────────────────────────────────────────────
+        ensureSpace(120);
+        drawCard(doc, LM, y, half, 112, 8);
+        drawCard(doc, LM + half + gap, y, half, 112, 8);
+
+        doc.font(F.semiBold).fontSize(8).fillColor(primary);
+        doc.text("CUSTOMER", LM + 14, y + 12, { lineBreak: false });
+        const customerRows: Array<[string, string]> = [];
+        if (customerName) customerRows.push(["Name", customerName]);
+        if (customerEmail) customerRows.push(["Email", customerEmail]);
+        if (customerPhone) customerRows.push(["Phone", customerPhone]);
+        if (customerId) customerRows.push(["Customer ID", customerId]);
+        customerRows.forEach(([label, value], index) => {
+          const rowY = y + 30 + index * 16;
+          doc.font(F.regular).fontSize(7).fillColor(C.muted);
+          doc.text(label, LM + 14, rowY, { width: 72, lineBreak: false });
+          doc.font(F.medium).fontSize(8.5).fillColor(C.text);
+          doc.text(fitText(doc, value, F.medium, 8.5, half - 100), LM + 88, rowY, {
+            width: half - 100,
+            lineBreak: false,
+          });
+        });
+
+        const shipX = LM + half + gap;
+        doc.font(F.semiBold).fontSize(8).fillColor(primary);
+        doc.text("SHIPPING", shipX + 14, y + 12, { lineBreak: false });
+        const shipRows: Array<[string, string]> = [];
+        if (ship?.fullName) shipRows.push(["Recipient", ship.fullName]);
+        if (ship?.phone) shipRows.push(["Phone", ship.phone]);
+        const addressLine = [ship?.street, ship?.city, ship?.state, ship?.zip, ship?.country]
+          .map((v) => v?.trim())
+          .filter(Boolean)
+          .join(", ");
+        if (addressLine) shipRows.push(["Address", addressLine]);
+        if (shippingMethod) shipRows.push(["Method", shippingMethod]);
+        if (shippingCharge > 0 || order.shipping != null || order.deliveryCharge != null) {
+          shipRows.push(["Charge", formatMoney(shippingCharge, moneySettings)]);
+        }
+        shipRows.slice(0, 5).forEach(([label, value], index) => {
+          const rowY = y + 30 + index * 14;
+          doc.font(F.regular).fontSize(7).fillColor(C.muted);
+          doc.text(label, shipX + 14, rowY, { width: 58, lineBreak: false });
+          doc.font(F.medium).fontSize(8).fillColor(C.text);
+          doc.text(fitText(doc, value, F.medium, 8, half - 90), shipX + 74, rowY, {
+            width: half - 90,
+            lineBreak: false,
+          });
+        });
+        y += 128;
+
+        // ── Items table ─────────────────────────────────────────────────────
+        ensureSpace(40);
+        doc.font(F.semiBold).fontSize(8).fillColor(primary);
+        doc.text("ITEMS", LM + 2, y, { lineBreak: false });
+        y += 14;
+
+        const cols = [
+          { key: "img", label: "", width: 28 },
+          { key: "product", label: "Product", width: 98 },
+          { key: "variant", label: "Variant", width: 58 },
+          { key: "sku", label: "SKU", width: 42 },
+          { key: "qty", label: "Qty", width: 26 },
+          { key: "unit", label: "Unit", width: 52 },
+          { key: "disc", label: "Disc.", width: 42 },
+          { key: "tax", label: "Tax", width: 42 },
+          { key: "sub", label: "Subtotal", width: 54 },
+          { key: "total", label: "Total", width: 53 },
+        ];
+        const colSum = cols.reduce((sum, col) => sum + col.width, 0);
+        const scale = PW / colSum;
+        const scaled = cols.map((col) => ({ ...col, width: col.width * scale }));
+
+        const drawTableHeader = () => {
+          doc.save();
+          doc.roundedRect(LM, y, PW, 22, 6).fill(primary);
+          doc.restore();
+          let x = LM + 6;
+          doc.font(F.semiBold).fontSize(7).fillColor(C.white);
+          scaled.forEach((col) => {
+            if (col.label) {
+              doc.text(col.label, x, y + 7, {
+                width: col.width - 6,
+                align: col.key === "qty" || col.key === "img" ? "center" : ["unit", "disc", "tax", "sub", "total"].includes(col.key) ? "right" : "left",
+                lineBreak: false,
+              });
+            }
+            x += col.width;
+          });
+          y += 26;
         };
 
         drawTableHeader();
-        const items = Array.isArray(order.items) ? order.items : [];
+        const items = order.items ?? [];
         if (items.length === 0) {
-          drawRoundedCard(doc, tableX, y, PW, 20, 4, C.bgTableAlt);
+          drawCard(doc, LM, y, PW, 28, 6);
           doc.font(F.regular).fontSize(8).fillColor(C.muted);
-          doc.text("No items available.", tableX + 10, y + 6);
-          y += 24;
+          doc.text("No items on this order.", LM + 12, y + 9, { lineBreak: false });
+          y += 40;
         } else {
-          for (const item of items) {
-            const itemName = item.name?.trim() || "—";
-            const variant = item.variantTitle?.trim() || "—";
-            const sku = item.sku?.trim() || "—";
+          for (let i = 0; i < items.length; i += 1) {
+            const item = items[i];
             const qty = Number(item.quantity ?? 0);
-            const unitPrice = Number(item.price ?? 0);
-            const lineTotal = qty * unitPrice;
-            const nameH = doc.heightOfString(itemName, { width: tableColumns[0].width - 14 });
-            const variantH = doc.heightOfString(variant, { width: tableColumns[1].width - 14 });
-            const rowH = Math.max(22, Math.max(nameH, variantH) + 12);
-            ensureSpace(rowH + 8, () => {
-              renderSectionTitle("Items");
+            const unit = Number(item.price ?? 0);
+            const itemDiscount = Number(item.discount ?? 0);
+            const itemTax = Number(item.tax ?? 0);
+            const lineSubtotal = qty * unit;
+            const lineTotal = Math.max(0, lineSubtotal - itemDiscount + itemTax);
+            const rowH = 36;
+            ensureSpace(rowH + 8);
+            if (y + rowH > bottomLimit - 8) {
+              doc.addPage();
+              y = 36;
               drawTableHeader();
-            });
+            }
 
-            drawRoundedCard(doc, tableX, y, PW, rowH, 4, C.bgTableAlt);
-            let colX = tableX + 8;
-            doc.font(F.regular).fontSize(8).fillColor(C.text);
-            doc.text(itemName, colX, y + 6, { width: tableColumns[0].width - 12, align: "left" });
-            colX += tableColumns[0].width;
-            doc.text(variant, colX, y + 6, { width: tableColumns[1].width - 12, align: "left" });
-            colX += tableColumns[1].width;
-            doc.text(sku, colX, y + 6, { width: tableColumns[2].width - 12, align: "left" });
-            colX += tableColumns[2].width;
-            doc.text(String(qty || 0), colX, y + 6, { width: tableColumns[3].width - 12, align: "center" });
-            colX += tableColumns[3].width;
-            doc.text(formatCurrency(unitPrice, currency, currencySettings), colX, y + 6, { width: tableColumns[4].width - 12, align: "right" });
-            colX += tableColumns[4].width;
-            doc.text(formatCurrency(lineTotal, currency, currencySettings), colX, y + 6, { width: tableColumns[5].width - 12, align: "right" });
-            y += rowH + 4;
+            doc.save();
+            doc.roundedRect(LM, y, PW, rowH, 4).fill(i % 2 === 0 ? C.bgSoft : C.bg);
+            doc.restore();
+
+            let x = LM + 6;
+            const textY = y + 13;
+            const img = itemImages[i];
+            if (img) {
+              try {
+                doc.image(img, x, y + 6, { fit: [22, 22], align: "center", valign: "center" });
+              } catch {
+                // ignore bad image
+              }
+            }
+            x += scaled[0].width;
+
+            const cells: Array<{ text: string; align: "left" | "right" | "center"; money?: boolean }> = [
+              { text: item.name?.trim() || "", align: "left" },
+              { text: item.variantTitle?.trim() || "", align: "left" },
+              { text: item.sku?.trim() || "", align: "left" },
+              { text: String(qty || 0), align: "center" },
+              { text: formatMoney(unit, moneySettings), align: "right", money: true },
+              { text: itemDiscount ? formatMoney(itemDiscount, moneySettings) : "—", align: "right", money: true },
+              { text: itemTax ? formatMoney(itemTax, moneySettings) : "—", align: "right", money: true },
+              { text: formatMoney(lineSubtotal, moneySettings), align: "right", money: true },
+              { text: formatMoney(lineTotal, moneySettings), align: "right", money: true },
+            ];
+
+            cells.forEach((cell, cellIndex) => {
+              const col = scaled[cellIndex + 1];
+              doc.font(cell.money ? F.medium : F.regular).fontSize(7.5).fillColor(C.text);
+              const text = fitText(doc, cell.text || "—", cell.money ? F.medium : F.regular, 7.5, col.width - 6);
+              doc.text(text, x, textY, {
+                width: col.width - 6,
+                align: cell.align,
+                lineBreak: false,
+              });
+              x += col.width;
+            });
+            y += rowH + 3;
           }
         }
 
-        ensureSpace(108);
-        renderSectionTitle("Summary");
-        const summaryW = Math.min(230, PW);
+        // ── Summary ─────────────────────────────────────────────────────────
+        ensureSpace(150);
+        const summaryW = 220;
         const summaryX = RM - summaryW;
-        const summaryRows = [
-          ["Subtotal", formatCurrency(subtotal, currency, currencySettings)],
-          ...(discount > 0 ? [["Discount", `-${formatCurrency(discount, currency, currencySettings)}`]] : []),
-          ["Shipping", formatCurrency(shipping, currency, currencySettings)],
-          ["Tax", formatCurrency(tax, currency, currencySettings)],
-        ] as Array<[string, string]>;
-        const summaryHeight = 18 + summaryRows.length * 14 + 26;
-        drawRoundedCard(doc, summaryX, y, summaryW, summaryHeight, 8, C.bgTable, C.border);
+        const summaryRows: Array<[string, string, boolean?]> = [
+          ["Subtotal", formatMoney(subtotal, moneySettings)],
+        ];
+        if (discount > 0) summaryRows.push(["Discount", `−${formatMoney(discount, moneySettings)}`]);
+        if (order.couponCode?.trim()) summaryRows.push(["Coupon", order.couponCode.trim()]);
+        summaryRows.push(["Shipping", formatMoney(shippingCharge, moneySettings)]);
+        if (tax > 0) summaryRows.push(["Tax", formatMoney(tax, moneySettings)]);
+        summaryRows.push(["Grand total", formatMoney(total, moneySettings), true]);
+        if (paymentReceived > 0) summaryRows.push(["Payment received", formatMoney(paymentReceived, moneySettings)]);
+        if (remainingDue > 0) summaryRows.push(["Remaining due", formatMoney(remainingDue, moneySettings)]);
 
-        let sy = y + 10;
-        for (const [label, value] of summaryRows) {
-          doc.font(F.regular).fontSize(8).fillColor(C.muted);
-          doc.text(label, summaryX + 12, sy, { width: summaryW - 120 });
-          doc.font(F.medium).fontSize(8).fillColor(C.text);
-          doc.text(value, summaryX + 12, sy, { width: summaryW - 24, align: "right" });
-          sy += 14;
+        const summaryH = 18 + summaryRows.length * 18 + 8;
+        drawCard(doc, summaryX, y, summaryW, summaryH, 8);
+        let sy = y + 12;
+        summaryRows.forEach(([label, value, strong]) => {
+          doc.font(strong ? F.bold : F.regular).fontSize(strong ? 10 : 8).fillColor(strong ? primary : C.muted);
+          doc.text(label, summaryX + 14, sy, { width: 90, lineBreak: false });
+          doc.font(strong ? F.bold : F.medium).fontSize(strong ? 10 : 8).fillColor(strong ? primary : C.text);
+          doc.text(value, summaryX + 14, sy, { width: summaryW - 28, align: "right", lineBreak: false });
+          sy += strong ? 22 : 17;
+        });
+
+        if (order.notes?.trim()) {
+          const notesW = PW - summaryW - 16;
+          drawCard(doc, LM, y, notesW, summaryH, 8);
+          doc.font(F.semiBold).fontSize(8).fillColor(primary);
+          doc.text("NOTES", LM + 14, y + 12, { lineBreak: false });
+          doc.font(F.regular).fontSize(8).fillColor(C.text);
+          doc.text(order.notes.trim(), LM + 14, y + 28, {
+            width: notesW - 28,
+            height: summaryH - 40,
+            ellipsis: true,
+          });
         }
-        doc.save();
-        doc.moveTo(summaryX + 12, sy + 2).lineTo(summaryX + summaryW - 12, sy + 2).lineWidth(0.5).strokeColor(C.border).stroke();
-        doc.restore();
-        doc.font(F.bold).fontSize(11).fillColor(primary);
-        doc.text("GRAND TOTAL", summaryX + 12, sy + 8, { width: summaryW - 120 });
-        doc.text(formatCurrency(total, currency, currencySettings), summaryX + 12, sy + 8, { width: summaryW - 24, align: "right" });
-        y += summaryHeight + 12;
+        y += summaryH + 16;
 
-        ensureSpace(64);
-        renderSectionTitle("Notes");
-        drawRoundedCard(doc, LM, y, PW, 54, 8, C.bgTable, C.border);
-        doc.font(F.regular).fontSize(8).fillColor(order.notes?.trim() ? C.text : C.muted);
-        doc.text(order.notes?.trim() || "No notes provided.", LM + 12, y + 12, { width: PW - 24, height: 28 });
-        y += 66;
-
+        // ── QR (optional) ───────────────────────────────────────────────────
         if (payload.verificationUrl?.trim()) {
-          ensureSpace(96);
-          renderSectionTitle("Verification");
-          drawRoundedCard(doc, LM, y, PW, 84, 8, C.bgTable, C.border);
+          ensureSpace(78);
+          drawCard(doc, LM, y, PW, 70, 8);
           const qrBuffer = await QRCode.toBuffer(payload.verificationUrl, {
-            width: 90,
+            width: 96,
             margin: 1,
-            color: { dark: primary, light: C.white },
+            color: { dark: primary, light: "#ffffff" },
             errorCorrectionLevel: "M",
           });
-          doc.image(qrBuffer, LM + 12, y + 10, { width: 50, height: 50 });
-          drawBadge(doc, F.bold, "VERIFY INVOICE", LM + 72, y + 12, primary, primaryLight);
-          doc.font(F.regular).fontSize(7.5).fillColor(C.text);
-          doc.text(payload.verificationUrl, LM + 72, y + 32, { width: PW - 98, link: payload.verificationUrl });
-          doc.font(F.regular).fontSize(6.5).fillColor(C.muted);
-          doc.text("Scan the QR code to verify this invoice.", LM + 72, y + 48, { width: PW - 98 });
-          y += 96;
+          doc.image(qrBuffer, LM + 14, y + 10, { width: 50, height: 50 });
+          doc.font(F.semiBold).fontSize(8).fillColor(primary);
+          doc.text("Verify invoice", LM + 78, y + 18, { lineBreak: false });
+          doc.font(F.regular).fontSize(7.5).fillColor(C.muted);
+          doc.text(fitText(doc, payload.verificationUrl, F.regular, 7.5, PW - 110), LM + 78, y + 34, {
+            width: PW - 110,
+            lineBreak: false,
+            link: payload.verificationUrl,
+          });
+          y += 86;
         }
 
-        const footerY = doc.page.height - 48;
-        doc.save();
-        doc.moveTo(LM, footerY - 8).lineTo(RM, footerY - 8).lineWidth(0.5).strokeColor(C.border).stroke();
-        doc.restore();
-        doc.font(F.regular).fontSize(6.5).fillColor(C.muted);
-        doc.text("Powered by BornoLand", LM, footerY, { width: PW, align: "center" });
+        // ── Footer on every page ────────────────────────────────────────────
+        const pageCount = doc.bufferedPageRange().count;
+        for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+          doc.switchToPage(pageIndex);
+          const footerY = doc.page.height - 48;
+          doc.save();
+          doc.moveTo(LM, footerY - 10).lineTo(RM, footerY - 10).lineWidth(0.6).strokeColor(C.border).stroke();
+          doc.restore();
+          doc.font(F.medium).fontSize(8).fillColor(C.text);
+          doc.text(`Thank you for shopping with ${storeName}.`, LM, footerY - 2, {
+            width: PW,
+            align: "center",
+            lineBreak: false,
+          });
+          const helpBits = ["Need help?", storeEmail, storePhone, storeWebsite].filter(Boolean);
+          doc.font(F.regular).fontSize(7).fillColor(C.muted);
+          doc.text(helpBits.join("  ·  "), LM, footerY + 12, {
+            width: PW,
+            align: "center",
+            lineBreak: false,
+          });
+          doc.font(F.regular).fontSize(6.5).fillColor(C.muted);
+          doc.text("Powered by BornoLand", LM, footerY + 26, {
+            width: PW,
+            align: "center",
+            lineBreak: false,
+          });
+        }
 
         doc.end();
       } catch (error) {

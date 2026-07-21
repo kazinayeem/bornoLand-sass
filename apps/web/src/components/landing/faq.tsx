@@ -4,59 +4,57 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
 import { SectionHeading } from "./section-heading";
-
-const faqs = [
-  { q: "How do I create a store?", a: "Sign up for free, choose your store name and subdomain, then use our drag-and-drop builder to customize your storefront. Add products, connect payments, and publish — all in under 30 minutes." },
-  { q: "Can I use my own domain?", a: "Yes! You can connect any custom domain to your BornoLand store. We provide free SSL certificates for all custom domains and subdomains." },
-  { q: "Do you support bKash?", a: "Yes, bKash is fully integrated. Your customers can pay via bKash, and we also support Nagad, Rocket, Stripe, SSLCommerz, PayPal, and more." },
-  { q: "Do you support Cash on Delivery?", a: "Absolutely. COD is built into the checkout flow. You can enable or disable it per store and set delivery charge rules." },
-  { q: "Can I sell digital products?", a: "Yes, BornoLand supports both physical and digital products. You can upload files, set download limits, and manage digital inventory." },
-  { q: "Can I manage multiple stores?", a: "Yes, our Business and Agency plans support multiple stores under one account with centralized management." },
-  { q: "Is SSL included?", a: "Yes, every store gets a free SSL certificate — both on your custom domain and your BornoLand subdomain. All data is encrypted." },
-  { q: "What payment methods are supported?", a: "We support bKash, Nagad, Rocket, Stripe, SSLCommerz, and PayPal. More payment gateways are being added regularly." },
-];
+import { useLandingLocale } from "./landing-locale";
 
 export function FAQ() {
-  const [open, setOpen] = useState<number | null>(null);
+  const { t } = useLandingLocale();
+  const section = t.faq;
+  const faqs = section.items.slice(0, 6);
+  const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+    <section id="faq" className="relative bg-apple-canvas-parchment px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto max-w-3xl">
         <SectionHeading
-          eyebrow="FAQ"
-          title="Frequently Asked Questions"
-          description="Everything you need to know about BornoLand."
+          eyebrow={section.eyebrow}
+          title={section.title}
+          description={section.description}
         />
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-8 space-y-2"
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-10 space-y-2"
         >
           {faqs.map((faq, i) => (
             <div
-              key={i}
+              key={faq.q}
               className={`rounded-lg border transition-colors duration-200 ${
-                open === i ? "border-blue-200 bg-blue-50/30" : "border-apple-hairline bg-apple-canvas"
+                open === i ? "border-blue-200 bg-apple-canvas" : "border-apple-hairline bg-apple-canvas"
               }`}
             >
               <button
+                type="button"
                 onClick={() => setOpen(open === i ? null : i)}
                 aria-expanded={open === i}
                 aria-controls={`faq-answer-${i}`}
                 className="flex w-full items-center justify-between px-5 py-4 text-left"
               >
-                <span className="text-sm font-semibold text-apple-ink pr-4">{faq.q}</span>
-                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
-                  open === i ? "bg-blue-100 text-blue-600" : "bg-apple-canvas-parchment text-apple-ink-muted-48"
-                }`}>
+                <span className="pr-4 text-sm font-semibold text-apple-ink">{faq.q}</span>
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
+                    open === i
+                      ? "bg-blue-100 text-apple-primary"
+                      : "bg-apple-canvas-parchment text-apple-ink-muted-48"
+                  }`}
+                >
                   {open === i ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                 </span>
               </button>
               <AnimatePresence>
-                {open === i && (
+                {open === i ? (
                   <motion.div
                     id={`faq-answer-${i}`}
                     initial={{ height: 0, opacity: 0 }}
@@ -67,7 +65,7 @@ export function FAQ() {
                   >
                     <p className="px-5 pb-4 text-sm leading-relaxed text-apple-ink-muted-80">{faq.a}</p>
                   </motion.div>
-                )}
+                ) : null}
               </AnimatePresence>
             </div>
           ))}

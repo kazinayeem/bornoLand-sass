@@ -36,11 +36,7 @@ function OrdersList() {
   const orders = data?.data?.orders ?? [];
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[calc(100vh-12rem)] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900" />
-      </div>
-    );
+    return <CustomerAuthLoader message="Loading orders…" />;
   }
 
   if (orders.length === 0) {

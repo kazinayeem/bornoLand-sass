@@ -9,6 +9,7 @@ import { ensureDefaultStoreSettings } from "./store-settings.service.js";
 import { ensureDefaultStoreContact } from "./store-contact.service.js";
 import { HomepageSliderModel } from "../../models/homepage-slider.model.js";
 import { createStoreSchema, updateStoreSchema, updateStoreBrandingSchema, type CreateStoreInput, type UpdateStoreInput, type UpdateStoreBrandingInput } from "./store.validator.js";
+import { canonicalizeBrandingMediaUrls } from "./store-branding-logo.js";
 import { ProductModel } from "../../models/product.model.js";
 import { OrderModel } from "../../models/order.model.js";
 import { applyTrialExpiryToStore, applySubscriptionExpiryToStore, buildTrialFields } from "./trial.service.js";
@@ -404,9 +405,10 @@ export async function updateStoreBranding(storeId: string, userId: string, paylo
   if (!parsed.success) return { ok: false as const, message: "Invalid branding data" };
 
   await connectDatabase();
+  const branding = await canonicalizeBrandingMediaUrls(parsed.data);
   const store = await StoreModel.findOneAndUpdate(
     { _id: id, userId },
-    { $set: parsed.data },
+    { $set: branding },
     { new: true }
   )
     .select("name shortName tagline logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor plan planId")

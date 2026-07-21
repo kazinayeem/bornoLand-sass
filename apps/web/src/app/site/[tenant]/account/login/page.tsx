@@ -17,6 +17,7 @@ import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
 import { validateInternalRedirect } from "@/lib/auth-redirect";
 import { resolveStoreHref } from "@/lib/store-href";
 import { cn } from "@/lib/utils";
+import { useIsClient } from "@/hooks/use-is-client";
 
 const loginFormSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -31,6 +32,7 @@ function LoginForm() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const { restored, isAuthenticated } = useSelector((s: RootState) => s.customer);
+  const mounted = useIsClient();
   const redirectTo = validateInternalRedirect(searchParams.get("redirect")) ?? "/";
   const [login, { isLoading }] = useCustomerLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
@@ -44,10 +46,10 @@ function LoginForm() {
   });
 
   useEffect(() => {
-    if (!restored || !isAuthenticated || redirectedRef.current) return;
+    if (!mounted || !restored || !isAuthenticated || redirectedRef.current) return;
     redirectedRef.current = true;
     router.replace(resolveStoreHref(redirectTo, pathname));
-  }, [restored, isAuthenticated, redirectTo, router, pathname]);
+  }, [mounted, restored, isAuthenticated, redirectTo, router, pathname]);
 
   const onSubmit = async (data: LoginFormData) => {
     setApiError("");
@@ -71,7 +73,7 @@ function LoginForm() {
     }
   };
 
-  if (!restored || isAuthenticated) {
+  if (!mounted || !restored || isAuthenticated) {
     return <CustomerAuthLoader message={isAuthenticated ? "Taking you back…" : "Checking your account…"} />;
   }
 

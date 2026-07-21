@@ -15,6 +15,7 @@ import { UserPlus, Mail, Lock, User, Eye, EyeOff, ArrowRight } from "lucide-reac
 import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
 import { validateInternalRedirect } from "@/lib/auth-redirect";
 import { resolveStoreHref } from "@/lib/store-href";
+import { useIsClient } from "@/hooks/use-is-client";
 
 const registerFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -34,6 +35,7 @@ function RegisterForm() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const { restored, isAuthenticated } = useSelector((s: RootState) => s.customer);
+  const mounted = useIsClient();
   const redirectTo = validateInternalRedirect(searchParams.get("redirect")) ?? "/";
   const [registerCustomer, { isLoading }] = useCustomerRegisterMutation();
   const [showPassword, setShowPassword] = useState(false);
@@ -46,10 +48,10 @@ function RegisterForm() {
   });
 
   useEffect(() => {
-    if (!restored || !isAuthenticated || redirectedRef.current) return;
+    if (!mounted || !restored || !isAuthenticated || redirectedRef.current) return;
     redirectedRef.current = true;
     router.replace(resolveStoreHref(redirectTo, pathname));
-  }, [restored, isAuthenticated, redirectTo, router, pathname]);
+  }, [mounted, restored, isAuthenticated, redirectTo, router, pathname]);
 
   const onSubmit = async (data: RegisterFormData) => {
     setApiError("");
@@ -73,7 +75,7 @@ function RegisterForm() {
     }
   };
 
-  if (!restored || isAuthenticated) {
+  if (!mounted || !restored || isAuthenticated) {
     return <CustomerAuthLoader message={isAuthenticated ? "Taking you back…" : "Checking your account…"} />;
   }
 

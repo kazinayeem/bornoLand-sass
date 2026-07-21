@@ -74,6 +74,28 @@ export default function CheckoutPage() {
     }
   }, [paymentMethods, selectedPayment]);
 
+  // Auto-match delivery zone from city / state / zip when possible
+  useEffect(() => {
+    if (!deliveryZones.length) return;
+    const city = form.city.trim().toLowerCase();
+    const state = form.state.trim().toLowerCase();
+    const zip = form.zip.trim().toLowerCase();
+    if (!city && !state && !zip) return;
+
+    const matched = deliveryZones.find((zone) => {
+      const districts = (zone.districts ?? []).map((d) => d.toLowerCase());
+      const divisions = (zone.divisions ?? []).map((d) => d.toLowerCase());
+      const codes = (zone.postalCodes ?? []).map((d) => d.toLowerCase());
+      if (city && districts.some((d) => d === city || city.includes(d) || d.includes(city))) return true;
+      if (state && divisions.some((d) => d === state || state.includes(d) || d.includes(state))) return true;
+      if (zip && codes.some((c) => c === zip)) return true;
+      return false;
+    });
+    if (matched && matched._id !== selectedZoneId) {
+      setSelectedZoneId(matched._id);
+    }
+  }, [form.city, form.state, form.zip, deliveryZones, selectedZoneId]);
+
   if (showLoader) {
     return <CustomerAuthLoader message="Preparing checkout…" />;
   }
@@ -83,10 +105,18 @@ export default function CheckoutPage() {
 
   const hasItems = items.length > 0;
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const deliveryCharge = selectedZone?.charge ?? 0;
+  const discount = 0;
+  const shippingEnabled = settings.shippingEnabled !== false;
+  const freeShipping =
+    shippingEnabled
+    && Boolean(settings.freeShippingEnabled)
+    && (settings.freeShippingMin ?? 0) > 0
+    && subtotal >= (settings.freeShippingMin ?? 0);
+  const baseDelivery = shippingEnabled ? (selectedZone?.charge ?? 0) : 0;
+  const deliveryCharge = freeShipping ? 0 : baseDelivery;
   const taxRate = settings.taxEnabled ? (settings.taxRate ?? 0) : 0;
-  const taxAmount = taxRate > 0 && !settings.taxIncluded ? subtotal * (taxRate / 100) : 0;
-  const total = subtotal + taxAmount + deliveryCharge;
+  const taxAmount = taxRate > 0 && !settings.taxIncluded ? (subtotal - discount) * (taxRate / 100) : 0;
+  const total = Math.max(0, subtotal - discount + taxAmount + deliveryCharge);
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -384,9 +414,21 @@ export default function CheckoutPage() {
                   <span>Subtotal</span>
                   <span>{formatCurrency(subtotal, settings)}</span>
                 </div>
+                {discount > 0 ? (
+                  <div className="flex justify-between text-apple-ink-muted-48">
+                    <span>Discount</span>
+                    <span>−{formatCurrency(discount, settings)}</span>
+                  </div>
+                ) : null}
                 <div className="flex justify-between text-apple-ink-muted-48">
-                  <span>Delivery ({selectedZone?.name ?? "—"})</span>
-                  <span>{deliveryCharge === 0 ? "Free" : formatCurrency(deliveryCharge, settings)}</span>
+                  <span>Shipping {selectedZone ? `(${selectedZone.name})` : ""}</span>
+                  <span>
+                    {deliveryCharge === 0
+                      ? freeShipping
+                        ? "Free"
+                        : "Free"
+                      : formatCurrency(deliveryCharge, settings)}
+                  </span>
                 </div>
                 {taxAmount > 0 && (
                   <div className="flex justify-between text-apple-ink-muted-48">
@@ -395,7 +437,7 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="flex justify-between border-t border-zinc-100 pt-2 font-semibold text-apple-ink">
-                  <span>Total</span>
+                  <span>Grand total</span>
                   <span>{formatCurrency(total, settings)}</span>
                 </div>
               </div>

@@ -28,10 +28,18 @@ export async function createOrderController(request: SubdomainRequest, response:
   const storeId = request.store?._id?.toString();
   if (!storeId) return sendFailure(response, "Store not found", 404);
 
-  const customerId = getCustomerId(request);
-  if (!customerId) return sendFailure(response, "Not authenticated", 401);
-
   const sessionId = (request.headers["x-session-id"] as string) ?? crypto.randomUUID();
+
+  let customerId = getCustomerId(request);
+
+  if (!customerId) {
+    const guestEmail = typeof request.body?.email === "string" ? request.body.email.trim().toLowerCase() : "";
+    if (!guestEmail) return sendFailure(response, "Not authenticated", 401);
+
+    const { createGuestCustomer } = await import("../customers/customer.service.js");
+    const guest = await createGuestCustomer(storeId, guestEmail, request.body?.shippingAddress?.fullName);
+    customerId = String(guest.data.customer._id);
+  }
 
   const result = await createOrder(storeId, customerId, sessionId, request.body);
   return result.ok

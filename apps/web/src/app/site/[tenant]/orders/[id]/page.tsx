@@ -9,15 +9,10 @@ import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
 import { useRequireCustomerAuth } from "@/hooks/use-require-customer-auth";
 import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
+import { OrderTimeline } from "@/components/orders/order-timeline";
+import { ORDER_STATUS_LABELS } from "@/lib/orders/timeline";
 
-const statusLabels: Record<string, string> = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  processing: "Processing",
-  shipped: "Shipped",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-};
+const statusLabels = ORDER_STATUS_LABELS;
 
 const statusStyles: Record<string, string> = {
   pending: "bg-amber-50 text-amber-600",
@@ -91,6 +86,23 @@ function OrderDetail({ orderId }: { orderId: string }) {
       </div>
 
       <div className="space-y-6">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className="rounded-xl border border-zinc-100 p-5">
+          <h2 className="mb-4 font-semibold text-apple-ink">Order timeline</h2>
+          <OrderTimeline
+            status={order.status}
+            paymentStatus={order.paymentStatus}
+            timeline={order.timeline}
+          />
+          {(order.courier || order.trackingNumber || order.estimatedDelivery) ? (
+            <div className="mt-4 grid gap-2 rounded-xl bg-apple-canvas-parchment p-3 text-sm text-apple-ink-muted-80 sm:grid-cols-3">
+              <p>Courier: <span className="font-medium text-apple-ink">{order.courier || "—"}</span></p>
+              <p>Tracking: <span className="font-medium text-apple-ink">{order.trackingNumber || "—"}</span></p>
+              <p>ETA: <span className="font-medium text-apple-ink">{order.estimatedDelivery || "—"}</span></p>
+            </div>
+          ) : null}
+        </motion.div>
+
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-xl border border-zinc-100 p-5">
           <h2 className="mb-4 flex items-center gap-2 font-semibold text-apple-ink">

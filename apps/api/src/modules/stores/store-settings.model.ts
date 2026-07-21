@@ -19,6 +19,10 @@ const storeSettingsSchema = new Schema(
     dateFormat: { type: String, default: "MM/DD/YYYY" },
     timezone: { type: String, default: "UTC" },
     language: { type: String, default: "en" },
+    // Shipping
+    shippingEnabled: { type: Boolean, default: true },
+    freeShippingEnabled: { type: Boolean, default: false },
+    freeShippingMin: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

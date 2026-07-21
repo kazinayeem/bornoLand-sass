@@ -10,6 +10,10 @@ const deliveryZoneSchema = new Schema(
     estimatedDays: { type: String, default: "3-5 days" },
     enabled: { type: Boolean, default: true },
     sortOrder: { type: Number, default: 0 },
+    /** Optional location matching for checkout auto-select */
+    divisions: { type: [String], default: [] },
+    districts: { type: [String], default: [] },
+    postalCodes: { type: [String], default: [] },
   },
   { timestamps: true }
 );

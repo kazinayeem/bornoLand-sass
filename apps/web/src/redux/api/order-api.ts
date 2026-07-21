@@ -30,11 +30,24 @@ type OrderData = {
   shipping: number;
   deliveryCharge: number;
   deliveryZone: string;
+  discount?: number;
+  tax?: number;
   total: number;
   status: string;
+  paymentStatus?: string;
   shippingAddress: ShippingAddress;
   paymentMethod: string;
   notes?: string;
+  courier?: string;
+  trackingNumber?: string;
+  estimatedDelivery?: string;
+  timeline?: Array<{
+    status: string;
+    note?: string;
+    createdBy?: string;
+    updatedBy?: string;
+    createdAt?: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 };

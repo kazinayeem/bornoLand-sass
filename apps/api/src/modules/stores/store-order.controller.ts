@@ -112,7 +112,7 @@ export async function updateOrderStatusController(request: AuthRequest, response
     const { status } = request.body;
     const userId = request.user?.userId;
 
-    const validStatuses = ["pending", "confirmed", "processing", "packed", "shipped", "delivered", "cancelled", "refunded", "partial_refund"];
+    const validStatuses = ["pending", "confirmed", "processing", "packed", "shipped", "out_for_delivery", "delivered", "cancelled", "refunded", "partial_refund"];
     if (!validStatuses.includes(status)) {
       return response.status(400).json({ message: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
     }
@@ -123,16 +123,25 @@ export async function updateOrderStatusController(request: AuthRequest, response
     }
 
     const before = await OrderModel.findOne({ _id: id, storeId }).lean() as { status?: string; paymentStatus?: string; orderNumber?: string } | null;
+    const actor = request.user?.userId || "admin";
+    const note = (request.body as { note?: string; courier?: string; trackingNumber?: string; estimatedDelivery?: string }).note
+      ?? `Status changed to ${status}`;
+    const extras = request.body as { courier?: string; trackingNumber?: string; estimatedDelivery?: string };
+    const $set: Record<string, unknown> = { status };
+    if (typeof extras.courier === "string") $set.courier = extras.courier;
+    if (typeof extras.trackingNumber === "string") $set.trackingNumber = extras.trackingNumber;
+    if (typeof extras.estimatedDelivery === "string") $set.estimatedDelivery = extras.estimatedDelivery;
 
     const order = await OrderModel.findOneAndUpdate(
       { _id: id, storeId },
       {
-        $set: { status },
+        $set,
         $push: {
           timeline: {
             status,
-            note: (request.body as { note?: string }).note ?? `Status changed to ${status}`,
-            createdBy: request.user?.userId ?? "admin",
+            note,
+            createdBy: actor,
+            updatedBy: actor,
           },
         },
       },
@@ -184,10 +193,23 @@ export async function updatePaymentStatusController(request: AuthRequest, respon
     }
 
     const before = await OrderModel.findOne({ _id: id, storeId }).lean() as { status?: string; paymentStatus?: string; orderNumber?: string } | null;
+    const actor = request.user?.userId || "admin";
+    const timelineStatus = paymentStatus === "paid" ? "paid" : paymentStatus === "pending" ? "payment_pending" : paymentStatus;
 
     const order = await OrderModel.findOneAndUpdate(
       { _id: id, storeId },
-      { paymentStatus },
+      {
+        $set: { paymentStatus },
+        $push: {
+          timeline: {
+            status: timelineStatus,
+            note: (request.body as { note?: string }).note
+              ?? (paymentStatus === "paid" ? "Payment received" : `Payment status: ${paymentStatus}`),
+            createdBy: actor,
+            updatedBy: actor,
+          },
+        },
+      },
       { new: true }
     ).populate("customerId", "name email phone").lean();
 

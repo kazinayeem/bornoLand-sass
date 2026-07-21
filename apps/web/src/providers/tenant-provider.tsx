@@ -42,6 +42,9 @@ export type StoreSettingsData = {
   dateFormat?: string;
   timezone?: string;
   language?: string;
+  shippingEnabled?: boolean;
+  freeShippingEnabled?: boolean;
+  freeShippingMin?: number;
 };
 
 export type HomepageSliderData = {

@@ -24,10 +24,20 @@ type DeliveryZone = {
   estimatedDays: string;
   enabled: boolean;
   sortOrder: number;
+  divisions?: string[];
+  districts?: string[];
+  postalCodes?: string[];
 };
 
 type FormData = {
-  name: string; charge: string; estimatedDays: string; enabled: boolean; sortOrder: number;
+  name: string;
+  charge: string;
+  estimatedDays: string;
+  enabled: boolean;
+  sortOrder: number;
+  divisions: string;
+  districts: string;
+  postalCodes: string;
 };
 
 export function DeliveryTab({ storeId }: DeliveryTabProps) {
@@ -42,27 +52,54 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
 
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<FormData>({ name: "", charge: "", estimatedDays: "", enabled: true, sortOrder: 0 });
+  const [form, setForm] = useState<FormData>({
+    name: "", charge: "", estimatedDays: "", enabled: true, sortOrder: 0,
+    divisions: "", districts: "", postalCodes: "",
+  });
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const resetForm = () => {
-    setForm({ name: "", charge: "", estimatedDays: "", enabled: true, sortOrder: 0 });
+    setForm({
+      name: "", charge: "", estimatedDays: "", enabled: true, sortOrder: 0,
+      divisions: "", districts: "", postalCodes: "",
+    });
     setEditId(null);
     setShowForm(false);
   };
 
   const openEdit = (z: DeliveryZone) => {
     setEditId(z._id);
-    setForm({ name: z.name, charge: String(z.charge), estimatedDays: z.estimatedDays, enabled: z.enabled, sortOrder: z.sortOrder });
+    setForm({
+      name: z.name,
+      charge: String(z.charge),
+      estimatedDays: z.estimatedDays,
+      enabled: z.enabled,
+      sortOrder: z.sortOrder,
+      divisions: (z.divisions ?? []).join(", "),
+      districts: (z.districts ?? []).join(", "),
+      postalCodes: (z.postalCodes ?? []).join(", "),
+    });
     setShowForm(true);
   };
+
+  const parseList = (value: string) =>
+    value.split(",").map((s) => s.trim()).filter(Boolean);
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.charge) { toast.error("Name and charge are required"); return; }
     setSaving(true);
     try {
-      const payload = { name: form.name.trim(), charge: Number(form.charge), estimatedDays: form.estimatedDays, enabled: form.enabled, sortOrder: form.sortOrder };
+      const payload = {
+        name: form.name.trim(),
+        charge: Number(form.charge),
+        estimatedDays: form.estimatedDays,
+        enabled: form.enabled,
+        sortOrder: form.sortOrder,
+        divisions: parseList(form.divisions),
+        districts: parseList(form.districts),
+        postalCodes: parseList(form.postalCodes),
+      };
       if (editId) {
         await updateZone({ storeId, id: editId, data: payload }).unwrap();
         toast.success("Zone updated");
@@ -180,6 +217,21 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
             <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Estimated Delivery Time</label>
             <input type="text" value={form.estimatedDays} onChange={(e) => setForm({ ...form, estimatedDays: e.target.value })}
               className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" placeholder="e.g. 1-3 business days" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Divisions (comma-separated)</label>
+            <input type="text" value={form.divisions} onChange={(e) => setForm({ ...form, divisions: e.target.value })}
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" placeholder="e.g. Dhaka, Chittagong" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Districts (comma-separated)</label>
+            <input type="text" value={form.districts} onChange={(e) => setForm({ ...form, districts: e.target.value })}
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" placeholder="e.g. Dhaka, Gazipur" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Postal codes (comma-separated)</label>
+            <input type="text" value={form.postalCodes} onChange={(e) => setForm({ ...form, postalCodes: e.target.value })}
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" placeholder="e.g. 1205, 1212" />
           </div>
           <div className="flex items-center gap-4">
             <label className="inline-flex items-center gap-2 cursor-pointer">

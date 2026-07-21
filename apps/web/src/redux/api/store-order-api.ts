@@ -36,6 +36,16 @@ export type StoreOrder = {
   };
   notes: string;
   currencyCode: string;
+  courier?: string;
+  trackingNumber?: string;
+  estimatedDelivery?: string;
+  timeline?: Array<{
+    status: string;
+    note?: string;
+    createdBy?: string;
+    updatedBy?: string;
+    createdAt?: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 };

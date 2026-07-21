@@ -3,11 +3,17 @@ import { baseApi } from "@/redux/api/base-api";
 export type PaymentMethodData = {
   _id: string;
   storeId: string;
-  type: "cod" | "bkash" | "nagad" | "rocket" | "bank";
+  type: "cod" | "bkash" | "nagad" | "rocket" | "bank" | "stripe" | "sslcommerz" | "other";
   label: string;
   accountNumber: string;
   accountType: "personal" | "agent" | "merchant" | "";
   instructions: string;
+  logoUrl?: string;
+  bankName?: string;
+  branch?: string;
+  accountName?: string;
+  routingNumber?: string;
+  swift?: string;
   enabled: boolean;
   sortOrder: number;
 };

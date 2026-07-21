@@ -94,15 +94,17 @@ export async function createOrder(
 
   let deliveryCharge = 0;
   let deliveryZoneName = "";
+  let deliveryZoneEta = "";
   if (payload.deliveryZoneId) {
     const zone = (await DeliveryZoneModel.findOne({
       _id: payload.deliveryZoneId,
       storeId,
       enabled: true,
-    }).lean()) as { charge: number; name: string } | null;
+    }).lean()) as { charge: number; name: string; estimatedDays?: string } | null;
     if (zone) {
       deliveryCharge = zone.charge;
       deliveryZoneName = zone.name;
+      deliveryZoneEta = zone.estimatedDays ?? "";
     }
   }
 
@@ -113,7 +115,21 @@ export async function createOrder(
     taxIncluded?: boolean;
     orderPrefix?: string;
     invoicePrefix?: string;
+    freeShippingEnabled?: boolean;
+    freeShippingMin?: number;
+    shippingEnabled?: boolean;
   } | null;
+
+  if (storeSettings?.shippingEnabled === false) {
+    deliveryCharge = 0;
+  } else if (
+    storeSettings?.freeShippingEnabled
+    && (storeSettings.freeShippingMin ?? 0) > 0
+    && subtotal - discount >= (storeSettings.freeShippingMin ?? 0)
+  ) {
+    deliveryCharge = 0;
+  }
+
   const currencyCode = storeSettings?.currencyCode ?? "USD";
   const taxableAmount = Math.max(0, subtotal - discount);
   const { tax, taxRate } = calculateTax(taxableAmount, storeSettings ?? {});
@@ -158,7 +174,18 @@ export async function createOrder(
     paymentMethod: payload.paymentMethod ?? "cod",
     notes: payload.notes ?? "",
     currencyCode,
-    timeline: [{ status: "pending", note: "Order placed", createdBy: "system" }],
+    timeline: [
+      { status: "pending", note: "Order placed", createdBy: "system", updatedBy: "system" },
+      {
+        status: (payload.paymentMethod ?? "cod") === "cod" ? "payment_pending" : "payment_pending",
+        note: (payload.paymentMethod ?? "cod") === "cod" ? "Cash on delivery — pay when received" : "Awaiting payment confirmation",
+        createdBy: "system",
+        updatedBy: "system",
+      },
+    ],
+    estimatedDelivery: deliveryZoneEta,
+    courier: "",
+    trackingNumber: "",
     orderNotes: payload.notes
       ? [{ body: payload.notes, type: "customer", createdBy: "customer" }]
       : [],
@@ -173,6 +200,13 @@ export async function createOrder(
   }
 
   await CartModel.deleteOne({ _id: cart._id });
+
+  try {
+    const { syncCustomerOrderStats } = await import("../customers/customer.service.js");
+    await syncCustomerOrderStats(storeId, customerId);
+  } catch (err) {
+    console.error("[orders] Failed to sync customer stats", err);
+  }
 
   if (store?.userId) {
     try {
@@ -224,7 +258,7 @@ export async function trackOrderByNumber(
     customerId: customer._id,
     orderNumber: orderNumber.trim().toUpperCase(),
   })
-    .select("orderNumber status paymentStatus total currencyCode items shippingAddress timeline createdAt updatedAt")
+    .select("orderNumber status paymentStatus total currencyCode items shippingAddress deliveryCharge deliveryZone discount tax subtotal paymentMethod notes courier trackingNumber estimatedDelivery timeline createdAt updatedAt")
     .lean();
 
   if (!order) {
@@ -234,7 +268,7 @@ export async function trackOrderByNumber(
       customerId: customer._id,
       orderNumber: new RegExp(`^${orderNumber.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
     })
-      .select("orderNumber status paymentStatus total currencyCode items shippingAddress timeline createdAt updatedAt")
+      .select("orderNumber status paymentStatus total currencyCode items shippingAddress deliveryCharge deliveryZone discount tax subtotal paymentMethod notes courier trackingNumber estimatedDelivery timeline createdAt updatedAt")
       .lean();
     if (!orderLoose) return { ok: false as const, message: "Order not found" };
     return { ok: true as const, data: { order: orderLoose } };

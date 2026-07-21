@@ -60,7 +60,21 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
 
   const openEdit = (m: PaymentMethodData) => {
     setEditMethod(m);
-    setForm({ type: m.type, label: m.label, accountNumber: m.accountNumber, accountType: m.accountType, instructions: m.instructions, enabled: m.enabled, sortOrder: m.sortOrder });
+    setForm({
+      type: m.type,
+      label: m.label,
+      accountNumber: m.accountNumber,
+      accountType: m.accountType,
+      instructions: m.instructions,
+      enabled: m.enabled,
+      sortOrder: m.sortOrder,
+      bankName: m.bankName,
+      branch: m.branch,
+      accountName: m.accountName,
+      routingNumber: m.routingNumber,
+      swift: m.swift,
+      logoUrl: m.logoUrl,
+    });
     setShowForm(true);
   };
 
@@ -186,7 +200,7 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
               <option value="bank">Bank Transfer</option>
               <option value="stripe">Stripe</option>
               <option value="sslcommerz">SSLCommerz</option>
-              <option value="manual">Manual Payment</option>
+              <option value="other">Other</option>
             </select>
           </div>
           <div>
@@ -208,6 +222,35 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
               <option value="merchant">Merchant</option>
             </select>
           </div>
+          {form.type === "bank" ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Bank name</label>
+                <input type="text" value={form.bankName ?? ""} onChange={(e) => setForm({ ...form, bankName: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Branch</label>
+                <input type="text" value={form.branch ?? ""} onChange={(e) => setForm({ ...form, branch: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Account name</label>
+                <input type="text" value={form.accountName ?? ""} onChange={(e) => setForm({ ...form, accountName: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Routing number</label>
+                <input type="text" value={form.routingNumber ?? ""} onChange={(e) => setForm({ ...form, routingNumber: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">SWIFT</label>
+                <input type="text" value={form.swift ?? ""} onChange={(e) => setForm({ ...form, swift: e.target.value })}
+                  className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
+              </div>
+            </div>
+          ) : null}
           <div>
             <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Instructions (shown at checkout)</label>
             <textarea rows={3} value={form.instructions ?? ""} onChange={(e) => setForm({ ...form, instructions: e.target.value })}

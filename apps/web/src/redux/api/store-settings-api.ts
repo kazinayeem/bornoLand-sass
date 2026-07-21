@@ -14,6 +14,9 @@ export type StoreSettings = {
   dateFormat: string;
   timezone: string;
   language: string;
+  shippingEnabled?: boolean;
+  freeShippingEnabled?: boolean;
+  freeShippingMin?: number;
   createdAt?: string;
   updatedAt?: string;
 };

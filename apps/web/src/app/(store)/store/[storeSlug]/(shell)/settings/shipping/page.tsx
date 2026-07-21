@@ -1,10 +1,10 @@
 "use client";
 
-import { SettingsTab } from "@/components/workspace/settings-tab";
+import { ShippingSettingsTab } from "@/components/workspace/shipping-settings-tab";
 import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-page";
 import { Loader2 } from "lucide-react";
 
-export default function StoreSettingsGeneralPage() {
+export default function StoreShippingSettingsPage() {
   const { storeId, isLoading } = useStorePage();
   if (isLoading || !storeId) {
     return (
@@ -15,7 +15,7 @@ export default function StoreSettingsGeneralPage() {
   }
   return (
     <StorePageCard>
-      <SettingsTab storeId={storeId} />
+      <ShippingSettingsTab storeId={storeId} />
     </StorePageCard>
   );
 }

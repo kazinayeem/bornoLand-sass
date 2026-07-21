@@ -14,14 +14,41 @@ function getCustomerJwtSecret(): string {
 export async function registerCustomer(storeId: string, payload: { name: string; email: string; password: string }) {
   await connectDatabase();
 
-  const existing = await CustomerModel.findOne({ storeId, email: payload.email.toLowerCase() });
-  if (existing) return { ok: false as const, message: "Email already registered" };
+  const email = payload.email.toLowerCase().trim();
+  const existing = await CustomerModel.findOne({ storeId, email });
+
+  if (existing) {
+    if (existing.isGuest) {
+      const passwordHash = await bcrypt.hash(payload.password, 12);
+      existing.name = payload.name;
+      existing.passwordHash = passwordHash;
+      existing.isGuest = false;
+      existing.status = "active";
+      existing.lastLoginAt = new Date();
+      await existing.save();
+
+      const token = jwt.sign(
+        { customerId: existing._id, storeId, email: existing.email },
+        getCustomerJwtSecret(),
+        { expiresIn: "7d" }
+      );
+
+      return {
+        ok: true as const,
+        data: {
+          customer: { _id: existing._id, name: existing.name, email: existing.email, storeId: existing.storeId },
+          token
+        }
+      };
+    }
+    return { ok: false as const, message: "Email already registered" };
+  }
 
   const passwordHash = await bcrypt.hash(payload.password, 12);
   const customer = await CustomerModel.create({
     storeId,
     name: payload.name,
-    email: payload.email.toLowerCase(),
+    email,
     passwordHash
   });
 
@@ -72,6 +99,138 @@ export async function getCustomerById(customerId: string) {
   if (!customer) return { ok: false as const, message: "Customer not found" };
   const { passwordHash, ...rest } = customer;
   return { ok: true as const, data: { customer: rest } };
+}
+
+export async function syncCustomerOrderStats(storeId: string, customerId: string) {
+  const { OrderModel } = await import("../../models/order.model.js");
+  const stats = await OrderModel.aggregate([
+    { $match: { storeId: storeId as any, customerId: customerId as any } },
+    {
+      $group: {
+        _id: null,
+        totalOrders: { $sum: 1 },
+        totalSpent: { $sum: "$total" },
+        lastOrderDate: { $max: "$createdAt" },
+      },
+    },
+  ]);
+  const s = stats[0] || { totalOrders: 0, totalSpent: 0, lastOrderDate: undefined };
+  await CustomerModel.findByIdAndUpdate(customerId, {
+    $set: {
+      totalOrders: s.totalOrders,
+      totalSpent: s.totalSpent,
+      lastOrderDate: s.lastOrderDate || null,
+      averageOrderValue: s.totalOrders > 0 ? Math.round((s.totalSpent / s.totalOrders) * 100) / 100 : 0,
+    },
+  });
+}
+
+export async function listStoreCustomers(storeId: string, options?: { search?: string; page?: number; limit?: number; status?: string }) {
+  await connectDatabase();
+  const search = options?.search;
+  const page = Math.max(1, options?.page ?? 1);
+  const limitNum = Math.min(100, Math.max(1, options?.limit ?? 20));
+  const skip = (page - 1) * limitNum;
+
+  const filter: Record<string, unknown> = { storeId };
+  if (options?.status) filter.status = options.status;
+  if (search) {
+    const q = search.trim();
+    filter.$or = [
+      { name: { $regex: q, $options: "i" } },
+      { email: { $regex: q, $options: "i" } },
+      { phone: { $regex: q, $options: "i" } },
+    ];
+  }
+
+  const [customers, total] = await Promise.all([
+    CustomerModel.find(filter)
+      .select("-passwordHash")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean(),
+    CustomerModel.countDocuments(filter),
+  ]);
+
+  return {
+    ok: true as const,
+    data: {
+      customers,
+      total,
+      page,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+    },
+  };
+}
+
+export async function getStoreCustomerDetail(storeId: string, customerId: string) {
+  await connectDatabase();
+  const { OrderModel } = await import("../../models/order.model.js");
+  const { AddressModel } = await import("./address.model.js");
+
+  const customer = await CustomerModel.findOne({ _id: customerId, storeId })
+    .select("-passwordHash")
+    .lean() as any;
+  if (!customer) return { ok: false as const, message: "Customer not found" };
+
+  const [orders, addresses] = await Promise.all([
+    OrderModel.find({ storeId, customerId }).sort({ createdAt: -1 }).lean(),
+    AddressModel.find({ storeId, customerId }).lean(),
+  ]);
+
+  return {
+    ok: true as const,
+    data: { customer: { ...customer, addresses }, orders },
+  };
+}
+
+export async function updateStoreCustomer(
+  storeId: string,
+  customerId: string,
+  payload: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    status?: string;
+    notes?: string;
+    tags?: string[];
+  }
+) {
+  await connectDatabase();
+  const update: Record<string, unknown> = {};
+  if (payload.name !== undefined) update.name = payload.name;
+  if (payload.email !== undefined) update.email = payload.email.toLowerCase().trim();
+  if (payload.phone !== undefined) update.phone = payload.phone;
+  if (payload.status !== undefined) update.status = payload.status;
+  if (payload.notes !== undefined) update.notes = payload.notes;
+  if (payload.tags !== undefined) update.tags = payload.tags;
+
+  const customer = await CustomerModel.findOneAndUpdate(
+    { _id: customerId, storeId },
+    { $set: update },
+    { new: true }
+  ).select("-passwordHash").lean();
+
+  if (!customer) return { ok: false as const, message: "Customer not found" };
+  return { ok: true as const, data: { customer } };
+}
+
+export async function createGuestCustomer(storeId: string, email: string, name?: string) {
+  await connectDatabase();
+  const existing = await CustomerModel.findOne({ storeId, email: email.toLowerCase().trim() });
+  if (existing) return { ok: true as const, data: { customer: existing }, created: false };
+
+  const customer = await CustomerModel.create({
+    storeId,
+    name: name || email.split("@")[0],
+    email: email.toLowerCase().trim(),
+    passwordHash: "",
+    isGuest: true,
+  });
+
+  return { ok: true as const, data: { customer }, created: true };
 }
 
 /**

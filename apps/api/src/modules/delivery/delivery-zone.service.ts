@@ -1,16 +1,18 @@
 import { connectDatabase } from "../../common/database/connection.js";
 import { DeliveryZoneModel } from "../../models/delivery-zone.model.js";
 
-export async function createDeliveryZone(
-  storeId: string,
-  payload: {
-    name: string;
-    charge: number;
-    estimatedDays?: string;
-    enabled?: boolean;
-    sortOrder?: number;
-  }
-) {
+type ZonePayload = {
+  name: string;
+  charge: number;
+  estimatedDays?: string;
+  enabled?: boolean;
+  sortOrder?: number;
+  divisions?: string[];
+  districts?: string[];
+  postalCodes?: string[];
+};
+
+export async function createDeliveryZone(storeId: string, payload: ZonePayload) {
   await connectDatabase();
 
   const existing = await DeliveryZoneModel.findOne({
@@ -28,6 +30,9 @@ export async function createDeliveryZone(
     estimatedDays: payload.estimatedDays ?? "3-5 days",
     enabled: payload.enabled ?? true,
     sortOrder: payload.sortOrder ?? 0,
+    divisions: payload.divisions ?? [],
+    districts: payload.districts ?? [],
+    postalCodes: payload.postalCodes ?? [],
   });
 
   return { ok: true as const, data: { deliveryZone: zone.toObject() } };
@@ -44,13 +49,7 @@ export async function listDeliveryZones(storeId: string) {
 export async function updateDeliveryZone(
   id: string,
   storeId: string,
-  payload: Partial<{
-    name: string;
-    charge: number;
-    estimatedDays: string;
-    enabled: boolean;
-    sortOrder: number;
-  }>
+  payload: Partial<ZonePayload>
 ) {
   await connectDatabase();
   const zone = await DeliveryZoneModel.findOneAndUpdate(

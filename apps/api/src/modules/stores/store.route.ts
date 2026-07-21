@@ -17,6 +17,7 @@ import { getStoreSettingsController, updateStoreSettingsController } from "./sto
 import { getStoreContactController, updateStoreContactController } from "./store-contact.controller.js";
 import { createHomepageSliderController, deleteHomepageSliderController, listHomepageSlidersController, updateHomepageSliderController } from "./homepage-slider.controller.js";
 import { listStoreOrdersController, getStoreOrderController, updateOrderStatusController, updatePaymentStatusController, addOrderNoteController, processRefundController } from "./store-order.controller.js";
+import { listStoreCustomersController, getStoreCustomerController, updateStoreCustomerController } from "./store-customer.controller.js";
 import { couponRouter } from "../coupons/coupon.route.js";
 import { reviewRouter } from "../reviews/review.route.js";
 import { collectionRouter } from "../collections/collection.route.js";
@@ -59,6 +60,10 @@ storeRouter.put("/:storeId/orders/:id/status", updateOrderStatusController);
 storeRouter.put("/:storeId/orders/:id/payment-status", updatePaymentStatusController);
 storeRouter.post("/:storeId/orders/:id/notes", addOrderNoteController);
 storeRouter.post("/:storeId/orders/:id/refund", processRefundController);
+
+storeRouter.get("/:storeId/customers", listStoreCustomersController);
+storeRouter.get("/:storeId/customers/:customerId", getStoreCustomerController);
+storeRouter.put("/:storeId/customers/:customerId", updateStoreCustomerController);
 
 storeRouter.use("/:storeId/coupons", couponRouter);
 storeRouter.use("/:storeId/reviews", reviewRouter);

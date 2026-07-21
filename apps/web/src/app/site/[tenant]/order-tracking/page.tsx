@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { PackageSearch, Loader2 } from "lucide-react";
+import { PackageSearch, Loader2, MapPin, Truck } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
 import { getApiUrl } from "@/lib/urls";
 import { formatCurrency } from "@/lib/format-currency";
+import { OrderTimeline } from "@/components/orders/order-timeline";
+import { ORDER_STATUS_LABELS } from "@/lib/orders/timeline";
 import {
   StorefrontPage,
   StorefrontPageHeader,
@@ -19,10 +21,28 @@ type TrackedOrder = {
   orderNumber?: string;
   status: string;
   paymentStatus?: string;
+  paymentMethod?: string;
+  subtotal?: number;
+  discount?: number;
+  tax?: number;
+  deliveryCharge?: number;
+  deliveryZone?: string;
   total: number;
   currencyCode?: string;
+  notes?: string;
+  courier?: string;
+  trackingNumber?: string;
+  estimatedDelivery?: string;
   items?: Array<{ name: string; quantity: number; price: number }>;
-  timeline?: Array<{ status: string; note?: string; createdAt?: string }>;
+  shippingAddress?: {
+    fullName?: string;
+    phone?: string;
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+  };
+  timeline?: Array<{ status: string; note?: string; createdBy?: string; updatedBy?: string; createdAt?: string }>;
   createdAt?: string;
 };
 
@@ -65,8 +85,10 @@ export default function OrderTrackingPage() {
     }
   };
 
+  const currency = (order?.currencyCode || settings?.currencyCode || "USD") as "USD" | "BDT" | "EUR" | "GBP" | "INR";
+
   return (
-    <StorefrontPage maxWidth="sm">
+    <StorefrontPage maxWidth="lg">
       <div className="mb-8 text-center">
         <div
           className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-apple-lg"
@@ -81,7 +103,7 @@ export default function OrderTrackingPage() {
         />
       </div>
 
-      <StorefrontCard>
+      <StorefrontCard className="mx-auto max-w-md">
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className={cn("mb-1.5 block text-caption-strong", classes.body)}>Order number</label>
@@ -112,44 +134,135 @@ export default function OrderTrackingPage() {
       </StorefrontCard>
 
       {order ? (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mt-8 space-y-4">
-          <StorefrontCard>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className={cn("text-caption", classes.muted)}>Order</p>
-                <p className={cn("text-body-strong", classes.heading)}>{order.orderNumber}</p>
-              </div>
-              <span
-                className="rounded-apple-pill px-3 py-1 text-fine-print font-medium capitalize"
-                style={{ backgroundColor: `${primaryColor}14`, color: primaryColor }}
-              >
-                {order.status}
-              </span>
-            </div>
-            <p className={cn("mt-4 text-body", classes.body)}>
-              Total{" "}
-              <span className="font-semibold">
-                {formatCurrency(order.total, (order.currencyCode || settings?.currencyCode || "USD") as any)}
-              </span>
-            </p>
-          </StorefrontCard>
-
-          {order.timeline && order.timeline.length > 0 ? (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-8 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]"
+        >
+          <div className="space-y-4">
             <StorefrontCard>
-              <p className={cn("mb-3 text-caption-strong", classes.heading)}>Timeline</p>
-              <ol className="space-y-3">
-                {order.timeline.map((event, i) => (
-                  <li key={`${event.status}-${i}`} className="flex gap-3">
-                    <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: primaryColor }} />
-                    <div>
-                      <p className={cn("text-caption-strong capitalize", classes.heading)}>{event.status}</p>
-                      {event.note ? <p className={cn("text-caption", classes.muted)}>{event.note}</p> : null}
-                    </div>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className={cn("text-caption", classes.muted)}>Order number</p>
+                  <p className={cn("text-body-strong", classes.heading)}>{order.orderNumber}</p>
+                </div>
+                <span
+                  className="rounded-apple-pill px-3 py-1 text-fine-print font-medium"
+                  style={{ backgroundColor: `${primaryColor}14`, color: primaryColor }}
+                >
+                  {ORDER_STATUS_LABELS[order.status] ?? order.status}
+                </span>
+              </div>
+              {order.estimatedDelivery ? (
+                <p className={cn("mt-3 text-caption", classes.muted)}>
+                  Estimated delivery: <span className={classes.body}>{order.estimatedDelivery}</span>
+                </p>
+              ) : null}
+            </StorefrontCard>
+
+            <StorefrontCard>
+              <p className={cn("mb-4 text-caption-strong", classes.heading)}>Timeline</p>
+              <OrderTimeline
+                status={order.status}
+                paymentStatus={order.paymentStatus}
+                timeline={order.timeline}
+                accentColor={primaryColor}
+              />
+            </StorefrontCard>
+          </div>
+
+          <div className="space-y-4">
+            <StorefrontCard>
+              <p className={cn("mb-3 flex items-center gap-2 text-caption-strong", classes.heading)}>
+                <MapPin className="h-4 w-4" /> Shipping address
+              </p>
+              {order.shippingAddress ? (
+                <div className={cn("space-y-0.5 text-caption", classes.body)}>
+                  <p className="font-medium">{order.shippingAddress.fullName}</p>
+                  <p>{order.shippingAddress.street}</p>
+                  <p>
+                    {[order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.zip]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </p>
+                  {order.shippingAddress.phone ? <p>{order.shippingAddress.phone}</p> : null}
+                </div>
+              ) : (
+                <p className={cn("text-caption", classes.muted)}>Not available</p>
+              )}
+            </StorefrontCard>
+
+            <StorefrontCard>
+              <p className={cn("mb-3 flex items-center gap-2 text-caption-strong", classes.heading)}>
+                <Truck className="h-4 w-4" /> Shipping & payment
+              </p>
+              <dl className="space-y-2 text-caption">
+                <div className="flex justify-between gap-3">
+                  <dt className={classes.muted}>Courier</dt>
+                  <dd className={classes.body}>{order.courier || "—"}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className={classes.muted}>Tracking number</dt>
+                  <dd className={classes.body}>{order.trackingNumber || "—"}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className={classes.muted}>Zone</dt>
+                  <dd className={classes.body}>{order.deliveryZone || "—"}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className={classes.muted}>Payment</dt>
+                  <dd className={cn("capitalize", classes.body)}>
+                    {order.paymentMethod || "—"} · {order.paymentStatus || "pending"}
+                  </dd>
+                </div>
+              </dl>
+            </StorefrontCard>
+
+            <StorefrontCard>
+              <p className={cn("mb-3 text-caption-strong", classes.heading)}>Items</p>
+              <ul className="space-y-2">
+                {(order.items ?? []).map((item, i) => (
+                  <li key={`${item.name}-${i}`} className="flex justify-between gap-3 text-caption">
+                    <span className={classes.body}>
+                      {item.name} × {item.quantity}
+                    </span>
+                    <span className={classes.heading}>{formatCurrency(item.price * item.quantity, currency)}</span>
                   </li>
                 ))}
-              </ol>
+              </ul>
+              <div className="mt-4 space-y-1.5 border-t border-apple-hairline pt-3 text-caption">
+                <div className="flex justify-between">
+                  <span className={classes.muted}>Subtotal</span>
+                  <span>{formatCurrency(order.subtotal ?? order.total, currency)}</span>
+                </div>
+                {(order.discount ?? 0) > 0 ? (
+                  <div className="flex justify-between">
+                    <span className={classes.muted}>Discount</span>
+                    <span>−{formatCurrency(order.discount ?? 0, currency)}</span>
+                  </div>
+                ) : null}
+                <div className="flex justify-between">
+                  <span className={classes.muted}>Delivery</span>
+                  <span>{formatCurrency(order.deliveryCharge ?? 0, currency)}</span>
+                </div>
+                {(order.tax ?? 0) > 0 ? (
+                  <div className="flex justify-between">
+                    <span className={classes.muted}>Tax</span>
+                    <span>{formatCurrency(order.tax ?? 0, currency)}</span>
+                  </div>
+                ) : null}
+                <div className="flex justify-between pt-1 text-body-strong">
+                  <span>Total</span>
+                  <span>{formatCurrency(order.total, currency)}</span>
+                </div>
+              </div>
+              {order.notes ? (
+                <p className={cn("mt-3 text-caption", classes.muted)}>
+                  Note: <span className={classes.body}>{order.notes}</span>
+                </p>
+              ) : null}
             </StorefrontCard>
-          ) : null}
+          </div>
         </motion.div>
       ) : null}
     </StorefrontPage>

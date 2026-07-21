@@ -19,10 +19,13 @@ import { TableSkeleton, StatCardSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
 
+import { OrderTimeline } from "@/components/orders/order-timeline";
+import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from "@/lib/orders/timeline";
+
 type OrdersTabProps = { storeId: string };
 
-const statusOptions = ["pending", "processing", "shipped", "delivered", "cancelled"];
-const paymentOptions = ["unpaid", "paid", "refunded", "partial"];
+const statusOptions = [...ORDER_STATUS_OPTIONS];
+const paymentOptions = ["pending", "paid", "partial", "failed", "refunded"];
 
 function formatBDT(v: number) {
   return new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT", maximumFractionDigits: 0 }).format(v || 0);
@@ -33,11 +36,22 @@ function formatDate(d: string) {
 }
 
 const statusBadgeVariant: Record<string, "warning" | "primary" | "violet" | "success" | "danger"> = {
-  pending: "warning", processing: "primary", shipped: "violet", delivered: "success", cancelled: "danger",
+  pending: "warning",
+  confirmed: "primary",
+  processing: "primary",
+  packed: "violet",
+  shipped: "violet",
+  out_for_delivery: "violet",
+  delivered: "success",
+  cancelled: "danger",
 };
 
 const paymentBadgeVariant: Record<string, "warning" | "success" | "danger" | "primary"> = {
-  unpaid: "warning", paid: "success", refunded: "danger", partial: "primary",
+  pending: "warning",
+  paid: "success",
+  refunded: "danger",
+  partial: "primary",
+  failed: "danger",
 };
 
 export function OrdersTab({ storeId }: OrdersTabProps) {
@@ -109,7 +123,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
           className="rounded-lg border border-apple-hairline bg-white px-2 py-1 text-xs font-medium outline-none"
         >
           {statusOptions.map((s) => (
-            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+            <option key={s} value={s}>{ORDER_STATUS_LABELS[s] ?? s}</option>
           ))}
         </select>
       ),
@@ -162,7 +176,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="h-9 rounded-xl border border-apple-hairline bg-white px-3 text-sm outline-none focus:border-blue-400">
           <option value="">All statuses</option>
-          {statusOptions.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+          {statusOptions.map((s) => <option key={s} value={s}>{ORDER_STATUS_LABELS[s] ?? s}</option>)}
         </select>
       </div>
 
@@ -240,10 +254,19 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
               </div>
             )}
 
+            <div>
+              <h4 className="mb-3 text-sm font-semibold text-apple-ink">Timeline</h4>
+              <OrderTimeline
+                status={selectedOrder.status}
+                paymentStatus={selectedOrder.paymentStatus}
+                timeline={(selectedOrder as { timeline?: Array<{ status: string; note?: string; createdBy?: string; createdAt?: string }> }).timeline}
+              />
+            </div>
+
             <div className="flex gap-2 pt-2">
               <select value={selectedOrder.status} onChange={(e) => handleStatusChange(selectedOrder._id, e.target.value)}
                 className="h-9 rounded-xl border border-apple-hairline bg-white px-3 text-sm outline-none">
-                {statusOptions.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                {statusOptions.map((s) => <option key={s} value={s}>{ORDER_STATUS_LABELS[s] ?? s}</option>)}
               </select>
               <select value={selectedOrder.paymentStatus} onChange={(e) => handlePaymentChange(selectedOrder._id, e.target.value)}
                 className="h-9 rounded-xl border border-apple-hairline bg-white px-3 text-sm outline-none">

@@ -7,7 +7,7 @@ const paymentMethodSchema = new Schema(
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, index: true },
     type: {
       type: String,
-      enum: ["cod", "bkash", "nagad", "rocket", "bank"],
+      enum: ["cod", "bkash", "nagad", "rocket", "bank", "stripe", "sslcommerz", "other"],
       required: true,
     },
     label: { type: String, required: true },
@@ -18,6 +18,13 @@ const paymentMethodSchema = new Schema(
       default: "",
     },
     instructions: { type: String, default: "" },
+    logoUrl: { type: String, default: "" },
+    // Bank transfer details
+    bankName: { type: String, default: "" },
+    branch: { type: String, default: "" },
+    accountName: { type: String, default: "" },
+    routingNumber: { type: String, default: "" },
+    swift: { type: String, default: "" },
     enabled: { type: Boolean, default: true },
     sortOrder: { type: Number, default: 0 },
   },

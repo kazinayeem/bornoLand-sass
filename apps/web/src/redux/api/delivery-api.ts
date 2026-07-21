@@ -1,6 +1,6 @@
 import { baseApi } from "@/redux/api/base-api";
 
-type DeliveryZoneData = {
+export type DeliveryZoneData = {
   _id: string;
   storeId: string;
   name: string;
@@ -8,6 +8,9 @@ type DeliveryZoneData = {
   estimatedDays: string;
   enabled: boolean;
   sortOrder: number;
+  divisions?: string[];
+  districts?: string[];
+  postalCodes?: string[];
 };
 
 type ApiResponse<T> = {

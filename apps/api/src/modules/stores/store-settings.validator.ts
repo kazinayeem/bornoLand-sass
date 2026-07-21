@@ -12,6 +12,9 @@ export const updateStoreSettingsSchema = z.object({
   dateFormat: z.enum(["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]).optional(),
   timezone: z.string().min(1).max(64).optional(),
   language: z.enum(["en", "bn", "es", "fr", "de", "ar", "hi", "zh", "ja", "ko"]).optional(),
+  shippingEnabled: z.boolean().optional(),
+  freeShippingEnabled: z.boolean().optional(),
+  freeShippingMin: z.number().min(0).optional(),
 });
 
 export type UpdateStoreSettingsInput = z.infer<typeof updateStoreSettingsSchema>;

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useGetStoreOrdersQuery } from "@/redux/api/store-order-api";
+import { useState } from "react";
+import { useGetStoreCustomersQuery, useGetStoreCustomerQuery } from "@/redux/api/store-customers-api";
 import { Users, Mail, Phone, Calendar } from "lucide-react";
 import { Drawer } from "@/components/ui/drawer";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -12,62 +12,38 @@ function formatBDT(v: number) {
   return new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT", maximumFractionDigits: 0 }).format(v || 0);
 }
 
-type CustomerSummary = {
+type CustomerRow = {
   _id: string;
   name: string;
   email: string;
   phone: string;
   totalOrders: number;
   totalSpent: number;
-  lastOrder: string;
-  cities: string[];
+  lastOrderDate: string | null;
+  createdAt: string;
+  status: string;
+  lastLoginAt: string | null;
 };
 
 export function CustomersTab({ storeId }: CustomersTabProps) {
-  const { data, isLoading } = useGetStoreOrdersQuery({ storeId, limit: "500" });
-  const orders = data?.data?.orders ?? [];
+  const { data, isLoading } = useGetStoreCustomersQuery({ storeId, limit: "500" });
+  const customers = data?.data?.customers ?? [];
 
   const [search, setSearch] = useState("");
-  const [selectedCust, setSelectedCust] = useState<CustomerSummary | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { data: detailData } = useGetStoreCustomerQuery(
+    { storeId, customerId: selectedId ?? "" },
+    { skip: !selectedId },
+  );
+  const selectedCust = detailData?.data?.customer ?? null;
 
-  const customers = useMemo(() => {
-    const map = new Map<string, CustomerSummary>();
-    orders.forEach((o) => {
-      const c = o.customerId;
-      if (!c?._id) return;
-      const existing = map.get(c._id);
-      if (existing) {
-        existing.totalOrders++;
-        existing.totalSpent += o.total;
-        if (o.shippingAddress?.city && !existing.cities.includes(o.shippingAddress.city)) {
-          existing.cities.push(o.shippingAddress.city);
-        }
-        if (new Date(o.createdAt) > new Date(existing.lastOrder)) {
-          existing.lastOrder = o.createdAt;
-          existing.phone = o.shippingAddress?.phone || existing.phone;
-        }
-      } else {
-        map.set(c._id, {
-          _id: c._id, name: c.name || "Unknown", email: c.email || "",
-          phone: o.shippingAddress?.phone || "",
-          totalOrders: 1, totalSpent: o.total,
-          lastOrder: o.createdAt,
-          cities: o.shippingAddress?.city ? [o.shippingAddress.city] : [],
-        });
-      }
-    });
-    return Array.from(map.values()).sort((a, b) => b.totalSpent - a.totalSpent);
-  }, [orders]);
-
-  const filtered = useMemo(() => {
-    if (!search) return customers;
+  const filtered = customers.filter((c) => {
+    if (!search) return true;
     const q = search.toLowerCase();
-    return customers.filter((c) =>
-      c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.phone.includes(q)
-    );
-  }, [customers, search]);
+    return c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.phone.includes(q);
+  });
 
-  const columns: Column<CustomerSummary>[] = [
+  const columns: Column<CustomerRow>[] = [
     {
       key: "customer", label: "Customer",
       render: (c) => (
@@ -83,6 +59,16 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
       ),
     },
     {
+      key: "status", label: "Status", hideOnTablet: true,
+      render: (c) => (
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+          c.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-500"
+        }`}>
+          {c.status === "active" ? "Active" : c.status === "suspended" ? "Suspended" : "Inactive"}
+        </span>
+      ),
+    },
+    {
       key: "orders", label: "Orders", sortable: true,
       render: (c) => <span className="text-sm font-medium text-apple-ink">{c.totalOrders}</span>,
     },
@@ -91,20 +77,21 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
       render: (c) => <span className="text-sm font-bold text-apple-ink">{formatBDT(c.totalSpent)}</span>,
     },
     {
-      key: "lastOrder", label: "Last Order",
-      render: (c) => <span className="text-sm text-apple-ink-muted-48">{new Date(c.lastOrder).toLocaleDateString()}</span>,
+      key: "lastOrderDate", label: "Last Order",
+      render: (c) => <span className="text-sm text-apple-ink-muted-48">{c.lastOrderDate ? new Date(c.lastOrderDate).toLocaleDateString() : "—"}</span>,
       hideOnMobile: true,
     },
     {
-      key: "cities", label: "Cities", hideOnTablet: true,
-      render: (c) => <span className="text-sm text-apple-ink-muted-48">{c.cities.slice(0, 2).join(", ") || "—"}</span>,
+      key: "createdAt", label: "Registered",
+      render: (c) => <span className="text-sm text-apple-ink-muted-48">{new Date(c.createdAt).toLocaleDateString()}</span>,
+      hideOnTablet: true,
     },
   ];
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-apple-ink-muted-48">{customers.length} customer{customers.length !== 1 ? "s" : ""}</p>
+        <p className="text-sm text-apple-ink-muted-48">{data?.data?.total ?? customers.length} customer{(data?.data?.total ?? customers.length) !== 1 ? "s" : ""}</p>
       </div>
 
       <DataTable
@@ -116,14 +103,14 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
         onSearchChange={setSearch}
         searchPlaceholder="Search customers..."
         emptyIcon={Users}
-        emptyTitle="No customer data"
-        emptyDescription="Customers will appear here when orders are placed."
-        onRowClick={setSelectedCust}
+        emptyTitle="No customers yet"
+        emptyDescription="Customers will appear here when they register or place an order."
+        onRowClick={(c) => setSelectedId(c._id)}
       />
 
       <Drawer
-        open={!!selectedCust}
-        onClose={() => setSelectedCust(null)}
+        open={!!selectedId}
+        onClose={() => setSelectedId(null)}
         title={selectedCust?.name}
         description="Customer details"
         size="md"
@@ -158,39 +145,50 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
                 )}
                 <div className="flex items-center gap-3 px-4 py-3">
                   <Calendar className="h-4 w-4 text-apple-ink-muted-48" />
-                  <span className="text-sm text-apple-ink-muted-80">Last order: {new Date(selectedCust.lastOrder).toLocaleDateString()}</span>
+                  <span className="text-sm text-apple-ink-muted-80">Registered: {new Date(selectedCust.createdAt).toLocaleDateString()}</span>
                 </div>
+                {selectedCust.lastLoginAt && (
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <Calendar className="h-4 w-4 text-apple-ink-muted-48" />
+                    <span className="text-sm text-apple-ink-muted-80">Last login: {new Date(selectedCust.lastLoginAt).toLocaleDateString()}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            {selectedCust.cities.length > 0 && (
+            {detailData?.data?.orders && detailData.data.orders.length > 0 && (
               <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-apple-ink">Shipping Cities</h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedCust.cities.map((city) => (
-                    <span key={city} className="rounded-lg bg-apple-canvas-parchment px-2.5 py-1 text-xs font-medium text-apple-ink-muted-80">{city}</span>
+                <h4 className="text-sm font-semibold text-apple-ink">Order History</h4>
+                <div className="space-y-2">
+                  {(detailData.data.orders as Array<{ _id: string; orderNumber: string; total: number; status: string; createdAt: string }>).slice(0, 5).map((o) => (
+                    <div key={o._id} className="flex items-center justify-between rounded-xl bg-apple-canvas-parchment px-4 py-2.5">
+                      <div>
+                        <p className="text-xs font-mono font-semibold text-blue-600">{o.orderNumber}</p>
+                        <p className="text-xs text-apple-ink-muted-48">{new Date(o.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-apple-ink">{formatBDT(o.total)}</p>
+                        <span className={`text-[10px] font-medium ${o.status === "delivered" ? "text-emerald-600" : o.status === "cancelled" ? "text-red-500" : "text-amber-600"}`}>{o.status}</span>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-apple-ink">Order History</h4>
-              <div className="space-y-2">
-                {orders.filter((o) => o.customerId?._id === selectedCust._id).slice(0, 5).map((o) => (
-                  <div key={o._id} className="flex items-center justify-between rounded-xl bg-apple-canvas-parchment px-4 py-2.5">
-                    <div>
-                      <p className="text-xs font-mono font-semibold text-blue-600">{o.orderNumber}</p>
-                      <p className="text-xs text-apple-ink-muted-48">{new Date(o.createdAt).toLocaleDateString()}</p>
+            {selectedCust.addresses && (selectedCust.addresses as Array<{ _id: string; label: string; city: string; street: string }>).length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-apple-ink">Addresses</h4>
+                <div className="space-y-2">
+                  {(selectedCust.addresses as Array<{ _id: string; label: string; street: string; city: string; state: string; zip: string; country: string }>).map((addr) => (
+                    <div key={addr._id} className="rounded-xl border border-apple-hairline px-4 py-3">
+                      <p className="text-xs font-semibold text-apple-ink-muted-48">{addr.label}</p>
+                      <p className="text-sm text-apple-ink">{addr.street}, {addr.city}, {addr.state} {addr.zip}, {addr.country}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-apple-ink">{formatBDT(o.total)}</p>
-                      <span className={`text-[10px] font-medium ${o.status === "delivered" ? "text-emerald-600" : o.status === "cancelled" ? "text-red-500" : "text-amber-600"}`}>{o.status}</span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </Drawer>

@@ -18,6 +18,7 @@ const timelineEventSchema = new Schema(
     status: { type: String, required: true },
     note: { type: String, default: "" },
     createdBy: { type: String, default: "system" },
+    updatedBy: { type: String, default: "" },
     createdAt: { type: Date, default: Date.now },
   },
   { _id: true }
@@ -31,6 +32,22 @@ const orderNoteSchema = new Schema(
     createdAt: { type: Date, default: Date.now },
   },
   { _id: true }
+);
+
+const paymentVerificationSchema = new Schema(
+  {
+    transactionId: { type: String, default: "" },
+    screenshotUrl: { type: String, default: "" },
+    status: {
+      type: String,
+      enum: ["pending", "verified", "rejected", ""],
+      default: "",
+    },
+    reviewedBy: { type: String, default: "" },
+    reviewedAt: { type: Date },
+    note: { type: String, default: "" },
+  },
+  { _id: false }
 );
 
 const orderSchema = new Schema(
@@ -51,7 +68,18 @@ const orderSchema = new Schema(
     total: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "processing", "packed", "shipped", "delivered", "cancelled", "refunded", "partial_refund"],
+      enum: [
+        "pending",
+        "confirmed",
+        "processing",
+        "packed",
+        "shipped",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+        "refunded",
+        "partial_refund",
+      ],
       default: "pending",
     },
     shippingAddress: {
@@ -69,6 +97,10 @@ const orderSchema = new Schema(
       enum: ["pending", "paid", "partial", "failed", "refunded"],
       default: "pending",
     },
+    paymentVerification: { type: paymentVerificationSchema, default: () => ({}) },
+    courier: { type: String, default: "" },
+    trackingNumber: { type: String, default: "" },
+    estimatedDelivery: { type: String, default: "" },
     notes: { type: String, default: "" },
     orderNotes: [orderNoteSchema],
     timeline: [timelineEventSchema],

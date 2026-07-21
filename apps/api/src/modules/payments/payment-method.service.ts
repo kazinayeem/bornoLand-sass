@@ -1,18 +1,23 @@
 import { connectDatabase } from "../../common/database/connection.js";
 import { PaymentMethodModel } from "../../models/payment-method.model.js";
 
-export async function createPaymentMethod(
-  storeId: string,
-  payload: {
-    type: string;
-    label: string;
-    accountNumber?: string;
-    accountType?: string;
-    instructions?: string;
-    enabled?: boolean;
-    sortOrder?: number;
-  }
-) {
+type PaymentPayload = {
+  type: string;
+  label: string;
+  accountNumber?: string;
+  accountType?: string;
+  instructions?: string;
+  logoUrl?: string;
+  bankName?: string;
+  branch?: string;
+  accountName?: string;
+  routingNumber?: string;
+  swift?: string;
+  enabled?: boolean;
+  sortOrder?: number;
+};
+
+export async function createPaymentMethod(storeId: string, payload: PaymentPayload) {
   await connectDatabase();
 
   const method = await PaymentMethodModel.create({
@@ -22,6 +27,12 @@ export async function createPaymentMethod(
     accountNumber: payload.accountNumber ?? "",
     accountType: payload.accountType ?? "",
     instructions: payload.instructions ?? "",
+    logoUrl: payload.logoUrl ?? "",
+    bankName: payload.bankName ?? "",
+    branch: payload.branch ?? "",
+    accountName: payload.accountName ?? "",
+    routingNumber: payload.routingNumber ?? "",
+    swift: payload.swift ?? "",
     enabled: payload.enabled ?? true,
     sortOrder: payload.sortOrder ?? 0,
   });
@@ -40,15 +51,7 @@ export async function listPaymentMethods(storeId: string) {
 export async function updatePaymentMethod(
   id: string,
   storeId: string,
-  payload: Partial<{
-    type: string;
-    label: string;
-    accountNumber: string;
-    accountType: string;
-    instructions: string;
-    enabled: boolean;
-    sortOrder: number;
-  }>
+  payload: Partial<PaymentPayload>
 ) {
   await connectDatabase();
   const method = await PaymentMethodModel.findOneAndUpdate(

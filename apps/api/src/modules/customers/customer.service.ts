@@ -73,3 +73,34 @@ export async function getCustomerById(customerId: string) {
   const { passwordHash, ...rest } = customer;
   return { ok: true as const, data: { customer: rest } };
 }
+
+/**
+ * Always returns success to avoid email enumeration.
+ * When SMTP is configured, a reset link email can be wired here later.
+ */
+export async function requestCustomerPasswordReset(storeId: string, email: string) {
+  await connectDatabase();
+  const customer = await CustomerModel.findOne({ storeId, email: email.toLowerCase().trim() }).lean() as {
+    _id: unknown;
+    email: string;
+  } | null;
+  if (customer) {
+    try {
+      const { sendEmail } = await import("../../common/integrations/email.js");
+      await sendEmail({
+        to: customer.email,
+        subject: "Password reset request",
+        text: "We received a password reset request for your account. If you did not request this, you can ignore this email. Contact the store to complete a password reset.",
+        html: "<p>We received a password reset request for your account.</p><p>If you did not request this, you can ignore this email. Contact the store to complete a password reset.</p>",
+      });
+    } catch {
+      // Soft-fail — still return success to the client
+    }
+  }
+  return {
+    ok: true as const,
+    data: {
+      message: "If an account exists for that email, you will receive reset instructions shortly.",
+    },
+  };
+}

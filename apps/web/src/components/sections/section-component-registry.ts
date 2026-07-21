@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import type { ComponentType } from "react";
 import type { SectionData } from "./section-renderer";
+import "@/lib/section-library-catalog";
 
 const registry = new Map<string, ComponentType<{ section: SectionData }>>();
 
@@ -76,6 +77,15 @@ registerSectionComponent(
   ["gallery", "image-grid", "masonry-gallery"],
   dynamic(() => import("./gallery").then((m) => ({ default: m.Gallery })), { ssr: false }),
 );
+registerSectionComponent("before-after", dynamic(() => import("./before-after").then((m) => ({ default: m.BeforeAfter })), { ssr: false }));
+registerSectionComponent(
+  ["google-map", "contact-google-map"],
+  dynamic(() => import("./google-map").then((m) => ({ default: m.GoogleMapSection })), { ssr: false }),
+);
+registerSectionComponent(
+  ["contact-section", "contact-store-location", "contact-cards"],
+  dynamic(() => import("./google-map").then((m) => ({ default: m.ContactSection })), { ssr: false }),
+);
 registerSectionComponent(
   ["video-section", "youtube-embed", "vimeo-embed"],
   dynamic(() => import("./video-section").then((m) => ({ default: m.VideoSection })), { ssr: false }),
@@ -95,15 +105,36 @@ registerSectionComponent("announcement-bar", dynamic(() => import("./announcemen
 registerSectionComponent("countdown-timer", dynamic(() => import("./countdown-timer").then((m) => ({ default: m.CountdownTimer })), { ssr: false }));
 
 // ─── Header ─────────────────────────────────────────────────────────────────
-registerSectionComponent("header-bar", dynamic(() => import("./header-bar").then((m) => ({ default: m.HeaderBar })), { ssr: false }));
+registerSectionComponent(
+  [
+    "header-bar",
+    "header-minimal", "header-modern", "header-center-logo", "header-mega",
+    "header-transparent", "header-sticky", "header-luxury", "header-fashion",
+    "header-electronics", "header-grocery", "header-mobile", "header-search-focus",
+    "header-brand", "header-marketplace", "header-light", "header-split",
+  ],
+  dynamic(() => import("./header-bar").then((m) => ({ default: m.HeaderBar })), { ssr: false }),
+);
 registerSectionComponent("header-logo", dynamic(() => import("./header-logo").then((m) => ({ default: m.HeaderLogo })), { ssr: false }));
 registerSectionComponent("header-nav", dynamic(() => import("./header-nav").then((m) => ({ default: m.HeaderNav })), { ssr: false }));
 registerSectionComponent("header-icons", dynamic(() => import("./header-icons").then((m) => ({ default: m.HeaderIcons })), { ssr: false }));
 
 // ─── Footer ─────────────────────────────────────────────────────────────────
-registerSectionComponent("simple-footer", dynamic(() => import("./simple-footer").then((m) => ({ default: m.SimpleFooter })), { ssr: false }));
 registerSectionComponent(
-  ["ecommerce-footer", "mega-footer", "multi-column-footer"],
+  [
+    "simple-footer",
+    "footer-simple-light", "footer-luxury", "footer-dark", "footer-minimal-light",
+    "footer-split", "footer-social-focus",
+  ],
+  dynamic(() => import("./simple-footer").then((m) => ({ default: m.SimpleFooter })), { ssr: false }),
+);
+registerSectionComponent(
+  [
+    "ecommerce-footer", "mega-footer", "multi-column-footer",
+    "footer-ecommerce", "footer-newsletter", "footer-multi-column", "footer-brand",
+    "footer-corporate", "footer-marketplace", "footer-contact-heavy", "footer-payment",
+    "footer-wide", "footer-store-info",
+  ],
   dynamic(() => import("./ecommerce-footer").then((m) => ({ default: m.EcommerceFooter })), { ssr: false }),
 );
 registerSectionComponent("footer-links", dynamic(() => import("./footer-links").then((m) => ({ default: m.FooterLinks })), { ssr: false }));

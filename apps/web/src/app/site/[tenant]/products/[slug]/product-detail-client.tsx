@@ -334,7 +334,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
                     <Plus className="h-4 w-4" />
                   </button>
                 </div>
-                <button onClick={() => dispatch(toggleWishlist({ productId: product._id, name: product.name, price: displayPrice, image: displayImage }))}
+                <button onClick={() => dispatch(toggleWishlist({ productId: product._id, slug: product.slug, name: product.name, price: displayPrice, image: displayImage }))}
                   className="flex h-12 w-12 items-center justify-center rounded-2xl border border-zinc-200 text-apple-ink-muted-48 transition-colors hover:border-red-200 hover:text-red-500">
                   <Heart className="h-5 w-5" />
                 </button>

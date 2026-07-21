@@ -66,7 +66,7 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
     <>
       <section className="relative overflow-hidden" style={{ fontFamily: font, background: sectionBg }}>
         <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl">
+          <div className="relative overflow-hidden rounded-apple-lg border border-white/10 shadow-product">
             <div className={`relative ${heroHeight}`}>
               {slides.map((slide, index) => {
                 const active = index === activeSlide % slides.length;
@@ -88,19 +88,19 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
                     <div className="absolute inset-0" style={{ background: slide.overlayColor, opacity: overlayOpacity }} />
                     <div className={`relative flex ${heroHeight} items-end lg:items-center`}>
                       <div className="mx-auto flex w-full max-w-7xl justify-start px-4 py-10 sm:px-6 lg:px-8">
-                        <div className={`max-w-2xl rounded-[1.75rem] border border-white/15 bg-white/10 p-8 text-white backdrop-blur-md ${
+                        <div className={`max-w-2xl rounded-apple-lg border border-white/15 bg-white/10 p-8 text-white backdrop-blur-md ${
                           (slide.textAlignment as string) === "center" ? "mx-auto text-center" :
                           (slide.textAlignment as string) === "right" ? "ml-auto text-right" : ""
                         }`}>
                           {(heroProps.kicker as string) && (
-                            <span className="inline-flex rounded-full border border-white/20 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-white/80">
+                            <span className="inline-flex rounded-pill border border-white/20 bg-white/10 px-3 py-1 text-fine-print font-medium uppercase tracking-widest text-white/80 backdrop-blur-sm">
                               {heroProps.kicker as string}
                             </span>
                           )}
-                          <h1 className="mt-5 text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
+                          <h1 className="mt-5 text-hero-display text-white">
                             {slide.title}
                           </h1>
-                          <p className="mt-4 max-w-xl text-base leading-7 text-white/80 sm:text-lg">
+                          <p className="mt-4 max-w-xl text-lead text-white/80">
                             {slide.subtitle}
                           </p>
                           <div className={`mt-7 flex flex-wrap gap-3 ${
@@ -108,14 +108,13 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
                             (slide.textAlignment as string) === "right" ? "justify-end" : "justify-start"
                           }`}>
                             <Link href={slide.buttonLink}
-                              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white transition-all hover:scale-[1.01] active:scale-95"
-                              style={{ borderRadius: buttonStyle, backgroundColor: primaryColor }}>
+                              className="btn-press inline-flex items-center gap-2 rounded-pill px-[22px] py-[11px] text-body text-white transition-all hover:opacity-90"
+                              style={{ backgroundColor: primaryColor }}>
                               <ShoppingBag className="h-4 w-4" /> {slide.buttonText}
                             </Link>
                             {(heroProps.secondaryButtonText as string) && (
                               <button onClick={() => setShowDemo(true)}
-                                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white/90 transition-all hover:bg-white/10 active:scale-95"
-                                style={{ borderRadius: buttonStyle, border: "1px solid rgba(255,255,255,0.2)" }}>
+                                className="btn-press inline-flex items-center gap-2 rounded-pill border border-white/20 bg-white/10 px-[22px] py-[11px] text-body text-white/90 backdrop-blur-sm transition-all hover:bg-white/20">
                                 <Play className="h-4 w-4" /> {heroProps.secondaryButtonText as string}
                               </button>
                             )}
@@ -131,11 +130,11 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
             {slides.length > 1 && (
               <>
                 <button onClick={() => setActiveSlide((current) => (current - 1 + slides.length) % slides.length)}
-                  className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/20 bg-black/20 p-3 text-white backdrop-blur-md transition hover:bg-black/30">
+                  className="btn-press absolute left-4 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md transition-all hover:bg-white/20">
                   <ChevronLeft className="h-5 w-5" />
                 </button>
                 <button onClick={() => setActiveSlide((current) => (current + 1) % slides.length)}
-                  className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/20 bg-black/20 p-3 text-white backdrop-blur-md transition hover:bg-black/30">
+                  className="btn-press absolute right-4 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md transition-all hover:bg-white/20">
                   <ChevronRight className="h-5 w-5" />
                 </button>
                 <div className="absolute bottom-5 left-1/2 z-10 flex -translate-x-1/2 gap-2">
@@ -155,18 +154,19 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
             onClick={() => setShowDemo(false)}>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl"
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="relative w-full max-w-2xl rounded-apple-lg border border-apple-hairline bg-apple-canvas p-apple-lg shadow-product"
               onClick={(e) => e.stopPropagation()}>
               <button onClick={() => setShowDemo(false)}
-                className="absolute right-4 top-4 rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
-                <X className="h-5 w-5" />
+                className="btn-press absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-apple-surface-chip/64 text-apple-ink transition-colors hover:bg-apple-surface-chip">
+                <X className="h-4 w-4" />
               </button>
-              <h3 className="mb-4 text-lg font-bold text-apple-ink">How {store.name} Works</h3>
-              <div className="aspect-video rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200 flex items-center justify-center">
-                <Play className="h-16 w-16 text-zinc-300" />
+              <h3 className="mb-4 text-body-strong text-apple-ink">How {store.name} Works</h3>
+              <div className="aspect-video rounded-apple-sm bg-apple-canvas-parchment flex items-center justify-center">
+                <Play className="h-16 w-16 text-apple-ink-muted-48/30" />
               </div>
-              <p className="mt-4 text-sm text-apple-ink-muted-48">Browse our collection, add items to cart, and checkout in seconds.</p>
+              <p className="mt-4 text-caption text-apple-ink-muted-48">Browse our collection, add items to cart, and checkout in seconds.</p>
             </motion.div>
           </motion.div>
         )}

@@ -36,6 +36,13 @@ export const customerApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Customer"],
     }),
+    forgotPassword: builder.mutation<ApiResponse<{ message: string }>, { email: string }>({
+      query: (body) => ({
+        url: "/customer/forgot-password",
+        method: "POST",
+        body,
+      }),
+    }),
     getMe: builder.query<ApiResponse<{ customer: CustomerData }>, string>({
       query: (token) => ({
         url: "/customer/me",
@@ -46,4 +53,4 @@ export const customerApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useRegisterMutation, useLoginMutation, useGetMeQuery } = customerApi;
+export const { useRegisterMutation, useLoginMutation, useForgotPasswordMutation, useGetMeQuery } = customerApi;

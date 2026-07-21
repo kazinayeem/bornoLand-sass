@@ -3,16 +3,23 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useLoading } from "@/hooks/use-loading";
+import { isIntraBuilderNavigation } from "@/lib/loading/builder-progress";
 
 /**
  * Starts navigation progress on internal link clicks;
  * completes when the route (pathname / search) settles.
+ * Skips intra-Builder navigations to avoid flashing the top bar while editing.
  */
 export function NavigationProgressListener() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { startNavigation, completeNavigation } = useLoading();
   const isFirstRender = useRef(true);
+  const pathnameRef = useRef(pathname);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -38,6 +45,13 @@ export function NavigationProgressListener() {
         ) {
           return;
         }
+
+        const from = pathnameRef.current || window.location.pathname;
+        // Stay inside Builder: no global top bar (editing should feel local)
+        if (isIntraBuilderNavigation(from, url.pathname)) {
+          return;
+        }
+
         startNavigation();
       } catch {
         // ignore malformed href

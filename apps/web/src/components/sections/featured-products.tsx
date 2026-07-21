@@ -21,10 +21,10 @@ export function FeaturedProducts({ section }: { section: SectionData }) {
         {display.length ? <ColumnGrid columns={cols}>
           {display.map((pr) => <ProductCard key={pr._id} product={pr} />)}
         </ColumnGrid> : <div className="rounded-2xl border border-dashed border-zinc-200 px-5 py-10 text-center text-sm text-apple-ink-muted-48">No products yet. Add products to see them in your storefront preview.</div>}
-        {showViewAll && (
+          {showViewAll && (
           <div className="mt-8 text-center">
             <Link href={p.viewAllLink || "/shop"}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-5 py-2.5 text-sm font-semibold text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all">
+              className="btn-press inline-flex items-center gap-2 rounded-pill border border-apple-hairline bg-apple-canvas px-5 py-2.5 text-sm font-semibold text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment">
               View All →</Link>
           </div>
         )}

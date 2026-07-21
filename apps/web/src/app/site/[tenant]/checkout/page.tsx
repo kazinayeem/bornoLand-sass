@@ -13,6 +13,10 @@ import { useGetPublicPaymentMethodsQuery } from "@/redux/api/payment-api";
 import { useGetPublicDeliveryZonesQuery } from "@/redux/api/delivery-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
+import { useRequireCustomerAuth } from "@/hooks/use-require-customer-auth";
+import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
+import { resolveStoreHref } from "@/lib/store-href";
+import { usePathname } from "next/navigation";
 
 const PAYMENT_ICONS: Record<string, typeof Banknote> = {
   cod: Banknote,
@@ -32,9 +36,9 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const pathname = usePathname() || "";
   const dispatch = useDispatch();
   const { items, hydrated } = useSelector((state: RootState) => state.cart);
-  const { isAuthenticated, restored } = useSelector((state: RootState) => state.customer);
   const [createOrder, { isLoading }] = useCreateOrderMutation();
   const { settings } = useTenant();
   const [mounted, setMounted] = useState(false);
@@ -55,11 +59,7 @@ export default function CheckoutPage() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  useEffect(() => {
-    if (restored && !isAuthenticated) {
-      router.push("/account/login?redirect=/checkout");
-    }
-  }, [restored, isAuthenticated, router]);
+  const { showLoader, ready } = useRequireCustomerAuth("/checkout");
 
   useEffect(() => {
     if (deliveryZones.length > 0 && !selectedZoneId) {
@@ -73,6 +73,10 @@ export default function CheckoutPage() {
       setSelectedPayment(cod?._id ?? paymentMethods[0]._id);
     }
   }, [paymentMethods, selectedPayment]);
+
+  if (showLoader) {
+    return <CustomerAuthLoader message="Preparing checkout…" />;
+  }
 
   const selectedZone = deliveryZones.find((z) => z._id === selectedZoneId);
   const selectedPm = paymentMethods.find((pm) => pm._id === selectedPayment);
@@ -92,11 +96,7 @@ export default function CheckoutPage() {
     e.preventDefault();
     setErrorMsg("");
 
-    const token = localStorage.getItem("customer_token");
-    if (!token) {
-      router.push("/account/login?redirect=/checkout");
-      return;
-    }
+    if (!ready) return;
 
     if (!hasItems) {
       setErrorMsg("Your cart is empty. Please add items before checking out.");

@@ -61,6 +61,7 @@
   --radius-apple-full: 9999px;
   /* Safe custom token — does not collide with Tailwind defaults */
   --radius-pill: 9999px;
+  --radius-apple-xl: 22px;
 
   /* Apple spacing — prefixed to avoid breaking max-w-*, w-*, gap-*, p-* defaults */
   --spacing-apple-xxs: 4px;
@@ -113,6 +114,27 @@ html {
   text-size-adjust: 100%;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  @keyframes skeleton-pulse {
+    0%, 100% {
+      opacity: 0.5;
+    }
+  }
+}
+
 body {
   background-color: var(--color-apple-canvas-parchment);
   color: var(--color-apple-ink);
@@ -132,6 +154,15 @@ body {
 
 * {
   border-color: var(--color-apple-hairline);
+}
+
+a {
+  color: var(--color-apple-primary);
+  text-decoration: none;
+}
+
+.dark a {
+  color: var(--color-apple-primary-on-dark);
 }
 
 /* ── Layout stability ───────────────────────────────────────────── */
@@ -225,12 +256,52 @@ svg {
   letter-spacing: -0.224px;
 }
 
+.text-dense-link {
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 2.41;
+  letter-spacing: 0;
+}
+
+.text-lead-airy {
+  font-family: var(--font-body);
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.text-button-large {
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.text-button-utility {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.29;
+  letter-spacing: -0.224px;
+}
+
 .text-fine-print {
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 400;
   line-height: 1;
   letter-spacing: -0.12px;
+}
+
+.text-micro-legal {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -0.08px;
 }
 
 .text-nav-link {
@@ -255,8 +326,115 @@ svg {
 
 /* ── Button press micro-interaction ───────────────────────────── */
 
+.btn-press {
+  transition: transform var(--duration-fast) var(--ease-apple);
+}
+
 .btn-press:active {
   transform: scale(0.95);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-press {
+    transition: none;
+  }
+  .btn-press:active {
+    transform: none;
+  }
+}
+
+/* ── Builder loading screen ───────────────────────────────────── */
+
+@keyframes builder-load-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 8px 30px -12px rgba(0, 0, 0, 0.18);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 12px 36px -10px rgba(0, 102, 204, 0.18);
+  }
+}
+
+@keyframes builder-load-logo {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.06) rotate(4deg);
+    opacity: 0.92;
+  }
+}
+
+@keyframes builder-load-progress {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+@keyframes builder-load-spin-soft {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes builder-load-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.builder-load-orb {
+  animation: builder-load-pulse 2.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.builder-load-logo {
+  animation: builder-load-logo 2.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+.builder-load-progress {
+  animation: builder-load-progress 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
+}
+
+.builder-load-ring {
+  animation: builder-load-spin-soft 12s linear infinite;
+  will-change: transform;
+}
+
+.builder-load-message {
+  animation: builder-load-message-in 0.35s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .builder-load-orb,
+  .builder-load-logo,
+  .builder-load-progress,
+  .builder-load-ring,
+  .builder-load-message {
+    animation: none !important;
+  }
+}
+
+.btn-press:focus-visible {
+  outline: 2px solid var(--color-apple-primary-focus);
+  outline-offset: 2px;
 }
 
 /* ── Product shadow (photography only) ────────────────────────── */
@@ -458,6 +636,15 @@ svg {
   }
   to {
     transform: translateX(0);
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
   }
 }
 

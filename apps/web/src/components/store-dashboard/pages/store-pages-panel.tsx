@@ -26,6 +26,7 @@ import { PageContextMenu } from "./page-context-menu";
 import { PageSettingsDrawer } from "./page-settings-drawer";
 import { NavConflictDialog } from "./nav-conflict-dialog";
 import { toast } from "sonner";
+import { isBuilderEditablePage } from "@/lib/storefront/system-pages";
 
 function PagesSkeleton() {
   return (
@@ -235,7 +236,9 @@ export function StorePagesPanel() {
         setShowNewPageModal(false);
         setNewPageTitle("");
         setNewPageSlug("");
-        openBuilder();
+        toast.success("Page created. Only Home is editable in the Builder.");
+        setSelectedPage(page);
+        setShowSettings(true);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to create page";
@@ -390,7 +393,14 @@ export function StorePagesPanel() {
                       depth={0}
                       selectedId={selectedId}
                       onSelect={(p) => { setSelectedId(p._id); setSelectedPage(p); }}
-                      onDoubleClick={() => openBuilder()}
+                      onDoubleClick={(p) => {
+                        if (isBuilderEditablePage(p)) openBuilder();
+                        else {
+                          setSelectedPage(p);
+                          setShowSettings(true);
+                          toast.message("Only the Home page is editable in the Builder.");
+                        }
+                      }}
                       onContextMenu={handleContextMenu}
                     />
                   ))
@@ -402,7 +412,14 @@ export function StorePagesPanel() {
               {pages.map((page) => (
                 <button
                   key={page._id}
-                  onClick={() => openBuilder()}
+                  onClick={() => {
+                    if (isBuilderEditablePage(page)) openBuilder();
+                    else {
+                      setSelectedPage(page);
+                      setShowSettings(true);
+                      toast.message("Only the Home page is editable in the Builder.");
+                    }
+                  }}
                   onContextMenu={(e) => handleContextMenu(e, page)}
                   className="flex flex-col items-start gap-2 rounded-apple-lg border border-apple-hairline bg-white p-4 text-left transition-all hover:border-zinc-300 hover:"
                 >

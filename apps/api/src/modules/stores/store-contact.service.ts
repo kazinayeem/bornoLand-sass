@@ -26,12 +26,43 @@ const defaultContact = {
   },
 } as const;
 
+function serializeStoreContact(doc: Record<string, unknown> | null | undefined, storeId: string) {
+  const social = (doc?.socialLinks as Record<string, unknown> | undefined) ?? {};
+
+  return {
+    _id: doc?._id ? String(doc._id) : undefined,
+    storeId: String(doc?.storeId ?? storeId),
+    businessName: String(doc?.businessName ?? defaultContact.businessName),
+    email: String(doc?.email ?? defaultContact.email),
+    phone: String(doc?.phone ?? defaultContact.phone),
+    whatsapp: String(doc?.whatsapp ?? defaultContact.whatsapp),
+    address: String(doc?.address ?? defaultContact.address),
+    city: String(doc?.city ?? defaultContact.city),
+    country: String(doc?.country ?? defaultContact.country),
+    postalCode: String(doc?.postalCode ?? defaultContact.postalCode),
+    googleMapsEmbedUrl: String(doc?.googleMapsEmbedUrl ?? defaultContact.googleMapsEmbedUrl),
+    latitude: String(doc?.latitude ?? defaultContact.latitude),
+    longitude: String(doc?.longitude ?? defaultContact.longitude),
+    businessHours: String(doc?.businessHours ?? defaultContact.businessHours),
+    socialLinks: {
+      facebook: String(social.facebook ?? defaultContact.socialLinks.facebook),
+      instagram: String(social.instagram ?? defaultContact.socialLinks.instagram),
+      x: String(social.x ?? defaultContact.socialLinks.x),
+      linkedin: String(social.linkedin ?? defaultContact.socialLinks.linkedin),
+      youtube: String(social.youtube ?? defaultContact.socialLinks.youtube),
+      telegram: String(social.telegram ?? defaultContact.socialLinks.telegram),
+    },
+    createdAt: doc?.createdAt ? new Date(doc.createdAt as string | Date).toISOString() : undefined,
+    updatedAt: doc?.updatedAt ? new Date(doc.updatedAt as string | Date).toISOString() : undefined,
+  };
+}
+
 export async function ensureDefaultStoreContact(storeId: string) {
   await connectDatabase();
   const existing = await StoreContactModel.findOne({ storeId }).lean();
-  if (existing) return existing;
+  if (existing) return serializeStoreContact(existing, storeId);
   const created = await StoreContactModel.create({ storeId, ...defaultContact });
-  return created.toObject();
+  return serializeStoreContact(created.toObject() as Record<string, unknown>, storeId);
 }
 
 export async function getStoreContact(storeId: string, userId?: string) {
@@ -41,7 +72,10 @@ export async function getStoreContact(storeId: string, userId?: string) {
     if (!store) return { ok: false as const, message: "Store not found" };
   }
   const contact = await StoreContactModel.findOne({ storeId }).lean();
-  return { ok: true as const, data: { contact: contact ?? { storeId, ...defaultContact } } };
+  return {
+    ok: true as const,
+    data: { contact: serializeStoreContact(contact, storeId) },
+  };
 }
 
 export async function updateStoreContact(storeId: string, userId: string, payload: unknown) {
@@ -54,20 +88,29 @@ export async function updateStoreContact(storeId: string, userId: string, payloa
 
   const update: Record<string, unknown> = { ...parsed.data };
   if (parsed.data.socialLinks) {
-    update.socialLinks = parsed.data.socialLinks;
+    for (const [key, value] of Object.entries(parsed.data.socialLinks)) {
+      update[`socialLinks.${key}`] = value;
+    }
+    delete update.socialLinks;
   }
 
   const contact = await StoreContactModel.findOneAndUpdate(
     { storeId },
-    { $set: update, $setOnInsert: { storeId, ...defaultContact } },
-    { upsert: true, new: true },
+    { $set: update, $setOnInsert: { storeId } },
+    { upsert: true, new: true, runValidators: true },
   ).lean();
 
-  return { ok: true as const, data: { contact } };
+  return {
+    ok: true as const,
+    data: { contact: serializeStoreContact(contact, storeId) },
+  };
 }
 
 export async function getPublicStoreContact(storeId: string) {
   await connectDatabase();
   const contact = await StoreContactModel.findOne({ storeId }).lean();
-  return { ok: true as const, data: { contact: contact ?? { storeId, ...defaultContact } } };
+  return {
+    ok: true as const,
+    data: { contact: serializeStoreContact(contact, storeId) },
+  };
 }

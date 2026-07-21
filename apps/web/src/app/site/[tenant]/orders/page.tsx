@@ -1,15 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/redux/store";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Package, ArrowRight, Clock, DollarSign } from "lucide-react";
 import { useGetOrdersQuery } from "@/redux/api/order-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
+import { useRequireCustomerAuth } from "@/hooks/use-require-customer-auth";
+import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
 
 const statusStyles: Record<string, string> = {
   pending: "bg-amber-50 text-amber-600",
@@ -21,16 +20,9 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function OrdersPage() {
-  const router = useRouter();
-  const { isAuthenticated, restored } = useSelector((s: RootState) => s.customer);
+  const { showLoader } = useRequireCustomerAuth("/orders");
 
-  useEffect(() => {
-    if (restored && !isAuthenticated) {
-      router.push("/account/login?redirect=/orders");
-    }
-  }, [restored, isAuthenticated, router]);
-
-  if (!restored || !isAuthenticated) return null;
+  if (showLoader) return <CustomerAuthLoader />;
 
   return <OrdersList />;
 }

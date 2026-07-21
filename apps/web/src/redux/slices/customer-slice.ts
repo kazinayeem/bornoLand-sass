@@ -51,6 +51,11 @@ const customerSlice = createSlice({
         state.customer = customer;
         state.token = action.payload;
         state.isAuthenticated = true;
+      } else {
+        // Fail closed — never leave a broken token that login would bounce on
+        state.customer = null;
+        state.token = null;
+        state.isAuthenticated = false;
       }
       state.restored = true;
     },

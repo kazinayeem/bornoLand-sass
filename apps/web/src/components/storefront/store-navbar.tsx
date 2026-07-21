@@ -107,7 +107,7 @@ export function StoreNavbar({ headerSections: _headerSections, headerSettings: _
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(getStorefrontLink(`/shop?search=${encodeURIComponent(searchQuery.trim())}`));
+      router.push(getStorefrontLink(`/search?q=${encodeURIComponent(searchQuery.trim())}`));
       setSearchOpen(false);
       setSearchQuery("");
     }
@@ -186,7 +186,7 @@ export function StoreNavbar({ headerSections: _headerSections, headerSettings: _
               </button>
             )}
             {showWishlist && (
-              <Link href="/account" aria-label="Wishlist" className={cn(iconBtn, "hidden sm:flex")}>
+              <Link href="/wishlist" aria-label="Wishlist" className={cn(iconBtn, "hidden sm:flex")}>
                 <Heart className="h-5 w-5" />
               </Link>
             )}
@@ -402,7 +402,7 @@ export function StoreNavbar({ headerSections: _headerSections, headerSettings: _
                   )}
                   <button
                     type="button"
-                    onClick={() => handleNavClick("/account")}
+                    onClick={() => handleNavClick("/wishlist")}
                     className="flex w-full items-center gap-3 rounded-apple-lg px-3 py-3 text-body text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
                   >
                     <Heart className="h-4 w-4 text-apple-ink-muted-48" /> Wishlist

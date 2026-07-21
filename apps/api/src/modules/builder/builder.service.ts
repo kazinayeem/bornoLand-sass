@@ -64,16 +64,26 @@ export async function getOrCreateHomePage(storeId: string) {
   await connectDatabase();
   let home = await PageModel.findOne({ storeId, isHome: true }).lean() as any;
   if (!home) {
-    const store = await StoreModel.findById(storeId).lean() as any;
-    home = await PageModel.create({
-      storeId,
-      title: "Home",
-      slug: "home",
-      isHome: true,
-      sections: DEFAULT_TEMPLATE_SECTIONS,
-      theme: store?.theme ?? {},
-    });
-    home = home.toObject();
+    try {
+      const store = await StoreModel.findById(storeId).lean() as any;
+      home = await PageModel.create({
+        storeId,
+        title: "Home",
+        slug: "home",
+        isHome: true,
+        sections: DEFAULT_TEMPLATE_SECTIONS,
+        theme: store?.theme ?? {},
+      });
+      home = home.toObject();
+    } catch (error: unknown) {
+      const mongoError = error as { code?: number };
+      if (mongoError.code === 11000) {
+        home = await PageModel.findOne({ storeId, isHome: true }).lean() as any;
+        if (!home) throw new Error("Failed to create or find home page");
+      } else {
+        throw error;
+      }
+    }
   }
   return { ok: true as const, data: { page: home } };
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import type { FormEvent } from "react";
-import { LayoutTemplate, Search, FileText, Layers, Loader2, AlertCircle, Heart, Eye, Monitor, Smartphone, Tablet, Moon, Sun, CheckSquare, Copy, Plus, FolderOpen, Save } from "lucide-react";
+import { LayoutTemplate, Search, FileText, Layers, Loader2, AlertCircle, Heart, Eye, Monitor, Smartphone, Tablet, Moon, Sun, CheckSquare, Copy, Plus, FolderOpen, Save, X, Check } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { addSection, loadSections, setActiveTab, setPageMetadata } from "@/redux/slices/builder-slice";
@@ -107,7 +107,22 @@ export function TemplatesPanel() {
     return [...result].sort((a, b) => sort === "updated" ? new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime() : sort === "sections" ? (b.sections?.length ?? 0) - (a.sections?.length ?? 0) : sort === "popular" ? Number(b.isBuiltIn) - Number(a.isBuiltIn) : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [templatesData, query, category, collection, favorites, recent, sort]);
 
-  const selectedTemplate = templates.find((template) => template._id === selectedId) ?? templates[0] ?? null;
+  const selectedTemplate = selectedId
+    ? templates.find((template) => template._id === selectedId) ?? null
+    : null;
+
+  const clearPreview = useCallback(() => setSelectedId(null), []);
+
+  const openPreview = useCallback((templateId: string) => {
+    setSelectedId(templateId);
+    setRecent((items) => [templateId, ...items.filter((id) => id !== templateId)].slice(0, 12));
+  }, []);
+
+  useEffect(() => {
+    if (selectedId && !templates.some((template) => template._id === selectedId)) {
+      setSelectedId(null);
+    }
+  }, [templates, selectedId]);
 
   const grouped = useMemo(() => {
     const map: Record<string, BuilderTemplate[]> = {};
@@ -198,9 +213,9 @@ export function TemplatesPanel() {
     <>
       <Modal
         open={open}
-        onClose={() => { setOpen(false); dispatch(setActiveTab("templates")); }}
+        onClose={() => { clearPreview(); setOpen(false); dispatch(setActiveTab("templates")); }}
         title="Template Library"
-        description="Explore layouts, preview them visually, and apply only what you need."
+        description="Browse templates first — preview only when you choose one."
         size="full"
         className="!h-[calc(100vh-2rem)] !max-h-none !max-w-[calc(100vw-2rem)] rounded-2xl sm:rounded-3xl"
       >
@@ -210,7 +225,7 @@ export function TemplatesPanel() {
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { setQuery(e.target.value); clearPreview(); }}
               placeholder="Search templates..."
               className="h-11 w-full rounded-2xl border border-zinc-200 bg-apple-canvas-parchment pl-11 pr-4 text-sm outline-none focus:border-zinc-400 focus:bg-white"
             />
@@ -219,11 +234,11 @@ export function TemplatesPanel() {
           <button type="button" onClick={() => setSaveKind("page")} className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-3 py-2.5 text-xs font-semibold text-white hover:bg-zinc-800"><Save className="h-3.5 w-3.5" />Save page</button>
           </div>
           <div className="mt-3 flex items-center gap-1 overflow-x-auto border-b border-zinc-100 pb-3">
-            {([ ["marketplace", "Marketplace", LayoutTemplate], ["mine", "My Templates", FolderOpen], ["favorites", "Favorites", Heart], ["recent", "Recent", FileText] ] as const).map(([id, label, Icon]) => <button key={id} type="button" onClick={() => { setCollection(id); setCategory("all"); }} className={cn("inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold", collection === id ? "bg-zinc-900 text-white" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment")}><Icon className="h-3.5 w-3.5" />{label}</button>)}
+            {([ ["marketplace", "Marketplace", LayoutTemplate], ["mine", "My Templates", FolderOpen], ["favorites", "Favorites", Heart], ["recent", "Recent", FileText] ] as const).map(([id, label, Icon]) => <button key={id} type="button" onClick={() => { setCollection(id); setCategory("all"); clearPreview(); }} className={cn("inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold", collection === id ? "bg-zinc-900 text-white" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment")}><Icon className="h-3.5 w-3.5" />{label}</button>)}
             <button type="button" onClick={() => setSaveKind(selectedSectionId ? "section" : "sections")} className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"><Plus className="h-3.5 w-3.5" />Save {selectedSectionId ? "section" : "sections"}</button>
           </div>
-          <div className="mt-4 grid min-h-0 flex-1 gap-5 overflow-hidden lg:grid-cols-[190px_minmax(0,1fr)_260px]">
-            <aside className="hidden overflow-y-auto border-r border-zinc-100 pr-3 lg:block"><p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-apple-ink-muted-48">Categories</p>{categoryOrder.map((item) => { const count = (templatesData?.data?.templates ?? []).filter((template) => template.category === item).length; return <button key={item} onClick={() => setCategory(item)} className={cn("mb-1 flex w-full items-center justify-between gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium", category === item ? "bg-zinc-100 text-apple-ink" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment")}><span><span className="mr-1">{categoryIcons[item] || "📄"}</span>{categoryLabels[item] || item}</span><span>{count}</span></button>})}</aside>
+          <div className={cn("mt-4 grid min-h-0 flex-1 gap-5 overflow-hidden", selectedTemplate ? "lg:grid-cols-[190px_minmax(0,1fr)_280px]" : "lg:grid-cols-[190px_minmax(0,1fr)]")}>
+            <aside className="hidden overflow-y-auto border-r border-zinc-100 pr-3 lg:block"><p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-apple-ink-muted-48">Categories</p><button type="button" onClick={() => { setCategory("all"); clearPreview(); }} className={cn("mb-1 flex w-full items-center justify-between gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium", category === "all" ? "bg-zinc-100 text-apple-ink" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment")}><span>All templates</span><span>{(templatesData?.data?.templates ?? []).length}</span></button>{categoryOrder.map((item) => { const count = (templatesData?.data?.templates ?? []).filter((template) => template.category === item).length; return <button key={item} type="button" onClick={() => { setCategory(item); clearPreview(); }} className={cn("mb-1 flex w-full items-center justify-between gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium", category === item ? "bg-zinc-100 text-apple-ink" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment")}><span><span className="mr-1">{categoryIcons[item] || "📄"}</span>{categoryLabels[item] || item}</span><span>{count}</span></button>})}</aside>
             <div className="min-h-0 overflow-y-auto pr-1">
 
           {/* Loading */}
@@ -251,9 +266,35 @@ export function TemplatesPanel() {
             </div>
           )}
 
-          {!isLoading && !error && <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{templates.map((template, index) => <TemplateCard key={template._id} template={template} gradient={templateGradients[index % templateGradients.length]} onApply={handleUseTemplate} applying={applying === template._id} selected={selectedTemplate?._id === template._id} onPreview={() => { setSelectedId(template._id); setRecent((items) => [template._id, ...items.filter((id) => id !== template._id)].slice(0, 12)); }} onLiveDemo={() => setLiveTemplate(template)} favorite={favorites.includes(template._id)} onFavorite={() => setFavorites((items) => items.includes(template._id) ? items.filter((id) => id !== template._id) : [...items, template._id])} />)}</div>}
+          {!isLoading && !error && (
+            <div className={cn("grid gap-4", selectedTemplate ? "sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4")}>
+              {templates.map((template, index) => (
+                <TemplateCard
+                  key={template._id}
+                  template={template}
+                  gradient={templateGradients[index % templateGradients.length]}
+                  onApply={handleUseTemplate}
+                  applying={applying === template._id}
+                  selected={selectedTemplate?._id === template._id}
+                  onPreview={() => openPreview(template._id)}
+                  onLiveDemo={() => setLiveTemplate(template)}
+                  favorite={favorites.includes(template._id)}
+                  onFavorite={() => setFavorites((items) => items.includes(template._id) ? items.filter((id) => id !== template._id) : [...items, template._id])}
+                />
+              ))}
             </div>
-            <aside className="hidden overflow-y-auto rounded-2xl border border-zinc-200 bg-apple-canvas-parchment/70 p-4 lg:block">{selectedTemplate ? <><div className={cn("aspect-[4/3] rounded-xl bg-gradient-to-br", templateGradients[templates.indexOf(selectedTemplate) % templateGradients.length])} /><p className="mt-4 text-sm font-semibold text-apple-ink">{selectedTemplate.name}</p><p className="mt-1 text-xs leading-5 text-apple-ink-muted-48">{selectedTemplate.description || "A responsive template ready for your store."}</p><div className="mt-4 flex flex-wrap gap-1"><span className="rounded-full bg-white px-2 py-1 text-[10px] text-apple-ink-muted-48">{selectedTemplate.category}</span><span className="rounded-full bg-white px-2 py-1 text-[10px] text-apple-ink-muted-48">{selectedTemplate.sections?.length ?? 0} sections</span><span className="rounded-full bg-white px-2 py-1 text-[10px] text-apple-ink-muted-48">Responsive</span></div><button onClick={() => handleUseTemplate(selectedTemplate, "sections")} className="mt-5 w-full rounded-xl bg-zinc-900 py-2.5 text-xs font-semibold text-white hover:bg-zinc-800">Insert into current page</button><button onClick={() => handleUseTemplate(selectedTemplate, "page")} className="mt-2 w-full rounded-xl border border-zinc-200 bg-white py-2.5 text-xs font-semibold text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Create new page</button></> : <p className="text-xs text-apple-ink-muted-48">Select a template to preview it.</p>}</aside>
+          )}
+            </div>
+            {selectedTemplate ? (
+              <TemplatePreviewSidebar
+                template={selectedTemplate}
+                gradient={templateGradients[Math.max(0, templates.findIndex((t) => t._id === selectedTemplate._id)) % templateGradients.length]}
+                applying={applying === selectedTemplate._id}
+                onClose={clearPreview}
+                onApply={handleUseTemplate}
+                onLiveDemo={() => setLiveTemplate(selectedTemplate)}
+              />
+            ) : null}
           </div>
         </div>
       </Modal>
@@ -270,7 +311,7 @@ function TemplateCard({
   applying,
   selected,
   onPreview,
-  onLiveDemo,
+  onLiveDemo: _onLiveDemo,
   favorite,
   onFavorite,
 }: {
@@ -284,73 +325,204 @@ function TemplateCard({
   favorite: boolean;
   onFavorite: () => void;
 }) {
-  const [showMenu, setShowMenu] = useState(false);
   const sectionCount = template.sections?.length ?? 0;
 
   return (
-    <div onClick={onPreview} className={cn("group relative cursor-pointer rounded-2xl border bg-white p-3 transition-all hover:-translate-y-1 hover:shadow-lg", selected ? "border-blue-300 ring-2 ring-blue-100" : "border-zinc-200") }>
-      {/* Thumbnail */}
-      <div className={`aspect-[16/10] rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center relative overflow-hidden`}>
-        {template.thumbnail ? (
-          <img src={template.thumbnail} alt={template.name} className="absolute inset-0 h-full w-full object-cover" />
-        ) : null}
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-zinc-950/45 opacity-0 transition duration-200 group-hover:opacity-100">
-          <button type="button" onClick={(event) => { event.stopPropagation(); onLiveDemo(); }} className="rounded-lg bg-white px-2.5 py-1.5 text-[10px] font-bold text-apple-ink"><Eye className="mr-1 inline h-3 w-3" />Live demo</button>
-          <button type="button" onClick={(event) => { event.stopPropagation(); onApply(template, "sections"); }} className="rounded-lg bg-blue-600 px-2.5 py-1.5 text-[10px] font-bold text-white"><Layers className="mr-1 inline h-3 w-3" />Insert</button>
-        </div>
-        <div className="relative flex flex-col items-center gap-1">
-          <span className="text-4xl">{categoryIcons[template.category] || "📄"}</span>
-          <span className="text-[10px] font-medium text-white/80 bg-black/20 px-2 py-0.5 rounded-full">
-            {sectionCount} section{sectionCount !== 1 ? "s" : ""}
+    <article
+      className={cn(
+        "group relative rounded-2xl border bg-white p-3 transition-all duration-200",
+        selected
+          ? "border-apple-primary/40 shadow-[0_8px_28px_-18px_rgba(0,102,204,0.45)] ring-1 ring-apple-primary/15"
+          : "border-apple-hairline hover:-translate-y-0.5 hover:border-apple-primary/25 hover:shadow-[0_12px_32px_-20px_rgba(0,0,0,0.28)]",
+      )}
+    >
+      {selected ? (
+        <span className="absolute right-5 top-5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-apple-primary text-white shadow-sm">
+          <Check className="h-3.5 w-3.5" strokeWidth={3} />
+        </span>
+      ) : null}
+
+      <div className={`relative aspect-[16/10] overflow-hidden rounded-2xl bg-gradient-to-br ${gradient}`}>
+        <button
+          type="button"
+          onClick={onPreview}
+          className="absolute inset-0 z-0 text-left"
+          aria-label={`Preview ${template.name}`}
+        >
+          {template.thumbnail ? (
+            <img src={template.thumbnail} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+          ) : null}
+          <span className="absolute inset-0 bg-black/10" />
+          <span className="relative flex h-full flex-col items-center justify-center gap-1">
+            <span className="text-4xl">{categoryIcons[template.category] || "📄"}</span>
+            <span className="rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-medium text-white/90">
+              {sectionCount} section{sectionCount !== 1 ? "s" : ""}
+            </span>
           </span>
-        </div>
-      </div>
+        </button>
 
-      {/* Info */}
-      <div className="mt-3.5">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-apple-ink truncate">{template.name}</p>
-            <p className="text-xs text-apple-ink-muted-48 mt-0.5 line-clamp-2">{template.description || "No description"}</p>
-          </div>
-          <button type="button" onClick={(event) => { event.stopPropagation(); onFavorite(); }} className={cn("rounded-lg p-1.5", favorite ? "text-rose-500" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment")}><Heart className="h-3.5 w-3.5" fill={favorite ? "currentColor" : "none"} /></button>
-        </div>
-
-        {/* Action buttons */}
-        <div className="mt-3.5 flex items-center gap-2">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 bg-gradient-to-t from-black/55 to-transparent p-3 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100">
           <button
-            onClick={(event) => { event.stopPropagation(); onApply(template, "page"); }}
-            disabled={applying}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-zinc-900 py-2 text-[11px] font-medium text-white hover:bg-zinc-800 disabled:opacity-50 transition-all"
+            type="button"
+            onClick={onPreview}
+            className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1.5 text-[10px] font-bold text-apple-ink shadow-sm"
           >
-            {applying ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <FileText className="h-3 w-3" />
-            )}
-            {applying ? "Creating..." : "Create Page"}
+            <Eye className="h-3 w-3" />
+            Preview
           </button>
           <button
-            onClick={(event) => { event.stopPropagation(); onApply(template, "sections"); }}
-            disabled={applying}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-50 transition-all"
-            title="Insert sections into current page"
+            type="button"
+            onClick={() => onApply(template, "sections")}
+            className="inline-flex items-center gap-1 rounded-lg bg-apple-primary px-2.5 py-1.5 text-[10px] font-bold text-white shadow-sm"
           >
             <Layers className="h-3 w-3" />
             Insert
           </button>
+          <button
+            type="button"
+            onClick={onFavorite}
+            className={cn(
+              "inline-flex items-center justify-center rounded-lg bg-white p-1.5 shadow-sm",
+              favorite ? "text-rose-500" : "text-apple-ink-muted-48",
+            )}
+            aria-label={favorite ? "Remove favorite" : "Favorite"}
+          >
+            <Heart className="h-3.5 w-3.5" fill={favorite ? "currentColor" : "none"} />
+          </button>
         </div>
       </div>
-    </div>
+
+      <div className="mt-3.5">
+        <div className="flex items-start justify-between gap-2">
+          <button type="button" onClick={onPreview} className="min-w-0 flex-1 text-left">
+            <p className="truncate text-sm font-medium text-apple-ink">{template.name}</p>
+            <p className="mt-0.5 line-clamp-2 text-xs text-apple-ink-muted-48">{template.description || "No description"}</p>
+          </button>
+          <button
+            type="button"
+            onClick={onFavorite}
+            className={cn(
+              "rounded-lg p-1.5 opacity-0 transition-opacity group-hover:opacity-100",
+              favorite ? "text-rose-500 opacity-100" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment",
+            )}
+            aria-label={favorite ? "Remove favorite" : "Favorite"}
+          >
+            <Heart className="h-3.5 w-3.5" fill={favorite ? "currentColor" : "none"} />
+          </button>
+        </div>
+
+        <div className="mt-3.5 flex items-center gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <button
+            type="button"
+            onClick={onPreview}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-apple-hairline py-2 text-[11px] font-medium text-apple-ink hover:bg-apple-canvas-parchment"
+          >
+            <Eye className="h-3 w-3" />
+            Preview
+          </button>
+          <button
+            type="button"
+            onClick={() => onApply(template, "sections")}
+            disabled={applying}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-apple-ink py-2 text-[11px] font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+          >
+            {applying ? <Loader2 className="h-3 w-3 animate-spin" /> : <Layers className="h-3 w-3" />}
+            {applying ? "Inserting…" : "Insert"}
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function TemplatePreviewSidebar({
+  template,
+  gradient,
+  applying,
+  onClose,
+  onApply,
+  onLiveDemo,
+}: {
+  template: BuilderTemplate;
+  gradient: string;
+  applying: boolean;
+  onClose: () => void;
+  onApply: (template: BuilderTemplate, mode: "page" | "sections") => void;
+  onLiveDemo: () => void;
+}) {
+  const sectionCount = template.sections?.length ?? 0;
+
+  return (
+    <aside className="hidden min-h-0 overflow-y-auto rounded-2xl border border-apple-hairline bg-apple-canvas-parchment/70 p-4 lg:flex lg:flex-col">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Preview</p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-white hover:text-apple-ink"
+          aria-label="Close preview"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className={cn("relative mt-3 aspect-[4/3] overflow-hidden rounded-xl bg-gradient-to-br", gradient)}>
+        {template.thumbnail ? (
+          <img src={template.thumbnail} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <div className="flex h-full items-center justify-center text-4xl">
+            {categoryIcons[template.category] || "📄"}
+          </div>
+        )}
+      </div>
+
+      <p className="mt-4 text-sm font-semibold text-apple-ink">{template.name}</p>
+      <p className="mt-1 text-xs leading-5 text-apple-ink-muted-48">
+        {template.description || "A responsive template ready for your store."}
+      </p>
+
+      <div className="mt-4 flex flex-wrap gap-1">
+        <span className="rounded-full bg-white px-2 py-1 text-[10px] text-apple-ink-muted-48">{categoryLabels[template.category] || template.category}</span>
+        <span className="rounded-full bg-white px-2 py-1 text-[10px] text-apple-ink-muted-48">{sectionCount} sections</span>
+        <span className="rounded-full bg-white px-2 py-1 text-[10px] text-apple-ink-muted-48">Responsive</span>
+      </div>
+
+      <div className="mt-auto space-y-2 pt-5">
+        <button
+          type="button"
+          onClick={onLiveDemo}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-apple-hairline bg-white py-2.5 text-xs font-semibold text-apple-ink hover:bg-apple-canvas"
+        >
+          <Eye className="h-3.5 w-3.5" />
+          Live demo
+        </button>
+        <button
+          type="button"
+          onClick={() => onApply(template, "sections")}
+          disabled={applying}
+          className="w-full rounded-xl bg-apple-ink py-2.5 text-xs font-semibold text-white hover:bg-zinc-800 disabled:opacity-50"
+        >
+          {applying ? "Inserting…" : "Insert into current page"}
+        </button>
+        <button
+          type="button"
+          onClick={() => onApply(template, "page")}
+          disabled={applying}
+          className="w-full rounded-xl border border-apple-hairline bg-white py-2.5 text-xs font-semibold text-apple-ink-muted-80 hover:bg-apple-canvas disabled:opacity-50"
+        >
+          Create new page
+        </button>
+      </div>
+    </aside>
   );
 }
 
 function TemplateLivePreview({ template, store, onClose, onApply, onDuplicate }: { template: BuilderTemplate; store: any; onClose: () => void; onApply: (template: BuilderTemplate, mode: "page" | "sections", selectedSectionIds?: string[]) => void; onDuplicate: (template: BuilderTemplate) => void }) {
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [dark, setDark] = useState(false);
+  // Lazy: only materialize section list when live preview mounts (user chose Live demo).
   const sections = (template.sections ?? []) as Array<{ id: string; type: string; label?: string; visible?: boolean; props?: Record<string, string> }>;
-  const [selected, setSelected] = useState<string[]>(sections.map((section) => section.id));
+  const [selected, setSelected] = useState<string[]>(() => sections.map((section) => section.id));
   const width = device === "mobile" ? 390 : device === "tablet" ? 820 : 1280;
   const toggle = (id: string) => setSelected((items) => items.includes(id) ? items.filter((item) => item !== id) : [...items, id]);
   const scrollToSection = (id: string) => document.querySelector(`[data-builder-section-id="${id}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });

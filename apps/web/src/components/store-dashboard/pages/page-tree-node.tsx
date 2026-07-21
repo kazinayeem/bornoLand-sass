@@ -9,6 +9,7 @@ import {
   Eye, Download, Lock,
 } from "lucide-react";
 import type { StorePage } from "@/redux/api/store-page-api";
+import { isBuilderEditablePage } from "@/lib/storefront/system-pages";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -90,13 +91,15 @@ export function PageTreeNode({ page, depth, selectedId, onSelect, onDoubleClick,
 
         {/* Actions (visible on hover) */}
         <div className="hidden group-hover:flex items-center gap-0.5 ml-1">
-          <button
-            onClick={(e) => { e.stopPropagation(); onDoubleClick(page); }}
-            className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-zinc-200 text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
-            title="Open in Builder"
-          >
-            <Layers className="h-3.5 w-3.5" />
-          </button>
+          {isBuilderEditablePage(page) ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDoubleClick(page); }}
+              className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-zinc-200 text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
+              title="Open in Builder"
+            >
+              <Layers className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
           <button
             onClick={(e) => { e.stopPropagation(); onContextMenu(e, page); }}
             className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-zinc-200 text-apple-ink-muted-48 hover:text-apple-ink-muted-80"

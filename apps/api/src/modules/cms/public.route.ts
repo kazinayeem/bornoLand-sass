@@ -9,8 +9,9 @@ import {
   paymentMethodsController,
   deliveryZonesController,
 } from "./public.controller.js";
-import { getPublicPageController } from "./cms.controller.js";
+import { getPublicPageController, getPublicFaqsController, getPublicBlogPostsController } from "./cms.controller.js";
 import { getPublicStoreContactController } from "../stores/store-contact.controller.js";
+import { trackOrderController } from "../orders/order.controller.js";
 
 export const publicRouter: Router = Router();
 
@@ -24,6 +25,9 @@ publicRouter.get("/product/:storeSlug/:productSlug", resolveProductBySlugControl
 
 publicRouter.use(resolveStoreFromSubdomain);
 publicRouter.get("/page/:slug", getPublicPageController);
+publicRouter.get("/faqs", getPublicFaqsController);
+publicRouter.get("/blog/posts", getPublicBlogPostsController);
 publicRouter.get("/contact", getPublicStoreContactController);
 publicRouter.get("/payment-methods", paymentMethodsController);
 publicRouter.get("/delivery-zones", deliveryZonesController);
+publicRouter.get("/order-track", trackOrderController);

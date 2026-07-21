@@ -12,6 +12,7 @@ const defaultPages = [
   { slug: "privacy-policy", title: "Privacy Policy" },
   { slug: "terms-conditions", title: "Terms & Conditions" },
   { slug: "about-us", title: "About Us" },
+  { slug: "blog", title: "Blog" },
 ];
 
 function defaultHtml(slug: string): string {
@@ -24,6 +25,7 @@ function defaultHtml(slug: string): string {
     "privacy-policy": "<h2>Privacy Policy</h2><p>How we collect, use, and protect your personal information.</p>",
     "terms-conditions": "<h2>Terms & Conditions</h2><p>Please read these terms carefully before using our store.</p>",
     "about-us": "<h2>About Us</h2><p>Learn more about our story, mission, and values.</p>",
+    blog: "<h2>Blog</h2><p>News, stories, and updates from our store.</p>",
   };
   return templates[slug] ?? "<h2>Page</h2><p>Content coming soon.</p>";
 }
@@ -85,6 +87,38 @@ export async function getFaqs(storeId: string) {
   await connectDatabase();
   const faqs = await FaqModel.find({ storeId }).sort({ sortOrder: 1, createdAt: 1 }).lean();
   return { ok: true as const, data: { faqs } };
+}
+
+export async function getPublicFaqs(storeId: string) {
+  await connectDatabase();
+  const faqs = await FaqModel.find({ storeId, active: true })
+    .sort({ sortOrder: 1, createdAt: 1 })
+    .select("question answer category sortOrder")
+    .lean();
+  return { ok: true as const, data: { faqs } };
+}
+
+/** Blog posts are CMS pages with slug prefix `post/` (e.g. post/summer-sale). */
+export async function getPublicBlogPosts(storeId: string) {
+  await connectDatabase();
+  const posts = await CmsPageModel.find({
+    storeId,
+    published: true,
+    slug: { $regex: /^post\// },
+  })
+    .sort({ updatedAt: -1 })
+    .select("slug title seoDescription ogImage html updatedAt createdAt")
+    .lean();
+  return {
+    ok: true as const,
+    data: {
+      posts: posts.map((p) => ({
+        ...p,
+        postSlug: String(p.slug).replace(/^post\//, ""),
+        excerpt: (p.seoDescription || String(p.html || "").replace(/<[^>]+>/g, " ").trim()).slice(0, 180),
+      })),
+    },
+  };
 }
 
 export async function createFaq(storeId: string, userId: string, payload: { question: string; answer: string; category?: string }) {

@@ -8,7 +8,7 @@ import type { StorefrontSectionLike } from "./storefront-types";
 export function CatSection({ section }: { section?: StorefrontSectionLike }) {
   const { theme, categories, products } = useTenant();
   const { primaryColor, layoutWidth, darkMode } = theme;
-  const layoutClass = layoutWidth === "100%" ? "" : "max-w-7xl";
+  const layoutClass = layoutWidth === "100%" ? "" : "max-w-[1440px]";
   const isDark = darkMode;
   const p = section?.props ?? {};
 
@@ -16,7 +16,6 @@ export function CatSection({ section }: { section?: StorefrontSectionLike }) {
   const subtitle = (p.subtitle as string) || "";
   const gridCols = (p.gridColumns as string) || "4";
   const bgColor = (p.backgroundColor as string) || "";
-  const cardStyle = (p.cardStyle as string) || "default";
 
   const colMap: Record<string, string> = { "2": "sm:grid-cols-2", "3": "sm:grid-cols-3", "4": "sm:grid-cols-4", "5": "sm:grid-cols-5", "6": "sm:grid-cols-6" };
   const colClass = colMap[gridCols] ?? "sm:grid-cols-4";
@@ -28,16 +27,16 @@ export function CatSection({ section }: { section?: StorefrontSectionLike }) {
   const productCount = (catId: string) => products.filter((p) => (p.categoryIds ?? []).includes(catId)).length;
 
   return (
-    <section className="py-8 sm:py-12"
-      style={{ backgroundColor: bgColor || (isDark ? "#000000" : "#ffffff") }}>
+    <section className="py-apple-section"
+      style={{ backgroundColor: bgColor || (isDark ? "var(--color-apple-surface-black)" : "var(--color-apple-canvas)") }}>
       <div className={`mx-auto ${layoutClass} px-4 sm:px-6 lg:px-8`}>
-        <div className="mb-6 text-center">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl"
-            style={{ color: isDark ? "#fafafa" : "#18181b" }}>
+        <div className="mb-8 text-center">
+          <h2 className="text-display-lg"
+            style={{ color: isDark ? "var(--color-apple-body-on-dark)" : "var(--color-apple-ink)" }}>
             {title}
           </h2>
           {subtitle && (
-            <p className="mt-2 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>{subtitle}</p>
+            <p className="mt-2 text-lead" style={{ color: isDark ? "var(--color-apple-body-muted)" : "var(--color-apple-ink-muted-48)" }}>{subtitle}</p>
           )}
         </div>
         <div className={`grid grid-cols-2 gap-3 ${colClass} sm:gap-4`}>
@@ -45,9 +44,9 @@ export function CatSection({ section }: { section?: StorefrontSectionLike }) {
             const count = productCount(cat._id);
             return (
               <Link key={cat._id} href={`/category/${cat.slug}`}
-                className="group flex flex-col items-center gap-2 rounded-2xl border p-4 sm:p-6 transition-all hover:shadow-md hover:-translate-y-0.5"
-                style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", backgroundColor: isDark ? "#18181b" : "#fafafa" }}>
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl sm:h-16 sm:w-16"
+                className="group flex flex-col items-center gap-2 rounded-apple-lg border border-apple-hairline bg-apple-canvas p-4 transition-all hover:bg-apple-canvas-parchment sm:p-6"
+                style={{ borderColor: isDark ? "var(--color-apple-surface-tile-3)" : "var(--color-apple-hairline)", backgroundColor: isDark ? "var(--color-apple-surface-tile-2)" : "var(--color-apple-canvas)" }}>
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-apple-sm sm:h-16 sm:w-16"
                   style={{ backgroundColor: `${primaryColor}12` }}>
                   {cat.imageUrl ? (
                     <img src={cat.imageUrl} alt={cat.name} className="h-full w-full object-cover" />
@@ -55,8 +54,8 @@ export function CatSection({ section }: { section?: StorefrontSectionLike }) {
                     <ImageIcon className="h-6 w-6" style={{ color: primaryColor }} />
                   )}
                 </div>
-                <span className="text-xs font-medium sm:text-sm" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{cat.name}</span>
-                <span className="text-[10px] sm:text-xs" style={{ color: isDark ? "#71717a" : "#a1a1aa" }}>
+                <span className="text-caption-strong text-apple-ink">{cat.name}</span>
+                <span className="text-fine-print text-apple-ink-muted-48">
                   {count} {count === 1 ? "product" : "products"}
                 </span>
               </Link>

@@ -16,16 +16,18 @@ const rawBaseQuery = fetchBaseQuery({
     if (typeof window !== "undefined") {
       headers.set("x-forwarded-host", window.location.host);
 
-      // Attach access token for authenticated API calls
-      const at = getAccessToken();
-      if (at) {
-        headers.set("Authorization", `Bearer ${at}`);
-      }
-
-      // Customer token (storefront) — kept separate
-      const customerToken = localStorage.getItem("customer_token");
-      if (customerToken && !at) {
-        headers.set("Authorization", `Bearer ${customerToken}`);
+      // Prefer an Authorization header already set by the endpoint (e.g. customer APIs).
+      // Otherwise attach platform access token, then storefront customer token.
+      if (!headers.has("Authorization")) {
+        const at = getAccessToken();
+        if (at) {
+          headers.set("Authorization", `Bearer ${at}`);
+        } else {
+          const customerToken = localStorage.getItem("customer_token");
+          if (customerToken) {
+            headers.set("Authorization", `Bearer ${customerToken}`);
+          }
+        }
       }
     }
     return headers;
@@ -41,6 +43,26 @@ async function tryRefreshToken(): Promise<string | null> {
   return refreshAccessTokenCoordinated();
 }
 
+function getAuthorizationHeader(args: string | FetchArgs): string | undefined {
+  if (typeof args === "string") return undefined;
+  const headers = args.headers;
+  if (!headers) return undefined;
+  if (headers instanceof Headers) return headers.get("Authorization") ?? undefined;
+  if (Array.isArray(headers)) {
+    const match = headers.find(([key]) => key.toLowerCase() === "authorization");
+    return match?.[1];
+  }
+  const record = headers as Record<string, string>;
+  return record.Authorization ?? record.authorization;
+}
+
+/** Storefront customer JWTs must not trigger merchant refresh / logout. */
+function isCustomerAuthorization(authorization: string | undefined): boolean {
+  if (!authorization?.startsWith("Bearer ") || typeof window === "undefined") return false;
+  const customerToken = localStorage.getItem("customer_token");
+  return Boolean(customerToken && authorization === `Bearer ${customerToken}`);
+}
+
 const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
   api,
@@ -49,8 +71,13 @@ const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown,
   // First attempt
   let result = await rawBaseQuery(args, api, extraOptions);
 
-  // On 401, try to refresh the access token and retry once
+  // On 401, try to refresh the access token and retry once (merchant/platform sessions only)
   if (result.error && result.error.status === 401) {
+    if (isCustomerAuthorization(getAuthorizationHeader(args))) {
+      // Leave customer_token alone here — protected pages decide via Redux restore.
+      return result;
+    }
+
     const newToken = await tryRefreshToken();
 
     if (newToken) {

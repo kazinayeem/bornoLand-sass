@@ -1,17 +1,20 @@
 "use client";
 
-import { Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRegisterMutation } from "@/redux/api/customer-api";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "@/redux/store";
 import { setCustomer } from "@/redux/slices/customer-slice";
 import { motion } from "framer-motion";
 import { UserPlus, Mail, Lock, User, Eye, EyeOff, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
+import { validateInternalRedirect } from "@/lib/auth-redirect";
+import { resolveStoreHref } from "@/lib/store-href";
 
 const registerFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -27,17 +30,26 @@ type RegisterFormData = z.infer<typeof registerFormSchema>;
 
 function RegisterForm() {
   const router = useRouter();
+  const pathname = usePathname() || "";
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/";
+  const { restored, isAuthenticated } = useSelector((s: RootState) => s.customer);
+  const redirectTo = validateInternalRedirect(searchParams.get("redirect")) ?? "/";
   const [register, { isLoading }] = useRegisterMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState("");
+  const redirectedRef = useRef(false);
 
   const { register: reg, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
     resolver: zodResolver(registerFormSchema),
     defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   });
+
+  useEffect(() => {
+    if (!restored || !isAuthenticated || redirectedRef.current) return;
+    redirectedRef.current = true;
+    router.replace(resolveStoreHref(redirectTo, pathname));
+  }, [restored, isAuthenticated, redirectTo, router, pathname]);
 
   const onSubmit = async (data: RegisterFormData) => {
     setApiError("");
@@ -47,7 +59,8 @@ function RegisterForm() {
         localStorage.setItem("customer_token", result.data.token);
         dispatch(setCustomer({ customer: result.data.customer, token: result.data.token }));
         window.dispatchEvent(new Event("auth-change"));
-        router.push(redirectTo);
+        redirectedRef.current = true;
+        router.replace(resolveStoreHref(redirectTo, pathname));
       } else {
         setApiError(result.message ?? "Registration failed");
       }
@@ -59,6 +72,10 @@ function RegisterForm() {
       }
     }
   };
+
+  if (!restored || isAuthenticated) {
+    return <CustomerAuthLoader message={isAuthenticated ? "Taking you back…" : "Checking your account…"} />;
+  }
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">

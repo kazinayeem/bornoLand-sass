@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import {
   ImagePlus, Library, RefreshCw, Upload, Loader2, X, Search,
   Image, Video, FileText, Clock, Star, ChevronLeft, ChevronRight,
-  Trash2, Link, ExternalLink,
+  Trash2, Link, ExternalLink, Copy,
 } from "lucide-react";
 import type { MediaFile } from "@/redux/api/media-api";
 import {
@@ -76,6 +76,7 @@ export function MediaPicker({
   label = "Image",
   compact = false,
   hideLabel = false,
+  allowUrlPaste = false,
 }: {
   storeId: string;
   billingHref: string;
@@ -85,6 +86,7 @@ export function MediaPicker({
   label?: string;
   compact?: boolean;
   hideLabel?: boolean;
+  allowUrlPaste?: boolean;
 }) {
   // ─── Wrapper state ──────────────────────────────────────────
   const [open, setOpen] = useState(false);
@@ -101,6 +103,7 @@ export function MediaPicker({
   const [importUrl, setImportUrl] = useState("");
   const [uploads, setUploads] = useState<UploadProgress[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [pasteUrl, setPasteUrl] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
@@ -147,6 +150,7 @@ export function MediaPicker({
     sort: sidebarFilter === "recent" ? "newest" : undefined,
     page,
     limit: PAGE_SIZE,
+    folder,
     ...filterQuery,
   });
 
@@ -253,6 +257,34 @@ export function MediaPicker({
     }
   }, [deleteFile, storeId, refetch]);
 
+  const handleCopyUrl = useCallback(async () => {
+    if (!previewUrl) return;
+    try {
+      await navigator.clipboard.writeText(previewUrl);
+      toast.success("URL copied");
+    } catch {
+      toast.error("Could not copy URL");
+    }
+  }, [previewUrl]);
+
+  const handleApplyPasteUrl = useCallback(() => {
+    const url = pasteUrl.trim();
+    if (!url) return;
+    try {
+      new URL(url);
+    } catch {
+      toast.error("Enter a valid URL");
+      return;
+    }
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      toast.error("URL must start with http:// or https://");
+      return;
+    }
+    onChange({ url });
+    setPasteUrl("");
+    toast.success("Image URL applied");
+  }, [onChange, pasteUrl]);
+
   // ─── Wrapper view ─────────────────────────────────────────
 
   const wrapperPreviewSize = compact ? "h-16 w-16" : "h-20 w-20";
@@ -300,7 +332,7 @@ export function MediaPicker({
               )}
             >
               <Library className={compact ? "h-3 w-3" : "h-4 w-4"} />
-              {previewUrl ? "Open Media Library" : "Choose Image"}
+              {previewUrl ? "Replace from library" : "Select from Media Library"}
             </button>
 
             {previewUrl && (
@@ -318,6 +350,17 @@ export function MediaPicker({
                 </button>
                 <button
                   type="button"
+                  onClick={() => void handleCopyUrl()}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg border border-apple-hairline font-medium hover:bg-apple-canvas-parchment",
+                    compact ? "px-2.5 py-1.5 text-[11px]" : "px-3 py-2 text-sm"
+                  )}
+                >
+                  <Copy className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
+                  Copy URL
+                </button>
+                <button
+                  type="button"
                   onClick={() => onChange({ url: "" })}
                   className={compact ? "text-[11px] text-red-600" : "text-sm text-red-600"}
                 >
@@ -326,6 +369,32 @@ export function MediaPicker({
               </>
             )}
           </div>
+
+          {allowUrlPaste && (
+            <div className="flex items-center gap-2">
+              <input
+                type="url"
+                value={pasteUrl}
+                onChange={(e) => setPasteUrl(e.target.value)}
+                placeholder="Paste image URL (https://…)"
+                className={cn(
+                  "min-w-0 flex-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1.5 text-apple-ink-muted-80 placeholder:text-apple-ink-muted-48 focus:border-zinc-400 focus:outline-none",
+                  compact ? "text-[10px]" : "text-sm",
+                )}
+              />
+              <button
+                type="button"
+                onClick={handleApplyPasteUrl}
+                disabled={!pasteUrl.trim()}
+                className={cn(
+                  "shrink-0 rounded-lg border border-apple-hairline font-medium hover:bg-apple-canvas-parchment disabled:opacity-40",
+                  compact ? "px-2 py-1.5 text-[10px]" : "px-3 py-2 text-sm",
+                )}
+              >
+                Use URL
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

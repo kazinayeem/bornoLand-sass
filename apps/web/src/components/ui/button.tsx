@@ -5,7 +5,7 @@ import { LoadingSpinner } from "@/components/loading/loading-spinner";
 import { LOADING_LABELS, type LoadingLabelKey } from "@/lib/loading/constants";
 
 const buttonVariants = cva(
-  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap font-body transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-apple-primary-focus focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 btn-press",
+  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap font-body transition-all duration-[var(--duration-fast)] ease-[var(--ease-apple)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-apple-primary-focus focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 btn-press",
   {
     variants: {
       variant: {

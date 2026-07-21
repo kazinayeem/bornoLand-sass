@@ -34,6 +34,7 @@ export function BuilderMediaField({
       folder={folder}
       compact
       hideLabel
+      allowUrlPaste
       value={selection}
       onChange={handleChange}
     />

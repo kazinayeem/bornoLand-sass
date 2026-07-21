@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import type { Response } from "express";
 import type { SubdomainRequest } from "../../common/middleware/subdomain.middleware.js";
-import { createOrder, getCustomerOrders, getOrderById } from "./order.service.js";
+import { createOrder, getCustomerOrders, getOrderById, trackOrderByNumber } from "./order.service.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 import jwt from "jsonwebtoken";
 
@@ -58,6 +58,22 @@ export async function getOrderController(request: SubdomainRequest, response: Re
   if (!customerId) return sendFailure(response, "Not authenticated", 401);
 
   const result = await getOrderById(request.params.id as string, customerId);
+  return result.ok
+    ? sendSuccess(response, result.data)
+    : sendFailure(response, result.message, 404);
+}
+
+export async function trackOrderController(request: SubdomainRequest, response: Response) {
+  const storeId = request.store?._id?.toString() ?? (request.query.storeId as string | undefined);
+  if (!storeId) return sendFailure(response, "Store not found", 404);
+
+  const orderNumber = typeof request.query.orderNumber === "string" ? request.query.orderNumber : "";
+  const email = typeof request.query.email === "string" ? request.query.email : "";
+  if (!orderNumber.trim() || !email.trim()) {
+    return sendFailure(response, "Order number and email are required", 400);
+  }
+
+  const result = await trackOrderByNumber(storeId, orderNumber, email);
   return result.ok
     ? sendSuccess(response, result.data)
     : sendFailure(response, result.message, 404);

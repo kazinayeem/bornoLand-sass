@@ -43,6 +43,7 @@
     "next": "15.3.3",
     "nodemailer": "^7.0.6",
     "react": "19.1.0",
+    "react-before-after-slider-component": "^1.1.8",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.62.0",
     "react-redux": "^9.3.0",

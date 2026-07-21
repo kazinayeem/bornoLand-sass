@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { PageType, HeaderSettings, FooterSettings } from "@/redux/api/store-page-api";
+import { normalizeSectionStyle } from "@/lib/section-style";
 
 export type SectionProps = Record<string, string>;
 
@@ -88,6 +89,7 @@ export type GalleryItemData = {
   title: string;
   alt: string;
   link: string;
+  caption?: string;
 };
 
 // ─── Section style with responsive overrides ───────────────────────
@@ -111,6 +113,7 @@ export type SectionStyle = {
 
   // Typography
   fontFamily?: string; fontSize?: string; fontWeight?: string; letterSpacing?: string;
+  lineHeight?: string; textShadow?: string;
   textTransform?: string; textDecoration?: string; color?: string; textAlign?: string;
 
   // Flex
@@ -137,6 +140,7 @@ export type SectionStyle = {
   trustBadgeItems?: TrustBadgeData[];
   testimonialItems?: TestimonialItemData[];
   galleryItems?: GalleryItemData[];
+  logoItems?: GalleryItemData[];
 
   // Slider
   slides?: SlideData[];
@@ -378,6 +382,21 @@ function applySnapshot(state: BuilderState, snapshot: GlobalSnapshot): void {
   state.footerSections = snapshot.footerSections;
 }
 
+/** Rolling undo/redo window — keep only the latest N snapshots. */
+export const BUILDER_HISTORY_LIMIT = 10;
+
+function trimPast(state: BuilderState): void {
+  while (state.past.length > BUILDER_HISTORY_LIMIT) {
+    state.past.shift();
+  }
+}
+
+function trimFuture(state: BuilderState): void {
+  while (state.future.length > BUILDER_HISTORY_LIMIT) {
+    state.future.pop();
+  }
+}
+
 /** Action types that should automatically push history. Keep in sync with builderHistoryMiddleware. */
 export const BUILDER_HISTORY_ACTIONS = new Set([
   'builder/setSections',
@@ -469,7 +488,7 @@ const builderSlice = createSlice({
     commitHistory(state, action: PayloadAction<GlobalSnapshot>) {
       state.past.push(action.payload);
       state.future = [];
-      if (state.past.length > 100) state.past.shift();
+      trimPast(state);
     },
 
     // ─── Section CRUD ──────────────────────────────────────────────────────
@@ -513,7 +532,7 @@ const builderSlice = createSlice({
     updateSectionStyle(state, action: PayloadAction<{ id: string; style: Partial<SectionStyle> }>) {
       mutateSectionById(state, action.payload.id, (section) => ({
         ...section,
-        style: { ...section.style, ...action.payload.style },
+        style: normalizeSectionStyle({ ...section.style, ...action.payload.style }) ?? { ...section.style, ...action.payload.style },
       }));
     },
 
@@ -610,6 +629,7 @@ const builderSlice = createSlice({
 
     toggleLeftPanel(state) { state.leftPanelOpen = !state.leftPanelOpen; },
     toggleRightPanel(state) { state.rightPanelOpen = !state.rightPanelOpen; },
+    setRightPanelOpen(state, action: PayloadAction<boolean>) { state.rightPanelOpen = action.payload; },
     setRightPanelPinned(state, action: PayloadAction<boolean>) { state.rightPanelPinned = action.payload; },
     setLeftPanelWidth(state, action: PayloadAction<number>) { state.leftPanelWidth = Math.max(44, Math.min(400, action.payload)); },
     setRightPanelWidth(state, action: PayloadAction<number>) { state.rightPanelWidth = Math.max(300, Math.min(500, action.payload)); },
@@ -683,11 +703,13 @@ const builderSlice = createSlice({
     },
 
     // ─── Section Library Modal ─────────────────────────────────────────────
-    openSectionLibrary(state, action: PayloadAction<{ insertPosition?: number | null; anchorPosition?: { top: number; left: number } | null; targetZone?: "header" | "body" | "footer" | null } | undefined>) {
+    openSectionLibrary(state, action: PayloadAction<{ insertPosition?: number | null; anchorPosition?: { top: number; left: number } | null; targetZone?: "header" | "body" | "footer" | null; category?: string | "all" } | undefined>) {
       state.sectionLibrary.isOpen = true;
       state.sectionLibrary.insertPosition = action.payload?.insertPosition ?? null;
       state.sectionLibrary.anchorPosition = action.payload?.anchorPosition ?? null;
       state.sectionLibrary.targetZone = action.payload?.targetZone ?? null;
+      state.sectionLibrary.activeCategory = action.payload?.category ?? "all";
+      state.sectionLibrary.searchTerm = "";
     },
 
     closeSectionLibrary(state) {
@@ -731,6 +753,7 @@ const builderSlice = createSlice({
       if (!previous) return;
       const currentSnapshot = takeSnapshot(state);
       state.future.unshift(currentSnapshot);
+      trimFuture(state);
       applySnapshot(state, previous);
       state.isDirty = true;
     },
@@ -740,6 +763,7 @@ const builderSlice = createSlice({
       if (!next) return;
       const currentSnapshot = takeSnapshot(state);
       state.past.push(currentSnapshot);
+      trimPast(state);
       applySnapshot(state, next);
       state.isDirty = true;
     },
@@ -795,7 +819,7 @@ export const {
   moveSection, duplicateSection,
   updateSectionMeta, setSelectedSection, setHoveredSection, setEditingSection,
   setActiveTab, setActiveRightTab,
-  toggleLeftPanel, toggleRightPanel, setRightPanelPinned,
+  toggleLeftPanel, toggleRightPanel, setRightPanelOpen, setRightPanelPinned,
   setLeftPanelWidth, setRightPanelWidth, setFullscreen, setPresentationMode,
   toggleSectionLock, toggleSectionFavorite, copySection, pasteSection,
   restoreHistorySnapshot, undoBuilder, redoBuilder,

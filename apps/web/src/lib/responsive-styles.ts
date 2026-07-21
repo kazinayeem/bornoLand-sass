@@ -108,12 +108,15 @@ export function computeSectionStyle(
     borderWidth: normalizeCssLength(style.borderWidth),
     borderStyle: style.borderStyle,
     boxShadow: shadowValue,
-    opacity: style.opacity ? Number(style.opacity) / 100 : undefined,
+    opacity: style.opacity !== undefined && style.opacity !== ""
+      ? Number(style.opacity) / 100
+      : undefined,
     fontFamily: style.fontFamily,
     fontWeight: style.fontWeight,
     letterSpacing: normalizeCssLength(style.letterSpacing),
     textTransform: style.textTransform as React.CSSProperties["textTransform"],
     textDecoration: style.textDecoration as React.CSSProperties["textDecoration"],
+    textShadow: style.textShadow && style.textShadow !== "none" ? style.textShadow : undefined,
     color: style.color,
     display: style.display as React.CSSProperties["display"],
     flexWrap: style.flexWrap as React.CSSProperties["flexWrap"],

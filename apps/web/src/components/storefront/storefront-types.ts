@@ -7,7 +7,7 @@ export type SectionStyle = {
   paddingTop?: string; paddingBottom?: string; paddingLeft?: string; paddingRight?: string;
   marginTop?: string; marginBottom?: string; marginLeft?: string; marginRight?: string;
   backgroundColor?: string; backgroundGradient?: string;
-  backgroundImage?: string; backgroundSize?: string; backgroundPosition?: string; backgroundRepeat?: string; backgroundAttachment?: string;
+  backgroundImage?: string; backgroundImageMediaId?: string; backgroundSize?: string; backgroundPosition?: string; backgroundRepeat?: string; backgroundAttachment?: string;
   overlayColor?: string; overlayOpacity?: string; blur?: string; backdropBlur?: string;
   borderColor?: string; borderWidth?: string; borderRadius?: string; borderStyle?: string;
   shadow?: string; opacity?: string;
@@ -18,7 +18,8 @@ export type SectionStyle = {
   animation?: string; animationDuration?: string; animationDelay?: string; animationTrigger?: string;
   parallaxSpeed?: string; sticky?: boolean;
   fontFamily?: string; fontSize?: string; fontWeight?: string; letterSpacing?: string;
-  textTransform?: string; textDecoration?: string; color?: string;
+  lineHeight?: string; textShadow?: string;
+  textTransform?: string; textDecoration?: string; color?: string; textAlign?: string;
   display?: string; flexDirection?: string; alignItems?: string; justifyContent?: string;
   flexWrap?: string; gap?: string;
   position?: string; top?: string; right?: string; bottom?: string; left?: string; zIndex?: string;

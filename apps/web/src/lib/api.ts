@@ -32,9 +32,16 @@ api.interceptors.response.use(
     if (error.code === "ERR_NETWORK") {
       console.error("[API] Network error — CORS or backend unreachable");
     }
-    if (error.response?.status === 401) {
-      localStorage.removeItem("customer_token");
-      window.dispatchEvent(new Event("auth-change"));
+    if (error.response?.status === 401 && typeof window !== "undefined") {
+      // Only clear storefront customer auth when this request used the customer JWT.
+      // Unrelated 401s (or merchant session failures) must not log the shopper out.
+      const customerToken = localStorage.getItem("customer_token");
+      const authHeader = error.config?.headers?.Authorization;
+      const authValue = typeof authHeader === "string" ? authHeader : undefined;
+      if (customerToken && authValue === `Bearer ${customerToken}`) {
+        localStorage.removeItem("customer_token");
+        window.dispatchEvent(new Event("auth-change"));
+      }
     }
     return Promise.reject(error);
   }

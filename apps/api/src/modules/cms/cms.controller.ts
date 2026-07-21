@@ -1,7 +1,7 @@
 import type { Response } from "express";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
 import type { SubdomainRequest } from "../../common/middleware/subdomain.middleware.js";
-import { getCmsPages, getCmsPage, saveCmsPage, getFaqs, createFaq, updateFaq, deleteFaq, reorderFaqs } from "./cms.service.js";
+import { getCmsPages, getCmsPage, saveCmsPage, getFaqs, getPublicFaqs, getPublicBlogPosts, createFaq, updateFaq, deleteFaq, reorderFaqs } from "./cms.service.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 import { recordAuditFromRequest } from "../audit/audit.service.js";
 import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
@@ -84,4 +84,18 @@ export async function getPublicPageController(request: SubdomainRequest, respons
 
   const result = await getCmsPage(storeId, slug);
   return result.ok ? sendSuccess(response, result.data) : sendFailure(response, result.message, 404);
+}
+
+export async function getPublicFaqsController(request: SubdomainRequest, response: Response) {
+  const storeId = request.store?._id?.toString() ?? (request.query.storeId as string | undefined);
+  if (!storeId) return sendFailure(response, "Store not found", 404);
+  const result = await getPublicFaqs(storeId);
+  return sendSuccess(response, result.data);
+}
+
+export async function getPublicBlogPostsController(request: SubdomainRequest, response: Response) {
+  const storeId = request.store?._id?.toString() ?? (request.query.storeId as string | undefined);
+  if (!storeId) return sendFailure(response, "Store not found", 404);
+  const result = await getPublicBlogPosts(storeId);
+  return sendSuccess(response, result.data);
 }

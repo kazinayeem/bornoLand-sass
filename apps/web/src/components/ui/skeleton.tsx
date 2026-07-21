@@ -4,9 +4,10 @@ export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivEl
   return (
     <div
       className={cn(
-        "animate-pulse rounded-lg bg-apple-canvas-parchment dark:bg-apple-surface-tile-3",
+        "rounded-lg bg-apple-canvas-parchment dark:bg-apple-surface-tile-3",
         className
       )}
+      style={{ animation: "skeleton-pulse 2s var(--ease-apple) infinite" }}
       {...props}
     />
   );

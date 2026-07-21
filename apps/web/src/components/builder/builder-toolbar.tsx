@@ -4,77 +4,78 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Save, Send, ExternalLink } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
-import { markSaved, setSaving, setPublishing, setSaveError } from "@/redux/slices/builder-slice";
-import { useSaveStorePageDraftMutation, usePublishStorePageMutation } from "@/redux/api/store-page-api";
+import { markSaved, setPublishing, setSaveError } from "@/redux/slices/builder-slice";
+import { usePublishStorePageMutation } from "@/redux/api/store-page-api";
 import { toast } from "sonner";
 import { useRequiredStore } from "@/providers/store-context";
 import { revalidateStorefrontAction } from "@/lib/actions/revalidate-storefront";
 import { LoadingButton } from "@/components/ui/loading-button";
+import {
+  builderSaveStatusLabel,
+  type BuilderSaveStatus,
+} from "@/hooks/use-builder-auto-save";
 import { cn } from "@/lib/utils";
-
-function timeAgo(dateStr: string | null): string {
-  if (!dateStr) return "";
-  const diff = Date.now() - new Date(dateStr).getTime();
-  if (diff < 30000) return "Just now";
-  if (diff < 60000) return `${Math.floor(diff / 1000)}s ago`;
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-  return `${Math.floor(diff / 3600000)}h ago`;
-}
 
 type Props = {
   onBack: () => void;
   saving: boolean;
   publishing: boolean;
   isDirty: boolean;
+  autoSaveStatus: BuilderSaveStatus;
+  onForceSave: () => Promise<boolean>;
 };
 
-export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
+export function BuilderToolbar({
+  onBack,
+  saving,
+  publishing,
+  isDirty,
+  autoSaveStatus,
+  onForceSave,
+}: Props) {
   const dispatch = useDispatch();
   const { store, storeId } = useRequiredStore();
-  const storeSettings = useSelector((s: RootState) => s.storeSettings);
-  const theme = useSelector((s: RootState) => s.theme);
-  const sections = useSelector((s: RootState) => s.builder.sections);
-  const headerSections = useSelector((s: RootState) => s.builder.headerSections);
-  const footerSections = useSelector((s: RootState) => s.builder.footerSections);
-  const headerSettings = useSelector((s: RootState) => s.builder.headerSettings);
-  const footerSettings = useSelector((s: RootState) => s.builder.footerSettings);
   const pageId = useSelector((s: RootState) => s.builder.page.id);
-  const lastSaved = useSelector((s: RootState) => s.builder.lastSaved);
   const lastSaveError = useSelector((s: RootState) => s.builder.lastSaveError);
 
-  const [savePageDraft] = useSaveStorePageDraftMutation();
   const [publishPage] = usePublishStorePageMutation();
-  const [, setNow] = useState(Date.now());
+  const [statusVisible, setStatusVisible] = useState(true);
 
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 10000);
-    return () => clearInterval(interval);
-  }, []);
+    if (autoSaveStatus === "saved") {
+      setStatusVisible(true);
+      const t = setTimeout(() => setStatusVisible(false), 2000);
+      return () => clearTimeout(t);
+    }
+    if (autoSaveStatus === "idle") {
+      setStatusVisible(false);
+      return;
+    }
+    setStatusVisible(true);
+  }, [autoSaveStatus]);
+
+  const handleBack = async () => {
+    if (isDirty) {
+      await onForceSave();
+    }
+    onBack();
+  };
 
   const handleSave = async () => {
     if (!pageId) {
       toast.error("Home page not loaded");
       return;
     }
-    dispatch(setSaving(true));
-    try {
-      await savePageDraft({
-        id: pageId,
-        storeId,
-        sections,
-        headerSections,
-        footerSections,
-        headerSettings,
-        footerSettings,
-        theme,
-        settings: storeSettings,
-      }).unwrap();
-      dispatch(markSaved(new Date().toISOString()));
-      toast.success("Saved");
-    } catch {
-      dispatch(setSaveError("Save failed"));
-      toast.error("Failed to save");
+    const ok = await onForceSave();
+    if (ok) toast.success("Saved");
+    else if (!isDirty) toast.message("Nothing to save");
+  };
+
+  const handlePreview = async () => {
+    if (isDirty) {
+      await onForceSave();
     }
+    window.open(`/store/${store.slug}`, "_blank", "noopener,noreferrer");
   };
 
   const handlePublish = async () => {
@@ -84,35 +85,25 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
     }
     dispatch(setPublishing(true));
     try {
-      await savePageDraft({
-        id: pageId,
-        storeId,
-        sections,
-        headerSections,
-        footerSections,
-        headerSettings,
-        footerSettings,
-        theme,
-        settings: storeSettings,
-      }).unwrap();
+      await onForceSave();
       await publishPage({ id: pageId, storeId }).unwrap();
       await revalidateStorefrontAction({ tenantSlug: store.subdomain || store.slug, storeId, scope: "all" });
       dispatch(markSaved(new Date().toISOString()));
       toast.success("Published!");
     } catch {
+      dispatch(setSaveError("Publish failed"));
       toast.error("Publish failed");
     }
     dispatch(setPublishing(false));
   };
 
-  const statusLabel = saving
-    ? "Saving…"
-    : lastSaveError
-      ? "Save failed"
-      : isDirty
-        ? "Unsaved changes"
-        : lastSaved
-          ? `Saved ${timeAgo(lastSaved)}`
+  const statusLabel =
+    publishing
+      ? "Publishing…"
+      : lastSaveError && autoSaveStatus === "error"
+        ? builderSaveStatusLabel("error")
+        : statusVisible
+          ? builderSaveStatusLabel(autoSaveStatus)
           : null;
 
   return (
@@ -120,7 +111,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
-          onClick={onBack}
+          onClick={() => void handleBack()}
           aria-label="Back to dashboard"
           className="btn-press flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-apple-surface-chip/64 text-apple-ink-muted-80 transition-colors hover:text-apple-ink"
         >
@@ -128,7 +119,17 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
         </button>
         <div className="min-w-0">
           <p className="truncate text-body-strong text-apple-ink">{store.shortName || store.name}</p>
-          <p className="truncate text-caption text-apple-ink-muted-48">
+          <p
+            className={cn(
+              "truncate text-caption transition-opacity duration-300",
+              autoSaveStatus === "unsaved" && "text-amber-600",
+              autoSaveStatus === "saving" && "text-apple-primary",
+              autoSaveStatus === "saved" && "text-emerald-600",
+              autoSaveStatus === "error" && "text-red-600",
+              (autoSaveStatus === "idle" || !statusLabel) && "text-apple-ink-muted-48",
+            )}
+            aria-live="polite"
+          >
             Homepage{statusLabel ? ` · ${statusLabel}` : ""}
           </p>
         </div>
@@ -137,7 +138,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={() => window.open(`/store/${store.slug}`, "_blank", "noopener,noreferrer")}
+          onClick={() => void handlePreview()}
           className="btn-press hidden items-center gap-2 rounded-apple-pill border border-apple-hairline bg-apple-canvas px-4 py-2 text-caption font-medium text-apple-ink transition-colors hover:bg-apple-canvas-parchment sm:inline-flex"
         >
           <ExternalLink className="h-3.5 w-3.5" />
@@ -150,7 +151,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
           loading={saving}
           loadingKey="save"
           onClick={() => void handleSave()}
-          disabled={!isDirty}
+          disabled={!isDirty && !saving}
           icon={<Save className="h-3.5 w-3.5" />}
           className="rounded-apple-pill"
         >

@@ -17,6 +17,7 @@ import {
   ArrowUp, ArrowDown, Copy, Settings2,
 } from "lucide-react";
 import { getSectionDef, type SectionPropDef } from "@/lib/section-registry";
+import { getSectionEditor } from "@/components/builder/section-editors";
 import { BuilderMediaField } from "@/components/builder/builder-media-field";
 import { MediaPicker } from "@/components/media/media-picker";
 import { RepeaterEditor, type RepeaterField } from "@/components/builder/repeater-editor";
@@ -25,49 +26,50 @@ import { FooterBuilderSettings } from "@/components/builder/footer-builder-setti
 import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
 import { normalizeCssLength } from "@/lib/section-style";
+import { styleChangesToProps } from "@/lib/resolve-section-visuals";
 import type { MediaSelection } from "@/lib/media-selection";
+import { isVideoUrl } from "@/lib/builder-media-urls";
+import {
+  AdvancedDetails,
+  BuilderColorPicker,
+  ButtonPresetControl,
+  FontFamilyControl,
+  FontSizeControl,
+  FontWeightControl,
+  GradientPresetControl,
+  LINE_HEIGHT_PRESETS,
+  LETTER_SPACING_PRESETS,
+  MaxWidthControl,
+  OpacityControl,
+  PresetChips,
+  RadiusControl,
+  SHADOW_PRESETS,
+  SpacingSlider,
+  TEXT_SHADOW_PRESETS,
+  TextAlignControl,
+  TextTransformControl,
+  VisualSlider,
+} from "@/components/builder/controls/visual-controls";
 
-// ─── Shared Controls ──────────────────────────────────────────────
-
-function ColorInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="flex items-center gap-2">
-      <input type="color" value={value || "#000000"} onChange={(e) => onChange(e.target.value)}
-        className="h-7 w-7 cursor-pointer rounded border border-zinc-200 p-0.5" />
-      <input type="text" value={value} onChange={(e) => onChange(e.target.value)}
-        placeholder="#000000" className="h-7 flex-1 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
-    </div>
-  );
+function ColorInput({ value, onChange, brandColors }: { value: string; onChange: (v: string) => void; brandColors?: string[] }) {
+  return <BuilderColorPicker value={value} onChange={onChange} brandColors={brandColors} />;
 }
 
 function RangeInput({ value, onChange, min, max, step, suffix }: { value: string; onChange: (v: string) => void; min?: number; max?: number; step?: number; suffix?: string }) {
-  const num = Number(value) || 0;
   return (
-    <div className="flex items-center gap-2">
-      <input type="range" min={min ?? 0} max={max ?? 100} step={step ?? 1} value={num}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-zinc-200 accent-zinc-900" />
-      <input type="number" value={num} onChange={(e) => onChange(e.target.value)}
-        min={min} max={max} step={step}
-        className="h-7 w-14 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 text-center focus:border-zinc-400 focus:outline-none" />
-      {suffix && <span className="text-[9px] text-apple-ink-muted-48 w-4">{suffix}</span>}
-    </div>
+    <VisualSlider
+      value={value}
+      onChange={onChange}
+      min={min ?? 0}
+      max={max ?? 100}
+      step={step ?? 1}
+      suffix={suffix}
+    />
   );
 }
 
 function SpacingInput({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
-  const num = Number(value) || 0;
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className="w-12 text-[10px] font-medium text-apple-ink-muted-48">{label}</span>
-      <input type="range" min={0} max={200} step={1} value={num}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-1 flex-1 appearance-none rounded-full bg-zinc-200 accent-zinc-900" />
-      <input type="number" value={num} onChange={(e) => onChange(e.target.value)}
-        className="h-6 w-12 rounded border border-zinc-200 bg-transparent px-1 text-[10px] text-apple-ink-muted-80 text-center focus:border-zinc-400 focus:outline-none" />
-      <span className="text-[9px] text-apple-ink-muted-48">px</span>
-    </div>
-  );
+  return <SpacingSlider value={value} onChange={onChange} label={label} />;
 }
 
 function SelectInput({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { label: string; value: string }[] }) {
@@ -100,14 +102,15 @@ function TextInput({ value, onChange, placeholder }: { value: string; onChange: 
 // ─── Section-defined property controls ────────────────────────────
 
 function ControlRenderer({
-  propDef, propKey, value, onChange, onSectionPropsChange, sectionProps, storeId, storeSlug,
+  propDef, propKey, value, onChange, onSectionPropsChange, sectionProps, storeId, storeSlug, brandColors,
 }: {
   propDef: SectionPropDef; propKey: string; value: string; onChange: (v: string) => void;
   onSectionPropsChange: (props: Record<string, string | undefined>) => void;
   sectionProps: Record<string, string | undefined>; storeId: string; storeSlug: string;
+  brandColors?: string[];
 }) {
   switch (propDef.type) {
-    case "color": return <ColorInput value={value} onChange={onChange} />;
+    case "color": return <ColorInput value={value} onChange={onChange} brandColors={brandColors} />;
     case "image": return <BuilderMediaField storeId={storeId} storeSlug={storeSlug} propKey={propKey} sectionProps={sectionProps} onPropsChange={onSectionPropsChange} />;
     case "range": return <RangeInput value={value} onChange={onChange} min={propDef.min} max={propDef.max} step={propDef.step} />;
     case "toggle": return <ToggleInput value={value} onChange={onChange} />;
@@ -119,6 +122,21 @@ function ControlRenderer({
     case "number": return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder={propDef.placeholder}
       className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />;
     case "video":
+      return (
+        <div className="space-y-1.5">
+          <TextInput value={value} onChange={onChange} placeholder={propDef.placeholder || "https://youtube.com/... or .mp4"} />
+          {value && !isVideoUrl(value) ? (
+            <p className="text-[10px] text-red-600">Enter a valid YouTube, Vimeo, or MP4 URL</p>
+          ) : null}
+          <BuilderMediaField
+            storeId={storeId}
+            storeSlug={storeSlug}
+            propKey={propKey}
+            sectionProps={sectionProps}
+            onPropsChange={onSectionPropsChange}
+          />
+        </div>
+      );
     case "url": return <TextInput value={value} onChange={onChange} placeholder={propDef.placeholder} />;
     default: return <TextInput value={value} onChange={onChange} placeholder={propDef.placeholder} />;
   }
@@ -149,15 +167,15 @@ const groupOrder = ["content", "layout", "background", "typography", "spacing", 
 
 const PRIMARY_TABS: Array<{ key: RightTab; label: string; icon: typeof Type }> = [
   { key: "content", label: "Content", icon: Type },
-  { key: "style", label: "Look", icon: PaintBucket },
+  { key: "style", label: "Style", icon: PaintBucket },
   { key: "layout", label: "Layout", icon: Box },
 ];
 
 const ADVANCED_TABS: Array<{ key: RightTab; label: string; icon: typeof Type }> = [
-  { key: "responsive", label: "Mobile & tablet", icon: MonitorSmartphone },
-  { key: "animation", label: "Motion", icon: Sparkles },
-  { key: "seo", label: "Search & labels", icon: Globe },
-  { key: "advanced", label: "Custom code", icon: Lightbulb },
+  { key: "responsive", label: "Responsive", icon: MonitorSmartphone },
+  { key: "animation", label: "Animation", icon: Sparkles },
+  { key: "seo", label: "SEO", icon: Globe },
+  { key: "advanced", label: "Advanced", icon: Lightbulb },
 ];
 
 // ─── Collapsible group wrapper ────────────────────────────────────
@@ -197,27 +215,29 @@ function ControlRow({ label, children, responsive }: { label: string; children: 
   );
 }
 
-function StyleBackgroundInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [mode, setMode] = useState<"picker" | "none">(value ? "picker" : "none");
+function StyleBackgroundInput({
+  value,
+  mediaId,
+  onChange,
+}: {
+  value: string;
+  mediaId?: string;
+  onChange: (selection: MediaSelection) => void;
+}) {
   const { storeId, storeSlug } = useRequiredStore();
+  const selection: MediaSelection = mediaId ? { url: value, mediaId } : { url: value };
+
   return (
-    <div className="space-y-2">
-      <div className="flex gap-1">
-        <button onClick={() => setMode("picker")} className={cn("flex-1 rounded-lg border px-2 py-1 text-[9px] font-medium transition-all", mode === "picker" ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment")}>Image</button>
-        <button onClick={() => { setMode("none"); onChange(""); }} className={cn("flex-1 rounded-lg border px-2 py-1 text-[9px] font-medium transition-all", mode === "none" ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment")}>None</button>
-      </div>
-      {mode === "picker" && (
-        <MediaPicker
-          storeId={storeId}
-          billingHref={`/store/${storeSlug}/billing`}
-          value={value}
-          onChange={(sel: MediaSelection) => onChange(sel.url)}
-          folder="builder"
-          compact
-          hideLabel
-        />
-      )}
-    </div>
+    <MediaPicker
+      storeId={storeId}
+      billingHref={`/store/${storeSlug}/billing`}
+      value={selection}
+      onChange={onChange}
+      folder="builder"
+      compact
+      hideLabel
+      allowUrlPaste
+    />
   );
 }
 
@@ -225,7 +245,12 @@ function StyleBackgroundInput({ value, onChange }: { value: string; onChange: (v
 
 export function PropertiesPanel() {
   const dispatch = useDispatch();
-  const { storeId, storeSlug } = useRequiredStore();
+  const { storeId, storeSlug, store } = useRequiredStore();
+  const brandColors = useMemo(() => {
+    const theme = store?.theme;
+    return [theme?.primaryColor, theme?.secondaryColor, store?.brandColor, store?.accentColor]
+      .filter((c): c is string => Boolean(c && typeof c === "string"));
+  }, [store]);
   const selectedId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const editingZone = useSelector((s: RootState) => s.builder.editingZone);
   const section = useSelector((s: RootState) => {
@@ -240,7 +265,7 @@ export function PropertiesPanel() {
   const rightPanelPinned = useSelector((s: RootState) => s.builder.rightPanelPinned);
   const device = useSelector((s: RootState) => s.preview.device);
 
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set(["bg", "typo", "border", "shadow", "entrance", "motion"]));
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set(["bg", "border", "shadow", "opacity", "btnStyle", "entrance", "motion", "gapRadius", "sizing"]));
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // ─── Repeater configs (static, defined outside conditional) ─────────────────
@@ -265,7 +290,7 @@ export function PropertiesPanel() {
         { key: "name", label: "Name", type: "text", placeholder: "Full name..." },
         { key: "role", label: "Role", type: "text", placeholder: "Job title..." },
         { key: "bio", label: "Bio", type: "textarea", placeholder: "Short bio..." },
-        { key: "image", label: "Image URL", type: "url", placeholder: "https://..." },
+        { key: "image", label: "Image", type: "image" },
         { key: "twitter", label: "Twitter URL", type: "url", placeholder: "https://twitter.com/..." },
         { key: "linkedin", label: "LinkedIn URL", type: "url", placeholder: "https://linkedin.com/..." },
       ],
@@ -285,15 +310,15 @@ export function PropertiesPanel() {
         { key: "role", label: "Role", type: "text", placeholder: "Verified Buyer" },
         { key: "text", label: "Review Text", type: "textarea", placeholder: "Customer review..." },
         { key: "rating", label: "Rating (1-5)", type: "number", placeholder: "5" },
-        { key: "avatar", label: "Avatar URL", type: "url", placeholder: "https://..." },
+        { key: "avatar", label: "Avatar", type: "image" },
         { key: "badge", label: "Badge", type: "text", placeholder: "Verified Purchase" },
       ],
     },
     "image-carousel": {
       field: "slides", title: "Carousel Slides", addLabel: "Add Slide",
       fields: [
-        { key: "image", label: "Image URL", type: "url", placeholder: "https://..." },
-        { key: "mobileImage", label: "Mobile Image URL", type: "url", placeholder: "https://..." },
+        { key: "image", label: "Image", type: "image" },
+        { key: "mobileImage", label: "Mobile Image", type: "image" },
         { key: "alt", label: "Alt Text", type: "text", placeholder: "Describe the image..." },
         { key: "badge", label: "Badge", type: "text", placeholder: "New" },
         { key: "title", label: "Title", type: "text", placeholder: "Slide title..." },
@@ -313,7 +338,7 @@ export function PropertiesPanel() {
     gallery: {
       field: "galleryItems", title: "Gallery Images", addLabel: "Add Image",
       fields: [
-        { key: "image", label: "Image URL", type: "url", placeholder: "https://..." },
+        { key: "image", label: "Image", type: "image" },
         { key: "title", label: "Title", type: "text", placeholder: "Image title..." },
         { key: "alt", label: "Alt Text", type: "text", placeholder: "Image description..." },
         { key: "link", label: "Link URL", type: "url", placeholder: "https://..." },
@@ -369,7 +394,15 @@ export function PropertiesPanel() {
     const nextValue = typeof value === "string" && LENGTH_STYLE_KEYS.has(key)
       ? (normalizeCssLength(value) ?? value)
       : value;
-    dispatch(updateSectionStyle({ id: section.id, style: { [key]: nextValue } as Partial<SectionStyle> }));
+    const stylePatch = { [key]: nextValue } as Partial<SectionStyle>;
+    dispatch(updateSectionStyle({ id: section.id, style: stylePatch }));
+
+    if (typeof nextValue === "string") {
+      const propSync = styleChangesToProps(stylePatch);
+      if (Object.keys(propSync).length > 0) {
+        dispatch(updateSectionProps({ id: section.id, props: { ...section.props, ...propSync } }));
+      }
+    }
   };
 
   const handleSectionPropsChange = (props: Record<string, string | undefined>) => {
@@ -401,8 +434,36 @@ export function PropertiesPanel() {
 
   const activeRepeater = repeaterConfigs[section.type];
   const repeaterItems = activeRepeater ? (section.style?.[activeRepeater.field] as Record<string, string>[] | undefined) ?? [] : [];
+  const customEditor = getSectionEditor(section.type);
+  const EditorComponent = customEditor?.Component;
 
-  const renderContentTab = () => (
+  const visiblePrimaryTabs = PRIMARY_TABS.filter((tab) => {
+    if (tab.key === "content") return true;
+    if (!customEditor?.tabs) return true;
+    return customEditor.tabs.includes(tab.key as "style" | "layout");
+  });
+
+  const visibleAdvancedTabs = ADVANCED_TABS.filter((tab) => {
+    if (!customEditor?.tabs) return true;
+    return customEditor.tabs.includes(tab.key as "responsive" | "animation" | "seo" | "advanced");
+  });
+
+  const renderContentTab = () => {
+    if (EditorComponent) {
+      return (
+        <EditorComponent
+          section={section}
+          storeId={storeId}
+          storeSlug={storeSlug}
+          brandColors={brandColors}
+          onPropChange={handlePropChange}
+          onPropsChange={handleSectionPropsChange}
+          onStyleChange={(stylePatch) => dispatch(updateSectionStyle({ id: section.id, style: stylePatch }))}
+        />
+      );
+    }
+
+    return (
     <div className="divide-y divide-zinc-100">
       {groupOrder.filter((g) => grouped[g]?.length && tabGroups.content?.includes(g)).map((group) => {
         const items = grouped[group];
@@ -428,7 +489,8 @@ export function PropertiesPanel() {
                       <ControlRenderer propDef={propDef} propKey={key} value={val}
                         onChange={(v) => handlePropChange(key, v)}
                         onSectionPropsChange={handleSectionPropsChange}
-                        sectionProps={section.props} storeId={storeId} storeSlug={storeSlug} />
+                        sectionProps={section.props} storeId={storeId} storeSlug={storeSlug}
+                        brandColors={brandColors} />
                     </ControlRow>
                   );
                 })}
@@ -446,187 +508,150 @@ export function PropertiesPanel() {
             title={activeRepeater.title}
             addLabel={activeRepeater.addLabel}
             onUpdate={handleRepeaterUpdate}
+            storeId={storeId}
+            storeSlug={storeSlug}
           />
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   // ─── Style Tab ──────────────────────────────────────────────────
 
   const renderStyleTab = () => {
     const s = style;
-
-    const bgSizeOptions = [
-      { label: "Cover", value: "cover" },
-      { label: "Contain", value: "contain" },
-      { label: "Auto", value: "auto" },
-    ];
-    const bgPosOptions = [
-      { label: "Center", value: "center" },
-      { label: "Top", value: "top" },
-      { label: "Bottom", value: "bottom" },
-      { label: "Left", value: "left" },
-      { label: "Right", value: "right" },
-      { label: "Top Left", value: "top left" },
-      { label: "Top Right", value: "top right" },
-      { label: "Bottom Left", value: "bottom left" },
-      { label: "Bottom Right", value: "bottom right" },
-    ];
-    const bgRepeatOptions = [
-      { label: "No Repeat", value: "no-repeat" },
-      { label: "Repeat", value: "repeat" },
-      { label: "Repeat X", value: "repeat-x" },
-      { label: "Repeat Y", value: "repeat-y" },
-    ];
-    const bgAttachOptions = [
-      { label: "Scroll", value: "scroll" },
-      { label: "Fixed", value: "fixed" },
-    ];
+    const isHero = section.type.includes("hero") || section.type.includes("banner");
 
     return (
       <div className="divide-y divide-zinc-100">
-        {/* Background */}
-        <CollapsibleGroup label="Background" icon={<PaintBucket className="h-3 w-3" />}
-          collapsed={collapsedGroups.has("bg")} onToggle={() => toggleGroup("bg")}>
-
-          <ControlRow label="Background Color">
-            <ColorInput value={s.backgroundColor ?? ""} onChange={(v) => handleStyleChange("backgroundColor", v)} />
-          </ControlRow>
-
-          <ControlRow label="Background Image">
-            <StyleBackgroundInput value={s.backgroundImage ?? ""} onChange={(v) => handleStyleChange("backgroundImage", v)} />
-          </ControlRow>
-
-          <ControlRow label="Size">
-            <SelectInput value={s.backgroundSize ?? "cover"} onChange={(v) => handleStyleChange("backgroundSize", v)} options={bgSizeOptions} />
-          </ControlRow>
-
-          <ControlRow label="Position">
-            <SelectInput value={s.backgroundPosition ?? "center"} onChange={(v) => handleStyleChange("backgroundPosition", v)} options={bgPosOptions} />
-          </ControlRow>
-
-          <ControlRow label="Repeat">
-            <SelectInput value={s.backgroundRepeat ?? "no-repeat"} onChange={(v) => handleStyleChange("backgroundRepeat", v)} options={bgRepeatOptions} />
-          </ControlRow>
-
-          <ControlRow label="Attachment">
-            <SelectInput value={s.backgroundAttachment ?? "scroll"} onChange={(v) => handleStyleChange("backgroundAttachment", v)} options={bgAttachOptions} />
-          </ControlRow>
-
-          <ControlRow label="Gradient (CSS)">
-            <input type="text" value={s.backgroundGradient ?? ""}
-              onChange={(e) => handleStyleChange("backgroundGradient", e.target.value)}
-              placeholder="linear-gradient(135deg, #000, #fff)"
-              className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] font-mono text-apple-ink-muted-80 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
-          </ControlRow>
-
-          <ControlRow label="Overlay Color">
-            <ColorInput value={s.overlayColor ?? ""} onChange={(v) => handleStyleChange("overlayColor", v)} />
-          </ControlRow>
-
-          <ControlRow label="Overlay Opacity">
-            <RangeInput value={s.overlayOpacity ?? "40"} onChange={(v) => handleStyleChange("overlayOpacity", v)} max={100} suffix="%" />
-          </ControlRow>
-
-          <ControlRow label="Blur">
-            <RangeInput value={s.blur ?? "0"} onChange={(v) => handleStyleChange("blur", v)} max={50} suffix="px" />
-          </ControlRow>
-        </CollapsibleGroup>
-
-        {/* Typography */}
+        {/* Typography — primary for beginners */}
         <CollapsibleGroup label="Typography" icon={<AlignLeft className="h-3 w-3" />}
           collapsed={collapsedGroups.has("typo")} onToggle={() => toggleGroup("typo")}>
           <ControlRow label="Font Family">
-            <TextInput value={s.fontFamily ?? ""} onChange={(v) => handleStyleChange("fontFamily", v)} placeholder="Inter, sans-serif" />
+            <FontFamilyControl value={s.fontFamily ?? ""} onChange={(v) => handleStyleChange("fontFamily", v)} />
           </ControlRow>
           <ControlRow label="Font Size">
-            <TextInput value={s.fontSize ?? ""} onChange={(v) => handleStyleChange("fontSize", v)} placeholder="16px" />
+            <FontSizeControl value={s.fontSize ?? "16px"} onChange={(v) => handleStyleChange("fontSize", v)} />
           </ControlRow>
           <ControlRow label="Font Weight">
-            <SelectInput value={s.fontWeight ?? "400"} onChange={(v) => handleStyleChange("fontWeight", v)}
-              options={[
-                { label: "Thin (100)", value: "100" },
-                { label: "Light (300)", value: "300" },
-                { label: "Regular (400)", value: "400" },
-                { label: "Medium (500)", value: "500" },
-                { label: "Semibold (600)", value: "600" },
-                { label: "Bold (700)", value: "700" },
-                { label: "Black (900)", value: "900" },
-              ]} />
+            <FontWeightControl value={s.fontWeight ?? "400"} onChange={(v) => handleStyleChange("fontWeight", v)} />
           </ControlRow>
           <ControlRow label="Text Color">
-            <ColorInput value={s.color ?? ""} onChange={(v) => handleStyleChange("color", v)} />
+            <ColorInput value={s.color ?? ""} onChange={(v) => handleStyleChange("color", v)} brandColors={brandColors} />
           </ControlRow>
-          <ControlRow label="Text Align">
-            <SelectInput value={s.textAlign ?? "left"} onChange={(v) => handleStyleChange("textAlign", v as any)}
-              options={[
-                { label: "Left", value: "left" },
-                { label: "Center", value: "center" },
-                { label: "Right", value: "right" },
-              ]} />
+          <ControlRow label="Alignment">
+            <TextAlignControl value={s.textAlign ?? "left"} onChange={(v) => handleStyleChange("textAlign", v)} />
+          </ControlRow>
+          <ControlRow label="Transform">
+            <TextTransformControl value={s.textTransform ?? "none"} onChange={(v) => handleStyleChange("textTransform", v)} />
+          </ControlRow>
+          <ControlRow label="Line Height">
+            <PresetChips value={s.lineHeight ?? "1.5"} onChange={(v) => handleStyleChange("lineHeight", v)} options={LINE_HEIGHT_PRESETS} />
           </ControlRow>
           <ControlRow label="Letter Spacing">
-            <TextInput value={s.letterSpacing ?? ""} onChange={(v) => handleStyleChange("letterSpacing", v)} placeholder="0.5px" />
+            <PresetChips value={s.letterSpacing ?? "0"} onChange={(v) => handleStyleChange("letterSpacing", v)} options={LETTER_SPACING_PRESETS} />
           </ControlRow>
-          <ControlRow label="Text Transform">
-            <SelectInput value={s.textTransform ?? "none"} onChange={(v) => handleStyleChange("textTransform", v as any)}
-              options={[
-                { label: "None", value: "none" },
-                { label: "Uppercase", value: "uppercase" },
-                { label: "Lowercase", value: "lowercase" },
-                { label: "Capitalize", value: "capitalize" },
-              ]} />
+          <ControlRow label="Text Shadow">
+            <PresetChips
+              value={s.textShadow ?? "none"}
+              onChange={(v) => handleStyleChange("textShadow", v)}
+              options={TEXT_SHADOW_PRESETS}
+            />
+          </ControlRow>
+          <ControlRow label="Max Width">
+            <MaxWidthControl value={s.maxWidth ?? ""} onChange={(v) => handleStyleChange("maxWidth", v)} />
           </ControlRow>
         </CollapsibleGroup>
 
-        {/* Border */}
-        <CollapsibleGroup label="Border" icon={<Square className="h-3 w-3" />}
+        {/* Background */}
+        <CollapsibleGroup label="Background" icon={<PaintBucket className="h-3 w-3" />}
+          collapsed={collapsedGroups.has("bg")} onToggle={() => toggleGroup("bg")}>
+          <ControlRow label="Color">
+            <ColorInput value={s.backgroundColor ?? ""} onChange={(v) => handleStyleChange("backgroundColor", v)} brandColors={brandColors} />
+          </ControlRow>
+          <ControlRow label="Gradient">
+            <GradientPresetControl value={s.backgroundGradient ?? ""} onChange={(v) => handleStyleChange("backgroundGradient", v)} />
+          </ControlRow>
+          <ControlRow label="Image">
+            <StyleBackgroundInput
+              value={s.backgroundImage ?? ""}
+              mediaId={s.backgroundImageMediaId}
+              onChange={(selection) => {
+                handleStyleChange("backgroundImage", selection.url);
+                dispatch(updateSectionStyle({
+                  id: section.id,
+                  style: { backgroundImageMediaId: selection.mediaId ?? "" },
+                }));
+              }}
+            />
+          </ControlRow>
+          <ControlRow label="Image Fit">
+            <SelectInput
+              value={s.backgroundSize ?? "cover"}
+              onChange={(v) => handleStyleChange("backgroundSize", v)}
+              options={[
+                { label: "Cover", value: "cover" },
+                { label: "Contain", value: "contain" },
+                { label: "Auto", value: "auto" },
+              ]}
+            />
+          </ControlRow>
+          <ControlRow label="Image Position">
+            <SelectInput
+              value={s.backgroundPosition ?? "center"}
+              onChange={(v) => handleStyleChange("backgroundPosition", v)}
+              options={[
+                { label: "Center", value: "center" },
+                { label: "Top", value: "top" },
+                { label: "Bottom", value: "bottom" },
+                { label: "Left", value: "left" },
+                { label: "Right", value: "right" },
+              ]}
+            />
+          </ControlRow>
+          <ControlRow label="Overlay Color">
+            <ColorInput value={s.overlayColor ?? ""} onChange={(v) => handleStyleChange("overlayColor", v)} brandColors={brandColors} />
+          </ControlRow>
+          <ControlRow label="Overlay Opacity">
+            <OpacityControl value={s.overlayOpacity ?? "40"} onChange={(v) => handleStyleChange("overlayOpacity", v)} />
+          </ControlRow>
+          <ControlRow label="Blur">
+            <VisualSlider value={s.blur ?? "0"} onChange={(v) => handleStyleChange("blur", v)} max={50} suffix="px" />
+          </ControlRow>
+        </CollapsibleGroup>
+
+        {/* Border & Radius */}
+        <CollapsibleGroup label="Border & Radius" icon={<Square className="h-3 w-3" />}
           collapsed={collapsedGroups.has("border")} onToggle={() => toggleGroup("border")}>
           <ControlRow label="Color">
-            <ColorInput value={s.borderColor ?? ""} onChange={(v) => handleStyleChange("borderColor", v)} />
+            <ColorInput value={s.borderColor ?? ""} onChange={(v) => handleStyleChange("borderColor", v)} brandColors={brandColors} />
           </ControlRow>
           <ControlRow label="Width">
-            <RangeInput value={s.borderWidth ?? "0"} onChange={(v) => handleStyleChange("borderWidth", v)} max={20} suffix="px" />
+            <VisualSlider value={s.borderWidth ?? "0"} onChange={(v) => handleStyleChange("borderWidth", v)} max={20} suffix="px" />
           </ControlRow>
           <ControlRow label="Radius">
-            <RangeInput value={s.borderRadius ?? "0"} onChange={(v) => handleStyleChange("borderRadius", v)} max={50} suffix="px" />
+            <RadiusControl value={s.borderRadius ?? "0"} onChange={(v) => handleStyleChange("borderRadius", v)} />
           </ControlRow>
           <ControlRow label="Style">
-            <select value={s.borderStyle ?? "solid"} onChange={(e) => handleStyleChange("borderStyle", e.target.value)}
-              className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 focus:border-zinc-400 focus:outline-none">
-              <option value="solid">Solid</option>
-              <option value="dashed">Dashed</option>
-              <option value="dotted">Dotted</option>
-              <option value="double">Double</option>
-              <option value="none">None</option>
-            </select>
+            <SelectInput
+              value={s.borderStyle ?? "solid"}
+              onChange={(v) => handleStyleChange("borderStyle", v)}
+              options={[
+                { label: "Solid", value: "solid" },
+                { label: "Dashed", value: "dashed" },
+                { label: "Dotted", value: "dotted" },
+                { label: "None", value: "none" },
+              ]}
+            />
           </ControlRow>
         </CollapsibleGroup>
 
         {/* Shadow */}
         <CollapsibleGroup label="Shadow" icon={<Maximize2 className="h-3 w-3" />}
           collapsed={collapsedGroups.has("shadow")} onToggle={() => toggleGroup("shadow")}>
-          <ControlRow label="Shadow (CSS)">
-            <TextInput value={s.shadow ?? ""} onChange={(v) => handleStyleChange("shadow", v)} placeholder="0 2px 8px rgba(0,0,0,0.1)" />
-          </ControlRow>
-          <ControlRow label="Presets">
-            <div className="flex gap-1">
-              {[
-                { label: "None", value: "none" },
-                { label: "Sm", value: "0 1px 3px rgba(0,0,0,0.1)" },
-                { label: "Md", value: "0 4px 12px rgba(0,0,0,0.1)" },
-                { label: "Lg", value: "0 8px 30px rgba(0,0,0,0.12)" },
-                { label: "Xl", value: "0 20px 60px rgba(0,0,0,0.15)" },
-              ].map((opt) => (
-                <button key={opt.label} onClick={() => handleStyleChange("shadow", opt.value)}
-                  className={`flex-1 rounded-lg border px-2 py-1 text-[9px] font-medium transition-all ${
-                    s.shadow === opt.value ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment"
-                  }`}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+          <ControlRow label="Preset">
+            <PresetChips value={s.shadow ?? "none"} onChange={(v) => handleStyleChange("shadow", v)} options={SHADOW_PRESETS} />
           </ControlRow>
         </CollapsibleGroup>
 
@@ -634,107 +659,78 @@ export function PropertiesPanel() {
         <CollapsibleGroup label="Opacity" icon={<Eye className="h-3 w-3" />}
           collapsed={collapsedGroups.has("opacity")} onToggle={() => toggleGroup("opacity")}>
           <ControlRow label="Opacity">
-            <RangeInput value={s.opacity ?? "100"} onChange={(v) => handleStyleChange("opacity", v)} max={100} suffix="%" />
+            <OpacityControl value={s.opacity ?? "100"} onChange={(v) => handleStyleChange("opacity", v)} />
           </ControlRow>
         </CollapsibleGroup>
 
-        {/* Flex */}
-        <CollapsibleGroup label="Flex / Grid" icon={<Layers className="h-3 w-3" />}
-          collapsed={collapsedGroups.has("flex")} onToggle={() => toggleGroup("flex")}>
-          <ControlRow label="Display">
-            <SelectInput value={s.display ?? ""} onChange={(v) => handleStyleChange("display", v)}
-              options={[
-                { label: "Default", value: "" },
-                { label: "Flex", value: "flex" },
-                { label: "Grid", value: "grid" },
-                { label: "Block", value: "block" },
-                { label: "Inline", value: "inline" },
-                { label: "Inline-block", value: "inline-block" },
-              ]} />
-          </ControlRow>
-          {s.display === "flex" && (
-            <>
-              <ControlRow label="Direction">
-                <SelectInput value={s.flexDirection ?? "row"} onChange={(v) => handleStyleChange("flexDirection", v)}
-                  options={[
-                    { label: "Row", value: "row" },
-                    { label: "Column", value: "column" },
-                    { label: "Row Reverse", value: "row-reverse" },
-                    { label: "Column Reverse", value: "column-reverse" },
-                  ]} />
-              </ControlRow>
-              <ControlRow label="Align Items">
-                <SelectInput value={s.alignItems ?? ""} onChange={(v) => handleStyleChange("alignItems", v)}
-                  options={[
-                    { label: "Default", value: "" },
-                    { label: "Start", value: "flex-start" },
-                    { label: "Center", value: "center" },
-                    { label: "End", value: "flex-end" },
-                    { label: "Stretch", value: "stretch" },
-                  ]} />
-              </ControlRow>
-              <ControlRow label="Justify Content">
-                <SelectInput value={s.justifyContent ?? ""} onChange={(v) => handleStyleChange("justifyContent", v)}
-                  options={[
-                    { label: "Default", value: "" },
-                    { label: "Start", value: "flex-start" },
-                    { label: "Center", value: "center" },
-                    { label: "End", value: "flex-end" },
-                    { label: "Between", value: "space-between" },
-                    { label: "Around", value: "space-around" },
-                  ]} />
-              </ControlRow>
-              <ControlRow label="Gap">
-                <TextInput value={s.gap ?? ""} onChange={(v) => handleStyleChange("gap", v)} placeholder="16px" />
-              </ControlRow>
-              <ControlRow label="Wrap">
-                <SelectInput value={s.flexWrap ?? ""} onChange={(v) => handleStyleChange("flexWrap", v)}
-                  options={[
-                    { label: "Default", value: "" },
-                    { label: "No Wrap", value: "nowrap" },
-                    { label: "Wrap", value: "wrap" },
-                  ]} />
-              </ControlRow>
-            </>
-          )}
-        </CollapsibleGroup>
+        {/* Button presets for hero / CTA-heavy sections */}
+        {isHero && (
+          <CollapsibleGroup label="Button Style" icon={<Sparkles className="h-3 w-3" />}
+            collapsed={collapsedGroups.has("btnStyle")} onToggle={() => toggleGroup("btnStyle")}>
+            <ControlRow label="Preset">
+              <ButtonPresetControl
+                value={section.props.buttonStyle ?? "primary"}
+                onChange={(v) => handlePropChange("buttonStyle", v)}
+              />
+            </ControlRow>
+          </CollapsibleGroup>
+        )}
 
-        {/* Position */}
-        <CollapsibleGroup label="Position" icon={<Settings2 className="h-3 w-3" />}
-          collapsed={collapsedGroups.has("position")} onToggle={() => toggleGroup("position")}>
-          <ControlRow label="Position">
-            <SelectInput value={s.position ?? ""} onChange={(v) => handleStyleChange("position", v)}
-              options={[
-                { label: "Default", value: "" },
-                { label: "Relative", value: "relative" },
-                { label: "Absolute", value: "absolute" },
-                { label: "Fixed", value: "fixed" },
-                { label: "Sticky", value: "sticky" },
-              ]} />
-          </ControlRow>
-          <ControlRow label="Z-Index">
-            <TextInput value={s.zIndex ?? ""} onChange={(v) => handleStyleChange("zIndex", v)} placeholder="auto" />
-          </ControlRow>
-          {(s.position === "absolute" || s.position === "fixed") && (
-            <>
-              <ControlRow label="Top"><TextInput value={s.top ?? ""} onChange={(v) => handleStyleChange("top", v)} placeholder="auto" /></ControlRow>
-              <ControlRow label="Right"><TextInput value={s.right ?? ""} onChange={(v) => handleStyleChange("right", v)} placeholder="auto" /></ControlRow>
-              <ControlRow label="Bottom"><TextInput value={s.bottom ?? ""} onChange={(v) => handleStyleChange("bottom", v)} placeholder="auto" /></ControlRow>
-              <ControlRow label="Left"><TextInput value={s.left ?? ""} onChange={(v) => handleStyleChange("left", v)} placeholder="auto" /></ControlRow>
-            </>
-          )}
-        </CollapsibleGroup>
-
-        {/* Transform */}
-        <CollapsibleGroup label="Transform" icon={<RefreshCw className="h-3 w-3" />}
-          collapsed={collapsedGroups.has("transform")} onToggle={() => toggleGroup("transform")}>
-          <ControlRow label="Transform (CSS)">
-            <TextInput value={s.transform ?? ""} onChange={(v) => handleStyleChange("transform", v)} placeholder="scale(1.1) rotate(5deg)" />
-          </ControlRow>
-          <ControlRow label="Transform Origin">
-            <TextInput value={s.transformOrigin ?? ""} onChange={(v) => handleStyleChange("transformOrigin", v)} placeholder="center" />
-          </ControlRow>
-        </CollapsibleGroup>
+        {/* Advanced — free-text / CSS only here */}
+        <div className="px-3 py-3">
+          <AdvancedDetails title="Advanced (CSS & pixels)">
+            <ControlRow label="Custom Gradient CSS">
+              <TextInput value={s.backgroundGradient ?? ""} onChange={(v) => handleStyleChange("backgroundGradient", v)} placeholder="linear-gradient(...)" />
+            </ControlRow>
+            <ControlRow label="Custom Shadow CSS">
+              <TextInput value={s.shadow ?? ""} onChange={(v) => handleStyleChange("shadow", v)} placeholder="0 2px 8px rgba(0,0,0,0.1)" />
+            </ControlRow>
+            <ControlRow label="Font Size (exact)">
+              <TextInput value={s.fontSize ?? ""} onChange={(v) => handleStyleChange("fontSize", v)} placeholder="16px" />
+            </ControlRow>
+            <ControlRow label="Letter Spacing (exact)">
+              <TextInput value={s.letterSpacing ?? ""} onChange={(v) => handleStyleChange("letterSpacing", v)} placeholder="0.5px" />
+            </ControlRow>
+            <ControlRow label="Display">
+              <SelectInput value={s.display ?? ""} onChange={(v) => handleStyleChange("display", v)}
+                options={[
+                  { label: "Default", value: "" },
+                  { label: "Flex", value: "flex" },
+                  { label: "Grid", value: "grid" },
+                  { label: "Block", value: "block" },
+                ]} />
+            </ControlRow>
+            {s.display === "flex" && (
+              <>
+                <ControlRow label="Direction">
+                  <SelectInput value={s.flexDirection ?? "row"} onChange={(v) => handleStyleChange("flexDirection", v)}
+                    options={[
+                      { label: "Row", value: "row" },
+                      { label: "Column", value: "column" },
+                    ]} />
+                </ControlRow>
+                <ControlRow label="Gap">
+                  <SpacingSlider value={s.gap ?? "0"} onChange={(v) => handleStyleChange("gap", v)} max={80} />
+                </ControlRow>
+              </>
+            )}
+            <ControlRow label="Position">
+              <SelectInput value={s.position ?? ""} onChange={(v) => handleStyleChange("position", v)}
+                options={[
+                  { label: "Default", value: "" },
+                  { label: "Relative", value: "relative" },
+                  { label: "Absolute", value: "absolute" },
+                  { label: "Sticky", value: "sticky" },
+                ]} />
+            </ControlRow>
+            <ControlRow label="Z-Index">
+              <TextInput value={s.zIndex ?? ""} onChange={(v) => handleStyleChange("zIndex", v)} placeholder="auto" />
+            </ControlRow>
+            <ControlRow label="Transform">
+              <TextInput value={s.transform ?? ""} onChange={(v) => handleStyleChange("transform", v)} placeholder="scale(1.05)" />
+            </ControlRow>
+          </AdvancedDetails>
+        </div>
       </div>
     );
   };
@@ -759,7 +755,7 @@ export function PropertiesPanel() {
           collapsed={collapsedGroups.has("padding")} onToggle={() => toggleGroup("padding")}>
           {spacingFields.map((field) => (
             <ControlRow key={field.key} label={field.label}>
-              <SpacingInput value={String(style[field.key] ?? "0")} onChange={(v) => handleStyleChange(field.key, v)} label={field.label} />
+              <SpacingSlider value={String(style[field.key] ?? "0")} onChange={(v) => handleStyleChange(field.key, v)} />
             </ControlRow>
           ))}
         </CollapsibleGroup>
@@ -768,31 +764,48 @@ export function PropertiesPanel() {
           collapsed={collapsedGroups.has("margin")} onToggle={() => toggleGroup("margin")}>
           {marginFields.map((field) => (
             <ControlRow key={field.key} label={field.label}>
-              <SpacingInput value={String(style[field.key] ?? "0")} onChange={(v) => handleStyleChange(field.key, v)} label={field.label} />
+              <SpacingSlider value={String(style[field.key] ?? "0")} onChange={(v) => handleStyleChange(field.key, v)} />
             </ControlRow>
           ))}
         </CollapsibleGroup>
 
+        <CollapsibleGroup label="Gap & Radius" icon={<Ruler className="h-3 w-3" />}
+          collapsed={collapsedGroups.has("gapRadius")} onToggle={() => toggleGroup("gapRadius")}>
+          <ControlRow label="Gap">
+            <SpacingSlider value={style.gap ?? "0"} onChange={(v) => handleStyleChange("gap", v)} max={80} />
+          </ControlRow>
+          <ControlRow label="Border Radius">
+            <RadiusControl value={style.borderRadius ?? "0"} onChange={(v) => handleStyleChange("borderRadius", v)} />
+          </ControlRow>
+          <ControlRow label="Opacity">
+            <OpacityControl value={style.opacity ?? "100"} onChange={(v) => handleStyleChange("opacity", v)} />
+          </ControlRow>
+        </CollapsibleGroup>
+
         <CollapsibleGroup label="Sizing" icon={<Maximize2 className="h-3 w-3" />}
           collapsed={collapsedGroups.has("sizing")} onToggle={() => toggleGroup("sizing")}>
-          <ControlRow label="Width">
-            <TextInput value={style.width ?? ""} onChange={(v) => handleStyleChange("width", v)} placeholder="100%" />
-          </ControlRow>
-          <ControlRow label="Min Width">
-            <TextInput value={style.minWidth ?? ""} onChange={(v) => handleStyleChange("minWidth", v)} placeholder="auto" />
-          </ControlRow>
           <ControlRow label="Max Width">
-            <TextInput value={style.maxWidth ?? ""} onChange={(v) => handleStyleChange("maxWidth", v)} placeholder="1200px" />
-          </ControlRow>
-          <ControlRow label="Height">
-            <TextInput value={style.height ?? ""} onChange={(v) => handleStyleChange("height", v)} placeholder="auto" />
+            <MaxWidthControl value={style.maxWidth ?? ""} onChange={(v) => handleStyleChange("maxWidth", v)} />
           </ControlRow>
           <ControlRow label="Min Height">
-            <TextInput value={style.minHeight ?? ""} onChange={(v) => handleStyleChange("minHeight", v)} placeholder="auto" />
+            <SpacingSlider value={style.minHeight ?? "0"} onChange={(v) => handleStyleChange("minHeight", v)} max={900} />
           </ControlRow>
-          <ControlRow label="Max Height">
-            <TextInput value={style.maxHeight ?? ""} onChange={(v) => handleStyleChange("maxHeight", v)} placeholder="none" />
-          </ControlRow>
+          <div className="pt-1">
+            <AdvancedDetails title="Exact size values">
+              <ControlRow label="Width">
+                <TextInput value={style.width ?? ""} onChange={(v) => handleStyleChange("width", v)} placeholder="100%" />
+              </ControlRow>
+              <ControlRow label="Height">
+                <TextInput value={style.height ?? ""} onChange={(v) => handleStyleChange("height", v)} placeholder="auto" />
+              </ControlRow>
+              <ControlRow label="Min Width">
+                <TextInput value={style.minWidth ?? ""} onChange={(v) => handleStyleChange("minWidth", v)} placeholder="auto" />
+              </ControlRow>
+              <ControlRow label="Max Height">
+                <TextInput value={style.maxHeight ?? ""} onChange={(v) => handleStyleChange("maxHeight", v)} placeholder="none" />
+              </ControlRow>
+            </AdvancedDetails>
+          </div>
         </CollapsibleGroup>
       </div>
     );
@@ -996,7 +1009,7 @@ export function PropertiesPanel() {
         </div>
 
         <div className="mt-4 flex gap-1 rounded-apple-pill bg-apple-canvas-parchment p-1">
-          {PRIMARY_TABS.map((tab) => {
+          {visiblePrimaryTabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
@@ -1025,12 +1038,13 @@ export function PropertiesPanel() {
           </div>
         )}
 
-        {controls.length === 0 && activeRightTab === "content" && isPrimaryTab && (
+        {controls.length === 0 && !customEditor && activeRightTab === "content" && isPrimaryTab && (
           <div className="p-6 text-center">
             <p className="text-caption text-apple-ink-muted-48">Nothing to edit here — try another tab.</p>
           </div>
         )}
 
+        {visibleAdvancedTabs.length > 0 ? (
         <div className="border-t border-apple-hairline">
           <button
             type="button"
@@ -1047,7 +1061,7 @@ export function PropertiesPanel() {
           {showAdvanced && (
             <div className="space-y-3 border-t border-apple-hairline bg-apple-canvas-parchment/40 px-4 py-3">
               <div className="flex flex-wrap gap-1.5">
-                {ADVANCED_TABS.map((tab) => {
+                {visibleAdvancedTabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
                     <button
@@ -1079,6 +1093,7 @@ export function PropertiesPanel() {
             </div>
           )}
         </div>
+        ) : null}
       </div>
     </div>
   );

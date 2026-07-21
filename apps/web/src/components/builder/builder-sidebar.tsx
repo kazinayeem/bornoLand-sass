@@ -3,10 +3,9 @@
 import { useMemo, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
-import { setActiveTab, toggleLeftPanel, openSectionLibrary } from "@/redux/slices/builder-slice";
+import { setActiveTab, toggleLeftPanel } from "@/redux/slices/builder-slice";
 import type { LeftTab } from "@/redux/slices/builder-slice";
 import {
-  Plus,
   LayoutTemplate,
   ImagePlus,
   Palette,
@@ -24,17 +23,16 @@ import { cn } from "@/lib/utils";
 
 type TabDef = {
   key: LeftTab;
-  icon: typeof Plus;
+  icon: typeof LayoutTemplate;
   label: string;
-  description: string;
 };
 
 const SIDEBAR_TABS: TabDef[] = [
-  { key: "templates", icon: LayoutTemplate, label: "Layouts", description: "Start from a template" },
-  { key: "media", icon: ImagePlus, label: "Images", description: "Your photos & files" },
-  { key: "theme", icon: Palette, label: "Colors", description: "Brand & fonts" },
-  { key: "navigator", icon: ListTree, label: "Sections", description: "Reorder page blocks" },
-  { key: "history", icon: History, label: "History", description: "Undo timeline" },
+  { key: "templates", icon: LayoutTemplate, label: "Layouts" },
+  { key: "media", icon: ImagePlus, label: "Images" },
+  { key: "theme", icon: Palette, label: "Colors" },
+  { key: "navigator", icon: ListTree, label: "Sections" },
+  { key: "history", icon: History, label: "History" },
 ];
 
 export function BuilderSidebar() {
@@ -46,7 +44,7 @@ export function BuilderSidebar() {
     (key: LeftTab) => {
       dispatch(setActiveTab(key));
     },
-    [dispatch]
+    [dispatch],
   );
 
   const renderPanel = () => {
@@ -70,22 +68,12 @@ export function BuilderSidebar() {
     return SIDEBAR_TABS.find((tab) => tab.key === activeTab) ?? SIDEBAR_TABS[0];
   }, [activeTab]);
 
+  const showPanelHeading = activeTab === "media" || activeTab === "theme";
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-apple-canvas">
-      <div className="border-b border-apple-hairline px-4 py-4">
-        <button
-          type="button"
-          onClick={() => dispatch(openSectionLibrary({ insertPosition: null }))}
-          className="btn-press flex w-full items-center justify-center gap-2 rounded-apple-pill bg-apple-primary px-5 py-3 text-body text-apple-on-primary transition-opacity hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" />
-          Add section
-        </button>
-        <p className="mt-4 text-caption text-apple-ink-muted-48">You&apos;re editing your store homepage.</p>
-      </div>
-
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="flex min-h-0 w-[72px] flex-col items-stretch gap-1 border-r border-apple-hairline bg-apple-canvas-parchment/50 px-2 py-3">
+        <div className="flex min-h-0 w-[64px] flex-col items-stretch gap-0.5 border-r border-apple-hairline bg-apple-canvas-parchment/50 px-1.5 py-2">
           {SIDEBAR_TABS.map(({ key, icon: Icon, label }) => (
             <button
               key={key}
@@ -93,32 +81,33 @@ export function BuilderSidebar() {
               title={label}
               onClick={() => handleTabClick(key)}
               className={cn(
-                "btn-press flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-apple-lg px-1 py-2 text-[10px] font-medium transition-colors",
+                "btn-press flex min-h-[48px] flex-col items-center justify-center gap-0.5 rounded-apple-md px-1 py-1.5 text-[10px] font-medium transition-colors",
                 activeTab === key
                   ? "bg-apple-canvas text-apple-primary ring-1 ring-apple-hairline"
-                  : "text-apple-ink-muted-48 hover:bg-apple-canvas hover:text-apple-ink-muted-80"
+                  : "text-apple-ink-muted-48 hover:bg-apple-canvas hover:text-apple-ink-muted-80",
               )}
             >
-              <Icon className="h-[18px] w-[18px]" />
+              <Icon className="h-4 w-4" />
               <span className="max-w-full truncate leading-tight">{label}</span>
             </button>
           ))}
           <button
             type="button"
             onClick={() => dispatch(toggleLeftPanel())}
-            className="btn-press mt-auto flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-apple-lg px-1 py-2 text-[10px] font-medium text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas hover:text-apple-ink"
+            className="btn-press mt-auto flex min-h-[40px] flex-col items-center justify-center gap-0.5 rounded-apple-md px-1 py-1.5 text-[10px] font-medium text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas hover:text-apple-ink"
             title="Hide sidebar"
           >
-            <PanelLeftClose className="h-[18px] w-[18px]" />
+            <PanelLeftClose className="h-4 w-4" />
             <span>Hide</span>
           </button>
         </div>
 
         <div className="min-h-0 flex-1 overflow-hidden">
-          <div className="border-b border-apple-hairline px-5 py-4">
-            <h2 className="text-body-strong text-apple-ink">{panelMeta.label}</h2>
-            <p className="mt-0.5 text-caption text-apple-ink-muted-48">{panelMeta.description}</p>
-          </div>
+          {showPanelHeading ? (
+            <div className="border-b border-apple-hairline px-3 py-3">
+              <h2 className="text-[13px] font-semibold text-apple-ink">{panelMeta.label}</h2>
+            </div>
+          ) : null}
           {renderPanel()}
         </div>
       </div>

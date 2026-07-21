@@ -8,6 +8,7 @@ import {
   Layers, Download, ChevronRight, FileText, Lock,
 } from "lucide-react";
 import type { StorePage } from "@/redux/api/store-page-api";
+import { isBuilderEditablePage } from "@/lib/storefront/system-pages";
 
 type Props = {
   page: StorePage;
@@ -41,7 +42,9 @@ export function PageContextMenu({ page, x, y, onClose, onAction }: Props) {
   const menuY = Math.min(y, window.innerHeight - 460);
 
   const items: Array<{ label: string; icon: typeof Pencil; action: string; disabled?: boolean; divider?: boolean }> = [
-    { label: "Open in Builder", icon: Layers as typeof Pencil, action: "open-builder" },
+    ...(isBuilderEditablePage(page)
+      ? [{ label: "Open in Builder", icon: Layers as typeof Pencil, action: "open-builder" }]
+      : [{ label: "System page (not in Builder)", icon: Lock as typeof Pencil, action: "noop", disabled: true }]),
     { label: "Preview", icon: ExternalLink as typeof Pencil, action: "preview" },
     { label: "Generate Preview Link", icon: Lock as typeof Pencil, action: "generate-preview" },
     { label: "Rename", icon: Pencil, action: "rename" },

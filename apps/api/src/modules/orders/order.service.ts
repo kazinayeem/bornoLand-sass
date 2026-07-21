@@ -205,3 +205,40 @@ export async function getOrderById(orderId: string, customerId: string) {
   if (!order) return { ok: false as const, message: "Order not found" };
   return { ok: true as const, data: { order } };
 }
+
+export async function trackOrderByNumber(
+  storeId: string,
+  orderNumber: string,
+  email: string,
+) {
+  await connectDatabase();
+  const { CustomerModel } = await import("../../models/customer.model.js");
+  const customer = await CustomerModel.findOne({
+    storeId,
+    email: email.toLowerCase().trim(),
+  }).lean() as { _id: unknown } | null;
+  if (!customer) return { ok: false as const, message: "Order not found" };
+
+  const order = await OrderModel.findOne({
+    storeId,
+    customerId: customer._id,
+    orderNumber: orderNumber.trim().toUpperCase(),
+  })
+    .select("orderNumber status paymentStatus total currencyCode items shippingAddress timeline createdAt updatedAt")
+    .lean();
+
+  if (!order) {
+    // Try case-insensitive match
+    const orderLoose = await OrderModel.findOne({
+      storeId,
+      customerId: customer._id,
+      orderNumber: new RegExp(`^${orderNumber.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+    })
+      .select("orderNumber status paymentStatus total currencyCode items shippingAddress timeline createdAt updatedAt")
+      .lean();
+    if (!orderLoose) return { ok: false as const, message: "Order not found" };
+    return { ok: true as const, data: { order: orderLoose } };
+  }
+
+  return { ok: true as const, data: { order } };
+}

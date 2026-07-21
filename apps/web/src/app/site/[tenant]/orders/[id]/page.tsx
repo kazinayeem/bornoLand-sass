@@ -1,15 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/redux/store";
 import { motion } from "framer-motion";
 import { Package, ShoppingBag, ChevronLeft, Clock, DollarSign, MapPin, CreditCard, CheckCircle } from "lucide-react";
 import { useGetOrderQuery } from "@/redux/api/order-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
+import { useRequireCustomerAuth } from "@/hooks/use-require-customer-auth";
+import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
 
 const statusLabels: Record<string, string> = {
   pending: "Pending",
@@ -31,17 +30,10 @@ const statusStyles: Record<string, string> = {
 
 export default function OrderDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const orderId = params.id as string;
-  const { isAuthenticated, restored } = useSelector((s: RootState) => s.customer);
+  const { showLoader } = useRequireCustomerAuth(`/orders/${orderId}`);
 
-  useEffect(() => {
-    if (restored && !isAuthenticated) {
-      router.push("/account/login?redirect=" + encodeURIComponent(`/orders/${orderId}`));
-    }
-  }, [restored, isAuthenticated, router, orderId]);
-
-  if (!restored || !isAuthenticated) return null;
+  if (showLoader) return <CustomerAuthLoader />;
 
   return <OrderDetail orderId={orderId} />;
 }

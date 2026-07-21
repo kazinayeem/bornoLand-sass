@@ -6,6 +6,10 @@ const AUTH_PATHS = [
   "/logout",
   "/auth",
   "/admin/login",
+  "/account/login",
+  "/account/register",
+  "/account/forgot-password",
+  "/account/reset-password",
 ] as const;
 
 const MAX_REDIRECT_LENGTH = 2_048;
@@ -47,7 +51,11 @@ export function validateInternalRedirect(value: string | null | undefined): stri
     const pathname = parsed.pathname.replace(/\/{2,}/g, "/");
     const normalizedPath = safelyDecode(pathname)?.toLowerCase();
     if (!normalizedPath || normalizedPath.startsWith("//")) return null;
-    if (AUTH_PATHS.some((route) => hasRoutePrefix(normalizedPath, route))) return null;
+    if (AUTH_PATHS.some((route) => {
+      if (hasRoutePrefix(normalizedPath, route)) return true;
+      // Match tenant-prefixed storefront auth routes: /site/{tenant}/account/login
+      return normalizedPath.endsWith(route) || normalizedPath.includes(`${route}/`);
+    })) return null;
 
     return `${pathname}${parsed.search}${parsed.hash}`;
   } catch {

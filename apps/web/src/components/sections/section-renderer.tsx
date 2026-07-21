@@ -7,6 +7,16 @@ import type { SectionStyle } from "@/components/storefront/storefront-types";
 import { useDevice } from "@/lib/device-context";
 import { computeSectionStyle, applyResponsiveVisibility } from "@/lib/responsive-styles";
 import { normalizeCssLength } from "@/lib/section-style";
+import {
+  isValidBackgroundImage,
+  resolveBackgroundColor,
+  resolveBackgroundGradient,
+  resolveBackgroundImage,
+  resolveOpacity,
+  resolveSectionCssVars,
+  resolveTextAlignment,
+  resolveTextColor,
+} from "@/lib/resolve-section-visuals";
 import type { Breakpoint } from "@/lib/builder-types";
 
 export type SectionData = {
@@ -47,12 +57,6 @@ function animationStyle(animation: string, duration = "600", delay = "0", _trigg
   }
 }
 
-const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".gif"];
-
-function isImageUrl(url: string) {
-  return IMAGE_EXTENSIONS.some((ext) => url.toLowerCase().includes(ext)) || url.includes("media") || url.includes("cloudinary") || url.includes("amazonaws");
-}
-
 export function SectionWrapper({ section, children, className = "" }: WrapperProps) {
   const device = useDevice();
   const p = section.props;
@@ -67,9 +71,9 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
     : s?.hideOnMobile ? "mobile-only"
     : p.visibility || "all";
 
-  const bgColor = s?.backgroundColor || p.bgColor || "";
-  const bgGradient = s?.backgroundGradient || p.bgGradient || "";
-  const bgImage = s?.backgroundImage || p.bgImage || "";
+  const bgColor = resolveBackgroundColor(section);
+  const bgGradient = resolveBackgroundGradient(section);
+  const bgImage = resolveBackgroundImage(section);
   const bgSize = s?.backgroundSize || p.backgroundSize || "cover";
   const bgPos = s?.backgroundPosition || p.backgroundPosition || "center";
   const bgRepeat = s?.backgroundRepeat || p.backgroundRepeat || "no-repeat";
@@ -93,7 +97,7 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
   const borderWidth = normalizeCssLength(s?.borderWidth ?? p.borderWidth ?? "0");
   const borderColor = responsiveStyle.borderColor || s?.borderColor || p.borderColor || "";
   const borderStyle = s?.borderStyle || (borderWidth && borderWidth !== "0" ? "solid" : undefined);
-  const opacity = responsiveStyle.opacity !== undefined ? responsiveStyle.opacity : s?.opacity ? Number(s.opacity) / 100 : undefined;
+  const opacity = responsiveStyle.opacity !== undefined ? responsiveStyle.opacity : resolveOpacity(section);
   const width = responsiveStyle.width || normalizeCssLength(s?.width || p.width || "");
   const height = responsiveStyle.height || normalizeCssLength(s?.height || p.height || "");
   const minHeight = responsiveStyle.minHeight || normalizeCssLength(s?.minHeight || p.minHeight || "");
@@ -103,7 +107,7 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
   const animTrigger = s?.animationTrigger || "on-scroll";
   const parallaxSpeed = s?.parallaxSpeed || "0";
 
-  const hasBgImage = bgImage && isImageUrl(bgImage);
+  const hasBgImage = isValidBackgroundImage(bgImage);
   const isGradient = bgGradient && bgGradient.trim().length > 0 && bgGradient !== "none";
 
   const shadowClass = shadow === "sm" ? "shadow-sm" : shadow === "md" ? "shadow-md" : shadow === "lg" ? "shadow-lg" : "";
@@ -171,24 +175,32 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
     overflow: "hidden",
   };
 
+  const cssVars = resolveSectionCssVars(section);
   const contentTypography: React.CSSProperties = {
-    color: responsiveStyle.color,
-    fontFamily: responsiveStyle.fontFamily,
-    fontSize: responsiveStyle.fontSize,
-    fontWeight: responsiveStyle.fontWeight,
-    letterSpacing: responsiveStyle.letterSpacing,
-    textTransform: responsiveStyle.textTransform,
+    ...cssVars,
+    color: responsiveStyle.color ?? cssVars.color,
+    fontFamily: responsiveStyle.fontFamily ?? cssVars.fontFamily,
+    fontSize: responsiveStyle.fontSize ?? cssVars.fontSize,
+    fontWeight: responsiveStyle.fontWeight ?? cssVars.fontWeight,
+    letterSpacing: responsiveStyle.letterSpacing ?? cssVars.letterSpacing,
+    textTransform: responsiveStyle.textTransform ?? cssVars.textTransform,
     textDecoration: responsiveStyle.textDecoration,
-    textAlign: responsiveStyle.textAlign,
+    textAlign: (responsiveStyle.textAlign ?? cssVars.textAlign) as React.CSSProperties["textAlign"],
     lineHeight: responsiveStyle.lineHeight,
   };
 
+  const customCss = s?.customCss?.trim();
+
   return (
     <motion.section
+      data-section-id={section.id}
       className={`relative ${hiddenClass} ${shadowClass} ${className}`}
       style={wrapperStyle}
       {...animProps}
     >
+      {customCss ? (
+        <style>{`[data-section-id="${section.id}"] { ${customCss} }`}</style>
+      ) : null}
       {/* Background image layer */}
       {(hasBgImage) && (
         <div
@@ -224,20 +236,41 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
 
 // ─── Section title helper ───────────────────────────────────────
 
-export function SectionTitle({ title, subtitle, textColor, textAlignment }: {
+export function SectionTitle({
+  title,
+  subtitle,
+  textColor,
+  textAlignment,
+  section,
+}: {
   title?: string;
   subtitle?: string;
   textColor?: string;
   textAlignment?: string;
+  section?: SectionData;
 }) {
   if (!title) return null;
+  const resolvedColor = section ? resolveTextColor(section, textColor) : textColor;
+  const resolvedAlign = section ? resolveTextAlignment(section) ?? textAlignment : textAlignment;
+  const alignClass = resolvedAlign === "left" ? "text-left" : resolvedAlign === "right" ? "text-right" : "text-center";
+
   return (
-    <div className={`mb-8 sm:mb-10 ${textAlignment === "left" ? "text-left" : textAlignment === "right" ? "text-right" : "text-center"}`}>
-      <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl" style={{ color: textColor || "#18181b" }}>
+    <div className={`mb-8 sm:mb-10 ${alignClass}`}>
+      <h2
+        className="text-display-lg"
+        style={{
+          color: resolvedColor || "var(--section-text-color, #1d1d1f)",
+          fontFamily: "var(--section-font-family, inherit)",
+          fontSize: "var(--section-font-size, inherit)",
+        }}
+      >
         {title}
       </h2>
       {subtitle && (
-        <p className="mt-3 text-sm sm:text-base" style={{ color: textColor ? `${textColor}cc` : "#52525b" }}>
+        <p
+          className="mt-3 text-lead"
+          style={{ color: resolvedColor ? `${resolvedColor}cc` : "var(--section-text-color, #52525b)" }}
+        >
           {subtitle}
         </p>
       )}
@@ -288,12 +321,12 @@ function PlaceholderSection({ section }: { section: SectionData }) {
 
 export function SectionRenderer({ section }: { section: SectionData }) {
   const normalizedType = normalizeSectionType(section.type);
-  const normalizedSection = normalizedType === section.type ? section : { ...section, type: normalizedType };
-  const def = getSectionDef(normalizedSection.type);
+  const def = getSectionDef(section.type);
   if (!def) return null;
 
-  const Component = getSectionComponent(normalizedSection.type);
-  if (Component) return <Component section={normalizedSection} />;
+  const Component = getSectionComponent(section.type) ?? getSectionComponent(normalizedType);
+  const renderSection = normalizedType === section.type ? section : { ...section, type: normalizedType };
+  if (Component) return <Component section={renderSection} />;
 
-  return <PlaceholderSection section={normalizedSection} />;
+  return <PlaceholderSection section={section} />;
 }

@@ -2,12 +2,13 @@
 
 import { useCallback } from "react";
 import { Plus, Trash2, Copy, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { MediaPicker } from "@/components/media/media-picker";
+import type { MediaSelection } from "@/lib/media-selection";
 
 export type RepeaterField = {
   key: string;
   label: string;
-  type: "text" | "textarea" | "number" | "url";
+  type: "text" | "textarea" | "number" | "url" | "image";
   placeholder?: string;
 };
 
@@ -17,10 +18,33 @@ type RepeaterEditorProps = {
   onUpdate: (items: Record<string, string>[]) => void;
   title?: string;
   addLabel?: string;
+  storeId?: string;
+  storeSlug?: string;
+  mediaFolder?: string;
 };
 
 function generateId() {
   return `item_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function readRepeaterImage(item: Record<string, string>, key: string): MediaSelection {
+  const url = item[key] || "";
+  const mediaId = item[`${key}MediaId`];
+  return mediaId ? { url, mediaId } : { url };
+}
+
+function patchRepeaterImage(
+  item: Record<string, string>,
+  key: string,
+  selection: MediaSelection,
+): Record<string, string> {
+  const next = { ...item, [key]: selection.url };
+  if (selection.mediaId) {
+    next[`${key}MediaId`] = selection.mediaId;
+  } else {
+    delete next[`${key}MediaId`];
+  }
+  return next;
 }
 
 export function RepeaterEditor({
@@ -29,6 +53,9 @@ export function RepeaterEditor({
   onUpdate,
   title = "Items",
   addLabel = "Add Item",
+  storeId,
+  storeSlug,
+  mediaFolder = "builder",
 }: RepeaterEditorProps) {
   const addItem = useCallback(() => {
     const newItem: Record<string, string> = { id: generateId() };
@@ -59,6 +86,13 @@ export function RepeaterEditor({
 
   const updateField = useCallback((index: number, key: string, value: string) => {
     const next = items.map((item, i) => (i === index ? { ...item, [key]: value } : item));
+    onUpdate(next);
+  }, [items, onUpdate]);
+
+  const updateImageField = useCallback((index: number, key: string, selection: MediaSelection) => {
+    const next = items.map((item, i) => (
+      i === index ? patchRepeaterImage(item, key, selection) : item
+    ));
     onUpdate(next);
   }, [items, onUpdate]);
 
@@ -110,7 +144,18 @@ export function RepeaterEditor({
               {fields.map((field) => (
                 <div key={field.key}>
                   <label className="mb-0.5 block text-[9px] font-medium text-apple-ink-muted-48">{field.label}</label>
-                  {field.type === "textarea" ? (
+                  {field.type === "image" && storeId && storeSlug ? (
+                    <MediaPicker
+                      storeId={storeId}
+                      billingHref={`/store/${storeSlug}/billing`}
+                      folder={mediaFolder}
+                      compact
+                      hideLabel
+                      allowUrlPaste
+                      value={readRepeaterImage(item, field.key)}
+                      onChange={(selection) => updateImageField(index, field.key, selection)}
+                    />
+                  ) : field.type === "textarea" ? (
                     <textarea
                       value={item[field.key] || ""}
                       onChange={(e) => updateField(index, field.key, e.target.value)}

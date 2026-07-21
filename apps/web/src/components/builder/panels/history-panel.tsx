@@ -3,7 +3,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { restoreHistorySnapshot } from "@/redux/slices/builder-slice";
-import { History } from "lucide-react";
 
 export function HistoryPanel() {
   const dispatch = useDispatch();
@@ -11,14 +10,8 @@ export function HistoryPanel() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-apple-hairline/60 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <History className="h-4 w-4 text-apple-ink-muted-48" />
-          <div>
-            <h2 className="text-sm font-semibold text-apple-ink">History</h2>
-            <p className="text-[11px] text-apple-ink-muted-48">Restore previous snapshots</p>
-          </div>
-        </div>
+      <div className="border-b border-apple-hairline/60 px-3 py-3">
+        <h2 className="text-[13px] font-semibold text-apple-ink">History</h2>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
         {historySnapshots.length === 0 ? (

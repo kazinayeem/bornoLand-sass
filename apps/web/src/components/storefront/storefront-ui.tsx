@@ -294,3 +294,43 @@ export function StorefrontInput({ className, ...props }: InputHTMLAttributes<HTM
   const { classes } = useStorefrontSurface();
   return <input className={cn(classes.input, className)} {...props} />;
 }
+
+type StorefrontSkeletonProps = {
+  className?: string;
+  rows?: number;
+};
+
+export function StorefrontSkeleton({ className, rows = 4 }: StorefrontSkeletonProps) {
+  const { classes, dark } = useStorefrontSurface();
+  const pulse = dark ? "bg-apple-surface-tile-3" : "bg-apple-canvas-parchment";
+  return (
+    <StorefrontPage className={className}>
+      <div className="space-y-4 animate-pulse">
+        <div className={cn("h-10 w-48 rounded-apple-md", pulse)} />
+        <div className={cn("h-4 w-72 rounded-apple-sm", pulse)} />
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className={cn("h-24 w-full rounded-apple-lg", pulse, classes.card)} />
+        ))}
+      </div>
+    </StorefrontPage>
+  );
+}
+
+type StorefrontStatusPageProps = {
+  code?: string;
+  title: string;
+  description: string;
+  action?: ReactNode;
+};
+
+export function StorefrontStatusPage({ code, title, description, action }: StorefrontStatusPageProps) {
+  const { classes } = useStorefrontSurface();
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
+      {code ? <p className={cn("text-hero-display tabular-nums", classes.muted, "opacity-30")}>{code}</p> : null}
+      <h1 className={cn("text-display-md", classes.heading)}>{title}</h1>
+      <p className={cn("max-w-md text-body", classes.muted)}>{description}</p>
+      {action}
+    </div>
+  );
+}

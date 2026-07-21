@@ -2,6 +2,7 @@
 
 import { BuilderLink as Link } from "./builder-link";
 import { SectionWrapper, type SectionData } from "./section-renderer";
+import { resolveTextAlignment, resolveTextColor } from "@/lib/resolve-section-visuals";
 
 const heightMap: Record<string, string> = {
   sm: "min-h-[300px] md:min-h-[400px]",
@@ -12,9 +13,11 @@ const heightMap: Record<string, string> = {
 
 export function HeroBanner({ section }: { section: SectionData }) {
   const p = section.props;
+  const textColor = resolveTextColor(section, "#ffffff");
+  const textAlignment = resolveTextAlignment(section) || p.textAlignment;
   const height = heightMap[p.heroHeight || "md"] || heightMap.md;
-  const align = p.textAlignment === "left" ? "items-start text-left" : p.textAlignment === "right" ? "items-end text-right" : "items-center text-center";
-  const contentAlign = p.textAlignment === "left" ? "items-start" : p.textAlignment === "right" ? "items-end" : "items-center";
+  const align = textAlignment === "left" ? "items-start text-left" : textAlignment === "right" ? "items-end text-right" : "items-center text-center";
+  const contentAlign = textAlignment === "left" ? "items-start" : textAlignment === "right" ? "items-end" : "items-center";
 
   return (
     <SectionWrapper section={section} className={height}>
@@ -26,12 +29,12 @@ export function HeroBanner({ section }: { section: SectionData }) {
             </span>
           )}
           {p.headline && (
-            <h1 className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl xl:text-6xl" style={{ color: p.textColor || "#ffffff" }}>
+            <h1 className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl xl:text-6xl" style={{ color: textColor }}>
               {p.headline}
             </h1>
           )}
           {p.subheadline && (
-            <p className="max-w-xl text-sm leading-relaxed sm:text-base lg:text-lg" style={{ color: p.textColor ? `${p.textColor}cc` : "rgba(255,255,255,0.8)" }}>
+            <p className="max-w-xl text-sm leading-relaxed sm:text-base lg:text-lg" style={{ color: textColor ? `${textColor}cc` : "rgba(255,255,255,0.8)" }}>
               {p.subheadline}
             </p>
           )}
@@ -39,13 +42,13 @@ export function HeroBanner({ section }: { section: SectionData }) {
             <div className={`mt-2 flex flex-wrap gap-3 ${contentAlign}`}>
               {p.buttonText && (
                 <Link href={p.buttonLink || "#"}
-                  className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-apple-ink transition-all hover:bg-apple-canvas-parchment active:scale-95">
+                  className="btn-press inline-flex items-center gap-2 rounded-pill bg-white px-5 py-2.5 text-sm font-semibold text-apple-ink transition-all hover:bg-apple-canvas-parchment">
                   {p.buttonText}
                 </Link>
               )}
               {p.secondaryButtonText && (
                 <Link href={p.secondaryButtonLink || "#"}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 active:scale-95">
+                  className="btn-press inline-flex items-center gap-2 rounded-pill border border-white/20 bg-transparent px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10">
                   {p.secondaryButtonText}
                 </Link>
               )}

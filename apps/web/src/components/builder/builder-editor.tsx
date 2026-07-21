@@ -34,6 +34,14 @@ import { StorePreview } from "@/components/builder/store-preview";
 import { PropertiesPanel } from "@/components/builder/properties-panel";
 import { SectionLibraryModal } from "@/components/builder/section-library-modal";
 import { BuilderFloatingToolbar } from "@/components/builder/builder-floating-toolbar";
+import {
+  BuilderLoadingScreen,
+  useMinimumLoading,
+} from "@/components/builder/builder-loading-screen";
+import {
+  useBuilderAutoSave,
+  type BuilderDraftPayload,
+} from "@/hooks/use-builder-auto-save";
 import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
 import { PanelLeftOpen, PanelRightOpen, GripVertical } from "lucide-react";
@@ -157,6 +165,7 @@ export function BuilderEditor() {
   const { data: pagesData, isLoading: pagesLoading } = useGetStorePagesQuery(storeId, {
     skip: !storeId || !store,
   });
+  const { show: showPagesLoading, exiting: pagesLoadingExit } = useMinimumLoading(pagesLoading);
 
   // Store settings: used for preview (currency, locale). Graceful default if unavailable.
   const { data: settingsData } = useGetStoreSettingsQuery(storeId, {
@@ -188,6 +197,62 @@ export function BuilderEditor() {
   const rightPanelWidth = useSelector((s: RootState) => s.builder.rightPanelWidth);
   const fullscreen = useSelector((s: RootState) => s.builder.fullscreen);
   const [resizing, setResizing] = useState<"left" | "right" | null>(null);
+  const [contentRevision, setContentRevision] = useState(0);
+
+  // Bump revision on every meaningful edit so idle timer resets and concurrent saves stay safe
+  useEffect(() => {
+    if (!isDirty) return;
+    setContentRevision((n) => n + 1);
+  }, [
+    isDirty,
+    sections,
+    headerSections,
+    footerSections,
+    headerSettings,
+    footerSettings,
+    currentTheme,
+    settings,
+  ]);
+
+  const getDraftPayload = useCallback((): BuilderDraftPayload | null => {
+    if (!pageId) return null;
+    return {
+      id: pageId,
+      storeId,
+      sections,
+      headerSections,
+      footerSections,
+      headerSettings: headerSettings as Record<string, unknown>,
+      footerSettings: footerSettings as Record<string, unknown>,
+      theme: currentTheme as unknown as Record<string, unknown>,
+      settings: settings as unknown as Record<string, unknown>,
+    };
+  }, [
+    pageId,
+    storeId,
+    sections,
+    headerSections,
+    footerSections,
+    headerSettings,
+    footerSettings,
+    currentTheme,
+    settings,
+  ]);
+
+  const persistDraft = useCallback(async (payload: BuilderDraftPayload) => {
+    await savePageDraft(payload).unwrap();
+  }, [savePageDraft]);
+
+  const { status: autoSaveStatus, saveNow } = useBuilderAutoSave({
+    isDirty,
+    revision: contentRevision,
+    getPayload: getDraftPayload,
+    saveDraft: persistDraft,
+    onSaved: (iso) => dispatch(markSaved(iso)),
+    onError: (message) => dispatch(setSaveError(message)),
+    onSavingChange: (next) => dispatch(setSaving(next)),
+    idleMs: 30_000,
+  });
 
   const handleQuickInsert = useCallback((index: number, event: ReactMouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -338,33 +403,6 @@ export function BuilderEditor() {
     }));
   }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug]);
 
-  // ─── Autosave 3s after last change ────────────────────────────────────────
-  useEffect(() => {
-    if (!isDirty || !pageId || saving) return;
-    const timer = setTimeout(() => {
-      dispatch(setSaving(true));
-      savePageDraft({ id: pageId, storeId, sections, headerSections, footerSections, headerSettings, footerSettings, theme: currentTheme, settings })
-        .unwrap()
-        .then(() => dispatch(markSaved(new Date().toISOString())))
-        .catch(() => dispatch(setSaveError("Save failed — check your connection")));
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [
-    isDirty,
-    pageId,
-    saving,
-    sections,
-    headerSections,
-    footerSections,
-    headerSettings,
-    footerSettings,
-    currentTheme,
-    settings,
-    storeId,
-    dispatch,
-    savePageDraft,
-  ]);
-
   // ─── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -379,12 +417,7 @@ export function BuilderEditor() {
 
       if (mod && event.key.toLowerCase() === "s") {
         event.preventDefault();
-        if (!pageId) return;
-        dispatch(setSaving(true));
-        savePageDraft({ id: pageId, storeId, sections, headerSections, footerSections, headerSettings, footerSettings, theme: currentTheme, settings })
-          .unwrap()
-          .then(() => dispatch(markSaved(new Date().toISOString())))
-          .catch(() => dispatch(setSaveError("Save failed")));
+        void saveNow();
         return;
       }
 
@@ -428,27 +461,14 @@ export function BuilderEditor() {
     return () => window.removeEventListener("keydown", handler);
   }, [
     clipboardSection,
-    currentTheme,
     dispatch,
-    pageId,
-    savePageDraft,
-    sections,
-    headerSections,
-    footerSections,
-    headerSettings,
-    footerSettings,
+    saveNow,
     selectedSectionId,
-    settings,
-    storeId,
   ]);
 
   // ─── Loading state ─────────────────────────────────────────────────────────
-  if (pagesLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-apple-canvas-parchment">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900" />
-      </div>
-    );
+  if (showPagesLoading) {
+    return <BuilderLoadingScreen exiting={pagesLoadingExit} message="Restoring your latest edits…" />;
   }
 
   return (
@@ -465,6 +485,8 @@ export function BuilderEditor() {
           saving={saving}
           publishing={publishing}
           isDirty={isDirty}
+          autoSaveStatus={autoSaveStatus}
+          onForceSave={saveNow}
         />
       )}
 

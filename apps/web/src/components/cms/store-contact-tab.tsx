@@ -3,8 +3,14 @@
 import { useEffect, useState } from "react";
 import { Loader2, MapPin, Save } from "lucide-react";
 import { toast } from "sonner";
-import { useGetStoreContactQuery, useUpdateStoreContactMutation, type StoreContact } from "@/redux/api/store-contact-api";
-import { revalidateStorefrontAction } from "@/lib/actions/revalidate-storefront";
+import {
+  useGetStoreContactQuery,
+  useUpdateStoreContactMutation,
+  type StoreContact,
+  type UpdateStoreContactPayload,
+} from "@/redux/api/store-contact-api";
+import { getMutationErrorMessage } from "@/lib/api/envelope";
+import { revalidateStorefrontForStore } from "@/lib/revalidate-storefront-client";
 import { useStorePage } from "@/components/store-dashboard/store-page";
 
 type StoreContactTabProps = {
@@ -20,6 +26,30 @@ const emptySocial = {
   youtube: "",
   telegram: "",
 };
+
+function contactToForm(contact: StoreContact, storeId: string): Omit<StoreContact, "_id" | "createdAt" | "updatedAt"> {
+  return {
+    storeId,
+    businessName: contact.businessName ?? "",
+    email: contact.email ?? "",
+    phone: contact.phone ?? "",
+    whatsapp: contact.whatsapp ?? "",
+    address: contact.address ?? "",
+    city: contact.city ?? "",
+    country: contact.country ?? "",
+    postalCode: contact.postalCode ?? "",
+    googleMapsEmbedUrl: contact.googleMapsEmbedUrl ?? "",
+    latitude: contact.latitude ?? "",
+    longitude: contact.longitude ?? "",
+    businessHours: contact.businessHours ?? "",
+    socialLinks: { ...emptySocial, ...(contact.socialLinks ?? {}) },
+  };
+}
+
+function formToPayload(form: Omit<StoreContact, "_id" | "createdAt" | "updatedAt">): UpdateStoreContactPayload {
+  const { socialLinks, ...fields } = form;
+  return { ...fields, socialLinks };
+}
 
 function Field({
   label,
@@ -57,11 +87,10 @@ function Field({
   );
 }
 
-export function StoreContactTab({ storeId, storeSlug }: StoreContactTabProps) {
+export function StoreContactTab({ storeId }: StoreContactTabProps) {
   const { store } = useStorePage();
-  const { data, isLoading } = useGetStoreContactQuery(storeId);
+  const { data: contact, isLoading } = useGetStoreContactQuery(storeId);
   const [updateContact] = useUpdateStoreContactMutation();
-  const contact = data?.data?.contact;
 
   const [form, setForm] = useState<Omit<StoreContact, "_id" | "createdAt" | "updatedAt">>({
     storeId,
@@ -83,25 +112,10 @@ export function StoreContactTab({ storeId, storeSlug }: StoreContactTabProps) {
 
   useEffect(() => {
     if (!contact) return;
-    setForm({
-      storeId,
-      businessName: contact.businessName ?? "",
-      email: contact.email ?? "",
-      phone: contact.phone ?? "",
-      whatsapp: contact.whatsapp ?? "",
-      address: contact.address ?? "",
-      city: contact.city ?? "",
-      country: contact.country ?? "",
-      postalCode: contact.postalCode ?? "",
-      googleMapsEmbedUrl: contact.googleMapsEmbedUrl ?? "",
-      latitude: contact.latitude ?? "",
-      longitude: contact.longitude ?? "",
-      businessHours: contact.businessHours ?? "",
-      socialLinks: { ...emptySocial, ...(contact.socialLinks ?? {}) },
-    });
+    setForm(contactToForm(contact, storeId));
   }, [contact, storeId]);
 
-  const setField = (key: keyof typeof form, value: string) => {
+  const setField = (key: keyof Omit<typeof form, "socialLinks" | "storeId">, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -112,12 +126,19 @@ export function StoreContactTab({ storeId, storeSlug }: StoreContactTabProps) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateContact({ storeId, data: form }).unwrap();
-      const tenantSlug = store?.subdomain || store?.slug || storeSlug;
-      await revalidateStorefrontAction({ tenantSlug, storeId, scope: "cms", cmsSlugs: ["contact-us"] });
+      const saved = await updateContact({ storeId, data: formToPayload(form) }).unwrap();
+      setForm(contactToForm(saved, storeId));
       toast.success("Contact information saved");
-    } catch {
-      toast.error("Failed to save contact information");
+
+      if (store) {
+        try {
+          await revalidateStorefrontForStore(store, { scope: "cms" });
+        } catch {
+          toast.warning("Saved, but the public contact page may take a moment to refresh.");
+        }
+      }
+    } catch (error) {
+      toast.error(getMutationErrorMessage(error, "Failed to save contact information"));
     } finally {
       setSaving(false);
     }

@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense, useRef } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLoginMutation } from "@/redux/api/customer-api";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "@/redux/store";
 import { setCustomer } from "@/redux/slices/customer-slice";
 import { motion } from "framer-motion";
 import { LogIn, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { StorefrontButton, useStorefrontSurface } from "@/components/storefront/storefront-ui";
+import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
+import { validateInternalRedirect } from "@/lib/auth-redirect";
+import { resolveStoreHref } from "@/lib/store-href";
 import { cn } from "@/lib/utils";
 
 const loginFormSchema = z.object({
@@ -23,13 +27,16 @@ type LoginFormData = z.infer<typeof loginFormSchema>;
 
 function LoginForm() {
   const router = useRouter();
+  const pathname = usePathname() || "";
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/";
+  const { restored, isAuthenticated } = useSelector((s: RootState) => s.customer);
+  const redirectTo = validateInternalRedirect(searchParams.get("redirect")) ?? "/";
   const [login, { isLoading }] = useLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState("");
   const { classes, primaryColor } = useStorefrontSurface();
+  const redirectedRef = useRef(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
     resolver: zodResolver(loginFormSchema),
@@ -37,9 +44,10 @@ function LoginForm() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem("customer_token");
-    if (token) router.push(redirectTo);
-  }, [router, redirectTo]);
+    if (!restored || !isAuthenticated || redirectedRef.current) return;
+    redirectedRef.current = true;
+    router.replace(resolveStoreHref(redirectTo, pathname));
+  }, [restored, isAuthenticated, redirectTo, router, pathname]);
 
   const onSubmit = async (data: LoginFormData) => {
     setApiError("");
@@ -49,7 +57,8 @@ function LoginForm() {
         localStorage.setItem("customer_token", result.data.token);
         dispatch(setCustomer({ customer: result.data.customer, token: result.data.token }));
         window.dispatchEvent(new Event("auth-change"));
-        router.push(redirectTo);
+        redirectedRef.current = true;
+        router.replace(resolveStoreHref(redirectTo, pathname));
       } else {
         setApiError(result.message ?? "Login failed");
       }
@@ -61,6 +70,16 @@ function LoginForm() {
       }
     }
   };
+
+  if (!restored || isAuthenticated) {
+    return <CustomerAuthLoader message={isAuthenticated ? "Taking you back…" : "Checking your account…"} />;
+  }
+
+  const registerHref = resolveStoreHref(
+    `/account/register${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`,
+    pathname,
+  );
+  const forgotHref = resolveStoreHref("/account/forgot-password", pathname);
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
@@ -164,12 +183,13 @@ function LoginForm() {
 
         <p className={cn("mt-6 text-center text-caption", classes.muted)}>
           Don&apos;t have an account?{" "}
-          <Link
-            href={`/account/register${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
-            className="font-medium text-apple-primary underline underline-offset-4"
-            style={{ color: primaryColor }}
-          >
+          <Link href={registerHref} className="font-medium text-apple-primary underline underline-offset-4" style={{ color: primaryColor }}>
             Create one
+          </Link>
+        </p>
+        <p className={cn("mt-3 text-center text-caption", classes.muted)}>
+          <Link href={forgotHref} className="underline underline-offset-4" style={{ color: primaryColor }}>
+            Forgot password?
           </Link>
         </p>
       </motion.div>
@@ -179,7 +199,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<CustomerAuthLoader />}>
       <LoginForm />
     </Suspense>
   );

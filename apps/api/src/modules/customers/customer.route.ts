@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { subdomainDetector, resolveStoreFromSubdomain } from "../../common/middleware/subdomain.middleware.js";
-import { registerController, loginController, meController } from "./customer.controller.js";
+import { registerController, loginController, meController, forgotPasswordController } from "./customer.controller.js";
 
 export const customerRouter: Router = Router();
 
@@ -9,4 +9,5 @@ customerRouter.use(resolveStoreFromSubdomain);
 
 customerRouter.post("/register", registerController);
 customerRouter.post("/login", loginController);
+customerRouter.post("/forgot-password", forgotPasswordController);
 customerRouter.get("/me", meController);

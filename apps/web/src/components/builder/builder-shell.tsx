@@ -4,32 +4,31 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { useStoreFromSlug } from "@/hooks/use-store-from-slug";
 import { StoreBrandingSync } from "@/components/store-dashboard/store-branding-sync";
-import { LoadingSpinner } from "@/components/loading/loading-spinner";
+import {
+  BuilderLoadingScreen,
+  useMinimumLoading,
+} from "@/components/builder/builder-loading-screen";
 
 export function BuilderShell({ children }: { children: ReactNode }) {
   const { store, isLoading, isError } = useStoreFromSlug();
+  const { show, exiting } = useMinimumLoading(isLoading);
 
-  if (isLoading) {
-    return (
-      <div
-        className="flex h-screen flex-col items-center justify-center gap-3 bg-zinc-950"
-        role="status"
-        aria-live="polite"
-        aria-busy="true"
-      >
-        <LoadingSpinner size="lg" label="Loading builder" className="text-apple-ink-muted-48" />
-        <p className="text-caption text-apple-ink-muted-48">Loading builder…</p>
-      </div>
-    );
+  if (show) {
+    return <BuilderLoadingScreen exiting={exiting} className="h-screen min-h-0" />;
   }
 
   if (isError || !store) {
     return (
-      <div className="flex h-screen items-center justify-center bg-zinc-950 p-6">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center">
-          <h2 className="text-lg font-semibold text-white">Store not found</h2>
-          <p className="mt-1 text-sm text-apple-ink-muted-48">This store doesn&apos;t exist or you don&apos;t have access.</p>
-          <Link href="/dashboard/stores" className="mt-4 inline-block text-sm font-medium text-white underline">
+      <div className="flex h-screen items-center justify-center bg-apple-canvas-parchment p-6">
+        <div className="max-w-sm rounded-apple-lg border border-apple-hairline bg-apple-canvas p-8 text-center shadow-sm">
+          <h2 className="text-tagline text-apple-ink">Store not found</h2>
+          <p className="mt-2 text-caption text-apple-ink-muted-48">
+            This store doesn&apos;t exist or you don&apos;t have access.
+          </p>
+          <Link
+            href="/dashboard/stores"
+            className="mt-5 inline-block text-caption font-medium text-apple-primary underline underline-offset-4"
+          >
             Back to stores
           </Link>
         </div>

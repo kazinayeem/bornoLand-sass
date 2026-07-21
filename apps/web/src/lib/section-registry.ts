@@ -546,6 +546,39 @@ export const sectionRegistry: SectionDef[] = [
       layout, bg, typography,
     ),
   },
+  {
+    type: "contact-section", label: "Contact", category: "content", icon: "Mail", description: "Business contact details with map",
+    props: merge(
+      {
+        title: G.text("title", "Section Title", "Contact"),
+        businessName: G.text("businessName", "Business Name", ""),
+        phone: G.text("phone", "Phone", ""),
+        email: G.text("email", "Email", ""),
+        address: G.textarea("address", "Address", ""),
+        businessHours: G.textarea("businessHours", "Working Hours", ""),
+        mapEmbed: G.textarea("mapEmbed", "Google Maps Embed URL", ""),
+        latitude: G.text("latitude", "Latitude", ""),
+        longitude: G.text("longitude", "Longitude", ""),
+        facebook: G.text("facebook", "Facebook", ""),
+        instagram: G.text("instagram", "Instagram", ""),
+        x: G.text("x", "X / Twitter", ""),
+      },
+      layout, bg, typography,
+    ),
+  },
+  {
+    type: "google-map", label: "Google Map", category: "content", icon: "Map", description: "Embedded Google Map",
+    props: merge(
+      {
+        title: G.text("title", "Section Title", "Find us"),
+        address: G.textarea("address", "Business Address", ""),
+        mapEmbed: G.textarea("mapEmbed", "Google Maps Embed URL", ""),
+        latitude: G.text("latitude", "Latitude", ""),
+        longitude: G.text("longitude", "Longitude", ""),
+      },
+      layout, bg,
+    ),
+  },
 
   // ════════ MEDIA ════════
   {
@@ -579,7 +612,29 @@ export const sectionRegistry: SectionDef[] = [
   {
     type: "before-after", label: "Before / After", category: "media", icon: "SplitSquareHorizontal", description: "Before and after comparison slider",
     props: merge(
-      { title: G.text("title", "Section Title", "Transformation"), beforeImage: G.image("beforeImage", "Before Image"), afterImage: G.image("afterImage", "After Image"), beforeLabel: G.text("beforeLabel", "Before Label", "Before"), afterLabel: G.text("afterLabel", "After Label", "After"), orientation: G.select("orientation", "Orientation", "horizontal", [{ value: "horizontal", label: "Horizontal" }, { value: "vertical", label: "Vertical" }], "layout") },
+      {
+        title: G.text("title", "Section Title", "Transformation"),
+        caption: G.textarea("caption", "Caption", ""),
+        beforeImage: G.image("beforeImage", "Before Image", "content"),
+        afterImage: G.image("afterImage", "After Image", "content"),
+        beforeLabel: G.text("beforeLabel", "Before Label", "Before"),
+        afterLabel: G.text("afterLabel", "After Label", "After"),
+        showLabels: G.toggle("showLabels", "Show Labels", "true"),
+        altText: G.text("altText", "Alt Text", ""),
+        beforeAlt: G.text("beforeAlt", "Before Alt", ""),
+        afterAlt: G.text("afterAlt", "After Alt", ""),
+        orientation: G.select("orientation", "Orientation", "horizontal", [{ value: "horizontal", label: "Horizontal" }], "layout"),
+        sliderPosition: G.range("sliderPosition", "Default Slider Position", "50", 0, 100, 1, "layout"),
+        delimiterColor: G.color("delimiterColor", "Delimiter Color", "#ffffff", "layout"),
+        comparisonWidth: G.text("comparisonWidth", "Width", "100%", "layout"),
+        comparisonHeight: G.select("comparisonHeight", "Height", "md", [
+          { value: "sm", label: "Small" }, { value: "md", label: "Medium" },
+          { value: "lg", label: "Large" }, { value: "xl", label: "Extra Large" },
+        ], "layout"),
+        comparisonRadius: G.range("comparisonRadius", "Image Border Radius", "16", 0, 48, 4, "layout"),
+        showOverlay: G.toggle("showOverlay", "Overlay", "false", "background"),
+        overlayColor: G.color("overlayColor", "Overlay Color", "rgba(0,0,0,0.15)"),
+      },
       layout, bg, typography,
     ),
   },
@@ -898,6 +953,15 @@ for (const def of sectionRegistry) {
   sectionRegistryMap[def.type] = def;
 }
 
+/** Allow library presets to register render aliases without circular imports. */
+export function registerSectionTypeAlias(from: string, to: string) {
+  sectionTypeAliases[from] = to;
+}
+
+export function registerSectionDef(def: SectionDef) {
+  sectionRegistryMap[def.type] = def;
+}
+
 export const sectionCategories: { id: SectionCategory; label: string }[] = [
   { id: "hero", label: "Hero" },
   { id: "products", label: "Products" },
@@ -937,5 +1001,6 @@ export function normalizeSectionType(type: string): string {
 }
 
 export function getSectionDef(type: string): SectionDef | undefined {
-  return sectionRegistryMap[normalizeSectionType(type)];
+  // Prefer an exact def (library presets) before falling back to render aliases.
+  return sectionRegistryMap[type] ?? sectionRegistryMap[normalizeSectionType(type)];
 }

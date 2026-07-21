@@ -11,9 +11,8 @@ export function MediaPanel({ billingHref }: { billingHref?: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="h-full overflow-y-auto overscroll-contain p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Media</p>
+    <div className="h-full overflow-y-auto overscroll-contain p-3">
+      <div className="mb-3 flex items-center justify-end">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -22,9 +21,6 @@ export function MediaPanel({ billingHref }: { billingHref?: string }) {
           <ImagePlus className="mr-1 inline h-3 w-3" /> Open library
         </button>
       </div>
-      <p className="text-xs text-apple-ink-muted-48">
-        Upload and manage builder assets from the media library.
-      </p>
       <Drawer
         open={open}
         onClose={() => setOpen(false)}

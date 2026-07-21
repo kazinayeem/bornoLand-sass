@@ -8,29 +8,17 @@
  *   • shift  — keeps the menu inside the viewport horizontally
  *   • offset — 6px gap between trigger and menu
  *
- * Renders into document.body via React portal so it is NEVER clipped
+ * Renders into document.body via FloatingPortal so it is NEVER clipped
  * by overflow:hidden parents, scroll containers, or stacking contexts.
- *
- * Usage:
- *   <DropdownMenu
- *     trigger={<button>...</button>}
- *     items={[
- *       { label: "Edit", icon: Pencil, onClick: () => {} },
- *       { divider: true },
- *       { label: "Delete", icon: Trash2, onClick: () => {}, danger: true },
- *     ]}
- *   />
  */
 
 import {
   useCallback,
-  useEffect,
   useId,
   useState,
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
 import {
   useFloating,
   autoUpdate,
@@ -38,7 +26,9 @@ import {
   flip,
   shift,
   useDismiss,
+  useInteractions,
   FloatingFocusManager,
+  FloatingPortal,
   type Placement,
 } from "@floating-ui/react";
 import { cn } from "@/lib/utils";
@@ -77,6 +67,8 @@ type DropdownMenuProps = {
   minWidth?: number;
   /** Disable the whole menu */
   disabled?: boolean;
+  /** Extra class on the trigger wrapper */
+  triggerClassName?: string;
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -88,6 +80,7 @@ export function DropdownMenu({
   className,
   minWidth = 192,
   disabled = false,
+  triggerClassName,
 }: DropdownMenuProps) {
   const [open, setOpen] = useState(false);
   const menuId = useId();
@@ -104,24 +97,20 @@ export function DropdownMenu({
     ],
   });
 
-  const dismiss = useDismiss(context, { outsidePressEvent: "mousedown" });
+  const dismiss = useDismiss(context, {
+    outsidePressEvent: "mousedown",
+    // Reposition on scroll via autoUpdate — do not force-close.
+    // Capture-phase scroll listeners made menus unusable inside overflow panels.
+    ancestorScroll: false,
+  });
+  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss]);
 
-  // Manual click toggle with stopPropagation so parent onClick never interferes.
-  // We use useDismiss for outside-click dismissal but manually control
-  // the open state via handleTriggerClick instead of useClick.
   const handleTriggerClick = useCallback((e: React.MouseEvent) => {
     if (disabled) return;
+    e.preventDefault();
     e.stopPropagation();
     setOpen((prev) => !prev);
   }, [disabled]);
-
-  // Close on scroll
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    window.addEventListener("scroll", close, { passive: true, capture: true });
-    return () => window.removeEventListener("scroll", close, true);
-  }, [open]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -167,84 +156,93 @@ export function DropdownMenu({
     <>
       <div
         ref={refs.setReference}
-        className="inline-flex"
+        className={cn("relative z-20 inline-flex shrink-0", triggerClassName)}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        onClick={handleTriggerClick}
+        {...getReferenceProps({
+          onClick: handleTriggerClick,
+        })}
       >
         {trigger}
       </div>
 
-      {typeof document !== "undefined" && open && createPortal(
-        <FloatingFocusManager context={context} modal={false} initialFocus={-1}>
-          <div
-            ref={refs.setFloating}
-            id={menuId}
-            style={{ ...floatingStyles, minWidth, zIndex: 9999 }}
-            onKeyDown={handleKeyDown}
-            className={cn(
-              "rounded-lg border border-apple-hairline bg-apple-canvas py-1.5 outline-none dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2",
-              className
-            )}
-          >
-            {items.map((item, index) => {
-              if (item.divider) {
+      {open ? (
+        <FloatingPortal>
+          <FloatingFocusManager context={context} modal={false} initialFocus={-1}>
+            <div
+              ref={refs.setFloating}
+              id={menuId}
+              {...getFloatingProps({
+                onKeyDown: handleKeyDown,
+              })}
+              style={{ ...floatingStyles, minWidth, zIndex: 10000 }}
+              className={cn(
+                "rounded-lg border border-apple-hairline bg-apple-canvas py-1.5 shadow-lg outline-none dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2",
+                className
+              )}
+              role="menu"
+            >
+              {items.map((item, index) => {
+                if (item.divider) {
+                  return (
+                    <div
+                      key={item.key ?? `divider-${index}`}
+                      role="separator"
+                      className="my-1 border-t border-apple-divider-soft"
+                    />
+                  );
+                }
+
+                const { label, icon: Icon, danger, warning, disabled: itemDisabled, description, badge } = item;
+
                 return (
-                  <div
-                    key={item.key ?? `divider-${index}`}
-                    role="separator"
-                    className="my-1 border-t border-apple-divider-soft"
-                  />
-                );
-              }
-
-              const { label, icon: Icon, onClick, danger, warning, disabled: itemDisabled, description, badge } = item;
-
-              return (
-                <button
-                  key={item.key ?? label}
-                  type="button"
-                  role="menuitem"
-                  disabled={itemDisabled}
-                  onClick={() => handleItemClick(item)}
-                  className={cn(
-                    "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-caption outline-none transition-colors",
-                    "focus-visible:bg-apple-canvas-parchment dark:focus-visible:bg-apple-surface-tile-3",
-                    itemDisabled && "cursor-not-allowed opacity-40",
-                    !itemDisabled && danger && "text-red-600 hover:bg-red-50 focus-visible:bg-red-50 dark:hover:bg-red-950/20",
-                    !itemDisabled && warning && "text-amber-700 hover:bg-amber-50 focus-visible:bg-amber-50 dark:hover:bg-amber-950/20",
-                    !itemDisabled && !danger && !warning && "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment dark:text-apple-body-muted dark:hover:bg-apple-surface-tile-3"
-                  )}
-                >
-                  {Icon && (
-                    <Icon className={cn(
-                      "h-4 w-4 shrink-0",
-                      danger  ? "text-red-500"   : "",
-                      warning ? "text-amber-600" : "",
-                      !danger && !warning ? "text-apple-ink-muted-48" : ""
-                    )} />
-                  )}
-                  <span className="flex-1 min-w-0">
-                    <span className="block truncate">{label}</span>
-                    {description && (
-                      <span className="mt-0.5 block truncate text-fine-print font-normal leading-tight text-apple-ink-muted-48">
-                        {description}
+                  <button
+                    key={item.key ?? label}
+                    type="button"
+                    role="menuitem"
+                    disabled={itemDisabled}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleItemClick(item);
+                    }}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-caption outline-none transition-colors",
+                      "focus-visible:bg-apple-canvas-parchment dark:focus-visible:bg-apple-surface-tile-3",
+                      itemDisabled && "cursor-not-allowed opacity-40",
+                      !itemDisabled && danger && "text-red-600 hover:bg-red-50 focus-visible:bg-red-50 dark:hover:bg-red-950/20",
+                      !itemDisabled && warning && "text-amber-700 hover:bg-amber-50 focus-visible:bg-amber-50 dark:hover:bg-amber-950/20",
+                      !itemDisabled && !danger && !warning && "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment dark:text-apple-body-muted dark:hover:bg-apple-surface-tile-3"
+                    )}
+                  >
+                    {Icon && (
+                      <Icon className={cn(
+                        "h-4 w-4 shrink-0",
+                        danger  ? "text-red-500"   : "",
+                        warning ? "text-amber-600" : "",
+                        !danger && !warning ? "text-apple-ink-muted-48" : ""
+                      )} />
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate">{label}</span>
+                      {description && (
+                        <span className="mt-0.5 block truncate text-fine-print font-normal leading-tight text-apple-ink-muted-48">
+                          {description}
+                        </span>
+                      )}
+                    </span>
+                    {badge && (
+                      <span className="ml-2 shrink-0 rounded-pill bg-apple-canvas-parchment px-1.5 py-0.5 text-fine-print font-semibold text-apple-ink-muted-48">
+                        {badge}
                       </span>
                     )}
-                  </span>
-                  {badge && (
-                    <span className="ml-2 shrink-0 rounded-pill bg-apple-canvas-parchment px-1.5 py-0.5 text-fine-print font-semibold text-apple-ink-muted-48">
-                      {badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </FloatingFocusManager>,
-        document.body
-      )}
+                  </button>
+                );
+              })}
+            </div>
+          </FloatingFocusManager>
+        </FloatingPortal>
+      ) : null}
     </>
   );
 }

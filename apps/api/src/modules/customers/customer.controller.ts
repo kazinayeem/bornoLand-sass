@@ -1,6 +1,6 @@
 import type { Response } from "express";
 import type { SubdomainRequest } from "../../common/middleware/subdomain.middleware.js";
-import { registerCustomer, loginCustomer, getCustomerById } from "./customer.service.js";
+import { registerCustomer, loginCustomer, getCustomerById, requestCustomerPasswordReset } from "./customer.service.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 import jwt from "jsonwebtoken";
 
@@ -51,4 +51,15 @@ export async function meController(request: SubdomainRequest, response: Response
   } catch {
     return sendFailure(response, "Invalid or expired token", 401);
   }
+}
+
+export async function forgotPasswordController(request: SubdomainRequest, response: Response) {
+  const storeId = request.store?._id;
+  if (!storeId) return sendFailure(response, "Store not found", 404);
+
+  const email = typeof request.body?.email === "string" ? request.body.email : "";
+  if (!email.trim()) return sendFailure(response, "Email is required", 400);
+
+  const result = await requestCustomerPasswordReset(storeId.toString(), email);
+  return sendSuccess(response, result.data, result.data.message);
 }

@@ -45,7 +45,6 @@ export function VideoEditor({
             <MediaPicker
               storeId={storeId}
               billingHref={`/store/${storeSlug}/billing`}
-              folder="builder"
               compact
               hideLabel
               allowUrlPaste

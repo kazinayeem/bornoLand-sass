@@ -233,7 +233,6 @@ function StyleBackgroundInput({
       billingHref={`/store/${storeSlug}/billing`}
       value={selection}
       onChange={onChange}
-      folder="builder"
       compact
       hideLabel
       allowUrlPaste

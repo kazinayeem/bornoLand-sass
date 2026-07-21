@@ -55,7 +55,7 @@ export function RepeaterEditor({
   addLabel = "Add Item",
   storeId,
   storeSlug,
-  mediaFolder = "builder",
+  mediaFolder,
 }: RepeaterEditorProps) {
   const addItem = useCallback(() => {
     const newItem: Record<string, string> = { id: generateId() };

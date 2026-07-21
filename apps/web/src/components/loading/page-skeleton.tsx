@@ -1,5 +1,6 @@
 import { CardSkeleton, StatsSkeleton, TableSkeleton, ChartSkeleton } from "@/components/ui/skeleton";
 
+/** Admin / dashboard workspace loading only — never use on public storefront routes. */
 export function PageLoadingSkeleton() {
   return (
     <div className="mx-auto w-full max-w-[1440px] animate-fade-in space-y-6 p-4 sm:p-6 lg:p-8">

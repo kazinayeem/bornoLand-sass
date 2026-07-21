@@ -4,6 +4,9 @@ export const LOADING_MIN_VISIBLE_MS = 300;
 /** Delay before showing progress bar to avoid flicker on instant navigations (ms). */
 export const LOADING_SHOW_DELAY_MS = 80;
 
+/** Delay before showing route skeletons so fast loads skip the flash (ms). */
+export const SKELETON_SHOW_DELAY_MS = 180;
+
 /** How long success/error action toasts remain visible (ms). */
 export const ACTION_TOAST_DURATION_MS = 4000;
 

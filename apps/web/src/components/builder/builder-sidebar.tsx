@@ -60,7 +60,7 @@ export function BuilderSidebar() {
       case "history":
         return <HistoryPanel />;
       default:
-        return <TemplatesPanel />;
+        return <LayersPanel title="Sections" />;
     }
   };
 

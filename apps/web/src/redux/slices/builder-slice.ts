@@ -268,7 +268,7 @@ const initialState: BuilderState = {
   selectedSectionId: null,
   hoveredSectionId: null,
   editingSectionId: null,
-  activeTab: "templates",
+  activeTab: "navigator",
   activeRightTab: "content",
   leftPanelOpen: true,
   // Advanced inspector is opt-in; selecting a canvas section should not shrink the editing surface.

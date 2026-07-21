@@ -16,7 +16,22 @@ type StorefrontCanvasProps = {
   hoveredSectionId?: string | null;
   onSelectSection?: (sectionId: string) => void;
   onHoverSection?: (sectionId: string | null) => void;
-  onQuickEditRequest?: (payload: { sectionId: string; mode: "text" | "image" | "button" }) => void;
+  onQuickEditRequest?: (payload: {
+    sectionId: string;
+    mode: "text" | "image" | "button" | "video";
+    anchor: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      top: number;
+      left: number;
+      right: number;
+      bottom: number;
+    };
+  }) => void;
+  /** Fired when a section is clicked but no editable element was targeted */
+  onQuickEditDismiss?: () => void;
   onQuickInsert?: (index: number, event: React.MouseEvent) => void;
   /** Updates made by the canvas are immediately reflected in the draft (and autosaved by the editor). */
   onInlineTextChange?: (payload: { sectionId: string; key: string; value: string }) => void;
@@ -43,8 +58,52 @@ const CanvasSectionRenderer = memo(function CanvasSectionRenderer({ section }: {
 
 type HoverCard = { sectionId: string; label: string; rect: DOMRect };
 
-const EDITABLE_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "small", "li", "figcaption"]);
+const EDITABLE_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "small", "li", "figcaption", "label"]);
 const TEXT_KEYS = ["headline", "title", "kicker", "subheadline", "subtitle", "description", "text", "content", "buttonText", "badge", "copyright", "placeholderText"];
+
+function rectPayload(el: Element) {
+  const r = el.getBoundingClientRect();
+  return {
+    x: r.x,
+    y: r.y,
+    width: r.width,
+    height: r.height,
+    top: r.top,
+    left: r.left,
+    right: r.right,
+    bottom: r.bottom,
+  };
+}
+
+function resolveQuickEditTarget(target: HTMLElement): {
+  mode: "text" | "image" | "button" | "video";
+  el: HTMLElement;
+} | null {
+  const img = target.closest("img");
+  if (img instanceof HTMLElement) return { mode: "image", el: img };
+
+  const video = target.closest("video, iframe");
+  if (video instanceof HTMLElement) return { mode: "video", el: video };
+
+  const mediaBg = target.closest("[data-quick-edit='image'], [data-bg-image], .bg-cover, .bg-center");
+  if (mediaBg instanceof HTMLElement && (mediaBg.style.backgroundImage || mediaBg.getAttribute("data-bg-image"))) {
+    return { mode: "image", el: mediaBg };
+  }
+
+  const btn = target.closest("a, button, [role='button']");
+  if (btn instanceof HTMLElement) return { mode: "button", el: btn };
+
+  const svg = target.closest("svg");
+  if (svg instanceof SVGElement) {
+    const host = (svg.parentElement instanceof HTMLElement ? svg.parentElement : svg) as HTMLElement;
+    return { mode: "image", el: host };
+  }
+
+  const tagName = target.tagName.toLowerCase();
+  if (EDITABLE_TAGS.has(tagName)) return { mode: "text", el: target };
+
+  return null;
+}
 
 function findEditableProp(section: StorefrontSectionLike, target: HTMLElement) {
   const text = target.innerText?.trim();
@@ -57,7 +116,7 @@ function findEditableProp(section: StorefrontSectionLike, target: HTMLElement) {
   return partial?.[0] ?? null;
 }
 
-export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId, onSelectSection, onHoverSection, onQuickEditRequest, onQuickInsert, onInlineTextChange, onSectionAction }: StorefrontCanvasProps) {
+export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId, onSelectSection, onHoverSection, onQuickEditRequest, onQuickEditDismiss, onQuickInsert, onInlineTextChange, onSectionAction }: StorefrontCanvasProps) {
   const visibleSections = sections.filter((section) => section.visible !== false);
   const [hoveredInsertIndex, setHoveredInsertIndex] = useState<number | null>(null);
   const [clickedInsertIndex, setClickedInsertIndex] = useState<number | null>(null);
@@ -166,12 +225,23 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
               onSelectSection?.(section.id);
               if (!onQuickEditRequest) return;
               const target = event.target as HTMLElement | null;
-              if (!target) return;
-              const tagName = target.tagName.toLowerCase();
-              if (tagName === "img") {
-                onQuickEditRequest({ sectionId: section.id, mode: "image" });
-              } else if (tagName === "a" || tagName === "button") {
-                onQuickEditRequest({ sectionId: section.id, mode: "button" });
+              if (!target) {
+                onQuickEditDismiss?.();
+                return;
+              }
+              const resolved = resolveQuickEditTarget(target);
+              if (resolved) {
+                document.querySelectorAll("[data-quick-edit-anchor='true']").forEach((el) => {
+                  el.removeAttribute("data-quick-edit-anchor");
+                });
+                resolved.el.setAttribute("data-quick-edit-anchor", "true");
+                onQuickEditRequest({
+                  sectionId: section.id,
+                  mode: resolved.mode,
+                  anchor: rectPayload(resolved.el),
+                });
+              } else {
+                onQuickEditDismiss?.();
               }
             }}
             onDoubleClick={(event) => {
@@ -194,7 +264,15 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
                 selection?.removeAllRanges();
                 selection?.addRange(range);
               } else if (onQuickEditRequest && EDITABLE_TAGS.has(tagName)) {
-                onQuickEditRequest({ sectionId: section.id, mode: "text" });
+                document.querySelectorAll("[data-quick-edit-anchor='true']").forEach((el) => {
+                  el.removeAttribute("data-quick-edit-anchor");
+                });
+                target.setAttribute("data-quick-edit-anchor", "true");
+                onQuickEditRequest({
+                  sectionId: section.id,
+                  mode: "text",
+                  anchor: rectPayload(target),
+                });
               }
             }}
             onKeyDown={(event) => {
@@ -254,7 +332,18 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
       {contextMenu && (
         <div className="fixed z-[80] w-44 rounded-apple-lg border border-apple-hairline bg-apple-canvas p-1.5 shadow-2xl" style={{ top: contextMenu.y, left: contextMenu.x }} onClick={(event) => event.stopPropagation()}>
           <p className="px-2 py-1 text-fine-print font-medium text-apple-ink-muted-48">{selectedLabel ?? "Block"}</p>
-          <CanvasMenuItem icon={<Pencil />} label="Edit" onClick={() => { onQuickEditRequest?.({ sectionId: contextMenu.sectionId, mode: "text" }); setContextMenu(null); }} />
+          <CanvasMenuItem icon={<Pencil />} label="Edit" onClick={() => {
+            const el = document.querySelector(`[data-builder-section-id="${contextMenu.sectionId}"]`);
+            onQuickEditRequest?.({
+              sectionId: contextMenu.sectionId,
+              mode: "text",
+              anchor: el ? rectPayload(el) : {
+                x: contextMenu.x, y: contextMenu.y, width: 1, height: 1,
+                top: contextMenu.y, left: contextMenu.x, right: contextMenu.x + 1, bottom: contextMenu.y + 1,
+              },
+            });
+            setContextMenu(null);
+          }} />
           <CanvasMenuItem icon={<Copy />} label="Duplicate" onClick={() => { onSectionAction?.({ sectionId: contextMenu.sectionId, action: "duplicate" }); setContextMenu(null); }} />
           <CanvasMenuItem icon={<Copy />} label="Copy" onClick={() => { onSectionAction?.({ sectionId: contextMenu.sectionId, action: "copy" }); setContextMenu(null); }} />
           <CanvasMenuItem icon={<EyeOff />} label="Hide" onClick={() => { onSectionAction?.({ sectionId: contextMenu.sectionId, action: "hide" }); setContextMenu(null); }} />

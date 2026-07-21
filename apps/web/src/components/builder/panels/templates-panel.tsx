@@ -61,8 +61,7 @@ const templateGradients = [
 export function TemplatesPanel() {
   const dispatch = useDispatch();
   const { store, storeId } = useRequiredStore();
-  // This panel only mounts when Templates is chosen; open it synchronously so
-  // the sidebar never becomes a temporary template drawer.
+  // Mounted only when the user opens the Layouts/Templates tab — safe to show then.
   const [open, setOpen] = useState(true);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
@@ -213,7 +212,15 @@ export function TemplatesPanel() {
     <>
       <Modal
         open={open}
-        onClose={() => { clearPreview(); setOpen(false); dispatch(setActiveTab("templates")); }}
+        onClose={() => {
+          clearPreview();
+          setOpen(false);
+          if (typeof window !== "undefined") {
+            window.localStorage.setItem("builder.templateLibrary.dismissed", "1");
+          }
+          // Return to the editing workspace — never bounce back into Templates on reload
+          dispatch(setActiveTab("navigator"));
+        }}
         title="Template Library"
         description="Browse templates first — preview only when you choose one."
         size="full"

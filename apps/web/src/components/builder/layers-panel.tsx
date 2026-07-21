@@ -16,6 +16,7 @@ import {
   toggleSection,
   updateSectionMeta,
   openSectionLibrary,
+  setActiveTab,
 } from "@/redux/slices/builder-slice";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
 import {
@@ -354,14 +355,23 @@ export function LayersPanel({ title: _title = "Sections" }: { title?: "Layers" |
               {searchQuery ? "No matches" : "No sections yet"}
             </p>
             {!searchQuery ? (
-              <button
-                type="button"
-                onClick={openAddSection}
-                className="btn-press mt-4 inline-flex items-center gap-1.5 rounded-apple-pill bg-apple-primary px-4 py-2 text-[12px] font-medium text-apple-on-primary"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Section
-              </button>
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <button
+                  type="button"
+                  onClick={openAddSection}
+                  className="btn-press inline-flex items-center gap-1.5 rounded-apple-pill bg-apple-primary px-4 py-2 text-[12px] font-medium text-apple-on-primary"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Section
+                </button>
+                <button
+                  type="button"
+                  onClick={() => dispatch(setActiveTab("templates"))}
+                  className="btn-press inline-flex items-center gap-1.5 rounded-apple-pill border border-apple-hairline bg-apple-canvas px-4 py-2 text-[12px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                >
+                  Browse Templates
+                </button>
+              </div>
             ) : null}
           </div>
         ) : (
@@ -390,9 +400,6 @@ export function LayersPanel({ title: _title = "Sections" }: { title?: "Layers" |
                   ) : null}
 
                   <div
-                    draggable={!section.locked && !isRenaming}
-                    onDragStart={() => handleDragStart(item)}
-                    onDragEnd={handleDragEnd}
                     onDragOver={(e) => {
                       e.preventDefault();
                       setDragOverKey(dropKey);
@@ -414,8 +421,14 @@ export function LayersPanel({ title: _title = "Sections" }: { title?: "Layers" |
                       !section.visible && "opacity-60",
                     )}
                   >
-                    {/* Drag */}
+                    {/* Drag — grip only so ⋯ / visibility clicks are never stolen */}
                     <div
+                      draggable={!section.locked && !isRenaming}
+                      onDragStart={(e) => {
+                        e.stopPropagation();
+                        handleDragStart(item);
+                      }}
+                      onDragEnd={handleDragEnd}
                       className="flex h-10 w-8 shrink-0 cursor-grab items-center justify-center text-apple-ink-muted-48 active:cursor-grabbing"
                       onClick={(e) => e.stopPropagation()}
                       title="Drag to reorder"
@@ -478,14 +491,11 @@ export function LayersPanel({ title: _title = "Sections" }: { title?: "Layers" |
                       <DropdownMenu
                         placement="bottom-end"
                         minWidth={180}
-                        triggerClassName="relative z-30"
                         trigger={
                           <button
                             type="button"
-                            className="relative z-30 flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-apple-ink-muted-48 hover:bg-apple-canvas hover:text-apple-ink"
+                            className="flex h-10 w-10 items-center justify-center rounded-md text-apple-ink-muted-48 hover:bg-apple-canvas hover:text-apple-ink"
                             aria-label="More actions"
-                            onClick={(e) => e.stopPropagation()}
-                            onPointerDown={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </button>

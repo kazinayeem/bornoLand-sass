@@ -190,7 +190,7 @@ export function MediaPicker({
   const skipListQuery = sidebarFilter === "favorites";
 
   // ─── Fetch files from the shared Store Media library ───────
-  const { data, isLoading, isFetching, refetch } = useGetMediaFilesQuery({
+  const { data, isLoading, refetch } = useGetMediaFilesQuery({
     storeId,
     search: debouncedSearch || undefined,
     sort: sidebarFilter === "recent" ? "newest" : undefined,
@@ -484,7 +484,7 @@ export function MediaPicker({
   const modal = open ? (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div data-media-picker-root className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -506,14 +506,14 @@ export function MediaPicker({
           >
             {/* ── Header ──────────────────────────────────────── */}
             <div className="flex shrink-0 items-center gap-3 border-b border-apple-divider-soft px-5 py-3">
-              <h2 className="text-base font-semibold text-apple-ink whitespace-nowrap">Media Library</h2>
+              <h2 className="text-base font-semibold text-apple-ink whitespace-nowrap">Store Media</h2>
 
               <div className="relative min-w-0 flex-1 max-w-md">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-apple-ink-muted-48" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search files..."
+                  placeholder="Search filename, tags, folder, type…"
                   className="h-8 w-full rounded-lg border border-apple-hairline bg-apple-canvas-parchment pl-8 pr-3 text-xs outline-none focus:border-zinc-400 focus:bg-apple-canvas"
                 />
               </div>
@@ -637,6 +637,7 @@ export function MediaPicker({
               {SIDEBAR_ITEMS.map((item) => (
                 <button
                   key={item.id}
+                  type="button"
                   onClick={() => setSidebarFilter(item.id)}
                   className={cn(
                     "flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap",
@@ -647,6 +648,23 @@ export function MediaPicker({
                   {item.label}
                 </button>
               ))}
+              {MEDIA_LIBRARY_FOLDERS.map((folderItem) => {
+                const id = `folder:${folderItem.id}` as SidebarFilter;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setSidebarFilter(id)}
+                    className={cn(
+                      "flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap",
+                      sidebarFilter === id ? "bg-zinc-900 text-white" : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                    )}
+                  >
+                    <Folder className="h-3 w-3" />
+                    {folderItem.label}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="flex flex-1 overflow-hidden">
@@ -655,6 +673,7 @@ export function MediaPicker({
                   {SIDEBAR_ITEMS.map((item) => (
                     <button
                       key={item.id}
+                      type="button"
                       onClick={() => setSidebarFilter(item.id)}
                       className={cn(
                         "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition",
@@ -669,6 +688,31 @@ export function MediaPicker({
                   ))}
                 </nav>
 
+                <div className="mt-3 border-t border-apple-hairline pt-3">
+                  <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Folders</p>
+                  <nav className="space-y-0.5">
+                    {MEDIA_LIBRARY_FOLDERS.map((folderItem) => {
+                      const id = `folder:${folderItem.id}` as SidebarFilter;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => setSidebarFilter(id)}
+                          className={cn(
+                            "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition",
+                            sidebarFilter === id
+                              ? "bg-apple-canvas text-apple-ink"
+                              : "text-apple-ink-muted-80 hover:bg-apple-canvas/60"
+                          )}
+                        >
+                          <Folder className="h-3.5 w-3.5" />
+                          {folderItem.label}
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </div>
+
                 <div className="mt-4 border-t border-apple-hairline pt-3 px-3">
                   <p className="text-[10px] text-apple-ink-muted-48">{totalCount} files</p>
                 </div>
@@ -676,7 +720,7 @@ export function MediaPicker({
 
               <div className="flex flex-1 flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-4">
-                  {isLoading ? (
+                  {listLoading ? (
                     <div className="flex h-full items-center justify-center">
                       <Loader2 className="h-6 w-6 animate-spin text-zinc-300" />
                     </div>
@@ -684,16 +728,17 @@ export function MediaPicker({
                     <div className="flex h-full flex-col items-center justify-center text-center">
                       <Image className="mb-3 h-10 w-10 text-zinc-200" />
                       <p className="text-sm font-medium text-apple-ink-muted-80">No files found</p>
-                      <p className="mt-1 text-xs text-apple-ink-muted-48">Upload an image or adjust your search</p>
+                      <p className="mt-1 text-xs text-apple-ink-muted-48">
+                        {sidebarFilter === "favorites"
+                          ? "Star files to save them here"
+                          : "Upload to Store Media or adjust your search"}
+                      </p>
                     </div>
                   ) : (
                     <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}>
                       {files.map((file) => (
-                        <button
+                        <div
                           key={file._id}
-                          type="button"
-                          onClick={() => handleClickFile(file)}
-                          onDoubleClick={() => handleDoubleClick(file)}
                           className={cn(
                             "group relative aspect-square overflow-hidden rounded-xl border-2 bg-apple-canvas-parchment text-left transition-all",
                             previewFile?._id === file._id
@@ -701,20 +746,44 @@ export function MediaPicker({
                               : "border-apple-divider-soft hover:border-zinc-300"
                           )}
                         >
-                          {file.fileType === "image" ? (
-                            <img
-                              src={resolveMediaUrl(file.thumbnailUrl || file.publicUrl)}
-                              alt={file.displayName || file.originalName}
-                              className="h-full w-full object-cover"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center">
-                              <FileText className="h-8 w-8 text-zinc-300" />
-                            </div>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleClickFile(file)}
+                            onDoubleClick={() => handleDoubleClick(file)}
+                            className="absolute inset-0"
+                            aria-label={file.displayName || file.originalName}
+                          >
+                            {file.fileType === "image" ? (
+                              <img
+                                src={resolveMediaUrl(file.thumbnailUrl || file.publicUrl)}
+                                alt={file.displayName || file.originalName}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <FileText className="h-8 w-8 text-zinc-300" />
+                              </div>
+                            )}
+                          </button>
 
-                          <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(file._id);
+                            }}
+                            className={cn(
+                              "absolute left-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition hover:bg-black/60",
+                              favoriteIds.has(file._id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                            )}
+                            aria-label={favoriteIds.has(file._id) ? "Remove from favorites" : "Add to favorites"}
+                          >
+                            <Star className={cn("h-3.5 w-3.5", favoriteIds.has(file._id) && "fill-amber-400 text-amber-400")} />
+                          </button>
+
+                          <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100">
                             <div className="p-2">
                               <p className="truncate text-[10px] font-medium text-white drop-shadow-sm">
                                 {file.displayName || file.originalName}
@@ -723,11 +792,11 @@ export function MediaPicker({
                           </div>
 
                           {previewFile?._id === file._id && (
-                            <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-white">
+                            <div className="pointer-events-none absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-white">
                               <div className="h-2 w-2 rounded-full bg-apple-canvas" />
                             </div>
                           )}
-                        </button>
+                        </div>
                       ))}
                     </div>
                   )}

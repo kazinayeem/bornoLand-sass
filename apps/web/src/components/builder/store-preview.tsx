@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import type { StoreSettingsData, HomepageSliderData, ThemeData, StoreData, ProductData, CategoryData } from "@/providers/tenant-provider";
@@ -8,15 +8,29 @@ import { BuilderDeviceProvider } from "@/lib/device-context";
 import { StorefrontCanvas } from "@/components/storefront/storefront-canvas";
 import type { StorefrontSectionLike } from "@/components/storefront/storefront-types";
 import { StorefrontFrame } from "@/components/storefront/storefront-frame";
-import { copySection, duplicateSection, moveSection, removeSection, setHoveredSection, setSelectedSection, toggleSection, toggleSectionLock, updateSectionProps } from "@/redux/slices/builder-slice";
+import {
+  copySection,
+  duplicateSection,
+  openSectionLibrary,
+  removeSection,
+  setActiveTab,
+  setHoveredSection,
+  setSelectedSection,
+  toggleSection,
+  toggleSectionLock,
+  updateSectionProps,
+} from "@/redux/slices/builder-slice";
 import { getSectionDef, normalizeSectionType } from "@/lib/section-registry";
-import { Copy, Eye, EyeOff, ImagePlus, Lock, LockOpen, MoveDown, MoveUp, Pencil, Trash2 } from "lucide-react";
-import { Drawer } from "@/components/ui/drawer";
 import { BuilderMediaField } from "@/components/builder/builder-media-field";
+import {
+  ContextualQuickEdit,
+  type QuickEditAnchor,
+  type QuickEditMode,
+} from "@/components/builder/contextual-quick-edit";
 import { setZoom } from "@/redux/slices/preview-slice";
-import { cn } from "@/lib/utils";
 import { useGetProductsQuery } from "@/redux/api/product-api";
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
+import { Layers, Plus } from "lucide-react";
 
 type StorePreviewProps = {
   store: StoreData;
@@ -45,29 +59,34 @@ export function StorePreview({ store, theme, products = [], categories = [], set
   const hoveredSectionId = useSelector((s: RootState) => s.builder.hoveredSectionId);
   const headerSettings = useSelector((s: RootState) => s.builder.headerSettings);
   const footerSettings = useSelector((s: RootState) => s.builder.footerSettings);
-  const allSections = sections;
-  const activeZoneSections = editingZone === "header" ? headerSections
-    : editingZone === "footer" ? footerSections
-    : sections;
 
   const selectedSection = useSelector((s: RootState) => {
     const zone = s.builder.editingZone;
     const list = zone === "header" ? s.builder.headerSections : zone === "footer" ? s.builder.footerSections : s.builder.sections;
     return list.find((section) => section.id === selectedSectionId);
   });
-  const selectedSectionIndex = useSelector((s: RootState) => {
-    const zone = s.builder.editingZone;
-    const list = zone === "header" ? s.builder.headerSections : zone === "footer" ? s.builder.footerSections : s.builder.sections;
-    return list.findIndex((section) => section.id === selectedSectionId);
-  });
-  const totalSections = useSelector((s: RootState) => {
-    const zone = s.builder.editingZone;
-    const list = zone === "header" ? s.builder.headerSections : zone === "footer" ? s.builder.footerSections : s.builder.sections;
-    return list.length;
-  });
   const previewWidth = device === "mobile" ? 390 : device === "tablet" ? 820 : device === "laptop" ? 1024 : 1280;
-  const [quickEditMode, setQuickEditMode] = useState<"text" | "image" | "button" | null>(null);
+  const [quickEditMode, setQuickEditMode] = useState<QuickEditMode | null>(null);
+  const [quickEditAnchor, setQuickEditAnchor] = useState<QuickEditAnchor | null>(null);
   const canvasScrollerRef = useRef<HTMLDivElement>(null);
+
+  const closeQuickEdit = useCallback(() => {
+    setQuickEditMode(null);
+    setQuickEditAnchor(null);
+    document.querySelectorAll("[data-quick-edit-anchor='true']").forEach((el) => {
+      el.removeAttribute("data-quick-edit-anchor");
+    });
+  }, []);
+
+  const openQuickEdit = useCallback((payload: {
+    sectionId: string;
+    mode: QuickEditMode;
+    anchor: QuickEditAnchor;
+  }) => {
+    dispatch(setSelectedSection(payload.sectionId));
+    setQuickEditMode(payload.mode);
+    setQuickEditAnchor(payload.anchor);
+  }, [dispatch]);
 
   const handleCanvasWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     if (!event.ctrlKey && !event.metaKey) return;
@@ -94,7 +113,9 @@ export function StorePreview({ store, theme, products = [], categories = [], set
     const imageCandidates = [
       "imageUrl", "bgImage", "productImage", "posterImage", "mobileImageUrl",
       "slide1Image", "slide2Image", "slide3Image", "beforeImage", "afterImage",
+      "logoUrl", "avatarImage", "iconImage", "mapImage",
     ];
+    const videoCandidates = ["videoUrl", "videoId", "youtubeUrl", "embedUrl"];
 
     const pickFirst = (candidates: string[], fallbackKeys: string[]) =>
       candidates.find((key) => selectedSection.props[key] !== undefined) ?? fallbackKeys[0] ?? null;
@@ -121,6 +142,15 @@ export function StorePreview({ store, theme, products = [], categories = [], set
       return imageKey ? [{ key: imageKey, label: selectedSectionDef.props[imageKey]?.label ?? "Image", kind: "image" as const }] : null;
     }
 
+    if (quickEditMode === "video") {
+      const videoKey = pickFirst(videoCandidates, [...byType("video"), ...byType("url"), ...byType("text")]);
+      const posterKey = pickFirst(["posterImage", "imageUrl"], byType("image"));
+      const fields = [];
+      if (videoKey) fields.push({ key: videoKey, label: selectedSectionDef.props[videoKey]?.label ?? "Video URL", kind: "text" as const });
+      if (posterKey) fields.push({ key: posterKey, label: selectedSectionDef.props[posterKey]?.label ?? "Poster", kind: "image" as const });
+      return fields.length > 0 ? fields : null;
+    }
+
     return null;
   }, [quickEditMode, selectedSection, selectedSectionDef]);
 
@@ -136,8 +166,6 @@ export function StorePreview({ store, theme, products = [], categories = [], set
     if (action === "lock") dispatch(toggleSectionLock(sectionId));
     if (action === "copy") dispatch(copySection(sectionId));
   };
-
-  const selectedSectionName = selectedSection ? (getSectionDef(selectedSection.type)?.label ?? selectedSection.label ?? selectedSection.type) : null;
 
   const renderZoneLabel = () => {
     if (editingZone === "header") {
@@ -170,6 +198,39 @@ export function StorePreview({ store, theme, products = [], categories = [], set
   // When editing header or footer, render only the zone's sections directly
   const isZoneMode = editingZone === "header" || editingZone === "footer";
   const zoneSections = editingZone === "header" ? headerSections : footerSections;
+  const canvasSections = isZoneMode ? zoneSections : activeNavSections;
+  const showEmptyState = canvasSections.length === 0;
+
+  const emptyState = (
+    <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 px-6 py-16 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
+        <Layers className="h-5 w-5 text-zinc-400" />
+      </div>
+      <div className="space-y-1">
+        <p className="text-[15px] font-semibold text-zinc-900">No sections yet</p>
+        <p className="max-w-xs text-[13px] leading-5 text-zinc-500">
+          Add a section to start editing, or browse templates when you want a starting layout.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={() => dispatch(openSectionLibrary({ insertPosition: null, targetZone: editingZone === "header" || editingZone === "footer" ? editingZone : "body" }))}
+          className="inline-flex items-center gap-1.5 rounded-full bg-zinc-900 px-4 py-2.5 text-[13px] font-medium text-white"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add Section
+        </button>
+        <button
+          type="button"
+          onClick={() => dispatch(setActiveTab("templates"))}
+          className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-4 py-2.5 text-[13px] font-medium text-zinc-700 hover:bg-zinc-50"
+        >
+          Browse Templates
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <BuilderDeviceProvider device={device}>
@@ -181,62 +242,17 @@ export function StorePreview({ store, theme, products = [], categories = [], set
         className="relative shrink-0 overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-[0_20px_60px_-24px_rgba(0,0,0,0.28)] transition-transform duration-300 will-change-transform motion-reduce:transition-none"
         style={{ width: previewWidth, maxWidth: "calc(100vw - 2rem)", transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}>
         {renderZoneLabel()}
-        {!isZoneMode && selectedSection && quickEditFields && quickEditMode !== "text" && (
-          <div className="absolute right-3 top-3 z-20 w-72 rounded-2xl border border-apple-hairline bg-white/95 p-3 shadow-lg backdrop-blur">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Quick Edit</p>
-                <p className="text-sm font-semibold text-apple-ink">{quickEditMode === "button" ? "Button editing" : "Image editing"}</p>
-              </div>
-              <button onClick={() => setQuickEditMode(null)} className="rounded-full p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
-                {quickEditMode === "button" ? <Copy className="h-3.5 w-3.5" /> : <ImagePlus className="h-3.5 w-3.5" />}
-              </button>
-            </div>
-            <div className="mt-4 space-y-3">
-              {quickEditFields.map((field) => (
-                <div key={field.key}>
-                  <label className="mb-1 block text-[11px] font-medium text-apple-ink-muted-48">{field.label}</label>
-                  {field.kind === "image" ? (
-                    <BuilderMediaField
-                      storeId={store._id}
-                      storeSlug={store.slug}
-                      propKey={field.key}
-                      sectionProps={selectedSection.props}
-                      onPropsChange={(nextProps) => {
-                        dispatch(updateSectionProps({
-                          id: selectedSection.id,
-                          props: nextProps as typeof selectedSection.props,
-                        }));
-                      }}
-                    />
-                  ) : (
-                    <input
-                      value={selectedSection.props[field.key] ?? ""}
-                      onChange={(event) => updateQuickEditField(field.key, event.target.value)}
-                      className="h-10 w-full rounded-2xl border border-zinc-200 bg-apple-canvas-parchment px-3 text-sm text-apple-ink outline-none transition-colors focus:border-zinc-400 focus:bg-white"
-                    />
-                  )}
-                </div>
-              ))}
-              <p className="text-[11px] leading-5 text-apple-ink-muted-48">
-                Double-click text in the canvas to edit copy directly. Click images or buttons in the preview to jump into focused quick edits instead of opening the full inspector.
-              </p>
-            </div>
-          </div>
-        )}
         {isZoneMode ? (
-          /* Zone editing mode: render header or footer sections directly */
           <div className="min-h-[200px] p-4">
+            {showEmptyState ? emptyState : (
             <StorefrontCanvas
               sections={zoneSections}
               selectedSectionId={selectedSectionId}
               hoveredSectionId={hoveredSectionId}
               onSelectSection={(sectionId) => dispatch(setSelectedSection(sectionId))}
               onHoverSection={(sectionId) => dispatch(setHoveredSection(sectionId))}
-              onQuickEditRequest={({ sectionId, mode }) => {
-                dispatch(setSelectedSection(sectionId));
-                setQuickEditMode(mode);
-              }}
+              onQuickEditRequest={openQuickEdit}
+              onQuickEditDismiss={closeQuickEdit}
               onInlineTextChange={({ sectionId, key, value }) => {
                 const section = zoneSections.find((item) => item.id === sectionId);
                 if (section) dispatch(updateSectionProps({ id: sectionId, props: { ...section.props, [key]: value } as Record<string, string> }));
@@ -244,6 +260,7 @@ export function StorePreview({ store, theme, products = [], categories = [], set
               onSectionAction={({ sectionId, action }) => handleCanvasAction(sectionId, action)}
               onQuickInsert={onQuickInsert}
             />
+            )}
           </div>
         ) : (
         <StorefrontFrame
@@ -261,16 +278,15 @@ export function StorePreview({ store, theme, products = [], categories = [], set
           footerSection={footerSection}
           builderMode
         >
+          {showEmptyState ? emptyState : (
           <StorefrontCanvas
             sections={activeNavSections}
             selectedSectionId={selectedSectionId}
             hoveredSectionId={hoveredSectionId}
             onSelectSection={(sectionId) => dispatch(setSelectedSection(sectionId))}
             onHoverSection={(sectionId) => dispatch(setHoveredSection(sectionId))}
-            onQuickEditRequest={({ sectionId, mode }) => {
-              dispatch(setSelectedSection(sectionId));
-              setQuickEditMode(mode);
-            }}
+            onQuickEditRequest={openQuickEdit}
+            onQuickEditDismiss={closeQuickEdit}
             onInlineTextChange={({ sectionId, key, value }) => {
               const section = activeNavSections.find((item) => item.id === sectionId);
               if (section) dispatch(updateSectionProps({ id: sectionId, props: { ...section.props, [key]: value } as Record<string, string> }));
@@ -278,9 +294,51 @@ export function StorePreview({ store, theme, products = [], categories = [], set
             onSectionAction={({ sectionId, action }) => handleCanvasAction(sectionId, action)}
             onQuickInsert={onQuickInsert}
           />
+          )}
         </StorefrontFrame>
         )}
       </div>
+
+      <ContextualQuickEdit
+        open={Boolean(selectedSection && quickEditFields && quickEditMode && quickEditAnchor)}
+        mode={quickEditMode ?? "text"}
+        anchor={quickEditAnchor}
+        selectionKey={`${selectedSectionId ?? ""}:${quickEditMode ?? ""}:${Math.round(quickEditAnchor?.left ?? 0)}:${Math.round(quickEditAnchor?.top ?? 0)}`}
+        onClose={closeQuickEdit}
+      >
+        {selectedSection && quickEditFields ? (
+          <>
+            {quickEditFields.map((field) => (
+              <div key={field.key}>
+                <label className="mb-1 block text-[11px] font-medium text-apple-ink-muted-48">{field.label}</label>
+                {field.kind === "image" ? (
+                  <BuilderMediaField
+                    storeId={store._id}
+                    storeSlug={store.slug}
+                    propKey={field.key}
+                    sectionProps={selectedSection.props}
+                    onPropsChange={(nextProps) => {
+                      dispatch(updateSectionProps({
+                        id: selectedSection.id,
+                        props: nextProps as typeof selectedSection.props,
+                      }));
+                    }}
+                  />
+                ) : (
+                  <input
+                    value={selectedSection.props[field.key] ?? ""}
+                    onChange={(event) => updateQuickEditField(field.key, event.target.value)}
+                    className="h-10 w-full rounded-2xl border border-zinc-200 bg-apple-canvas-parchment px-3 text-sm text-apple-ink outline-none transition-colors focus:border-zinc-400 focus:bg-white"
+                  />
+                )}
+              </div>
+            ))}
+            <p className="text-[11px] leading-5 text-apple-ink-muted-48">
+              Double-click text on the canvas to edit in place. Esc or click outside to close.
+            </p>
+          </>
+        ) : null}
+      </ContextualQuickEdit>
     </div>
     </BuilderDeviceProvider>
   );

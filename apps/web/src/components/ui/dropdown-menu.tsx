@@ -3,20 +3,19 @@
 /**
  * DropdownMenu — portal-based, collision-aware, keyboard-navigable.
  *
- * Uses @floating-ui/react for:
- *   • flip   — opens above when there's no room below
- *   • shift  — keeps the menu inside the viewport horizontally
- *   • offset — 6px gap between trigger and menu
- *
  * Renders into document.body via FloatingPortal so it is NEVER clipped
  * by overflow:hidden parents, scroll containers, or stacking contexts.
  */
 
 import {
+  Children,
+  cloneElement,
+  isValidElement,
   useCallback,
   useId,
   useState,
   type KeyboardEvent,
+  type ReactElement,
   type ReactNode,
 } from "react";
 import {
@@ -27,6 +26,7 @@ import {
   shift,
   useDismiss,
   useInteractions,
+  useMergeRefs,
   FloatingFocusManager,
   FloatingPortal,
   type Placement,
@@ -49,29 +49,19 @@ export type DropdownItem =
       danger?: boolean;
       warning?: boolean;
       disabled?: boolean;
-      /** Small secondary text below the label */
       description?: string;
-      /** Badge / chip text on the right */
       badge?: string;
     };
 
 type DropdownMenuProps = {
-  /** The element that triggers the dropdown. Will have aria-expanded + aria-haspopup. */
   trigger: ReactNode;
   items: DropdownItem[];
-  /** Preferred placement (default: "bottom-end") */
   placement?: Placement;
-  /** Extra class on the outer menu panel */
   className?: string;
-  /** Minimum width in px (default 192) */
   minWidth?: number;
-  /** Disable the whole menu */
   disabled?: boolean;
-  /** Extra class on the trigger wrapper */
   triggerClassName?: string;
 };
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function DropdownMenu({
   trigger,
@@ -99,8 +89,6 @@ export function DropdownMenu({
 
   const dismiss = useDismiss(context, {
     outsidePressEvent: "mousedown",
-    // Reposition on scroll via autoUpdate — do not force-close.
-    // Capture-phase scroll listeners made menus unusable inside overflow panels.
     ancestorScroll: false,
   });
   const { getReferenceProps, getFloatingProps } = useInteractions([dismiss]);
@@ -152,20 +140,53 @@ export function DropdownMenu({
     []
   );
 
+  const child = Children.only(isValidElement(trigger) ? trigger : null);
+  const childRef = child && "ref" in child ? (child as ReactElement & { ref?: React.Ref<HTMLElement> }).ref : null;
+  const mergedRef = useMergeRefs([refs.setReference, childRef].filter(Boolean) as React.Ref<HTMLElement>[]);
+
+  const referenceProps = getReferenceProps({
+    onClick: handleTriggerClick,
+    onPointerDown: (e: React.PointerEvent) => {
+      // Keep card drag / row click from stealing the gesture
+      e.stopPropagation();
+    },
+  });
+
+  const triggerNode = child ? (
+    cloneElement(child as ReactElement<Record<string, unknown>>, {
+      ...referenceProps,
+      ref: mergedRef,
+      "aria-haspopup": "menu",
+      "aria-expanded": open,
+      "aria-controls": open ? menuId : undefined,
+      className: cn(
+        (child.props as { className?: string }).className,
+        triggerClassName,
+        "relative z-30 shrink-0",
+      ),
+      onClick: (e: React.MouseEvent) => {
+        handleTriggerClick(e);
+        const original = (child.props as { onClick?: (ev: React.MouseEvent) => void }).onClick;
+        original?.(e);
+      },
+    })
+  ) : (
+    <button
+      type="button"
+      ref={refs.setReference}
+      className={cn("relative z-30 inline-flex shrink-0", triggerClassName)}
+      aria-haspopup="menu"
+      aria-expanded={open}
+      aria-controls={open ? menuId : undefined}
+      {...referenceProps}
+    >
+      {trigger}
+    </button>
+  );
+
   return (
     <>
-      <div
-        ref={refs.setReference}
-        className={cn("relative z-20 inline-flex shrink-0", triggerClassName)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        {...getReferenceProps({
-          onClick: handleTriggerClick,
-        })}
-      >
-        {trigger}
-      </div>
+      {triggerNode}
 
       {open ? (
         <FloatingPortal>

@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import { StorefrontCanvas } from "@/components/storefront/storefront-canvas";
+import { DelayedSkeleton } from "@/components/loading/delayed-skeleton";
+import { HomeStorefrontSkeleton } from "@/components/loading/storefront-skeletons";
 import { fetchTenantSite } from "@/lib/server/tenant-site";
 import { normalizeSectionType } from "@/lib/section-registry";
 
@@ -19,7 +21,13 @@ export default async function TenantSitePage({ params }: { params: Promise<{ ten
   const { tenant: slug } = await params;
 
   return (
-    <Suspense fallback={<div className="flex min-h-[40vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-apple-hairline border-t-apple-ink" /></div>}>
+    <Suspense
+      fallback={
+        <DelayedSkeleton>
+          <HomeStorefrontSkeleton />
+        </DelayedSkeleton>
+      }
+    >
       <HomeCanvas slug={slug} />
     </Suspense>
   );

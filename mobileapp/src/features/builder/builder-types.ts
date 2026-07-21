@@ -6,9 +6,17 @@ export type SectionStyle = {
   marginBottom?: string;
   bgColor?: string;
   bgImage?: string;
+  bgGradient?: string;
+  bgOverlayColor?: string;
+  bgOverlayOpacity?: string;
   textColor?: string;
+  fontSize?: string;
   textAlignment?: string;
   animation?: string;
+  shadow?: string;
+  borderRadius?: string;
+  borderWidth?: string;
+  borderColor?: string;
   visibility?: Record<string, boolean>;
 };
 

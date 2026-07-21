@@ -71,13 +71,17 @@ export async function getOrCreateHomePageController(request: AuthRequest, respon
   try {
     const storeId = request.params.storeId as string;
     if (!storeId || !/^[a-f\d]{24}$/i.test(storeId)) {
+      console.warn("[builder] Invalid store ID format:", storeId);
       return sendFailure(response, "Invalid store ID", 400);
     }
     const result = await getOrCreateHomePage(storeId);
     return sendSuccess(response, result.data);
   } catch (error) {
-    console.error("[builder] getOrCreateHomePageController failed:", error instanceof Error ? error.message : error);
-    return sendFailure(response, "Failed to load builder page", 500);
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : "";
+    console.error("[builder] getOrCreateHomePageController failed:", message);
+    if (stack) console.error("[builder] Stack:", stack);
+    return sendFailure(response, message, 500);
   }
 }
 

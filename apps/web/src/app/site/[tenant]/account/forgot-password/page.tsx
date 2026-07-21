@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { KeyRound, Mail, ArrowLeft } from "lucide-react";
-import { useForgotPasswordMutation } from "@/redux/api/customer-api";
+import { useCustomerForgotPasswordMutation } from "@/redux/api/customer-api";
 import {
   StorefrontButton,
   useStorefrontSurface,
@@ -16,7 +16,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
-  const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
+  const [forgotPassword, { isLoading }] = useCustomerForgotPasswordMutation();
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

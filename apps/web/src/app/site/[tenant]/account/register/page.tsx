@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRegisterMutation } from "@/redux/api/customer-api";
+import { useCustomerRegisterMutation } from "@/redux/api/customer-api";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setCustomer } from "@/redux/slices/customer-slice";
@@ -35,7 +35,7 @@ function RegisterForm() {
   const searchParams = useSearchParams();
   const { restored, isAuthenticated } = useSelector((s: RootState) => s.customer);
   const redirectTo = validateInternalRedirect(searchParams.get("redirect")) ?? "/";
-  const [register, { isLoading }] = useRegisterMutation();
+  const [registerCustomer, { isLoading }] = useCustomerRegisterMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState("");
   const redirectedRef = useRef(false);
@@ -54,7 +54,7 @@ function RegisterForm() {
   const onSubmit = async (data: RegisterFormData) => {
     setApiError("");
     try {
-      const result = await register({ name: data.name, email: data.email, password: data.password }).unwrap();
+      const result = await registerCustomer({ name: data.name, email: data.email, password: data.password }).unwrap();
       if (result.success && result.data) {
         localStorage.setItem("customer_token", result.data.token);
         dispatch(setCustomer({ customer: result.data.customer, token: result.data.token }));

@@ -73,6 +73,7 @@ type RefreshResponse = {
 };
 
 export const authApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     register: builder.mutation<ApiEnvelope<{ tenantId: string; userId: string }>, RegisterRequest>({
       query: (body) => ({

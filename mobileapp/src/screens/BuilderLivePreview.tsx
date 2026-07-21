@@ -21,7 +21,7 @@ export function BuilderLivePreview({
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={[styles.header, { backgroundColor: theme.colors.navigation, borderBottomColor: theme.colors.divider }]}>
           <Pressable onPress={onClose} hitSlop={8} style={styles.backBtn}>
-            <Ionicons name="close-outline" size={24} color={theme.colors.text} />
+            <Ionicons name="chevron-back-outline" size={24} color={theme.colors.text} />
           </Pressable>
           <Text style={[styles.title, { color: theme.colors.text }]} numberOfLines={1}>
             {title}

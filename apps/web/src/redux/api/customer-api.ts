@@ -18,9 +18,11 @@ type ApiResponse<T> = {
   message?: string;
 };
 
+/** Storefront customer auth — endpoint names must not collide with auth-api (platform register/login). */
 export const customerApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
-    register: builder.mutation<ApiResponse<AuthResponse>, { name: string; email: string; password: string }>({
+    customerRegister: builder.mutation<ApiResponse<AuthResponse>, { name: string; email: string; password: string }>({
       query: (body) => ({
         url: "/customer/register",
         method: "POST",
@@ -28,7 +30,7 @@ export const customerApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Customer"],
     }),
-    login: builder.mutation<ApiResponse<AuthResponse>, { email: string; password: string }>({
+    customerLogin: builder.mutation<ApiResponse<AuthResponse>, { email: string; password: string }>({
       query: (body) => ({
         url: "/customer/login",
         method: "POST",
@@ -36,14 +38,14 @@ export const customerApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Customer"],
     }),
-    forgotPassword: builder.mutation<ApiResponse<{ message: string }>, { email: string }>({
+    customerForgotPassword: builder.mutation<ApiResponse<{ message: string }>, { email: string }>({
       query: (body) => ({
         url: "/customer/forgot-password",
         method: "POST",
         body,
       }),
     }),
-    getMe: builder.query<ApiResponse<{ customer: CustomerData }>, string>({
+    getCustomerMe: builder.query<ApiResponse<{ customer: CustomerData }>, string>({
       query: (token) => ({
         url: "/customer/me",
         headers: { Authorization: `Bearer ${token}` },
@@ -53,4 +55,9 @@ export const customerApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useRegisterMutation, useLoginMutation, useForgotPasswordMutation, useGetMeQuery } = customerApi;
+export const {
+  useCustomerRegisterMutation,
+  useCustomerLoginMutation,
+  useCustomerForgotPasswordMutation,
+  useGetCustomerMeQuery,
+} = customerApi;

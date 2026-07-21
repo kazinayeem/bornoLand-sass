@@ -54,8 +54,12 @@ export function AppHeader() {
     <View style={[styles.header, { backgroundColor: "#ffffff", borderBottomColor: "#E5E7EB" }]}>
       <View style={styles.content}>
         <View style={styles.left}>
-          {canGoBack ? (
-            <Pressable onPress={goBack} accessibilityLabel="Go back" style={styles.iconButton}>
+          {canGoBack || navigation.name === "builder" ? (
+            <Pressable
+              onPress={canGoBack ? goBack : () => navigate("dashboard")}
+              accessibilityLabel="Go back"
+              style={styles.iconButton}
+            >
               <Ionicons name="chevron-back-outline" size={24} color="#1d1d1f" />
             </Pressable>
           ) : (

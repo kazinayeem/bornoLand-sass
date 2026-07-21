@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLoginMutation } from "@/redux/api/customer-api";
+import { useCustomerLoginMutation } from "@/redux/api/customer-api";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setCustomer } from "@/redux/slices/customer-slice";
@@ -32,7 +32,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const { restored, isAuthenticated } = useSelector((s: RootState) => s.customer);
   const redirectTo = validateInternalRedirect(searchParams.get("redirect")) ?? "/";
-  const [login, { isLoading }] = useLoginMutation();
+  const [login, { isLoading }] = useCustomerLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState("");
   const { classes, primaryColor } = useStorefrontSurface();

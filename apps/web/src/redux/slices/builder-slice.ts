@@ -264,7 +264,7 @@ const initialState: BuilderState = {
   selectedSectionId: null,
   hoveredSectionId: null,
   editingSectionId: null,
-  activeTab: "layers",
+  activeTab: "templates",
   activeRightTab: "content",
   leftPanelOpen: true,
   // Advanced inspector is opt-in; selecting a canvas section should not shrink the editing surface.
@@ -295,6 +295,50 @@ const initialState: BuilderState = {
 };
 
 // ─── Helper: get active sections based on editingZone ────────────────────────
+
+type SectionZone = "header" | "body" | "footer";
+
+function getSectionList(state: BuilderState, zone: SectionZone): BuilderSection[] {
+  if (zone === "header") return state.headerSections;
+  if (zone === "footer") return state.footerSections;
+  return state.sections;
+}
+
+function findSectionLocation(state: BuilderState, id: string): { zone: SectionZone; index: number } | null {
+  for (const zone of ["header", "body", "footer"] as const) {
+    const index = getSectionList(state, zone).findIndex((section) => section.id === id);
+    if (index >= 0) return { zone, index };
+  }
+  return null;
+}
+
+function replaceSectionAt(
+  state: BuilderState,
+  zone: SectionZone,
+  index: number,
+  nextSection: BuilderSection,
+): void {
+  const list = [...getSectionList(state, zone)];
+  list[index] = nextSection;
+  if (zone === "header") state.headerSections = list;
+  else if (zone === "footer") state.footerSections = list;
+  else state.sections = list;
+}
+
+function mutateSectionById(
+  state: BuilderState,
+  id: string,
+  updater: (section: BuilderSection) => BuilderSection,
+): boolean {
+  const location = findSectionLocation(state, id);
+  if (!location) return false;
+  const current = getSectionList(state, location.zone)[location.index];
+  const next = updater(current);
+  if (next === current) return false;
+  replaceSectionAt(state, location.zone, location.index, next);
+  state.isDirty = true;
+  return true;
+}
 
 function getSections(state: BuilderState): BuilderSection[] {
   if (state.editingZone === "header") return state.headerSections;
@@ -453,54 +497,61 @@ const builderSlice = createSlice({
     },
 
     toggleSection(state, action: PayloadAction<string>) {
-      const s = getSections(state).find((s) => s.id === action.payload);
-      if (s) { s.visible = !s.visible; state.isDirty = true; }
+      mutateSectionById(state, action.payload, (section) => ({
+        ...section,
+        visible: !section.visible,
+      }));
     },
 
     updateSectionProps(state, action: PayloadAction<{ id: string; props: SectionProps }>) {
-      const s = getSections(state).find((s) => s.id === action.payload.id);
-      if (s) { s.props = action.payload.props; state.isDirty = true; }
+      mutateSectionById(state, action.payload.id, (section) => ({
+        ...section,
+        props: action.payload.props,
+      }));
     },
 
-    updateSectionStyle(state, action: PayloadAction<{ id: string; style: SectionStyle }>) {
-      const s = getSections(state).find((s) => s.id === action.payload.id);
-      if (s) { s.style = { ...s.style, ...action.payload.style }; state.isDirty = true; }
+    updateSectionStyle(state, action: PayloadAction<{ id: string; style: Partial<SectionStyle> }>) {
+      mutateSectionById(state, action.payload.id, (section) => ({
+        ...section,
+        style: { ...section.style, ...action.payload.style },
+      }));
     },
 
     updateSectionResponsive(state, action: PayloadAction<{ id: string; device: "desktop" | "laptop" | "tablet" | "mobile"; hide: boolean }>) {
-      const s = getSections(state).find((s) => s.id === action.payload.id);
-      if (s) {
-        if (action.payload.device === "desktop") s.style = { ...s.style, hideOnDesktop: action.payload.hide };
-        if (action.payload.device === "tablet") s.style = { ...s.style, hideOnTablet: action.payload.hide };
-        if (action.payload.device === "mobile") s.style = { ...s.style, hideOnMobile: action.payload.hide };
-        state.isDirty = true;
-      }
+      mutateSectionById(state, action.payload.id, (section) => {
+        const style = { ...section.style };
+        if (action.payload.device === "desktop") style.hideOnDesktop = action.payload.hide;
+        if (action.payload.device === "tablet") style.hideOnTablet = action.payload.hide;
+        if (action.payload.device === "mobile") style.hideOnMobile = action.payload.hide;
+        return { ...section, style };
+      });
     },
 
     updateSectionStyleResponsive(state, action: PayloadAction<{ id: string; device: "desktop" | "laptop" | "tablet" | "mobile"; key: keyof DeviceStyle; value: string }>) {
-      const s = getSections(state).find((s) => s.id === action.payload.id);
-      if (s) {
+      mutateSectionById(state, action.payload.id, (section) => {
         const { device, key, value } = action.payload;
-        const currentResponsive = s.style?.responsive ?? {};
+        const currentResponsive = section.style?.responsive ?? {};
         const currentDevice = currentResponsive[device] ?? {};
-        s.style = {
-          ...s.style,
-          responsive: {
-            ...currentResponsive,
-            [device]: { ...currentDevice, [key]: value },
+        return {
+          ...section,
+          style: {
+            ...section.style,
+            responsive: {
+              ...currentResponsive,
+              [device]: { ...currentDevice, [key]: value },
+            },
           },
         };
-        state.isDirty = true;
-      }
+      });
     },
 
     updateSectionMeta(state, action: PayloadAction<{ id: string; label?: string; visible?: boolean }>) {
-      const s = getSections(state).find((sec) => sec.id === action.payload.id);
-      if (s) {
-        if (typeof action.payload.label === "string") s.label = action.payload.label;
-        if (typeof action.payload.visible === "boolean") s.visible = action.payload.visible;
-        state.isDirty = true;
-      }
+      mutateSectionById(state, action.payload.id, (section) => {
+        const next = { ...section };
+        if (typeof action.payload.label === "string") next.label = action.payload.label;
+        if (typeof action.payload.visible === "boolean") next.visible = action.payload.visible;
+        return next;
+      });
     },
 
     moveSection(state, action: PayloadAction<{ from: number; to: number }>) {
@@ -533,6 +584,10 @@ const builderSlice = createSlice({
     // ─── Selection ──────────────────────────────────────────────────────────
     setSelectedSection(state, action: PayloadAction<string | null>) {
       state.selectedSectionId = action.payload;
+      if (action.payload) {
+        const location = findSectionLocation(state, action.payload);
+        if (location) state.editingZone = location.zone;
+      }
     },
 
     setHoveredSection(state, action: PayloadAction<string | null>) {
@@ -575,18 +630,27 @@ const builderSlice = createSlice({
 
     // ─── Section utilities ─────────────────────────────────────────────────
     toggleSectionLock(state, action: PayloadAction<string>) {
-      const s = getSections(state).find((sec) => sec.id === action.payload);
-      if (s) { s.locked = !s.locked; state.isDirty = true; }
+      mutateSectionById(state, action.payload, (section) => ({
+        ...section,
+        locked: !section.locked,
+      }));
     },
 
     toggleSectionFavorite(state, action: PayloadAction<string>) {
-      const s = getSections(state).find((sec) => sec.id === action.payload);
-      if (s) { s.favorite = !s.favorite; }
+      mutateSectionById(state, action.payload, (section) => ({
+        ...section,
+        favorite: !section.favorite,
+      }));
     },
 
     copySection(state, action: PayloadAction<string>) {
-      const s = getSections(state).find((sec) => sec.id === action.payload);
-      state.clipboardSection = s ? { ...s, props: { ...s.props } } : null;
+      const location = findSectionLocation(state, action.payload);
+      if (!location) {
+        state.clipboardSection = null;
+        return;
+      }
+      const s = getSectionList(state, location.zone)[location.index];
+      state.clipboardSection = { ...s, props: { ...s.props } };
     },
 
     pasteSection(state, action: PayloadAction<string | null | undefined>) {

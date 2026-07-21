@@ -42,12 +42,11 @@ export function BuilderCommandPalette({ open, onClose }: BuilderCommandPalettePr
 
   const actions = useMemo(() => {
     const panels = [
-      ["layers", "Open Navigator", "Search and reorder page sections"],
-      ["pages", "Open Pages", "Manage store pages"],
-      ["components", "Browse Sections", "Find components and sections"],
       ["templates", "Open Templates", "Browse reusable templates"],
       ["media", "Open Media", "Browse store media"],
-      ["theme", "Open Settings", "Theme and advanced settings"],
+      ["theme", "Open Theme", "Theme and storefront styles"],
+      ["navigator", "Open Navigator", "Search and reorder sections"],
+      ["history", "Open History", "Restore previous snapshots"],
     ] as const;
     const panelActions = panels.map(([id, label, hint]) => ({ id, label, hint, run: () => dispatch(setActiveTab(id)) }));
     const sections = sectionRegistry.map((section) => ({
@@ -71,7 +70,7 @@ export function BuilderCommandPalette({ open, onClose }: BuilderCommandPalettePr
       <div className="relative z-10 w-full max-w-2xl overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas animate-in fade-in zoom-in-95 duration-150" onMouseDown={(event) => event.stopPropagation()}>
         <div className="flex items-center border-b border-apple-divider-soft px-4">
           <Search className="mr-3 h-4 w-4 shrink-0 text-apple-ink-muted-48" />
-          <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && results[0]) { results[0].run(); close(); } }} placeholder="Search pages, sections, templates, media, or commands…" className="h-14 min-w-0 flex-1 bg-transparent text-sm text-apple-ink outline-none placeholder:text-apple-ink-muted-48" />
+          <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && results[0]) { results[0].run(); close(); } }} placeholder="Search sections, templates, media, or commands…" className="h-14 min-w-0 flex-1 bg-transparent text-sm text-apple-ink outline-none placeholder:text-apple-ink-muted-48" />
           <button type="button" onClick={close} className="rounded-md p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80" aria-label="Close command palette"><X className="h-4 w-4" /></button>
         </div>
         <div className="max-h-[min(56vh,520px)] overflow-y-auto p-2">

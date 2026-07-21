@@ -120,10 +120,10 @@ export function WorkspaceNavbar() {
             <h1 className="text-lg font-semibold tracking-tight text-apple-ink">{pageTitle}</h1>
             <p className="hidden text-xs leading-5 text-apple-ink-muted-48 sm:block">
               <span>{contextTitle}</span>
-              <span className="mx-1 text-zinc-300">/</span>
+              <span className="mx-1 text-apple-ink-muted-48">/</span>
               {segments.map((s, i) => (
                 <span key={`${s}-${i}`}>
-                  {i > 0 && <span className="mx-1 text-zinc-300">/</span>}
+                  {i > 0 && <span className="mx-1 text-apple-ink-muted-48">/</span>}
                   {s.replace(/-/g, " ")}
                 </span>
               ))}

@@ -2,8 +2,9 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { clearAuthState } from "@/redux/slices/auth-slice";
 import { getApiUrl } from "@/lib/urls";
-import { getAccessToken, setAccessToken, setRefreshPromise, getRefreshPromise, clearRefreshPromise } from "@/lib/access-token";
+import { getAccessToken, setAccessToken } from "@/lib/access-token";
 import { broadcastAuthEvent } from "@/lib/auth-tab-sync";
+import { refreshAccessTokenCoordinated } from "@/lib/auth-refresh-coordinator";
 
 const apiBaseUrl = getApiUrl();
 
@@ -37,34 +38,7 @@ function emitApiError(detail: { status: number | string; message: string }) {
 }
 
 async function tryRefreshToken(): Promise<string | null> {
-  // Deduplicate concurrent refresh calls
-  const existing = getRefreshPromise();
-  if (existing) return existing;
-
-  const promise = (async () => {
-    try {
-      const res = await fetch(`${apiBaseUrl}/auth/refresh`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) return null;
-      const json = await res.json();
-      const newToken: string | undefined = json?.data?.accessToken;
-      if (newToken) {
-        setAccessToken(newToken);
-        return newToken;
-      }
-      return null;
-    } catch {
-      return null;
-    } finally {
-      clearRefreshPromise();
-    }
-  })();
-
-  setRefreshPromise(promise);
-  return promise;
+  return refreshAccessTokenCoordinated();
 }
 
 const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
@@ -127,6 +101,6 @@ const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown,
 export const baseApi = createApi({
   reducerPath: "baseApi",
   baseQuery: baseQueryWithGlobalErrorHandling,
-  tagTypes: ["Auth", "User", "Tenant", "Dashboard", "Stores", "Templates", "Products", "Cart", "Orders", "BuilderPages", "BuilderPage", "Customer", "StoreSettings", "HomepageSliders", "PaymentMethods", "DeliveryZones", "CmsPages", "CmsPage", "Faqs", "Categories", "SubscriptionPayments", "Subscriptions", "Notifications", "Invoices", "Features", "Coupons", "Inventory", "Reviews", "Marketing", "Reports", "Media", "AuditLogs", "Analytics", "StorePages", "StorePage", "PageVersions", "Navigations", "Navigation", "GlobalSections", "GlobalSection", "BuilderTemplates", "BuilderTemplate"],
+  tagTypes: ["Auth", "User", "Tenant", "Dashboard", "Stores", "Templates", "Products", "Cart", "Orders", "BuilderPages", "BuilderPage", "Customer", "StoreSettings", "StoreContact", "ContactMessages", "HomepageSliders", "PaymentMethods", "DeliveryZones", "CmsPages", "CmsPage", "Faqs", "Categories", "SubscriptionPayments", "Subscriptions", "Notifications", "Invoices", "Features", "Coupons", "Inventory", "Reviews", "Marketing", "Reports", "Media", "AuditLogs", "Analytics", "StorePages", "StorePage", "PageVersions", "Navigations", "Navigation", "GlobalSections", "GlobalSection", "BuilderTemplates", "BuilderTemplate"],
   endpoints: () => ({})
 });

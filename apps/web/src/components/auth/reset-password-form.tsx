@@ -6,25 +6,33 @@ import { useResetPasswordMutation } from "@/redux/api/auth-api";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
+import { FormLoadingShell } from "@/components/loading/form-loading-shell";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const [loading, setLoading] = useState(false);
   const [resetPassword] = useResetPasswordMutation();
 
   return (
-    <form
+    <FormLoadingShell
       className="space-y-5"
+      loading={loading}
+      loadingLabel="Resetting password"
       onSubmit={async (event) => {
         event.preventDefault();
+        if (loading) return;
         setLoading(true);
         const response = await resetPassword({
           token,
-          password: String(new FormData(event.currentTarget).get("password") ?? "")
+          password: String(new FormData(event.currentTarget).get("password") ?? ""),
         });
         setLoading(false);
         if ("error" in response) {
           const message =
-            (response.error && "data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
+            (response.error &&
+            "data" in response.error &&
+            response.error.data &&
+            typeof response.error.data === "object" &&
+            "message" in response.error.data
               ? String((response.error.data as { message?: string }).message)
               : "Could not reset password") || "Could not reset password";
           toast.error(message);
@@ -40,16 +48,17 @@ export function ResetPasswordForm({ token }: { token: string }) {
       </div>
       <Button
         type="submit"
-        disabled={loading}
+        loading={loading}
+        loadingKey="save"
         className="h-11 w-full rounded-xl bg-zinc-900 text-sm font-semibold hover:bg-zinc-800 dark:bg-apple-canvas-parchment dark:text-apple-ink dark:hover:bg-white"
       >
-        {loading ? "Resetting..." : "Reset password"}
+        Reset password
       </Button>
       <p className="text-center text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
         <a href="/login" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">
           Back to sign in
         </a>
       </p>
-    </form>
+    </FormLoadingShell>
   );
 }

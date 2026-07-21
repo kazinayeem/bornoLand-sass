@@ -90,7 +90,11 @@ export function StorefrontShell({
     : [];
 
   const shellContent = (
-    <div style={{ fontFamily: theme.font, backgroundColor: theme.darkMode ? "#000000" : "#ffffff" }}>
+    <div
+      data-surface={builderMode ? undefined : "storefront"}
+      className={builderMode ? undefined : theme.darkMode ? "dark" : undefined}
+      style={{ fontFamily: theme.font, backgroundColor: theme.darkMode ? "var(--color-apple-surface-black)" : "var(--color-apple-canvas)" }}
+    >
       <TenantProvider value={tenantValue}>
         <AuthInit />
         {hasBuilderHeader ? (

@@ -41,6 +41,7 @@ export function StoreNavbar({ store }: { store: Store }) {
       orders: "Orders",
       customers: "Customers",
       cms: "CMS",
+      "customer-messages": "Customer Messages",
       pages: "Pages",
       media: "Media Library",
       theme: "Theme",
@@ -68,7 +69,7 @@ export function StoreNavbar({ store }: { store: Store }) {
           <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-apple-ink-muted-48">
             {breadcrumbs.map((item, index) => (
               <span key={`${item.label}-${index}`} className="inline-flex items-center gap-1">
-                {index > 0 && <ChevronRight className="h-3 w-3 text-zinc-300" />}
+                {index > 0 && <ChevronRight className="h-3 w-3 text-apple-ink-muted-48" />}
                 {item.href ? (
                   <Link href={item.href} className="transition-colors hover:text-apple-ink-muted-80">
                     {item.label}

@@ -47,7 +47,7 @@ export function NavConflictDialog({ page, storeId, onClose, onConfirmDelete }: P
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl"
+        className="w-full max-w-md rounded-apple-lg border border-apple-hairline bg-white p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-4">
@@ -116,7 +116,7 @@ export function NavConflictDialog({ page, storeId, onClose, onConfirmDelete }: P
           <button
             onClick={onClose}
             disabled={deleting}
-            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-50"
+            className="rounded-xl border border-apple-hairline px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-50"
           >
             Cancel
           </button>

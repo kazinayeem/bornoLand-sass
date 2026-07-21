@@ -11,6 +11,8 @@ import { useDispatch } from "react-redux";
 import { setCustomer } from "@/redux/slices/customer-slice";
 import { motion } from "framer-motion";
 import { LogIn, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { StorefrontButton, useStorefrontSurface } from "@/components/storefront/storefront-ui";
+import { cn } from "@/lib/utils";
 
 const loginFormSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -27,6 +29,7 @@ function LoginForm() {
   const [login, { isLoading }] = useLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState("");
+  const { classes, primaryColor } = useStorefrontSurface();
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
     resolver: zodResolver(loginFormSchema),
@@ -63,64 +66,78 @@ function LoginForm() {
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-apple-lg bg-apple-canvas-parchment">
             <LogIn className="h-6 w-6 text-apple-ink-muted-80" />
           </div>
-          <h1 className="text-2xl font-bold text-apple-ink">Welcome back</h1>
-          <p className="mt-1 text-sm text-apple-ink-muted-48">Sign in to your account</p>
+          <h1 className={cn("text-display-md", classes.heading)}>Welcome back</h1>
+          <p className={cn("mt-1 text-caption", classes.muted)}>Sign in to your account</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Email</label>
+            <label className={cn("mb-1.5 block text-caption-strong", classes.body)}>Email</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
-              <input type="email" {...register("email")}
-                required placeholder="you@example.com"
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment pl-9 pr-4 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+              <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
+              <input
+                type="email"
+                {...register("email")}
+                required
+                placeholder="you@example.com"
+                className={cn(classes.input, "pl-10")}
+              />
             </div>
-            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+            {errors.email && <p className="mt-1 text-fine-print text-red-500">{errors.email.message}</p>}
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Password</label>
+            <label className={cn("mb-1.5 block text-caption-strong", classes.body)}>Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
-              <input type={showPassword ? "text" : "password"} {...register("password")}
-                required placeholder="Enter your password"
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment pl-9 pr-10 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-apple-ink-muted-48">
+              <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
+              <input
+                type={showPassword ? "text" : "password"}
+                {...register("password")}
+                required
+                placeholder="Enter your password"
+                className={cn(classes.input, "pl-10 pr-10")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-apple-ink-muted-48"
+              >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+            {errors.password && <p className="mt-1 text-fine-print text-red-500">{errors.password.message}</p>}
           </div>
 
-          {apiError && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{apiError}</p>
-          )}
+          {apiError && <p className="rounded-apple-md bg-red-50 px-3 py-2 text-caption text-red-600">{apiError}</p>}
 
-          <button type="submit" disabled={isLoading}
-            className="flex h-10 w-full items-center justify-center gap-2 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
-            style={{ backgroundColor: "#18181b" }}>
+          <StorefrontButton type="submit" disabled={isLoading} className="h-11 w-full">
             {isLoading ? "Signing in..." : "Sign In"}
             <ArrowRight className="h-4 w-4" />
-          </button>
+          </StorefrontButton>
         </form>
 
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-zinc-200" />
+            <div className={cn("w-full border-t", classes.divider)} />
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-apple-ink-muted-48">or continue with</span>
+          <div className="relative flex justify-center text-fine-print uppercase">
+            <span className="bg-apple-canvas px-2 text-apple-ink-muted-48">or continue with</span>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <button type="button" disabled
-            className="flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment disabled:opacity-50 disabled:cursor-not-allowed">
+          <button
+            type="button"
+            disabled
+            className={cn(
+              "flex items-center justify-center gap-2 rounded-apple-lg border px-4 py-2.5 text-caption font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50",
+              classes.card,
+              classes.body
+            )}
+          >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -129,8 +146,15 @@ function LoginForm() {
             </svg>
             Google
           </button>
-          <button type="button" disabled
-            className="flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment disabled:opacity-50 disabled:cursor-not-allowed">
+          <button
+            type="button"
+            disabled
+            className={cn(
+              "flex items-center justify-center gap-2 rounded-apple-lg border px-4 py-2.5 text-caption font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50",
+              classes.card,
+              classes.body
+            )}
+          >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#1877F2">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
             </svg>
@@ -138,10 +162,13 @@ function LoginForm() {
           </button>
         </div>
 
-        <p className="mt-6 text-center text-sm text-apple-ink-muted-48">
+        <p className={cn("mt-6 text-center text-caption", classes.muted)}>
           Don&apos;t have an account?{" "}
-          <Link href={`/account/register${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
-            className="font-medium underline underline-offset-4" style={{ color: "#18181b" }}>
+          <Link
+            href={`/account/register${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
+            className="font-medium text-apple-primary underline underline-offset-4"
+            style={{ color: primaryColor }}
+          >
             Create one
           </Link>
         </p>

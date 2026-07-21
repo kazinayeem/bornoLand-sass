@@ -37,6 +37,7 @@ export async function revalidateStorefront(args: {
     } else {
       revalidateTag(cacheTags.cmsStore(storeId));
     }
+    revalidateTag(cacheTags.storeContact(storeId));
   }
 
   if ((scope === "all" || scope === "products") && productSlug) {

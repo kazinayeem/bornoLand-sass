@@ -234,7 +234,7 @@ export function VariantsPanel({
         <button
           type="button"
           onClick={addOption}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-800"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-apple-ink px-4 py-2 text-xs font-semibold text-white hover:bg-apple-ink-muted-80"
         >
           <Plus className="h-3.5 w-3.5" /> Add First Option
         </button>
@@ -252,7 +252,7 @@ export function VariantsPanel({
         <button
           type="button"
           onClick={addOption}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
         >
           <Plus className="h-3 w-3" /> Add Option
         </button>
@@ -260,15 +260,15 @@ export function VariantsPanel({
 
       <div className="space-y-3">
         {options.map((option, optionIndex) => (
-          <div key={optionIndex} className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment p-4">
+          <div key={optionIndex} className="rounded-apple-lg border border-apple-hairline bg-apple-canvas-parchment p-4">
             <div className="mb-3 flex items-center gap-3">
-              <GripVertical className="h-4 w-4 text-zinc-300" />
+              <GripVertical className="h-4 w-4 text-apple-ink-muted-48" />
               <input
                 type="text"
                 value={option.name}
                 onChange={(event) => updateOptionName(optionIndex, event.target.value)}
                 placeholder="Option name (e.g. Color)"
-                className="h-9 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium"
+                className="h-9 flex-1 rounded-xl border border-apple-hairline bg-white px-3 text-sm font-medium"
               />
               <button
                 type="button"
@@ -287,12 +287,12 @@ export function VariantsPanel({
                     value={value}
                     onChange={(event) => updateOptionValue(optionIndex, valueIndex, event.target.value)}
                     placeholder={`Value ${valueIndex + 1}`}
-                    className="h-8 w-28 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs"
+                    className="h-8 w-28 rounded-lg border border-apple-hairline bg-white px-2.5 text-xs"
                   />
                   <button
                     type="button"
                     onClick={() => removeOptionValue(optionIndex, valueIndex)}
-                    className="rounded p-1 text-zinc-300 hover:text-red-500"
+                    className="rounded p-1 text-apple-ink-muted-48 hover:text-red-500"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -310,7 +310,7 @@ export function VariantsPanel({
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 pt-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-apple-divider-soft pt-2">
         <p className="text-xs text-apple-ink-muted-48">
           {combosWithData.length > 0
             ? `${combosWithData.length} variant${combosWithData.length !== 1 ? "s" : ""} ready`
@@ -319,26 +319,26 @@ export function VariantsPanel({
         <button
           type="button"
           onClick={handleGenerate}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-xs font-semibold text-white hover:bg-zinc-800"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-apple-ink px-4 py-2 text-xs font-semibold text-white hover:bg-apple-ink-muted-80"
         >
           <RefreshCw className="h-3.5 w-3.5" /> Generate All Combinations
         </button>
       </div>
 
       {selectedKeys.size > 0 && (
-        <div className="flex flex-wrap items-end gap-2 rounded-xl border border-zinc-200 bg-apple-canvas-parchment p-3">
+        <div className="flex flex-wrap items-end gap-2 rounded-xl border border-apple-hairline bg-apple-canvas-parchment p-3">
           <p className="w-full text-xs font-medium text-apple-ink-muted-80">{selectedKeys.size} selected</p>
           <input
             type="number"
             placeholder="Bulk price"
             value={bulkPrice}
             onChange={(event) => setBulkPrice(event.target.value)}
-            className="h-8 w-28 rounded-lg border border-zinc-200 px-2 text-xs"
+            className="h-8 w-28 rounded-lg border border-apple-hairline px-2 text-xs"
           />
           <button
             type="button"
             onClick={() => runBulk("update_price")}
-            className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs text-white"
+            className="rounded-lg bg-apple-ink px-3 py-1.5 text-xs text-white"
           >
             Set price
           </button>
@@ -347,12 +347,12 @@ export function VariantsPanel({
             placeholder="Bulk stock"
             value={bulkStock}
             onChange={(event) => setBulkStock(event.target.value)}
-            className="h-8 w-28 rounded-lg border border-zinc-200 px-2 text-xs"
+            className="h-8 w-28 rounded-lg border border-apple-hairline px-2 text-xs"
           />
           <button
             type="button"
             onClick={() => runBulk("update_stock")}
-            className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs text-white"
+            className="rounded-lg bg-apple-ink px-3 py-1.5 text-xs text-white"
           >
             Set stock
           </button>
@@ -371,10 +371,10 @@ export function VariantsPanel({
       )}
 
       {combosWithData.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-zinc-200">
+        <div className="overflow-x-auto rounded-apple-lg border border-apple-hairline">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-zinc-200 bg-apple-canvas-parchment">
+              <tr className="border-b border-apple-hairline bg-apple-canvas-parchment">
                 <th className="px-2 py-2.5" />
                 <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Variant</th>
                 <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Image</th>
@@ -393,7 +393,7 @@ export function VariantsPanel({
               {combosWithData.map((variant, index) => {
                 const key = comboKey(variant.optionValues);
                 return (
-                  <tr key={key} className="border-b border-zinc-100 last:border-b-0 hover:bg-apple-canvas-parchment/50">
+                  <tr key={key} className="border-b border-apple-divider-soft last:border-b-0 hover:bg-apple-canvas-parchment/50">
                     <td className="px-2 py-2">
                       <input
                         type="checkbox"
@@ -403,7 +403,7 @@ export function VariantsPanel({
                     </td>
                     <td className="px-3 py-2">
                       <div className="min-w-[140px]">
-                        <p className="text-sm font-medium text-zinc-800">{variant.title || buildVariantTitle(variant.optionValues)}</p>
+                        <p className="text-sm font-medium text-apple-ink">{variant.title || buildVariantTitle(variant.optionValues)}</p>
                         <p className="text-[11px] text-apple-ink-muted-48">
                           {Object.entries(variant.optionValues)
                             .map(([optionName, value]) => `${optionName}: ${value}`)
@@ -429,7 +429,7 @@ export function VariantsPanel({
                         type="text"
                         value={variant.sku}
                         onChange={(event) => updateVariantField(index, "sku", event.target.value)}
-                        className="h-8 w-28 rounded-lg border border-zinc-200 px-2 text-xs"
+                        className="h-8 w-28 rounded-lg border border-apple-hairline px-2 text-xs"
                       />
                     </td>
                     <td className="px-3 py-2">
@@ -437,7 +437,7 @@ export function VariantsPanel({
                         type="text"
                         value={variant.barcode ?? ""}
                         onChange={(event) => updateVariantField(index, "barcode", event.target.value)}
-                        className="h-8 w-28 rounded-lg border border-zinc-200 px-2 text-xs"
+                        className="h-8 w-28 rounded-lg border border-apple-hairline px-2 text-xs"
                       />
                     </td>
                     <td className="px-3 py-2">
@@ -449,7 +449,7 @@ export function VariantsPanel({
                         onChange={(event) =>
                           updateVariantField(index, "price", event.target.value ? Number(event.target.value) : undefined)
                         }
-                        className="h-8 w-20 rounded-lg border border-zinc-200 px-2 text-xs"
+                        className="h-8 w-20 rounded-lg border border-apple-hairline px-2 text-xs"
                       />
                     </td>
                     <td className="px-3 py-2">
@@ -461,7 +461,7 @@ export function VariantsPanel({
                         onChange={(event) =>
                           updateVariantField(index, "comparePrice", event.target.value ? Number(event.target.value) : undefined)
                         }
-                        className="h-8 w-20 rounded-lg border border-zinc-200 px-2 text-xs"
+                        className="h-8 w-20 rounded-lg border border-apple-hairline px-2 text-xs"
                       />
                     </td>
                     <td className="px-3 py-2">
@@ -473,7 +473,7 @@ export function VariantsPanel({
                         onChange={(event) =>
                           updateVariantField(index, "costPrice", event.target.value ? Number(event.target.value) : undefined)
                         }
-                        className="h-8 w-20 rounded-lg border border-zinc-200 px-2 text-xs"
+                        className="h-8 w-20 rounded-lg border border-apple-hairline px-2 text-xs"
                       />
                     </td>
                     <td className="px-3 py-2">
@@ -482,7 +482,7 @@ export function VariantsPanel({
                         min={0}
                         value={variant.stock}
                         onChange={(event) => updateVariantField(index, "stock", Number(event.target.value))}
-                        className="h-8 w-16 rounded-lg border border-zinc-200 px-2 text-xs"
+                        className="h-8 w-16 rounded-lg border border-apple-hairline px-2 text-xs"
                       />
                     </td>
                     <td className="px-3 py-2">
@@ -494,14 +494,14 @@ export function VariantsPanel({
                         onChange={(event) =>
                           updateVariantField(index, "weight", event.target.value ? Number(event.target.value) : undefined)
                         }
-                        className="h-8 w-16 rounded-lg border border-zinc-200 px-2 text-xs"
+                        className="h-8 w-16 rounded-lg border border-apple-hairline px-2 text-xs"
                       />
                     </td>
                     <td className="px-3 py-2">
                       <select
                         value={variant.status ?? "active"}
                         onChange={(event) => updateVariantField(index, "status", event.target.value as ProductVariant["status"])}
-                        className="h-8 rounded-lg border border-zinc-200 px-2 text-xs"
+                        className="h-8 rounded-lg border border-apple-hairline px-2 text-xs"
                       >
                         <option value="active">Active</option>
                         <option value="draft">Draft</option>

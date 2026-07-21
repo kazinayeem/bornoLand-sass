@@ -60,7 +60,7 @@ export function CheckoutTab({ storeId }: CheckoutTabProps) {
   }
 
   const Toggle = ({ value, onChange, label, desc }: { value: boolean; onChange: (v: boolean) => void; label: string; desc: string }) => (
-    <div className="flex items-center justify-between rounded-xl border border-zinc-200 p-4">
+    <div className="flex items-center justify-between rounded-xl border border-apple-hairline p-4">
       <div>
         <p className="text-sm font-medium text-apple-ink">{label}</p>
         <p className="text-xs text-apple-ink-muted-48">{desc}</p>
@@ -75,7 +75,7 @@ export function CheckoutTab({ storeId }: CheckoutTabProps) {
   return (
     <div className="max-w-2xl space-y-6">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
         <div className="flex items-center gap-3 mb-5">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">
             <ShoppingCart className="h-5 w-5 text-blue-600" />
@@ -98,7 +98,7 @@ export function CheckoutTab({ storeId }: CheckoutTabProps) {
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-        className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
         <div className="flex items-center gap-3 mb-5">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100">
             <DollarSign className="h-5 w-5 text-amber-600" />
@@ -113,19 +113,19 @@ export function CheckoutTab({ storeId }: CheckoutTabProps) {
             <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Minimum Order Amount (BDT)</label>
             <input type="number" min={0} value={minOrderAmount}
               onChange={(e) => setMinOrderAmount(Number(e.target.value))}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Tax Rate (%)</label>
             <input type="number" min={0} max={100} step="0.1" value={taxRate}
               onChange={(e) => setTaxRate(Number(e.target.value))}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
           </div>
         </div>
       </motion.div>
 
       <button onClick={handleSave} disabled={saving}
-        className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-50 transition-colors">
+        className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-6 py-2.5 text-sm font-semibold text-white hover:bg-apple-ink-muted-80 disabled:opacity-50 transition-colors">
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
         Save Checkout Settings
       </button>

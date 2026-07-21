@@ -302,7 +302,7 @@ function buildMenuItems(
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigator" }) {
+export function LayersPanel({ title = "Sections" }: { title?: "Layers" | "Navigator" | "Sections" }) {
   const dispatch = useDispatch();
   const sections = useSelector((s: RootState) => s.builder.sections);
   const headerSections = useSelector((s: RootState) => s.builder.headerSections);
@@ -317,6 +317,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
   // ─── State ──────────────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilterId>("all");
+  const [showFilters, setShowFilters] = useState(false);
   const [collapsedRegions, setCollapsedRegions] = useState<Record<string, boolean>>({
     header: false,
     footer: false,
@@ -512,10 +513,10 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
       >
         {/* Drop indicator */}
         {dragOver?.zone === zone && dragOver.index === index && (
-          <div className="flex items-center gap-1 px-2 py-0.5">
-            <div className="h-0.5 flex-1 rounded-full bg-blue-500" />
-            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-            <div className="h-0.5 flex-1 rounded-full bg-blue-500" />
+          <div className="flex items-center gap-1 px-2 py-1">
+            <div className="h-0.5 flex-1 rounded-full bg-apple-primary" />
+            <div className="h-2 w-2 animate-pulse rounded-full bg-apple-primary" />
+            <div className="h-0.5 flex-1 rounded-full bg-apple-primary" />
           </div>
         )}
 
@@ -531,11 +532,11 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
             dispatch(setSelectedSection(section.id));
           }}
           className={cn(
-            "group/section mb-1 cursor-pointer rounded-xl border px-2.5 py-2 transition-all duration-150",
+            "group/section mb-2 cursor-pointer rounded-apple-lg border px-3 py-3 transition-all duration-200 ease-apple",
             selected
-              ? "border-blue-300 bg-blue-50/80 shadow-sm ring-1 ring-blue-200"
-              : "border-transparent bg-white hover:border-zinc-200 hover:bg-apple-canvas-parchment/50",
-            isDragging && "opacity-50 scale-[0.98]"
+              ? "border-apple-primary bg-apple-primary/5 ring-2 ring-apple-primary/25"
+              : "border-apple-hairline bg-apple-canvas hover:border-apple-primary/30 hover:bg-apple-canvas-parchment/60",
+            isDragging && "scale-[0.98] opacity-60"
           )}
         >
           <div className="flex items-center gap-1.5">
@@ -557,19 +558,19 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
             </button>
 
             {/* Drag handle */}
-            <div className="shrink-0 cursor-grab text-zinc-300 opacity-0 group-hover/section:opacity-100 transition-opacity active:cursor-grabbing">
-              <GripVertical className="h-3.5 w-3.5" />
+            <div className="shrink-0 cursor-grab text-apple-ink-muted-48 opacity-60 transition-opacity group-hover/section:opacity-100 active:cursor-grabbing">
+              <GripVertical className="h-4 w-4" />
             </div>
 
-            {/* Section type icon */}
-            <div className={cn(
-              "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition-all",
-              selected ? "bg-blue-500 text-white" : "bg-zinc-100 text-apple-ink-muted-48"
-            )}>
-              <Icon className="h-3 w-3" />
+            <div
+              className={cn(
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-apple-md transition-all",
+                selected ? "bg-apple-primary text-apple-on-primary" : "bg-apple-canvas-parchment text-apple-ink-muted-48"
+              )}
+            >
+              <Icon className="h-4 w-4" />
             </div>
 
-            {/* Section info */}
             <div className="min-w-0 flex-1">
               <input
                 value={section.label}
@@ -577,16 +578,15 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => dispatch(updateSectionMeta({ id: section.id, label: e.target.value }))}
                 className={cn(
-                  "w-full truncate bg-transparent text-xs font-semibold outline-none rounded px-1 -mx-1 py-0.5 transition-all",
-                  selected ? "text-blue-900" : "text-apple-ink",
-                  "focus:bg-white focus:ring-1 focus:ring-blue-200"
+                  "w-full truncate rounded-apple-sm bg-transparent px-1 py-1 text-body-strong outline-none transition-all",
+                  selected ? "text-apple-ink" : "text-apple-ink",
+                  "focus:bg-apple-canvas focus:ring-2 focus:ring-apple-primary/20"
                 )}
               />
-              <p className="text-[10px] text-apple-ink-muted-48 leading-tight px-1">{def?.label || normalizeSectionType(section.type)}</p>
+              <p className="px-1 text-caption text-apple-ink-muted-48">{def?.label || normalizeSectionType(section.type)}</p>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-0.5 shrink-0">
+            <div className="flex shrink-0 items-center">
               {/* Move up/down buttons (visible on hover) */}
               <button
                 onClick={(e) => { e.stopPropagation(); if (currentIndex > 0) dispatch(moveSection({ from: currentIndex, to: currentIndex - 1 })); }}
@@ -647,14 +647,19 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
           </div>
 
           {/* Children list (expandable) */}
-          {hasChildren && isExpanded && (
-            <div className="ml-7 mt-1.5 space-y-0.5 border-l-2 border-zinc-100 pl-2">
+          {hasChildren && (
+            <div
+              className={cn(
+                "ml-7 mt-2 space-y-0.5 overflow-hidden border-l-2 border-apple-divider-soft pl-3 transition-all duration-200 ease-apple",
+                isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+              )}
+            >
               {children.map((child) => (
                 <div
                   key={child}
-                  className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors cursor-default"
+                  className="flex cursor-default items-center gap-2 rounded-apple-md px-2 py-1.5 text-caption text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas-parchment"
                 >
-                  <div className="h-1 w-1 rounded-full bg-zinc-300" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-apple-ink-muted-48/40" />
                   {child}
                 </div>
               ))}
@@ -679,8 +684,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
     const filteredSections = sectionList.filter(filterSection);
 
     return (
-      <div className={cn("mb-2 rounded-xl border transition-all duration-150", isActive ? "border-zinc-200 bg-apple-canvas-parchment/50" : "border-transparent")}>
-        {/* Region header */}
+      <div className={cn("mb-3 rounded-apple-lg border transition-all duration-200 ease-apple", isActive ? "border-apple-primary/20 bg-apple-primary/[0.03]" : "border-transparent")}>
         <div
           role="button"
           tabIndex={0}
@@ -693,15 +697,15 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
             }
           }}
           className={cn(
-            "group flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition-all outline-none",
-            isActive ? "bg-zinc-100/80" : "hover:bg-apple-canvas-parchment"
+            "group flex w-full items-center gap-2.5 rounded-apple-lg px-3 py-2.5 text-left outline-none transition-all",
+            isActive ? "bg-apple-canvas-parchment" : "hover:bg-apple-canvas-parchment/60"
           )}
         >
-          <div className={cn("flex h-5 w-5 items-center justify-center rounded-md text-white", colorClass)}>
-            {createElement(icon, { className: "h-2.5 w-2.5" })}
+          <div className={cn("flex h-7 w-7 items-center justify-center rounded-apple-md text-white", colorClass)}>
+            {createElement(icon, { className: "h-3.5 w-3.5" })}
           </div>
-          <span className="flex-1 text-[11px] font-bold uppercase tracking-wider text-apple-ink-muted-48">{label}</span>
-          <span className="text-[10px] font-medium text-apple-ink-muted-48 bg-zinc-100 px-1.5 py-0.5 rounded-full">
+          <span className="flex-1 text-body-strong text-apple-ink">{label}</span>
+          <span className="rounded-apple-pill bg-apple-canvas-parchment px-2 py-0.5 text-caption font-medium text-apple-ink-muted-48">
             {filteredSections.length}
           </span>
           <button
@@ -710,64 +714,64 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
               dispatch(setEditingZone(zone));
               dispatch(openSectionLibrary({ insertPosition: null, targetZone: zone }));
             }}
-            className="rounded-md p-1 text-blue-500 opacity-0 group-hover:opacity-100 hover:bg-blue-50 transition-all"
-            title={`Add ${label} section`}
+            className="rounded-apple-md p-1.5 text-apple-primary opacity-0 transition-all hover:bg-apple-primary/10 group-hover:opacity-100"
+            title={`Add to ${label.toLowerCase()}`}
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
-          {isCollapsed ? <ChevronRight className="h-3.5 w-3.5 text-apple-ink-muted-48" /> : <ChevronDown className="h-3.5 w-3.5 text-apple-ink-muted-48" />}
+          {isCollapsed ? <ChevronRight className="h-4 w-4 text-apple-ink-muted-48" /> : <ChevronDown className="h-4 w-4 text-apple-ink-muted-48" />}
         </div>
 
-        {/* Region sections */}
-        {!isCollapsed && (
-          <div className="px-2 pb-2">
+        <div
+          className={cn(
+            "overflow-hidden transition-all duration-200 ease-apple",
+            isCollapsed ? "max-h-0 opacity-0" : "max-h-[2000px] opacity-100"
+          )}
+        >
+          <div className="px-2 pb-2 pt-1">
             {filteredSections.length === 0 ? (
-              <div className="px-3 py-4 text-center">
-                <p className="text-[11px] text-apple-ink-muted-48">
+              <div className="px-3 py-5 text-center">
+                <p className="text-caption text-apple-ink-muted-48">
                   {searchQuery || typeFilter !== "all"
                     ? "No matching sections"
-                    : zone === "header" ? "No header sections yet"
-                    : zone === "footer" ? "No footer sections yet"
-                    : "No sections on this page"}
+                    : zone === "header" ? "Nothing in your top bar yet"
+                    : zone === "footer" ? "Nothing at the bottom yet"
+                    : "Your homepage is empty"}
                 </p>
                 {!searchQuery && typeFilter === "all" && (
-                  <>
-                    <p className="mt-0.5 text-[10px] text-zinc-300">Add sections from the library</p>
-                    <button
-                      onClick={() => {
-                        dispatch(setEditingZone(zone));
-                        dispatch(openSectionLibrary({ insertPosition: null, targetZone: zone }));
-                      }}
-                      className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-blue-500 px-3 py-1.5 text-[11px] font-medium text-white shadow-sm transition-all hover:bg-blue-600 hover:shadow-md active:scale-95"
-                      title="Add Section"
-                    >
-                      <Plus className="h-3 w-3" />
-                      Add Section
-                    </button>
-                  </>
+                  <button
+                    onClick={() => {
+                      dispatch(setEditingZone(zone));
+                      dispatch(openSectionLibrary({ insertPosition: null, targetZone: zone }));
+                    }}
+                    className="btn-press mt-3 inline-flex items-center gap-1.5 rounded-apple-pill bg-apple-primary px-4 py-2 text-caption font-medium text-apple-on-primary"
+                    title="Add section"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add section
+                  </button>
                 )}
               </div>
             ) : (
               filteredSections.map((section, index) => renderSectionItem(section, index, zone, filteredSections.length))
             )}
 
-            {/* Drop zone at end of region */}
             <div
               onDragOver={(e) => handleDragOver(e, zone, filteredSections.length)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, zone, filteredSections.length)}
               className={cn(
-                "group/drop mt-1 rounded-lg border-2 border-dashed p-2 text-center transition-all duration-150",
+                "group/drop mt-2 rounded-apple-lg border-2 border-dashed p-3 text-center transition-all duration-200 ease-apple",
                 dragOver?.zone === zone && dragOver.index === filteredSections.length
-                  ? "border-blue-400 bg-blue-50 scale-[1.02]"
-                  : "border-zinc-200 hover:border-blue-300 hover:bg-blue-50/50"
+                  ? "scale-[1.01] border-apple-primary bg-apple-primary/5"
+                  : "border-apple-hairline hover:border-apple-primary/30 hover:bg-apple-primary/[0.02]"
               )}
             >
               {dragOver?.zone === zone && dragOver.index === filteredSections.length ? (
                 <div className="flex items-center justify-center gap-1.5">
-                  <div className="h-1 w-1 rounded-full bg-blue-500 animate-pulse" />
-                  <p className="text-[10px] font-medium text-blue-600">Drop here</p>
-                  <div className="h-1 w-1 rounded-full bg-blue-500 animate-pulse" />
+                  <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-apple-primary" />
+                  <p className="text-caption font-medium text-apple-primary">Drop here</p>
+                  <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-apple-primary" />
                 </div>
               ) : (
                 <button
@@ -775,16 +779,16 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
                     dispatch(setEditingZone(zone));
                     dispatch(openSectionLibrary({ insertPosition: null, targetZone: zone }));
                   }}
-                  className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-medium text-blue-600 opacity-0 shadow-sm transition-all group-hover/drop:opacity-100 hover:bg-blue-100 hover:border-blue-300 hover:shadow active:scale-95"
-                  title="Add Section"
+                  className="inline-flex items-center gap-1 rounded-apple-pill border border-apple-hairline bg-apple-canvas px-3 py-1.5 text-caption font-medium text-apple-ink-muted-48 opacity-0 shadow-sm transition-all group-hover/drop:opacity-100 hover:border-apple-primary/30 hover:text-apple-primary"
+                  title="Add section"
                 >
                   <Plus className="h-3 w-3" />
-                  Add Section
+                  Add section
                 </button>
               )}
             </div>
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -803,91 +807,83 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
   }, [contextMenu, clipboardSection, dispatch, createTemplate, storeId, sections, headerSections, footerSections]);
 
   return (
-    <aside className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div className="border-b border-zinc-100 px-3 py-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-apple-ink-muted-80">
-              <PanelLeft className="h-3.5 w-3.5" />
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">{title}</p>
-              <p className="text-xs font-semibold text-apple-ink">Page Structure</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] font-medium text-apple-ink-muted-48 mr-1">{totalSections}</span>
+    <aside className="flex h-full min-h-0 flex-col overflow-hidden bg-apple-canvas">
+      <div className="border-b border-apple-hairline px-4 py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <p className="text-body-strong text-apple-ink">What&apos;s on your page</p>
+            <p className="text-caption text-apple-ink-muted-48">{totalSections} blocks · drag to reorder</p>
           </div>
         </div>
       </div>
 
-      {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-1 border-b border-zinc-100 px-2 py-1.5">
+      <div className="flex items-center gap-2 border-b border-apple-hairline px-3 py-2.5">
         <button
+          type="button"
           onClick={() => {
             dispatch(setEditingZone("body"));
             dispatch(openSectionLibrary({ insertPosition: null, targetZone: "body" }));
           }}
-          className="flex items-center gap-1 rounded-lg bg-blue-500 px-2 py-1 text-[10px] font-medium text-white shadow-sm transition-all hover:bg-blue-600 hover:shadow active:scale-95"
-          title="Add Section"
+          className="btn-press inline-flex items-center gap-1.5 rounded-apple-pill bg-apple-primary px-3 py-1.5 text-caption font-medium text-apple-on-primary"
         >
-          <Plus className="h-3 w-3" />
+          <Plus className="h-3.5 w-3.5" />
           Add
         </button>
-        <div className="h-4 w-px bg-zinc-200 mx-0.5" />
         <button
-          onClick={expandAll}
-          className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-all"
-          title="Expand all sections"
+          type="button"
+          onClick={() => setShowFilters((v) => !v)}
+          className={cn(
+            "inline-flex items-center gap-1 rounded-apple-pill border px-3 py-1.5 text-caption font-medium transition-colors",
+            showFilters
+              ? "border-apple-primary bg-apple-primary/5 text-apple-primary"
+              : "border-apple-hairline text-apple-ink-muted-48 hover:bg-apple-canvas-parchment"
+          )}
         >
-          <ChevronsUpDown className="h-3 w-3" />
-        </button>
-        <button
-          onClick={collapseAll}
-          className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-all"
-          title="Collapse all sections"
-        >
-          <ChevronsDownUp className="h-3 w-3" />
+          <Filter className="h-3.5 w-3.5" />
+          Filter
         </button>
       </div>
 
-      {/* ── Search & Filter ─────────────────────────────────────────────────── */}
-      <div className="px-2.5 pb-1.5 pt-1.5 space-y-1.5">
-        {/* Search input */}
+      <div className="space-y-2 px-3 pb-2 pt-2">
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-apple-ink-muted-48" />
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-apple-ink-muted-48" />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search sections..."
-            className="h-7 w-full rounded-lg border border-zinc-200 bg-apple-canvas-parchment pl-6 pr-6 text-[11px] text-apple-ink-muted-80 placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all"
+            placeholder="Find a section…"
+            className="h-10 w-full rounded-apple-pill border border-apple-hairline bg-apple-canvas-parchment pl-9 pr-8 text-caption text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/15"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-apple-ink-muted-48 hover:text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all">
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-apple-ink-muted-48 hover:bg-apple-canvas"
+            >
               <X className="h-3 w-3" />
             </button>
           )}
         </div>
 
-        {/* Type filter chips */}
-        <div className="flex flex-wrap gap-1">
-          {TYPE_FILTERS.map(({ id, label, icon: FilterIcon }) => (
-            <button
-              key={id}
-              onClick={() => setTypeFilter(id)}
-              className={cn(
-                "flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium transition-all",
-                typeFilter === id
-                  ? "bg-blue-500 text-white shadow-sm"
-                  : "bg-zinc-100 text-apple-ink-muted-48 hover:bg-zinc-200 hover:text-apple-ink-muted-80"
-              )}
-            >
-              <FilterIcon className="h-2.5 w-2.5" />
-              {label}
-            </button>
-          ))}
-        </div>
+        {showFilters && (
+          <div className="flex flex-wrap gap-1.5">
+            {TYPE_FILTERS.map(({ id, label, icon: FilterIcon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTypeFilter(id)}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-apple-pill px-2.5 py-1 text-fine-print font-medium transition-all",
+                  typeFilter === id
+                    ? "bg-apple-primary text-apple-on-primary"
+                    : "bg-apple-canvas-parchment text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
+                )}
+              >
+                <FilterIcon className="h-3 w-3" />
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Section List ────────────────────────────────────────────────────── */}
@@ -895,12 +891,12 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
         {(() => {
           return (
             <>
-              {renderRegion("Header", "header", Menu, headerSections, "bg-blue-500")}
-              <div className="border-t border-zinc-100 pt-1">
-                {renderRegion("Body", "body", Layers, sections, "bg-zinc-800")}
+              {renderRegion("Top bar", "header", Menu, headerSections, "bg-apple-primary")}
+              <div className="border-t border-apple-divider-soft pt-2">
+                {renderRegion("Main content", "body", Layers, sections, "bg-apple-ink")}
               </div>
-              <div className="border-t border-zinc-100 pt-1">
-                {renderRegion("Footer", "footer", PanelBottom, footerSections, "bg-purple-500")}
+              <div className="border-t border-apple-divider-soft pt-2">
+                {renderRegion("Bottom", "footer", PanelBottom, footerSections, "bg-violet-600")}
               </div>
             </>
           );

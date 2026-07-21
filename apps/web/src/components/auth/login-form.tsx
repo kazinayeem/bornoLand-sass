@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/validators/auth";
@@ -12,6 +11,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FormLoadingShell } from "@/components/loading";
 import { useLoginMutation } from "@/redux/api/auth-api";
 import { useAppDispatch } from "@/hooks/redux";
 import { setAuthState } from "@/redux/slices/auth-slice";
@@ -20,32 +20,36 @@ import { setTenantContext } from "@/redux/slices/tenant-slice";
 import { consumeRedirectAfterLogin } from "@/lib/auth-redirect-client";
 
 export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin" }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [login] = useLoginMutation();
   const dispatch = useAppDispatch();
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema) as any,
-    defaultValues: { email: "", password: "", rememberMe: false, loginType }
+    defaultValues: { email: "", password: "", rememberMe: false, loginType },
   });
 
   const onSubmit = handleSubmit(async (values) => {
+    if (loading) return;
     setLoading(true);
     const response = await login({
       email: values.email,
       password: values.password,
       loginType: loginType ?? values.loginType,
-      rememberMe: values.rememberMe
+      rememberMe: values.rememberMe,
     });
     setLoading(false);
 
     if ("error" in response) {
       const message =
-        (response.error && "data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
+        (response.error &&
+        "data" in response.error &&
+        response.error.data &&
+        typeof response.error.data === "object" &&
+        "message" in response.error.data
           ? String((response.error.data as { message?: string }).message)
           : "Login failed") || "Login failed";
       toast.error(message);
@@ -62,14 +66,17 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
     dispatch(setUserProfile(payload.user));
     dispatch(setTenantContext({ tenantId: payload.user.tenantId }));
 
-    const queryRedirect = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect") : null;
-    const destination = consumeRedirectAfterLogin(queryRedirect, loginType === "admin" ? "/admin/dashboard" : "/dashboard");
-    router.replace(destination);
-    router.refresh();
+    const queryRedirect =
+      typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect") : null;
+    const destination = consumeRedirectAfterLogin(
+      queryRedirect,
+      loginType === "admin" ? "/admin/dashboard" : "/dashboard"
+    );
+    window.location.replace(destination);
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
+    <FormLoadingShell loading={loading} loadingLabel="Signing in" onSubmit={onSubmit} className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="login-email">Email</Label>
         <Input
@@ -90,7 +97,11 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
 
       <div className="flex items-center justify-between gap-4">
         <label className="flex items-center gap-2 text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
-          <input type="checkbox" {...register("rememberMe")} className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+          <input
+            type="checkbox"
+            {...register("rememberMe")}
+            className="h-4 w-4 rounded border-zinc-300 text-apple-primary focus:ring-apple-primary"
+          />
           Remember me
         </label>
         <a href="/forgot-password" className="text-sm font-medium text-apple-primary hover:text-apple-primary-focus">
@@ -98,12 +109,8 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
         </a>
       </div>
 
-      <Button
-        type="submit"
-        disabled={loading}
-        className="h-11 w-full rounded-pill bg-apple-primary text-sm font-semibold text-apple-on-primary hover:bg-apple-primary-focus"
-      >
-        {loading ? "Signing in..." : loginType === "admin" ? "Admin Sign In" : "Sign in"}
+      <Button type="submit" loading={loading} loadingKey="login" className="h-11 w-full">
+        {loginType === "admin" ? "Admin Sign In" : "Sign in"}
       </Button>
 
       <div className="relative py-1">
@@ -111,14 +118,18 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
           <span className="w-full border-t border-apple-hairline dark:border-apple-hairline" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-apple-canvas px-3 text-[11px] font-medium uppercase tracking-[0.28em] text-apple-ink-muted-48 dark:bg-apple-surface-black">or continue with</span>
+          <span className="bg-apple-canvas px-3 text-[11px] font-medium uppercase tracking-[0.28em] text-apple-ink-muted-48 dark:bg-apple-surface-black">
+            or continue with
+          </span>
         </div>
       </div>
 
       <GoogleButton label="Continue with Google" />
 
       <div className="rounded-lg border border-dashed border-apple-hairline bg-apple-canvas-parchment/80 p-4 dark:border-apple-hairline dark:bg-apple-surface-tile-1/40">
-        <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Quick demo access</p>
+        <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">
+          Quick demo access
+        </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <QuickLoginButton
             label="Quick user login"
@@ -143,6 +154,6 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
           Create an account
         </a>
       </p>
-    </form>
+    </FormLoadingShell>
   );
 }

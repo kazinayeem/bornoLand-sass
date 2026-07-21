@@ -43,7 +43,7 @@ export default function LiveVisitorsPage() {
           <p className="text-sm text-apple-ink-muted-48">Real-time visitor activity — auto-refreshes every 5 seconds</p>
         </div>
         <button onClick={() => refetch()}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors">
+          className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors">
           <RefreshCw className="h-3.5 w-3.5" />
           Refresh
         </button>
@@ -60,19 +60,19 @@ export default function LiveVisitorsPage() {
               <p className="mt-1 text-2xl font-bold text-emerald-900">{count}</p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-              className="rounded-xl border border-zinc-200 bg-white p-4">
+              className="rounded-xl border border-apple-hairline bg-white p-4">
               <p className="text-xs font-medium text-apple-ink-muted-48">Active Sessions</p>
               <p className="mt-1 text-2xl font-bold text-apple-ink">{visitors.length}</p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="rounded-xl border border-zinc-200 bg-white p-4">
+              className="rounded-xl border border-apple-hairline bg-white p-4">
               <p className="text-xs font-medium text-apple-ink-muted-48">Unique Devices</p>
               <p className="mt-1 text-2xl font-bold text-apple-ink">
                 {new Set(visitors.map((v) => String(v.device ?? ""))).size}
               </p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-              className="rounded-xl border border-zinc-200 bg-white p-4">
+              className="rounded-xl border border-apple-hairline bg-white p-4">
               <p className="text-xs font-medium text-apple-ink-muted-48">Countries</p>
               <p className="mt-1 text-2xl font-bold text-apple-ink">
                 {new Set(visitors.map((v) => String(v.country ?? "Unknown"))).size}
@@ -81,8 +81,8 @@ export default function LiveVisitorsPage() {
           </div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-            <div className="border-b border-zinc-100 px-5 py-3">
+            className="overflow-hidden rounded-apple-lg border border-apple-hairline bg-white">
+            <div className="border-b border-apple-divider-soft px-5 py-3">
               <h3 className="text-sm font-semibold text-apple-ink">Active Sessions</h3>
             </div>
             <div className="overflow-x-auto">
@@ -183,7 +183,7 @@ export default function LiveVisitorsPage() {
               },
             ].map((section, si) => (
               <motion.div key={section.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + si * 0.05 }}
-                className="rounded-xl border border-zinc-200 bg-white p-4">
+                className="rounded-xl border border-apple-hairline bg-white p-4">
                 <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">{section.title}</h3>
                 <div className="space-y-2">
                   {section.data.map((d) => {
@@ -194,7 +194,7 @@ export default function LiveVisitorsPage() {
                           <span className="truncate text-apple-ink-muted-80">{d.name}</span>
                           <span className="text-apple-ink-muted-48">{d.count} ({pct}%)</span>
                         </div>
-                        <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
+                        <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-apple-canvas-parchment">
                           <div className="h-full rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
                         </div>
                       </div>

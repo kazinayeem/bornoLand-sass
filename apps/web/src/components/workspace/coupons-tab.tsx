@@ -81,7 +81,7 @@ export function CouponsTab({ storeId }: { storeId: string }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-apple-ink-muted-48">{coupons.length} coupons</p>
-        <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-4 py-2 text-sm font-semibold text-white">
           <Plus className="h-4 w-4" />
           New Coupon
         </button>
@@ -89,7 +89,7 @@ export function CouponsTab({ storeId }: { storeId: string }) {
 
       <div className="space-y-2">
         {coupons.map((coupon) => (
-          <div key={coupon._id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-100 p-4">
+          <div key={coupon._id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-apple-divider-soft p-4">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50">
                 <Ticket className="h-5 w-5 text-amber-600" />
@@ -116,7 +116,7 @@ export function CouponsTab({ storeId }: { storeId: string }) {
           </div>
         ))}
         {coupons.length === 0 && (
-          <p className="rounded-xl border border-dashed border-zinc-200 py-12 text-center text-sm text-apple-ink-muted-48">
+          <p className="rounded-xl border border-dashed border-apple-hairline py-12 text-center text-sm text-apple-ink-muted-48">
             No coupons yet. Create percentage, fixed, free shipping, or buy X get Y discounts.
           </p>
         )}
@@ -129,23 +129,23 @@ export function CouponsTab({ storeId }: { storeId: string }) {
               placeholder="Code"
               value={form.code}
               onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))}
-              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-apple-hairline px-3 py-2 text-sm"
             />
           )}
-          <input placeholder="Name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
-          <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as Coupon["type"] }))} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm">
+          <input placeholder="Name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="w-full rounded-lg border border-apple-hairline px-3 py-2 text-sm" />
+          <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as Coupon["type"] }))} className="w-full rounded-lg border border-apple-hairline px-3 py-2 text-sm">
             <option value="percentage">Percentage</option>
             <option value="fixed">Fixed amount</option>
             <option value="free_shipping">Free shipping</option>
             <option value="buy_x_get_y">Buy X Get Y</option>
           </select>
-          <input type="number" placeholder="Value" value={form.value} onChange={(e) => setForm((f) => ({ ...f, value: Number(e.target.value) }))} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm" />
-          <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as Coupon["status"] }))} className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm">
+          <input type="number" placeholder="Value" value={form.value} onChange={(e) => setForm((f) => ({ ...f, value: Number(e.target.value) }))} className="w-full rounded-lg border border-apple-hairline px-3 py-2 text-sm" />
+          <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as Coupon["status"] }))} className="w-full rounded-lg border border-apple-hairline px-3 py-2 text-sm">
             <option value="draft">Draft</option>
             <option value="active">Active</option>
             <option value="expired">Expired</option>
           </select>
-          <button type="button" onClick={handleSave} className="w-full rounded-xl bg-zinc-900 py-2.5 text-sm font-semibold text-white">
+          <button type="button" onClick={handleSave} className="w-full rounded-xl bg-apple-ink py-2.5 text-sm font-semibold text-white">
             Save Coupon
           </button>
         </div>

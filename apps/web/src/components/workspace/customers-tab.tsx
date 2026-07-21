@@ -131,11 +131,11 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
         {selectedCust && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-zinc-200 p-4">
+              <div className="rounded-xl border border-apple-hairline p-4">
                 <p className="text-xs font-semibold text-apple-ink-muted-48 uppercase">Total Orders</p>
                 <p className="text-2xl font-bold text-apple-ink mt-1">{selectedCust.totalOrders}</p>
               </div>
-              <div className="rounded-xl border border-zinc-200 p-4">
+              <div className="rounded-xl border border-apple-hairline p-4">
                 <p className="text-xs font-semibold text-apple-ink-muted-48 uppercase">Total Spent</p>
                 <p className="text-2xl font-bold text-apple-ink mt-1">{formatBDT(selectedCust.totalSpent)}</p>
               </div>
@@ -143,7 +143,7 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
 
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-apple-ink">Contact Info</h4>
-              <div className="rounded-xl border border-zinc-200 divide-y divide-zinc-100">
+              <div className="rounded-xl border border-apple-hairline divide-y divide-zinc-100">
                 {selectedCust.email && (
                   <div className="flex items-center gap-3 px-4 py-3">
                     <Mail className="h-4 w-4 text-apple-ink-muted-48" />
@@ -168,7 +168,7 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
                 <h4 className="text-sm font-semibold text-apple-ink">Shipping Cities</h4>
                 <div className="flex flex-wrap gap-2">
                   {selectedCust.cities.map((city) => (
-                    <span key={city} className="rounded-lg bg-zinc-100 px-2.5 py-1 text-xs font-medium text-apple-ink-muted-80">{city}</span>
+                    <span key={city} className="rounded-lg bg-apple-canvas-parchment px-2.5 py-1 text-xs font-medium text-apple-ink-muted-80">{city}</span>
                   ))}
                 </div>
               </div>

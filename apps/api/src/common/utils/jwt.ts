@@ -83,6 +83,8 @@ export function getRefreshTokenCookieMaxAge(rememberMe = false) {
 }
 
 export function getSessionCookieOptions(maxAgeSeconds: number) {
+  const domain = resolveCookieDomain();
+
   const options: Record<string, unknown> = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -91,15 +93,53 @@ export function getSessionCookieOptions(maxAgeSeconds: number) {
     maxAge: maxAgeSeconds * 1000,
   };
 
-  if (process.env.NODE_ENV === "production") {
-    const rootDomain = process.env.ROOT_DOMAIN ?? process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "";
-    const hostname = rootDomain.includes(":") ? rootDomain.split(":")[0] : rootDomain;
-    if (hostname) {
-      options.domain = process.env.WILDCARD_DOMAIN ?? `.${hostname}`;
-    }
-  } else if (process.env.WILDCARD_DOMAIN) {
-    options.domain = process.env.WILDCARD_DOMAIN;
+  if (domain) {
+    options.domain = domain;
   }
 
   return options;
+}
+
+/** Legacy JWT cookie — SameSite lax so OAuth redirects can restore the session. */
+export function getLegacySessionCookieOptions(maxAgeSeconds: number) {
+  return {
+    ...getSessionCookieOptions(maxAgeSeconds),
+    sameSite: "lax" as const,
+  };
+}
+
+/**
+ * Only scope cookies to a parent domain when the app is actually served from
+ * that domain tree. Omitting domain on bare localhost keeps cookies attachable.
+ */
+function resolveCookieDomain(): string | undefined {
+  const wildcard = process.env.WILDCARD_DOMAIN?.trim();
+  if (!wildcard) return undefined;
+
+  const normalized = wildcard.startsWith(".") ? wildcard : `.${wildcard}`;
+  const bare = normalized.slice(1);
+
+  const rootDomain = (
+    process.env.ROOT_DOMAIN ??
+    process.env.NEXT_PUBLIC_ROOT_DOMAIN ??
+    ""
+  ).trim();
+
+  // Local dev on localhost:3000 must not use a .localhost.com parent domain.
+  if (
+    rootDomain === "localhost" ||
+    rootDomain.startsWith("localhost:") ||
+    (!rootDomain && bare.includes("localhost.com"))
+  ) {
+    return undefined;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    // In development, only set domain when explicitly targeting a wildcard host.
+    if (!bare.includes("localhost.com")) {
+      return undefined;
+    }
+  }
+
+  return normalized;
 }

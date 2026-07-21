@@ -310,7 +310,7 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
       key: "name", label: "Product", sortable: true,
       render: (p) => (
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 shrink-0 rounded-lg bg-zinc-100 flex items-center justify-center overflow-hidden">
+          <div className="h-9 w-9 shrink-0 rounded-lg bg-apple-canvas-parchment flex items-center justify-center overflow-hidden">
             {getProductImageUrl(p) ? <img src={getProductImageUrl(p)} alt={p.name} className="h-full w-full object-cover" /> : <Package className="h-4 w-4 text-apple-ink-muted-48" />}
           </div>
           <div className="min-w-0">
@@ -359,7 +359,7 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
       render: (p) => (
         <div className="flex items-center justify-end gap-1">
           <button onClick={() => toggleFeatured(p)}
-            className={`rounded-lg p-1.5 transition-colors ${p.featured ? "text-amber-500 hover:bg-amber-50" : "text-zinc-300 hover:bg-apple-canvas-parchment"}`}
+            className={`rounded-lg p-1.5 transition-colors ${p.featured ? "text-amber-500 hover:bg-amber-50" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment"}`}
             title={p.featured ? "Unfeature" : "Feature"}>
             <Star className="h-3.5 w-3.5" fill={p.featured ? "currentColor" : "none"} />
           </button>
@@ -398,7 +398,7 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
             className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
               showAdvancedFilters || hasActiveFilters
                 ? "border-blue-200 bg-blue-50 text-blue-700"
-                : "border-zinc-200 bg-white text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                : "border-apple-hairline bg-white text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
             }`}>
             <Filter className="h-3.5 w-3.5" />
             Advanced
@@ -410,25 +410,25 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex overflow-hidden rounded-xl border border-zinc-200 bg-white">
+          <div className="flex overflow-hidden rounded-xl border border-apple-hairline bg-white">
             <button onClick={() => setViewMode("table")}
-              className={`p-2 transition-colors ${viewMode === "table" ? "bg-zinc-100 text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"}`}
+              className={`p-2 transition-colors ${viewMode === "table" ? "bg-apple-canvas-parchment text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"}`}
               title="Table view">
               <List className="h-4 w-4" />
             </button>
             <button onClick={() => setViewMode("grid")}
-              className={`p-2 transition-colors ${viewMode === "grid" ? "bg-zinc-100 text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"}`}
+              className={`p-2 transition-colors ${viewMode === "grid" ? "bg-apple-canvas-parchment text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"}`}
               title="Grid view">
               <LayoutGrid className="h-4 w-4" />
             </button>
           </div>
           <button onClick={handleExportCSV}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors"
             title="Export CSV">
             <Download className="h-3.5 w-3.5" /> Export
           </button>
           <button onClick={() => fileInputRef.current?.click()} disabled={importing}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors disabled:opacity-50"
             title="Import CSV">
             <Upload className="h-3.5 w-3.5" /> {importing ? "Importing..." : "Import"}
           </button>
@@ -443,12 +443,12 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
       {/* Advanced Filters Panel */}
       {showAdvancedFilters && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-zinc-200 bg-white p-4">
+          className="rounded-apple-lg border border-apple-hairline bg-white p-4">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             <div>
               <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Category</label>
               <select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
-                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80">
+                className="h-9 w-full rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80">
                 <option value="">All</option>
                 {categories.map((c) => <option key={c._id} value={c.name}>{c.name}</option>)}
               </select>
@@ -456,7 +456,7 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
             <div>
               <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Stock</label>
               <select value={stockFilter} onChange={(e) => { setStockFilter(e.target.value); setPage(1); }}
-                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80">
+                className="h-9 w-full rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80">
                 <option value="">All</option>
                 <option value="in">In Stock</option>
                 <option value="out">Out of Stock</option>
@@ -465,7 +465,7 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
             <div>
               <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Featured</label>
               <select value={featuredFilter} onChange={(e) => { setFeaturedFilter(e.target.value); setPage(1); }}
-                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80">
+                className="h-9 w-full rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80">
                 <option value="">All</option>
                 <option value="true">Featured</option>
                 <option value="false">Not Featured</option>
@@ -474,16 +474,16 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
             <div>
               <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Min Price</label>
               <input type="number" min={0} value={priceMin} onChange={(e) => { setPriceMin(e.target.value); setPage(1); }}
-                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80" placeholder="0" />
+                className="h-9 w-full rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80" placeholder="0" />
             </div>
             <div>
               <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Max Price</label>
               <input type="number" min={0} value={priceMax} onChange={(e) => { setPriceMax(e.target.value); setPage(1); }}
-                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80" placeholder="9999" />
+                className="h-9 w-full rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80" placeholder="9999" />
             </div>
             <div className="flex items-end">
               <button onClick={() => { setCategoryFilter(""); setStockFilter(""); setFeaturedFilter(""); setPriceMin(""); setPriceMax(""); }}
-                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
+                className="h-9 w-full rounded-xl border border-apple-hairline bg-white px-2.5 text-xs font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
                 Clear
               </button>
             </div>
@@ -496,13 +496,13 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {paginated.map((p) => (
             <motion.div key={p._id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-              className="group relative rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm hover:shadow-lg transition-all">
+              className="group relative rounded-apple-lg border border-apple-hairline bg-white p-3  hover:shadow-lg transition-all">
               <div className="mb-3 aspect-square overflow-hidden rounded-xl bg-apple-canvas-parchment">
                 {getProductImageUrl(p) ? (
                   <img src={getProductImageUrl(p)} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 ) : (
                   <div className="flex h-full items-center justify-center">
-                    <Package className="h-8 w-8 text-zinc-300" />
+                    <Package className="h-8 w-8 text-apple-ink-muted-48" />
                   </div>
                 )}
               </div>
@@ -519,16 +519,16 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
                 <div className="flex items-center gap-1.5 pt-1">
                   <button onClick={() => toggleStatus(p)}
                     className={`flex-1 rounded-lg py-1 text-[10px] font-semibold transition-colors ${
-                      p.status === "active" ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "bg-zinc-100 text-apple-ink-muted-48 hover:bg-zinc-200"
+                      p.status === "active" ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "bg-apple-canvas-parchment text-apple-ink-muted-48 hover:bg-zinc-200"
                     }`}>
                     {p.status === "active" ? "Active" : "Inactive"}
                   </button>
                   <button onClick={() => openEdit(p)}
-                    className="rounded-lg p-1.5 text-zinc-300 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors">
+                    className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors">
                     <Pencil className="h-3 w-3" />
                   </button>
                   <button onClick={() => setDeleteTarget(p)}
-                    className="rounded-lg p-1.5 text-zinc-300 hover:bg-red-50 hover:text-red-500 transition-colors">
+                    className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-red-50 hover:text-red-500 transition-colors">
                     <Trash2 className="h-3 w-3" />
                   </button>
                 </div>

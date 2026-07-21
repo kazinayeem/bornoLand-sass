@@ -19,7 +19,7 @@ export function EmptyState({ icon: Icon, title, description, action, className }
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        "flex flex-col items-center justify-center rounded-lg border border-apple-hairline bg-apple-canvas px-6 py-section text-center dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2",
+        "flex flex-col items-center justify-center rounded-lg border border-apple-hairline bg-apple-canvas px-6 py-apple-section text-center dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2",
         className
       )}
     >
@@ -53,7 +53,7 @@ export function NoResults({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className={cn(
-        "flex flex-col items-center justify-center rounded-lg border border-apple-hairline bg-apple-canvas px-6 py-section text-center dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2",
+        "flex flex-col items-center justify-center rounded-lg border border-apple-hairline bg-apple-canvas px-6 py-apple-section text-center dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2",
         className
       )}
     >
@@ -92,7 +92,7 @@ export function NoResults({
 
 export function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-red-200 bg-red-50 px-6 py-section text-center dark:border-red-900/50 dark:bg-red-950/20">
+    <div className="flex flex-col items-center justify-center rounded-lg border border-red-200 bg-red-50 px-6 py-apple-section text-center dark:border-red-900/50 dark:bg-red-950/20">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30">
         <svg
           className="h-7 w-7 text-red-500"

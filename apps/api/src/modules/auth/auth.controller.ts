@@ -8,12 +8,12 @@ import {
   signSessionToken,
   getSessionCookieName,
   getRefreshTokenCookieMaxAge,
-  getSessionCookieOptions,
   getSessionCookieMaxAge,
   verifyAccessToken,
   generateRefreshToken,
   hashRefreshToken,
 } from "../../common/utils/jwt.js";
+import { clearSessionCookies, setSessionCookies } from "./auth-cookies.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 import { getWebUrl } from "../../common/utils/app-url.js";
 import {
@@ -23,6 +23,7 @@ import {
   refreshAccessToken,
   registerUser,
   resetPassword,
+  sessionFromRefreshToken,
 } from "./auth.service.js";
 import { RefreshTokenModel } from "./refresh-token.model.js";
 import { VerificationTokenModel } from "./verification-token.model.js";
@@ -36,9 +37,15 @@ function extractCookieToken(request: Request) {
   return match?.[1] ?? null;
 }
 
-function clearSessionCookies(response: Response) {
-  response.clearCookie(getSessionCookieName(), getSessionCookieOptions(0));
-  response.clearCookie("bornoland.session.legacy", getSessionCookieOptions(0));
+function writeSessionCookies(
+  response: Response,
+  data: {
+    refreshToken: string;
+    sessionToken: string;
+    sessionMaxAge: number;
+  },
+) {
+  setSessionCookies(response, data);
 }
 
 function safeOAuthCallbackPath(value: unknown) {
@@ -106,15 +113,10 @@ export async function loginController(request: Request, response: Response) {
 
   // Set Refresh Token as httpOnly cookie
   const rtMaxAge = result.data.sessionMaxAge ?? getRefreshTokenCookieMaxAge(Boolean(request.body?.rememberMe));
-  response.cookie(getSessionCookieName(), result.data.refreshToken, getSessionCookieOptions(rtMaxAge));
-
-  // Also set a legacy session cookie for middleware.ts backward compat
-  response.cookie("bornoland.session.legacy", result.data.sessionToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: rtMaxAge * 1000,
+  writeSessionCookies(response, {
+    refreshToken: result.data.refreshToken,
+    sessionToken: result.data.sessionToken,
+    sessionMaxAge: rtMaxAge,
   });
 
   return sendSuccess(response, {
@@ -144,13 +146,10 @@ export async function refreshController(request: Request, response: Response) {
 
   // Rotate refresh token cookie
   const rtMaxAge = result.data.sessionMaxAge ?? getRefreshTokenCookieMaxAge();
-  response.cookie(getSessionCookieName(), result.data.refreshToken, getSessionCookieOptions(rtMaxAge));
-  response.cookie("bornoland.session.legacy", result.data.sessionToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: rtMaxAge * 1000,
+  writeSessionCookies(response, {
+    refreshToken: result.data.refreshToken,
+    sessionToken: result.data.sessionToken,
+    sessionMaxAge: rtMaxAge,
   });
 
   return sendSuccess(response, {
@@ -228,12 +227,20 @@ export async function meController(request: Request, response: Response) {
 
   // Check if it's an opaque refresh token (starts with hex 64 chars)
   if (/^[a-f0-9]{64}$/.test(token)) {
-    // This is a refresh token — try to get a new access token
-    const result = await refreshAccessToken(token);
+    // Validate refresh token without rotation — rotation is reserved for POST /auth/refresh.
+    const result = await sessionFromRefreshToken(token, { rotate: false });
     if (!result.ok) {
       clearSessionCookies(response);
       return sendSuccess(response, { session: null }, "Session expired");
     }
+
+    // Refresh the legacy JWT cookie when it is missing or near expiry.
+    writeSessionCookies(response, {
+      refreshToken: token,
+      sessionToken: result.data.sessionToken,
+      sessionMaxAge: result.data.sessionMaxAge,
+    });
+
     return sendSuccess(response, {
       session: result.data.session,
       accessToken: result.data.accessToken,
@@ -407,25 +414,23 @@ export async function googleCallbackController(request: Request, response: Respo
   const refreshToken = generateRefreshToken();
   const refreshTokenHash = hashRefreshToken(refreshToken);
   const family = generateRefreshTokenFamily();
-  const rtExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const rtMaxAge = getSessionCookieMaxAge();
+  const rtExpiresAt = new Date(Date.now() + rtMaxAge * 1000);
 
   await RefreshTokenModel.create({
     userId: user._id,
     tokenHash: refreshTokenHash,
     family,
+    rememberMe: false,
     expiresAt: rtExpiresAt,
   });
 
   const accessToken = signAccessToken(sessionPayload);
-  const rtMaxAge = 7 * 24 * 60 * 60;
 
-  response.cookie(getSessionCookieName(), refreshToken, getSessionCookieOptions(rtMaxAge));
-  response.cookie("bornoland.session.legacy", signSessionToken(sessionPayload, "7d"), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: rtMaxAge * 1000,
+  writeSessionCookies(response, {
+    refreshToken,
+    sessionToken: signSessionToken(sessionPayload, "7d"),
+    sessionMaxAge: rtMaxAge,
   });
 
   let callbackUrl = "/dashboard";

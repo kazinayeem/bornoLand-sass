@@ -6,6 +6,7 @@ import { TenantModel } from "../../models/tenant.model.js";
 import { TeamMemberModel } from "../../models/team-member.model.js";
 import { PageModel } from "../../models/page.model.js";
 import { ensureDefaultStoreSettings } from "./store-settings.service.js";
+import { ensureDefaultStoreContact } from "./store-contact.service.js";
 import { HomepageSliderModel } from "../../models/homepage-slider.model.js";
 import { createStoreSchema, updateStoreSchema, updateStoreBrandingSchema, type CreateStoreInput, type UpdateStoreInput, type UpdateStoreBrandingInput } from "./store.validator.js";
 import { ProductModel } from "../../models/product.model.js";
@@ -270,6 +271,7 @@ export async function createStore(userId: string, payload: unknown) {
     }
 
     await ensureDefaultStoreSettings(store._id.toString(), session);
+    await ensureDefaultStoreContact(store._id.toString());
     await HomepageSliderModel.deleteMany({ storeId: store._id }).session(session);
     await HomepageSliderModel.create([{
       storeId: store._id,

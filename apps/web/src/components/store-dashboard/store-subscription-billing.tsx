@@ -150,8 +150,8 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
                 key={plan._id}
                 type="button"
                 onClick={() => setSelectedPlanId(plan._id)}
-                className={`rounded-2xl border-2 p-4 text-left transition-all ${
-                  selectedPlanId === plan._id ? "border-zinc-900 bg-apple-canvas-parchment" : "border-zinc-200 hover:border-zinc-300"
+                className={`rounded-apple-lg border-2 p-4 text-left transition-all ${
+                  selectedPlanId === plan._id ? "border-zinc-900 bg-apple-canvas-parchment" : "border-apple-hairline hover:border-zinc-300"
                 }`}
               >
                 <p className="font-semibold text-apple-ink">{plan.name}</p>
@@ -172,7 +172,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
                     type="button"
                     onClick={() => setDuration(d)}
                     className={`rounded-lg border px-3 py-2 text-sm ${
-                      duration === d ? "border-zinc-900 bg-apple-canvas-parchment font-medium" : "border-zinc-200"
+                      duration === d ? "border-zinc-900 bg-apple-canvas-parchment font-medium" : "border-apple-hairline"
                     }`}
                   >
                     {DURATION_LABELS[d]}
@@ -194,7 +194,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
                 type="button"
                 onClick={() => setPaymentMethod(method.type)}
                 className={`rounded-xl border px-4 py-3 text-left text-sm ${
-                  paymentMethod === method.type ? "border-zinc-900 bg-apple-canvas-parchment" : "border-zinc-200"
+                  paymentMethod === method.type ? "border-zinc-900 bg-apple-canvas-parchment" : "border-apple-hairline"
                 }`}
               >
                 {method.label}
@@ -203,7 +203,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
           </div>
 
           {selectedMethod && (
-            <div className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment p-4 text-sm">
+            <div className="rounded-apple-lg border border-apple-hairline bg-apple-canvas-parchment p-4 text-sm">
               <p className="font-medium text-apple-ink">Send payment to</p>
               <p className="mt-1 text-lg font-bold tracking-wide text-apple-ink">{selectedMethod.accountNumber}</p>
               {selectedMethod.merchantNumber && (
@@ -232,7 +232,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
               <input
                 value={senderNumber}
                 onChange={(e) => setSenderNumber(e.target.value)}
-                className="h-10 w-full rounded-xl border border-zinc-200 px-3 text-sm"
+                className="h-10 w-full rounded-xl border border-apple-hairline px-3 text-sm"
               />
             </div>
             <div>
@@ -240,7 +240,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
               <input
                 value={transactionId}
                 onChange={(e) => setTransactionId(e.target.value)}
-                className="h-10 w-full rounded-xl border border-zinc-200 px-3 text-sm"
+                className="h-10 w-full rounded-xl border border-apple-hairline px-3 text-sm"
               />
             </div>
           </div>
@@ -251,7 +251,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-apple-hairline px-3 py-2 text-sm"
             />
           </div>
 
@@ -259,7 +259,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
             type="button"
             onClick={handleSubmit}
             disabled={submitting || !senderNumber || !transactionId || !selectedPlan || (paymentAmount <= 0 && !selectedPlan.isCustomPrice)}
-            className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             Submit Payment
@@ -283,7 +283,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
               {payments.map((payment) => (
                 <div
                   key={payment._id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-100 px-4 py-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-apple-divider-soft px-4 py-3"
                 >
                   <div>
                     <p className="text-sm font-medium text-apple-ink">

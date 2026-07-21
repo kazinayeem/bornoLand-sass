@@ -73,7 +73,7 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
           const Icon = kpi.icon;
           return (
             <motion.div key={kpi.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-              className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+              className="rounded-apple-lg border border-apple-hairline bg-white p-4 ">
               <div className="flex items-center justify-between mb-3">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${kpi.bg}`}>
                   <Icon className={`h-4 w-4 ${kpi.color}`} />
@@ -89,7 +89,7 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Payment Analytics */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <h3 className="text-base font-semibold text-apple-ink mb-4 flex items-center gap-2">
             <CreditCard className="h-4 w-4 text-apple-ink-muted-48" /> Payment Analytics
           </h3>
@@ -104,7 +104,7 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
                   <span className="text-apple-ink-muted-80">{item.label}</span>
                   <span className="font-semibold text-apple-ink">{item.value}</span>
                 </div>
-                <div className="h-2 rounded-full bg-zinc-100 overflow-hidden">
+                <div className="h-2 rounded-full bg-apple-canvas-parchment overflow-hidden">
                   <div className={`h-full rounded-full ${item.color} transition-all`}
                     style={{ width: `${item.total > 0 ? (item.value / item.total) * 100 : 0}%` }} />
                 </div>
@@ -115,7 +115,7 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
 
         {/* Top Products */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-          className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <h3 className="text-base font-semibold text-apple-ink mb-4 flex items-center gap-2">
             <Package className="h-4 w-4 text-apple-ink-muted-48" /> Top Products
           </h3>
@@ -126,7 +126,7 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
               {stats.topProducts.map(([name, data], i) => (
                 <div key={name} className="flex items-center justify-between">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <span className="text-xs font-bold text-zinc-300 w-5">{i + 1}</span>
+                    <span className="text-xs font-bold text-apple-ink-muted-48 w-5">{i + 1}</span>
                     <span className="text-sm text-apple-ink-muted-80 truncate">{name}</span>
                   </div>
                   <div className="flex items-center gap-4 text-xs">
@@ -142,7 +142,7 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
 
       {/* Recent Orders Timeline */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-        className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
         <h3 className="text-base font-semibold text-apple-ink mb-4 flex items-center gap-2">
           <Activity className="h-4 w-4 text-apple-ink-muted-48" /> Recent Orders
         </h3>

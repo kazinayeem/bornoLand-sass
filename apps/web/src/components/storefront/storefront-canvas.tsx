@@ -7,6 +7,8 @@ import type { StorefrontSectionLike } from "./storefront-types";
 import { Copy, EyeOff, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import { getSectionDef } from "@/lib/section-registry";
 import { cn } from "@/lib/utils";
+import { sectionsEqualForRender } from "@/lib/section-style";
+import type { BuilderSection } from "@/redux/slices/builder-slice";
 
 type StorefrontCanvasProps = {
   sections: StorefrontSectionLike[];
@@ -37,7 +39,7 @@ function toSectionData(s: StorefrontSectionLike): SectionData {
 // this comparator cuts full-canvas rendering work on single-section edits.
 const CanvasSectionRenderer = memo(function CanvasSectionRenderer({ section }: { section: StorefrontSectionLike }) {
   return <SectionRenderer section={toSectionData(section)} />;
-}, (previous, next) => previous.section === next.section);
+}, (previous, next) => sectionsEqualForRender(previous.section as BuilderSection, next.section as BuilderSection));
 
 type HoverCard = { sectionId: string; label: string; rect: DOMRect };
 
@@ -111,7 +113,7 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
           {/* Left line */}
           <div className={cn(
             "flex-1 h-px transition-all duration-200",
-            isHovered || isClicked ? "bg-gradient-to-r from-transparent via-blue-400 to-blue-400" : "bg-transparent"
+            isHovered || isClicked ? "bg-gradient-to-r from-transparent via-apple-primary/60 to-apple-primary/60" : "bg-transparent"
           )} />
           
           {/* Button */}
@@ -120,8 +122,8 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
             className={cn(
               "mx-3 flex items-center gap-2 rounded-full border shadow-lg transition-all duration-200 whitespace-nowrap",
               isHovered || isClicked
-                ? "bg-blue-500 border-blue-600 text-white px-4 py-2 hover:bg-blue-600 hover:shadow-xl scale-100"
-                : "bg-white border-zinc-300 text-apple-ink-muted-80 px-3 py-1.5 scale-95"
+                ? "scale-100 border-apple-primary bg-apple-primary px-4 py-2 text-apple-on-primary shadow-lg hover:opacity-90"
+                : "scale-95 border-apple-hairline bg-apple-canvas px-3 py-1.5 text-apple-ink-muted-80"
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -137,14 +139,14 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
               "font-medium text-sm transition-all duration-200",
               isHovered || isClicked ? "opacity-100 max-w-[200px]" : "opacity-0 max-w-0 overflow-hidden"
             )}>
-              Add Section
+              Add block
             </span>
           </button>
           
           {/* Right line */}
           <div className={cn(
             "flex-1 h-px transition-all duration-200",
-            isHovered || isClicked ? "bg-gradient-to-l from-transparent via-blue-400 to-blue-400" : "bg-transparent"
+            isHovered || isClicked ? "bg-gradient-to-l from-transparent via-apple-primary/60 to-apple-primary/60" : "bg-transparent"
           )} />
         </div>
       </div>
@@ -223,15 +225,15 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
               setHoverCard({ sectionId: section.id, label: getSectionDef(section.type)?.label ?? section.type, rect: event.currentTarget.getBoundingClientRect() });
             }}
             onMouseLeave={() => { onHoverSection?.(null); setHoverCard(null); }}
-            className={`relative transition-all ${
-              onSelectSection ? "cursor-pointer" : ""
-            } ${
+            className={cn(
+              "relative transition-all duration-200 ease-apple",
+              onSelectSection ? "cursor-pointer" : "",
               selectedSectionId === section.id
-                ? "ring-1 ring-blue-500 ring-offset-1 ring-offset-zinc-100"
+                ? "ring-2 ring-apple-primary ring-offset-2 ring-offset-apple-canvas-parchment shadow-[0_0_0_1px_rgba(0,0,0,0.04)]"
                 : hoveredSectionId === section.id
-                  ? "ring-1 ring-blue-300/80 ring-offset-1 ring-offset-zinc-100"
+                  ? "ring-2 ring-apple-primary/35 ring-offset-2 ring-offset-apple-canvas-parchment"
                   : ""
-            }`}
+            )}
           >
             <CanvasSectionRenderer section={section} />
           </div>
@@ -245,13 +247,13 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
     return <BuilderProvider>
       {canvasContent}
       {hoverCard && hoverCard.sectionId !== selectedSectionId && (
-        <div className="pointer-events-none fixed z-[70] rounded-lg bg-blue-600 px-2 py-1 text-[10px] font-semibold text-white shadow-lg" style={{ top: Math.max(6, hoverCard.rect.top + 6), left: Math.max(6, hoverCard.rect.left + 6) }}>
+        <div className="pointer-events-none fixed z-[70] rounded-apple-md bg-apple-ink/90 px-2.5 py-1 text-fine-print font-medium text-white shadow-lg backdrop-blur-sm" style={{ top: Math.max(6, hoverCard.rect.top + 6), left: Math.max(6, hoverCard.rect.left + 6) }}>
           {hoverCard.label} · {Math.round(hoverCard.rect.width)} × {Math.round(hoverCard.rect.height)}
         </div>
       )}
       {contextMenu && (
-        <div className="fixed z-[80] w-44 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-2xl" style={{ top: contextMenu.y, left: contextMenu.x }} onClick={(event) => event.stopPropagation()}>
-          <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">{selectedLabel ?? "Section"}</p>
+        <div className="fixed z-[80] w-44 rounded-apple-lg border border-apple-hairline bg-apple-canvas p-1.5 shadow-2xl" style={{ top: contextMenu.y, left: contextMenu.x }} onClick={(event) => event.stopPropagation()}>
+          <p className="px-2 py-1 text-fine-print font-medium text-apple-ink-muted-48">{selectedLabel ?? "Block"}</p>
           <CanvasMenuItem icon={<Pencil />} label="Edit" onClick={() => { onQuickEditRequest?.({ sectionId: contextMenu.sectionId, mode: "text" }); setContextMenu(null); }} />
           <CanvasMenuItem icon={<Copy />} label="Duplicate" onClick={() => { onSectionAction?.({ sectionId: contextMenu.sectionId, action: "duplicate" }); setContextMenu(null); }} />
           <CanvasMenuItem icon={<Copy />} label="Copy" onClick={() => { onSectionAction?.({ sectionId: contextMenu.sectionId, action: "copy" }); setContextMenu(null); }} />

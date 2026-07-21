@@ -4,6 +4,13 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ── Apple Design System Tokens (DESIGN.md) ───────────────────── */
+/*
+ * IMPORTANT — Tailwind v4 token naming:
+ * Do NOT define --spacing-sm/md/lg/xl or --radius-sm/md/lg in @theme.
+ * In v4, max-w-lg maps to --spacing-lg (not a separate max-width scale).
+ * Overriding those keys collapsed max-w-* to 12–32px and broke every layout.
+ * Use --spacing-apple-* / --radius-apple-* for design-system-specific values.
+ */
 
 @theme {
   /* Colors */
@@ -44,24 +51,26 @@
   --color-destructive: #dc2626;
   --color-destructive-foreground: #ffffff;
 
-  /* Border radius */
-  --radius-none: 0px;
-  --radius-xs: 5px;
-  --radius-sm: 8px;
-  --radius-md: 11px;
-  --radius-lg: 18px;
+  /* Border radius — Apple tokens use apple- prefix to avoid overriding Tailwind defaults */
+  --radius-apple-none: 0px;
+  --radius-apple-xs: 5px;
+  --radius-apple-sm: 8px;
+  --radius-apple-md: 11px;
+  --radius-apple-lg: 18px;
+  --radius-apple-pill: 9999px;
+  --radius-apple-full: 9999px;
+  /* Safe custom token — does not collide with Tailwind defaults */
   --radius-pill: 9999px;
-  --radius-full: 9999px;
 
-  /* Spacing */
-  --spacing-xxs: 4px;
-  --spacing-xs: 8px;
-  --spacing-sm: 12px;
-  --spacing-md: 17px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-xxl: 48px;
-  --spacing-section: 80px;
+  /* Apple spacing — prefixed to avoid breaking max-w-*, w-*, gap-*, p-* defaults */
+  --spacing-apple-xxs: 4px;
+  --spacing-apple-xs: 8px;
+  --spacing-apple-sm: 12px;
+  --spacing-apple-md: 17px;
+  --spacing-apple-lg: 24px;
+  --spacing-apple-xl: 32px;
+  --spacing-apple-xxl: 48px;
+  --spacing-apple-section: 80px;
 
   /* Typography families */
   --font-display: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -100,6 +109,8 @@ body {
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -121,6 +132,23 @@ body {
 
 * {
   border-color: var(--color-apple-hairline);
+}
+
+/* ── Layout stability ───────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
 }
 
 /* ── Typography utilities ─────────────────────────────────────── */
@@ -318,7 +346,7 @@ body {
   margin: 1.5rem 0;
   font-size: 14px;
   overflow: hidden;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-apple-lg);
   border: 1px solid var(--color-apple-hairline);
 }
 
@@ -470,4 +498,80 @@ body {
 [data-sonner-toaster] [data-sonner-toast][data-type="error"] {
   background: var(--color-apple-canvas) !important;
   color: #dc2626 !important;
+}
+
+/* ── Storefront (customer-facing subdomain sites) ─────────────── */
+
+[data-surface="storefront"] {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+[data-surface="storefront"] .storefront-prose {
+  color: var(--color-apple-ink-muted-80);
+}
+
+[data-surface="storefront"].dark .storefront-prose,
+.dark [data-surface="storefront"] .storefront-prose {
+  color: var(--color-apple-body-muted);
+}
+
+[data-surface="storefront"] .storefront-prose h1,
+[data-surface="storefront"] .storefront-prose h2,
+[data-surface="storefront"] .storefront-prose h3 {
+  font-family: var(--font-display);
+  color: var(--color-apple-ink);
+  letter-spacing: -0.28px;
+}
+
+.dark [data-surface="storefront"] .storefront-prose h1,
+.dark [data-surface="storefront"] .storefront-prose h2,
+.dark [data-surface="storefront"] .storefront-prose h3 {
+  color: var(--color-apple-body-on-dark);
+}
+
+[data-surface="storefront"] .storefront-prose a {
+  color: var(--color-apple-primary);
+  text-decoration: none;
+}
+
+.dark [data-surface="storefront"] .storefront-prose a {
+  color: var(--color-apple-primary-on-dark);
+}
+
+[data-surface="storefront"] .storefront-utility-card {
+  border-radius: var(--radius-apple-lg);
+  border: 1px solid var(--color-apple-hairline);
+  background: var(--color-apple-canvas);
+  padding: var(--spacing-apple-lg);
+}
+
+.dark [data-surface="storefront"] .storefront-utility-card {
+  border-color: var(--color-apple-surface-tile-3);
+  background: var(--color-apple-surface-tile-2);
+}
+
+[data-surface="storefront"] .storefront-product-image {
+  box-shadow: var(--shadow-product);
+}
+
+/* ── Store dashboard (CMS / merchant) ───────────────────────────── */
+
+[data-surface="dashboard"] {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+[data-surface="dashboard"] .dashboard-kpi-card {
+  border-radius: var(--radius-apple-lg);
+  border: 1px solid var(--color-apple-hairline);
+  background: var(--color-apple-canvas);
+  padding: var(--spacing-apple-lg);
+  transition: border-color 200ms var(--ease-apple);
+}
+
+[data-surface="dashboard"] .dashboard-kpi-card:hover {
+  border-color: color-mix(in srgb, var(--color-apple-primary) 20%, var(--color-apple-hairline));
 }

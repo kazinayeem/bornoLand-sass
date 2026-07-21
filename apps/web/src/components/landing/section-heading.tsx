@@ -8,21 +8,23 @@ type Props = {
   className?: string;
 };
 
-export function SectionHeading({ eyebrow, title, description, align = "center", className = "" }: Props) {
+export function SectionHeading({
+  eyebrow,
+  title,
+  description,
+  align = "center",
+  className = "",
+}: Props) {
   return (
     <div className={`max-w-3xl ${align === "center" ? "mx-auto text-center" : ""} ${className}`}>
       {eyebrow && (
-        <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-700">
+        <span className="mb-4 inline-flex items-center gap-1.5 rounded-pill border border-apple-hairline bg-apple-canvas px-3.5 py-1.5 text-fine-print font-semibold uppercase tracking-[0.2em] text-apple-primary">
           {eyebrow}
         </span>
       )}
-      <h2 className="font-[family-name:var(--font-space-grotesk)] text-3xl font-bold tracking-tight text-apple-ink sm:text-4xl lg:text-5xl">
-        {title}
-      </h2>
+      <h2 className="text-display-lg text-apple-ink">{title}</h2>
       {description && (
-        <p className="mt-4 text-base leading-relaxed text-apple-ink-muted-48 sm:text-lg max-w-2xl mx-auto">
-          {description}
-        </p>
+        <p className="mx-auto mt-4 max-w-2xl text-lead text-apple-ink-muted-80">{description}</p>
       )}
     </div>
   );

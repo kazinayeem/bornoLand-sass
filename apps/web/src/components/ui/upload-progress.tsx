@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, X, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, X, CheckCircle2, AlertCircle, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LoadingSpinner } from "@/components/loading/loading-spinner";
 
 export type UploadFileItem = {
   id: string;
@@ -14,6 +15,7 @@ export type UploadFileItem = {
   error?: string;
   speed?: number;
   remaining?: number;
+  onRetry?: () => void;
 };
 
 type UploadProgressProps = {
@@ -55,17 +57,29 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
 
   if (minimal) {
     return (
-      <div className={cn(
-        "rounded-xl border px-3 py-2 text-sm",
-        isComplete && !hasError ? "border-emerald-200 bg-emerald-50" :
-        hasError ? "border-red-200 bg-red-50" : "border-blue-200 bg-blue-50"
-      )}>
+      <div
+        className={cn(
+          "rounded-lg border px-3 py-2 text-sm",
+          isComplete && !hasError
+            ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/30"
+            : hasError
+              ? "border-red-200 bg-red-50 dark:border-red-900/40 dark:bg-red-950/30"
+              : "border-apple-hairline bg-apple-canvas-parchment"
+        )}
+        role="status"
+        aria-live="polite"
+        aria-busy={!isComplete || undefined}
+      >
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
             {isComplete ? (
-              hasError ? <AlertCircle className="h-4 w-4 shrink-0 text-red-500" /> : <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+              hasError ? (
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+              )
             ) : (
-              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-blue-500" />
+              <LoadingSpinner size="sm" label="Uploading" />
             )}
             <span className="truncate text-xs font-medium">
               {activeCount > 0
@@ -76,8 +90,11 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
           {!isComplete && <span className="shrink-0 text-xs text-apple-ink-muted-48">{overallProgress}%</span>}
         </div>
         {!isComplete && (
-          <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/60">
-            <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${overallProgress}%` }} />
+          <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-apple-canvas">
+            <div
+              className="h-full rounded-full bg-apple-primary transition-[width] duration-300 motion-reduce:transition-none"
+              style={{ width: `${overallProgress}%` }}
+            />
           </div>
         )}
       </div>
@@ -85,7 +102,12 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
   }
 
   return (
-    <div className="rounded-lg border border-apple-hairline bg-apple-canvas">
+    <div
+      className="rounded-lg border border-apple-hairline bg-apple-canvas"
+      role="status"
+      aria-live="polite"
+      aria-busy={!isComplete || undefined}
+    >
       <div className="flex items-center justify-between border-b border-apple-divider-soft px-4 py-3">
         <div className="flex items-center gap-2">
           <Upload className="h-4 w-4 text-apple-ink-muted-48" />
@@ -113,7 +135,7 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
                 ) : file.status === "error" ? (
                   <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
                 ) : (
-                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-blue-500" />
+                  <LoadingSpinner size="sm" label={`Uploading ${file.name}`} />
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-apple-ink-muted-80">{file.name}</p>
@@ -128,12 +150,22 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex shrink-0 items-center gap-3">
                 {file.status === "uploading" && (
-                  <span className="text-xs font-medium text-blue-600">{file.progress}%</span>
+                  <span className="text-xs font-medium text-apple-primary">{file.progress}%</span>
                 )}
                 {file.status === "error" && file.error && (
                   <span className="text-xs text-red-500">{file.error}</span>
+                )}
+                {file.status === "error" && file.onRetry && (
+                  <button
+                    type="button"
+                    onClick={file.onRetry}
+                    className="btn-press rounded-full p-1 text-red-600 hover:bg-red-50"
+                    aria-label={`Retry upload for ${file.name}`}
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </button>
                 )}
                 {file.status !== "uploading" && file.status !== "pending" && (
                   <button onClick={() => onRemove(file.id)} className="rounded-sm p-1 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
@@ -146,7 +178,7 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
             {(file.status === "pending" || file.status === "uploading") && (
               <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-apple-canvas-parchment">
                 <motion.div
-                  className="h-full rounded-full bg-blue-500"
+                  className="h-full rounded-full bg-apple-primary"
                   initial={{ width: 0 }}
                   animate={{ width: `${file.progress}%` }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
@@ -154,11 +186,10 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
               </div>
             )}
 
-            {/* Indeterminate progress when pending */}
             {file.status === "pending" && file.progress === 0 && (
               <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-apple-canvas-parchment">
                 <motion.div
-                  className="h-full rounded-full bg-blue-400"
+                  className="h-full rounded-full bg-apple-primary/60 motion-reduce:animate-none"
                   animate={{ x: ["-100%", "200%"] }}
                   transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
                   style={{ width: "40%" }}

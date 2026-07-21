@@ -106,7 +106,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
           value={order.status}
           onChange={(e) => handleStatusChange(order._id, e.target.value)}
           onClick={(e) => e.stopPropagation()}
-          className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-medium outline-none"
+          className="rounded-lg border border-apple-hairline bg-white px-2 py-1 text-xs font-medium outline-none"
         >
           {statusOptions.map((s) => (
             <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -121,7 +121,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
           value={order.paymentStatus}
           onChange={(e) => handlePaymentChange(order._id, e.target.value)}
           onClick={(e) => e.stopPropagation()}
-          className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-medium outline-none"
+          className="rounded-lg border border-apple-hairline bg-white px-2 py-1 text-xs font-medium outline-none"
         >
           {paymentOptions.map((s) => (
             <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -143,7 +143,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
             { label: "Processing", value: String(analytics.processingOrders), color: "text-blue-600" },
             { label: "Delivered", value: String(analytics.deliveredOrders), color: "text-emerald-600" },
           ].map((s) => (
-            <div key={s.label} className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
+            <div key={s.label} className="rounded-xl border border-apple-hairline bg-white p-3 ">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">{s.label}</p>
               <p className={`mt-1 text-lg font-bold ${s.color}`}>{s.value}</p>
             </div>
@@ -157,10 +157,10 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
           <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search orders..."
-            className="h-9 w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
+            className="h-9 w-full rounded-xl border border-apple-hairline bg-white pl-9 pr-4 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
         </div>
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-blue-400">
+          className="h-9 rounded-xl border border-apple-hairline bg-white px-3 text-sm outline-none focus:border-blue-400">
           <option value="">All statuses</option>
           {statusOptions.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
         </select>
@@ -217,7 +217,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
               <h4 className="text-sm font-semibold text-apple-ink mb-2">Items</h4>
               <div className="space-y-2">
                 {selectedOrder.items?.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between rounded-xl border border-zinc-100 p-3">
+                  <div key={i} className="flex items-center justify-between rounded-xl border border-apple-divider-soft p-3">
                     <div>
                       <p className="text-sm font-medium text-apple-ink">{item.name}</p>
                       {item.variantTitle && <p className="text-xs text-apple-ink-muted-48">{item.variantTitle}</p>}
@@ -232,7 +232,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
             {selectedOrder.shippingAddress && (
               <div>
                 <h4 className="text-sm font-semibold text-apple-ink mb-2">Shipping</h4>
-                <div className="rounded-xl border border-zinc-100 p-3 text-sm text-apple-ink-muted-80">
+                <div className="rounded-xl border border-apple-divider-soft p-3 text-sm text-apple-ink-muted-80">
                   <p>{selectedOrder.shippingAddress.fullName}</p>
                   <p>{selectedOrder.shippingAddress.street}</p>
                   <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.zip}</p>
@@ -242,11 +242,11 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
 
             <div className="flex gap-2 pt-2">
               <select value={selectedOrder.status} onChange={(e) => handleStatusChange(selectedOrder._id, e.target.value)}
-                className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none">
+                className="h-9 rounded-xl border border-apple-hairline bg-white px-3 text-sm outline-none">
                 {statusOptions.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
               </select>
               <select value={selectedOrder.paymentStatus} onChange={(e) => handlePaymentChange(selectedOrder._id, e.target.value)}
-                className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none">
+                className="h-9 rounded-xl border border-apple-hairline bg-white px-3 text-sm outline-none">
                 {paymentOptions.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
               </select>
             </div>

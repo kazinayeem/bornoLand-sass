@@ -10,9 +10,7 @@ import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
 import { setTheme } from "@/redux/slices/theme-slice";
 import { setStoreSettings } from "@/redux/slices/store-settings-slice";
 import {
-  loadSections,
   loadPage,
-  setPageMetadata,
   markSaved,
   setSaveError,
   setSaving,
@@ -21,7 +19,6 @@ import {
   setLeftPanelWidth,
   setRightPanelWidth,
   setFullscreen,
-  setPresentationMode,
   copySection,
   duplicateSection,
   pasteSection,
@@ -36,11 +33,10 @@ import { BuilderSidebar } from "@/components/builder/builder-sidebar";
 import { StorePreview } from "@/components/builder/store-preview";
 import { PropertiesPanel } from "@/components/builder/properties-panel";
 import { SectionLibraryModal } from "@/components/builder/section-library-modal";
-import { FloatingSectionToolbar } from "@/components/builder/floating-section-toolbar";
-import { ClearPageDialog } from "@/components/builder/clear-page-dialog";
+import { BuilderFloatingToolbar } from "@/components/builder/builder-floating-toolbar";
 import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
-import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Maximize, Minimize, GripVertical } from "lucide-react";
+import { PanelLeftOpen, PanelRightOpen, GripVertical } from "lucide-react";
 
 function getDefaultSectionsForPageType(pageType: string): BuilderSection[] {
   const id = (type: string) => `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
@@ -191,9 +187,7 @@ export function BuilderEditor() {
   const leftPanelWidth = useSelector((s: RootState) => s.builder.leftPanelWidth);
   const rightPanelWidth = useSelector((s: RootState) => s.builder.rightPanelWidth);
   const fullscreen = useSelector((s: RootState) => s.builder.fullscreen);
-  const presentationMode = useSelector((s: RootState) => s.builder.presentationMode);
   const [resizing, setResizing] = useState<"left" | "right" | null>(null);
-  const [clearPageOpen, setClearPageOpen] = useState(false);
 
   const handleQuickInsert = useCallback((index: number, event: ReactMouseEvent) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -269,21 +263,6 @@ export function BuilderEditor() {
     }));
   }, [store.theme, dispatch]);
 
-  // ─── Derive pageType from slug when backend doesn't provide it ────────────
-  const derivePageType = useCallback((page: { slug: string; pageType?: string }): string => {
-    if (page.pageType) return page.pageType;
-    const slugToType: Record<string, string> = {
-      home: "home", shop: "shop", cart: "cart", checkout: "checkout",
-      about: "about", contact: "contact", faq: "faq", blog: "blog",
-      login: "login", register: "register", account: "account",
-      wishlist: "wishlist", search: "search", "privacy-policy": "privacy_policy",
-      "terms-conditions": "terms_conditions", "shipping-policy": "shipping_policy",
-      "returns-policy": "returns_policy", product: "product", category: "category",
-      collection: "collection",
-    };
-    return slugToType[page.slug.replace(/^\/+/, "")] || "custom";
-  }, []);
-
   // ─── Dispatch settings (once per actual settings identity) ──────────────────
   const settingsRef = useRef<string>("");
   useEffect(() => {
@@ -299,30 +278,23 @@ export function BuilderEditor() {
     }));
   }, [settings, dispatch]);
 
-  // ─── Load / redirect to page ────────────────────────────────────────────────
-  // Maps a stored page slug ("/" or "home") to the route segment the builder uses.
-  // The home page is stored with slug "/" but is served at route "/builder/home".
-  const toRouteSlug = useCallback((slug: string): string => {
-    const trimmed = slug.replace(/^\/+/, "");
-    return trimmed === "" || trimmed === "home" ? "home" : trimmed;
-  }, []);
+  // ─── Home-only builder routing ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!routePageSlug || routePageSlug === "home") return;
+    router.replace(`/store/${storeSlug}/builder/home`);
+  }, [routePageSlug, router, storeSlug]);
 
+  // ─── Load home page only ───────────────────────────────────────────────────
   useEffect(() => {
     const pages = pagesData?.data?.pages;
     if (!pages) return;
+    if (routePageSlug && routePageSlug !== "home") return;
 
-    const isMongoId = (value: string) => /^[a-f\d]{24}$/i.test(value);
-
-    // Resolve the page the current route is addressing.
-    const normalizedRouteSlug = routePageSlug.startsWith("/") ? routePageSlug : `/${routePageSlug}`;
-    const matchedPage =
-      pages.find((page) => page.slug === normalizedRouteSlug || page.slug === routePageSlug) ??
-      (routePageSlug && isMongoId(routePageSlug) ? pages.find((page) => page._id === routePageSlug) : undefined) ??
-      pages.find((page) => page.slug === "/" || page.slug === "home") ??
+    const homePage =
+      pages.find((page) => page.slug === "/" || page.slug === "home" || page.isHomePage) ??
       pages[0];
 
-    if (!matchedPage) {
-      // No pages yet — create the home page exactly once.
+    if (!homePage) {
       if (loadedRef.current === `create:${storeId}`) return;
       loadedRef.current = `create:${storeId}`;
       createPage({ storeId, title: "Home", slug: "/" })
@@ -330,18 +302,13 @@ export function BuilderEditor() {
         .then((res) => {
           const createdPage = res.data?.page;
           if (!createdPage?._id) return;
-          const bodySections = getDefaultSectionsForPageType("home");
-          const headerSections = getDefaultHeaderSections();
-          const footerSections = getDefaultFooterSections();
           dispatch(loadPage({
             page: { id: createdPage._id, title: createdPage.title, slug: createdPage.slug, pageType: "home" as any, isSystem: false, description: "", status: "draft" as any },
-            sections: bodySections,
-            headerSections,
-            footerSections,
+            sections: getDefaultSectionsForPageType("home"),
+            headerSections: getDefaultHeaderSections(),
+            footerSections: getDefaultFooterSections(),
           }));
-          if (toRouteSlug(createdPage.slug) !== routePageSlug) {
-            router.replace(`/store/${storeSlug}/builder/home`);
-          }
+          router.replace(`/store/${storeSlug}/builder/home`);
         })
         .catch(() => {
           loadedRef.current = "";
@@ -349,32 +316,27 @@ export function BuilderEditor() {
       return;
     }
 
-    // Guard: load a given page exactly once. Keyed by store + page id so the
-    // home-page route alternation ("/" <-> "home") never re-triggers a load.
-    const loadKey = `${storeId}:${matchedPage._id}`;
+    const loadKey = `${storeId}:${homePage._id}`;
     if (loadedRef.current === loadKey) return;
     loadedRef.current = loadKey;
 
-    const resolvedPageType = derivePageType(matchedPage);
-    const pageDefaults = getDefaultSectionsForPageType(resolvedPageType);
-    const bodySections = (matchedPage.sections?.length ? matchedPage.sections : pageDefaults) as BuilderSection[];
-    const headerSecs = (matchedPage.headerSections?.length ? matchedPage.headerSections : getDefaultHeaderSections()) as BuilderSection[];
-    const footerSecs = (matchedPage.footerSections?.length ? matchedPage.footerSections : getDefaultFooterSections()) as BuilderSection[];
     dispatch(loadPage({
-      page: { id: matchedPage._id, title: matchedPage.title, slug: matchedPage.slug, pageType: resolvedPageType as any, isSystem: matchedPage.isSystem ?? false, description: matchedPage.description ?? "", status: (matchedPage.status || "draft") as any },
-      sections: bodySections,
-      headerSections: headerSecs,
-      footerSections: footerSecs,
-      headerSettings: (matchedPage.headerSettings as any) ?? {},
-      footerSettings: (matchedPage.footerSettings as any) ?? {},
+      page: {
+        id: homePage._id,
+        title: homePage.title,
+        slug: homePage.slug,
+        pageType: "home" as any,
+        isSystem: homePage.isSystem ?? false,
+        description: homePage.description ?? "",
+        status: (homePage.status || "draft") as any,
+      },
+      sections: (homePage.sections?.length ? homePage.sections : getDefaultSectionsForPageType("home")) as BuilderSection[],
+      headerSections: (homePage.headerSections?.length ? homePage.headerSections : getDefaultHeaderSections()) as BuilderSection[],
+      footerSections: (homePage.footerSections?.length ? homePage.footerSections : getDefaultFooterSections()) as BuilderSection[],
+      headerSettings: (homePage.headerSettings as any) ?? {},
+      footerSettings: (homePage.footerSettings as any) ?? {},
     }));
-
-    // Redirect only when the route segment genuinely does not match the page.
-    const canonicalRouteSlug = toRouteSlug(matchedPage.slug);
-    if (routePageSlug !== canonicalRouteSlug && !isMongoId(routePageSlug)) {
-      router.replace(`/store/${storeSlug}/builder/${canonicalRouteSlug}`);
-    }
-  }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug, derivePageType, toRouteSlug]);
+  }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug]);
 
   // ─── Autosave 3s after last change ────────────────────────────────────────
   useEffect(() => {
@@ -493,61 +455,72 @@ export function BuilderEditor() {
     <div
       ref={containerRef}
       className={cn(
-        "flex h-dvh min-h-0 flex-col overflow-hidden bg-apple-canvas-parchment transition-all duration-200",
-        fullscreen && "fixed inset-0 z-50",
-        presentationMode && "bg-black"
+        "flex h-dvh min-h-0 flex-col overflow-hidden bg-[#ececef] transition-all duration-200",
+        fullscreen && "fixed inset-0 z-50"
       )}
     >
-      {!presentationMode && (
+      {!fullscreen && (
         <BuilderToolbar
           onBack={() => router.push(`/store/${storeSlug}/dashboard`)}
           saving={saving}
           publishing={publishing}
           isDirty={isDirty}
-          onOpenSectionLibrary={() => {
-            dispatch(openSectionLibrary({ insertPosition: null }));
-          }}
-          onClearPage={() => setClearPageOpen(true)}
         />
       )}
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        {!presentationMode && leftPanelOpen && (
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        {leftPanelOpen && (
           <div
-            className="min-h-0 flex-shrink-0 overflow-hidden border-r border-apple-hairline/60 bg-apple-canvas/90 backdrop-blur-xl"
+            className="min-h-0 flex-shrink-0 overflow-hidden border-r border-apple-hairline/60 bg-apple-canvas/95 backdrop-blur-xl"
             style={{ width: leftPanelWidth }}
           >
             <BuilderSidebar />
           </div>
         )}
 
-        {!presentationMode && leftPanelOpen && (
-          <ResizeHandle side="left" onMouseDown={() => setResizing("left")} />
-        )}
+        {leftPanelOpen && <ResizeHandle side="left" onMouseDown={() => setResizing("left")} />}
 
-        <div className={cn(
-          "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain bg-transparent transition-all duration-200",
-          presentationMode && "bg-black"
-        )}>
-          <div className="mx-auto h-full max-w-[2200px] px-3 py-3 sm:px-4 sm:py-4">
-          <StorePreview
-            store={store}
-            theme={currentTheme}
-            sections={sections as never}
-            headerSections={headerSections as never}
-            footerSections={footerSections as never}
-            onQuickInsert={handleQuickInsert}
-          />
+        <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
+          <div className="absolute left-3 top-3 z-30 flex gap-1">
+            <button
+              type="button"
+              onClick={() => dispatch(toggleLeftPanel())}
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-apple-hairline/80 bg-apple-canvas/90 text-apple-ink-muted-48 shadow-sm backdrop-blur hover:text-apple-ink"
+              title={leftPanelOpen ? "Hide sidebar" : "Show sidebar"}
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => dispatch(toggleRightPanel())}
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-apple-hairline/80 bg-apple-canvas/90 text-apple-ink-muted-48 shadow-sm backdrop-blur hover:text-apple-ink"
+              title={rightPanelOpen ? "Hide inspector" : "Show inspector"}
+            >
+              <PanelRightOpen className="h-4 w-4" />
+            </button>
           </div>
+
+          <div className="h-full overflow-x-hidden overflow-y-auto overscroll-contain">
+            <StorePreview
+              store={store}
+              theme={currentTheme}
+              sections={sections as never}
+              headerSections={headerSections as never}
+              footerSections={footerSections as never}
+              onQuickInsert={handleQuickInsert}
+            />
+          </div>
+
+          <BuilderFloatingToolbar />
         </div>
 
-        {!presentationMode && rightPanelOpen && (selectedSectionId || editingZone !== "body") && (
+        {rightPanelOpen && (selectedSectionId || editingZone !== "body") && (
           <ResizeHandle side="right" onMouseDown={() => setResizing("right")} />
         )}
 
-        {!presentationMode && rightPanelOpen && (selectedSectionId || editingZone !== "body") && (
+        {rightPanelOpen && (selectedSectionId || editingZone !== "body") && (
           <div
-            className="min-h-0 flex-shrink-0 overflow-hidden border-l border-apple-hairline/60 bg-apple-canvas/90 backdrop-blur-xl"
+            className="min-h-0 flex-shrink-0 overflow-hidden border-l border-apple-hairline/60 bg-apple-canvas/95 backdrop-blur-xl"
             style={{ width: rightPanelWidth }}
           >
             <PropertiesPanel />
@@ -555,78 +528,7 @@ export function BuilderEditor() {
         )}
       </div>
 
-      {/* Canvas toggle buttons - floating */}
-      {!presentationMode && !fullscreen && (
-        <div className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 flex items-center gap-1.5 rounded-lg border border-apple-hairline bg-apple-canvas/90 px-2.5 py-1.5 backdrop-blur-md">
-          <button
-            onClick={() => dispatch(toggleLeftPanel())}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors"
-            title={leftPanelOpen ? "Hide sidebar" : "Show sidebar"}
-          >
-            {leftPanelOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
-            <span className="hidden sm:inline">{leftPanelOpen ? "Hide" : "Sidebar"}</span>
-          </button>
-          <div className="h-4 w-px bg-zinc-200" />
-          <button
-            onClick={() => dispatch(setFullscreen(true))}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors"
-            title="Fullscreen"
-          >
-            <Maximize className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Fullscreen</span>
-          </button>
-          <button
-            onClick={() => dispatch(setPresentationMode(true))}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors"
-            title="Presentation mode"
-          >
-            <Maximize className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Present</span>
-          </button>
-          <div className="h-4 w-px bg-zinc-200" />
-          <button
-            onClick={() => dispatch(toggleRightPanel())}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors"
-            title={rightPanelOpen ? "Hide inspector" : "Show inspector"}
-          >
-            {rightPanelOpen ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
-            <span className="hidden sm:inline">{rightPanelOpen ? "Hide" : "Inspector"}</span>
-          </button>
-        </div>
-      )}
-
-      {/* Fullscreen exit button */}
-      {fullscreen && (
-        <button
-          onClick={() => dispatch(setFullscreen(false))}
-          className="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-xl bg-zinc-900/80 px-3 py-2 text-xs font-medium text-white backdrop-blur-sm hover:bg-zinc-900 transition-colors"
-        >
-          <Minimize className="h-3.5 w-3.5" />
-          Exit fullscreen
-        </button>
-      )}
-
-      {/* Section Library Modal */}
       <SectionLibraryModal />
-
-      {/* Floating section toolbar — shown when a section is selected */}
-      {!presentationMode && <FloatingSectionToolbar />}
-
-      <ClearPageDialog
-        open={clearPageOpen}
-        onClose={() => setClearPageOpen(false)}
-      />
-
-      {/* Presentation mode exit */}
-      {presentationMode && (
-        <button
-          onClick={() => dispatch(setPresentationMode(false))}
-          className="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-xl bg-apple-canvas/90 px-3 py-2 text-xs font-medium text-apple-ink backdrop-blur-sm hover:bg-apple-canvas transition-colors"
-        >
-          <Minimize className="h-3.5 w-3.5" />
-          Exit presentation
-        </button>
-      )}
     </div>
   );
 }

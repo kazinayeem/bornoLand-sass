@@ -18,6 +18,7 @@ type ModalProps = {
   stickyHeader?: boolean;
   stickyFooter?: boolean;
   footer?: React.ReactNode;
+  loading?: boolean;
 };
 
 const sizeClasses = {
@@ -41,13 +42,14 @@ export function Modal({
   stickyHeader,
   stickyFooter,
   footer,
+  loading = false,
 }: ModalProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !loading) onClose();
     };
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -56,7 +58,7 @@ export function Modal({
       document.removeEventListener("keydown", handler);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, onClose]);
+  }, [open, onClose, loading]);
 
   const hasHeader = title || description;
 
@@ -71,7 +73,7 @@ export function Modal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 bg-apple-surface-black/60 backdrop-blur-sm"
-            onClick={onClose}
+            onClick={() => !loading && onClose()}
           />
           <motion.div
             ref={ref}
@@ -84,11 +86,14 @@ export function Modal({
               sizeClasses[size],
               className
             )}
+            role="dialog"
+            aria-modal="true"
+            aria-busy={loading || undefined}
           >
             {(hasHeader || showClose) && (
               <div
                 className={cn(
-                  "flex items-start justify-between gap-4 p-lg pb-4",
+                  "flex items-start justify-between gap-4 p-apple-lg pb-4",
                   stickyHeader &&
                     "sticky top-0 z-10 rounded-t-lg border-b border-apple-divider-soft bg-apple-canvas dark:bg-apple-surface-tile-2"
                 )}
@@ -108,7 +113,8 @@ export function Modal({
                 {showClose && (
                   <button
                     onClick={onClose}
-                    className="btn-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-apple-surface-chip/64 text-apple-ink transition-colors hover:bg-apple-surface-chip dark:text-apple-body-on-dark"
+                    disabled={loading}
+                    className="btn-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-apple-surface-chip/64 text-apple-ink transition-colors hover:bg-apple-surface-chip disabled:opacity-40 dark:text-apple-body-on-dark"
                     aria-label="Close modal"
                   >
                     <X className="h-4 w-4" />
@@ -117,12 +123,12 @@ export function Modal({
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto px-lg pb-lg">{children}</div>
+            <div className="flex-1 overflow-y-auto px-apple-lg pb-apple-lg">{children}</div>
 
             {footer && (
               <div
                 className={cn(
-                  "px-lg py-4",
+                  "px-apple-lg py-4",
                   stickyFooter &&
                     "sticky bottom-0 rounded-b-lg border-t border-apple-divider-soft bg-apple-canvas dark:bg-apple-surface-tile-2"
                 )}

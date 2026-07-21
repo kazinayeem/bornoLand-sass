@@ -273,7 +273,7 @@ export function MediaPicker({
             />
           </div>
         ) : (
-          <div className={cn("flex shrink-0 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-apple-canvas-parchment text-apple-ink-muted-48", wrapperPreviewSize)}>
+          <div className={cn("flex shrink-0 items-center justify-center rounded-xl border border-dashed border-apple-hairline bg-apple-canvas-parchment text-apple-ink-muted-48", wrapperPreviewSize)}>
             <ImagePlus className={compact ? "h-5 w-5" : "h-6 w-6"} />
           </div>
         )}
@@ -295,7 +295,7 @@ export function MediaPicker({
               type="button"
               onClick={openPicker}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 font-medium hover:bg-apple-canvas-parchment",
+                "inline-flex items-center gap-1.5 rounded-lg border border-apple-hairline font-medium hover:bg-apple-canvas-parchment",
                 compact ? "px-2.5 py-1.5 text-[11px]" : "px-4 py-2 text-sm"
               )}
             >
@@ -309,7 +309,7 @@ export function MediaPicker({
                   type="button"
                   onClick={openPicker}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 font-medium hover:bg-apple-canvas-parchment",
+                    "inline-flex items-center gap-1.5 rounded-lg border border-apple-hairline font-medium hover:bg-apple-canvas-parchment",
                     compact ? "px-2.5 py-1.5 text-[11px]" : "px-3 py-2 text-sm"
                   )}
                 >
@@ -356,7 +356,7 @@ export function MediaPicker({
             style={{ height: "85vh", maxHeight: "85vh", maxWidth: "min(1200px, 95vw)" }}
           >
             {/* ── Header ──────────────────────────────────────── */}
-            <div className="flex shrink-0 items-center gap-3 border-b border-zinc-100 px-5 py-3">
+            <div className="flex shrink-0 items-center gap-3 border-b border-apple-divider-soft px-5 py-3">
               <h2 className="text-base font-semibold text-apple-ink whitespace-nowrap">Media Library</h2>
 
               <div className="relative min-w-0 flex-1 max-w-md">
@@ -365,7 +365,7 @@ export function MediaPicker({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search files..."
-                  className="h-8 w-full rounded-lg border border-zinc-200 bg-apple-canvas-parchment pl-8 pr-3 text-xs outline-none focus:border-zinc-400 focus:bg-white"
+                  className="h-8 w-full rounded-lg border border-apple-hairline bg-apple-canvas-parchment pl-8 pr-3 text-xs outline-none focus:border-zinc-400 focus:bg-apple-canvas"
                 />
               </div>
 
@@ -393,7 +393,7 @@ export function MediaPicker({
                   "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition",
                   showUploadDrop
                     ? "border-zinc-900 bg-zinc-900 text-white"
-                    : "border-zinc-200 text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                    : "border-apple-hairline text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
                 )}
               >
                 <Link className="h-3.5 w-3.5" />
@@ -417,7 +417,7 @@ export function MediaPicker({
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="overflow-hidden border-b border-zinc-100"
+                  className="overflow-hidden border-b border-apple-divider-soft"
                 >
                   <div className="flex gap-3 p-4 bg-apple-canvas-parchment">
                     <div
@@ -426,7 +426,7 @@ export function MediaPicker({
                       onDrop={(e) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files?.length) handleUpload(e.dataTransfer.files); }}
                       className={cn(
                         "flex flex-1 items-center justify-center gap-3 rounded-xl border-2 border-dashed p-4 text-center transition-colors",
-                        dragOver ? "border-zinc-900 bg-zinc-100" : "border-zinc-200"
+                        dragOver ? "border-zinc-900 bg-apple-canvas-parchment" : "border-apple-hairline"
                       )}
                     >
                       <Upload className="h-5 w-5 text-apple-ink-muted-48 shrink-0" />
@@ -443,7 +443,7 @@ export function MediaPicker({
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-xl border border-apple-hairline bg-apple-canvas px-3 py-2">
                       <Link className="h-4 w-4 text-apple-ink-muted-48 shrink-0" />
                       <input
                         ref={importInputRef}
@@ -467,10 +467,10 @@ export function MediaPicker({
                   </div>
 
                   {uploads.length > 0 && (
-                    <div className="border-t border-zinc-100 bg-white px-4 py-2">
+                    <div className="border-t border-apple-divider-soft bg-apple-canvas px-4 py-2">
                       {uploads.map((u) => (
                         <div key={u.fileName} className="flex items-center gap-2 text-[11px] text-apple-ink-muted-80">
-                          <div className="h-1.5 flex-1 rounded-full bg-zinc-100 overflow-hidden">
+                          <div className="h-1.5 flex-1 rounded-full bg-apple-canvas-parchment overflow-hidden">
                             <div className="h-full bg-zinc-900 rounded-full transition-all" style={{ width: `${u.progress}%` }} />
                           </div>
                           <span className="shrink-0 w-8 text-right">{u.progress}%</span>
@@ -484,7 +484,7 @@ export function MediaPicker({
 
             {/* ── Body: Sidebar + Grid + Preview ──────────────── */}
 
-            <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-zinc-100 px-4 py-2 lg:hidden">
+            <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-apple-divider-soft px-4 py-2 lg:hidden">
               {SIDEBAR_ITEMS.map((item) => (
                 <button
                   key={item.id}
@@ -501,7 +501,7 @@ export function MediaPicker({
             </div>
 
             <div className="flex flex-1 overflow-hidden">
-              <aside className="hidden w-44 shrink-0 border-r border-zinc-100 bg-apple-canvas-parchment/50 p-2 lg:block">
+              <aside className="hidden w-44 shrink-0 border-r border-apple-divider-soft bg-apple-canvas-parchment/50 p-2 lg:block">
                 <nav className="space-y-0.5">
                   {SIDEBAR_ITEMS.map((item) => (
                     <button
@@ -510,8 +510,8 @@ export function MediaPicker({
                       className={cn(
                         "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition",
                         sidebarFilter === item.id
-                          ? "bg-white text-apple-ink shadow-sm"
-                          : "text-apple-ink-muted-80 hover:bg-white/60"
+                          ? "bg-apple-canvas text-apple-ink"
+                          : "text-apple-ink-muted-80 hover:bg-apple-canvas/60"
                       )}
                     >
                       <item.icon className="h-3.5 w-3.5" />
@@ -520,7 +520,7 @@ export function MediaPicker({
                   ))}
                 </nav>
 
-                <div className="mt-4 border-t border-zinc-200 pt-3 px-3">
+                <div className="mt-4 border-t border-apple-hairline pt-3 px-3">
                   <p className="text-[10px] text-apple-ink-muted-48">{totalCount} files</p>
                 </div>
               </aside>
@@ -549,7 +549,7 @@ export function MediaPicker({
                             "group relative aspect-square overflow-hidden rounded-xl border-2 bg-apple-canvas-parchment text-left transition-all",
                             previewFile?._id === file._id
                               ? "border-zinc-900 ring-2 ring-zinc-900/20"
-                              : "border-zinc-100 hover:border-zinc-300"
+                              : "border-apple-divider-soft hover:border-zinc-300"
                           )}
                         >
                           {file.fileType === "image" ? (
@@ -575,7 +575,7 @@ export function MediaPicker({
 
                           {previewFile?._id === file._id && (
                             <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-white">
-                              <div className="h-2 w-2 rounded-full bg-white" />
+                              <div className="h-2 w-2 rounded-full bg-apple-canvas" />
                             </div>
                           )}
                         </button>
@@ -585,7 +585,7 @@ export function MediaPicker({
                 </div>
 
                 {totalPages > 1 && (
-                  <div className="flex shrink-0 items-center justify-between border-t border-zinc-100 px-4 py-2.5">
+                  <div className="flex shrink-0 items-center justify-between border-t border-apple-divider-soft px-4 py-2.5">
                     <p className="text-[11px] text-apple-ink-muted-48">Page {page} of {totalPages}</p>
                     <div className="flex items-center gap-1">
                       <button
@@ -627,8 +627,8 @@ export function MediaPicker({
               </div>
 
               {previewFile && (
-                <aside className="hidden w-72 shrink-0 border-l border-zinc-100 bg-apple-canvas-parchment/50 p-4 lg:flex lg:flex-col">
-                  <div className="relative aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-white">
+                <aside className="hidden w-72 shrink-0 border-l border-apple-divider-soft bg-apple-canvas-parchment/50 p-4 lg:flex lg:flex-col">
+                  <div className="relative aspect-square overflow-hidden rounded-xl border border-apple-hairline bg-apple-canvas">
                     {previewFile.fileType === "image" ? (
                       <img
                         src={resolveMediaUrl(previewFile.publicUrl)}
@@ -678,8 +678,8 @@ export function MediaPicker({
             </div>
 
             {previewFile && (
-              <div className="flex shrink-0 items-center gap-3 border-t border-zinc-100 bg-white px-4 py-3 lg:hidden">
-                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-apple-canvas-parchment">
+              <div className="flex shrink-0 items-center gap-3 border-t border-apple-divider-soft bg-apple-canvas px-4 py-3 lg:hidden">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas-parchment">
                   {previewFile.fileType === "image" ? (
                     <img
                       src={resolveMediaUrl(previewFile.thumbnailUrl || previewFile.publicUrl)}

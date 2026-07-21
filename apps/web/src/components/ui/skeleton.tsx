@@ -35,7 +35,7 @@ export function CardSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="space-y-3 rounded-lg border border-apple-hairline p-lg">
+        <div key={i} className="space-y-3 rounded-lg border border-apple-hairline p-apple-lg">
           <Skeleton className="h-10 w-10 rounded-sm" />
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-3 w-1/2" />
@@ -65,7 +65,7 @@ export function StatCardSkeleton({ count = 4 }: { count?: number }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="space-y-2 rounded-lg border border-apple-hairline p-lg">
+        <div key={i} className="space-y-2 rounded-lg border border-apple-hairline p-apple-lg">
           <Skeleton className="h-3 w-1/2" />
           <Skeleton className="h-7 w-1/3" />
           <Skeleton className="h-3 w-1/4" />
@@ -91,7 +91,7 @@ export function StatsSkeleton({ count = 4 }: { count?: number }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-lg border border-apple-hairline bg-apple-canvas p-lg">
+        <div key={i} className="rounded-lg border border-apple-hairline bg-apple-canvas p-apple-lg">
           <div className="flex items-center justify-between">
             <div className="h-10 w-10 rounded-sm bg-apple-canvas-parchment" />
             <Skeleton className="h-4 w-16" />
@@ -106,7 +106,7 @@ export function StatsSkeleton({ count = 4 }: { count?: number }) {
 
 export function ChartSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("rounded-lg border border-apple-hairline bg-apple-canvas p-lg", className)}>
+    <div className={cn("rounded-lg border border-apple-hairline bg-apple-canvas p-apple-lg", className)}>
       <div className="flex items-center justify-between">
         <Skeleton className="h-5 w-1/3" />
         <Skeleton className="h-4 w-16" />

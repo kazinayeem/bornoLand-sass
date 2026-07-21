@@ -211,7 +211,7 @@ export function ImageCarousel({ section }: { section: SectionData }) {
                 >
                   <div className="absolute inset-0">
                     <SmartImage
-                      src={slide.mobileImage || slide.image}
+                      src={slide.mobileImage || slide.image || ""}
                       alt={slide.alt || slide.title || p.title || "Slide"}
                       fill
                       priority={index === 0}

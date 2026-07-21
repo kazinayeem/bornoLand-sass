@@ -6,10 +6,11 @@ import {
   Copy,
   ExternalLink,
   Eye,
-  Loader2,
   Save,
   Trash2,
 } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { Button } from "@/components/ui/button";
 
 type ProductEditorActionBarProps = {
   title: string;
@@ -24,6 +25,8 @@ type ProductEditorActionBarProps = {
   onDuplicate?: () => void;
   onDelete?: () => void;
   onBack: () => void;
+  duplicating?: boolean;
+  deleting?: boolean;
 };
 
 export function ProductEditorActionBar({
@@ -39,24 +42,29 @@ export function ProductEditorActionBar({
   onDuplicate,
   onDelete,
   onBack,
+  duplicating = false,
+  deleting = false,
 }: ProductEditorActionBarProps) {
   const previewHref = productId ? `/products/${productId}` : undefined;
+  const isBusy = saving || duplicating || deleting;
 
   return (
     <div className="sticky top-0 z-30 -mx-4 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+            className="rounded-xl"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
-          </button>
+          </Button>
           <div className="min-w-0">
             <h1 className="truncate text-lg font-semibold text-apple-ink">{title}</h1>
-            <p className="text-xs text-apple-ink-muted-48">
+            <p className="text-xs text-apple-ink-muted-48" aria-live="polite">
               {autoSaveStatus === "saving" && "Saving…"}
               {autoSaveStatus === "saved" && "All changes saved"}
               {autoSaveStatus === "error" && "Auto-save failed"}
@@ -71,50 +79,68 @@ export function ProductEditorActionBar({
             <Link
               href={previewHref}
               target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-apple-hairline px-3 text-caption text-apple-ink-muted-80 transition hover:bg-apple-canvas-parchment"
             >
               <Eye className="h-4 w-4" />
               Preview
             </Link>
           )}
           {onDuplicate && (
-            <button
+            <LoadingButton
               type="button"
+              variant="outline"
+              size="sm"
+              loading={duplicating}
+              loadingKey="create"
               onClick={onDuplicate}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+              disabled={isBusy}
+              icon={<Copy className="h-4 w-4" />}
+              className="rounded-xl"
             >
-              <Copy className="h-4 w-4" />
               Duplicate
-            </button>
+            </LoadingButton>
           )}
           {onDelete && (
-            <button
+            <LoadingButton
               type="button"
+              variant="danger"
+              size="sm"
+              loading={deleting}
+              loadingKey="delete"
               onClick={onDelete}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+              disabled={isBusy}
+              icon={<Trash2 className="h-4 w-4" />}
+              className="rounded-xl"
             >
-              <Trash2 className="h-4 w-4" />
               Delete
-            </button>
+            </LoadingButton>
           )}
-          <button
+          <LoadingButton
             type="button"
+            variant="outline"
+            size="sm"
+            loading={saving}
+            loadingKey="save"
             onClick={onSaveDraft}
-            disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-50"
+            disabled={isBusy}
+            icon={<Save className="h-4 w-4" />}
+            className="rounded-xl"
           >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save Draft
-          </button>
-          <button
+          </LoadingButton>
+          <LoadingButton
             type="button"
+            variant="primary"
+            size="sm"
+            loading={saving}
+            loadingKey="publish"
             onClick={onPublish}
-            disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-50"
+            disabled={isBusy}
+            icon={<ExternalLink className="h-4 w-4" />}
+            className="rounded-xl bg-zinc-900 hover:bg-zinc-800"
           >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
             Publish
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>

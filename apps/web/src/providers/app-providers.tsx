@@ -1,20 +1,37 @@
 "use client";
 
+import { Suspense } from "react";
 import { ReduxProvider } from "@/providers/redux-provider";
 import { ApiErrorListener } from "@/providers/api-error-listener";
-import { ActionStatusProvider, TopProgressBar, ActionStatusBar } from "@/providers/action-status-provider";
+import { LoadingProvider } from "@/providers/loading-provider";
+import {
+  NavigationProgressBar,
+  NavigationProgressListener,
+  RtkMutationProgressListener,
+} from "@/components/loading";
 import { SessionInit } from "@/components/auth/session-init";
+
+function LoadingInstrumentation() {
+  return (
+    <>
+      <NavigationProgressListener />
+      <RtkMutationProgressListener />
+    </>
+  );
+}
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <ReduxProvider>
-      <ActionStatusProvider>
+      <LoadingProvider>
         <ApiErrorListener />
         <SessionInit />
-        <TopProgressBar />
+        <NavigationProgressBar />
+        <Suspense fallback={null}>
+          <LoadingInstrumentation />
+        </Suspense>
         {children}
-        <ActionStatusBar />
-      </ActionStatusProvider>
+      </LoadingProvider>
     </ReduxProvider>
   );
 }

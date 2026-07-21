@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { SearchBar } from "@/components/ui/search-bar";
 import { Pagination } from "@/components/ui/pagination";
 import { TableSkeleton } from "@/components/ui/skeleton";
+import { TableLoadingOverlay } from "@/components/loading/table-loading-overlay";
 import { EmptyState, NoResults } from "@/components/ui/empty-state";
 import type { LucideIcon } from "lucide-react";
 
@@ -37,6 +38,7 @@ type DataTableProps<T> = {
   columns: Column<T>[];
   keyExtractor: (item: T) => string;
   isLoading?: boolean;
+  isFetching?: boolean;
   emptyIcon?: LucideIcon;
   emptyTitle?: string;
   emptyDescription?: string;
@@ -62,7 +64,7 @@ type DataTableProps<T> = {
 };
 
 export function DataTable<T>({
-  data, columns, keyExtractor, isLoading,
+  data, columns, keyExtractor, isLoading, isFetching,
   emptyIcon, emptyTitle, emptyDescription, emptyAction,
   searchValue, onSearchChange, searchPlaceholder,
   page, totalPages, total, pageSize, onPageChange, onPageSizeChange,
@@ -120,7 +122,7 @@ export function DataTable<T>({
     onSort({ key, order: currentOrder === "asc" ? "desc" : "asc" });
   };
 
-  if (isLoading) {
+  if (isLoading && data.length === 0) {
     return (
       <div className={className}>
         {!hideSearch && <div className="mb-4"><SearchBar value="" onChange={() => {}} placeholder={searchPlaceholder} /></div>}
@@ -156,12 +158,18 @@ export function DataTable<T>({
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-4", className)} aria-busy={isLoading || isFetching || undefined}>
       {/* Toolbar */}
       {(!hideSearch || selectMode) && (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {!hideSearch && onSearchChange && (
-            <SearchBar value={searchValue || ""} onChange={onSearchChange} placeholder={searchPlaceholder} className="w-full sm:max-w-xs" />
+            <SearchBar
+              value={searchValue || ""}
+              onChange={onSearchChange}
+              placeholder={searchPlaceholder}
+              className="w-full sm:max-w-xs"
+              aria-busy={isFetching || undefined}
+            />
           )}
           {selectMode && bulkActions && (
             <div className="flex items-center gap-2">
@@ -191,7 +199,8 @@ export function DataTable<T>({
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-apple-hairline bg-apple-canvas dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2">
+      <div className="relative overflow-x-auto rounded-lg border border-apple-hairline bg-apple-canvas dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2">
+        <TableLoadingOverlay show={isFetching} label="Updating results" />
         <table className="w-full min-w-[640px]">
           <thead>
             <tr className={cn("border-b border-apple-divider-soft bg-apple-canvas-parchment/80", stickyHeader && "sticky top-0 z-10 backdrop-blur-sm dark:bg-apple-surface-tile-3/80")}>
@@ -282,6 +291,7 @@ export function DataTable<T>({
           total={total}
           pageSize={pageSize}
           onPageSizeChange={onPageSizeChange}
+          aria-busy={isFetching || undefined}
         />
       )}
     </div>

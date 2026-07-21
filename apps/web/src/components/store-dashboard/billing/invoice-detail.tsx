@@ -102,13 +102,13 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white shadow-2xl"
+        className="w-full max-w-lg rounded-apple-lg border border-apple-hairline bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="border-b border-zinc-100 px-6 py-4 flex items-center justify-between">
+        <div className="border-b border-apple-divider-soft px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-apple-canvas-parchment">
               <FileText className="h-5 w-5 text-apple-ink-muted-80" />
             </div>
             <div>
@@ -145,7 +145,7 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
           </div>
 
           {/* Details */}
-          <div className="space-y-3 border-t border-zinc-100 pt-4">
+          <div className="space-y-3 border-t border-apple-divider-soft pt-4">
             <div className="flex justify-between text-sm">
               <span className="text-apple-ink-muted-48">Plan</span>
               <span className="font-medium text-apple-ink">{planName}</span>
@@ -161,7 +161,7 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
           </div>
 
           {/* Pricing */}
-          <div className="space-y-2 border-t border-zinc-100 pt-4">
+          <div className="space-y-2 border-t border-apple-divider-soft pt-4">
             <div className="flex justify-between text-sm">
               <span className="text-apple-ink-muted-48">Subtotal</span>
               <span className="text-apple-ink">{formatBDT(invoice.subtotal)}</span>
@@ -178,7 +178,7 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
                 <span className="text-apple-ink">{formatBDT(invoice.taxAmount)}</span>
               </div>
             )}
-            <div className="flex justify-between text-base font-bold border-t border-zinc-200 pt-2">
+            <div className="flex justify-between text-base font-bold border-t border-apple-hairline pt-2">
               <span className="text-apple-ink">Total</span>
               <span className="text-apple-ink">{formatBDT(invoice.total)}</span>
             </div>
@@ -204,11 +204,11 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
         </div>
 
         {/* Actions */}
-        <div className="border-t border-zinc-100 px-6 py-4 flex gap-3">
+        <div className="border-t border-apple-divider-soft px-6 py-4 flex gap-3">
           <button
             onClick={handleDownload}
             disabled={downloading}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all duration-200 disabled:opacity-50"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-apple-hairline px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all duration-200 disabled:opacity-50"
           >
             {downloading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -220,7 +220,7 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
           <button
             onClick={handlePrint}
             disabled={printing}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all duration-200 disabled:opacity-50"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-apple-hairline px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all duration-200 disabled:opacity-50"
           >
             {printing ? (
               <Loader2 className="h-4 w-4 animate-spin" />

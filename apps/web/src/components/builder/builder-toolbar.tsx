@@ -1,19 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Monitor, Smartphone, Tablet, ArrowLeft, Save, Send, Undo2, Redo2, ZoomIn, ZoomOut, Search, Plus, Download, Upload, History, Palette, Maximize, Eye, EyeOff, Layers, PanelRightOpen, Trash2, Sparkles, ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Save, Send, ExternalLink } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
-import { setDevice, setZoom, toggleGuides, toggleGrid, setFullscreen } from "@/redux/slices/preview-slice";
-import { markSaved, setSaving, setPublishing, undoBuilder, redoBuilder, restoreHistorySnapshot, updateSectionProps, loadPage, toggleLeftPanel, toggleRightPanel, setSaveError, setEditingZone } from "@/redux/slices/builder-slice";
-import type { BuilderSection } from "@/redux/slices/builder-slice";
+import { markSaved, setSaving, setPublishing, setSaveError } from "@/redux/slices/builder-slice";
 import { useSaveStorePageDraftMutation, usePublishStorePageMutation } from "@/redux/api/store-page-api";
 import { toast } from "sonner";
-import { Drawer } from "@/components/ui/drawer";
-import { ThemePanel } from "@/components/builder/panels/theme-panel";
-import { BuilderCommandPalette } from "@/components/builder/builder-command-palette";
 import { useRequiredStore } from "@/providers/store-context";
 import { revalidateStorefrontAction } from "@/lib/actions/revalidate-storefront";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { cn } from "@/lib/utils";
 
 function timeAgo(dateStr: string | null): string {
@@ -30,68 +26,48 @@ type Props = {
   saving: boolean;
   publishing: boolean;
   isDirty: boolean;
-  onOpenSectionLibrary?: () => void;
-  onClearPage?: () => void;
 };
 
-export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSectionLibrary, onClearPage }: Props) {
+export function BuilderToolbar({ onBack, saving, publishing, isDirty }: Props) {
   const dispatch = useDispatch();
   const { store, storeId } = useRequiredStore();
   const storeSettings = useSelector((s: RootState) => s.storeSettings);
-  const device = useSelector((s: RootState) => s.preview.device);
-  const zoom = useSelector((s: RootState) => s.preview.zoom);
   const theme = useSelector((s: RootState) => s.theme);
   const sections = useSelector((s: RootState) => s.builder.sections);
   const headerSections = useSelector((s: RootState) => s.builder.headerSections);
   const footerSections = useSelector((s: RootState) => s.builder.footerSections);
   const headerSettings = useSelector((s: RootState) => s.builder.headerSettings);
   const footerSettings = useSelector((s: RootState) => s.builder.footerSettings);
-  const editingZone = useSelector((s: RootState) => s.builder.editingZone);
-  const page = useSelector((s: RootState) => s.builder.page);
-  const pageId = page.id;
-  const globalSectionIds = useSelector((s: RootState) => s.builder.globalSectionIds);
+  const pageId = useSelector((s: RootState) => s.builder.page.id);
   const lastSaved = useSelector((s: RootState) => s.builder.lastSaved);
   const lastSaveError = useSelector((s: RootState) => s.builder.lastSaveError);
-  const pastCount = useSelector((s: RootState) => s.builder.past.length);
-  const futureCount = useSelector((s: RootState) => s.builder.future.length);
-  const historySnapshots = useSelector((s: RootState) => s.builder.past);
-  const leftPanelOpen = useSelector((s: RootState) => s.builder.leftPanelOpen);
-  const rightPanelOpen = useSelector((s: RootState) => s.builder.rightPanelOpen);
-  const showGuides = useSelector((s: RootState) => s.preview.showGuides);
-  const showGrid = useSelector((s: RootState) => s.preview.showGrid);
 
   const [savePageDraft] = useSaveStorePageDraftMutation();
   const [publishPage] = usePublishStorePageMutation();
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [stylesOpen, setStylesOpen] = useState(false);
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [now, setNow] = useState(Date.now());
+  const [, setNow] = useState(Date.now());
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 10000);
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setCommandPaletteOpen((isOpen) => !isOpen);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
-
   const handleSave = async () => {
-    if (!pageId) { toast.error("No page selected"); return; }
+    if (!pageId) {
+      toast.error("Home page not loaded");
+      return;
+    }
     dispatch(setSaving(true));
     try {
       await savePageDraft({
-        id: pageId, storeId,
-        sections, headerSections, footerSections, headerSettings, footerSettings, theme, settings: storeSettings,
+        id: pageId,
+        storeId,
+        sections,
+        headerSections,
+        footerSections,
+        headerSettings,
+        footerSettings,
+        theme,
+        settings: storeSettings,
       }).unwrap();
       dispatch(markSaved(new Date().toISOString()));
       toast.success("Saved");
@@ -102,12 +78,22 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
   };
 
   const handlePublish = async () => {
-    if (!pageId) { toast.error("No page selected"); return; }
+    if (!pageId) {
+      toast.error("Home page not loaded");
+      return;
+    }
     dispatch(setPublishing(true));
     try {
       await savePageDraft({
-        id: pageId, storeId,
-        sections, headerSections, footerSections, headerSettings, footerSettings, theme, settings: storeSettings,
+        id: pageId,
+        storeId,
+        sections,
+        headerSections,
+        footerSections,
+        headerSettings,
+        footerSettings,
+        theme,
+        settings: storeSettings,
       }).unwrap();
       await publishPage({ id: pageId, storeId }).unwrap();
       await revalidateStorefrontAction({ tenantSlug: store.subdomain || store.slug, storeId, scope: "all" });
@@ -119,290 +105,70 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
     dispatch(setPublishing(false));
   };
 
-  const handlePreview = () => {
-    window.open(`/store/${store.slug}`, "_blank", "noopener,noreferrer");
-  };
-
-  const handleExport = async () => {
-    if (!pageId) { toast.error("No page selected"); return; }
-    try {
-      const data = {
-        version: "1.0",
-        exportedAt: new Date().toISOString(),
-        page,
-        sections,
-        headerSections,
-        footerSections,
-        headerSettings,
-        footerSettings,
-        globalSectionIds,
-        theme,
-        settings: storeSettings,
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = `page-export.json`; a.click();
-      URL.revokeObjectURL(url);
-      toast.success("Exported");
-    } catch { toast.error("Export failed"); }
-  };
-
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string);
-        if (!data.sections || !Array.isArray(data.sections)) { toast.error("Invalid import file: missing sections"); return; }
-        if (data.headerSections && !Array.isArray(data.headerSections)) { toast.error("Invalid import file: headerSections must be an array"); return; }
-        if (data.footerSections && !Array.isArray(data.footerSections)) { toast.error("Invalid import file: footerSections must be an array"); return; }
-
-        // Restore full state locally — preserves all IDs so media references stay intact
-        dispatch(loadPage({
-          page: data.page ?? { id: pageId, title: "Imported Page", slug: "/imported", pageType: "custom" as any, isSystem: false, description: "", status: "draft" as any },
-          sections: data.sections ?? [],
-          headerSections: data.headerSections ?? [],
-          footerSections: data.footerSections ?? [],
-          globalSectionIds: data.globalSectionIds ?? [],
-          headerSettings: data.headerSettings ?? {},
-          footerSettings: data.footerSettings ?? {},
-        }));
-
-        // Persist to backend immediately so the import survives a refresh
-        if (pageId) {
-          await savePageDraft({
-            id: pageId, storeId,
-            sections: data.sections ?? [],
-            headerSections: data.headerSections ?? [],
-            footerSections: data.footerSections ?? [],
-            headerSettings: data.headerSettings ?? {},
-            footerSettings: data.footerSettings ?? {},
-            globalSectionIds: data.globalSectionIds ?? [],
-            theme: data.theme,
-            settings: data.settings ?? storeSettings,
-          }).unwrap();
-          dispatch(markSaved(new Date().toISOString()));
-        }
-
-        toast.success(`Imported ${data.sections.length} sections`);
-      } catch { toast.error("Import failed: invalid JSON"); }
-    };
-    reader.readAsText(file);
-    event.target.value = "";
-  };
-
-  const devices = [
-    { key: "desktop" as const, icon: Monitor, label: "Desktop (1280)" },
-    { key: "laptop" as const, icon: Monitor, label: "Laptop (1024)" },
-    { key: "tablet" as const, icon: Tablet, label: "Tablet (820)" },
-    { key: "mobile" as const, icon: Smartphone, label: "Mobile (390)" },
-  ];
+  const statusLabel = saving
+    ? "Saving…"
+    : lastSaveError
+      ? "Save failed"
+      : isDirty
+        ? "Unsaved changes"
+        : lastSaved
+          ? `Saved ${timeAgo(lastSaved)}`
+          : null;
 
   return (
-    <header className="sticky top-0 z-40 flex min-h-16 flex-col gap-2 border-b border-apple-hairline/70 bg-apple-canvas/90 px-3 py-2 backdrop-blur-xl">
-      <div className="flex items-center justify-between gap-2">
-      {/* Left */}
-      <div className="flex min-w-0 items-center gap-2">
-        <button onClick={onBack} className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
+    <header className="frosted-bar sticky top-0 z-40 flex min-h-14 items-center justify-between gap-4 border-b border-apple-hairline px-4 py-2 sm:px-6">
+      <div className="flex min-w-0 items-center gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Back to dashboard"
+          className="btn-press flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-apple-surface-chip/64 text-apple-ink-muted-80 transition-colors hover:text-apple-ink"
+        >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <div className="h-4 w-px bg-zinc-200" />
-        <div className="flex min-w-0 items-center gap-1.5">
-          <span className="max-w-[140px] truncate text-sm font-semibold text-apple-ink">{store.shortName || store.name}</span>
-        </div>
-        {/* Save status pill */}
-        <div className="flex items-center gap-1.5 ml-2">
-          {saving && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-600 border border-amber-200/50">
-              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
-              Saving...
-            </span>
-          )}
-          {!saving && !lastSaveError && lastSaved && !isDirty && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600 border border-emerald-200/50">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              Saved {timeAgo(lastSaved)}
-            </span>
-          )}
-          {!saving && !lastSaveError && isDirty && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-apple-canvas-parchment px-2 py-0.5 text-[10px] font-medium text-apple-ink-muted-48 border border-apple-hairline/50">
-              Unsaved
-            </span>
-          )}
-          {!saving && lastSaveError && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600 border border-red-200/50">
-              Save Failed
-            </span>
-          )}
+        <div className="min-w-0">
+          <p className="truncate text-body-strong text-apple-ink">{store.shortName || store.name}</p>
+          <p className="truncate text-caption text-apple-ink-muted-48">
+            Homepage{statusLabel ? ` · ${statusLabel}` : ""}
+          </p>
         </div>
       </div>
 
-      {/* Center */}
-        <div className="hidden items-center gap-1 md:flex">
-        {/* Editing Zone Switcher */}
-        <div className="flex rounded-lg border border-apple-hairline bg-apple-canvas p-0.5">
-          {[
-            { key: "body" as const, label: "Body", icon: Layers },
-            { key: "header" as const, label: "Header", icon: PanelRightOpen },
-            { key: "footer" as const, label: "Footer", icon: PanelRightOpen },
-          ].map(({ key, label, icon: Icon }) => (
-            <button key={key} title={label} onClick={() => dispatch(setEditingZone(key))}
-              className={cn("rounded-md px-2 py-1 text-[10px] font-medium transition-colors inline-flex items-center gap-1",
-                editingZone === key ? "bg-apple-canvas-parchment text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80")}>
-              <Icon className="h-3 w-3" />
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className="h-4 w-px bg-zinc-200 mx-1" />
-
-        {/* Device switcher */}
-        <div className="flex rounded-lg border border-apple-hairline bg-apple-canvas p-0.5">
-          {devices.map(({ key, icon: Icon, label }) => (
-            <button key={key} title={label} onClick={() => dispatch(setDevice(key))}
-              className={cn("rounded-md p-1.5 transition-colors", device === key ? "bg-apple-canvas-parchment text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80")}>
-              <Icon className="h-3.5 w-3.5" />
-            </button>
-          ))}
-        </div>
-        <div className="h-4 w-px bg-zinc-200 mx-1" />
-
-        {/* Undo/Redo */}
-        <button onClick={() => dispatch(undoBuilder())} disabled={pastCount === 0}
-          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-30 transition-all">
-          <Undo2 className="h-3.5 w-3.5" />
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => window.open(`/store/${store.slug}`, "_blank", "noopener,noreferrer")}
+          className="btn-press hidden items-center gap-2 rounded-apple-pill border border-apple-hairline bg-apple-canvas px-4 py-2 text-caption font-medium text-apple-ink transition-colors hover:bg-apple-canvas-parchment sm:inline-flex"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          Preview
         </button>
-        <button onClick={() => dispatch(redoBuilder())} disabled={futureCount === 0}
-          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-30 transition-all">
-          <Redo2 className="h-3.5 w-3.5" />
-        </button>
-
-        <div className="h-4 w-px bg-zinc-200 mx-1" />
-
-        {/* Zoom */}
-        <div className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1">
-          <button type="button" onClick={() => dispatch(setZoom(zoom - 25))} className="rounded p-0.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80" title="Zoom out"><ZoomOut className="h-3 w-3" /></button>
-          <select value={zoom} onChange={(e) => dispatch(setZoom(Number(e.target.value)))}
-            className="bg-transparent text-[11px] text-apple-ink-muted-80 outline-none w-12">
-            {[25, 50, 75, 90, 100, 125, 150, 200, 300, 400].map((v) => <option key={v} value={v}>{v}%</option>)}
-          </select>
-          <button type="button" onClick={() => dispatch(setZoom(zoom + 25))} className="rounded p-0.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80" title="Zoom in"><ZoomIn className="h-3 w-3" /></button>
-        </div>
-
-        <div className="h-4 w-px bg-zinc-200 mx-1" />
-
-        {/* Quick add */}
-        <button onClick={() => onOpenSectionLibrary?.()}
-          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
-          <Plus className="h-3.5 w-3.5" /> Add
-        </button>
-
-        {/* Tools */}
-        <button onClick={() => dispatch(toggleGuides())}
-          className={cn("rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-all", showGuides ? "border-zinc-900 bg-zinc-900 text-white" : "border-apple-hairline bg-apple-canvas text-apple-ink-muted-80 hover:bg-apple-canvas-parchment")}
-          title="Show guides">
-          Guides
-        </button>
-
-        {/* History drawer */}
-        <button onClick={() => setHistoryOpen(true)}
-          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
-          <History className="h-3.5 w-3.5" /> History
-        </button>
-
-        {/* Export/Import */}
-        <button onClick={handleExport}
-          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
-          <Download className="h-3.5 w-3.5" />
-        </button>
-        <button onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
-          <Upload className="h-3.5 w-3.5" />
-        </button>
-        <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
-
-        <div className="h-4 w-px bg-zinc-200 mx-1" />
-        <button onClick={onClearPage}
-          className="flex items-center gap-1 rounded-lg border border-red-200 bg-apple-canvas px-2 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-50">
-          <Trash2 className="h-3.5 w-3.5" /> Clear
-        </button>
-      </div>
-
-      {/* Right */}
-      <div className="flex items-center gap-1.5">
-        {/* Search */}
-        <button onClick={() => setCommandPaletteOpen((isOpen) => !isOpen)}
-          className="hidden lg:flex items-center gap-1.5 rounded-lg border border-apple-hairline bg-apple-canvas px-2.5 py-1.5 text-[11px] text-apple-ink-muted-48">
-          <Search className="h-3 w-3" /> Search
-          <span className="rounded bg-apple-canvas-parchment px-1 py-0.5 text-[9px] text-apple-ink-muted-48">⌘K</span>
-        </button>
-
-        <div className="h-4 w-px bg-zinc-200" />
-
-        <button onClick={() => setStylesOpen(true)}
-          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
-          <Palette className="h-3.5 w-3.5" /> Styles
-        </button>
-
-        <button onClick={handlePreview}
-          className="hidden items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment lg:flex">
-          <ExternalLink className="h-3.5 w-3.5" /> Preview
-        </button>
-
-        <button disabled
-          className="hidden items-center gap-1 rounded-lg border border-dashed border-apple-hairline bg-apple-canvas-parchment px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-48 lg:flex"
-          title="AI assistant coming soon">
-          <Sparkles className="h-3.5 w-3.5" /> AI Assistant
-        </button>
-
-        {/* Save */}
-        <button onClick={handleSave} disabled={saving || !isDirty}
-          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-30">
-          {saving ? <div className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" /> : <Save className="h-3.5 w-3.5" />}
+        <LoadingButton
+          type="button"
+          variant="outline"
+          size="sm"
+          loading={saving}
+          loadingKey="save"
+          onClick={() => void handleSave()}
+          disabled={!isDirty}
+          icon={<Save className="h-3.5 w-3.5" />}
+          className="rounded-apple-pill"
+        >
           Save
-        </button>
-
-        {/* Publish */}
-        <button onClick={handlePublish} disabled={publishing}
-          className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] font-medium text-white hover:opacity-90 disabled:opacity-50 transition-all"
-          style={{ backgroundColor: "#18181b" }}>
-          {publishing ? <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Send className="h-3.5 w-3.5" />}
+        </LoadingButton>
+        <LoadingButton
+          type="button"
+          variant="primary"
+          size="sm"
+          loading={publishing}
+          loadingKey="publish"
+          onClick={() => void handlePublish()}
+          icon={<Send className="h-3.5 w-3.5" />}
+          className={cn("rounded-apple-pill bg-apple-primary hover:bg-apple-primary-focus")}
+        >
           Publish
-        </button>
+        </LoadingButton>
       </div>
-      </div>
-
-      <Drawer open={stylesOpen} onClose={() => setStylesOpen(false)} title="Global Styles" description="Theme, spacing, typography, and shared storefront presentation." side="right" size="lg" className="px-0 py-0">
-        <ThemePanel />
-      </Drawer>
-      <Drawer open={historyOpen} onClose={() => setHistoryOpen(false)} title="History & Snapshots" description="Restore previous builder snapshots." side="right" size="lg">
-        <div className="space-y-2">
-          {historySnapshots.length === 0 && (
-            <div className="rounded-xl border border-dashed border-apple-hairline p-6 text-center text-sm text-apple-ink-muted-48">No history yet. Start editing sections to create snapshots.</div>
-          )}
-          {[...historySnapshots].reverse().map((snapshot, index) => {
-            const originalIndex = historySnapshots.length - 1 - index;
-            const totalSections = (snapshot.sections?.length ?? 0) + (snapshot.headerSections?.length ?? 0) + (snapshot.footerSections?.length ?? 0);
-            return (
-              <div key={originalIndex} className="rounded-xl border border-apple-hairline bg-apple-canvas p-3.5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-apple-ink">Snapshot {historySnapshots.length - index}</p>
-                    <p className="mt-0.5 text-xs text-apple-ink-muted-48">{totalSections} sections</p>
-                  </div>
-                  <button onClick={() => { dispatch(restoreHistorySnapshot(snapshot)); setHistoryOpen(false); }}
-                    className="rounded-lg bg-zinc-900 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-zinc-800">
-                    Restore
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </Drawer>
-      <BuilderCommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
     </header>
   );
 }

@@ -24,7 +24,7 @@ export function StoreBrandMark({
   if (logoUrl) {
     return (
       <div
-        className={`relative overflow-hidden border border-zinc-200 bg-white ${roundedClassName} ${className}`}
+        className={`relative overflow-hidden border border-apple-hairline bg-white ${roundedClassName} ${className}`}
         style={{ width: size, height: size }}
       >
         <SmartImage src={logoUrl} alt={store.name} fill sizes={`${size}px`} className="object-cover" />

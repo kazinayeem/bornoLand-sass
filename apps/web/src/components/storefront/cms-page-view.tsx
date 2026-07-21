@@ -8,6 +8,8 @@ import { useTrackCmsPageView } from "@/hooks/use-analytics-tracker";
 import type { CmsPageData } from "@/lib/cms-page-types";
 import type { LucideIcon } from "lucide-react";
 import { getApiUrl } from "@/lib/urls";
+import { StorefrontPage, useStorefrontSurface } from "./storefront-ui";
+import { cn } from "@/lib/utils";
 
 const ICON_MAP = {
   help: HelpCircle,
@@ -30,9 +32,8 @@ type CmsPageViewProps = {
 export default function CmsPageView({ slug, title, description, icon: IconProp, iconName, initialPage }: CmsPageViewProps) {
   useTrackCmsPageView(slug, title);
 
-  const { store, theme } = useTenant();
-  const { primaryColor, darkMode } = theme;
-  const isDark = darkMode;
+  const { store } = useTenant();
+  const { classes, primaryColor } = useStorefrontSurface();
   const DisplayIcon = IconProp ?? (iconName ? ICON_MAP[iconName] : FileText);
 
   const [page, setPage] = useState<CmsPageData | null>(initialPage ?? null);
@@ -56,58 +57,45 @@ export default function CmsPageView({ slug, title, description, icon: IconProp, 
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+      <StorefrontPage maxWidth="sm">
         <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-6 w-6 animate-spin" style={{ color: primaryColor }} />
+          <Loader2 className="h-6 w-6 animate-spin text-apple-primary" style={{ color: primaryColor }} />
         </div>
-      </div>
+      </StorefrontPage>
     );
   }
 
   if (page?.html) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+      <StorefrontPage maxWidth="sm">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="prose prose-zinc max-w-none"
-          style={{
-            color: isDark ? "#a1a1aa" : "#52525b",
-            "--tw-prose-headings": isDark ? "#fafafa" : "#18181b",
-            "--tw-prose-links": primaryColor,
-            "--tw-prose-bold": isDark ? "#fafafa" : "#18181b",
-            "--tw-prose-quotes": isDark ? "#a1a1aa" : "#52525b",
-            "--tw-prose-code": isDark ? "#fafafa" : "#18181b",
-            "--tw-prose-pre-bg": isDark ? "#27272a" : "#f4f4f5",
-            "--tw-prose-pre-code": isDark ? "#fafafa" : "#18181b",
-          } as React.CSSProperties}
+          className="storefront-prose prose max-w-none"
           dangerouslySetInnerHTML={{ __html: page.html }}
         />
-      </div>
+      </StorefrontPage>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="text-center mb-12">
+    <StorefrontPage maxWidth="sm">
+      <div className="mb-12 text-center">
         {(IconProp || iconName) && (
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl"
-            style={{ backgroundColor: `${primaryColor}12` }}>
-            <DisplayIcon className="h-6 w-6" style={{ color: primaryColor }} />
+          <div
+            className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-apple-lg"
+            style={{ backgroundColor: `${primaryColor}12` }}
+          >
+            <DisplayIcon className="h-6 w-6 text-apple-primary" style={{ color: primaryColor }} />
           </div>
         )}
-        <h1 className="text-4xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{title}</h1>
-        {description && (
-          <p className="mt-2 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>{description}</p>
-        )}
+        <h1 className={cn("text-display-md", classes.heading)}>{title}</h1>
+        {description && <p className={cn("mt-2 text-body", classes.muted)}>{description}</p>}
       </div>
-      <div className="rounded-2xl border p-8 text-center"
-        style={{ borderColor: isDark ? "#27272a" : "#e4e4e7" }}>
-        <FileText className="mx-auto h-8 w-8" style={{ color: isDark ? "#52525b" : "#a1a1aa" }} />
-        <p className="mt-2 text-sm" style={{ color: isDark ? "#71717a" : "#a1a1aa" }}>
-          No content published yet. Check back soon.
-        </p>
+      <div className={cn("p-8 text-center", classes.card)}>
+        <FileText className={cn("mx-auto h-8 w-8", classes.muted)} />
+        <p className={cn("mt-2 text-caption", classes.muted)}>No content published yet. Check back soon.</p>
       </div>
-    </div>
+    </StorefrontPage>
   );
 }

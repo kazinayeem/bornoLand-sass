@@ -2,7 +2,6 @@
 
 import { useSelector, useDispatch } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X, ShoppingBag, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import type { RootState } from "@/redux/store";
@@ -10,6 +9,8 @@ import { closeCart, updateQuantity, removeFromCart } from "@/redux/slices/cart-s
 import { useUpdateCartItemMutation, useRemoveFromCartMutation } from "@/redux/api/cart-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
+import { useStorefrontSurface, StorefrontButton } from "./storefront-ui";
+import { cn } from "@/lib/utils";
 
 type CartDrawerProps = {
   primaryColor: string;
@@ -19,6 +20,7 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
   const dispatch = useDispatch();
   const router = useRouter();
   const { settings } = useTenant();
+  const { classes } = useStorefrontSurface();
   const { items, isOpen } = useSelector((state: RootState) => state.cart);
   const [updateRemote] = useUpdateCartItemMutation();
   const [removeRemote] = useRemoveFromCartMutation();
@@ -55,62 +57,95 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm"
-            onClick={() => dispatch(closeCart())} />
-          <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-zinc-100 p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-apple-surface-black/20 backdrop-blur-sm"
+            onClick={() => dispatch(closeCart())}
+          />
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-apple-hairline bg-apple-canvas"
+          >
+            <div className={cn("flex items-center justify-between border-b p-4", classes.divider)}>
               <div className="flex items-center gap-2">
-                <ShoppingBag className="h-5 w-5" style={{ color: primaryColor }} />
-                <span className="font-semibold text-apple-ink">Cart ({itemCount})</span>
+                <ShoppingBag className="h-5 w-5 text-apple-primary" style={{ color: primaryColor }} />
+                <span className="text-body-strong text-apple-ink">Cart ({itemCount})</span>
               </div>
-              <button onClick={() => dispatch(closeCart())} aria-label="Close cart" className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
+              <button
+                type="button"
+                onClick={() => dispatch(closeCart())}
+                aria-label="Close cart"
+                className={classes.iconBtn}
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {items.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8">
-                <ShoppingBag className="h-12 w-12 text-zinc-200" />
-                <p className="text-sm text-apple-ink-muted-48">Your cart is empty</p>
-                <button onClick={handleContinueShopping}
-                  className="rounded-xl bg-zinc-900 px-4 py-2 text-xs font-medium text-white">
+                <ShoppingBag className="h-12 w-12 text-apple-ink-muted-48/40" />
+                <p className="text-caption text-apple-ink-muted-48">Your cart is empty</p>
+                <StorefrontButton variant="utility" size="compact" onClick={handleContinueShopping}>
                   Continue Shopping
-                </button>
+                </StorefrontButton>
               </div>
             ) : (
               <>
                 <div className="flex-1 overflow-y-auto p-4">
                   <div className="space-y-3">
                     {items.map((item) => (
-                      <div key={`${item.productId}-${item.variantId ?? ""}`} className="flex gap-3 rounded-xl border border-zinc-100 p-3">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-apple-canvas-parchment">
-                          <ShoppingBag className="h-6 w-6" style={{ color: `${primaryColor}30` }} />
+                      <div key={`${item.productId}-${item.variantId ?? ""}`} className={cn("flex gap-3 p-3", classes.card)}>
+                        <div className={cn("flex h-16 w-16 items-center justify-center rounded-apple-sm", classes.imageWell)}>
+                          <ShoppingBag className="h-6 w-6 text-apple-primary/30" style={{ color: `${primaryColor}30` }} />
                         </div>
                         <div className="flex flex-1 flex-col justify-between">
                           <div className="flex justify-between">
                             <div>
-                              <p className="text-sm font-medium text-apple-ink truncate max-w-[180px]">{item.name}</p>
-                              {item.variantTitle && <p className="text-xs text-apple-ink-muted-48">{item.variantTitle}</p>}
+                              <p className="max-w-[180px] truncate text-caption font-medium text-apple-ink">{item.name}</p>
+                              {item.variantTitle && (
+                                <p className="text-fine-print text-apple-ink-muted-48">{item.variantTitle}</p>
+                              )}
                             </div>
-                            <button onClick={() => handleRemove(item.productId, item.variantId)} aria-label={`Remove ${item.name}`} className="text-zinc-300 hover:text-red-400">
+                            <button
+                              type="button"
+                              onClick={() => handleRemove(item.productId, item.variantId)}
+                              aria-label={`Remove ${item.name}`}
+                              className="text-apple-ink-muted-48 transition-colors hover:text-red-500"
+                            >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
-                          <p className="text-sm font-semibold" style={{ color: primaryColor }}>
+                          <p className="text-caption font-semibold text-apple-primary" style={{ color: primaryColor }}>
                             {formatCurrency(item.price * item.quantity, settings)}
                           </p>
                           <div className="flex items-center gap-2">
-                            <button onClick={() => handleQuantity(item.productId, item.variantId, item.quantity - 1)}
+                            <button
+                              type="button"
+                              onClick={() => handleQuantity(item.productId, item.variantId, item.quantity - 1)}
                               aria-label="Decrease quantity"
-                              className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
+                              className={cn(
+                                "flex h-6 w-6 items-center justify-center rounded-apple-xs border text-apple-ink-muted-48",
+                                classes.divider
+                              )}
+                            >
                               <Minus className="h-3 w-3" />
                             </button>
-                            <span className="w-6 text-center text-xs font-medium text-apple-ink-muted-80">{item.quantity}</span>
-                            <button onClick={() => handleQuantity(item.productId, item.variantId, item.quantity + 1)}
+                            <span className="w-6 text-center text-fine-print font-medium text-apple-ink-muted-80">
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleQuantity(item.productId, item.variantId, item.quantity + 1)}
                               aria-label="Increase quantity"
-                              className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
+                              className={cn(
+                                "flex h-6 w-6 items-center justify-center rounded-apple-xs border text-apple-ink-muted-48",
+                                classes.divider
+                              )}
+                            >
                               <Plus className="h-3 w-3" />
                             </button>
                           </div>
@@ -120,16 +155,14 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                   </div>
                 </div>
 
-                <div className="border-t border-zinc-100 p-4">
+                <div className={cn("border-t p-4", classes.divider)}>
                   <div className="mb-3 flex items-center justify-between">
-                    <span className="text-sm text-apple-ink-muted-48">Subtotal</span>
-                    <span className="text-lg font-bold text-apple-ink">{formatCurrency(subtotal, settings)}</span>
+                    <span className="text-caption text-apple-ink-muted-48">Subtotal</span>
+                    <span className="text-body-strong text-apple-ink">{formatCurrency(subtotal, settings)}</span>
                   </div>
-                  <button onClick={handleViewCart}
-                    className="flex w-full items-center justify-center gap-2 py-2.5 text-sm font-medium text-white transition-all hover:opacity-90"
-                    style={{ borderRadius: "0.5rem", backgroundColor: primaryColor }}>
+                  <StorefrontButton className="w-full" onClick={handleViewCart}>
                     View Cart <ArrowRight className="h-4 w-4" />
-                  </button>
+                  </StorefrontButton>
                 </div>
               </>
             )}

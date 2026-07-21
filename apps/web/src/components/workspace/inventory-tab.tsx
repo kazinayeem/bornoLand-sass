@@ -20,7 +20,7 @@ export function InventoryTab({ storeId }: { storeId: string }) {
   return (
     <div className="space-y-5">
       {/* Sub-tab bar */}
-      <div className="flex items-center gap-1 rounded-2xl border border-zinc-200 bg-white p-1 w-fit">
+      <div className="flex items-center gap-1 rounded-apple-lg border border-apple-hairline bg-white p-1 w-fit">
         {[
           { id: "all" as SubTab, label: "All Inventory", icon: Package },
           { id: "history" as SubTab, label: "Stock History", icon: History },
@@ -29,7 +29,7 @@ export function InventoryTab({ storeId }: { storeId: string }) {
           <button key={t.id} onClick={() => setSubTab(t.id)}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all",
-              subTab === t.id ? "bg-zinc-900 text-white shadow-sm" : "text-apple-ink-muted-48 hover:text-zinc-800"
+              subTab === t.id ? "bg-apple-ink text-white " : "text-apple-ink-muted-48 hover:text-apple-ink"
             )}>
             <t.icon className="h-3.5 w-3.5" />
             {t.label}
@@ -148,7 +148,7 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
       key: "name", label: "Product", sortable: true,
       render: (item) => (
         <div className="flex items-center gap-3 min-w-0">
-          <div className="h-9 w-9 shrink-0 rounded-lg bg-zinc-100 flex items-center justify-center overflow-hidden">
+          <div className="h-9 w-9 shrink-0 rounded-lg bg-apple-canvas-parchment flex items-center justify-center overflow-hidden">
             {item.imageUrl ? (
               <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
             ) : (
@@ -167,7 +167,7 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
       render: (item) => (
         <div className="text-xs text-apple-ink-muted-48 font-mono">
           <p>{item.sku || "—"}</p>
-          {item.barcode && <p className="text-[10px] text-zinc-300">{item.barcode}</p>}
+          {item.barcode && <p className="text-[10px] text-apple-ink-muted-48">{item.barcode}</p>}
         </div>
       ),
     },
@@ -275,16 +275,16 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-apple-ink-muted-48" />
           <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search name, SKU, barcode..."
-            className="h-9 w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-3 text-xs text-apple-ink outline-none focus:border-blue-400"
+            className="h-9 w-full rounded-xl border border-apple-hairline bg-white pl-9 pr-3 text-xs text-apple-ink outline-none focus:border-blue-400"
           />
           {search && (
-            <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-300 hover:text-apple-ink-muted-48">
+            <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-apple-ink-muted-48 hover:text-apple-ink-muted-48">
               <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
         <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-          className="h-9 rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
+          className="h-9 rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
@@ -292,14 +292,14 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
           <option value="archived">Archived</option>
         </select>
         <select value={stockStatus} onChange={(e) => { setStockStatus(e.target.value); setPage(1); }}
-          className="h-9 rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
+          className="h-9 rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
           <option value="">All Stock</option>
           <option value="in_stock">In Stock</option>
           <option value="low_stock">Low Stock</option>
           <option value="out_of_stock">Out of Stock</option>
         </select>
         <select value={productType} onChange={(e) => { setProductType(e.target.value); setPage(1); }}
-          className="h-9 rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
+          className="h-9 rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
           <option value="">All Types</option>
           <option value="simple">Simple</option>
           <option value="variable">Variable</option>
@@ -309,7 +309,7 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
             "inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors",
             showAdvanced || activeFilterCount > 0
               ? "border-blue-200 bg-blue-50 text-blue-700"
-              : "border-zinc-200 bg-white text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+              : "border-apple-hairline bg-white text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
           )}>
           <ChevronDown className={cn("h-3 w-3 transition-transform", showAdvanced && "rotate-180")} />
           Advanced {activeFilterCount > 0 && `(${activeFilterCount})`}
@@ -320,26 +320,26 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
       <AnimatePresence>
         {showAdvanced && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-            className="rounded-2xl border border-zinc-200 bg-white p-4">
+            className="rounded-apple-lg border border-apple-hairline bg-white p-4">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Category</label>
                 <input value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
-                  className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400" placeholder="Filter by category" />
+                  className="h-9 w-full rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400" placeholder="Filter by category" />
               </div>
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Brand</label>
                 <input value={brandFilter} onChange={(e) => { setBrandFilter(e.target.value); setPage(1); }}
-                  className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400" placeholder="Filter by brand" />
+                  className="h-9 w-full rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400" placeholder="Filter by brand" />
               </div>
               <div>
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Vendor</label>
                 <input value={vendorFilter} onChange={(e) => { setVendorFilter(e.target.value); setPage(1); }}
-                  className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400" placeholder="Filter by vendor" />
+                  className="h-9 w-full rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400" placeholder="Filter by vendor" />
               </div>
               <div className="flex items-end">
                 <button onClick={() => { setCategoryFilter(""); setBrandFilter(""); setVendorFilter(""); }}
-                  className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
+                  className="h-9 w-full rounded-xl border border-apple-hairline bg-white px-2.5 text-xs font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
                   Clear
                 </button>
               </div>
@@ -379,7 +379,7 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
             onClick={() => setAdjustTarget(null)}>
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl">
+              className="w-full max-w-md rounded-apple-lg border border-apple-hairline bg-white p-6 shadow-2xl">
               <h3 className="text-lg font-semibold text-apple-ink">Adjust Stock</h3>
               <p className="mt-1 text-sm text-apple-ink-muted-48">{adjustTarget.name}</p>
               <p className="mt-1 text-xs text-apple-ink-muted-48">Current stock: <span className="font-semibold">{adjustTarget.currentStock}</span></p>
@@ -389,12 +389,12 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
                   <label className="mb-1 block text-xs font-medium text-apple-ink-muted-48">Quantity change (+/-)</label>
                   <div className="flex gap-2">
                     <button onClick={() => setAdjustQty(prev => (prev >= 0 ? -1 : prev - 1))}
-                      className="h-9 w-9 rounded-xl border border-zinc-200 text-apple-ink-muted-80 hover:bg-apple-canvas-parchment text-sm font-semibold">−</button>
+                      className="h-9 w-9 rounded-xl border border-apple-hairline text-apple-ink-muted-80 hover:bg-apple-canvas-parchment text-sm font-semibold">−</button>
                     <input type="number" value={adjustQty} onChange={(e) => setAdjustQty(Number(e.target.value))}
-                      className="h-9 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-center text-apple-ink outline-none focus:border-blue-400 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      className="h-9 flex-1 rounded-xl border border-apple-hairline bg-white px-3 text-sm text-center text-apple-ink outline-none focus:border-blue-400 [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
                     <button onClick={() => setAdjustQty(prev => (prev <= 0 ? 1 : prev + 1))}
-                      className="h-9 w-9 rounded-xl border border-zinc-200 text-apple-ink-muted-80 hover:bg-apple-canvas-parchment text-sm font-semibold">+</button>
+                      className="h-9 w-9 rounded-xl border border-apple-hairline text-apple-ink-muted-80 hover:bg-apple-canvas-parchment text-sm font-semibold">+</button>
                   </div>
                   <p className="mt-1 text-xs text-apple-ink-muted-48">
                     New stock: <span className={cn("font-semibold", (adjustTarget.currentStock + adjustQty) < 0 && "text-red-500")}>
@@ -405,7 +405,7 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
                 <div>
                   <label className="mb-1 block text-xs font-medium text-apple-ink-muted-48">Reason</label>
                   <select value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)}
-                    className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
+                    className="h-9 w-full rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
                     <option value="manual_adjust">Manual Adjustment</option>
                     <option value="restock">Restock</option>
                     <option value="return">Return</option>
@@ -417,14 +417,14 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
                 <div>
                   <label className="mb-1 block text-xs font-medium text-apple-ink-muted-48">Note (optional)</label>
                   <input value={adjustNote} onChange={(e) => setAdjustNote(e.target.value)}
-                    className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400" placeholder="e.g. Physical count adjustment"
+                    className="h-9 w-full rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400" placeholder="e.g. Physical count adjustment"
                   />
                 </div>
               </div>
 
               <div className="mt-5 flex items-center justify-end gap-2">
                 <button onClick={() => setAdjustTarget(null)}
-                  className="rounded-xl border border-zinc-200 px-4 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors">
+                  className="rounded-xl border border-apple-hairline px-4 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors">
                   Cancel
                 </button>
                 <button onClick={handleAdjustStock}
@@ -445,7 +445,7 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
             onClick={() => setHistoryTarget(null)}>
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-2xl max-h-[80vh] rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl overflow-y-auto">
+              className="w-full max-w-2xl max-h-[80vh] rounded-apple-lg border border-apple-hairline bg-white p-6 shadow-2xl overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-apple-ink">Stock History</h3>
@@ -477,8 +477,8 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
                           {log.quantityChange > 0 ? "+" : ""}{log.quantityChange}
                         </td>
                         <td className="px-3 py-2.5 text-xs text-apple-ink-muted-48">{log.previousStock}</td>
-                        <td className="px-3 py-2.5 text-xs font-medium text-zinc-800">{log.newStock}</td>
-                        <td className="px-3 py-2.5"><span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-apple-ink-muted-80">{log.reason.replace(/_/g, " ")}</span></td>
+                        <td className="px-3 py-2.5 text-xs font-medium text-apple-ink">{log.newStock}</td>
+                        <td className="px-3 py-2.5"><span className="rounded-md bg-apple-canvas-parchment px-1.5 py-0.5 text-[10px] font-medium text-apple-ink-muted-80">{log.reason.replace(/_/g, " ")}</span></td>
                         <td className="px-3 py-2.5 text-xs text-apple-ink-muted-48 max-w-[150px] truncate">{log.note || "—"}</td>
                       </tr>
                     ))}
@@ -553,11 +553,11 @@ function StockHistoryTab({ storeId }: { storeId: string }) {
     },
     {
       key: "previousNew", label: "Stock", hideOnMobile: true,
-      render: (log) => <span className="text-xs text-apple-ink-muted-48">{log.previousStock} → <span className="font-medium text-zinc-800">{log.newStock}</span></span>,
+      render: (log) => <span className="text-xs text-apple-ink-muted-48">{log.previousStock} → <span className="font-medium text-apple-ink">{log.newStock}</span></span>,
     },
     {
       key: "reason", label: "Reason",
-      render: (log) => <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-apple-ink-muted-80">{log.reason.replace(/_/g, " ")}</span>,
+      render: (log) => <span className="rounded-md bg-apple-canvas-parchment px-1.5 py-0.5 text-[10px] font-medium text-apple-ink-muted-80">{log.reason.replace(/_/g, " ")}</span>,
     },
     {
       key: "source", label: "Source", hideOnTablet: true,
@@ -573,7 +573,7 @@ function StockHistoryTab({ storeId }: { storeId: string }) {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <select value={reasonFilter} onChange={(e) => { setReasonFilter(e.target.value); setPage(1); }}
-          className="h-9 rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
+          className="h-9 rounded-xl border border-apple-hairline bg-white px-2.5 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
           <option value="">All Reasons</option>
           {["manual_adjust", "order_placed", "order_refunded", "order_cancelled", "import", "bulk_update", "product_edit", "variant_edit", "restock", "return", "damage", "expired", "other"].map((r) => (
             <option key={r} value={r}>{r.replace(/_/g, " ")}</option>
@@ -618,7 +618,7 @@ function AnalyticsTab({ storeId }: { storeId: string }) {
       {/* Most Sold */}
       <section>
         <h3 className="mb-3 text-sm font-semibold text-apple-ink">Most Sold (Last 30 Days)</h3>
-        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+        <div className="overflow-hidden rounded-apple-lg border border-apple-hairline bg-white">
           <table className="w-full text-sm">
             <thead className="bg-apple-canvas-parchment text-left text-[10px] uppercase text-apple-ink-muted-48">
               <tr>
@@ -633,7 +633,7 @@ function AnalyticsTab({ storeId }: { storeId: string }) {
               )}
               {analytics?.mostSold?.map((item) => (
                 <tr key={item.productId} className="border-t border-zinc-50">
-                  <td className="px-4 py-3 text-xs font-medium text-zinc-800">{item.name}</td>
+                  <td className="px-4 py-3 text-xs font-medium text-apple-ink">{item.name}</td>
                   <td className="px-4 py-3 text-xs font-semibold text-emerald-600">{item.totalSold}</td>
                   <td className="px-4 py-3 text-xs text-apple-ink-muted-48">{item.changes} adjustments</td>
                 </tr>
@@ -646,7 +646,7 @@ function AnalyticsTab({ storeId }: { storeId: string }) {
       {/* Slow Moving */}
       <section>
         <h3 className="mb-3 text-sm font-semibold text-apple-ink">Slow Moving (No sales in 90 days)</h3>
-        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+        <div className="overflow-hidden rounded-apple-lg border border-apple-hairline bg-white">
           <table className="w-full text-sm">
             <thead className="bg-apple-canvas-parchment text-left text-[10px] uppercase text-apple-ink-muted-48">
               <tr>
@@ -666,7 +666,7 @@ function AnalyticsTab({ storeId }: { storeId: string }) {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {item.imageUrl && <img src={item.imageUrl} className="h-6 w-6 rounded object-cover" />}
-                      <span className="text-xs font-medium text-zinc-800">{item.name}</span>
+                      <span className="text-xs font-medium text-apple-ink">{item.name}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-apple-ink-muted-48 font-mono">{item.sku || "—"}</td>
@@ -683,7 +683,7 @@ function AnalyticsTab({ storeId }: { storeId: string }) {
       {/* Dead Stock */}
       <section>
         <h3 className="mb-3 text-sm font-semibold text-apple-ink">Dead Stock (90 days, 0 stock)</h3>
-        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+        <div className="overflow-hidden rounded-apple-lg border border-apple-hairline bg-white">
           <table className="w-full text-sm">
             <thead className="bg-apple-canvas-parchment text-left text-[10px] uppercase text-apple-ink-muted-48">
               <tr>
@@ -703,7 +703,7 @@ function AnalyticsTab({ storeId }: { storeId: string }) {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {item.imageUrl && <img src={item.imageUrl} className="h-6 w-6 rounded object-cover" />}
-                      <span className="text-xs font-medium text-zinc-800">{item.name}</span>
+                      <span className="text-xs font-medium text-apple-ink">{item.name}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-apple-ink-muted-48 font-mono">{item.sku || "—"}</td>
@@ -728,7 +728,7 @@ function StatCard({ label, value, color = "default" }: { label: string; value: s
       "rounded-xl border p-3",
       color === "amber" && "border-amber-100 bg-amber-50",
       color === "red" && "border-red-100 bg-red-50",
-      color === "default" && "border-zinc-100"
+      color === "default" && "border-apple-divider-soft"
     )}>
       <p className={cn(
         "text-[10px] font-semibold uppercase tracking-wider",

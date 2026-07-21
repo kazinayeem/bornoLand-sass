@@ -191,14 +191,14 @@ export function PaymentSubmissionFlow({
             const isCurrent = s === step;
             return (
               <div key={s} className="flex items-center">
-                <div className={`flex items-center gap-2 ${isActive ? "text-apple-ink" : "text-zinc-300"}`}>
+                <div className={`flex items-center gap-2 ${isActive ? "text-apple-ink" : "text-apple-ink-muted-48"}`}>
                   <div
                     className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all ${
                       isCurrent
-                        ? "bg-zinc-900 text-white"
+                        ? "bg-apple-ink text-white"
                         : isActive
                         ? "bg-emerald-100 text-emerald-700"
-                        : "bg-zinc-100 text-apple-ink-muted-48"
+                        : "bg-apple-canvas-parchment text-apple-ink-muted-48"
                     }`}
                   >
                     {isActive && s !== step ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
@@ -207,7 +207,7 @@ export function PaymentSubmissionFlow({
                     {s === "payment" ? "Pay" : s}
                   </span>
                 </div>
-                {s !== "confirm" && <div className={`mx-2 h-px w-8 ${isActive ? "bg-zinc-300" : "bg-zinc-100"}`} />}
+                {s !== "confirm" && <div className={`mx-2 h-px w-8 ${isActive ? "bg-zinc-300" : "bg-apple-canvas-parchment"}`} />}
               </div>
             );
           })}
@@ -230,15 +230,15 @@ export function PaymentSubmissionFlow({
                     key={plan._id}
                     type="button"
                     onClick={() => { setSelectedPlanId(plan._id); }}
-                    className={`relative flex items-center justify-between rounded-2xl border-2 p-4 text-left transition-all ${
+                    className={`relative flex items-center justify-between rounded-apple-lg border-2 p-4 text-left transition-all ${
                       isSelected
-                        ? "border-zinc-900 bg-apple-canvas-parchment shadow-sm"
-                        : "border-zinc-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment/50"
+                        ? "border-zinc-900 bg-apple-canvas-parchment "
+                        : "border-apple-hairline hover:border-zinc-300 hover:bg-apple-canvas-parchment/50"
                     }`}
                   >
                     <div className="flex items-center gap-4">
                       <div className={`flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold ${
-                        isSelected ? "bg-zinc-900 text-white" : "bg-zinc-100 text-apple-ink-muted-80"
+                        isSelected ? "bg-apple-ink text-white" : "bg-apple-canvas-parchment text-apple-ink-muted-80"
                       }`}>
                         {plan.name.charAt(0)}
                       </div>
@@ -265,7 +265,7 @@ export function PaymentSubmissionFlow({
                 type="button"
                 onClick={() => setStep("duration")}
                 disabled={!selectedPlanId}
-                className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
               >
                 Next <ChevronRight className="h-4 w-4" />
               </button>
@@ -291,10 +291,10 @@ export function PaymentSubmissionFlow({
                     key={d}
                     type="button"
                     onClick={() => setDuration(d)}
-                    className={`relative rounded-2xl border-2 p-4 text-center transition-all ${
+                    className={`relative rounded-apple-lg border-2 p-4 text-center transition-all ${
                       isSelected
-                        ? "border-zinc-900 bg-apple-canvas-parchment shadow-sm ring-1 ring-zinc-900/10"
-                        : "border-zinc-200 hover:border-zinc-300"
+                        ? "border-zinc-900 bg-apple-canvas-parchment  ring-1 ring-zinc-900/10"
+                        : "border-apple-hairline hover:border-zinc-300"
                     }`}
                   >
                     <p className="text-sm font-semibold text-apple-ink">{DURATION_LABELS[d]}</p>
@@ -317,14 +317,14 @@ export function PaymentSubmissionFlow({
               <button
                 type="button"
                 onClick={() => setStep("plan")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
+                className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
               >
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>
               <button
                 type="button"
                 onClick={() => setStep("payment")}
-                className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white"
+                className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-5 py-2.5 text-sm font-semibold text-white"
               >
                 Next <ChevronRight className="h-4 w-4" />
               </button>
@@ -356,8 +356,8 @@ export function PaymentSubmissionFlow({
                       onClick={() => setPaymentMethod(method.type)}
                       className={`relative rounded-xl border-2 p-3 text-center transition-all ${
                         isSelected
-                          ? "border-zinc-900 bg-apple-canvas-parchment shadow-sm"
-                          : "border-zinc-200 hover:border-zinc-300"
+                          ? "border-zinc-900 bg-apple-canvas-parchment "
+                          : "border-apple-hairline hover:border-zinc-300"
                       }`}
                     >
                       <div className={`mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${METHOD_COLORS[method.type] || "from-zinc-500 to-zinc-600"} text-white`}>
@@ -372,7 +372,7 @@ export function PaymentSubmissionFlow({
 
             {/* Payment info display */}
             {selectedMethod && (
-              <div className="rounded-2xl border border-zinc-200 bg-gradient-to-br from-zinc-50 to-white p-5">
+              <div className="rounded-apple-lg border border-apple-hairline bg-gradient-to-br from-zinc-50 to-white p-5">
                 <div className="flex items-center gap-3 mb-3">
                   <ShieldCheck className="h-5 w-5 text-emerald-500" />
                   <p className="text-sm font-semibold text-apple-ink">Send payment to the following account</p>
@@ -407,7 +407,7 @@ export function PaymentSubmissionFlow({
                     </div>
                   )}
                   {selectedMethod.instructions && (
-                    <div className="mt-3 rounded-lg bg-zinc-100 p-3 text-xs text-apple-ink-muted-80">
+                    <div className="mt-3 rounded-lg bg-apple-canvas-parchment p-3 text-xs text-apple-ink-muted-80">
                       <p className="font-medium text-apple-ink-muted-80 mb-1">Instructions:</p>
                       {selectedMethod.instructions}
                     </div>
@@ -415,7 +415,7 @@ export function PaymentSubmissionFlow({
                 </div>
                 {selectedMethod.qrCodeUrl && (
                   <div className="mt-4 flex justify-center">
-                    <img src={selectedMethod.qrCodeUrl} alt="QR Code" className="h-32 w-32 rounded-xl border border-zinc-200" />
+                    <img src={selectedMethod.qrCodeUrl} alt="QR Code" className="h-32 w-32 rounded-xl border border-apple-hairline" />
                   </div>
                 )}
               </div>
@@ -429,7 +429,7 @@ export function PaymentSubmissionFlow({
                   value={senderNumber}
                   onChange={(e) => setSenderNumber(e.target.value)}
                   placeholder="01XXXXXXXXX"
-                  className="h-11 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400"
+                  className="h-11 w-full rounded-xl border border-apple-hairline px-3 text-sm outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400"
                 />
               </div>
               <div>
@@ -438,7 +438,7 @@ export function PaymentSubmissionFlow({
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
                   placeholder="e.g. A7B8C9D10"
-                  className="h-11 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400"
+                  className="h-11 w-full rounded-xl border border-apple-hairline px-3 text-sm outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400"
                 />
               </div>
             </div>
@@ -447,7 +447,7 @@ export function PaymentSubmissionFlow({
             <div>
               <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Payment Screenshot (optional)</label>
               <div
-                className="relative flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 p-6 hover:border-zinc-300 transition-colors"
+                className="relative flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-apple-hairline p-6 hover:border-zinc-300 transition-colors"
                 onClick={() => document.getElementById("screenshot-upload")?.click()}
               >
                 {screenshotPreview ? (
@@ -463,7 +463,7 @@ export function PaymentSubmissionFlow({
                   </div>
                 ) : (
                   <div className="text-center">
-                    <Upload className="mx-auto h-8 w-8 text-zinc-300" />
+                    <Upload className="mx-auto h-8 w-8 text-apple-ink-muted-48" />
                     <p className="mt-2 text-sm text-apple-ink-muted-48">Upload payment screenshot</p>
                     <p className="text-xs text-apple-ink-muted-48">PNG, JPG or JPEG</p>
                   </div>
@@ -502,13 +502,13 @@ export function PaymentSubmissionFlow({
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                     placeholder="Enter coupon code"
-                    className="h-11 flex-1 rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400"
+                    className="h-11 flex-1 rounded-xl border border-apple-hairline px-3 text-sm outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400"
                   />
                   <button
                     type="button"
                     onClick={handleApplyCoupon}
                     disabled={!couponCode.trim() || applyingCoupon}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-40 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-40 transition-colors"
                   >
                     {applyingCoupon ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Tag className="h-3.5 w-3.5" />}
                     Apply
@@ -518,7 +518,7 @@ export function PaymentSubmissionFlow({
             </div>
 
             {/* Pricing Summary */}
-            <div className="rounded-xl border border-zinc-200 bg-apple-canvas-parchment p-4 space-y-2">
+            <div className="rounded-xl border border-apple-hairline bg-apple-canvas-parchment p-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-apple-ink-muted-48">Subtotal</span>
                 <span className="text-apple-ink">{formatBDT(paymentAmount)}</span>
@@ -535,7 +535,7 @@ export function PaymentSubmissionFlow({
                   <span className="text-apple-ink">{formatBDT(taxAmount)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-base font-bold border-t border-zinc-200 pt-2">
+              <div className="flex justify-between text-base font-bold border-t border-apple-hairline pt-2">
                 <span className="text-apple-ink">Total</span>
                 <span className="text-apple-ink">{formatBDT(finalTotal)}</span>
               </div>
@@ -548,7 +548,7 @@ export function PaymentSubmissionFlow({
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
                 placeholder="Any additional reference..."
-                className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400 resize-none"
+                className="w-full rounded-xl border border-apple-hairline px-3 py-2 text-sm outline-none focus:border-zinc-400 resize-none"
               />
             </div>
 
@@ -556,7 +556,7 @@ export function PaymentSubmissionFlow({
               <button
                 type="button"
                 onClick={() => setStep("duration")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
+                className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
               >
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>
@@ -564,7 +564,7 @@ export function PaymentSubmissionFlow({
                 type="button"
                 onClick={() => setStep("confirm")}
                 disabled={!canProceedToConfirm}
-                className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
               >
                 Review <ChevronRight className="h-4 w-4" />
               </button>
@@ -579,42 +579,42 @@ export function PaymentSubmissionFlow({
               <p className="text-sm text-apple-ink-muted-48 mt-1">Review your payment details before submitting</p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment/50 p-5 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+            <div className="rounded-apple-lg border border-apple-hairline bg-apple-canvas-parchment/50 p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-apple-hairline">
                 <span className="text-sm text-apple-ink-muted-80">Plan</span>
                 <span className="text-sm font-semibold text-apple-ink">{selectedPlan?.name}</span>
               </div>
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+              <div className="flex items-center justify-between pb-3 border-b border-apple-hairline">
                 <span className="text-sm text-apple-ink-muted-80">Duration</span>
                 <span className="text-sm font-semibold text-apple-ink capitalize">{DURATION_LABELS[duration]}</span>
               </div>
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+              <div className="flex items-center justify-between pb-3 border-b border-apple-hairline">
                 <span className="text-sm text-apple-ink-muted-80">Subtotal</span>
                 <span className="text-sm text-apple-ink">{formatBDT(paymentAmount)}</span>
               </div>
               {couponApplied && (
-                <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+                <div className="flex items-center justify-between pb-3 border-b border-apple-hairline">
                   <span className="text-sm text-emerald-600">Coupon Discount</span>
                   <span className="text-sm font-medium text-emerald-600">-{formatBDT(discountAmount)}</span>
                 </div>
               )}
               {taxAmount > 0 && (
-                <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+                <div className="flex items-center justify-between pb-3 border-b border-apple-hairline">
                   <span className="text-sm text-apple-ink-muted-80">Tax</span>
                   <span className="text-sm text-apple-ink">{formatBDT(taxAmount)}</span>
                 </div>
               )}
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+              <div className="flex items-center justify-between pb-3 border-b border-apple-hairline">
                 <span className="text-sm font-semibold text-apple-ink">Total</span>
                 <span className="text-lg font-bold text-apple-ink">{formatBDT(finalTotal)}</span>
               </div>
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+              <div className="flex items-center justify-between pb-3 border-b border-apple-hairline">
                 <span className="text-sm text-apple-ink-muted-80">Payment Method</span>
-                <Badge variant="default" className="bg-white border border-zinc-200 text-apple-ink-muted-80">
+                <Badge variant="default" className="bg-white border border-apple-hairline text-apple-ink-muted-80">
                   {selectedMethod?.label || paymentMethod}
                 </Badge>
               </div>
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+              <div className="flex items-center justify-between pb-3 border-b border-apple-hairline">
                 <span className="text-sm text-apple-ink-muted-80">Sender Number</span>
                 <span className="text-sm font-mono font-medium text-apple-ink">{senderNumber}</span>
               </div>
@@ -633,7 +633,7 @@ export function PaymentSubmissionFlow({
               <button
                 type="button"
                 onClick={() => setStep("payment")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
+                className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
               >
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>
@@ -641,7 +641,7 @@ export function PaymentSubmissionFlow({
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {submitting ? "Submitting..." : "Submit Payment"}
@@ -669,7 +669,7 @@ export function PaymentSubmissionFlow({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800"
+                className="rounded-xl bg-apple-ink px-6 py-2.5 text-sm font-semibold text-white hover:bg-apple-ink-muted-80"
               >
                 Back to Billing
               </button>

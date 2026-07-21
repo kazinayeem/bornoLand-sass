@@ -14,6 +14,7 @@ import {
   Ticket,
   FileText,
   Image,
+  Mail,
   BarChart3,
   Megaphone,
   Blocks,
@@ -75,7 +76,7 @@ const mainLinks = [
   { href: "/reviews", label: "Reviews", icon: Star, featureKey: "reviews", comingSoon: true },
   { href: "/coupons", label: "Coupons", icon: Ticket, featureKey: "coupons" },
   { href: "/cms", label: "CMS", icon: FileText, featureKey: "cms" },
-  { href: "/pages", label: "Pages", icon: FileText, featureKey: "cms" },
+  { href: "/customer-messages", label: "Messages", icon: Mail, featureKey: "cms" },
   { href: "/media", label: "Media", icon: Image, featureKey: "media" },
   { href: "/builder", label: "Builder", icon: Sparkles, featureKey: "builder" },
   { href: "/theme", label: "Theme", icon: Palette },
@@ -148,7 +149,7 @@ function NavItem({
       href={fullHref}
       title={collapsed ? label : locked ? `Available in ${requiredPlan ?? "a higher plan"}` : undefined}
       className={cn(
-        "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+        "group relative flex items-center gap-3 rounded-apple-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
         active
           ? "bg-apple-canvas-parchment text-apple-primary"
           : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment hover:text-apple-ink",

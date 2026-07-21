@@ -59,14 +59,14 @@ export default function ReferrersPage() {
         </AnalyticsChartCard>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="rounded-xl border border-zinc-200 bg-white p-5">
+          className="rounded-xl border border-apple-hairline bg-white p-5">
           <h3 className="mb-3 text-sm font-semibold text-apple-ink">All Referrers</h3>
           <div className="space-y-2">
             {referrers.map((r) => (
               <div key={String(r._id)} className="flex items-center justify-between rounded-lg bg-apple-canvas-parchment p-3 text-xs">
                 <div className="flex items-center gap-2">
                   <Link2 className="h-3.5 w-3.5 text-apple-ink-muted-48" />
-                  <span className="font-medium text-zinc-800">{String(r.source)}</span>
+                  <span className="font-medium text-apple-ink">{String(r.source)}</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-apple-ink-muted-48">{String(r.visits ?? 0)} visits</span>

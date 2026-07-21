@@ -1,8 +1,10 @@
 "use client";
 
 import { StoreLink as Link } from "./store-link";
-import { ShoppingBag, Mail, MapPin, Phone, Facebook, Twitter, Instagram, Youtube } from "lucide-react";
+import { Mail, MapPin, Phone, Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
+import { useStorefrontSurface } from "./storefront-ui";
+import { cn } from "@/lib/utils";
 import type { StorefrontSectionLike } from "./storefront-types";
 
 type StoreFooterProps = {
@@ -12,12 +14,11 @@ type StoreFooterProps = {
 
 export function StoreFooter({ section, footerSections: _footerSections }: StoreFooterProps = {}) {
   const { store, theme } = useTenant();
-  const { primaryColor, font, darkMode } = theme;
-  const isDark = darkMode;
+  const { classes, primaryColor } = useStorefrontSurface();
+  const { font, darkMode } = theme;
   const footerSection = section?.props
     ? section
-    : _footerSections?.find((s) => s.type?.includes?.("footer"))
-    ?? null;
+    : _footerSections?.find((s) => s.type?.includes?.("footer")) ?? null;
   const footerProps: Record<string, string | number | boolean | null | undefined> = footerSection?.props ?? {};
 
   const bgColor = (footerProps.backgroundColor as string) || "";
@@ -27,31 +28,42 @@ export function StoreFooter({ section, footerSections: _footerSections }: StoreF
   const contactAddress = (footerProps.contactAddress as string) || "123 Commerce St, NY 10001";
 
   return (
-    <footer style={{
-      backgroundColor: bgColor || (isDark ? "#09090b" : "#fafafa"),
-      borderTop: `1px solid ${isDark ? "#27272a" : "#e4e4e7"}`,
-      fontFamily: font
-    }}>
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+    <footer
+      className={cn(!bgColor && (darkMode ? "bg-apple-surface-tile-1" : "bg-apple-canvas-parchment"))}
+      style={{
+        backgroundColor: bgColor || undefined,
+        fontFamily: font,
+      }}
+    >
+      <div className="mx-auto max-w-[1440px] px-4 py-apple-section sm:px-6 lg:px-8">
+        <div className="grid gap-apple-xl sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ backgroundColor: primaryColor }}>
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-apple-sm text-sm font-semibold text-apple-on-primary"
+                style={{ backgroundColor: primaryColor }}
+              >
                 {store.name[0]}
               </div>
-              <span className="text-lg font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{store.name}</span>
+              <span className={cn("text-tagline", classes.heading)}>{store.name}</span>
             </Link>
-            <p className="text-sm leading-relaxed" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-              {store.description || "Premium ecommerce store offering curated products with fast shipping and exceptional service."}
+            <p className={cn("text-caption leading-relaxed", classes.body)}>
+              {store.description ||
+                "Premium ecommerce store offering curated products with fast shipping and exceptional service."}
             </p>
             {showSocial && (
               <div className="flex items-center gap-2">
                 {[Facebook, Twitter, Instagram, Youtube].map((Icon, idx) => (
-                  <a key={idx} href="#"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
-                    style={{ backgroundColor: isDark ? "#18181b" : "#f4f4f5", color: isDark ? "#a1a1aa" : "#71717a" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor; e.currentTarget.style.color = "#ffffff"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = isDark ? "#18181b" : "#f4f4f5"; e.currentTarget.style.color = isDark ? "#a1a1aa" : "#71717a"; }}>
+                  <a
+                    key={idx}
+                    href="#"
+                    className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-apple-sm transition-colors",
+                      darkMode
+                        ? "bg-apple-surface-tile-2 text-apple-body-muted hover:bg-apple-primary hover:text-apple-on-primary"
+                        : "bg-apple-canvas text-apple-ink-muted-48 hover:bg-apple-primary hover:text-apple-on-primary"
+                    )}
+                  >
                     <Icon className="h-4 w-4" />
                   </a>
                 ))}
@@ -60,19 +72,20 @@ export function StoreFooter({ section, footerSections: _footerSections }: StoreF
           </div>
 
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Quick Links</h3>
-            <ul className="space-y-2.5">
+            <h3 className={cn("mb-4 text-caption-strong uppercase tracking-wider", classes.heading)}>Quick Links</h3>
+            <ul className="space-y-2">
               {[
                 { name: "Home", href: "/" },
                 { name: "Shop All", href: "/shop" },
                 { name: "Categories", href: "/categories" },
                 { name: "About", href: "/about" },
-                { name: "Contact", href: "/contact" }
+                { name: "Contact", href: "/contact" },
               ].map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-sm transition-colors" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = primaryColor}
-                    onMouseLeave={(e) => e.currentTarget.style.color = isDark ? "#a1a1aa" : "#52525b"}>
+                  <Link
+                    href={link.href}
+                    className={cn("text-body leading-[2.41] transition-colors hover:text-apple-primary", classes.body)}
+                  >
                     {link.name}
                   </Link>
                 </li>
@@ -81,19 +94,20 @@ export function StoreFooter({ section, footerSections: _footerSections }: StoreF
           </div>
 
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Support</h3>
-            <ul className="space-y-2.5">
+            <h3 className={cn("mb-4 text-caption-strong uppercase tracking-wider", classes.heading)}>Support</h3>
+            <ul className="space-y-2">
               {[
                 { name: "FAQ", href: "/faq" },
                 { name: "Shipping Info", href: "/shipping" },
                 { name: "Returns", href: "/returns" },
                 { name: "Size Guide", href: "/size-guide" },
-                { name: "Contact Us", href: "/contact" }
+                { name: "Contact Us", href: "/contact" },
               ].map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-sm transition-colors" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = primaryColor}
-                    onMouseLeave={(e) => e.currentTarget.style.color = isDark ? "#a1a1aa" : "#52525b"}>
+                  <Link
+                    href={link.href}
+                    className={cn("text-body leading-[2.41] transition-colors hover:text-apple-primary", classes.body)}
+                  >
                     {link.name}
                   </Link>
                 </li>
@@ -102,18 +116,18 @@ export function StoreFooter({ section, footerSections: _footerSections }: StoreF
           </div>
 
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Contact</h3>
+            <h3 className={cn("mb-4 text-caption-strong uppercase tracking-wider", classes.heading)}>Contact</h3>
             <ul className="space-y-3">
-              <li className="flex items-center gap-2.5 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-                <Mail className="h-4 w-4 shrink-0" style={{ color: primaryColor }} />
+              <li className={cn("flex items-center gap-2.5 text-caption", classes.body)}>
+                <Mail className="h-4 w-4 shrink-0 text-apple-primary" />
                 <span>{contactEmail}</span>
               </li>
-              <li className="flex items-center gap-2.5 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-                <Phone className="h-4 w-4 shrink-0" style={{ color: primaryColor }} />
+              <li className={cn("flex items-center gap-2.5 text-caption", classes.body)}>
+                <Phone className="h-4 w-4 shrink-0 text-apple-primary" />
                 <span>{contactPhone}</span>
               </li>
-              <li className="flex items-center gap-2.5 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-                <MapPin className="h-4 w-4 shrink-0" style={{ color: primaryColor }} />
+              <li className={cn("flex items-center gap-2.5 text-caption", classes.body)}>
+                <MapPin className="h-4 w-4 shrink-0 text-apple-primary" />
                 <span>{contactAddress}</span>
               </li>
             </ul>
@@ -121,15 +135,21 @@ export function StoreFooter({ section, footerSections: _footerSections }: StoreF
         </div>
       </div>
 
-      <div className="border-t py-6" style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", backgroundColor: isDark ? "#000000" : "#ffffff" }}>
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
-          <p className="text-xs" style={{ color: isDark ? "#52525b" : "#a1a1aa" }}>
+      <div className={cn("border-t py-6", classes.divider, darkMode ? "bg-apple-surface-black" : "bg-apple-canvas")}>
+        <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8">
+          <p className="text-fine-print text-apple-ink-muted-48">
             {footerProps.copyright ?? `© ${new Date().getFullYear()} ${store.name}. All rights reserved.`}
           </p>
-          <div className="flex items-center gap-4 text-xs" style={{ color: isDark ? "#52525b" : "#a1a1aa" }}>
-            <Link href="/privacy">Privacy Policy</Link>
-            <Link href="/terms">Terms of Service</Link>
-            <Link href="/contact">Contact</Link>
+          <div className="flex items-center gap-4 text-fine-print text-apple-ink-muted-48">
+            <Link href="/privacy" className="hover:text-apple-primary">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-apple-primary">
+              Terms of Service
+            </Link>
+            <Link href="/contact" className="hover:text-apple-primary">
+              Contact
+            </Link>
           </div>
         </div>
       </div>

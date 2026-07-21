@@ -51,11 +51,11 @@ export default function ReportsPage() {
         <p className="text-sm text-apple-ink-muted-48">Generate and export analytics reports</p>
       </div>
 
-      <div className="flex items-center gap-1 rounded-2xl border border-zinc-200 bg-white p-1 w-fit flex-wrap">
+      <div className="flex items-center gap-1 rounded-apple-lg border border-apple-hairline bg-white p-1 w-fit flex-wrap">
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition-all ${
-              tab === t.id ? "bg-zinc-900 text-white shadow-sm" : "text-apple-ink-muted-48 hover:text-zinc-800"
+              tab === t.id ? "bg-apple-ink text-white " : "text-apple-ink-muted-48 hover:text-apple-ink"
             }`}>
             {t.label}
           </button>
@@ -67,7 +67,7 @@ export default function ReportsPage() {
         {["24h", "7d", "30d", "90d", "1y"].map((d) => (
           <button key={d} onClick={() => setDateRange(d)}
             className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-              dateRange === d ? "bg-zinc-900 text-white" : "bg-zinc-100 text-apple-ink-muted-80 hover:bg-zinc-200"
+              dateRange === d ? "bg-apple-ink text-white" : "bg-apple-canvas-parchment text-apple-ink-muted-80 hover:bg-zinc-200"
             }`}>
             {d === "24h" ? "Today" : d === "7d" ? "7 Days" : d === "30d" ? "30 Days" : d === "90d" ? "90 Days" : "1 Year"}
           </button>
@@ -76,11 +76,11 @@ export default function ReportsPage() {
 
       {tab === "visitors" && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-zinc-200 bg-white p-6">
+          className="rounded-apple-lg border border-apple-hairline bg-white p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-apple-ink">Visitor Report</h3>
             <button onClick={() => { exportCSV("visitors", ["Metric", "Value"], Object.entries(stats ?? {}).map(([k, v]) => [k, String(v)])); toast.success("Report exported"); }}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
+              className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
               <FileDown className="h-3.5 w-3.5" /> CSV
             </button>
           </div>
@@ -95,7 +95,7 @@ export default function ReportsPage() {
               { label: "Bounce Rate", value: `${String(stats?.bounceRate ?? 0)}%` },
               { label: "Avg Session", value: formatDuration(Number(stats?.avgSessionDuration ?? 0)) },
             ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-zinc-100 bg-apple-canvas-parchment p-3">
+              <div key={item.label} className="rounded-xl border border-apple-divider-soft bg-apple-canvas-parchment p-3">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">{item.label}</p>
                 <p className="mt-0.5 text-lg font-bold text-apple-ink">{item.value}</p>
               </div>
@@ -106,11 +106,11 @@ export default function ReportsPage() {
 
       {tab === "traffic" && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-zinc-200 bg-white">
-          <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-3">
+          className="rounded-apple-lg border border-apple-hairline bg-white">
+          <div className="flex items-center justify-between border-b border-apple-divider-soft px-6 py-3">
             <h3 className="text-sm font-semibold text-apple-ink">Traffic Sources Report</h3>
             <button onClick={() => { exportCSV("traffic-sources", ["Source", "Type", "Visits", "Unique", "Page Views"], sources.map((s) => [String(s.source), String(s.type), String(s.visits ?? 0), String(s.uniqueVisitors ?? 0), String(s.pageViews ?? 0)])); toast.success("Report exported"); }}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
+              className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
               <FileDown className="h-3.5 w-3.5" /> CSV
             </button>
           </div>
@@ -128,7 +128,7 @@ export default function ReportsPage() {
               <tbody className="divide-y divide-zinc-50">
                 {sources.map((s) => (
                   <tr key={String(s._id)} className="hover:bg-apple-canvas-parchment/50">
-                    <td className="px-3 py-2.5 text-xs font-medium text-zinc-800">{String(s.source)}</td>
+                    <td className="px-3 py-2.5 text-xs font-medium text-apple-ink">{String(s.source)}</td>
                     <td className="px-3 py-2.5 text-xs capitalize text-apple-ink-muted-48">{String(s.type)}</td>
                     <td className="px-3 py-2.5 text-xs text-apple-ink-muted-80">{String(s.visits ?? 0)}</td>
                     <td className="px-3 py-2.5 text-xs text-apple-ink-muted-48">{String(s.uniqueVisitors ?? 0)}</td>
@@ -150,11 +150,11 @@ export default function ReportsPage() {
             { title: "Operating Systems", key: "operatingSystems", data: (devices?.operatingSystems as Array<Record<string, unknown>>) ?? [] },
             { title: "Countries", key: "countries", data: (devices?.countries as Array<Record<string, unknown>>) ?? [] },
           ].map((section) => (
-            <div key={section.key} className="rounded-2xl border border-zinc-200 bg-white p-5">
+            <div key={section.key} className="rounded-apple-lg border border-apple-hairline bg-white p-5">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-apple-ink">{section.title}</h3>
                 <button onClick={() => { exportCSV(section.key.toLowerCase(), ["Name", "Percentage"], section.data.map((d) => [String(d.name ?? d.code ?? ""), String(d.percentage ?? "0")])); toast.success("Report exported"); }}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-apple-hairline px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                   <Download className="h-3 w-3" /> CSV
                 </button>
               </div>
@@ -165,7 +165,7 @@ export default function ReportsPage() {
                       <span className="text-apple-ink-muted-80">{String(d.name ?? d.code ?? "—")}</span>
                       <span className="text-apple-ink-muted-48">{String(d.percentage ?? "0")}%</span>
                     </div>
-                    <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
+                    <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-apple-canvas-parchment">
                       <div className="h-full rounded-full bg-blue-500" style={{ width: `${String(d.percentage ?? 0)}%` }} />
                     </div>
                   </div>
@@ -180,11 +180,11 @@ export default function ReportsPage() {
       {tab === "content" && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           className="space-y-4">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+          <div className="rounded-apple-lg border border-apple-hairline bg-white p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-apple-ink">Top Products</h3>
               <button onClick={() => { exportCSV("top-products", ["Product", "Views"], ((topContent?.topProducts ?? []) as Array<Record<string, unknown>>).map((p) => [String(p.name ?? ""), String(p.views ?? "0")])); toast.success("Report exported"); }}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
+                className="inline-flex items-center gap-1.5 rounded-lg border border-apple-hairline px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                 <Download className="h-3 w-3" /> CSV
               </button>
             </div>
@@ -198,11 +198,11 @@ export default function ReportsPage() {
               {((topContent?.topProducts ?? []) as Array<Record<string, unknown>>).length === 0 && <p className="text-xs text-apple-ink-muted-48">No data</p>}
             </div>
           </div>
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+          <div className="rounded-apple-lg border border-apple-hairline bg-white p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-apple-ink">Top Categories</h3>
               <button onClick={() => { exportCSV("top-categories", ["Category", "Views"], ((topContent?.topCategories ?? []) as Array<Record<string, unknown>>).map((c) => [String(c.name ?? ""), String(c.views ?? "0")])); toast.success("Report exported"); }}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
+                className="inline-flex items-center gap-1.5 rounded-lg border border-apple-hairline px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                 <Download className="h-3 w-3" /> CSV
               </button>
             </div>
@@ -221,11 +221,11 @@ export default function ReportsPage() {
 
       {tab === "conversion" && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-zinc-200 bg-white p-6">
+          className="rounded-apple-lg border border-apple-hairline bg-white p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-apple-ink">Conversion Report</h3>
             <button onClick={() => { exportCSV("conversion", ["Metric", "Value"], Object.entries(conversion ?? {}).map(([k, v]) => [k, String(v)])); toast.success("Report exported"); }}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
+              className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
               <FileDown className="h-3.5 w-3.5" /> CSV
             </button>
           </div>
@@ -240,7 +240,7 @@ export default function ReportsPage() {
               { label: "Homepage Views", value: String(conversion?.homepageViews ?? 0) },
               { label: "Product Views", value: String(conversion?.productViews ?? 0) },
             ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-zinc-100 bg-apple-canvas-parchment p-3">
+              <div key={item.label} className="rounded-xl border border-apple-divider-soft bg-apple-canvas-parchment p-3">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">{item.label}</p>
                 <p className="mt-0.5 text-lg font-bold text-apple-ink">{item.value}</p>
               </div>
@@ -252,7 +252,7 @@ export default function ReportsPage() {
       {tab === "export" && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           className="space-y-4">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+          <div className="rounded-apple-lg border border-apple-hairline bg-white p-6">
             <h3 className="text-sm font-semibold text-apple-ink mb-4">Export All Data</h3>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[
@@ -271,8 +271,8 @@ export default function ReportsPage() {
                     toast.success("Report exported");
                   }
                 }}
-                  className="flex items-start gap-3 rounded-xl border border-zinc-200 p-4 text-left transition-all hover:border-blue-200 hover:bg-blue-50/50">
-                  <div className="rounded-lg bg-zinc-100 p-2 text-apple-ink-muted-80">
+                  className="flex items-start gap-3 rounded-xl border border-apple-hairline p-4 text-left transition-all hover:border-blue-200 hover:bg-blue-50/50">
+                  <div className="rounded-lg bg-apple-canvas-parchment p-2 text-apple-ink-muted-80">
                     <exportItem.icon className="h-4 w-4" />
                   </div>
                   <div>

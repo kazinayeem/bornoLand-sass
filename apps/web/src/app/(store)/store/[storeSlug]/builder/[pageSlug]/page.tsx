@@ -1,16 +1,15 @@
-import dynamic from "next/dynamic";
+import { redirect } from "next/navigation";
 
-const BuilderEditor = dynamic(
-  () => import("@/components/builder/builder-editor").then((module) => module.BuilderEditor),
-  {
-    loading: () => (
-      <div className="flex h-screen items-center justify-center bg-apple-canvas-parchment">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900" />
-      </div>
-    ),
-  },
-);
+type BuilderPageSlugProps = {
+  params: Promise<{ storeSlug: string; pageSlug: string }>;
+};
 
-export default function StoreBuilderPageEditor() {
-  return <BuilderEditor />;
+export default async function BuilderPageSlugRedirect({ params }: BuilderPageSlugProps) {
+  const { storeSlug, pageSlug } = await params;
+  if (pageSlug !== "home") {
+    redirect(`/store/${storeSlug}/builder/home`);
+  }
+
+  const { default: BuilderEditorPage } = await import("./editor-client");
+  return <BuilderEditorPage />;
 }

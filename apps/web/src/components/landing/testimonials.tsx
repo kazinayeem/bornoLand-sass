@@ -84,11 +84,11 @@ export function Testimonials() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -40 }}
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                className="relative rounded-[2rem] border border-zinc-200/60 bg-white p-6 sm:p-8 shadow-lg"
+                className="relative rounded-lg border border-apple-hairline bg-apple-canvas p-6 sm:p-8"
               >
                 <Quote className="absolute right-6 top-6 h-10 w-10 text-blue-100" />
                 <div className="flex items-center gap-3 mb-4">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-full ${t.color} text-sm font-bold text-white shadow-md`}>
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-full ${t.color} text-sm font-bold text-white`}>
                     {t.avatar}
                   </div>
                   <div>
@@ -106,7 +106,7 @@ export function Testimonials() {
             </AnimatePresence>
 
             <div className="mt-5 flex items-center justify-center gap-3">
-              <button onClick={prev} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
+              <button onClick={prev} className="flex h-8 w-8 items-center justify-center rounded-full border border-apple-hairline text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <div className="flex gap-1.5">
@@ -120,7 +120,7 @@ export function Testimonials() {
                   />
                 ))}
               </div>
-              <button onClick={next} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
+              <button onClick={next} className="flex h-8 w-8 items-center justify-center rounded-full border border-apple-hairline text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>

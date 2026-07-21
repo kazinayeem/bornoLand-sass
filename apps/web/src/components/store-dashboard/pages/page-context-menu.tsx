@@ -66,15 +66,15 @@ export function PageContextMenu({ page, x, y, onClose, onAction }: Props) {
       ref={ref}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="fixed z-[100] w-52 rounded-xl border border-zinc-200 bg-white py-1 shadow-xl"
+      className="fixed z-[100] w-52 rounded-xl border border-apple-hairline bg-white py-1 shadow-xl"
       style={{ left: menuX, top: menuY }}
     >
-      <div className="px-3 py-2 border-b border-zinc-100">
+      <div className="px-3 py-2 border-b border-apple-divider-soft">
         <p className="text-xs font-semibold text-apple-ink truncate">{page.title}</p>
         <p className="text-[10px] text-apple-ink-muted-48 truncate">{page.slug}</p>
       </div>
       {items.map((item) => {
-        if (item.divider) return <div key={item.action} className="my-1 border-t border-zinc-100" />;
+        if (item.divider) return <div key={item.action} className="my-1 border-t border-apple-divider-soft" />;
         const Icon = item.icon;
         return (
           <button

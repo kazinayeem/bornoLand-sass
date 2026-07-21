@@ -18,41 +18,34 @@ const tabs = [
   { id: "theme", label: "Theme Editor", icon: Palette },
 ];
 
-const previewContent: Record<string, { title: string; description: string; color: string }> = {
+const previewContent: Record<string, { title: string; description: string }> = {
   dashboard: {
     title: "Dashboard Overview",
     description: "At-a-glance view of revenue, orders, products, and customer activity for your entire store.",
-    color: "from-blue-500 to-indigo-600",
   },
   products: {
     title: "Product Management",
     description: "Add, edit, organize products with variants, categories, SEO metadata, and bulk operations.",
-    color: "from-violet-500 to-purple-600",
   },
   orders: {
     title: "Order Management",
     description: "Track every order from placement to delivery with status updates, invoices, and notifications.",
-    color: "from-emerald-500 to-teal-600",
   },
   analytics: {
     title: "Analytics Dashboard",
     description: "Deep insights into revenue trends, conversion rates, top-performing products, and customer behavior.",
-    color: "from-amber-500 to-orange-600",
   },
   customers: {
     title: "Customer Profiles",
     description: "View purchase history, order preferences, and engagement data for every customer.",
-    color: "from-rose-500 to-pink-600",
   },
   builder: {
     title: "Drag & Drop Builder",
     description: "Visually build your store pages with sections, blocks, and live preview — no code needed.",
-    color: "from-cyan-500 to-blue-600",
   },
   theme: {
     title: "Theme Customization",
     description: "Full control over colors, typography, layout width, button styles, and dark mode.",
-    color: "from-indigo-500 to-violet-600",
   },
 };
 
@@ -76,15 +69,14 @@ export function DashboardShowcase() {
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="mt-10"
         >
-          {/* Tabs */}
-          <div className="mb-6 flex flex-wrap gap-1.5 rounded-2xl border border-zinc-200/60 bg-apple-canvas-parchment/50 p-1.5">
+          <div className="mb-6 flex flex-wrap gap-1.5 rounded-lg border border-apple-hairline bg-apple-canvas-parchment/50 p-1.5">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-medium transition-all ${
                   activeTab === tab.id
-                    ? "bg-white text-apple-ink shadow-sm"
+                    ? "bg-apple-canvas text-apple-ink"
                     : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
                 }`}
               >
@@ -94,10 +86,9 @@ export function DashboardShowcase() {
             ))}
           </div>
 
-          {/* Preview Card */}
-          <div className="overflow-hidden rounded-[2rem] border border-zinc-200/60 bg-white shadow-lg">
-            <div className={`h-48 bg-gradient-to-br ${content.color} sm:h-64 lg:h-80 flex items-end p-6 sm:p-8`}>
-              <div className="max-w-xl rounded-2xl bg-white/20 p-5 backdrop-blur-md">
+          <div className="overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas">
+            <div className="flex h-48 items-end bg-apple-primary p-6 sm:h-64 sm:p-8 lg:h-80">
+              <div className="max-w-xl rounded-lg bg-white/20 p-5 backdrop-blur-md">
                 <h3 className="text-xl font-bold text-white sm:text-2xl">{content.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-white/80">{content.description}</p>
               </div>
@@ -105,20 +96,15 @@ export function DashboardShowcase() {
 
             <div className="grid grid-cols-2 gap-4 p-5 sm:grid-cols-4 sm:p-6">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="rounded-xl border border-zinc-100 bg-apple-canvas-parchment/50 p-3">
+                <div key={i} className="rounded-xl border border-apple-divider-soft bg-apple-canvas-parchment/50 p-3">
                   <div className="mb-2 h-2 w-16 rounded-full bg-zinc-200" />
-                  <div className="h-4 w-20 rounded-md bg-zinc-100" />
+                  <div className="h-4 w-20 rounded-md bg-apple-canvas-parchment" />
                   <div className="mt-2 flex gap-1">
                     {[60, 75, 50, 85].map((h, j) => (
                       <div
                         key={j}
-                        className="h-6 flex-1 rounded-sm"
-                        style={{
-                          background: `linear-gradient(180deg, ${
-                            ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b"][i]
-                          }33, ${["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b"][i]}88)`,
-                          height: `${h}%`,
-                        }}
+                        className="h-6 flex-1 rounded-sm bg-blue-500/40"
+                        style={{ height: `${h}%` }}
                       />
                     ))}
                   </div>

@@ -14,7 +14,7 @@ export function StatCard({ label, value, icon: Icon, trend, className, iconClass
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas p-5 transition-colors duration-200 hover:border-apple-hairline",
+        "group relative overflow-hidden rounded-apple-lg border border-apple-hairline bg-apple-canvas p-5 transition-colors duration-200 hover:border-apple-primary/20",
         className
       )}
     >
@@ -26,7 +26,7 @@ export function StatCard({ label, value, icon: Icon, trend, className, iconClass
         </div>
         <div
           className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-apple-canvas-parchment text-apple-ink-muted-80 transition-colors group-hover:bg-zinc-950 group-hover:text-white",
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-apple-canvas-parchment text-apple-ink-muted-80 transition-colors group-hover:bg-apple-surface-black group-hover:text-white",
             iconClassName
           )}
         >

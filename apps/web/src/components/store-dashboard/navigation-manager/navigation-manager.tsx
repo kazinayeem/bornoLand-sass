@@ -231,8 +231,8 @@ export function NavigationManager({ storeId }: Props) {
 
   if (navigations.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-16 text-center shadow-sm">
-        <Menu className="mx-auto h-12 w-12 text-zinc-300" />
+      <div className="rounded-apple-lg border border-dashed border-zinc-300 bg-white p-16 text-center ">
+        <Menu className="mx-auto h-12 w-12 text-apple-ink-muted-48" />
         <h3 className="mt-4 text-lg font-semibold text-apple-ink">No navigations configured</h3>
         <p className="mt-1 text-sm text-apple-ink-muted-48">Navigations will be created automatically.</p>
       </div>
@@ -251,8 +251,8 @@ export function NavigationManager({ storeId }: Props) {
           className={cn(
             "inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition-colors",
             showAvailablePages
-              ? "border-zinc-900 bg-zinc-900 text-white"
-              : "border-zinc-200 text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+              ? "border-zinc-900 bg-apple-ink text-white"
+              : "border-apple-hairline text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
           )}
         >
           <Layers className="h-3.5 w-3.5" />
@@ -264,7 +264,7 @@ export function NavigationManager({ storeId }: Props) {
         {/* Main Content */}
         <div className="min-w-0 flex-1">
           {/* Nav Tabs */}
-          <div className="flex gap-1.5 overflow-x-auto border-b border-zinc-200 pb-px">
+          <div className="flex gap-1.5 overflow-x-auto border-b border-apple-hairline pb-px">
             {navigations.map((nav) => {
               const Icon = NAV_ICONS[nav.key] ?? Menu;
               const isActive = activeNav?._id === nav._id;
@@ -281,23 +281,23 @@ export function NavigationManager({ storeId }: Props) {
                 >
                   <Icon className="h-3.5 w-3.5" />
                   {nav.label}
-                  {!nav.isActive && <EyeOff className="h-3 w-3 text-zinc-300" />}
+                  {!nav.isActive && <EyeOff className="h-3 w-3 text-apple-ink-muted-48" />}
                 </button>
               );
             })}
           </div>
 
           {activeNav && (
-            <div className="mt-4 rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <div className="mt-4 rounded-apple-lg border border-apple-hairline bg-white ">
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
+              <div className="flex items-center justify-between border-b border-apple-divider-soft px-5 py-3">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-semibold text-apple-ink">{activeNav.label}</h3>
                   <span className={cn(
                     "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
                     activeNav.isActive
                       ? "bg-emerald-50 text-emerald-700"
-                      : "bg-zinc-100 text-apple-ink-muted-48"
+                      : "bg-apple-canvas-parchment text-apple-ink-muted-48"
                   )}>
                     {activeNav.isActive ? "Active" : "Hidden"}
                   </span>
@@ -308,7 +308,7 @@ export function NavigationManager({ storeId }: Props) {
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => handleToggleNav(activeNav)}
-                    className="rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                    className="rounded-lg border border-apple-hairline px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
                   >
                     {activeNav.isActive ? "Hide" : "Show"}
                   </button>
@@ -317,15 +317,15 @@ export function NavigationManager({ storeId }: Props) {
                     className={cn(
                       "rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors",
                       bulkMode
-                        ? "border-zinc-900 bg-zinc-900 text-white"
-                        : "border-zinc-200 text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                        ? "border-zinc-900 bg-apple-ink text-white"
+                        : "border-apple-hairline text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
                     )}
                   >
                     {bulkMode ? "Done" : "Select"}
                   </button>
                   <button
                     onClick={() => setShowAddItem(true)}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-zinc-800"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-apple-ink px-3 py-1.5 text-[11px] font-medium text-white hover:bg-apple-ink-muted-80"
                   >
                     <Plus className="h-3 w-3" />
                     Add Item
@@ -334,7 +334,7 @@ export function NavigationManager({ storeId }: Props) {
               </div>
 
               {/* Search + Filter */}
-              <div className="flex items-center gap-2 border-b border-zinc-100 px-5 py-2.5">
+              <div className="flex items-center gap-2 border-b border-apple-divider-soft px-5 py-2.5">
                 <div className="relative flex-1">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-apple-ink-muted-48" />
                   <input
@@ -342,7 +342,7 @@ export function NavigationManager({ storeId }: Props) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search items..."
-                    className="w-full rounded-lg border border-zinc-200 py-1.5 pl-8 pr-3 text-xs text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                    className="w-full rounded-lg border border-apple-hairline py-1.5 pl-8 pr-3 text-xs text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
                   />
                   {searchQuery && (
                     <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -350,14 +350,14 @@ export function NavigationManager({ storeId }: Props) {
                     </button>
                   )}
                 </div>
-                <div className="flex rounded-lg border border-zinc-200 overflow-hidden">
+                <div className="flex rounded-lg border border-apple-hairline overflow-hidden">
                   {(["all", "active", "hidden"] as const).map((mode) => (
                     <button
                       key={mode}
                       onClick={() => setFilterMode(mode)}
                       className={cn(
                         "px-2.5 py-1.5 text-[10px] font-medium",
-                        filterMode === mode ? "bg-zinc-100 text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
+                        filterMode === mode ? "bg-apple-canvas-parchment text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
                       )}
                     >
                       {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -368,7 +368,7 @@ export function NavigationManager({ storeId }: Props) {
 
               {/* Bulk actions bar */}
               {bulkMode && selectedIds.size > 0 && (
-                <div className="flex items-center gap-2 border-b border-zinc-100 bg-apple-canvas-parchment px-5 py-2">
+                <div className="flex items-center gap-2 border-b border-apple-divider-soft bg-apple-canvas-parchment px-5 py-2">
                   <span className="text-xs font-medium text-apple-ink-muted-80">
                     {selectedIds.size} selected
                   </span>
@@ -400,7 +400,7 @@ export function NavigationManager({ storeId }: Props) {
                     <div className="p-3 space-y-0.5">
                       {filteredItems.length === 0 && searchQuery ? (
                         <div className="p-8 text-center">
-                          <Search className="mx-auto h-6 w-6 text-zinc-300" />
+                          <Search className="mx-auto h-6 w-6 text-apple-ink-muted-48" />
                           <p className="mt-2 text-sm text-apple-ink-muted-48">No items match &ldquo;{searchQuery}&rdquo;</p>
                         </div>
                       ) : (
@@ -422,11 +422,11 @@ export function NavigationManager({ storeId }: Props) {
                 </DndContext>
               ) : (
                 <div className="p-12 text-center">
-                  <Link className="mx-auto h-8 w-8 text-zinc-300" />
+                  <Link className="mx-auto h-8 w-8 text-apple-ink-muted-48" />
                   <p className="mt-2 text-sm text-apple-ink-muted-48">No menu items yet</p>
                   <button
                     onClick={() => setShowAddItem(true)}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-2 text-xs font-medium text-white hover:bg-zinc-800"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-apple-ink px-4 py-2 text-xs font-medium text-white hover:bg-apple-ink-muted-80"
                   >
                     <Plus className="h-3 w-3" />
                     Add your first item
@@ -441,7 +441,7 @@ export function NavigationManager({ storeId }: Props) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"
+              className="mt-4 rounded-apple-lg border border-apple-hairline bg-white p-5 "
             >
               <h3 className="text-sm font-semibold text-apple-ink mb-4">Add Menu Item</h3>
               <div className="space-y-3">
@@ -452,7 +452,7 @@ export function NavigationManager({ storeId }: Props) {
                     value={newItem.title}
                     onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
                     placeholder="Home"
-                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                    className="w-full rounded-lg border border-apple-hairline px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
                     autoFocus
                   />
                 </div>
@@ -463,7 +463,7 @@ export function NavigationManager({ storeId }: Props) {
                     value={newItem.link}
                     onChange={(e) => setNewItem({ ...newItem, link: e.target.value })}
                     placeholder="/"
-                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                    className="w-full rounded-lg border border-apple-hairline px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
                   />
                 </div>
                 <div>
@@ -471,7 +471,7 @@ export function NavigationManager({ storeId }: Props) {
                   <select
                     value={newItem.linkType}
                     onChange={(e) => setNewItem({ ...newItem, linkType: e.target.value })}
-                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                    className="w-full rounded-lg border border-apple-hairline px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
                   >
                     {LINK_TYPES.map((t) => (
                       <option key={t.value} value={t.value}>{t.label}</option>
@@ -482,14 +482,14 @@ export function NavigationManager({ storeId }: Props) {
               <div className="mt-4 flex items-center justify-end gap-2">
                 <button
                   onClick={() => { setShowAddItem(false); setNewItem({ title: "", link: "", linkType: "custom" }); }}
-                  className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                  className="rounded-lg border border-apple-hairline px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAddItem}
                   disabled={!newItem.title.trim()}
-                  className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+                  className="rounded-lg bg-apple-ink px-3 py-1.5 text-xs font-medium text-white hover:bg-apple-ink-muted-80 disabled:opacity-50"
                 >
                   Add Item
                 </button>
@@ -514,8 +514,8 @@ export function NavigationManager({ storeId }: Props) {
             animate={{ opacity: 1, x: 0 }}
             className="w-72 shrink-0"
           >
-            <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
-              <div className="border-b border-zinc-100 px-4 py-3">
+            <div className="rounded-apple-lg border border-apple-hairline bg-white ">
+              <div className="border-b border-apple-divider-soft px-4 py-3">
                 <h3 className="text-xs font-semibold text-apple-ink flex items-center gap-2">
                   <Layers className="h-3.5 w-3.5" />
                   Available Pages
@@ -527,7 +527,7 @@ export function NavigationManager({ storeId }: Props) {
               <div className="max-h-[500px] overflow-y-auto p-2 space-y-0.5">
                 {availablePages.length === 0 ? (
                   <div className="p-4 text-center">
-                    <FileText className="mx-auto h-6 w-6 text-zinc-300" />
+                    <FileText className="mx-auto h-6 w-6 text-apple-ink-muted-48" />
                     <p className="mt-1 text-xs text-apple-ink-muted-48">No pages available</p>
                   </div>
                 ) : (
@@ -544,7 +544,7 @@ export function NavigationManager({ storeId }: Props) {
                         </p>
                         <p className="text-[10px] text-apple-ink-muted-48 truncate">{page.slug}</p>
                       </div>
-                      <Plus className="h-3 w-3 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <Plus className="h-3 w-3 text-apple-ink-muted-48 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </button>
                   ))
                 )}
@@ -591,7 +591,7 @@ function SortableMenuItemRow({
       <div
         className={cn(
           "group flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors",
-          isSelected ? "bg-zinc-100" : "hover:bg-apple-canvas-parchment"
+          isSelected ? "bg-apple-canvas-parchment" : "hover:bg-apple-canvas-parchment"
         )}
         style={{ paddingLeft: `${8 + depth * 20}px` }}
       >
@@ -600,7 +600,7 @@ function SortableMenuItemRow({
             onClick={onToggleSelect}
             className={cn(
               "flex h-4 w-4 items-center justify-center rounded border transition-colors",
-              isSelected ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300"
+              isSelected ? "border-zinc-900 bg-apple-ink text-white" : "border-zinc-300"
             )}
           >
             {isSelected && <Check className="h-3 w-3" />}
@@ -609,7 +609,7 @@ function SortableMenuItemRow({
           <button
             {...attributes}
             {...listeners}
-            className="flex h-5 w-5 items-center justify-center text-zinc-300 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity hover:text-apple-ink-muted-48"
+            className="flex h-5 w-5 items-center justify-center text-apple-ink-muted-48 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity hover:text-apple-ink-muted-48"
           >
             <GripVertical className="h-3.5 w-3.5" />
           </button>
@@ -621,7 +621,7 @@ function SortableMenuItemRow({
         ) : (
           <div className="w-4" />
         )}
-        <div className="flex h-5 w-5 items-center justify-center rounded bg-zinc-100 shrink-0">
+        <div className="flex h-5 w-5 items-center justify-center rounded bg-apple-canvas-parchment shrink-0">
           <FileText className="h-2.5 w-2.5 text-apple-ink-muted-48" />
         </div>
         <span className="flex-1 text-sm font-medium text-apple-ink truncate min-w-0">{item.title}</span>
@@ -634,7 +634,7 @@ function SortableMenuItemRow({
             </span>
           )}
           {item.openInNewTab && (
-            <span className="text-zinc-300" title="Opens in new tab">
+            <span className="text-apple-ink-muted-48" title="Opens in new tab">
               <ExternalLink className="h-2.5 w-2.5" />
             </span>
           )}
@@ -644,7 +644,7 @@ function SortableMenuItemRow({
             </span>
           )}
           {item.badge && (
-            <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[9px] font-medium text-apple-ink-muted-80">
+            <span className="rounded-full bg-apple-canvas-parchment px-1.5 py-0.5 text-[9px] font-medium text-apple-ink-muted-80">
               {item.badge}
             </span>
           )}
@@ -736,7 +736,7 @@ function EditMenuItemModal({
     }
   };
 
-  const inputClass = "w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400";
+  const inputClass = "w-full rounded-lg border border-apple-hairline px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400";
   const labelClass = "block text-xs font-medium text-apple-ink-muted-48 mb-1";
 
   return (
@@ -749,7 +749,7 @@ function EditMenuItemModal({
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-lg rounded-apple-lg border border-apple-hairline bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold text-apple-ink">Edit Menu Item</h2>
@@ -796,30 +796,30 @@ function EditMenuItemModal({
             <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={inputClass} />
           </div>
 
-          <div className="space-y-3 border-t border-zinc-100 pt-3">
+          <div className="space-y-3 border-t border-apple-divider-soft pt-3">
             <p className="text-xs font-semibold text-apple-ink-muted-48 uppercase tracking-wider">Visibility & Behavior</p>
             <div className="grid grid-cols-2 gap-2">
-              <label className="flex items-center gap-2.5 rounded-lg border border-zinc-100 p-2.5 hover:bg-apple-canvas-parchment cursor-pointer">
+              <label className="flex items-center gap-2.5 rounded-lg border border-apple-divider-soft p-2.5 hover:bg-apple-canvas-parchment cursor-pointer">
                 <input type="checkbox" checked={form.openInNewTab} onChange={(e) => setForm({ ...form, openInNewTab: e.target.checked })} className="h-4 w-4 rounded border-zinc-300 text-apple-ink focus:ring-zinc-900" />
                 <span className="text-xs text-apple-ink-muted-80">Open in new tab</span>
               </label>
-              <label className="flex items-center gap-2.5 rounded-lg border border-zinc-100 p-2.5 hover:bg-apple-canvas-parchment cursor-pointer">
+              <label className="flex items-center gap-2.5 rounded-lg border border-apple-divider-soft p-2.5 hover:bg-apple-canvas-parchment cursor-pointer">
                 <input type="checkbox" checked={form.noFollow} onChange={(e) => setForm({ ...form, noFollow: e.target.checked })} className="h-4 w-4 rounded border-zinc-300 text-apple-ink focus:ring-zinc-900" />
                 <span className="text-xs text-apple-ink-muted-80">NoFollow</span>
               </label>
-              <label className="flex items-center gap-2.5 rounded-lg border border-zinc-100 p-2.5 hover:bg-apple-canvas-parchment cursor-pointer">
+              <label className="flex items-center gap-2.5 rounded-lg border border-apple-divider-soft p-2.5 hover:bg-apple-canvas-parchment cursor-pointer">
                 <input type="checkbox" checked={form.isVisible} onChange={(e) => setForm({ ...form, isVisible: e.target.checked })} className="h-4 w-4 rounded border-zinc-300 text-apple-ink focus:ring-zinc-900" />
                 <span className="text-xs text-apple-ink-muted-80">Visible</span>
               </label>
-              <label className="flex items-center gap-2.5 rounded-lg border border-zinc-100 p-2.5 hover:bg-apple-canvas-parchment cursor-pointer">
+              <label className="flex items-center gap-2.5 rounded-lg border border-apple-divider-soft p-2.5 hover:bg-apple-canvas-parchment cursor-pointer">
                 <input type="checkbox" checked={form.authRequired} onChange={(e) => setForm({ ...form, authRequired: e.target.checked })} className="h-4 w-4 rounded border-zinc-300 text-apple-ink focus:ring-zinc-900" />
                 <span className="text-xs text-apple-ink-muted-80">Auth required</span>
               </label>
-              <label className="flex items-center gap-2.5 rounded-lg border border-zinc-100 p-2.5 hover:bg-apple-canvas-parchment cursor-pointer">
+              <label className="flex items-center gap-2.5 rounded-lg border border-apple-divider-soft p-2.5 hover:bg-apple-canvas-parchment cursor-pointer">
                 <input type="checkbox" checked={form.hideOnDesktop} onChange={(e) => setForm({ ...form, hideOnDesktop: e.target.checked })} className="h-4 w-4 rounded border-zinc-300 text-apple-ink focus:ring-zinc-900" />
                 <span className="text-xs text-apple-ink-muted-80">Hide on desktop</span>
               </label>
-              <label className="flex items-center gap-2.5 rounded-lg border border-zinc-100 p-2.5 hover:bg-apple-canvas-parchment cursor-pointer">
+              <label className="flex items-center gap-2.5 rounded-lg border border-apple-divider-soft p-2.5 hover:bg-apple-canvas-parchment cursor-pointer">
                 <input type="checkbox" checked={form.hideOnMobile} onChange={(e) => setForm({ ...form, hideOnMobile: e.target.checked })} className="h-4 w-4 rounded border-zinc-300 text-apple-ink focus:ring-zinc-900" />
                 <span className="text-xs text-apple-ink-muted-80">Hide on mobile</span>
               </label>
@@ -827,8 +827,8 @@ function EditMenuItemModal({
           </div>
         </div>
         <div className="mt-6 flex items-center justify-end gap-3">
-          <button onClick={onClose} className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Cancel</button>
-          <button onClick={handleSave} className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800">Save</button>
+          <button onClick={onClose} className="rounded-xl border border-apple-hairline px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Cancel</button>
+          <button onClick={handleSave} className="rounded-xl bg-apple-ink px-4 py-2 text-sm font-medium text-white hover:bg-apple-ink-muted-80">Save</button>
         </div>
       </motion.div>
     </motion.div>

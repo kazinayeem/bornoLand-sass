@@ -49,7 +49,7 @@ export default function AnalyticsOverviewPage() {
   const topPagesList = (charts?.topPages as Array<Record<string, unknown>>) ?? [];
 
   const statCards = [
-    { label: "Total Visitors", value: formatNumber(Number(stats?.totalVisitors ?? 0)), icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Total Visitors", value: formatNumber(Number(stats?.totalVisitors ?? 0)), icon: Users, color: "text-apple-primary", bg: "bg-blue-50" },
     { label: "Unique Visitors", value: String(stats?.uniqueVisitors ?? 0), sub: "this month", icon: Eye, color: "text-indigo-600", bg: "bg-indigo-50" },
     { label: "Sessions", value: String(stats?.month ?? 0), sub: "this month", icon: Activity, color: "text-purple-600", bg: "bg-purple-50" },
     { label: "Page Views", value: formatNumber(Number((charts?.visitorsByDay as Array<Record<string, unknown>>)?.reduce?.((s: number, d: Record<string, unknown>) => s + Number(d.pageViews ?? 0), 0) ?? 0)), icon: Eye, color: "text-cyan-600", bg: "bg-cyan-50" },
@@ -69,7 +69,7 @@ export default function AnalyticsOverviewPage() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => exportCSV("analytics-overview", ["Metric", "Value"], statCards.map((c) => [c.label, c.value]))}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors">
+            className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors">
             <FileDown className="h-3.5 w-3.5" /> Export CSV
           </button>
         </div>

@@ -56,7 +56,7 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
     onClose();
   };
 
-  const inputClass = "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400";
+  const inputClass = "w-full rounded-lg border border-apple-hairline bg-white px-3 py-2 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400";
   const labelClass = "block text-xs font-medium text-apple-ink-muted-48 mb-1";
   const sectionClass = "space-y-4";
 
@@ -71,11 +71,11 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
         initial={{ x: 400 }}
         animate={{ x: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="w-full max-w-lg bg-white shadow-2xl border-l border-zinc-200 overflow-y-auto"
+        className="w-full max-w-lg bg-white shadow-2xl border-l border-apple-hairline overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 border-b border-zinc-100 bg-white px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 z-10 border-b border-apple-divider-soft bg-white px-6 py-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-apple-ink">Page Settings</h2>
             <p className="text-xs text-apple-ink-muted-48">{page.title} — /{page.slug}</p>
@@ -86,7 +86,7 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-zinc-100 px-6">
+        <div className="border-b border-apple-divider-soft px-6">
           <nav className="-mb-px flex gap-4 overflow-x-auto">
             {TABS.map((tab) => {
               const Icon = tab.icon;
@@ -133,7 +133,7 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
             </div>
           </div>
 
-          <div className="border-t border-zinc-100" />
+          <div className="border-t border-apple-divider-soft" />
 
           {/* SEO Tab */}
           {activeTab === "seo" && (
@@ -252,7 +252,7 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
                   value={settings.customCss ?? ""}
                   onChange={(e) => setSettings({ ...settings, customCss: e.target.value })}
                   rows={6}
-                  className="w-full rounded-lg border border-zinc-200 bg-apple-canvas-parchment px-3 py-2 text-xs font-mono text-apple-ink focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                  className="w-full rounded-lg border border-apple-hairline bg-apple-canvas-parchment px-3 py-2 text-xs font-mono text-apple-ink focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
                   placeholder="/* Add custom CSS for this page */"
                 />
               </div>
@@ -262,7 +262,7 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
                   value={settings.customJs ?? ""}
                   onChange={(e) => setSettings({ ...settings, customJs: e.target.value })}
                   rows={6}
-                  className="w-full rounded-lg border border-zinc-200 bg-apple-canvas-parchment px-3 py-2 text-xs font-mono text-apple-ink focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                  className="w-full rounded-lg border border-apple-hairline bg-apple-canvas-parchment px-3 py-2 text-xs font-mono text-apple-ink focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
                   placeholder="// Add custom JavaScript for this page"
                 />
               </div>
@@ -290,7 +290,7 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
                           "flex flex-col items-center gap-1 rounded-xl border p-3 text-xs transition-all",
                           isActive
                             ? "border-zinc-900 bg-apple-canvas-parchment text-apple-ink"
-                            : "border-zinc-200 text-apple-ink-muted-48 hover:border-zinc-300"
+                            : "border-apple-hairline text-apple-ink-muted-48 hover:border-zinc-300"
                         )}
                       >
                         <Icon className="h-5 w-5" />
@@ -341,7 +341,7 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
                   <option value="302">302 — Temporary</option>
                 </select>
               </div>
-              <div className="border-t border-zinc-100 pt-4 space-y-3">
+              <div className="border-t border-apple-divider-soft pt-4 space-y-3">
                 <label className="flex items-center gap-2.5">
                   <input
                     type="checkbox"
@@ -397,17 +397,17 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 border-t border-zinc-100 bg-white px-6 py-4 flex items-center justify-end gap-3">
+        <div className="sticky bottom-0 border-t border-apple-divider-soft bg-white px-6 py-4 flex items-center justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+            className="rounded-xl border border-apple-hairline px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isLoading}
-            className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+            className="rounded-xl bg-apple-ink px-4 py-2 text-sm font-medium text-white hover:bg-apple-ink-muted-80 disabled:opacity-50"
           >
             {isLoading ? "Saving..." : "Save Settings"}
           </button>

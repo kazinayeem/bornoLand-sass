@@ -145,7 +145,7 @@ export function RenewalFlow({
                     className={`flex items-center justify-between rounded-xl border-2 p-3 text-left transition-all ${
                       selectedPlanId === plan._id
                         ? "border-zinc-900 bg-apple-canvas-parchment"
-                        : "border-zinc-200 hover:border-zinc-300"
+                        : "border-apple-hairline hover:border-zinc-300"
                     }`}
                   >
                     <div>
@@ -173,7 +173,7 @@ export function RenewalFlow({
                       className={`rounded-xl border-2 p-3 text-center transition-all ${
                         duration === d.value
                           ? "border-zinc-900 bg-apple-canvas-parchment"
-                          : "border-zinc-200 hover:border-zinc-300"
+                          : "border-apple-hairline hover:border-zinc-300"
                       }`}
                     >
                       <p className="text-sm font-semibold text-apple-ink">{d.label}</p>
@@ -201,7 +201,7 @@ export function RenewalFlow({
                 type="button"
                 onClick={() => setStep("payment")}
                 disabled={!selectedPlanId}
-                className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
               >
                 Continue <ChevronRight className="h-4 w-4" />
               </button>
@@ -227,7 +227,7 @@ export function RenewalFlow({
                   className={`rounded-xl border-2 p-3 text-center transition-all ${
                     paymentMethod === method.type
                       ? "border-zinc-900 bg-apple-canvas-parchment"
-                      : "border-zinc-200 hover:border-zinc-300"
+                      : "border-apple-hairline hover:border-zinc-300"
                   }`}
                 >
                   <p className="text-sm font-semibold text-apple-ink">{method.label}</p>
@@ -236,7 +236,7 @@ export function RenewalFlow({
             </div>
 
             {selectedMethod && (
-              <div className="rounded-xl border border-zinc-200 bg-apple-canvas-parchment p-4 text-sm space-y-1">
+              <div className="rounded-xl border border-apple-hairline bg-apple-canvas-parchment p-4 text-sm space-y-1">
                 <p className="font-medium text-apple-ink">Send to:</p>
                 <p className="text-lg font-bold tracking-wide text-apple-ink">{selectedMethod.accountNumber}</p>
                 {selectedMethod.accountName && <p className="text-apple-ink-muted-80">{selectedMethod.accountName}</p>}
@@ -251,7 +251,7 @@ export function RenewalFlow({
                   value={senderNumber}
                   onChange={(e) => setSenderNumber(e.target.value)}
                   placeholder="01XXXXXXXXX"
-                  className="h-11 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-zinc-400"
+                  className="h-11 w-full rounded-xl border border-apple-hairline px-3 text-sm outline-none focus:border-zinc-400"
                 />
               </div>
               <div>
@@ -260,7 +260,7 @@ export function RenewalFlow({
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
                   placeholder="Transaction ID"
-                  className="h-11 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-zinc-400"
+                  className="h-11 w-full rounded-xl border border-apple-hairline px-3 text-sm outline-none focus:border-zinc-400"
                 />
               </div>
             </div>
@@ -272,7 +272,7 @@ export function RenewalFlow({
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
                 placeholder="Any additional note..."
-                className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none resize-none"
+                className="w-full rounded-xl border border-apple-hairline px-3 py-2 text-sm outline-none resize-none"
               />
             </div>
 
@@ -280,7 +280,7 @@ export function RenewalFlow({
               <button
                 type="button"
                 onClick={() => setStep("plan")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
+                className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
               >
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>
@@ -288,7 +288,7 @@ export function RenewalFlow({
                 type="button"
                 onClick={() => setStep("confirm")}
                 disabled={!canProceed}
-                className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
               >
                 Review <ChevronRight className="h-4 w-4" />
               </button>
@@ -302,7 +302,7 @@ export function RenewalFlow({
               <h2 className="text-xl font-bold text-apple-ink">Confirm Renewal</h2>
               <p className="text-sm text-apple-ink-muted-48 mt-1">Review before submitting</p>
             </div>
-            <div className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment/50 p-5 space-y-3">
+            <div className="rounded-apple-lg border border-apple-hairline bg-apple-canvas-parchment/50 p-5 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-apple-ink-muted-48">Plan</span>
                 <span className="font-semibold text-apple-ink">{selectedPlan?.name}</span>
@@ -311,7 +311,7 @@ export function RenewalFlow({
                 <span className="text-apple-ink-muted-48">Duration</span>
                 <span className="font-semibold text-apple-ink capitalize">{DURATION_OPTIONS.find((d) => d.value === duration)?.label}</span>
               </div>
-              <div className="flex justify-between text-sm border-t border-zinc-200 pt-3">
+              <div className="flex justify-between text-sm border-t border-apple-hairline pt-3">
                 <span className="text-apple-ink-muted-48">Total</span>
                 <span className="text-lg font-bold text-apple-ink">{formatBDT(paymentAmount)}</span>
               </div>
@@ -321,14 +321,14 @@ export function RenewalFlow({
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-apple-ink-muted-48">Method</span>
-                <Badge variant="default" className="bg-white border border-zinc-200">{selectedMethod?.label || paymentMethod}</Badge>
+                <Badge variant="default" className="bg-white border border-apple-hairline">{selectedMethod?.label || paymentMethod}</Badge>
               </div>
             </div>
             <div className="flex gap-3 justify-end pt-2">
               <button
                 type="button"
                 onClick={() => setStep("payment")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
+                className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
               >
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>
@@ -363,7 +363,7 @@ export function RenewalFlow({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800"
+              className="rounded-xl bg-apple-ink px-6 py-2.5 text-sm font-semibold text-white hover:bg-apple-ink-muted-80"
             >
               Done
             </button>

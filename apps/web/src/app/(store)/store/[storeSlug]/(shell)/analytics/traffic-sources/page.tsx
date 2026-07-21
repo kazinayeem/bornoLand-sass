@@ -36,7 +36,7 @@ export default function TrafficSourcesPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <AnalyticsStatCard label="Total Visits" value={String(totalVisits)} icon={Globe} color="text-blue-600" bg="bg-blue-50" delay={0} />
+        <AnalyticsStatCard label="Total Visits" value={String(totalVisits)} icon={Globe} color="text-apple-primary" bg="bg-blue-50" delay={0} />
         <AnalyticsStatCard label="Traffic Sources" value={String(sources.length)} icon={Globe} color="text-emerald-600" bg="bg-emerald-50" delay={0.05} />
         <AnalyticsStatCard label="Unique Visitors" value={String(sources.reduce((sum, s) => sum + Number(s.uniqueVisitors ?? 0), 0))} icon={Globe} color="text-purple-600" bg="bg-purple-50" delay={0.1} />
         <AnalyticsStatCard label="Page Views" value={String(sources.reduce((sum, s) => sum + Number(s.pageViews ?? 0), 0))} icon={Globe} color="text-amber-600" bg="bg-amber-50" delay={0.15} />
@@ -61,11 +61,11 @@ export default function TrafficSourcesPage() {
         </AnalyticsChartCard>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="rounded-xl border border-zinc-200 bg-white">
-          <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
+          className="rounded-xl border border-apple-hairline bg-white">
+          <div className="flex items-center justify-between border-b border-apple-divider-soft px-5 py-3">
             <h3 className="text-sm font-semibold text-apple-ink">All Sources</h3>
             <select value={filter} onChange={(e) => setFilter(e.target.value)}
-              className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
+              className="h-8 rounded-lg border border-apple-hairline bg-white px-2 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
               <option value="all">All Types</option>
               {sourceTypes.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
@@ -88,11 +88,11 @@ export default function TrafficSourcesPage() {
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
                         <Globe className="h-3.5 w-3.5 text-apple-ink-muted-48" />
-                        <span className="text-xs font-medium text-zinc-800">{String(s.source)}</span>
+                        <span className="text-xs font-medium text-apple-ink">{String(s.source)}</span>
                       </div>
                     </td>
                     <td className="px-5 py-3">
-                      <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-apple-ink-muted-80 capitalize">
+                      <span className="rounded-md bg-apple-canvas-parchment px-1.5 py-0.5 text-[10px] font-medium text-apple-ink-muted-80 capitalize">
                         {String(s.type)}
                       </span>
                     </td>

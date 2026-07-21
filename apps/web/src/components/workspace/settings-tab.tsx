@@ -89,7 +89,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
     <div className="space-y-6 max-w-3xl">
       {/* Currency */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100">
             <DollarSign className="h-5 w-5 text-emerald-600" />
@@ -103,7 +103,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
           <div>
             <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Currency Code</label>
             <select value={currencyCode} onChange={(e) => handleCurrencyChange(e.target.value)}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
               <option value="BDT">BDT (৳)</option>
               <option value="USD">USD ($)</option>
               <option value="EUR">EUR (€)</option>
@@ -113,12 +113,12 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
           <div>
             <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Symbol</label>
             <input type="text" value={currencySymbol} onChange={(e) => setCurrencySymbol(e.target.value)}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Position</label>
             <select value={currencyPosition} onChange={(e) => setCurrencyPosition(e.target.value as "before" | "after")}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
               <option value="before">Before ({currencySymbol}100)</option>
               <option value="after">After (100{currencySymbol})</option>
             </select>
@@ -127,7 +127,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Decimal Places</label>
             <input type="number" min={0} max={4} value={decimalPlaces}
               onChange={(e) => setDecimalPlaces(Number(e.target.value))}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
           </div>
         </div>
         <div className="mt-4 p-3 rounded-xl bg-apple-canvas-parchment">
@@ -140,7 +140,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
 
       {/* Localization */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-        className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">
             <Globe className="h-5 w-5 text-blue-600" />
@@ -154,7 +154,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
           <div>
             <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Date Format</label>
             <select value={dateFormat} onChange={(e) => setDateFormat(e.target.value)}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
               <option value="MM/DD/YYYY">MM/DD/YYYY</option>
               <option value="DD/MM/YYYY">DD/MM/YYYY</option>
               <option value="YYYY-MM-DD">YYYY-MM-DD</option>
@@ -163,7 +163,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
           <div>
             <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Timezone</label>
             <select value={timezone} onChange={(e) => setTimezone(e.target.value)}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
               <option value="UTC">UTC</option>
               <option value="Asia/Dhaka">Asia/Dhaka (BST)</option>
               <option value="America/New_York">America/New_York (EST)</option>
@@ -174,7 +174,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
           <div>
             <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Language</label>
             <select value={language} onChange={(e) => setLanguage(e.target.value)}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
               <option value="en">English</option>
               <option value="bn">Bengali</option>
               <option value="hi">Hindi</option>
@@ -185,7 +185,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
 
       {/* Tax */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100">
             <Clock className="h-5 w-5 text-amber-600" />
@@ -200,14 +200,14 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
           <div className="flex items-center gap-2">
             <input type="number" min={0} max={100} step="0.1" value={taxRate}
               onChange={(e) => setTaxRate(Number(e.target.value))}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
             <span className="text-sm text-apple-ink-muted-48">%</span>
           </div>
         </div>
       </motion.div>
 
       <button onClick={handleSave} disabled={saving}
-        className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-50 transition-colors">
+        className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-6 py-2.5 text-sm font-semibold text-white hover:bg-apple-ink-muted-80 disabled:opacity-50 transition-colors">
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
         Save Settings
       </button>

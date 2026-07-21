@@ -9,28 +9,36 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FormLoadingShell } from "@/components/loading";
 import { useRegisterMutation } from "@/redux/api/auth-api";
+import { useLoading } from "@/hooks/use-loading";
 
 export function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [registerRequest] = useRegisterMutation();
+  const { startNavigation } = useLoading();
   const {
     register,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema) as any,
-    defaultValues: { name: "", email: "", password: "", tenantName: "", rememberMe: true }
+    defaultValues: { name: "", email: "", password: "", tenantName: "", rememberMe: true },
   });
 
   const onSubmit = handleSubmit(async (values) => {
+    if (loading) return;
     setLoading(true);
     const response = await registerRequest(values as any);
     setLoading(false);
 
     if ("error" in response) {
       const message =
-        (response.error && "data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
+        (response.error &&
+        "data" in response.error &&
+        response.error.data &&
+        typeof response.error.data === "object" &&
+        "message" in response.error.data
           ? String((response.error.data as { message?: string }).message)
           : "Registration failed") || "Registration failed";
       toast.error(message);
@@ -38,11 +46,12 @@ export function RegisterForm() {
     }
 
     toast.success("Account created. Check your email for verification.");
+    startNavigation();
     window.location.href = "/login";
   });
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
+    <FormLoadingShell loading={loading} loadingLabel="Creating account" onSubmit={onSubmit} className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="register-name">Full name</Label>
         <Input
@@ -79,15 +88,15 @@ export function RegisterForm() {
         {errors.password ? <p className="text-xs text-red-500">{errors.password.message}</p> : null}
       </div>
       <label className="flex items-center gap-2 text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
-        <input type="checkbox" {...register("rememberMe")} className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+        <input
+          type="checkbox"
+          {...register("rememberMe")}
+          className="h-4 w-4 rounded border-zinc-300 text-apple-primary focus:ring-apple-primary"
+        />
         Keep me signed in
       </label>
-      <Button
-        type="submit"
-        disabled={loading}
-        className="h-11 w-full rounded-pill bg-apple-primary text-sm font-semibold text-apple-on-primary hover:bg-apple-primary-focus"
-      >
-        {loading ? "Creating account..." : "Create account"}
+      <Button type="submit" loading={loading} loadingKey="register" className="h-11 w-full">
+        Create account
       </Button>
 
       <p className="text-center text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
@@ -96,6 +105,6 @@ export function RegisterForm() {
           Sign in
         </a>
       </p>
-    </form>
+    </FormLoadingShell>
   );
 }

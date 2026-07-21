@@ -6,17 +6,21 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        display: ["SF Pro Display", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-        body: ["SF Pro Text", "var(--font-inter)", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-      },
-      borderRadius: {
-        none: "0px",
-        xs: "5px",
-        sm: "8px",
-        md: "11px",
-        lg: "18px",
-        pill: "9999px",
-        full: "9999px",
+        display: [
+          "SF Pro Display",
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "sans-serif",
+        ],
+        body: [
+          "SF Pro Text",
+          "var(--font-inter)",
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "sans-serif",
+        ],
       },
       colors: {
         apple: {
@@ -64,19 +68,30 @@ const config: Config = {
           foreground: "var(--color-card-foreground)",
         },
       },
+      borderRadius: {
+        pill: "9999px",
+        apple: {
+          none: "0px",
+          xs: "5px",
+          sm: "8px",
+          md: "11px",
+          lg: "18px",
+          pill: "9999px",
+          full: "9999px",
+        },
+      },
       spacing: {
-        xxs: "4px",
-        xs: "8px",
-        sm: "12px",
-        md: "17px",
-        lg: "24px",
-        xl: "32px",
-        xxl: "48px",
-        section: "80px",
+        "apple-xxs": "4px",
+        "apple-xs": "8px",
+        "apple-sm": "12px",
+        "apple-md": "17px",
+        "apple-lg": "24px",
+        "apple-xl": "32px",
+        "apple-xxl": "48px",
+        "apple-section": "80px",
       },
       boxShadow: {
         product: "3px 5px 30px 0 rgba(0, 0, 0, 0.22)",
-        none: "none",
       },
       transitionTimingFunction: {
         apple: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",

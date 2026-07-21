@@ -44,12 +44,12 @@ export default function CountriesPage() {
           <div className="space-y-3">
             {countries.slice(0, 15).map((c, i) => (
               <div key={String(c.code)} className="flex items-center gap-3">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-bold text-apple-ink-muted-80 uppercase">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-apple-canvas-parchment text-[10px] font-bold text-apple-ink-muted-80 uppercase">
                   {String(c.code ?? "??").slice(0, 2)}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-sm font-medium text-zinc-800">{String(c.code)}</span>
+                    <span className="text-sm font-medium text-apple-ink">{String(c.code)}</span>
                     <span className="text-xs font-semibold text-apple-ink-muted-80">{String(c.count)}</span>
                   </div>
                   <AnalyticsProgressBar name="" value={String(c.percentage)} percentage={Number(c.percentage)} color={`hsl(${180 + i * 15}, 50%, 50%)`} />

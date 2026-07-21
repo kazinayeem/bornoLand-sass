@@ -181,7 +181,7 @@ export function DeleteStoreModal({
                 >
                   {/* Header */}
                   <div className="flex items-start gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-50">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-red-50">
                       <Trash2 className="h-7 w-7 text-red-600" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -260,7 +260,7 @@ export function DeleteStoreModal({
                 >
                   {/* Header */}
                   <div className="flex items-start gap-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-50">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-red-50">
                       <AlertTriangle className="h-7 w-7 text-red-600" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -371,7 +371,7 @@ export function DeleteStoreModal({
                 >
                   {/* Header row */}
                   <div className="flex items-center gap-4">
-                    <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-50">
+                    <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-red-50">
                       {/* Spinning ring */}
                       <svg className="absolute inset-0 h-full w-full animate-spin" viewBox="0 0 56 56">
                         <circle
@@ -407,7 +407,7 @@ export function DeleteStoreModal({
                   <div className="mt-5">
                     <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
                       <motion.div
-                        className="h-full rounded-full bg-gradient-to-r from-red-500 to-orange-500"
+                        className="h-full rounded-full bg-red-500"
                         initial={{ width: "0%" }}
                         animate={{
                           width: `${Math.round((completedSteps.length / PROGRESS_STEPS.length) * 100)}%`,

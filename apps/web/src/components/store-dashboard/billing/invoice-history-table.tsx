@@ -54,8 +54,8 @@ export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
 
   if (invoices.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center shadow-sm">
-        <FileText className="mx-auto h-10 w-10 text-zinc-300" />
+      <div className="rounded-apple-lg border border-dashed border-zinc-300 bg-white p-12 text-center ">
+        <FileText className="mx-auto h-10 w-10 text-apple-ink-muted-48" />
         <h3 className="mt-3 text-lg font-semibold text-apple-ink">No invoices yet</h3>
         <p className="mt-1 text-sm text-apple-ink-muted-48">Invoices are generated after payment approval.</p>
       </div>
@@ -64,10 +64,10 @@ export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
 
   return (
     <>
-      <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-apple-lg border border-apple-hairline bg-white ">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-100 bg-apple-canvas-parchment/50">
+            <tr className="border-b border-apple-divider-soft bg-apple-canvas-parchment/50">
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Invoice</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Date</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Plan</th>
@@ -110,7 +110,7 @@ export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
                     <div className="inline-flex items-center gap-1">
                       <button
                         onClick={() => setSelectedInvoice(inv)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors"
+                        className="inline-flex items-center gap-1 rounded-lg border border-apple-hairline bg-white px-2.5 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors"
                       >
                         <Eye className="h-3.5 w-3.5" />
                         View
@@ -118,7 +118,7 @@ export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
                       <button
                         onClick={() => handleQuickDownload(inv)}
                         disabled={downloadingId === inv._id}
-                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-lg border border-apple-hairline bg-white px-2.5 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors disabled:opacity-50"
                         title="Download PDF"
                       >
                         {downloadingId === inv._id ? (

@@ -6,24 +6,32 @@ import { useForgotPasswordMutation } from "@/redux/api/auth-api";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { FormLoadingShell } from "@/components/loading";
 
 export function ForgotPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [forgotPassword] = useForgotPasswordMutation();
 
   return (
-    <form
+    <FormLoadingShell
+      loading={loading}
+      loadingLabel="Sending reset link"
       className="space-y-5"
       onSubmit={async (event) => {
         event.preventDefault();
+        if (loading) return;
         setLoading(true);
         const response = await forgotPassword({
-          email: String(new FormData(event.currentTarget).get("email") ?? "")
+          email: String(new FormData(event.currentTarget).get("email") ?? ""),
         });
         setLoading(false);
         if ("error" in response) {
           const message =
-            (response.error && "data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
+            (response.error &&
+            "data" in response.error &&
+            response.error.data &&
+            typeof response.error.data === "object" &&
+            "message" in response.error.data
               ? String((response.error.data as { message?: string }).message)
               : "Could not send reset link") || "Could not send reset link";
           toast.error(message);
@@ -42,12 +50,8 @@ export function ForgotPasswordForm() {
           className="h-11 rounded-sm border-apple-hairline bg-apple-canvas-parchment/50 px-4 dark:border-apple-hairline dark:bg-apple-surface-tile-1/50"
         />
       </div>
-      <Button
-        type="submit"
-        disabled={loading}
-        className="h-11 w-full rounded-pill bg-apple-primary text-sm font-semibold text-apple-on-primary hover:bg-apple-primary-focus"
-      >
-        {loading ? "Sending..." : "Send reset link"}
+      <Button type="submit" loading={loading} loadingKey="send" className="h-11 w-full">
+        Send reset link
       </Button>
       <p className="text-center text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
         Remember your password?{" "}
@@ -55,6 +59,6 @@ export function ForgotPasswordForm() {
           Back to sign in
         </a>
       </p>
-    </form>
+    </FormLoadingShell>
   );
 }

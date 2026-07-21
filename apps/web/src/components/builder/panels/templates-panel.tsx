@@ -9,9 +9,8 @@ import { addSection, loadSections, setActiveTab, setPageMetadata } from "@/redux
 import { Modal } from "@/components/ui/modal";
 import { useCreateBuilderTemplateMutation, useCreateTemplateFromPageMutation, useDuplicateTemplateMutation, useGetBuilderTemplatesQuery, type BuilderTemplate } from "@/redux/api/builder-template-api";
 import { useRequiredStore } from "@/providers/store-context";
-import { useCreateStorePageMutation, useSaveStorePageDraftMutation } from "@/redux/api/store-page-api";
+import { useSaveStorePageDraftMutation } from "@/redux/api/store-page-api";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { StorefrontFrame } from "@/components/storefront/storefront-frame";
 import { StorefrontCanvas } from "@/components/storefront/storefront-canvas";
@@ -61,8 +60,7 @@ const templateGradients = [
 
 export function TemplatesPanel() {
   const dispatch = useDispatch();
-  const router = useRouter();
-  const { store, storeId, storeSlug } = useRequiredStore();
+  const { store, storeId } = useRequiredStore();
   // This panel only mounts when Templates is chosen; open it synchronously so
   // the sidebar never becomes a temporary template drawer.
   const [open, setOpen] = useState(true);
@@ -74,7 +72,6 @@ export function TemplatesPanel() {
   const [collection, setCollection] = useState<"marketplace" | "mine" | "favorites" | "recent">("marketplace");
   const [sort, setSort] = useState<"newest" | "popular" | "updated" | "sections">("newest");
   const [liveTemplate, setLiveTemplate] = useState<BuilderTemplate | null>(null);
-  const [createPage] = useCreateStorePageMutation();
   const [saveDraft] = useSaveStorePageDraftMutation();
   const [applying, setApplying] = useState<string | null>(null);
   const [duplicateTemplate] = useDuplicateTemplateMutation();
@@ -137,28 +134,21 @@ export function TemplatesPanel() {
       setApplying(template._id);
       try {
         if (mode === "page") {
-          const title = template.name;
-          const slug = template.slug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-          const result = await createPage({
-            storeId,
-            title,
-            slug: slug.startsWith("/") ? slug : `/${slug}`,
-          }).unwrap();
-          const page = result.data?.page;
-          if (page && template.sections?.length) {
-            await saveDraft({ id: page._id, storeId, sections: template.sections }).unwrap();
+          if (!page.id) {
+            toast.error("Home page not loaded");
+            return;
           }
-          toast.success(`Page "${template.name}" created`);
+          const templateSections = (template.sections ?? []) as any[];
+          dispatch(loadSections(templateSections));
+          await saveDraft({ id: page.id, storeId, sections: templateSections }).unwrap();
+          toast.success(`Applied "${template.name}" to Home`);
           setOpen(false);
-          dispatch(setActiveTab("layers"));
-          if (page) {
-            dispatch(setPageMetadata({ id: page._id, title: page.title, slug: page.slug }));
-            dispatch(loadSections((template.sections ?? []) as any));
-            router.push(`/store/${storeSlug}/builder/${page.slug.startsWith('/') ? page.slug.slice(1) : page.slug}`);
-          }
+          dispatch(setActiveTab("navigator"));
         } else {
-          const sections = ((template.sections ?? []) as any[]).filter((section) => !selectedSectionIds || selectedSectionIds.includes(section.id));
-          for (const section of sections) {
+          const templateSections = ((template.sections ?? []) as any[]).filter(
+            (section) => !selectedSectionIds || selectedSectionIds.includes(section.id)
+          );
+          for (const section of templateSections) {
             dispatch(addSection({
               id: `${section.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
               type: section.type,
@@ -167,16 +157,16 @@ export function TemplatesPanel() {
               props: section.props ?? {},
             }));
           }
-          toast.success(`Added ${sections.length} sections from "${template.name}"`);
+          toast.success(`Added ${templateSections.length} sections from "${template.name}"`);
           setOpen(false);
-          dispatch(setActiveTab("layers"));
+          dispatch(setActiveTab("navigator"));
         }
       } catch {
-        toast.error(`Failed to ${mode === "page" ? "create page from" : "insert"} template`);
+        toast.error(`Failed to ${mode === "page" ? "apply" : "insert"} template`);
       }
       setApplying(null);
     },
-    [dispatch, createPage, saveDraft, storeId, storeSlug, router],
+    [dispatch, page.id, saveDraft, storeId],
   );
 
   const handleDuplicate = async (template: BuilderTemplate) => {
@@ -208,7 +198,7 @@ export function TemplatesPanel() {
     <>
       <Modal
         open={open}
-        onClose={() => { setOpen(false); dispatch(setActiveTab("layers")); }}
+        onClose={() => { setOpen(false); dispatch(setActiveTab("templates")); }}
         title="Template Library"
         description="Explore layouts, preview them visually, and apply only what you need."
         size="full"

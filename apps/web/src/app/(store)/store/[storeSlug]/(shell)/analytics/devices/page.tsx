@@ -48,7 +48,7 @@ export default function DevicesPage() {
               const Icon = deviceIcons[String(d.name)] ?? Monitor;
               return (
                 <div key={String(d.name)} className="flex items-center gap-4">
-                  <div className="rounded-lg bg-zinc-100 p-3">
+                  <div className="rounded-lg bg-apple-canvas-parchment p-3">
                     <Icon className="h-6 w-6 text-apple-ink-muted-80" />
                   </div>
                   <div className="flex-1">

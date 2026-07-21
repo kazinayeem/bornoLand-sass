@@ -2,12 +2,19 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Search, SlidersHorizontal, Grid3X3, List, X, ChevronDown } from "lucide-react";
+import { Search, SlidersHorizontal, Grid3X3, List, X } from "lucide-react";
 import { ProductCard } from "@/components/storefront/product-card";
-import { ProductSkeleton } from "@/components/storefront/product-skeleton";
 import { useTenant } from "@/providers/tenant-provider";
 import { useSearchParams } from "next/navigation";
 import { formatCurrency } from "@/lib/format-currency";
+import {
+  StorefrontPage,
+  StorefrontPageHeader,
+  StorefrontButton,
+  StorefrontEmptyState,
+  useStorefrontSurface,
+} from "@/components/storefront/storefront-ui";
+import { cn } from "@/lib/utils";
 
 const SORT_OPTIONS = [
   { label: "Newest", value: "newest" },
@@ -19,9 +26,8 @@ const SORT_OPTIONS = [
 
 export default function ShopPage() {
   const searchParams = useSearchParams();
-  const { theme, products, categories, settings } = useTenant();
-  const { primaryColor, font, darkMode } = theme;
-  const isDark = darkMode;
+  const { products, categories, settings } = useTenant();
+  const { classes, primaryColor } = useStorefrontSurface();
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
@@ -33,7 +39,6 @@ export default function ShopPage() {
   const perPage = 12;
 
   const activeCategories = useMemo(() => categories.filter((c) => c.active), [categories]);
-
   const activeProducts = useMemo(() => products.filter((p) => p.status === "active"), [products]);
 
   const filtered = useMemo(() => {
@@ -41,25 +46,40 @@ export default function ShopPage() {
 
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter((p) =>
-        p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q)
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q) ||
+          p.category?.toLowerCase().includes(q)
       );
     }
 
     if (selectedCategoryId) {
-      result = result.filter((p) =>
-        (p.categoryIds ?? []).includes(selectedCategoryId) || p.category === activeCategories.find((c) => c._id === selectedCategoryId)?.name
+      result = result.filter(
+        (p) =>
+          (p.categoryIds ?? []).includes(selectedCategoryId) ||
+          p.category === activeCategories.find((c) => c._id === selectedCategoryId)?.name
       );
     }
 
     result = result.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
 
     switch (sort) {
-      case "price-asc": result.sort((a, b) => a.price - b.price); break;
-      case "price-desc": result.sort((a, b) => b.price - a.price); break;
-      case "name-asc": result.sort((a, b) => a.name.localeCompare(b.name)); break;
-      case "name-desc": result.sort((a, b) => b.name.localeCompare(a.name)); break;
-      default: result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); break;
+      case "price-asc":
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case "price-desc":
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case "name-asc":
+        result.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name-desc":
+        result.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      default:
+        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
     }
 
     return result;
@@ -67,143 +87,214 @@ export default function ShopPage() {
 
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
-
   const maxPrice = useMemo(() => Math.max(...activeProducts.map((p) => p.price), 100), [activeProducts]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: isDark ? "#000000" : "#ffffff" }}>
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Shop</h1>
-            <p className="mt-1 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-              {filtered.length} products found
-            </p>
+    <StorefrontPage parchment>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <StorefrontPageHeader
+          title="Shop"
+          description={`${filtered.length} products found`}
+          className="mb-0"
+        />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 sm:w-72">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Search products..."
+              autoFocus={!!searchParams.get("search")}
+              className={cn(classes.inputCompact, "w-full pl-10 pr-4")}
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
-              <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder="Search products..." autoFocus={!!searchParams.get("search")}
-                className="h-10 w-full rounded-xl border bg-transparent pl-9 pr-4 text-sm placeholder:text-apple-ink-muted-48 focus:outline-none focus:ring-2"
-                style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", color: isDark ? "#fafafa" : "#18181b" }} />
-            </div>
-            <button onClick={() => setShowFilters(!showFilters)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border transition-colors"
-              style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", color: isDark ? "#a1a1aa" : "#52525b" }}>
-              <SlidersHorizontal className="h-4 w-4" />
-            </button>
-            <button onClick={() => setView(view === "grid" ? "list" : "grid")}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border transition-colors"
-              style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", color: isDark ? "#a1a1aa" : "#52525b" }}>
-              {view === "grid" ? <List className="h-4 w-4" /> : <Grid3X3 className="h-4 w-4" />}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn("flex h-10 w-10 items-center justify-center border", classes.inputCompact, classes.divider)}
+            aria-label="Toggle filters"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setView(view === "grid" ? "list" : "grid")}
+            className={cn("flex h-10 w-10 items-center justify-center border", classes.inputCompact, classes.divider)}
+            aria-label="Toggle view"
+          >
+            {view === "grid" ? <List className="h-4 w-4" /> : <Grid3X3 className="h-4 w-4" />}
+          </button>
         </div>
+      </div>
 
-        {/* Filters */}
-        {showFilters && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-            className="mt-4 overflow-hidden rounded-xl border p-4"
-            style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", backgroundColor: isDark ? "#18181b" : "#fafafa" }}>
-            <div className="flex flex-wrap items-end gap-6">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>Category</label>
-                <div className="flex flex-wrap gap-1.5">
-                  <button onClick={() => { setSelectedCategoryId(""); setPage(1); }}
-                    className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-                    style={{ backgroundColor: !selectedCategoryId ? primaryColor : isDark ? "#27272a" : "#e4e4e7", color: !selectedCategoryId ? "#fff" : isDark ? "#a1a1aa" : "#52525b" }}>
-                    All
+      {showFilters && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          className={cn("mt-4 overflow-hidden p-4", classes.card)}
+        >
+          <div className="flex flex-wrap items-end gap-6">
+            <div>
+              <label className={cn("mb-1.5 block text-caption-strong", classes.body)}>Category</label>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategoryId("");
+                    setPage(1);
+                  }}
+                  className={cn(
+                    "px-3 py-1.5 text-caption font-medium transition-colors",
+                    !selectedCategoryId ? "rounded-apple-pill text-apple-on-primary" : classes.chip
+                  )}
+                  style={!selectedCategoryId ? { backgroundColor: primaryColor } : undefined}
+                >
+                  All
+                </button>
+                {activeCategories.map((cat) => (
+                  <button
+                    key={cat._id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategoryId(cat._id);
+                      setPage(1);
+                    }}
+                    className={cn(
+                      "px-3 py-1.5 text-caption font-medium transition-colors",
+                      selectedCategoryId === cat._id ? "rounded-apple-pill text-apple-on-primary" : classes.chip
+                    )}
+                    style={selectedCategoryId === cat._id ? { backgroundColor: primaryColor } : undefined}
+                  >
+                    {cat.name}
                   </button>
-                  {activeCategories.map((cat) => (
-                    <button key={cat._id} onClick={() => { setSelectedCategoryId(cat._id); setPage(1); }}
-                      className="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-                      style={{ backgroundColor: selectedCategoryId === cat._id ? primaryColor : isDark ? "#27272a" : "#e4e4e7", color: selectedCategoryId === cat._id ? "#fff" : isDark ? "#a1a1aa" : "#52525b" }}>
-                      {cat.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>Price Range</label>
-                <div className="flex items-center gap-2 text-xs" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-                  <span>{formatCurrency(priceRange[0], settings)}</span>
-                  <input type="range" min={0} max={maxPrice} value={priceRange[0]}
-                    onChange={(e) => setPriceRange([Math.min(Number(e.target.value), priceRange[1]), priceRange[1]])}
-                    className="w-24 accent-zinc-900" />
-                  <input type="range" min={0} max={maxPrice} value={priceRange[1]}
-                    onChange={(e) => setPriceRange([priceRange[0], Math.max(Number(e.target.value), priceRange[0])])}
-                    className="w-24 accent-zinc-900" />
-                  <span>{formatCurrency(priceRange[1], settings)}</span>
-                </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>Sort By</label>
-                <select value={sort} onChange={(e) => setSort(e.target.value)}
-                  className="h-9 rounded-xl border bg-transparent px-3 text-xs focus:outline-none"
-                  style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", color: isDark ? "#fafafa" : "#18181b" }}>
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                ))}
               </div>
             </div>
-          </motion.div>
-        )}
-
-        {/* Active filters tags */}
-        {(search || selectedCategoryId) && (
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            {search && (
-              <span className="flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
-                style={{ backgroundColor: `${primaryColor}12`, color: primaryColor }}>
-                Search: {search}
-                <button onClick={() => setSearch("")}><X className="h-3 w-3" /></button>
-              </span>
-            )}
-            {selectedCategoryId && (
-              <span className="flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
-                style={{ backgroundColor: `${primaryColor}12`, color: primaryColor }}>
-                {activeCategories.find((c) => c._id === selectedCategoryId)?.name ?? "Category"}
-                <button onClick={() => setSelectedCategoryId("")}><X className="h-3 w-3" /></button>
-              </span>
-            )}
+            <div>
+              <label className={cn("mb-1.5 block text-caption-strong", classes.body)}>Price Range</label>
+              <div className={cn("flex items-center gap-2 text-caption", classes.muted)}>
+                <span>{formatCurrency(priceRange[0], settings)}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={maxPrice}
+                  value={priceRange[0]}
+                  onChange={(e) =>
+                    setPriceRange([Math.min(Number(e.target.value), priceRange[1]), priceRange[1]])
+                  }
+                  className="w-24 accent-apple-primary"
+                />
+                <input
+                  type="range"
+                  min={0}
+                  max={maxPrice}
+                  value={priceRange[1]}
+                  onChange={(e) =>
+                    setPriceRange([priceRange[0], Math.max(Number(e.target.value), priceRange[0])])
+                  }
+                  className="w-24 accent-apple-primary"
+                />
+                <span>{formatCurrency(priceRange[1], settings)}</span>
+              </div>
+            </div>
+            <div>
+              <label className={cn("mb-1.5 block text-caption-strong", classes.body)}>Sort By</label>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                className={cn("px-3", classes.inputCompact)}
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        )}
+        </motion.div>
+      )}
 
-        {/* Products */}
-        {paginated.length === 0 ? (
-          <div className="mt-16 flex flex-col items-center justify-center gap-3">
-            <Search className="h-12 w-12 text-zinc-200" />
-            <p className="text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>No products found</p>
-            <button onClick={() => { setSearch(""); setSelectedCategoryId(""); setPriceRange([0, maxPrice]); }}
-              className="rounded-xl bg-zinc-900 px-4 py-2 text-xs font-medium text-white">Clear Filters</button>
-          </div>
-        ) : (
-          <div className={`mt-6 ${view === "grid" ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-4"}`}>
-            {paginated.map((product) => (
-              <ProductCard key={product._id} product={product} />
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-10 flex items-center justify-center gap-2">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button key={p} onClick={() => setPage(p)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-medium transition-all"
-                style={{
-                  backgroundColor: page === p ? primaryColor : isDark ? "#18181b" : "#f4f4f5",
-                  color: page === p ? "#fff" : isDark ? "#a1a1aa" : "#52525b"
-                }}>
-                {p}
+      {(search || selectedCategoryId) && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {search && (
+            <span
+              className="flex items-center gap-1 rounded-apple-pill px-3 py-1 text-caption font-medium text-apple-primary"
+              style={{ backgroundColor: `${primaryColor}12`, color: primaryColor }}
+            >
+              Search: {search}
+              <button type="button" onClick={() => setSearch("")}>
+                <X className="h-3 w-3" />
               </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+            </span>
+          )}
+          {selectedCategoryId && (
+            <span
+              className="flex items-center gap-1 rounded-apple-pill px-3 py-1 text-caption font-medium text-apple-primary"
+              style={{ backgroundColor: `${primaryColor}12`, color: primaryColor }}
+            >
+              {activeCategories.find((c) => c._id === selectedCategoryId)?.name ?? "Category"}
+              <button type="button" onClick={() => setSelectedCategoryId("")}>
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+        </div>
+      )}
+
+      {paginated.length === 0 ? (
+        <StorefrontEmptyState
+          className="mt-16 min-h-0"
+          icon={<Search className="h-12 w-12" />}
+          title="No products found"
+          action={
+            <StorefrontButton
+              variant="utility"
+              onClick={() => {
+                setSearch("");
+                setSelectedCategoryId("");
+                setPriceRange([0, maxPrice]);
+              }}
+            >
+              Clear Filters
+            </StorefrontButton>
+          }
+        />
+      ) : (
+        <div
+          className={cn(
+            "mt-6",
+            view === "grid" ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-4"
+          )}
+        >
+          {paginated.map((product) => (
+            <ProductCard key={product._id} product={product} />
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-10 flex items-center justify-center gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPage(p)}
+              className={cn(
+                "btn-press flex h-9 w-9 items-center justify-center rounded-apple-sm text-caption font-medium transition-all",
+                page === p ? "text-apple-on-primary" : classes.chip
+              )}
+              style={page === p ? { backgroundColor: primaryColor } : undefined}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      )}
+    </StorefrontPage>
   );
 }

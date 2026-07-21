@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Activity, BadgeHelp, ChevronDown, CreditCard, Loader2, LockKeyhole, LogOut, Settings, UserRound } from "lucide-react";
+import { useNavigate } from "@/hooks/use-navigate";
+import { Activity, BadgeHelp, ChevronDown, CreditCard, LockKeyhole, LogOut, Settings, UserRound } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { clearUserProfile } from "@/redux/slices/user-slice";
 import { useLogoutMutation } from "@/redux/api/auth-api";
@@ -35,7 +36,7 @@ export function UserAvatar({ className = "h-9 w-9", showChevron = false }: { cla
 export function ProfileDropdown({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  const router = useNavigate();
   const dispatch = useAppDispatch();
   const fallback = useAppSelector((state) => state.user.profile);
   const { data } = useGetProfileQuery();
@@ -59,7 +60,17 @@ export function ProfileDropdown({ compact = false }: { compact?: boolean }) {
     <AnimatePresence>{open && <motion.div initial={{ opacity: 0, y: -6, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: .98 }} transition={{ duration: .16 }} className="absolute right-0 top-[calc(100%+10px)] z-[70] w-64 overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas p-1.5">
       <div className="mb-1 flex items-center gap-3 rounded-lg bg-apple-canvas-parchment px-3 py-3"><UserAvatar className="h-10 w-10"/><div className="min-w-0"><p className="truncate text-sm font-semibold text-apple-ink">{profile?.name || fallback?.name || "User"}</p><p className="truncate text-xs text-apple-ink-muted-48">{profile?.email || fallback?.email}</p></div></div>
       <div className="py-1">{items.map((item, index) => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className={cn("flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-apple-ink-muted-80 transition hover:bg-apple-canvas-parchment hover:text-apple-ink", index === 4 && "mt-1 border-t border-apple-divider-soft pt-2")}><item.icon className="h-4 w-4 text-apple-ink-muted-48"/>{item.label}</Link>)}</div>
-      <button type="button" disabled={isLoading} onClick={() => void handleLogout()} className="flex w-full items-center gap-2.5 border-t border-apple-divider-soft rounded-lg px-3 py-2.5 text-sm text-red-600 transition hover:bg-red-50">{isLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : <LogOut className="h-4 w-4"/>}Logout</button>
+      <Button
+        type="button"
+        variant="ghost"
+        loading={isLoading}
+        loadingKey="logout"
+        onClick={() => void handleLogout()}
+        className="h-auto w-full justify-start gap-2.5 rounded-lg border-t border-apple-divider-soft px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-600"
+      >
+        <LogOut className="h-4 w-4" />
+        Logout
+      </Button>
     </motion.div>}</AnimatePresence>
   </div>;
 }

@@ -25,7 +25,10 @@ import { MediaPreviewViewer } from "@/components/media/media-preview-viewer";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
-import { Link, Loader2, Trash2 } from "lucide-react";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { InlineLoading } from "@/components/loading/inline-loading";
+import { TableLoadingOverlay } from "@/components/loading/table-loading-overlay";
+import { Link as LinkIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const PAGE_SIZE = 24;
@@ -159,9 +162,9 @@ export function MediaLibrary({
   const stats = data?.data?.globalStats ?? data?.data?.stats;
   const imageFiles = files.filter(isImage);
 
-  const [deleteFile] = useDeleteMediaFileMutation();
-  const [bulkDelete] = useBulkDeleteMediaMutation();
-  const [renameFile] = useRenameMediaFileMutation();
+  const [deleteFile, { isLoading: isDeleting }] = useDeleteMediaFileMutation();
+  const [bulkDelete, { isLoading: isBulkDeleting }] = useBulkDeleteMediaMutation();
+  const [renameFile, { isLoading: isRenaming }] = useRenameMediaFileMutation();
   const [replaceFile] = useReplaceMediaFileMutation();
 
   const { data: usageData } = useGetMediaUsageQuery(
@@ -376,15 +379,18 @@ export function MediaLibrary({
             className="min-w-0 flex-1 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm outline-none focus:border-zinc-900"
             onKeyDown={(e) => e.key === "Enter" && void handleImportUrlAction()}
           />
-          <button
+          <LoadingButton
             type="button"
+            size="sm"
+            loading={isImporting}
+            loadingKey="import"
             onClick={handleImportUrlAction}
-            disabled={isImporting || !importUrlValue.trim()}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+            disabled={!importUrlValue.trim()}
+            icon={<LinkIcon className="h-3.5 w-3.5" />}
+            className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-800"
           >
-            {isImporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link className="h-3.5 w-3.5" />}
             Import
-          </button>
+          </LoadingButton>
         </div>
       )}
 
@@ -409,14 +415,17 @@ export function MediaLibrary({
       {selected.size > 0 && (
         <div className="flex items-center gap-3 rounded-xl border border-red-100 bg-red-50/50 px-4 py-2.5">
           <span className="text-sm text-apple-ink-muted-80">{selected.size} selected</span>
-          <button
+          <LoadingButton
             type="button"
+            variant="danger"
+            size="sm"
+            loading={isBulkDeleting}
+            loadingKey="delete"
             onClick={() => void handleBulkDelete()}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700"
+            icon={<Trash2 className="h-4 w-4" />}
           >
-            <Trash2 className="h-4 w-4" />
             Delete selected
-          </button>
+          </LoadingButton>
           <button type="button" onClick={() => setSelected(new Set())} className="ml-auto text-sm text-apple-ink-muted-48 hover:text-apple-ink-muted-80">
             Clear
           </button>
@@ -433,15 +442,7 @@ export function MediaLibrary({
       />
 
       {isLoading ? (
-        <div className="flex min-h-[320px] items-center justify-center p-8">
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-              <div className="absolute inset-0 animate-ping rounded-full bg-blue-400/30" />
-            </div>
-            <p className="text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">Loading your media...</p>
-          </div>
-        </div>
+        <InlineLoading label="Loading your media…" />
       ) : showLimitState ? (
         <MediaEmptyState
           limitType={limitType}
@@ -455,8 +456,10 @@ export function MediaLibrary({
         />
       ) : showGrid ? (
         <>
-          <div className={isFetching ? "opacity-60 transition-opacity" : ""}>
-            <MediaLibraryGrid
+          <div className="relative">
+            <TableLoadingOverlay show={isFetching && !isLoading} label="Updating media" />
+            <div className={isFetching ? "opacity-60 transition-opacity motion-reduce:transition-none" : ""}>
+              <MediaLibraryGrid
               files={files}
               selectedIds={selected}
               copiedId={copiedId}
@@ -471,6 +474,7 @@ export function MediaLibrary({
               onDelete={setDeleteTarget}
               onSelect={selectable ? onSelect : undefined}
             />
+            </div>
           </div>
 
           {pickerSort !== "recent" && (
@@ -497,6 +501,7 @@ export function MediaLibrary({
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => void confirmDelete()}
+        loading={isDeleting}
         title="Delete file"
         message={
           deleteTarget && (deleteTarget.referenceCount ?? 0) > 0
@@ -507,25 +512,28 @@ export function MediaLibrary({
         variant="danger"
       />
 
-      <Modal open={!!renameTarget} onClose={() => setRenameTarget(null)} title="Rename file" size="sm">
+      <Modal
+        open={!!renameTarget}
+        onClose={() => setRenameTarget(null)}
+        title="Rename file"
+        size="sm"
+        loading={isRenaming}
+      >
         <input
           value={renameValue}
           onChange={(e) => setRenameValue(e.target.value)}
           className="w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
           autoFocus
+          disabled={isRenaming}
           onKeyDown={(e) => e.key === "Enter" && void submitRename()}
         />
         <div className="mt-4 flex justify-end gap-2">
-          <button type="button" onClick={() => setRenameTarget(null)} className="rounded-xl border px-4 py-2 text-sm">
+          <Button type="button" variant="outline" onClick={() => setRenameTarget(null)} disabled={isRenaming}>
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => void submitRename()}
-            className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white"
-          >
+          </Button>
+          <Button type="button" loading={isRenaming} loadingKey="save" onClick={() => void submitRename()}>
             Save
-          </button>
+          </Button>
         </div>
       </Modal>
 

@@ -21,6 +21,7 @@ export const NOTIFICATION_TYPES = [
   "payment_rejected",
   "subscription_expiring",
   "subscription_expired",
+  "contact_message",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

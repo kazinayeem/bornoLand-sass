@@ -32,7 +32,7 @@ export function TrustBar() {
                 <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-apple-canvas-parchment">
                   <m.icon className="h-5 w-5 text-blue-600" />
                 </div>
-                <p className="font-[family-name:var(--font-space-grotesk)] text-xl font-bold text-apple-ink sm:text-2xl">{m.value}</p>
+                <p className="text-xl font-bold text-apple-ink sm:text-2xl">{m.value}</p>
                 <p className="text-xs font-medium text-apple-ink-muted-48">{m.label}</p>
               </div>
             ))}

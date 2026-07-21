@@ -23,7 +23,7 @@ export function FinalCTA() {
           className="relative overflow-hidden rounded-lg bg-zinc-950 px-6 py-14 sm:px-12 sm:py-16"
         >
           <div className="relative text-center">
-            <h2 className="font-[family-name:var(--font-space-grotesk)] text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
               Start Your Online Business Today
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-apple-ink-muted-48">
@@ -53,7 +53,7 @@ export function FinalCTA() {
                   <div className="mx-auto mb-1.5 flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-800">
                     <m.icon className="h-4 w-4 text-blue-400" />
                   </div>
-                  <p className="font-[family-name:var(--font-space-grotesk)] text-lg font-bold text-white">{m.value}</p>
+                  <p className="text-lg font-bold text-white">{m.value}</p>
                   <p className="text-xs text-apple-ink-muted-48">{m.label}</p>
                 </div>
               ))}

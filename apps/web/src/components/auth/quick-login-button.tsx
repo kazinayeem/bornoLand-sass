@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLoginMutation } from "@/redux/api/auth-api";
@@ -29,14 +29,15 @@ export function QuickLoginButton({ label, email, password, loginType, callbackUr
       type="button"
       variant="secondary"
       className="h-10 w-full gap-2 rounded-xl text-sm"
-      disabled={loading}
+      loading={loading}
+      loadingKey="login"
       onClick={async () => {
         setLoading(true);
         const response = await login({
           email,
           password,
           loginType,
-          rememberMe: true
+          rememberMe: false,
         });
         setLoading(false);
 
@@ -62,7 +63,7 @@ export function QuickLoginButton({ label, email, password, loginType, callbackUr
         window.location.replace(consumeRedirectAfterLogin(queryRedirect, callbackUrl));
       }}
     >
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+      {!loading && <Sparkles className="h-4 w-4" />}
       {label}
     </Button>
   );

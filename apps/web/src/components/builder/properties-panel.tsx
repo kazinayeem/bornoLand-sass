@@ -24,6 +24,7 @@ import { HeaderBuilderSettings } from "@/components/builder/header-builder-setti
 import { FooterBuilderSettings } from "@/components/builder/footer-builder-settings";
 import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
+import { normalizeCssLength } from "@/lib/section-style";
 import type { MediaSelection } from "@/lib/media-selection";
 
 // ─── Shared Controls ──────────────────────────────────────────────
@@ -146,14 +147,17 @@ const groupLabels: Record<string, string> = {
 
 const groupOrder = ["content", "layout", "background", "typography", "spacing", "advanced"];
 
-const TABS: Array<{ key: RightTab; label: string; icon: typeof Type }> = [
+const PRIMARY_TABS: Array<{ key: RightTab; label: string; icon: typeof Type }> = [
   { key: "content", label: "Content", icon: Type },
-  { key: "style", label: "Style", icon: PaintBucket },
+  { key: "style", label: "Look", icon: PaintBucket },
   { key: "layout", label: "Layout", icon: Box },
-  { key: "responsive", label: "Responsive", icon: MonitorSmartphone },
-  { key: "animation", label: "Animation", icon: Sparkles },
-  { key: "seo", label: "SEO", icon: Globe },
-  { key: "advanced", label: "Advanced", icon: Lightbulb },
+];
+
+const ADVANCED_TABS: Array<{ key: RightTab; label: string; icon: typeof Type }> = [
+  { key: "responsive", label: "Mobile & tablet", icon: MonitorSmartphone },
+  { key: "animation", label: "Motion", icon: Sparkles },
+  { key: "seo", label: "Search & labels", icon: Globe },
+  { key: "advanced", label: "Custom code", icon: Lightbulb },
 ];
 
 // ─── Collapsible group wrapper ────────────────────────────────────
@@ -225,15 +229,19 @@ export function PropertiesPanel() {
   const selectedId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const editingZone = useSelector((s: RootState) => s.builder.editingZone);
   const section = useSelector((s: RootState) => {
-    if (editingZone === "header") return s.builder.headerSections.find((sec) => sec.id === selectedId);
-    if (editingZone === "footer") return s.builder.footerSections.find((sec) => sec.id === selectedId);
-    return s.builder.sections.find((sec) => sec.id === selectedId);
+    if (!selectedId) return undefined;
+    return (
+      s.builder.sections.find((sec) => sec.id === selectedId)
+      ?? s.builder.headerSections.find((sec) => sec.id === selectedId)
+      ?? s.builder.footerSections.find((sec) => sec.id === selectedId)
+    );
   });
   const activeRightTab = useSelector((s: RootState) => s.builder.activeRightTab);
   const rightPanelPinned = useSelector((s: RootState) => s.builder.rightPanelPinned);
   const device = useSelector((s: RootState) => s.preview.device);
 
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set(["bg", "typo", "border", "shadow", "entrance", "motion"]));
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // ─── Repeater configs (static, defined outside conditional) ─────────────────
   const repeaterConfigs: Record<string, { field: keyof SectionStyle; title: string; addLabel: string; fields: RepeaterField[] }> = {
@@ -349,8 +357,19 @@ export function PropertiesPanel() {
     dispatch(updateSectionProps({ id: section.id, props: { ...section.props, [key]: value } }));
   };
 
+  const LENGTH_STYLE_KEYS = new Set<keyof SectionStyle>([
+    "paddingTop", "paddingBottom", "paddingLeft", "paddingRight",
+    "marginTop", "marginBottom", "marginLeft", "marginRight",
+    "borderRadius", "borderWidth", "fontSize", "letterSpacing", "gap",
+    "width", "height", "minHeight", "maxHeight", "minWidth", "maxWidth",
+    "top", "right", "bottom", "left", "blur", "backdropBlur",
+  ]);
+
   const handleStyleChange = (key: keyof SectionStyle, value: string | boolean) => {
-    dispatch(updateSectionStyle({ id: section.id, style: { [key]: value } as Partial<SectionStyle> }));
+    const nextValue = typeof value === "string" && LENGTH_STYLE_KEYS.has(key)
+      ? (normalizeCssLength(value) ?? value)
+      : value;
+    dispatch(updateSectionStyle({ id: section.id, style: { [key]: nextValue } as Partial<SectionStyle> }));
   };
 
   const handleSectionPropsChange = (props: Record<string, string | undefined>) => {
@@ -943,48 +962,56 @@ export function PropertiesPanel() {
     }
   };
 
+  const isPrimaryTab = PRIMARY_TABS.some((tab) => tab.key === activeRightTab);
+  const isAdvancedTab = ADVANCED_TABS.some((tab) => tab.key === activeRightTab);
+
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="sticky top-0 z-10 border-b border-zinc-100 bg-white/95 px-3 py-3 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-zinc-100">
-              <Layers className="h-3 w-3 text-apple-ink-muted-48" />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-apple-ink">{section.label}</p>
-              <p className="truncate text-[10px] text-apple-ink-muted-48">{section.type}</p>
-            </div>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-apple-canvas">
+      <div className="sticky top-0 z-10 border-b border-apple-hairline bg-apple-canvas/95 px-4 py-4 backdrop-blur-sm">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-body-strong text-apple-ink">{section.label}</p>
+            <p className="truncate text-caption text-apple-ink-muted-48">{def?.label ?? "Section"}</p>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <button onClick={() => dispatch(setRightPanelPinned(!rightPanelPinned))}
-              className={`rounded p-1 transition-colors ${rightPanelPinned ? "text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"}`}
-              title={rightPanelPinned ? "Unpin" : "Pin"}>
-              <Pin className={`h-3.5 w-3.5 ${rightPanelPinned ? "rotate-45" : ""}`} />
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => dispatch(setRightPanelPinned(!rightPanelPinned))}
+              className={cn(
+                "rounded-apple-md p-1.5 transition-colors",
+                rightPanelPinned ? "text-apple-primary" : "text-apple-ink-muted-48 hover:text-apple-ink"
+              )}
+              title={rightPanelPinned ? "Unpin panel" : "Pin panel"}
+            >
+              <Pin className={cn("h-4 w-4", rightPanelPinned && "rotate-45")} />
             </button>
-            <button onClick={() => dispatch(toggleRightPanel())}
-              className="rounded p-1 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
-              <X className="h-3.5 w-3.5" />
+            <button
+              type="button"
+              onClick={() => dispatch(toggleRightPanel())}
+              className="rounded-apple-md p-1.5 text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas-parchment hover:text-apple-ink"
+            >
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="mt-2">
-          <input type="text" value={section.label}
-            onChange={(e) => dispatch(updateSectionMeta({ id: section.id, label: e.target.value }))}
-            className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 focus:border-zinc-400 focus:outline-none" />
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-0.5 rounded-xl bg-zinc-100/80 p-0.5">
-          {TABS.map((tab) => {
+        <div className="mt-4 flex gap-1 rounded-apple-pill bg-apple-canvas-parchment p-1">
+          {PRIMARY_TABS.map((tab) => {
             const Icon = tab.icon;
             return (
-              <button key={tab.key} type="button" onClick={() => dispatch(setActiveRightTab(tab.key))}
-                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[9px] font-medium transition-all ${
-                  activeRightTab === tab.key ? "bg-white text-apple-ink shadow-sm" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
-                }`}>
-                <Icon className="h-3 w-3" />
-                <span className="hidden sm:inline">{tab.label}</span>
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => dispatch(setActiveRightTab(tab.key))}
+                className={cn(
+                  "btn-press flex flex-1 items-center justify-center gap-1.5 rounded-apple-pill px-3 py-2 text-caption font-medium transition-all",
+                  activeRightTab === tab.key
+                    ? "bg-apple-canvas text-apple-ink shadow-sm"
+                    : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {tab.label}
               </button>
             );
           })}
@@ -992,13 +1019,66 @@ export function PropertiesPanel() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        {renderTabContent()}
-
-        {controls.length === 0 && activeRightTab === "content" && (
-          <div className="p-4 text-center">
-            <p className="text-xs text-apple-ink-muted-48">No editable properties for this section type</p>
+        {isPrimaryTab ? renderTabContent() : (
+          <div className="flex h-40 items-center justify-center p-6 text-center">
+            <p className="text-caption text-apple-ink-muted-48">Open <span className="font-medium text-apple-ink">More options</span> below for mobile, motion, and other settings.</p>
           </div>
         )}
+
+        {controls.length === 0 && activeRightTab === "content" && isPrimaryTab && (
+          <div className="p-6 text-center">
+            <p className="text-caption text-apple-ink-muted-48">Nothing to edit here — try another tab.</p>
+          </div>
+        )}
+
+        <div className="border-t border-apple-hairline">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((v) => !v)}
+            className="flex w-full items-center justify-between px-4 py-3 text-caption font-medium text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas-parchment hover:text-apple-ink"
+          >
+            <span className="flex items-center gap-2">
+              <Settings2 className="h-3.5 w-3.5" />
+              More options
+            </span>
+            <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", showAdvanced && "rotate-180")} />
+          </button>
+
+          {showAdvanced && (
+            <div className="space-y-3 border-t border-apple-hairline bg-apple-canvas-parchment/40 px-4 py-3">
+              <div className="flex flex-wrap gap-1.5">
+                {ADVANCED_TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => {
+                        dispatch(setActiveRightTab(tab.key));
+                        setShowAdvanced(true);
+                      }}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-apple-pill border px-3 py-1.5 text-fine-print font-medium transition-all",
+                        activeRightTab === tab.key
+                          ? "border-apple-primary bg-apple-primary/5 text-apple-primary"
+                          : "border-apple-hairline bg-apple-canvas text-apple-ink-muted-48 hover:border-apple-primary/30"
+                      )}
+                    >
+                      <Icon className="h-3 w-3" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {isAdvancedTab && (
+                <div className="rounded-apple-lg border border-apple-hairline bg-apple-canvas">
+                  {renderTabContent()}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

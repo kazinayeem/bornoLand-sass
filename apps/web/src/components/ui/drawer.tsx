@@ -66,7 +66,7 @@ export function Drawer({
               sizeClasses[size]
             )}
           >
-            <div className="flex items-center justify-between border-b border-apple-divider-soft px-lg py-4">
+            <div className="flex items-center justify-between border-b border-apple-divider-soft px-apple-lg py-4">
               <div>
                 {title && (
                   <h2 className="text-body-strong text-apple-ink dark:text-apple-body-on-dark">
@@ -87,7 +87,7 @@ export function Drawer({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className={cn("flex-1 overflow-y-auto px-lg py-4", className)}>{children}</div>
+            <div className={cn("flex-1 overflow-y-auto px-apple-lg py-4", className)}>{children}</div>
           </motion.div>
         </div>
       )}

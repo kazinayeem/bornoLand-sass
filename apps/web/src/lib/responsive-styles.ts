@@ -1,5 +1,6 @@
 import type { Breakpoint } from "./builder-types";
 import type { SectionStyle, DeviceStyle } from "@/redux/slices/builder-slice";
+import { normalizeCssLength } from "@/lib/section-style";
 
 function resolveBreakpointValue(
   responsive: Partial<Record<Breakpoint, DeviceStyle>> | undefined,
@@ -67,7 +68,12 @@ export function computeSectionStyle(
   if (!style) return {};
 
   const r = style.responsive;
-  const res = (key: keyof DeviceStyle, fallback?: string) => resolve(r, device, key, fallback ?? (style as any)[key]);
+  const res = (key: keyof DeviceStyle, fallback?: string) =>
+    normalizeCssLength(resolve(r, device, key, fallback ?? (style as Record<string, string | undefined>)[key]));
+
+  const shadowValue = style.shadow && !["none", "sm", "md", "lg"].includes(style.shadow)
+    ? style.shadow
+    : undefined;
 
   return {
     paddingTop: res("paddingTop"),
@@ -99,13 +105,13 @@ export function computeSectionStyle(
 
     backgroundColor: style.backgroundColor,
     borderColor: style.borderColor,
-    borderWidth: style.borderWidth ? `${Number(style.borderWidth) > 0 ? style.borderWidth + "px" : style.borderWidth}` : undefined,
+    borderWidth: normalizeCssLength(style.borderWidth),
     borderStyle: style.borderStyle,
-    boxShadow: style.shadow,
+    boxShadow: shadowValue,
     opacity: style.opacity ? Number(style.opacity) / 100 : undefined,
     fontFamily: style.fontFamily,
     fontWeight: style.fontWeight,
-    letterSpacing: style.letterSpacing,
+    letterSpacing: normalizeCssLength(style.letterSpacing),
     textTransform: style.textTransform as React.CSSProperties["textTransform"],
     textDecoration: style.textDecoration as React.CSSProperties["textDecoration"],
     color: style.color,
@@ -116,7 +122,7 @@ export function computeSectionStyle(
     zIndex: style.zIndex ? Number(style.zIndex) : undefined,
     transform: style.transform,
     transformOrigin: style.transformOrigin,
-    backdropFilter: style.backdropBlur ? `blur(${style.backdropBlur}px)` : undefined,
+    backdropFilter: style.backdropBlur ? `blur(${normalizeCssLength(style.backdropBlur)})` : undefined,
   };
 }
 

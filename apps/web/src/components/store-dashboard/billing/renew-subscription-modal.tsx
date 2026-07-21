@@ -91,14 +91,14 @@ export function RenewSubscriptionModal({
       ) : (
         <div className="space-y-6">
           {/* Order summary */}
-          <div className="rounded-xl border border-zinc-200 bg-apple-canvas-parchment p-4">
-            <div className="flex justify-between border-b border-zinc-200 pb-3">
+          <div className="rounded-xl border border-apple-hairline bg-apple-canvas-parchment p-4">
+            <div className="flex justify-between border-b border-apple-hairline pb-3">
               <span className="text-sm font-medium text-apple-ink-muted-80">Plan</span>
               <span className="text-sm font-semibold text-apple-ink">
                 {planName} ({duration})
               </span>
             </div>
-            <div className="flex justify-between border-b border-zinc-200 py-3">
+            <div className="flex justify-between border-b border-apple-hairline py-3">
               <span className="text-sm font-medium text-apple-ink-muted-80">Amount</span>
               <span className="text-sm font-semibold text-apple-ink">
                 ৳{amount?.toLocaleString() ?? "—"}
@@ -157,7 +157,7 @@ export function RenewSubscriptionModal({
               type="button"
               onClick={handlePayNow}
               disabled={isSubmitting || isPriceLoading || !amount}
-              className="flex items-center gap-2 rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white  hover:bg-indigo-700 disabled:opacity-50"
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {isSubmitting ? "Processing…" : "Pay Now"}

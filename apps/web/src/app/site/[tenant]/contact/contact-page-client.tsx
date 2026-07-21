@@ -2,37 +2,73 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Mail, Phone, MapPin, Send, Check } from "lucide-react";
+import {
+  Mail, Phone, MapPin, Send, Check, Clock, MessageCircle,
+  Facebook, Instagram, Linkedin, Youtube,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useTenant } from "@/providers/tenant-provider";
 import type { CmsPageData } from "@/lib/cms-page-types";
+import type { StoreContactData } from "@/lib/server/store-contact";
 import { getApiUrl } from "@/lib/urls";
+import {
+  StorefrontPage,
+  StorefrontCard,
+  StorefrontButton,
+  useStorefrontSurface,
+} from "@/components/storefront/storefront-ui";
 
 type CmsPage = CmsPageData;
 
-export function ContactPageClient({ initialPage }: { initialPage?: CmsPageData | null }) {
-  const { store, theme } = useTenant();
-  const { primaryColor, darkMode } = theme;
-  const isDark = darkMode;
+function formatAddress(contact: StoreContactData) {
+  return [contact.address, contact.city, contact.postalCode, contact.country].filter(Boolean).join(", ");
+}
+
+function SocialIcon({ platform }: { platform: string }) {
+  switch (platform) {
+    case "facebook": return <Facebook className="h-4 w-4" />;
+    case "instagram": return <Instagram className="h-4 w-4" />;
+    case "linkedin": return <Linkedin className="h-4 w-4" />;
+    case "youtube": return <Youtube className="h-4 w-4" />;
+    default: return <MessageCircle className="h-4 w-4" />;
+  }
+}
+
+export function ContactPageClient({
+  initialPage,
+  initialContact,
+}: {
+  initialPage?: CmsPageData | null;
+  initialContact?: StoreContactData | null;
+}) {
+  const { store } = useTenant();
+  const { classes, dark, primaryColor } = useStorefrontSurface();
 
   const [page, setPage] = useState<CmsPage | null>(initialPage ?? null);
-  const [loading, setLoading] = useState(!initialPage);
+  const [contact, setContact] = useState<StoreContactData | null>(initialContact ?? null);
 
   useEffect(() => {
-    if (initialPage || !store._id) return;
-    setLoading(true);
+    if (!store._id || (initialPage && initialContact)) return;
     const apiUrl = getApiUrl();
     if (!apiUrl) return;
-    fetch(`${apiUrl}/public/page/contact-us?storeId=${store._id}`, { cache: "no-store" })
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.success && json.data?.page) setPage(json.data.page);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [store._id, initialPage]);
 
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+    const load = async () => {
+      try {
+        const [pageRes, contactRes] = await Promise.all([
+          initialPage ? Promise.resolve(null) : fetch(`${apiUrl}/public/page/contact-us?storeId=${store._id}`, { cache: "no-store" }).then((r) => r.json()),
+          initialContact ? Promise.resolve(null) : fetch(`${apiUrl}/public/contact?storeId=${store._id}`, { cache: "no-store" }).then((r) => r.json()),
+        ]);
+        if (pageRes?.success && pageRes.data?.page) setPage(pageRes.data.page);
+        if (contactRes?.success && contactRes.data?.contact) setContact(contactRes.data.contact);
+      } catch {
+        // ignore
+      }
+    };
+
+    void load();
+  }, [store._id, initialPage, initialContact]);
+
+  const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -67,123 +103,160 @@ export function ContactPageClient({ initialPage }: { initialPage?: CmsPageData |
     }
   };
 
+  const displayName = contact?.businessName || store.name;
+  const fullAddress = contact ? formatAddress(contact) : "";
+  const socialEntries = Object.entries(contact?.socialLinks ?? {}).filter(([, url]) => url?.trim());
+
+  const contactItems = [
+    contact?.email ? { icon: Mail, label: "Email", value: contact.email, href: `mailto:${contact.email}` } : null,
+    contact?.phone ? { icon: Phone, label: "Phone", value: contact.phone, href: `tel:${contact.phone}` } : null,
+    contact?.whatsapp ? { icon: MessageCircle, label: "WhatsApp", value: contact.whatsapp, href: `https://wa.me/${contact.whatsapp.replace(/\D/g, "")}` } : null,
+    fullAddress ? { icon: MapPin, label: "Address", value: fullAddress } : null,
+    contact?.businessHours ? { icon: Clock, label: "Business hours", value: contact.businessHours } : null,
+  ].filter(Boolean) as Array<{ icon: typeof Mail; label: string; value: string; href?: string }>;
+
   return (
-    <div style={{ backgroundColor: isDark ? "#000000" : "#ffffff" }}>
-      <section className="py-20 sm:py-28 text-center px-4"
-        style={{ background: `linear-gradient(135deg, ${primaryColor}08 0%, ${primaryColor}02 100%)` }}>
+    <StorefrontPage parchment maxWidth="lg">
+      <section className="py-16 text-center sm:py-20">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <span className="inline-block rounded-full px-3 py-1 text-xs font-medium"
-            style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>Contact</span>
-          <h1 className="mt-4 text-4xl font-bold sm:text-5xl" style={{ color: isDark ? "#fafafa" : "#18181b" }}>
+          <span className={classes.chip + " inline-block px-3 py-1 text-caption font-medium"} style={{ color: primaryColor }}>
+            Contact
+          </span>
+          <h1 className={`mt-4 text-display-md sm:text-display-lg ${classes.heading}`}>
             {page?.title || "Get in Touch"}
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
+          <p className={`mx-auto mt-4 max-w-2xl text-lead ${classes.body}`}>
             Have a question? We&apos;d love to hear from you.
           </p>
         </motion.div>
       </section>
 
       {page?.html && (
-        <section className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <div className="prose prose-zinc max-w-none"
-            style={{
-              color: isDark ? "#a1a1aa" : "#52525b",
-              "--tw-prose-headings": isDark ? "#fafafa" : "#18181b",
-              "--tw-prose-links": primaryColor,
-              "--tw-prose-bold": isDark ? "#fafafa" : "#18181b",
-              "--tw-prose-quotes": isDark ? "#a1a1aa" : "#52525b",
-            } as React.CSSProperties}
+        <section className="mx-auto max-w-3xl px-4 pb-8 sm:px-6">
+          <div
+            className={`prose max-w-none ${dark ? "prose-invert" : "prose-zinc"}`}
             dangerouslySetInnerHTML={{ __html: page.html }}
           />
         </section>
       )}
 
-      <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+      <section className="pb-20">
         <div className="grid gap-10 lg:grid-cols-2">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-            <h2 className="text-2xl font-bold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Send us a message</h2>
-            <p className="mt-2 text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>
-              Fill out the form and we&apos;ll get back to you within 24 hours.
+            <h2 className={`text-tagline ${classes.heading}`}>Send us a message</h2>
+            <p className={`mt-2 text-caption ${classes.muted}`}>
+              Fill out the form and we&apos;ll get back to you soon.
             </p>
 
             {sent ? (
-              <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border p-8 text-center"
-                style={{ borderColor: isDark ? "#27272a" : "#e4e4e7" }}>
-                <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ backgroundColor: `${primaryColor}12` }}>
+              <StorefrontCard className="mt-8 p-8 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full" style={{ backgroundColor: `${primaryColor}12` }}>
                   <Check className="h-8 w-8" style={{ color: primaryColor }} />
                 </div>
-                <h3 className="text-lg font-semibold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Message Sent!</h3>
-                <p className="text-sm" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>We&apos;ll respond shortly.</p>
-              </div>
+                <h3 className={`mt-4 text-body-strong ${classes.heading}`}>Message sent!</h3>
+                <p className={`mt-2 text-caption ${classes.muted}`}>We&apos;ll respond shortly.</p>
+              </StorefrontCard>
             ) : (
-              <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-1 block text-xs font-medium" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>Name *</label>
-                    <input type="text" value={form.name} onChange={handleChange("name")} required
-                      className="h-10 w-full rounded-xl border bg-transparent px-3 text-sm focus:outline-none focus:ring-2"
-                      style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", color: isDark ? "#fafafa" : "#18181b" }} />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>Email *</label>
-                    <input type="email" value={form.email} onChange={handleChange("email")} required
-                      className="h-10 w-full rounded-xl border bg-transparent px-3 text-sm focus:outline-none focus:ring-2"
-                      style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", color: isDark ? "#fafafa" : "#18181b" }} />
-                  </div>
+              <form onSubmit={handleSubmit} className="mt-8 space-y-4" aria-label="Contact form">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <label className="block">
+                    <span className={`text-caption font-medium ${classes.muted}`}>Name *</span>
+                    <input type="text" value={form.name} onChange={handleChange("name")} required className={classes.input + " mt-1.5"} />
+                  </label>
+                  <label className="block">
+                    <span className={`text-caption font-medium ${classes.muted}`}>Email *</span>
+                    <input type="email" value={form.email} onChange={handleChange("email")} required className={classes.input + " mt-1.5"} />
+                  </label>
                 </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>Phone</label>
-                  <input type="tel" value={form.phone} onChange={handleChange("phone")}
-                    className="h-10 w-full rounded-xl border bg-transparent px-3 text-sm focus:outline-none focus:ring-2"
-                    style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", color: isDark ? "#fafafa" : "#18181b" }} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>Message *</label>
-                  <textarea value={form.message} onChange={handleChange("message")} required rows={5}
-                    className="w-full rounded-xl border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                    style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", color: isDark ? "#fafafa" : "#18181b" }} />
-                </div>
-                <button type="submit" disabled={sending}
-                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
-                  style={{ backgroundColor: "#18181b" }}>
-                  <Send className="h-4 w-4" /> {sending ? "Sending..." : "Send Message"}
-                </button>
+                <label className="block">
+                  <span className={`text-caption font-medium ${classes.muted}`}>Phone</span>
+                  <input type="tel" value={form.phone} onChange={handleChange("phone")} className={classes.input + " mt-1.5"} />
+                </label>
+                <label className="block">
+                  <span className={`text-caption font-medium ${classes.muted}`}>Subject</span>
+                  <input type="text" value={form.subject} onChange={handleChange("subject")} className={classes.input + " mt-1.5"} />
+                </label>
+                <label className="block">
+                  <span className={`text-caption font-medium ${classes.muted}`}>Message *</span>
+                  <textarea value={form.message} onChange={handleChange("message")} required rows={5} className={classes.input + " mt-1.5 h-auto min-h-[140px] py-3"} />
+                </label>
+                <StorefrontButton type="submit" disabled={sending} className="w-full">
+                  <Send className="h-4 w-4" />
+                  {sending ? "Sending…" : "Send message"}
+                </StorefrontButton>
               </form>
             )}
           </motion.div>
 
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-            <div className="rounded-2xl border p-6"
-              style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", backgroundColor: isDark ? "#18181b" : "#fafafa" }}>
-              <h3 className="mb-4 font-semibold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>Contact Information</h3>
-              <div className="space-y-4">
-                {[
-                  { icon: Mail, label: "Email", value: "hello@example.com" },
-                  { icon: Phone, label: "Phone", value: "+1 (555) 123-4567" },
-                  { icon: MapPin, label: "Address", value: "123 Commerce St, New York, NY 10001" },
-                ].map(({ icon: Icon, label, value }) => (
-                  <div key={label} className="flex items-start gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ backgroundColor: `${primaryColor}12` }}>
-                      <Icon className="h-4 w-4" style={{ color: primaryColor }} />
+            <StorefrontCard className="p-6">
+              <h3 className={`mb-4 text-body-strong ${classes.heading}`}>{displayName}</h3>
+              {contactItems.length > 0 ? (
+                <div className="space-y-4">
+                  {contactItems.map(({ icon: Icon, label, value, href }) => (
+                    <div key={label} className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-apple-md" style={{ backgroundColor: `${primaryColor}12` }}>
+                        <Icon className="h-4 w-4" style={{ color: primaryColor }} />
+                      </div>
+                      <div>
+                        <p className={`text-caption font-medium ${classes.muted}`}>{label}</p>
+                        {href ? (
+                          <a href={href} className={`text-body ${classes.link}`}>{value}</a>
+                        ) : (
+                          <p className={`whitespace-pre-line text-body ${classes.heading}`}>{value}</p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-medium" style={{ color: isDark ? "#a1a1aa" : "#52525b" }}>{label}</p>
-                      <p className="text-sm" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{value}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  ))}
+                </div>
+              ) : (
+                <p className={`text-caption ${classes.muted}`}>Contact details will appear here once configured in your store dashboard.</p>
+              )}
 
-            <div className="aspect-video rounded-2xl overflow-hidden border"
-              style={{ borderColor: isDark ? "#27272a" : "#e4e4e7" }}>
-              <div className="flex h-full items-center justify-center" style={{ backgroundColor: isDark ? "#18181b" : "#f4f4f5" }}>
-                <MapPin className="h-10 w-10" style={{ color: isDark ? "#52525b" : "#d4d4d8" }} />
+              {socialEntries.length > 0 && (
+                <div className="mt-6 flex flex-wrap gap-2 border-t border-apple-hairline pt-4">
+                  {socialEntries.map(([platform, url]) => (
+                    <a
+                      key={platform}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-2 rounded-apple-pill border px-3 py-1.5 text-caption capitalize ${classes.divider} ${classes.heading} hover:opacity-80`}
+                    >
+                      <SocialIcon platform={platform} />
+                      {platform === "x" ? "X" : platform}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </StorefrontCard>
+
+            {contact?.googleMapsEmbedUrl ? (
+              <div className={`aspect-video overflow-hidden rounded-apple-lg border ${classes.divider}`}>
+                <iframe
+                  title="Store location"
+                  src={contact.googleMapsEmbedUrl}
+                  className="h-full w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
               </div>
-            </div>
+            ) : contact?.latitude && contact?.longitude ? (
+              <div className={`aspect-video overflow-hidden rounded-apple-lg border ${classes.divider}`}>
+                <iframe
+                  title="Store location"
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(`${contact.latitude},${contact.longitude}`)}&z=15&output=embed`}
+                  className="h-full w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              </div>
+            ) : null}
           </motion.div>
         </div>
       </section>
-    </div>
+    </StorefrontPage>
   );
 }

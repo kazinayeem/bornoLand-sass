@@ -181,12 +181,12 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
         <p className="max-w-lg text-center text-sm text-apple-ink-muted-48">
           Compare all plans side by side. Pick the one that matches your store&apos;s needs.
         </p>
-        <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-sm">
+        <div className="flex items-center gap-1 rounded-full border border-apple-hairline bg-white p-1 ">
           <button
             onClick={() => setIsYearly(false)}
             className={cn(
               "rounded-full px-5 py-2 text-sm font-medium transition-all",
-              !isYearly ? "bg-zinc-900 text-white shadow-sm" : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+              !isYearly ? "bg-apple-ink text-white " : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
             )}
           >
             Monthly
@@ -195,7 +195,7 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
             onClick={() => setIsYearly(true)}
             className={cn(
               "rounded-full px-5 py-2 text-sm font-medium transition-all",
-              isYearly ? "bg-zinc-900 text-white shadow-sm" : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+              isYearly ? "bg-apple-ink text-white " : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
             )}
           >
             Yearly <span className="ml-1 text-xs text-emerald-500">(Save up to 20%)</span>
@@ -216,7 +216,7 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
             <div
               key={plan._id}
               className={cn(
-                "relative flex flex-col rounded-2xl border bg-white p-6 shadow-sm transition-all hover:shadow-md",
+                "relative flex flex-col rounded-apple-lg border bg-white p-6  transition-all hover:",
                 isCurrent
                   ? "border-emerald-500 bg-emerald-50/40 shadow-emerald-100 ring-1 ring-emerald-500/20"
                   : plan.isRecommended
@@ -265,7 +265,7 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
                     : buttonState === "upgrade"
                     ? plan.isRecommended
                       ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                      : "bg-zinc-900 text-white hover:bg-zinc-800"
+                      : "bg-apple-ink text-white hover:bg-apple-ink-muted-80"
                     : "border border-zinc-300 bg-white text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
                 )}
               >
@@ -319,7 +319,7 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
                                 value ? (
                                   <Check className="h-4 w-4 text-emerald-500" />
                                 ) : (
-                                  <X className="h-4 w-4 text-zinc-300" />
+                                  <X className="h-4 w-4 text-apple-ink-muted-48" />
                                 )
                               ) : row.format === "currency" ? (
                                 `৳${(Number(value) || 0).toLocaleString()}`

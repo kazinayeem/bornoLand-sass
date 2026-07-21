@@ -40,7 +40,7 @@ export default function ConversionPage() {
   ];
 
   const conversionRates = [
-    { label: "Visit → Product", rate: `${String(conversion.cartConversion ?? "0.00")}%`, desc: "Product viewers who added to cart", color: "text-blue-600" },
+    { label: "Visit → Product", rate: `${String(conversion.cartConversion ?? "0.00")}%`, desc: "Product viewers who added to cart", color: "text-apple-primary" },
     { label: "Cart → Checkout", rate: `${String(conversion.checkoutConversion ?? "0.00")}%`, desc: "Cart viewers who started checkout", color: "text-amber-600" },
     { label: "Checkout → Order", rate: `${String(conversion.orderConversion ?? "0.00")}%`, desc: "Checkout starters who completed order", color: "text-emerald-600" },
     { label: "Overall Conversion", rate: `${String(conversion.conversionRate ?? "0.00")}%`, desc: "Sessions that resulted in an order", color: "text-purple-600" },
@@ -57,7 +57,7 @@ export default function ConversionPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {conversionRates.map((cr, i) => (
           <motion.div key={cr.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-            className="rounded-xl border border-zinc-200 bg-white p-4 text-center">
+            className="rounded-xl border border-apple-hairline bg-white p-4 text-center">
             <p className="text-xs font-medium text-apple-ink-muted-48 mb-1">{cr.label}</p>
             <p className={`text-3xl font-bold ${cr.color}`}>{cr.rate}</p>
             <p className="text-[10px] text-apple-ink-muted-48 mt-1">{cr.desc}</p>
@@ -75,7 +75,7 @@ export default function ConversionPage() {
               <div key={step.label}>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-bold text-apple-ink-muted-48">{i + 1}</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-apple-canvas-parchment text-[10px] font-bold text-apple-ink-muted-48">{i + 1}</span>
                     <step.icon className="h-3.5 w-3.5 text-apple-ink-muted-48" />
                     <span className="font-medium text-apple-ink-muted-80">{step.label}</span>
                   </div>
@@ -84,7 +84,7 @@ export default function ConversionPage() {
                     <span className="text-apple-ink-muted-48 w-10 text-right">{step.percentage}%</span>
                   </div>
                 </div>
-                <div className="h-4 w-full overflow-hidden rounded-full bg-zinc-100">
+                <div className="h-4 w-full overflow-hidden rounded-full bg-apple-canvas-parchment">
                   <motion.div initial={{ width: 0 }} animate={{ width: `${width}%` }}
                     transition={{ duration: 0.8, delay: 0.2 + i * 0.1 }}
                     className={`h-full rounded-full ${step.color}`} />

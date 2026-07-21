@@ -43,32 +43,32 @@ export function Hero() {
       >
         <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
           <div className="relative">
-            <motion.div variants={itemVariants} className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-blue-200/60 bg-blue-50/80 px-3.5 py-1.5 text-xs font-semibold text-blue-700 backdrop-blur-sm">
+            <motion.div variants={itemVariants} className="mb-5 inline-flex items-center gap-1.5 rounded-pill border border-apple-hairline bg-apple-canvas px-3.5 py-1.5 text-caption-strong text-apple-primary">
               <Sparkles className="h-3.5 w-3.5" />
               Trusted by Growing Businesses
             </motion.div>
 
-            <motion.h1 variants={itemVariants} className="font-[family-name:var(--font-space-grotesk)] text-4xl font-bold leading-[1.1] tracking-tight text-apple-ink sm:text-5xl lg:text-6xl xl:text-7xl">
+            <motion.h1 variants={itemVariants} className="text-hero-display text-apple-ink">
               Build Your Ecommerce
               <br />
               <span className="text-apple-primary">Store in Minutes</span>
             </motion.h1>
 
-            <motion.p variants={itemVariants} className="mt-5 max-w-lg text-base leading-relaxed text-apple-ink-muted-48 sm:text-lg">
+            <motion.p variants={itemVariants} className="mt-5 max-w-lg text-lead text-apple-ink-muted-80">
               Create your online store, manage products, orders, payments, delivery, customers, and analytics from one powerful platform.
             </motion.p>
 
             <motion.div variants={itemVariants} className="mt-7 flex flex-wrap items-center gap-3">
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2 rounded-xl bg-apple-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:brightness-110"
+                className="btn-press group inline-flex items-center gap-2 rounded-pill bg-apple-primary px-7 py-[14px] text-[18px] font-light text-apple-on-primary"
               >
                 Start Free
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="#builder"
-                className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline bg-apple-canvas/70 px-6 py-3 text-sm font-semibold text-apple-ink-muted-80 backdrop-blur-sm transition-colors hover:border-zinc-300 hover:bg-apple-canvas"
+                className="btn-press inline-flex items-center gap-2 rounded-pill border border-apple-primary bg-transparent px-[22px] py-[11px] text-body text-apple-primary"
               >
                 <Play className="h-4 w-4" />
                 View Demo

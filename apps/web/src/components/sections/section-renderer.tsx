@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import type { SectionStyle } from "@/components/storefront/storefront-types";
 import { useDevice } from "@/lib/device-context";
 import { computeSectionStyle, applyResponsiveVisibility } from "@/lib/responsive-styles";
+import { normalizeCssLength } from "@/lib/section-style";
 import type { Breakpoint } from "@/lib/builder-types";
 
 export type SectionData = {
@@ -78,24 +79,24 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
   const blurAmt = s?.blur || p.blur || "";
   const backdropBlur = s?.backdropBlur || "";
 
-  const paddingTop = responsiveStyle.paddingTop ?? s?.paddingTop ?? p.paddingTop ?? "0";
-  const paddingBottom = responsiveStyle.paddingBottom ?? s?.paddingBottom ?? p.paddingBottom ?? "0";
-  const paddingLeft = responsiveStyle.paddingLeft ?? s?.paddingLeft ?? p.paddingLeft ?? "0";
-  const paddingRight = responsiveStyle.paddingRight ?? s?.paddingRight ?? p.paddingRight ?? "0";
-  const marginTop = responsiveStyle.marginTop ?? s?.marginTop ?? p.marginTop ?? "0";
-  const marginBottom = responsiveStyle.marginBottom ?? s?.marginBottom ?? p.marginBottom ?? "0";
-  const marginLeft = responsiveStyle.marginLeft ?? s?.marginLeft ?? "auto";
-  const marginRight = responsiveStyle.marginRight ?? s?.marginRight ?? "auto";
-  const maxWidth = responsiveStyle.maxWidth || s?.maxWidth || p.maxWidth || "1200px";
-  const borderRadius = responsiveStyle.borderRadius ?? s?.borderRadius ?? p.borderRadius ?? "0";
+  const paddingTop = normalizeCssLength(responsiveStyle.paddingTop ?? s?.paddingTop ?? p.paddingTop ?? "0");
+  const paddingBottom = normalizeCssLength(responsiveStyle.paddingBottom ?? s?.paddingBottom ?? p.paddingBottom ?? "0");
+  const paddingLeft = normalizeCssLength(responsiveStyle.paddingLeft ?? s?.paddingLeft ?? p.paddingLeft ?? "0");
+  const paddingRight = normalizeCssLength(responsiveStyle.paddingRight ?? s?.paddingRight ?? p.paddingRight ?? "0");
+  const marginTop = normalizeCssLength(responsiveStyle.marginTop ?? s?.marginTop ?? p.marginTop ?? "0");
+  const marginBottom = normalizeCssLength(responsiveStyle.marginBottom ?? s?.marginBottom ?? p.marginBottom ?? "0");
+  const marginLeft = normalizeCssLength(responsiveStyle.marginLeft ?? s?.marginLeft ?? "auto");
+  const marginRight = normalizeCssLength(responsiveStyle.marginRight ?? s?.marginRight ?? "auto");
+  const maxWidth = responsiveStyle.maxWidth || normalizeCssLength(s?.maxWidth || p.maxWidth || "1200px");
+  const borderRadius = normalizeCssLength(responsiveStyle.borderRadius ?? s?.borderRadius ?? p.borderRadius ?? "0");
   const shadow = s?.shadow || p.shadow || "none";
-  const borderWidth = s?.borderWidth ?? p.borderWidth ?? "0";
-  const borderColor = s?.borderColor || p.borderColor || "";
-  const borderStyle = s?.borderStyle || (borderWidth !== "0" ? "solid" : undefined);
-  const opacity = responsiveStyle.opacity !== undefined ? String(responsiveStyle.opacity) : s?.opacity || "";
-  const width = responsiveStyle.width || s?.width || p.width || "";
-  const height = responsiveStyle.height || s?.height || p.height || "";
-  const minHeight = responsiveStyle.minHeight || s?.minHeight || p.minHeight || "";
+  const borderWidth = normalizeCssLength(s?.borderWidth ?? p.borderWidth ?? "0");
+  const borderColor = responsiveStyle.borderColor || s?.borderColor || p.borderColor || "";
+  const borderStyle = s?.borderStyle || (borderWidth && borderWidth !== "0" ? "solid" : undefined);
+  const opacity = responsiveStyle.opacity !== undefined ? responsiveStyle.opacity : s?.opacity ? Number(s.opacity) / 100 : undefined;
+  const width = responsiveStyle.width || normalizeCssLength(s?.width || p.width || "");
+  const height = responsiveStyle.height || normalizeCssLength(s?.height || p.height || "");
+  const minHeight = responsiveStyle.minHeight || normalizeCssLength(s?.minHeight || p.minHeight || "");
   const animation = s?.animation || p.animation || "none";
   const animDuration = s?.animationDuration || "600";
   const animDelay = s?.animationDelay || "0";
@@ -106,13 +107,10 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
   const isGradient = bgGradient && bgGradient.trim().length > 0 && bgGradient !== "none";
 
   const shadowClass = shadow === "sm" ? "shadow-sm" : shadow === "md" ? "shadow-md" : shadow === "lg" ? "shadow-lg" : "";
+  const customBoxShadow = shadow && !["none", "sm", "md", "lg"].includes(shadow) ? shadow : responsiveStyle.boxShadow;
   const hiddenClass = isHidden ? "hidden" : visibility === "desktop-only" ? "hidden lg:block" : visibility === "tablet-only" ? "hidden md:block lg:hidden" : visibility === "mobile-only" ? "block md:hidden" : "";
 
   const animProps = animationStyle(animation, animDuration, animDelay, animTrigger);
-
-  const finalBg = isGradient
-    ? bgGradient
-    : bgColor || "transparent";
 
   const bgStyle: React.CSSProperties = {};
   if (hasBgImage) {
@@ -129,35 +127,66 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
     parallaxStyle.backgroundPosition = bgPos;
   }
 
+  const wrapperStyle: React.CSSProperties = {
+    paddingTop,
+    paddingBottom,
+    paddingLeft,
+    paddingRight,
+    marginTop,
+    marginBottom,
+    marginLeft,
+    marginRight,
+    maxWidth: maxWidth === "100%" ? "100%" : maxWidth,
+    backgroundColor: !hasBgImage && !isGradient ? (bgColor || undefined) : undefined,
+    background: isGradient ? bgGradient : undefined,
+    borderRadius,
+    borderWidth: borderWidth && borderWidth !== "0" ? borderWidth : undefined,
+    borderStyle,
+    borderColor: borderColor || undefined,
+    opacity,
+    width: width || undefined,
+    height: height || undefined,
+    minHeight: minHeight || undefined,
+    boxShadow: customBoxShadow,
+    position: (responsiveStyle.position || s?.position || "relative") as React.CSSProperties["position"],
+    zIndex: responsiveStyle.zIndex ?? (s?.zIndex ? Number(s.zIndex) : undefined),
+    transform: responsiveStyle.transform ?? s?.transform,
+    transformOrigin: responsiveStyle.transformOrigin ?? s?.transformOrigin,
+    display: responsiveStyle.display,
+    flexDirection: responsiveStyle.flexDirection,
+    alignItems: responsiveStyle.alignItems,
+    justifyContent: responsiveStyle.justifyContent,
+    flexWrap: responsiveStyle.flexWrap,
+    gap: responsiveStyle.gap,
+    color: responsiveStyle.color,
+    fontFamily: responsiveStyle.fontFamily,
+    fontSize: responsiveStyle.fontSize,
+    fontWeight: responsiveStyle.fontWeight,
+    letterSpacing: responsiveStyle.letterSpacing,
+    textTransform: responsiveStyle.textTransform,
+    textDecoration: responsiveStyle.textDecoration,
+    textAlign: responsiveStyle.textAlign,
+    lineHeight: responsiveStyle.lineHeight,
+    backdropFilter: responsiveStyle.backdropFilter,
+    overflow: "hidden",
+  };
+
+  const contentTypography: React.CSSProperties = {
+    color: responsiveStyle.color,
+    fontFamily: responsiveStyle.fontFamily,
+    fontSize: responsiveStyle.fontSize,
+    fontWeight: responsiveStyle.fontWeight,
+    letterSpacing: responsiveStyle.letterSpacing,
+    textTransform: responsiveStyle.textTransform,
+    textDecoration: responsiveStyle.textDecoration,
+    textAlign: responsiveStyle.textAlign,
+    lineHeight: responsiveStyle.lineHeight,
+  };
+
   return (
     <motion.section
       className={`relative ${hiddenClass} ${shadowClass} ${className}`}
-      style={{
-        paddingTop,
-        paddingBottom,
-        paddingLeft,
-        paddingRight,
-        marginTop,
-        marginBottom,
-        marginLeft,
-        marginRight,
-        maxWidth: maxWidth === "100%" ? "100%" : maxWidth,
-        background: hasBgImage || isGradient ? finalBg : finalBg,
-        borderRadius,
-        borderWidth: borderWidth ? `${Number(borderWidth) > 0 ? borderWidth + "px" : "0"}` : undefined,
-        borderStyle,
-        borderColor: borderColor || undefined,
-        opacity: opacity ? String(Number(opacity) / 100) : undefined,
-        width: width || undefined,
-        height: height || undefined,
-        minHeight: minHeight || undefined,
-        overflow: "hidden",
-        position: (s?.position || "relative") as React.CSSProperties["position"],
-        zIndex: s?.zIndex ? Number(s.zIndex) : undefined,
-        transform: s?.transform,
-        transformOrigin: s?.transformOrigin,
-        ...responsiveStyle,
-      }}
+      style={wrapperStyle}
       {...animProps}
     >
       {/* Background image layer */}
@@ -186,7 +215,7 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
       )}
 
       {/* Content */}
-      <div className="relative" style={{ zIndex: 2 }}>
+      <div className="relative" style={{ zIndex: 2, ...contentTypography }}>
         {children}
       </div>
     </motion.section>

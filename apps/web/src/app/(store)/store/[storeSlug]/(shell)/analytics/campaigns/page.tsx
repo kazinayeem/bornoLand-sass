@@ -59,14 +59,14 @@ export default function CampaignsPage() {
         </AnalyticsChartCard>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="rounded-xl border border-zinc-200 bg-white p-5">
+          className="rounded-xl border border-apple-hairline bg-white p-5">
           <h3 className="mb-3 text-sm font-semibold text-apple-ink">All Campaigns</h3>
           <div className="space-y-2">
             {campaigns.map((c) => (
               <div key={String(c._id)} className="flex items-center justify-between rounded-lg bg-apple-canvas-parchment p-3 text-xs">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <Target className="h-3.5 w-3.5 text-apple-ink-muted-48 shrink-0" />
-                  <span className="font-medium text-zinc-800 truncate">{String(c.source)}</span>
+                  <span className="font-medium text-apple-ink truncate">{String(c.source)}</span>
                   {String(c.campaign) && <span className="text-apple-ink-muted-48 text-[10px] truncate">({String(c.campaign)})</span>}
                 </div>
                 <div className="flex items-center gap-4 shrink-0 ml-3">

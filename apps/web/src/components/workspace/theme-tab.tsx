@@ -71,10 +71,10 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
       <div className="space-y-6">
         {/* Template */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <h3 className="text-base font-semibold text-apple-ink mb-4">Template</h3>
           <select value={templateId} onChange={(e) => setTemplateId(e.target.value)}
-            className="h-10 w-full max-w-xs rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+            className="h-10 w-full max-w-xs rounded-xl border border-apple-hairline bg-white px-3 text-sm">
             <option value="">Current template</option>
             {templates.map((t) => (
               <option key={t._id} value={t._id}>{t.name}</option>
@@ -84,25 +84,25 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
 
         {/* Colors */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <h3 className="text-base font-semibold text-apple-ink mb-4">Colors</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Primary Color</label>
               <div className="flex items-center gap-2">
                 <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)}
-                  className="h-10 w-10 shrink-0 rounded-xl border border-zinc-200 bg-white p-1 cursor-pointer" />
+                  className="h-10 w-10 shrink-0 rounded-xl border border-apple-hairline bg-white p-1 cursor-pointer" />
                 <input type="text" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)}
-                  className="h-10 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-mono" />
+                  className="h-10 flex-1 rounded-xl border border-apple-hairline bg-white px-3 text-xs font-mono" />
               </div>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Secondary Color</label>
               <div className="flex items-center gap-2">
                 <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)}
-                  className="h-10 w-10 shrink-0 rounded-xl border border-zinc-200 bg-white p-1 cursor-pointer" />
+                  className="h-10 w-10 shrink-0 rounded-xl border border-apple-hairline bg-white p-1 cursor-pointer" />
                 <input type="text" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)}
-                  className="h-10 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-mono" />
+                  className="h-10 flex-1 rounded-xl border border-apple-hairline bg-white px-3 text-xs font-mono" />
               </div>
             </div>
           </div>
@@ -110,13 +110,13 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
 
         {/* Typography & Layout */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <h3 className="text-base font-semibold text-apple-ink mb-4">Typography & Layout</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Font</label>
               <select value={font} onChange={(e) => setFont(e.target.value)}
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+                className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
                 {["Inter", "Roboto", "Open Sans", "Poppins", "Playfair Display", "Space Grotesk", "Montserrat"].map((f) => (
                   <option key={f} value={f}>{f}</option>
                 ))}
@@ -125,7 +125,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
             <div>
               <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Button Style</label>
               <select value={buttonStyle} onChange={(e) => setButtonStyle(e.target.value)}
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+                className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
                 <option value="rounded-lg">Rounded</option>
                 <option value="rounded-full">Pill</option>
                 <option value="rounded-none">Square</option>
@@ -134,7 +134,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
             <div>
               <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Layout Width</label>
               <select value={layoutWidth} onChange={(e) => setLayoutWidth(e.target.value)}
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+                className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
                 <option value="1000px">Narrow (1000px)</option>
                 <option value="1200px">Standard (1200px)</option>
                 <option value="1400px">Wide (1400px)</option>
@@ -144,7 +144,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
             <div>
               <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Navbar Style</label>
               <select value={navbarStyle} onChange={(e) => setNavbarStyle(e.target.value)}
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+                className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
                 <option value="fixed">Fixed</option>
                 <option value="sticky">Sticky</option>
                 <option value="static">Static</option>
@@ -156,7 +156,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
 
         {/* Dark Mode */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-          className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-semibold text-apple-ink">Dark Mode</h3>
@@ -164,7 +164,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
             </div>
             <button onClick={() => setDarkMode(!darkMode)}
               className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
-                darkMode ? "bg-zinc-900 text-white" : "bg-zinc-100 text-apple-ink-muted-80"
+                darkMode ? "bg-apple-ink text-white" : "bg-apple-canvas-parchment text-apple-ink-muted-80"
               }`}>
               {darkMode ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
               {darkMode ? "On" : "Off"}
@@ -175,9 +175,9 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
 
       {/* Preview Panel */}
       <div className="lg:sticky lg:top-24 space-y-4">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <div className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <h3 className="text-sm font-semibold text-apple-ink mb-4">Preview</h3>
-          <div className="rounded-xl border border-zinc-200 overflow-hidden">
+          <div className="rounded-xl border border-apple-hairline overflow-hidden">
             <div className="h-2" style={{ background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})` }} />
             <div className="p-4 space-y-3">
               <div className="flex items-center gap-2">
@@ -195,7 +195,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
         </div>
 
         <button onClick={handleSave} disabled={saving}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-50 transition-colors">
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-apple-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-apple-ink-muted-80 disabled:opacity-50 transition-colors">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           Save Theme
         </button>

@@ -16,7 +16,7 @@ export default async function StorefrontPage({ params }: StorefrontPageProps) {
   const { storeSlug, pageSlug } = await params;
 
   return (
-    <Suspense fallback={<div className="flex min-h-[40vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900" /></div>}>
+    <Suspense fallback={<div className="flex min-h-[40vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-apple-hairline border-t-zinc-900" /></div>}>
       <StorefrontPageRenderer storeSlug={storeSlug} pageSlug={pageSlug} />
     </Suspense>
   );

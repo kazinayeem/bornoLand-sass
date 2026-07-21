@@ -7,7 +7,8 @@ import type { NextFunction, Response } from "express";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 import { getApiUrl } from "../../common/utils/app-url.js";
-import { getSessionCookieMaxAge, getSessionCookieName, getSessionCookieOptions, generateRefreshToken, generateRefreshTokenFamily, hashRefreshToken, signAccessToken, signSessionToken } from "../../common/utils/jwt.js";
+import { getSessionCookieMaxAge, getSessionCookieName, generateRefreshToken, generateRefreshTokenFamily, hashRefreshToken, signAccessToken, signSessionToken } from "../../common/utils/jwt.js";
+import { clearSessionCookies, setSessionCookies } from "../auth/auth-cookies.js";
 import { getUploadRoot } from "../media/providers/local-storage.provider.js";
 import { RefreshTokenModel } from "../auth/refresh-token.model.js";
 import { recordAuditFromRequest } from "../audit/audit.service.js";
@@ -89,9 +90,12 @@ export async function changePasswordController(request: AuthRequest, response: R
   const session = { userId: user.id, tenantId: user.tenantId, role: user.role, email: user.email, name: user.name, loginType: user.role === "super_admin" ? "admin" as const : "user" as const, sessionVersion: user.sessionVersion };
   const refreshToken = generateRefreshToken();
   const maxAge = getSessionCookieMaxAge();
-  await RefreshTokenModel.create({ userId: user.id, tokenHash: hashRefreshToken(refreshToken), family: generateRefreshTokenFamily(), expiresAt: new Date(Date.now() + maxAge * 1000), userAgent: request.header("user-agent") ?? "", ipAddress: request.ip ?? "" });
-  response.cookie(getSessionCookieName(), refreshToken, getSessionCookieOptions(maxAge));
-  response.cookie("bornoland.session.legacy", signSessionToken(session, "7d"), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: maxAge * 1000 });
+  await RefreshTokenModel.create({ userId: user.id, tokenHash: hashRefreshToken(refreshToken), family: generateRefreshTokenFamily(), rememberMe: false, expiresAt: new Date(Date.now() + maxAge * 1000), userAgent: request.header("user-agent") ?? "", ipAddress: request.ip ?? "" });
+  setSessionCookies(response, {
+    refreshToken,
+    sessionToken: signSessionToken(session, "7d"),
+    sessionMaxAge: maxAge,
+  });
   await recordAuditFromRequest(request, { action: AUDIT_ACTIONS.PASSWORD_CHANGED, module: AUDIT_MODULES.AUTH, entityType: "User", entityId: user.id, actorId: user.id, description: "Password changed and previous sessions invalidated" });
   await Promise.allSettled([
     createBillingNotification({ userId: user.id, type: "security_alert", title: "Password changed", message: "Your password was changed and other sessions were signed out.", actionUrl: "/dashboard/security", metadata: { event: "password_changed" } }),
@@ -109,16 +113,14 @@ export async function getSessionsController(request: AuthRequest, response: Resp
 export async function logoutCurrentSessionController(request: AuthRequest, response: Response) {
   const token = cookieToken(request);
   if (token) await revokeSession(request.user!.userId, hashRefreshToken(token));
-  response.clearCookie(getSessionCookieName(), { path: "/" });
-  response.clearCookie("bornoland.session.legacy", { path: "/" });
+  clearSessionCookies(response);
   await recordAuditFromRequest(request, { action: AUDIT_ACTIONS.SESSION_REVOKED, module: AUDIT_MODULES.AUTH, entityType: "User", entityId: request.user!.userId, actorId: request.user!.userId, description: "Current session logged out" });
   return sendSuccess(response, undefined, "Current session logged out");
 }
 
 export async function logoutAllSessionsController(request: AuthRequest, response: Response) {
   await revokeAllSessions(request.user!.userId);
-  response.clearCookie(getSessionCookieName(), { path: "/" });
-  response.clearCookie("bornoland.session.legacy", { path: "/" });
+  clearSessionCookies(response);
   await recordAuditFromRequest(request, { action: AUDIT_ACTIONS.SESSION_REVOKED, module: AUDIT_MODULES.AUTH, entityType: "User", entityId: request.user!.userId, actorId: request.user!.userId, description: "All sessions logged out" });
   return sendSuccess(response, undefined, "All devices logged out");
 }

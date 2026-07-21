@@ -23,14 +23,14 @@ export function PaymentHistoryTable({ storeId }: { storeId?: string }) {
 
   if (payments.length === 0) {
     return (
-      <div className="rounded-2xl border border-apple-hairline bg-white p-12 text-center shadow-sm">
+      <div className="rounded-apple-lg border border-apple-hairline bg-white p-12 text-center ">
         <p className="text-sm font-medium text-apple-ink-muted-48">No payment history found for this store.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-apple-hairline bg-white shadow-sm overflow-hidden">
+    <div className="rounded-apple-lg border border-apple-hairline bg-white  overflow-hidden">
       <div className="p-6 border-b border-apple-hairline">
         <h2 className="text-lg font-semibold text-apple-ink">Payment History</h2>
         <p className="text-sm text-apple-ink-muted-48">Review your past transactions and payments.</p>
@@ -69,7 +69,7 @@ export function PaymentHistoryTable({ storeId }: { storeId?: string }) {
                   ) : payment.status === "requested_info" ? (
                     <Badge className="bg-violet-100 text-violet-800 border-violet-200">More Info</Badge>
                   ) : (
-                    <Badge className="bg-zinc-100 text-zinc-800 border-zinc-200">{payment.status}</Badge>
+                    <Badge className="bg-apple-canvas-parchment text-apple-ink border-apple-hairline">{payment.status}</Badge>
                   )}
                 </td>
               </tr>

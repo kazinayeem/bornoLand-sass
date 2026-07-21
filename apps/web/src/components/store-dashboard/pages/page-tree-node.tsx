@@ -22,9 +22,9 @@ type Props = {
 
 const statusConfig: Record<string, { icon: typeof Globe; className: string; label: string }> = {
   published: { icon: Globe, className: "text-emerald-600 bg-emerald-50 border-emerald-200", label: "Published" },
-  draft: { icon: EyeOff, className: "text-apple-ink-muted-80 bg-apple-canvas-parchment border-zinc-200", label: "Draft" },
+  draft: { icon: EyeOff, className: "text-apple-ink-muted-80 bg-apple-canvas-parchment border-apple-hairline", label: "Draft" },
   scheduled: { icon: Clock, className: "text-blue-600 bg-blue-50 border-blue-200", label: "Scheduled" },
-  archived: { icon: Archive, className: "text-apple-ink-muted-48 bg-apple-canvas-parchment border-zinc-200", label: "Archived" },
+  archived: { icon: Archive, className: "text-apple-ink-muted-48 bg-apple-canvas-parchment border-apple-hairline", label: "Archived" },
 };
 
 export function PageTreeNode({ page, depth, selectedId, onSelect, onDoubleClick, onContextMenu }: Props) {
@@ -39,7 +39,7 @@ export function PageTreeNode({ page, depth, selectedId, onSelect, onDoubleClick,
         className={cn(
           "group flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm cursor-pointer transition-all",
           "hover:bg-apple-canvas-parchment",
-          isSelected && "bg-zinc-100 ring-1 ring-zinc-300",
+          isSelected && "bg-apple-canvas-parchment ring-1 ring-zinc-300",
           depth > 0 && "ml-0"
         )}
         style={{ paddingLeft: `${12 + depth * 20}px` }}

@@ -13,8 +13,7 @@ import { getSectionDef, normalizeSectionType } from "@/lib/section-registry";
 import { Copy, Eye, EyeOff, ImagePlus, Lock, LockOpen, MoveDown, MoveUp, Pencil, Trash2 } from "lucide-react";
 import { Drawer } from "@/components/ui/drawer";
 import { BuilderMediaField } from "@/components/builder/builder-media-field";
-import { setZoom, toggleGrid, toggleGuides } from "@/redux/slices/preview-slice";
-import { Grid3X3, Map, Maximize2, Minus, Plus, Ruler } from "lucide-react";
+import { setZoom } from "@/redux/slices/preview-slice";
 import { cn } from "@/lib/utils";
 import { useGetProductsQuery } from "@/redux/api/product-api";
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
@@ -68,25 +67,7 @@ export function StorePreview({ store, theme, products = [], categories = [], set
   });
   const previewWidth = device === "mobile" ? 390 : device === "tablet" ? 820 : device === "laptop" ? 1024 : 1280;
   const [quickEditMode, setQuickEditMode] = useState<"text" | "image" | "button" | null>(null);
-  const [minimapOpen, setMinimapOpen] = useState(true);
-  const [canvasMetrics, setCanvasMetrics] = useState({ scrollTop: 0, scrollHeight: 1, clientHeight: 1 });
   const canvasScrollerRef = useRef<HTMLDivElement>(null);
-
-  const syncCanvasMetrics = useCallback(() => {
-    const element = canvasScrollerRef.current;
-    if (!element) return;
-    const next = { scrollTop: element.scrollTop, scrollHeight: element.scrollHeight, clientHeight: element.clientHeight };
-    setCanvasMetrics((current) => current.scrollTop === next.scrollTop && current.scrollHeight === next.scrollHeight && current.clientHeight === next.clientHeight ? current : next);
-  }, []);
-
-  useEffect(() => {
-    syncCanvasMetrics();
-    const element = canvasScrollerRef.current;
-    if (!element) return;
-    const observer = new ResizeObserver(syncCanvasMetrics);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [sections, headerSections, footerSections, zoom, syncCanvasMetrics]);
 
   const handleCanvasWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     if (!event.ctrlKey && !event.metaKey) return;
@@ -161,15 +142,15 @@ export function StorePreview({ store, theme, products = [], categories = [], set
   const renderZoneLabel = () => {
     if (editingZone === "header") {
       return (
-        <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 shadow-lg">
-          <span className="text-[11px] font-medium text-blue-700">Editing Header</span>
+        <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-apple-pill border border-apple-primary/20 bg-apple-primary/5 px-4 py-2 shadow-lg backdrop-blur-sm">
+          <span className="text-caption font-medium text-apple-primary">Editing top bar</span>
         </div>
       );
     }
     if (editingZone === "footer") {
       return (
-        <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3 py-1.5 shadow-lg">
-          <span className="text-[11px] font-medium text-purple-700">Editing Footer</span>
+        <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-apple-pill border border-violet-200 bg-violet-50 px-4 py-2 shadow-lg backdrop-blur-sm">
+          <span className="text-caption font-medium text-violet-700">Editing bottom</span>
         </div>
       );
     }
@@ -192,13 +173,13 @@ export function StorePreview({ store, theme, products = [], categories = [], set
 
   return (
     <BuilderDeviceProvider device={device}>
-    <div ref={canvasScrollerRef} onScroll={syncCanvasMetrics} onWheel={handleCanvasWheel} onDoubleClick={(event) => { if (event.target === event.currentTarget) dispatch(setZoom(100)); }} className="relative flex items-start justify-center overflow-x-hidden overflow-y-auto p-2 sm:p-3"
-      style={{ backgroundColor: theme.darkMode ? "#09090b" : "#f4f4f5", minHeight: "100%", backgroundImage: showGrid ? "linear-gradient(rgba(59,130,246,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,.14) 1px, transparent 1px)" : undefined, backgroundSize: showGrid ? "20px 20px" : undefined }}>
+    <div ref={canvasScrollerRef} onWheel={handleCanvasWheel} onDoubleClick={(event) => { if (event.target === event.currentTarget) dispatch(setZoom(100)); }} className="flex min-h-full w-full items-start justify-center overflow-x-hidden overflow-y-auto px-4 py-8 sm:px-6"
+      style={{ backgroundColor: theme.darkMode ? "#09090b" : "#ececef", backgroundImage: showGrid ? "linear-gradient(rgba(59,130,246,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,.08) 1px, transparent 1px)" : undefined, backgroundSize: showGrid ? "20px 20px" : undefined }}>
       {showGuides && <><div className="pointer-events-none fixed inset-y-0 left-1/2 z-20 w-px bg-pink-400/60" /><div className="pointer-events-none fixed inset-x-0 top-1/2 z-20 h-px bg-pink-400/60" /></>}
       {showGuides && <div className="pointer-events-none absolute left-0 top-0 z-20 h-5 w-full border-b border-zinc-300 bg-white/80 text-[9px] text-apple-ink-muted-48">0&nbsp;&nbsp;&nbsp;&nbsp;100&nbsp;&nbsp;&nbsp;&nbsp;200&nbsp;&nbsp;&nbsp;&nbsp;300&nbsp;&nbsp;&nbsp;&nbsp;400&nbsp;&nbsp;&nbsp;&nbsp;500</div>}
       <div
-        className="relative overflow-hidden rounded-[2rem] border border-white/60 bg-white shadow-[0_24px_80px_-40px_rgba(0,0,0,0.32)] transition-all duration-300"
-        style={{ width: previewWidth, maxWidth: "100%", transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}>
+        className="relative shrink-0 overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-[0_20px_60px_-24px_rgba(0,0,0,0.28)] transition-transform duration-300 will-change-transform motion-reduce:transition-none"
+        style={{ width: previewWidth, maxWidth: "calc(100vw - 2rem)", transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}>
         {renderZoneLabel()}
         {!isZoneMode && selectedSection && quickEditFields && quickEditMode !== "text" && (
           <div className="absolute right-3 top-3 z-20 w-72 rounded-2xl border border-apple-hairline bg-white/95 p-3 shadow-lg backdrop-blur">
@@ -300,65 +281,7 @@ export function StorePreview({ store, theme, products = [], categories = [], set
         </StorefrontFrame>
         )}
       </div>
-      {selectedSection && <SpacingOverlay section={selectedSection} />}
-      <CanvasControls zoom={zoom} showGrid={showGrid} showGuides={showGuides} onZoom={(next) => dispatch(setZoom(next))} onGrid={() => dispatch(toggleGrid())} onGuides={() => dispatch(toggleGuides())} onFit={() => dispatch(setZoom(90))} onReset={() => dispatch(setZoom(100))} onToggleMinimap={() => setMinimapOpen((open) => !open)} />
-      {minimapOpen && <MiniMap sections={activeSections} metrics={canvasMetrics} onNavigate={(ratio) => canvasScrollerRef.current?.scrollTo({ top: ratio * Math.max(0, canvasMetrics.scrollHeight - canvasMetrics.clientHeight), behavior: "smooth" })} />}
     </div>
     </BuilderDeviceProvider>
   );
-}
-
-function SpacingOverlay({ section }: { section: { id: string; style?: { paddingTop?: string; paddingRight?: string; paddingBottom?: string; paddingLeft?: string; marginTop?: string; marginRight?: string; marginBottom?: string; marginLeft?: string; gap?: string } } }) {
-  const [rect, setRect] = useState<DOMRect | null>(null);
-  useEffect(() => {
-    const element = document.querySelector(`[data-builder-section-id="${section.id}"]`) as HTMLElement | null;
-    if (!element) return;
-    const update = () => setRect(element.getBoundingClientRect());
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    window.addEventListener("scroll", update, true);
-    return () => { observer.disconnect(); window.removeEventListener("scroll", update, true); };
-  }, [section.id]);
-  if (!rect) return null;
-  const style = section.style ?? {};
-  const padding = [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft].filter(Boolean).join(" / ") || "0px";
-  const margin = [style.marginTop, style.marginRight, style.marginBottom, style.marginLeft].filter(Boolean).join(" / ") || "0px";
-  const gap = String(style.gap ?? "0px");
-  return <>
-    <div className="pointer-events-none fixed z-[55] border-2 border-orange-400/80 bg-orange-400/5" style={{ top: rect.top - 4, left: rect.left - 4, width: rect.width + 8, height: rect.height + 8 }} />
-    <div className="pointer-events-none fixed z-[56] border-2 border-emerald-400/80" style={{ top: rect.top + 4, left: rect.left + 4, width: Math.max(0, rect.width - 8), height: Math.max(0, rect.height - 8) }} />
-    <div className="pointer-events-none fixed z-[60] flex max-w-[calc(100vw-16px)] flex-wrap gap-1 rounded-lg border border-zinc-200 bg-white/95 p-1.5 text-[10px] font-medium shadow-lg backdrop-blur" style={{ top: Math.max(6, rect.bottom + 8), left: Math.max(8, rect.left) }}>
-      <span className="rounded bg-orange-100 px-1.5 py-0.5 text-orange-700">Margin {margin}</span>
-      <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-700">Padding {padding}</span>
-      <span className="rounded bg-violet-100 px-1.5 py-0.5 text-violet-700">Gap {gap}</span>
-      <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-apple-ink-muted-80">{Math.round(rect.width)} × {Math.round(rect.height)}</span>
-    </div>
-  </>;
-}
-
-function CanvasControls({ zoom, showGrid, showGuides, onZoom, onGrid, onGuides, onFit, onReset, onToggleMinimap }: { zoom: number; showGrid: boolean; showGuides: boolean; onZoom: (value: number) => void; onGrid: () => void; onGuides: () => void; onFit: () => void; onReset: () => void; onToggleMinimap: () => void }) {
-  const button = "flex h-8 w-8 items-center justify-center rounded-lg text-apple-ink-muted-48 transition hover:bg-apple-canvas-parchment hover:text-apple-ink";
-  return <div className="sticky bottom-4 z-40 ml-auto mt-auto flex w-fit items-center gap-1 rounded-xl border border-zinc-200/90 bg-white/95 p-1.5 shadow-xl backdrop-blur">
-    <button type="button" className={button} title="Zoom out" onClick={() => onZoom(zoom - 25)}><Minus className="h-3.5 w-3.5" /></button>
-    <button type="button" className="min-w-12 rounded-lg px-1 text-[11px] font-semibold text-apple-ink-muted-80 hover:bg-apple-canvas-parchment" title="Reset zoom" onClick={onReset}>{zoom}%</button>
-    <button type="button" className={button} title="Zoom in" onClick={() => onZoom(zoom + 25)}><Plus className="h-3.5 w-3.5" /></button>
-    <i className="mx-0.5 h-5 w-px bg-zinc-200" />
-    <button type="button" className={button} title="Fit canvas" onClick={onFit}><Maximize2 className="h-3.5 w-3.5" /></button>
-    <button type="button" className={cn(button, showGrid && "bg-blue-50 text-blue-600")} title="Toggle grid" onClick={onGrid}><Grid3X3 className="h-3.5 w-3.5" /></button>
-    <button type="button" className={cn(button, showGuides && "bg-blue-50 text-blue-600")} title="Toggle guides" onClick={onGuides}><Ruler className="h-3.5 w-3.5" /></button>
-    <button type="button" className={button} title="Toggle mini map" onClick={onToggleMinimap}><Map className="h-3.5 w-3.5" /></button>
-  </div>;
-}
-
-function MiniMap({ sections, metrics, onNavigate }: { sections: StorefrontSectionLike[]; metrics: { scrollTop: number; scrollHeight: number; clientHeight: number }; onNavigate: (ratio: number) => void }) {
-  const height = Math.max(36, Math.min(112, (metrics.clientHeight / metrics.scrollHeight) * 112));
-  const top = Math.min(112 - height, (metrics.scrollTop / Math.max(1, metrics.scrollHeight - metrics.clientHeight)) * (112 - height));
-  return <button type="button" onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); onNavigate(Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height))); }} className="sticky bottom-4 right-0 z-40 ml-4 mt-auto block h-32 w-24 shrink-0 overflow-hidden rounded-xl border border-zinc-200 bg-white/95 p-2 text-left shadow-xl backdrop-blur" title="Navigate page">
-    <div className="mb-1 flex items-center gap-1 text-[9px] font-semibold text-apple-ink-muted-48"><Map className="h-3 w-3" /> MAP</div>
-    <div className="relative h-28 overflow-hidden rounded bg-zinc-100 p-1">
-      <div className="space-y-1">{sections.map((section, index) => <div key={section.id} className="h-2 rounded bg-zinc-300" style={{ width: `${55 + ((index * 19) % 42)}%` }} />)}</div>
-      <div className="absolute left-0 right-0 border border-blue-500 bg-blue-400/15" style={{ top, height }} />
-    </div>
-  </button>;
 }

@@ -1,9 +1,11 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { LoadingSpinner } from "@/components/loading/loading-spinner";
+import { LOADING_LABELS, type LoadingLabelKey } from "@/lib/loading/constants";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-body transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-apple-primary-focus focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 btn-press",
+  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap font-body transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-apple-primary-focus focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 btn-press",
   {
     variants: {
       variant: {
@@ -43,16 +45,58 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {}
+    VariantProps<typeof buttonVariants> {
+  loading?: boolean;
+  loadingText?: string;
+  loadingKey?: LoadingLabelKey;
+}
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      loading = false,
+      loadingText,
+      loadingKey,
+      disabled,
+      children,
+      type = "button",
+      ...props
+    },
+    ref
+  ) => {
+    const isDisabled = disabled || loading;
+    const label =
+      loadingText ?? (loadingKey ? LOADING_LABELS[loadingKey] : undefined) ?? children;
+
     return (
       <button
         ref={ref}
-        className={cn(buttonVariants({ variant, size, className }))}
+        type={type}
+        disabled={isDisabled}
+        aria-busy={loading || undefined}
+        className={cn(
+          buttonVariants({ variant, size, className }),
+          loading && "cursor-wait"
+        )}
         {...props}
-      />
+      >
+        {loading ? (
+          <>
+            <span className="invisible inline-flex items-center justify-center gap-2">
+              {children}
+            </span>
+            <span className="absolute inset-0 inline-flex items-center justify-center gap-2">
+              <LoadingSpinner size="sm" />
+              <span>{label}</span>
+            </span>
+          </>
+        ) : (
+          children
+        )}
+      </button>
     );
   }
 );

@@ -87,8 +87,8 @@ const DashboardCard = memo(function DashboardCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        "rounded-[18px] border border-[#ececec] bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-200",
-        "hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:-translate-y-0.5",
+        "rounded-apple-lg border border-apple-hairline bg-apple-canvas p-apple-lg transition-colors duration-200",
+        "hover:border-apple-primary/20",
         className
       )}
     >
@@ -169,7 +169,7 @@ function QuickActionCard({
           <p className="text-[13px] font-semibold text-apple-ink">{label}</p>
           <p className="mt-0.5 truncate text-[11px] text-apple-ink-muted-48">{description}</p>
         </div>
-        <ArrowRight className="h-4 w-4 shrink-0 text-zinc-300 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-apple-ink-muted-48" />
+        <ArrowRight className="h-4 w-4 shrink-0 text-apple-ink-muted-48 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-apple-ink-muted-48" />
       </Link>
     </DashboardCard>
   );
@@ -214,7 +214,7 @@ function StorageCard({
         <span className="text-2xl font-bold tracking-tight text-apple-ink">{usedLabel}</span>
         <span className="text-sm text-apple-ink-muted-48">/ {limitLabel}</span>
       </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100">
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-apple-canvas-parchment">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${Math.min(percentUsed, 100)}%` }}
@@ -280,7 +280,7 @@ function PlanCard({
       )}
       <Link
         href={billingHref}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-[13px] font-medium text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-lg active:scale-[0.98]"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-apple-ink px-4 py-2.5 text-[13px] font-medium text-white transition-all duration-200 hover:bg-apple-ink-muted-80 hover:shadow-lg active:scale-[0.98]"
       >
         <CreditCard className="h-4 w-4" />
         Manage Plan
@@ -323,7 +323,7 @@ function PerformanceCard({
                 <span className="font-medium text-apple-ink-muted-80">{m.label}</span>
                 <span className="tabular-nums text-apple-ink-muted-48">{formatCompact(m.value)}</span>
               </div>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-100">
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-apple-canvas-parchment">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${pct}%` }}
@@ -490,7 +490,7 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={`${storeBase}/settings`}
-                className="inline-flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover:shadow-sm active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover: active:scale-[0.98]"
               >
                 Edit Store
               </Link>
@@ -498,7 +498,7 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
                 href={`https://${store.subdomain}.bornoland.com`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover:shadow-sm active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover: active:scale-[0.98]"
               >
                 <Globe className="h-4 w-4" />
                 Visit Store
@@ -506,14 +506,14 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
               </a>
               <Link
                 href={`${storeBase}/builder`}
-                className="inline-flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover:shadow-sm active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover: active:scale-[0.98]"
               >
                 <Palette className="h-4 w-4" />
                 Builder
               </Link>
               <Link
                 href={billingHref}
-                className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-[13px] font-medium text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-lg active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-4 py-2.5 text-[13px] font-medium text-white transition-all duration-200 hover:bg-apple-ink-muted-80 hover:shadow-lg active:scale-[0.98]"
               >
                 <CreditCard className="h-4 w-4" />
                 Upgrade Plan
@@ -681,12 +681,12 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
             delay={0.73}
           />
           <QuickActionCard
-            label="Pages"
-            description="Manage CMS pages"
-            icon={FileText}
-            href={`${storeBase}/pages`}
+            label="Theme"
+            description="Colors, fonts & branding"
+            icon={Palette}
+            href={`${storeBase}/theme`}
             color="text-apple-ink-muted-80"
-            bg="bg-zinc-100"
+            bg="bg-apple-canvas-parchment"
             delay={0.76}
           />
         </div>

@@ -70,7 +70,7 @@ export function VisitorsAnalyticsPanel({ storeId }: { storeId: string }) {
   return (
     <div className="space-y-6">
       {/* Live indicator */}
-      <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/50 px-5 py-3">
+      <div className="flex items-center gap-3 rounded-apple-lg border border-emerald-200 bg-emerald-50/50 px-5 py-3">
         <span className="relative flex h-3 w-3">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
           <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
@@ -85,7 +85,7 @@ export function VisitorsAnalyticsPanel({ storeId }: { storeId: string }) {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card, i) => (
           <motion.div key={card.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-            className="rounded-xl border border-zinc-200 bg-white p-3.5">
+            className="rounded-xl border border-apple-hairline bg-white p-3.5">
             <div className="flex items-center gap-3">
               <div className={`rounded-lg ${card.bg} p-2 ${card.color}`}>
                 <card.icon className="h-4 w-4" />
@@ -103,7 +103,7 @@ export function VisitorsAnalyticsPanel({ storeId }: { storeId: string }) {
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="rounded-xl border border-zinc-200 bg-white p-5">
+          className="rounded-xl border border-apple-hairline bg-white p-5">
           <h3 className="mb-1 text-sm font-semibold text-apple-ink">Daily Visitors</h3>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
@@ -126,7 +126,7 @@ export function VisitorsAnalyticsPanel({ storeId }: { storeId: string }) {
 
         {/* Visitors by Hour */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-          className="rounded-xl border border-zinc-200 bg-white p-5">
+          className="rounded-xl border border-apple-hairline bg-white p-5">
           <h3 className="mb-1 text-sm font-semibold text-apple-ink">Visitors by Hour (Today)</h3>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
@@ -151,7 +151,7 @@ export function VisitorsAnalyticsPanel({ storeId }: { storeId: string }) {
           { title: "Countries", key: "countries", data: (devices?.countries as Array<Record<string, unknown>>) ?? [] },
         ].map((section, si) => (
           <motion.div key={section.key} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + si * 0.05 }}
-            className="rounded-xl border border-zinc-200 bg-white p-4">
+            className="rounded-xl border border-apple-hairline bg-white p-4">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">{section.title}</h3>
             <div className="space-y-2">
               {section.data.slice(0, 5).map((d: Record<string, unknown>) => (
@@ -160,7 +160,7 @@ export function VisitorsAnalyticsPanel({ storeId }: { storeId: string }) {
                     <span className="text-apple-ink-muted-80">{String(d.name ?? d.code ?? "—")}</span>
                     <span className="text-apple-ink-muted-48">{String(d.percentage ?? "0")}%</span>
                   </div>
-                  <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
+                  <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-apple-canvas-parchment">
                     <div className="h-full rounded-full bg-blue-500" style={{ width: `${String(d.percentage ?? 0)}%` }} />
                   </div>
                 </div>
@@ -174,7 +174,7 @@ export function VisitorsAnalyticsPanel({ storeId }: { storeId: string }) {
       {/* Top Content */}
       <div className="grid gap-6 lg:grid-cols-2">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="rounded-xl border border-zinc-200 bg-white p-5">
+          className="rounded-xl border border-apple-hairline bg-white p-5">
           <h3 className="mb-3 text-sm font-semibold text-apple-ink">Top Products</h3>
           {topProducts.length > 0 ? (
             <div className="space-y-2">
@@ -188,7 +188,7 @@ export function VisitorsAnalyticsPanel({ storeId }: { storeId: string }) {
           ) : <p className="text-xs text-apple-ink-muted-48">No product view data yet</p>}
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-          className="rounded-xl border border-zinc-200 bg-white p-5">
+          className="rounded-xl border border-apple-hairline bg-white p-5">
           <h3 className="mb-3 text-sm font-semibold text-apple-ink">Top Pages</h3>
           {topPages.length > 0 ? (
             <div className="space-y-2">

@@ -50,7 +50,7 @@ export function CurrentSubscriptionCard({
   const billingCycle = store.subscriptionDuration || "monthly";
 
   return (
-    <div className="rounded-2xl border border-apple-hairline bg-white p-6 shadow-sm">
+    <div className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-apple-ink">Current Subscription</h2>
@@ -64,7 +64,7 @@ export function CurrentSubscriptionCard({
           ) : isActive ? (
             <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Active</Badge>
           ) : (
-            <Badge className="bg-zinc-100 text-zinc-800 hover:bg-apple-canvas-parchment">{store.billingStatus || "Unknown"}</Badge>
+            <Badge className="bg-apple-canvas-parchment text-apple-ink hover:bg-apple-canvas-parchment">{store.billingStatus || "Unknown"}</Badge>
           )}
         </div>
       </div>
@@ -112,7 +112,7 @@ export function CurrentSubscriptionCard({
         </div>
       </div>
 
-      <div className="mt-6 flex items-center justify-between border-t border-zinc-100 pt-6">
+      <div className="mt-6 flex items-center justify-between border-t border-apple-divider-soft pt-6">
         <div className="flex items-start gap-3">
           <div>
             <h4 className="text-sm font-medium text-apple-ink">Auto Renewal</h4>

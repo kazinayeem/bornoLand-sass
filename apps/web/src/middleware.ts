@@ -37,9 +37,6 @@ async function verifySessionToken(token: string): Promise<SessionToken | null> {
   }
 }
 
-function isMongoObjectId(value: string): boolean {
-  return /^[a-f\d]{24}$/i.test(value);
-}
 
 async function fetchStoreSlug(storeId: string, cookieHeader: string): Promise<string | null> {
   const apiBase = getApiUrl();
@@ -52,22 +49,6 @@ async function fetchStoreSlug(storeId: string, cookieHeader: string): Promise<st
     if (!response.ok) return null;
     const payload = (await response.json()) as { data?: { store?: { slug?: string } } };
     return payload.data?.store?.slug ?? null;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchBuilderPageSlug(pageId: string, cookieHeader: string): Promise<string | null> {
-  const apiBase = getApiUrl();
-  if (!apiBase) return null;
-  try {
-    const response = await fetch(`${apiBase}/builder/page/${pageId}`, {
-      headers: cookieHeader ? { cookie: cookieHeader } : undefined,
-      cache: "no-store",
-    });
-    if (!response.ok) return null;
-    const payload = (await response.json()) as { data?: { page?: { slug?: string } } };
-    return payload.data?.page?.slug ?? null;
   } catch {
     return null;
   }
@@ -119,32 +100,18 @@ export default async function middleware(request: NextRequest) {
   const legacyBuilderMatch = pathname.match(/^\/dashboard\/builder\/([^/]+)(?:\/([^/]+))?$/);
   if (legacyBuilderMatch) {
     const storeId = legacyBuilderMatch[1];
-    const pageParam = legacyBuilderMatch[2];
     const storeSlug = await fetchStoreSlug(storeId, cookieHeader);
     if (storeSlug) {
-      if (pageParam) {
-        const pageSlug = isMongoObjectId(pageParam)
-          ? (await fetchBuilderPageSlug(pageParam, cookieHeader)) ?? "home"
-          : pageParam;
-        return NextResponse.redirect(new URL(`/store/${storeSlug}/builder/${pageSlug}`, request.url));
-      }
-      return NextResponse.redirect(new URL(`/store/${storeSlug}/builder`, request.url));
+      return NextResponse.redirect(new URL(`/store/${storeSlug}/builder/home`, request.url));
     }
   }
 
   const legacyRootBuilderMatch = pathname.match(/^\/builder\/([^/]+)(?:\/([^/]+))?$/);
   if (legacyRootBuilderMatch) {
     const storeId = legacyRootBuilderMatch[1];
-    const pageParam = legacyRootBuilderMatch[2];
     const storeSlug = await fetchStoreSlug(storeId, cookieHeader);
     if (storeSlug) {
-      if (pageParam) {
-        const pageSlug = isMongoObjectId(pageParam)
-          ? (await fetchBuilderPageSlug(pageParam, cookieHeader)) ?? "home"
-          : pageParam;
-        return NextResponse.redirect(new URL(`/store/${storeSlug}/builder/${pageSlug}`, request.url));
-      }
-      return NextResponse.redirect(new URL(`/store/${storeSlug}/builder`, request.url));
+      return NextResponse.redirect(new URL(`/store/${storeSlug}/builder/home`, request.url));
     }
   }
 

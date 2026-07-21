@@ -123,7 +123,7 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
       <div className="space-y-6">
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <section className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">
               <Palette className="h-5 w-5 text-blue-600" />
@@ -137,20 +137,20 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Store name</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              <input value={name} onChange={(e) => setName(e.target.value)} className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Short name</label>
-              <input value={shortName} onChange={(e) => setShortName(e.target.value)} placeholder="NS" className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              <input value={shortName} onChange={(e) => setShortName(e.target.value)} placeholder="NS" className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
             </div>
             <div className="sm:col-span-2">
               <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Tagline</label>
-              <input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="Premium home essentials for modern living" className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              <input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="Premium home essentials for modern living" className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
             </div>
           </div>
         </section>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <section className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h3 className="text-base font-semibold text-apple-ink">Store logo</h3>
@@ -163,10 +163,10 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
             )}
           </div>
           <div className="mt-5 grid gap-6 lg:grid-cols-[220px_1fr]">
-            <div className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment p-5">
+            <div className="rounded-apple-lg border border-apple-hairline bg-apple-canvas-parchment p-5">
               <p className="mb-3 text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Current preview</p>
               <div className="flex flex-col items-start gap-3">
-                <StoreBrandMark store={previewStore} size={72} roundedClassName="rounded-2xl" />
+                <StoreBrandMark store={previewStore} size={72} roundedClassName="rounded-apple-lg" />
                 <div>
                   <p className="text-sm font-semibold text-apple-ink">{shortName || name || "Store"}</p>
                   <p className="text-xs text-apple-ink-muted-48">{tagline || "No tagline set"}</p>
@@ -184,7 +184,7 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <section className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h3 className="text-base font-semibold text-apple-ink">Browser icon</h3>
@@ -197,10 +197,10 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
             )}
           </div>
           <div className="mt-5 grid gap-6 lg:grid-cols-[220px_1fr]">
-            <div className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment p-5">
+            <div className="rounded-apple-lg border border-apple-hairline bg-apple-canvas-parchment p-5">
               <p className="mb-3 text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Favicon preview</p>
-              <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-                {favicon?.url ? <SmartImage src={favicon.url} alt="Favicon" fill sizes="64px" className="object-cover" /> : <StoreBrandMark store={previewStore} size={64} roundedClassName="rounded-2xl" />}
+              <div className="relative h-16 w-16 overflow-hidden rounded-apple-lg border border-apple-hairline bg-white">
+                {favicon?.url ? <SmartImage src={favicon.url} alt="Favicon" fill sizes="64px" className="object-cover" /> : <StoreBrandMark store={previewStore} size={64} roundedClassName="rounded-apple-lg" />}
               </div>
               <p className="mt-3 text-xs text-apple-ink-muted-48">Generated sizes: 16, 32, 64, 128, 256</p>
             </div>
@@ -215,21 +215,21 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <section className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <h3 className="text-base font-semibold text-apple-ink">Brand colors</h3>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Brand color</label>
               <div className="flex items-center gap-2">
-                <input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="h-10 w-10 rounded-xl border border-zinc-200 bg-white p-1" />
-                <input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="h-10 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-mono" />
+                <input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="h-10 w-10 rounded-xl border border-apple-hairline bg-white p-1" />
+                <input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="h-10 flex-1 rounded-xl border border-apple-hairline bg-white px-3 text-sm font-mono" />
               </div>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Accent color</label>
               <div className="flex items-center gap-2">
-                <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="h-10 w-10 rounded-xl border border-zinc-200 bg-white p-1" />
-                <input value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="h-10 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-mono" />
+                <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="h-10 w-10 rounded-xl border border-apple-hairline bg-white p-1" />
+                <input value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="h-10 flex-1 rounded-xl border border-apple-hairline bg-white px-3 text-sm font-mono" />
               </div>
             </div>
           </div>
@@ -237,9 +237,9 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
       </div>
 
       <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <div className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <h3 className="text-sm font-semibold text-apple-ink">Live preview</h3>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-200">
+          <div className="mt-4 overflow-hidden rounded-apple-lg border border-apple-hairline">
             <div className="flex items-center gap-3 px-4 py-3" style={{ background: `linear-gradient(90deg, ${brandColor}, ${accentColor})` }}>
               <StoreBrandMark store={previewStore} size={40} roundedClassName="rounded-xl" />
               <div>
@@ -249,13 +249,13 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
             </div>
             <div className="space-y-3 bg-white p-4">
               <div className="h-3 w-24 rounded" style={{ backgroundColor: brandColor }} />
-              <div className="h-3 w-full rounded bg-zinc-100" />
+              <div className="h-3 w-full rounded bg-apple-canvas-parchment" />
               <div className="h-9 rounded-xl text-white" style={{ backgroundColor: accentColor }} />
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <div className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <div className="flex items-start gap-3">
             <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-600" />
             <div>
@@ -269,7 +269,7 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
           </div>
         </div>
 
-        <button onClick={handleSave} disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-50">
+        <button onClick={handleSave} disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl bg-apple-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-apple-ink-muted-80 disabled:opacity-50">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           Save Branding
         </button>

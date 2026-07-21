@@ -39,7 +39,7 @@ export function AnalyticsSection() {
           {/* Stats Grid */}
           <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((s) => (
-              <div key={s.label} className="rounded-2xl border border-zinc-200/60 bg-white p-4 shadow-sm">
+              <div key={s.label} className="rounded-lg border border-apple-hairline bg-apple-canvas p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${s.bg}`}>
                     <s.icon className={`h-4.5 w-4.5 ${s.color}`} />
@@ -48,7 +48,7 @@ export function AnalyticsSection() {
                     {s.change} <ArrowUpRight className="h-3 w-3" />
                   </span>
                 </div>
-                <p className="font-[family-name:var(--font-space-grotesk)] text-2xl font-bold text-apple-ink">{s.value}</p>
+                <p className="text-2xl font-bold text-apple-ink">{s.value}</p>
                 <p className="text-xs font-medium text-apple-ink-muted-48">{s.label}</p>
               </div>
             ))}
@@ -56,7 +56,7 @@ export function AnalyticsSection() {
 
           <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
             {/* Chart Area */}
-            <div className="rounded-2xl border border-zinc-200/60 bg-white p-5 shadow-sm">
+            <div className="rounded-lg border border-apple-hairline bg-apple-canvas p-5">
               <h3 className="mb-4 text-sm font-bold text-apple-ink">Revenue Overview</h3>
               <div className="flex items-end gap-2 h-40">
                 {[28, 35, 22, 42, 30, 48, 38, 52, 45, 58, 50, 65, 55, 72, 62, 78, 68, 85, 75, 90].map((h, i) => (
@@ -65,11 +65,7 @@ export function AnalyticsSection() {
                     className="flex-1 rounded-t-sm transition-all"
                     style={{
                       height: `${h}%`,
-                      background: i > 15
-                        ? "linear-gradient(180deg, #3b82f6, #6366f1)"
-                        : i > 10
-                          ? "linear-gradient(180deg, #60a5fa, #818cf8)"
-                          : "linear-gradient(180deg, #93c5fd, #a5b4fc)",
+                      backgroundColor: i > 15 ? "#3b82f6" : i > 10 ? "#60a5fa" : "#93c5fd",
                       opacity: 0.5 + (h / 100) * 0.5,
                     }}
                   />
@@ -81,7 +77,7 @@ export function AnalyticsSection() {
             </div>
 
             {/* Top Products */}
-            <div className="rounded-2xl border border-zinc-200/60 bg-white p-5 shadow-sm">
+            <div className="rounded-lg border border-apple-hairline bg-apple-canvas p-5">
               <h3 className="mb-3 text-sm font-bold text-apple-ink">Top Products</h3>
               <div className="space-y-3">
                 {topProducts.map((p, i) => (

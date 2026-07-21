@@ -14,6 +14,7 @@ import {
   updateStoreBrandingController
 } from "./store.controller.js";
 import { getStoreSettingsController, updateStoreSettingsController } from "./store-settings.controller.js";
+import { getStoreContactController, updateStoreContactController } from "./store-contact.controller.js";
 import { createHomepageSliderController, deleteHomepageSliderController, listHomepageSlidersController, updateHomepageSliderController } from "./homepage-slider.controller.js";
 import { listStoreOrdersController, getStoreOrderController, updateOrderStatusController, updatePaymentStatusController, addOrderNoteController, processRefundController } from "./store-order.controller.js";
 import { couponRouter } from "../coupons/coupon.route.js";
@@ -26,6 +27,7 @@ import { taxRouter } from "../tax/tax.route.js";
 import { marketingRouter } from "../marketing/marketing.route.js";
 import { mediaRouter } from "../media/media.route.js";
 import { storeAuditRouter } from "../audit/audit.route.js";
+import { contactMessageRouter } from "../notifications/contact-message.route.js";
 
 export const storeRouter: Router = Router();
 
@@ -43,6 +45,8 @@ storeRouter.delete("/:id/branding/logo", deleteStoreLogoController);
 storeRouter.delete("/:id/branding/favicon", deleteStoreFaviconController);
 storeRouter.get("/:id/settings", getStoreSettingsController);
 storeRouter.put("/:id/settings", updateStoreSettingsController);
+storeRouter.get("/:id/contact", getStoreContactController);
+storeRouter.put("/:id/contact", updateStoreContactController);
 storeRouter.get("/:id/sliders", listHomepageSlidersController);
 storeRouter.post("/:id/sliders", createHomepageSliderController);
 storeRouter.put("/:id/sliders/:sliderId", updateHomepageSliderController);
@@ -66,3 +70,4 @@ storeRouter.use("/:storeId/tax", taxRouter);
 storeRouter.use("/:storeId/marketing", marketingRouter);
 storeRouter.use("/:storeId/media", mediaRouter);
 storeRouter.use("/:storeId/audit-logs", storeAuditRouter);
+storeRouter.use("/:storeId/contact-messages", contactMessageRouter);

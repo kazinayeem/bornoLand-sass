@@ -47,7 +47,7 @@ export default function BrowsersPage() {
                 <Globe className="h-4 w-4 text-apple-ink-muted-48 shrink-0" />
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-sm font-medium text-zinc-800">{String(b.name)}</span>
+                    <span className="text-sm font-medium text-apple-ink">{String(b.name)}</span>
                     <span className="text-xs font-semibold text-apple-ink-muted-80">{String(b.count)}</span>
                   </div>
                   <AnalyticsProgressBar name="" value={String(b.percentage)} percentage={Number(b.percentage)} color={`hsl(${i * 40}, 60%, 50%)`} />

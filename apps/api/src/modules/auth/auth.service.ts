@@ -233,30 +233,30 @@ export async function loginUser(payload: unknown) {
   };
 }
 
-// ── Refresh: validate Refresh Token, issue new Access Token ──────
-export async function refreshAccessToken(rawRefreshToken: string) {
+// ── Refresh: validate Refresh Token, optionally rotate ───────────
+type RefreshTokenRecord = {
+  _id: unknown;
+  userId: unknown;
+  expiresAt: Date;
+  revokedAt: Date | null;
+  userAgent?: string;
+  ipAddress?: string;
+  deviceInfo?: string;
+  family: string;
+  rememberMe?: boolean;
+};
+
+async function loadRefreshTokenRecord(rawRefreshToken: string) {
   await connectDatabase();
 
   const tokenHash = hashRefreshToken(rawRefreshToken);
-  const stored = (await RefreshTokenModel.findOne({ tokenHash })) as {
-    _id: unknown;
-    userId: unknown;
-    expiresAt: Date;
-    revokedAt: Date | null;
-    userAgent?: string;
-    ipAddress?: string;
-    deviceInfo?: string;
-    family: string;
-    rememberMe?: boolean;
-  } | null;
+  const stored = (await RefreshTokenModel.findOne({ tokenHash })) as RefreshTokenRecord | null;
 
   if (!stored) {
     return { ok: false as const, message: "Refresh token not found" };
   }
 
   if (stored.revokedAt) {
-    // A revoked token presented again is a replay signal. Revoke its family so
-    // a stolen, rotated token cannot be used to keep the session alive.
     await RefreshTokenModel.updateMany(
       { userId: stored.userId, family: stored.family, revokedAt: null },
       { $set: { revokedAt: new Date() } },
@@ -279,7 +279,6 @@ export async function refreshAccessToken(rawRefreshToken: string) {
   } | null;
 
   if (!user) {
-    // User was deleted — clean up their tokens
     await RefreshTokenModel.deleteMany({ userId: stored.userId });
     return { ok: false as const, message: "User not found" };
   }
@@ -289,20 +288,41 @@ export async function refreshAccessToken(rawRefreshToken: string) {
     return { ok: false as const, message: `Account ${user.status}` };
   }
 
-  const session = buildSessionPayload(user, user.role === "super_admin" ? "admin" : "user");
-  const newAccessToken = signAccessToken(session);
+  return { ok: true as const, stored, user };
+}
 
-  // Rotate refresh token (issue new one, revoke old)
-  const newRefreshToken = generateRefreshToken();
-  const newTokenHash = hashRefreshToken(newRefreshToken);
+export async function sessionFromRefreshToken(
+  rawRefreshToken: string,
+  options: { rotate?: boolean } = {},
+) {
+  const loaded = await loadRefreshTokenRecord(rawRefreshToken);
+  if (!loaded.ok) return loaded;
+
+  const { stored, user } = loaded;
+  const session = buildSessionPayload(user, user.role === "super_admin" ? "admin" : "user");
   const rememberMe = stored.rememberMe === true;
   const sessionMaxAge = getSessionCookieMaxAge(rememberMe);
+  const accessToken = signAccessToken(session);
+  const sessionToken = signSessionToken(session, rememberMe ? "30d" : "7d");
+
+  if (!options.rotate) {
+    return {
+      ok: true as const,
+      data: {
+        accessToken,
+        sessionToken,
+        session,
+        sessionMaxAge,
+      },
+    };
+  }
+
+  const newRefreshToken = generateRefreshToken();
+  const newTokenHash = hashRefreshToken(newRefreshToken);
   const newExpiresAt = new Date(Date.now() + sessionMaxAge * 1000);
 
-  // Revoke the old token
   await RefreshTokenModel.updateOne({ _id: stored._id }, { $set: { revokedAt: new Date() } });
 
-  // Insert new token in the same family
   await RefreshTokenModel.create({
     userId: user._id,
     tokenHash: newTokenHash,
@@ -317,14 +337,18 @@ export async function refreshAccessToken(rawRefreshToken: string) {
   return {
     ok: true as const,
     data: {
-      accessToken: newAccessToken,
-      sessionToken: signSessionToken(session, rememberMe ? "30d" : "7d"),
+      accessToken,
+      sessionToken,
       refreshToken: newRefreshToken,
       refreshTokenExpiresAt: newExpiresAt.toISOString(),
       sessionMaxAge,
       session,
     },
   };
+}
+
+export async function refreshAccessToken(rawRefreshToken: string) {
+  return sessionFromRefreshToken(rawRefreshToken, { rotate: true });
 }
 
 // ── Logout: revoke all refresh tokens for user ──────────────────

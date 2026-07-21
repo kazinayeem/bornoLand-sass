@@ -32,7 +32,7 @@ const methodColors: Record<string, string> = {
   bank: "bg-violet-100 text-violet-600",
   stripe: "bg-indigo-100 text-indigo-600",
   sslcommerz: "bg-amber-100 text-amber-600",
-  manual: "bg-zinc-100 text-apple-ink-muted-80",
+  manual: "bg-apple-canvas-parchment text-apple-ink-muted-80",
 };
 
 export function PaymentsTab({ storeId }: PaymentsTabProps) {
@@ -101,7 +101,7 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
       key: "method", label: "Method",
       render: (m) => {
         const Icon = methodIcons[m.type] || CreditCard;
-        const colorClass = methodColors[m.type] || "bg-zinc-100 text-apple-ink-muted-80";
+        const colorClass = methodColors[m.type] || "bg-apple-canvas-parchment text-apple-ink-muted-80";
         return (
           <div className="flex items-center gap-3">
             <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${colorClass}`}>
@@ -178,7 +178,7 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
           <div>
             <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Type</label>
             <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as any })}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
               <option value="cod">Cash on Delivery</option>
               <option value="bkash">bKash</option>
               <option value="nagad">Nagad</option>
@@ -192,17 +192,17 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
           <div>
             <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Label</label>
             <input type="text" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" placeholder="e.g. bKash Personal" />
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" placeholder="e.g. bKash Personal" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Account / Merchant Number</label>
             <input type="text" value={form.accountNumber ?? ""} onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Account Type</label>
             <select value={form.accountType} onChange={(e) => setForm({ ...form, accountType: e.target.value as any })}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
               <option value="personal">Personal</option>
               <option value="agent">Agent</option>
               <option value="merchant">Merchant</option>
@@ -211,7 +211,7 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
           <div>
             <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Instructions (shown at checkout)</label>
             <textarea rows={3} value={form.instructions ?? ""} onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm" placeholder="e.g. Send payment to this number..." />
+              className="w-full rounded-xl border border-apple-hairline bg-white px-3 py-2 text-sm" placeholder="e.g. Send payment to this number..." />
           </div>
           <div className="flex items-center gap-4">
             <label className="inline-flex items-center gap-2 cursor-pointer">
@@ -224,7 +224,7 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
         </div>
         <div className="mt-6 flex justify-end gap-3">
           <button onClick={resetForm}
-            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Cancel</button>
+            className="rounded-xl border border-apple-hairline px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Cancel</button>
           <button onClick={handleSave} disabled={saving}
             className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}

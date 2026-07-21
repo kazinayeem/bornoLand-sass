@@ -169,17 +169,17 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
           <div>
             <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Zone Name</label>
             <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" placeholder="e.g. Dhaka City" />
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" placeholder="e.g. Dhaka City" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Delivery Charge ({settingsData?.data?.settings?.currencyCode ?? "BDT"})</label>
             <input type="number" min={0} value={form.charge} onChange={(e) => setForm({ ...form, charge: e.target.value })}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Estimated Delivery Time</label>
             <input type="text" value={form.estimatedDays} onChange={(e) => setForm({ ...form, estimatedDays: e.target.value })}
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" placeholder="e.g. 1-3 business days" />
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" placeholder="e.g. 1-3 business days" />
           </div>
           <div className="flex items-center gap-4">
             <label className="inline-flex items-center gap-2 cursor-pointer">
@@ -192,7 +192,7 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
         </div>
         <div className="mt-6 flex justify-end gap-3">
           <button onClick={resetForm}
-            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Cancel</button>
+            className="rounded-xl border border-apple-hairline px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Cancel</button>
           <button onClick={handleSave} disabled={saving}
             className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}

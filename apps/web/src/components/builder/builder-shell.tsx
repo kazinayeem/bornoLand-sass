@@ -1,18 +1,24 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useStoreFromSlug } from "@/hooks/use-store-from-slug";
 import { StoreBrandingSync } from "@/components/store-dashboard/store-branding-sync";
+import { LoadingSpinner } from "@/components/loading/loading-spinner";
 
 export function BuilderShell({ children }: { children: ReactNode }) {
   const { store, isLoading, isError } = useStoreFromSlug();
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-zinc-950">
-        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
+      <div
+        className="flex h-screen flex-col items-center justify-center gap-3 bg-zinc-950"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <LoadingSpinner size="lg" label="Loading builder" className="text-apple-ink-muted-48" />
+        <p className="text-caption text-apple-ink-muted-48">Loading builder…</p>
       </div>
     );
   }

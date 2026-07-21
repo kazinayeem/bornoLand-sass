@@ -60,13 +60,13 @@ export function PaymentGatewayMock() {
   if (!paymentId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8f9fb]">
-        <div className="rounded-2xl border border-red-200 bg-white p-8 text-center shadow-md">
+        <div className="rounded-apple-lg border border-red-200 bg-white p-8 text-center ">
           <XCircle className="mx-auto mb-3 h-10 w-10 text-red-500" />
           <h2 className="text-lg font-semibold text-apple-ink">Invalid Payment Link</h2>
           <p className="mt-1 text-sm text-apple-ink-muted-48">No payment ID was provided.</p>
           <button
             onClick={() => router.push(`/store/${store?.slug}/billing`)}
-            className="mt-4 rounded-lg bg-zinc-900 px-5 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+            className="mt-4 rounded-lg bg-apple-ink px-5 py-2 text-sm font-medium text-white hover:bg-apple-ink-muted-80"
           >
             Back to Billing
           </button>
@@ -77,7 +77,7 @@ export function PaymentGatewayMock() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-apple-hairline bg-white p-8 shadow-xl">
+      <div className="w-full max-w-md rounded-apple-lg border border-apple-hairline bg-white p-8 shadow-xl">
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100">
@@ -109,14 +109,14 @@ export function PaymentGatewayMock() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleCallback("success")}
-                className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white  transition hover:bg-emerald-700"
               >
                 <CheckCircle2 className="h-4 w-4" />
                 Simulate Success
               </button>
               <button
                 onClick={() => handleCallback("cancelled")}
-                className="flex items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 py-3 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-100"
+                className="flex items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 py-3 text-sm font-semibold text-red-700  transition hover:bg-red-100"
               >
                 <XCircle className="h-4 w-4" />
                 Cancel Payment
@@ -146,7 +146,7 @@ export function PaymentGatewayMock() {
                 Your subscription has been activated successfully.
               </p>
             </div>
-            <div className="mt-2 rounded-lg bg-zinc-100 px-4 py-2">
+            <div className="mt-2 rounded-lg bg-apple-canvas-parchment px-4 py-2">
               <p className="text-sm text-apple-ink-muted-80">
                 Redirecting to Billing in{" "}
                 <span className="font-bold text-indigo-600">{countdown}s</span>
@@ -173,7 +173,7 @@ export function PaymentGatewayMock() {
                 Your payment was not completed. Your subscription was not changed.
               </p>
             </div>
-            <div className="mt-2 rounded-lg bg-zinc-100 px-4 py-2">
+            <div className="mt-2 rounded-lg bg-apple-canvas-parchment px-4 py-2">
               <p className="text-sm text-apple-ink-muted-80">
                 Redirecting to Billing in{" "}
                 <span className="font-bold text-red-500">{countdown}s</span>
@@ -188,7 +188,7 @@ export function PaymentGatewayMock() {
               </button>
               <button
                 onClick={() => router.push(`/store/${store?.slug}/billing`)}
-                className="rounded-lg bg-zinc-900 px-5 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+                className="rounded-lg bg-apple-ink px-5 py-2 text-sm font-medium text-white hover:bg-apple-ink-muted-80"
               >
                 Back to Billing
               </button>

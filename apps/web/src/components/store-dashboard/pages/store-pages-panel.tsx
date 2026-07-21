@@ -33,7 +33,7 @@ function PagesSkeleton() {
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <div className="h-7 w-24 animate-pulse rounded-lg bg-zinc-200" />
-          <div className="h-4 w-56 animate-pulse rounded-lg bg-zinc-100" />
+          <div className="h-4 w-56 animate-pulse rounded-lg bg-apple-canvas-parchment" />
         </div>
         <div className="flex gap-2">
           <div className="h-9 w-24 animate-pulse rounded-xl bg-zinc-200" />
@@ -41,15 +41,15 @@ function PagesSkeleton() {
         </div>
       </div>
       <div className="flex gap-3">
-        <div className="h-10 flex-1 animate-pulse rounded-xl bg-zinc-100" />
-        <div className="h-10 w-20 animate-pulse rounded-xl bg-zinc-100" />
+        <div className="h-10 flex-1 animate-pulse rounded-xl bg-apple-canvas-parchment" />
+        <div className="h-10 w-20 animate-pulse rounded-xl bg-apple-canvas-parchment" />
       </div>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+      <div className="rounded-apple-lg border border-apple-hairline bg-white p-4 ">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="flex items-center gap-3 px-3 py-3">
             <div className="h-4 w-4 animate-pulse rounded bg-zinc-200" />
             <div className="h-4 w-48 animate-pulse rounded bg-zinc-200" />
-            <div className="h-5 w-16 animate-pulse rounded-full bg-zinc-100" />
+            <div className="h-5 w-16 animate-pulse rounded-full bg-apple-canvas-parchment" />
           </div>
         ))}
       </div>
@@ -62,10 +62,10 @@ function EmptyPagesState({ onCreate }: { onCreate: () => void }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-dashed border-zinc-300 bg-white p-16 text-center shadow-sm"
+      className="rounded-apple-lg border border-dashed border-zinc-300 bg-white p-16 text-center "
     >
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-apple-canvas-parchment">
-        <FileText className="h-7 w-7 text-zinc-300" />
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-apple-lg bg-apple-canvas-parchment">
+        <FileText className="h-7 w-7 text-apple-ink-muted-48" />
       </div>
       <h3 className="mt-5 text-lg font-semibold text-apple-ink">No pages yet</h3>
       <p className="mt-1 text-sm text-apple-ink-muted-48 max-w-xs mx-auto">
@@ -73,7 +73,7 @@ function EmptyPagesState({ onCreate }: { onCreate: () => void }) {
       </p>
       <button
         onClick={onCreate}
-        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
+        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-apple-ink px-5 py-2.5 text-sm font-medium text-white hover:bg-apple-ink-muted-80 transition-colors"
       >
         <Plus className="h-4 w-4" />
         Create Your First Page
@@ -124,8 +124,8 @@ export function StorePagesPanel() {
       )
     : tree;
 
-  const openBuilder = useCallback((page: StorePage) => {
-    router.push(`/store/${store?.slug}/builder/${page.slug}`);
+  const openBuilder = useCallback(() => {
+    router.push(`/store/${store?.slug}/builder/home`);
   }, [router, store?.slug]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent, page: StorePage) => {
@@ -139,7 +139,7 @@ export function StorePagesPanel() {
     try {
       switch (action) {
         case "open-builder":
-          openBuilder(page);
+          openBuilder();
           break;
         case "preview": {
           window.open(`/${store?.slug}${page.slug === "/" ? "" : page.slug}`, "_blank");
@@ -235,7 +235,7 @@ export function StorePagesPanel() {
         setShowNewPageModal(false);
         setNewPageTitle("");
         setNewPageSlug("");
-        openBuilder(page);
+        openBuilder();
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to create page";
@@ -274,7 +274,7 @@ export function StorePagesPanel() {
               "inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-colors",
               showTrash
                 ? "border-red-200 bg-red-50 text-red-700"
-                : "border-zinc-200 text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                : "border-apple-hairline text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
             )}
           >
             <Trash2 className="h-4 w-4" />
@@ -287,14 +287,14 @@ export function StorePagesPanel() {
           </button>
           <button
             onClick={() => {}}
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors"
           >
             <FolderPlus className="h-4 w-4" />
             Folder
           </button>
           <button
             onClick={() => setShowNewPageModal(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-4 py-2.5 text-sm font-medium text-white hover:bg-apple-ink-muted-80 transition-colors"
           >
             <Plus className="h-4 w-4" />
             New Page
@@ -312,19 +312,19 @@ export function StorePagesPanel() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title, slug, status..."
-              className="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-10 pr-4 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+              className="w-full rounded-xl border border-apple-hairline bg-white py-2.5 pl-10 pr-4 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
             />
           </div>
-          <div className="flex rounded-lg border border-zinc-200 overflow-hidden">
+          <div className="flex rounded-lg border border-apple-hairline overflow-hidden">
             <button
               onClick={() => setViewMode("tree")}
-              className={cn("p-2", viewMode === "tree" ? "bg-zinc-100 text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80")}
+              className={cn("p-2", viewMode === "tree" ? "bg-apple-canvas-parchment text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80")}
             >
               <ListTree className="h-4 w-4" />
             </button>
             <button
               onClick={() => setViewMode("grid")}
-              className={cn("p-2", viewMode === "grid" ? "bg-zinc-100 text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80")}
+              className={cn("p-2", viewMode === "grid" ? "bg-apple-canvas-parchment text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80")}
             >
               <LayoutGrid className="h-4 w-4" />
             </button>
@@ -334,8 +334,8 @@ export function StorePagesPanel() {
 
       {/* Trash View */}
       {showTrash ? (
-        <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
-          <div className="border-b border-zinc-100 px-5 py-3">
+        <div className="rounded-apple-lg border border-apple-hairline bg-white ">
+          <div className="border-b border-apple-divider-soft px-5 py-3">
             <h3 className="text-sm font-semibold text-apple-ink flex items-center gap-2">
               <Trash2 className="h-4 w-4 text-apple-ink-muted-48" />
               Deleted Pages
@@ -345,7 +345,7 @@ export function StorePagesPanel() {
             <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-apple-ink-muted-48" /></div>
           ) : trashPages.length === 0 ? (
             <div className="p-12 text-center">
-              <Trash2 className="mx-auto h-8 w-8 text-zinc-300" />
+              <Trash2 className="mx-auto h-8 w-8 text-apple-ink-muted-48" />
               <p className="mt-2 text-sm text-apple-ink-muted-48">Trash is empty</p>
             </div>
           ) : (
@@ -357,7 +357,7 @@ export function StorePagesPanel() {
                   <span className="text-xs text-apple-ink-muted-48">{page.deletedAt ? new Date(page.deletedAt).toLocaleDateString() : ""}</span>
                   <button
                     onClick={() => handleRestoreFromTrash(page._id)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-apple-hairline px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors"
                   >
                     <RotateCcw className="h-3 w-3" />
                     Restore
@@ -375,11 +375,11 @@ export function StorePagesPanel() {
           ) : pages.length === 0 ? (
             <EmptyPagesState onCreate={() => setShowNewPageModal(true)} />
           ) : viewMode === "tree" ? (
-            <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            <div className="rounded-apple-lg border border-apple-hairline bg-white ">
               <div className="p-3">
                 {filteredPages.length === 0 && searchQuery ? (
                   <div className="p-8 text-center">
-                    <Search className="mx-auto h-6 w-6 text-zinc-300" />
+                    <Search className="mx-auto h-6 w-6 text-apple-ink-muted-48" />
                     <p className="mt-2 text-sm text-apple-ink-muted-48">No pages match &quot;{searchQuery}&quot;</p>
                   </div>
                 ) : (
@@ -390,7 +390,7 @@ export function StorePagesPanel() {
                       depth={0}
                       selectedId={selectedId}
                       onSelect={(p) => { setSelectedId(p._id); setSelectedPage(p); }}
-                      onDoubleClick={openBuilder}
+                      onDoubleClick={() => openBuilder()}
                       onContextMenu={handleContextMenu}
                     />
                   ))
@@ -402,11 +402,11 @@ export function StorePagesPanel() {
               {pages.map((page) => (
                 <button
                   key={page._id}
-                  onClick={() => openBuilder(page)}
+                  onClick={() => openBuilder()}
                   onContextMenu={(e) => handleContextMenu(e, page)}
-                  className="flex flex-col items-start gap-2 rounded-2xl border border-zinc-200 bg-white p-4 text-left transition-all hover:border-zinc-300 hover:shadow-sm"
+                  className="flex flex-col items-start gap-2 rounded-apple-lg border border-apple-hairline bg-white p-4 text-left transition-all hover:border-zinc-300 hover:"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-apple-canvas-parchment">
                     <FileText className="h-5 w-5 text-apple-ink-muted-48" />
                   </div>
                   <div className="min-w-0 flex-1 w-full">
@@ -418,8 +418,8 @@ export function StorePagesPanel() {
                       "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium",
                       page.status === "published" ? "text-emerald-600 bg-emerald-50 border-emerald-200" :
                       page.status === "scheduled" ? "text-blue-600 bg-blue-50 border-blue-200" :
-                      page.status === "archived" ? "text-apple-ink-muted-48 bg-apple-canvas-parchment border-zinc-200" :
-                      "text-apple-ink-muted-80 bg-apple-canvas-parchment border-zinc-200"
+                      page.status === "archived" ? "text-apple-ink-muted-48 bg-apple-canvas-parchment border-apple-hairline" :
+                      "text-apple-ink-muted-80 bg-apple-canvas-parchment border-apple-hairline"
                     )}>
                       {page.status}
                     </span>
@@ -442,7 +442,7 @@ export function StorePagesPanel() {
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl"
+            className="w-full max-w-md rounded-apple-lg border border-apple-hairline bg-white p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-semibold text-apple-ink">Create New Page</h2>
@@ -460,13 +460,13 @@ export function StorePagesPanel() {
                     }
                   }}
                   placeholder="About Us"
-                  className="w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                  className="w-full rounded-xl border border-apple-hairline px-3 py-2.5 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
                   autoFocus
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-apple-ink-muted-48 mb-1">Slug</label>
-                <div className="flex items-center gap-1 rounded-xl border border-zinc-200 px-3 text-sm text-apple-ink-muted-48">
+                <div className="flex items-center gap-1 rounded-xl border border-apple-hairline px-3 text-sm text-apple-ink-muted-48">
                   <span>/</span>
                   <input
                     type="text"
@@ -481,14 +481,14 @@ export function StorePagesPanel() {
             <div className="mt-6 flex items-center justify-end gap-3">
               <button
                 onClick={() => setShowNewPageModal(false)}
-                className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                className="rounded-xl border border-apple-hairline px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreatePage}
                 disabled={creating || !newPageTitle.trim()}
-                className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+                className="rounded-xl bg-apple-ink px-4 py-2 text-sm font-medium text-white hover:bg-apple-ink-muted-80 disabled:opacity-50"
               >
                 {creating ? "Creating..." : "Create & Open Builder"}
               </button>
@@ -505,7 +505,7 @@ export function StorePagesPanel() {
           className="fixed inset-0 z-40 bg-black/20 flex items-center justify-center p-4"
           onClick={() => setRenameId(null)}
         >
-          <div className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-apple-lg border border-apple-hairline bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-sm font-semibold text-apple-ink">Rename Page</h3>
             <input
               type="text"
@@ -515,12 +515,12 @@ export function StorePagesPanel() {
                 if (e.key === "Enter") handleRenameSubmit(renameId);
                 if (e.key === "Escape") setRenameId(null);
               }}
-              className="mt-3 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm text-apple-ink focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+              className="mt-3 w-full rounded-xl border border-apple-hairline px-3 py-2 text-sm text-apple-ink focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
               autoFocus
             />
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setRenameId(null)} className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Cancel</button>
-              <button onClick={() => handleRenameSubmit(renameId)} className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800">Save</button>
+              <button onClick={() => setRenameId(null)} className="rounded-lg border border-apple-hairline px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Cancel</button>
+              <button onClick={() => handleRenameSubmit(renameId)} className="rounded-lg bg-apple-ink px-3 py-1.5 text-xs font-medium text-white hover:bg-apple-ink-muted-80">Save</button>
             </div>
           </div>
         </motion.div>

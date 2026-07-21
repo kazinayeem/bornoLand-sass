@@ -66,10 +66,13 @@ export async function hasAuthCookie(): Promise<boolean> {
       await jwtVerify(legacyToken, getSecret());
       return true;
     } catch {
-      // expired legacy token alone is not enough — still return false
-      // so the user gets redirected to login to obtain a fresh session
+      // Expired legacy JWT — fall through to opaque refresh token check.
     }
   }
   const refreshToken = cookieStore.get(getSessionCookieName())?.value;
-  return !!refreshToken && REFRESH_TOKEN_RE.test(refreshToken);
+  if (refreshToken && REFRESH_TOKEN_RE.test(refreshToken)) {
+    return true;
+  }
+
+  return false;
 }

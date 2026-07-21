@@ -94,7 +94,7 @@ export function TeamGlobal() {
                 <div className="mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-apple-canvas-parchment">
                   <s.icon className="h-3.5 w-3.5 text-blue-600" />
                 </div>
-                <p className="font-[family-name:var(--font-space-grotesk)] text-base font-bold text-apple-ink">{s.value}</p>
+                <p className="text-base font-bold text-apple-ink">{s.value}</p>
                 <p className="text-[11px] text-apple-ink-muted-48">{s.label}</p>
               </div>
             ))}

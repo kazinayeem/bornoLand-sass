@@ -38,8 +38,8 @@ export function FAQ() {
           {faqs.map((faq, i) => (
             <div
               key={i}
-              className={`rounded-2xl border transition-all duration-200 ${
-                open === i ? "border-blue-200 bg-blue-50/30 shadow-sm" : "border-zinc-200/60 bg-white"
+              className={`rounded-lg border transition-colors duration-200 ${
+                open === i ? "border-blue-200 bg-blue-50/30" : "border-apple-hairline bg-apple-canvas"
               }`}
             >
               <button
@@ -50,7 +50,7 @@ export function FAQ() {
               >
                 <span className="text-sm font-semibold text-apple-ink pr-4">{faq.q}</span>
                 <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
-                  open === i ? "bg-blue-100 text-blue-600" : "bg-zinc-100 text-apple-ink-muted-48"
+                  open === i ? "bg-blue-100 text-blue-600" : "bg-apple-canvas-parchment text-apple-ink-muted-48"
                 }`}>
                   {open === i ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                 </span>

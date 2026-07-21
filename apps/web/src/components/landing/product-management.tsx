@@ -26,9 +26,8 @@ export function ProductManagement() {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="relative"
           >
-            <div className="overflow-hidden rounded-[1.75rem] border border-zinc-200/60 bg-white shadow-lg">
-              {/* Products Table Mockup */}
-              <div className="border-b border-zinc-100 px-5 py-3">
+            <div className="overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas">
+              <div className="border-b border-apple-divider-soft px-5 py-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-apple-ink">Products</h3>
                   <div className="flex items-center gap-2">
@@ -44,7 +43,7 @@ export function ProductManagement() {
                 { name: "Wireless Earbuds", sku: "EAR-001", price: "৳8,999", stock: 4, variant: "White, Black" },
               ].map((p, i) => (
                 <div key={i} className="flex items-center gap-3 border-b border-zinc-50 px-5 py-3 last:border-0">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-zinc-100 to-zinc-50" />
+                  <div className="h-8 w-8 rounded-lg bg-apple-canvas-parchment" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-apple-ink truncate">{p.name}</p>
                     <p className="text-[10px] text-apple-ink-muted-48">{p.sku} · {p.variant}</p>
@@ -55,7 +54,7 @@ export function ProductManagement() {
                   </div>
                 </div>
               ))}
-              <div className="border-t border-zinc-100 bg-apple-canvas-parchment px-5 py-2 text-center">
+              <div className="border-t border-apple-divider-soft bg-apple-canvas-parchment px-5 py-2 text-center">
                 <span className="text-[10px] font-medium text-apple-ink-muted-48">View all products →</span>
               </div>
             </div>
@@ -66,7 +65,7 @@ export function ProductManagement() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.4, duration: 0.4 }}
-              className="absolute -bottom-3 -right-3 rounded-xl border border-zinc-200/60 bg-white px-3.5 py-2 shadow-lg"
+              className="absolute -bottom-3 -right-3 rounded-xl border border-apple-hairline bg-apple-canvas px-3.5 py-2"
             >
               <p className="flex items-center gap-1.5 text-xs font-semibold text-apple-ink-muted-80">
                 <ShoppingBag className="h-3.5 w-3.5 text-blue-500" />

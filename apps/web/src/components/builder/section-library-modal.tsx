@@ -500,7 +500,7 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
                   {/* Empty state */}
                   {filteredSections.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
-                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
+                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-apple-canvas-parchment">
                         <Search className="h-5 w-5 text-apple-ink-muted-48" />
                       </div>
                       <p className="text-sm font-medium text-apple-ink-muted-80">No sections found</p>

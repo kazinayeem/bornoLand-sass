@@ -31,25 +31,25 @@ function BillingSkeleton() {
     <div className="space-y-6">
       {/* Header skeleton */}
       <div className="space-y-2">
-        <div className="h-8 w-64 animate-pulse rounded-lg bg-zinc-100" />
-        <div className="h-4 w-96 animate-pulse rounded bg-zinc-100" />
+        <div className="h-8 w-64 animate-pulse rounded-lg bg-apple-canvas-parchment" />
+        <div className="h-4 w-96 animate-pulse rounded bg-apple-canvas-parchment" />
       </div>
       {/* Quick stats skeleton */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-20 animate-pulse rounded-xl border border-zinc-100 bg-white" />
+          <div key={i} className="h-20 animate-pulse rounded-xl border border-apple-divider-soft bg-white" />
         ))}
       </div>
       {/* Tabs skeleton */}
-      <div className="flex gap-2 border-b border-zinc-100 pb-3">
+      <div className="flex gap-2 border-b border-apple-divider-soft pb-3">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-9 w-24 animate-pulse rounded-lg bg-zinc-100" />
+          <div key={i} className="h-9 w-24 animate-pulse rounded-lg bg-apple-canvas-parchment" />
         ))}
       </div>
       {/* Content skeleton */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-32 animate-pulse rounded-2xl border border-zinc-100 bg-white" />
+          <div key={i} className="h-32 animate-pulse rounded-apple-lg border border-apple-divider-soft bg-white" />
         ))}
       </div>
     </div>
@@ -60,8 +60,8 @@ function BillingSkeleton() {
 
 function EmptyBillingState({ onUpgrade }: { onUpgrade: () => void }) {
   return (
-    <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center">
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100">
+    <div className="rounded-apple-lg border border-dashed border-zinc-300 bg-white p-12 text-center">
+      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-apple-lg bg-apple-canvas-parchment">
         <CreditCard className="h-8 w-8 text-apple-ink-muted-48" />
       </div>
       <h3 className="text-lg font-semibold text-apple-ink">No Active Subscription</h3>
@@ -70,7 +70,7 @@ function EmptyBillingState({ onUpgrade }: { onUpgrade: () => void }) {
       </p>
       <button
         onClick={onUpgrade}
-        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-zinc-800 hover:shadow-lg active:scale-[0.98]"
+        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-apple-ink px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-apple-ink-muted-80 hover:shadow-lg active:scale-[0.98]"
       >
         Choose a Plan
         <ArrowRight className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function BillingDashboard() {
     <div className="space-y-6">
       {/* Status Banners */}
       {isExpired && (
-        <div className="rounded-2xl border border-red-200 bg-gradient-to-r from-red-50 to-orange-50 p-5 shadow-sm">
+        <div className="rounded-apple-lg border border-red-200 bg-gradient-to-r from-red-50 to-orange-50 p-5 ">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600">
               <AlertCircle className="h-6 w-6" />
@@ -137,7 +137,7 @@ export function BillingDashboard() {
             </div>
             <button
               onClick={() => setActiveTab("payment")}
-              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 transition-colors shrink-0"
+              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white  hover:bg-red-700 transition-colors shrink-0"
             >
               <RefreshCcw className="h-4 w-4" />
               Renew Now
@@ -147,7 +147,7 @@ export function BillingDashboard() {
       )}
 
       {isTrial && !isExpired && (
-        <div className="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-5 shadow-sm">
+        <div className="rounded-apple-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-5 ">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
               <Clock className="h-6 w-6" />
@@ -160,7 +160,7 @@ export function BillingDashboard() {
             </div>
             <button
               onClick={() => setActiveTab("payment")}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors shrink-0"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white  hover:bg-blue-700 transition-colors shrink-0"
             >
               <CreditCard className="h-4 w-4" />
               Upgrade Now
@@ -170,7 +170,7 @@ export function BillingDashboard() {
       )}
 
       {isPending && (
-        <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 p-5 shadow-sm">
+        <div className="rounded-apple-lg border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 p-5 ">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
               <Clock className="h-6 w-6" />
@@ -193,7 +193,7 @@ export function BillingDashboard() {
         </div>
         <button
           onClick={handleRefresh}
-          className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:border-zinc-300 hover:bg-apple-canvas-parchment shrink-0"
+          className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:border-zinc-300 hover:bg-apple-canvas-parchment shrink-0"
         >
           <RefreshCcw className="h-4 w-4" />
           Refresh
@@ -209,7 +209,7 @@ export function BillingDashboard() {
             { label: "Price", value: subPlan.priceBDT ? formatBDT(subPlan.priceBDT) : "Free", color: "text-apple-ink" },
             { label: "Renewal", value: sub.renewalDate ? new Date(sub.renewalDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—", color: "text-apple-ink" },
           ].map((item) => (
-            <div key={item.label} className="rounded-xl border border-apple-hairline bg-white p-3 shadow-sm">
+            <div key={item.label} className="rounded-xl border border-apple-hairline bg-white p-3 ">
               <p className="text-xs font-medium text-apple-ink-muted-48">{item.label}</p>
               <p className={`text-base font-bold mt-0.5 capitalize ${item.color}`}>{item.value}</p>
             </div>
@@ -218,7 +218,7 @@ export function BillingDashboard() {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-zinc-200 overflow-x-auto">
+      <div className="border-b border-apple-hairline overflow-x-auto">
         <nav className="-mb-px flex space-x-1 min-w-max" aria-label="Billing tabs">
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -262,7 +262,7 @@ export function BillingDashboard() {
           </div>
         )}
         {activeTab === "payment" && (
-          <div className="rounded-2xl border border-apple-hairline bg-white p-6 shadow-sm">
+          <div className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
             <PaymentSubmissionFlow
               storeId={storeId}
               plans={plans}

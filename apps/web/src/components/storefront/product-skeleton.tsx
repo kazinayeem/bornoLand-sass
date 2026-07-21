@@ -1,25 +1,23 @@
 "use client";
 
-import { useTenant } from "@/providers/tenant-provider";
+import { useStorefrontSurface } from "./storefront-ui";
+import { cn } from "@/lib/utils";
 
 export function ProductSkeleton() {
-  const { theme } = useTenant();
-  const { darkMode } = theme;
-  const isDark = darkMode;
+  const { classes } = useStorefrontSurface();
 
   return (
-    <div className="animate-pulse rounded-2xl border overflow-hidden"
-      style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", backgroundColor: isDark ? "#18181b" : "#ffffff" }}>
-      <div className="aspect-square" style={{ backgroundColor: isDark ? "#27272a" : "#f4f4f5" }} />
-      <div className="p-4 space-y-3">
-        <div className="h-3 w-16 rounded" style={{ backgroundColor: isDark ? "#27272a" : "#f4f4f5" }} />
-        <div className="h-4 w-3/4 rounded" style={{ backgroundColor: isDark ? "#27272a" : "#f4f4f5" }} />
-        <div className="h-3 w-1/2 rounded" style={{ backgroundColor: isDark ? "#27272a" : "#f4f4f5" }} />
+    <div className={cn("storefront-utility-card animate-pulse overflow-hidden", classes.card)}>
+      <div className={cn("aspect-square rounded-apple-sm", classes.imageWell)} />
+      <div className="mt-4 space-y-3">
+        <div className={cn("h-3 w-16 rounded-apple-xs", classes.imageWell)} />
+        <div className={cn("h-4 w-3/4 rounded-apple-xs", classes.imageWell)} />
+        <div className={cn("h-3 w-1/2 rounded-apple-xs", classes.imageWell)} />
         <div className="flex items-center justify-between">
-          <div className="h-5 w-16 rounded" style={{ backgroundColor: isDark ? "#27272a" : "#f4f4f5" }} />
-          <div className="h-3 w-12 rounded" style={{ backgroundColor: isDark ? "#27272a" : "#f4f4f5" }} />
+          <div className={cn("h-5 w-16 rounded-apple-xs", classes.imageWell)} />
+          <div className={cn("h-3 w-12 rounded-apple-xs", classes.imageWell)} />
         </div>
-        <div className="h-8 w-full rounded-xl" style={{ backgroundColor: isDark ? "#27272a" : "#f4f4f5" }} />
+        <div className={cn("h-10 w-full rounded-apple-pill", classes.imageWell)} />
       </div>
     </div>
   );

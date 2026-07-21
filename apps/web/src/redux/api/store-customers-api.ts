@@ -10,6 +10,8 @@ export type StoreCustomer = {
   status: string;
   lastLoginAt: string | null;
   totalOrders: number;
+  completedOrders?: number;
+  cancelledOrders?: number;
   totalSpent: number;
   lastOrderDate: string | null;
   averageOrderValue: number;
@@ -18,6 +20,26 @@ export type StoreCustomer = {
   isGuest: boolean;
   createdAt: string;
   updatedAt: string;
+  addresses?: Array<{
+    _id: string;
+    label?: string;
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  }>;
+};
+
+export type CustomerOrder = {
+  _id: string;
+  orderNumber: string;
+  invoiceNumber?: string;
+  total: number;
+  status: string;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  createdAt: string;
 };
 
 type ListCustomersResponse = {
@@ -32,8 +54,8 @@ type ListCustomersResponse = {
 
 type CustomerDetailResponse = {
   data: {
-    customer: StoreCustomer & { addresses: unknown[] };
-    orders: unknown[];
+    customer: StoreCustomer;
+    orders: CustomerOrder[];
   };
 };
 

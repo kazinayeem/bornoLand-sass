@@ -5,6 +5,8 @@ import { StoreModel } from "../../models/store.model.js";
 import { recordAuditFromRequest } from "../audit/audit.service.js";
 import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
 import { AUDIT_MODULES } from "../audit/audit.constants.js";
+import { generateOrderInvoice } from "../orders/order-invoice.service.js";
+import { sendEmail } from "../../common/integrations/email.js";
 
 export async function listStoreOrdersController(request: AuthRequest, response: Response) {
   try {
@@ -169,6 +171,22 @@ export async function updateOrderStatusController(request: AuthRequest, response
       newValue: { status },
     });
 
+    try {
+      const customerRef = (order as { customerId?: { _id?: unknown } | string }).customerId;
+      const customerId =
+        customerRef && typeof customerRef === "object" && customerRef._id
+          ? String(customerRef._id)
+          : customerRef
+            ? String(customerRef)
+            : "";
+      if (customerId) {
+        const { syncCustomerOrderStats } = await import("../customers/customer.service.js");
+        await syncCustomerOrderStats(String(storeId), customerId);
+      }
+    } catch (err) {
+      console.error("[orders] Failed to sync customer stats after status change", err);
+    }
+
     response.json({ data: { order } });
   } catch (error) {
     console.error("Update order status error:", error);
@@ -312,5 +330,94 @@ export async function processRefundController(request: AuthRequest, response: Re
   } catch (error) {
     console.error("Process refund error:", error);
     response.status(500).json({ message: "Failed to process refund" });
+  }
+}
+
+export async function downloadStoreOrderInvoiceController(request: AuthRequest, response: Response) {
+  try {
+    const { storeId, id } = request.params;
+    const userId = request.user?.userId;
+
+    const store = await StoreModel.findOne({ _id: storeId, userId });
+    if (!store) {
+      return response.status(404).json({ message: "Store not found" });
+    }
+
+    const result = await generateOrderInvoice({
+      storeId,
+      orderId: id,
+    });
+
+    if (!result.ok) {
+      const statusCode = result.message.includes("not found") ? 404 : 500;
+      return response.status(statusCode).json({ message: result.message });
+    }
+
+    response.setHeader("Content-Type", "application/pdf");
+    response.setHeader("Content-Disposition", `attachment; filename="${result.filename}"`);
+    response.setHeader("Content-Length", result.buffer.length);
+    return response.send(result.buffer);
+  } catch (error) {
+    console.error("Download store order invoice error:", error);
+    response.status(500).json({ message: "Failed to generate invoice" });
+  }
+}
+
+export async function emailStoreOrderInvoiceController(request: AuthRequest, response: Response) {
+  try {
+    const { storeId, id } = request.params;
+    const userId = request.user?.userId;
+    const { email } = (request.body || {}) as { email?: string };
+
+    const store = await StoreModel.findOne({ _id: storeId, userId });
+    if (!store) {
+      return response.status(404).json({ message: "Store not found" });
+    }
+
+    const result = await generateOrderInvoice({
+      storeId,
+      orderId: id,
+    });
+
+    if (!result.ok) {
+      const statusCode = result.message.includes("not found") ? 404 : 500;
+      return response.status(statusCode).json({ message: result.message });
+    }
+
+    const customer = result.order.customerId as { email?: string; name?: string } | string | undefined;
+    const customerEmail =
+      email?.trim() ||
+      (typeof customer === "object" && customer?.email ? customer.email : "");
+
+    if (!customerEmail) {
+      return response.status(400).json({ message: "No customer email found" });
+    }
+
+    const invoiceNumber = result.order.invoiceNumber || result.filename;
+    const orderNumber = result.order.orderNumber || id;
+
+    await sendEmail({
+      to: customerEmail,
+      subject: `Invoice ${invoiceNumber} — ${store.name}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1e293b;">Invoice ${invoiceNumber}</h2>
+          <p>Your invoice for order <strong>${orderNumber}</strong> from <strong>${store.name}</strong> is attached.</p>
+          <p style="color: #64748b; font-size: 12px; margin-top: 24px;">Powered by BornoLand</p>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: result.filename,
+          content: result.buffer,
+          contentType: "application/pdf",
+        },
+      ],
+    });
+
+    return response.json({ data: { sent: true, email: customerEmail } });
+  } catch (error) {
+    console.error("Email store order invoice error:", error);
+    response.status(500).json({ message: "Failed to email invoice" });
   }
 }

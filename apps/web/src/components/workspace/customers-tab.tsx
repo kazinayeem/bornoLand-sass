@@ -1,196 +1,350 @@
 "use client";
 
-import { useState } from "react";
-import { useGetStoreCustomersQuery, useGetStoreCustomerQuery } from "@/redux/api/store-customers-api";
-import { Users, Mail, Phone, Calendar } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  useGetStoreCustomersQuery,
+  useGetStoreCustomerQuery,
+  type CustomerOrder,
+  type StoreCustomer,
+} from "@/redux/api/store-customers-api";
+import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
+import { Users, Mail, Phone, Calendar, ShoppingBag, FileText } from "lucide-react";
 import { Drawer } from "@/components/ui/drawer";
 import { DataTable, type Column } from "@/components/ui/data-table";
+import { formatCurrency } from "@/lib/format-currency";
+import { downloadStoreOrderInvoice } from "@/lib/order-invoice";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type CustomersTabProps = { storeId: string };
 
-function formatBDT(v: number) {
-  return new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT", maximumFractionDigits: 0 }).format(v || 0);
+type ProfileTab = "overview" | "orders" | "invoices" | "addresses" | "notes";
+
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
-type CustomerRow = {
-  _id: string;
-  name: string;
-  email: string;
-  phone: string;
-  totalOrders: number;
-  totalSpent: number;
-  lastOrderDate: string | null;
-  createdAt: string;
-  status: string;
-  lastLoginAt: string | null;
-};
-
 export function CustomersTab({ storeId }: CustomersTabProps) {
-  const { data, isLoading } = useGetStoreCustomersQuery({ storeId, limit: "500" });
-  const customers = data?.data?.customers ?? [];
-
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { data: detailData } = useGetStoreCustomerQuery(
+  const [profileTab, setProfileTab] = useState<ProfileTab>("overview");
+
+  const { data: settingsData } = useGetStoreSettingsQuery(storeId);
+  const settings = settingsData?.data?.settings;
+
+  const { data, isLoading } = useGetStoreCustomersQuery({
+    storeId,
+    page: String(page),
+    limit: "20",
+    search: search || undefined,
+  });
+
+  const { data: detailData, isFetching: detailLoading } = useGetStoreCustomerQuery(
     { storeId, customerId: selectedId ?? "" },
     { skip: !selectedId },
   );
+
+  const customers = data?.data?.customers ?? [];
+  const totalPages = data?.data?.totalPages ?? 1;
+  const total = data?.data?.total ?? 0;
   const selectedCust = detailData?.data?.customer ?? null;
+  const orders = (detailData?.data?.orders ?? []) as CustomerOrder[];
 
-  const filtered = customers.filter((c) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.phone.includes(q);
-  });
+  const money = (v: number) => formatCurrency(v || 0, settings);
 
-  const columns: Column<CustomerRow>[] = [
-    {
-      key: "customer", label: "Customer",
-      render: (c) => (
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-apple-primary text-xs font-bold text-white">
-            {c.name.slice(0, 2).toUpperCase()}
+  const columns: Column<StoreCustomer>[] = useMemo(
+    () => [
+      {
+        key: "customer",
+        label: "Customer",
+        render: (c) => (
+          <div className="flex items-center gap-3">
+            {c.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={c.avatar} alt="" className="h-9 w-9 rounded-xl object-cover" />
+            ) : (
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-apple-primary text-xs font-bold text-white">
+                {(c.name || "?").slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className="text-sm font-semibold text-apple-ink">{c.name}</p>
+              <p className="text-xs text-apple-ink-muted-48">{c.email}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-apple-ink">{c.name}</p>
-            <p className="text-xs text-apple-ink-muted-48">{c.email || c.phone}</p>
+        ),
+      },
+      {
+        key: "status",
+        label: "Status",
+        hideOnTablet: true,
+        render: (c) => (
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-xs font-medium",
+              c.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-500",
+            )}
+          >
+            {c.status}
+          </span>
+        ),
+      },
+      {
+        key: "orders",
+        label: "Orders",
+        sortable: true,
+        render: (c) => (
+          <div className="text-sm">
+            <p className="font-medium text-apple-ink">{c.totalOrders}</p>
+            <p className="text-[10px] text-apple-ink-muted-48">
+              {c.completedOrders ?? 0} done · {c.cancelledOrders ?? 0} cancelled
+            </p>
           </div>
-        </div>
-      ),
-    },
-    {
-      key: "status", label: "Status", hideOnTablet: true,
-      render: (c) => (
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-          c.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-500"
-        }`}>
-          {c.status === "active" ? "Active" : c.status === "suspended" ? "Suspended" : "Inactive"}
-        </span>
-      ),
-    },
-    {
-      key: "orders", label: "Orders", sortable: true,
-      render: (c) => <span className="text-sm font-medium text-apple-ink">{c.totalOrders}</span>,
-    },
-    {
-      key: "spent", label: "Total Spent", sortable: true,
-      render: (c) => <span className="text-sm font-bold text-apple-ink">{formatBDT(c.totalSpent)}</span>,
-    },
-    {
-      key: "lastOrderDate", label: "Last Order",
-      render: (c) => <span className="text-sm text-apple-ink-muted-48">{c.lastOrderDate ? new Date(c.lastOrderDate).toLocaleDateString() : "—"}</span>,
-      hideOnMobile: true,
-    },
-    {
-      key: "createdAt", label: "Registered",
-      render: (c) => <span className="text-sm text-apple-ink-muted-48">{new Date(c.createdAt).toLocaleDateString()}</span>,
-      hideOnTablet: true,
-    },
+        ),
+      },
+      {
+        key: "spent",
+        label: "Total Spent",
+        sortable: true,
+        render: (c) => <span className="text-sm font-bold text-apple-ink">{money(c.totalSpent)}</span>,
+      },
+      {
+        key: "aov",
+        label: "AOV",
+        hideOnMobile: true,
+        render: (c) => <span className="text-sm text-apple-ink-muted-80">{money(c.averageOrderValue)}</span>,
+      },
+      {
+        key: "lastOrderDate",
+        label: "Last Order",
+        hideOnMobile: true,
+        render: (c) => (
+          <span className="text-sm text-apple-ink-muted-48">
+            {c.lastOrderDate ? new Date(c.lastOrderDate).toLocaleDateString() : "—"}
+          </span>
+        ),
+      },
+      {
+        key: "createdAt",
+        label: "Registered",
+        hideOnTablet: true,
+        render: (c) => (
+          <span className="text-sm text-apple-ink-muted-48">
+            {new Date(c.createdAt).toLocaleDateString()}
+          </span>
+        ),
+      },
+      {
+        key: "phone",
+        label: "Phone",
+        hideOnMobile: true,
+        render: (c) => <span className="text-sm text-apple-ink-muted-48">{c.phone || "—"}</span>,
+      },
+    ],
+    [settings],
+  );
+
+  const profileTabs: Array<{ id: ProfileTab; label: string }> = [
+    { id: "overview", label: "Overview" },
+    { id: "orders", label: "Orders" },
+    { id: "invoices", label: "Invoices" },
+    { id: "addresses", label: "Addresses" },
+    { id: "notes", label: "Notes" },
   ];
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-apple-ink-muted-48">{data?.data?.total ?? customers.length} customer{(data?.data?.total ?? customers.length) !== 1 ? "s" : ""}</p>
+        <p className="text-sm text-apple-ink-muted-48">
+          {total} customer{total !== 1 ? "s" : ""}
+        </p>
       </div>
 
       <DataTable
-        data={filtered}
+        data={customers}
         columns={columns}
         keyExtractor={(c) => c._id}
         isLoading={isLoading}
         searchValue={search}
-        onSearchChange={setSearch}
+        onSearchChange={(v) => {
+          setSearch(v);
+          setPage(1);
+        }}
         searchPlaceholder="Search customers..."
         emptyIcon={Users}
         emptyTitle="No customers yet"
         emptyDescription="Customers will appear here when they register or place an order."
-        onRowClick={(c) => setSelectedId(c._id)}
+        onRowClick={(c) => {
+          setSelectedId(c._id);
+          setProfileTab("overview");
+        }}
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={20}
+        onPageChange={setPage}
       />
 
       <Drawer
         open={!!selectedId}
         onClose={() => setSelectedId(null)}
-        title={selectedCust?.name}
-        description="Customer details"
-        size="md"
+        title={selectedCust?.name ?? "Customer"}
+        description="Customer profile"
+        size="lg"
       >
-        {selectedCust && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-apple-hairline p-4">
-                <p className="text-xs font-semibold text-apple-ink-muted-48 uppercase">Total Orders</p>
-                <p className="text-2xl font-bold text-apple-ink mt-1">{selectedCust.totalOrders}</p>
-              </div>
-              <div className="rounded-xl border border-apple-hairline p-4">
-                <p className="text-xs font-semibold text-apple-ink-muted-48 uppercase">Total Spent</p>
-                <p className="text-2xl font-bold text-apple-ink mt-1">{formatBDT(selectedCust.totalSpent)}</p>
+        {detailLoading && !selectedCust ? (
+          <p className="text-sm text-apple-ink-muted-48">Loading profile…</p>
+        ) : selectedCust ? (
+          <div className="space-y-5">
+            <div className="flex items-center gap-3">
+              {selectedCust.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={selectedCust.avatar} alt="" className="h-12 w-12 rounded-2xl object-cover" />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-apple-primary text-sm font-bold text-white">
+                  {(selectedCust.name || "?").slice(0, 2).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <p className="text-[15px] font-semibold text-apple-ink">{selectedCust.name}</p>
+                <p className="text-[12px] text-apple-ink-muted-48">{selectedCust.email}</p>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-apple-ink">Contact Info</h4>
-              <div className="rounded-xl border border-apple-hairline divide-y divide-zinc-100">
-                {selectedCust.email && (
+            <div className="flex gap-1 overflow-x-auto">
+              {profileTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setProfileTab(tab.id)}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-[12px] font-medium whitespace-nowrap",
+                    profileTab === tab.id
+                      ? "bg-apple-primary text-white"
+                      : "bg-apple-canvas-parchment text-apple-ink-muted-80",
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {profileTab === "overview" ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {[
+                    { label: "Total orders", value: String(selectedCust.totalOrders) },
+                    { label: "Completed", value: String(selectedCust.completedOrders ?? 0) },
+                    { label: "Cancelled", value: String(selectedCust.cancelledOrders ?? 0) },
+                    { label: "Total spent", value: money(selectedCust.totalSpent) },
+                    { label: "Avg order", value: money(selectedCust.averageOrderValue) },
+                    { label: "Status", value: selectedCust.status },
+                  ].map((card) => (
+                    <div key={card.label} className="rounded-xl border border-apple-hairline p-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-apple-ink-muted-48">
+                        {card.label}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-apple-ink">{card.value}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-xl border border-apple-hairline divide-y divide-zinc-100">
                   <div className="flex items-center gap-3 px-4 py-3">
                     <Mail className="h-4 w-4 text-apple-ink-muted-48" />
-                    <span className="text-sm text-apple-ink-muted-80">{selectedCust.email}</span>
+                    <span className="text-sm">{selectedCust.email || "—"}</span>
                   </div>
-                )}
-                {selectedCust.phone && (
                   <div className="flex items-center gap-3 px-4 py-3">
                     <Phone className="h-4 w-4 text-apple-ink-muted-48" />
-                    <span className="text-sm text-apple-ink-muted-80">{selectedCust.phone}</span>
+                    <span className="text-sm">{selectedCust.phone || "—"}</span>
                   </div>
-                )}
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <Calendar className="h-4 w-4 text-apple-ink-muted-48" />
-                  <span className="text-sm text-apple-ink-muted-80">Registered: {new Date(selectedCust.createdAt).toLocaleDateString()}</span>
-                </div>
-                {selectedCust.lastLoginAt && (
                   <div className="flex items-center gap-3 px-4 py-3">
                     <Calendar className="h-4 w-4 text-apple-ink-muted-48" />
-                    <span className="text-sm text-apple-ink-muted-80">Last login: {new Date(selectedCust.lastLoginAt).toLocaleDateString()}</span>
+                    <span className="text-sm">Registered: {formatDate(selectedCust.createdAt)}</span>
                   </div>
-                )}
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <Calendar className="h-4 w-4 text-apple-ink-muted-48" />
+                    <span className="text-sm">Last login: {formatDate(selectedCust.lastLoginAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <ShoppingBag className="h-4 w-4 text-apple-ink-muted-48" />
+                    <span className="text-sm">Last order: {formatDate(selectedCust.lastOrderDate)}</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : null}
 
-            {detailData?.data?.orders && detailData.data.orders.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-apple-ink">Order History</h4>
-                <div className="space-y-2">
-                  {(detailData.data.orders as Array<{ _id: string; orderNumber: string; total: number; status: string; createdAt: string }>).slice(0, 5).map((o) => (
-                    <div key={o._id} className="flex items-center justify-between rounded-xl bg-apple-canvas-parchment px-4 py-2.5">
+            {profileTab === "orders" || profileTab === "invoices" ? (
+              <div className="space-y-2">
+                {orders.length === 0 ? (
+                  <p className="text-sm text-apple-ink-muted-48">No orders yet.</p>
+                ) : (
+                  orders.map((o) => (
+                    <div
+                      key={o._id}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-apple-hairline px-4 py-3"
+                    >
                       <div>
-                        <p className="text-xs font-mono font-semibold text-blue-600">{o.orderNumber}</p>
-                        <p className="text-xs text-apple-ink-muted-48">{new Date(o.createdAt).toLocaleDateString()}</p>
+                        <p className="text-xs font-mono font-semibold text-apple-primary">{o.orderNumber}</p>
+                        <p className="text-xs text-apple-ink-muted-48">{formatDate(o.createdAt)}</p>
+                        <p className="text-[11px] capitalize text-apple-ink-muted-48">{o.status}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-apple-ink">{formatBDT(o.total)}</p>
-                        <span className={`text-[10px] font-medium ${o.status === "delivered" ? "text-emerald-600" : o.status === "cancelled" ? "text-red-500" : "text-amber-600"}`}>{o.status}</span>
+                        <p className="text-sm font-semibold">{money(o.total)}</p>
+                        <button
+                          type="button"
+                          className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-apple-primary"
+                          onClick={async () => {
+                            try {
+                              await downloadStoreOrderInvoice(storeId, o._id, o.orderNumber);
+                            } catch {
+                              toast.error("Could not download invoice");
+                            }
+                          }}
+                        >
+                          <FileText className="h-3 w-3" />
+                          Invoice PDF
+                        </button>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  ))
+                )}
               </div>
-            )}
+            ) : null}
 
-            {selectedCust.addresses && (selectedCust.addresses as Array<{ _id: string; label: string; city: string; street: string }>).length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-apple-ink">Addresses</h4>
-                <div className="space-y-2">
-                  {(selectedCust.addresses as Array<{ _id: string; label: string; street: string; city: string; state: string; zip: string; country: string }>).map((addr) => (
+            {profileTab === "addresses" ? (
+              <div className="space-y-2">
+                {(selectedCust.addresses ?? []).length === 0 ? (
+                  <p className="text-sm text-apple-ink-muted-48">No saved addresses.</p>
+                ) : (
+                  (selectedCust.addresses ?? []).map((addr) => (
                     <div key={addr._id} className="rounded-xl border border-apple-hairline px-4 py-3">
-                      <p className="text-xs font-semibold text-apple-ink-muted-48">{addr.label}</p>
-                      <p className="text-sm text-apple-ink">{addr.street}, {addr.city}, {addr.state} {addr.zip}, {addr.country}</p>
+                      <p className="text-xs font-semibold text-apple-ink-muted-48">{addr.label || "Address"}</p>
+                      <p className="text-sm text-apple-ink">
+                        {[addr.street, addr.city, addr.state, addr.zip, addr.country].filter(Boolean).join(", ")}
+                      </p>
                     </div>
-                  ))}
-                </div>
+                  ))
+                )}
               </div>
-            )}
+            ) : null}
+
+            {profileTab === "notes" ? (
+              <div className="rounded-xl border border-apple-hairline p-4">
+                <p className="text-sm text-apple-ink-muted-80 whitespace-pre-wrap">
+                  {selectedCust.notes || "No notes."}
+                </p>
+              </div>
+            ) : null}
           </div>
-        )}
+        ) : null}
       </Drawer>
     </div>
   );

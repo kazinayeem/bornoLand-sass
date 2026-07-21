@@ -1,10 +1,17 @@
 import nodemailer from "nodemailer";
 
+type EmailAttachment = {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+};
+
 type EmailPayload = {
   to: string;
   subject: string;
   html: string;
   text?: string;
+  attachments?: EmailAttachment[];
 };
 
 let transporter: nodemailer.Transporter | null = null;
@@ -32,7 +39,18 @@ export async function sendEmail(payload: EmailPayload): Promise<void> {
   }
 
   const from = process.env.SMTP_FROM || "noreply@bornoland.com";
-  await tp.sendMail({ from, to: payload.to, subject: payload.subject, html: payload.html, text: payload.text });
+  await tp.sendMail({
+    from,
+    to: payload.to,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+    attachments: payload.attachments?.map((a) => ({
+      filename: a.filename,
+      content: a.content,
+      contentType: a.contentType,
+    })),
+  });
 }
 
 export async function sendEmailOrThrow(payload: EmailPayload): Promise<void> {
@@ -41,5 +59,16 @@ export async function sendEmailOrThrow(payload: EmailPayload): Promise<void> {
     throw new Error("SMTP not configured");
   }
   const from = process.env.SMTP_FROM || "noreply@bornoland.com";
-  await tp.sendMail({ from, to: payload.to, subject: payload.subject, html: payload.html, text: payload.text });
+  await tp.sendMail({
+    from,
+    to: payload.to,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
+    attachments: payload.attachments?.map((a) => ({
+      filename: a.filename,
+      content: a.content,
+      contentType: a.contentType,
+    })),
+  });
 }

@@ -28,9 +28,52 @@ export type DashboardKPIs = {
   inventoryValue: number;
   couponsUsed: number;
   averageRating: number;
+  revenueToday: number;
+  revenueThisWeek: number;
+  revenueThisMonth: number;
+  revenueThisYear: number;
+  ordersToday: number;
   storageUsage: { used: number; limit: number; percent: number };
   mediaUsage: number;
   pages: number;
+  latestOrders?: Array<{
+    _id: string;
+    orderNumber: string;
+    invoiceNumber?: string;
+    total: number;
+    status: string;
+    paymentStatus?: string;
+    paymentMethod?: string;
+    createdAt: string;
+    customerId?: { name?: string; email?: string } | string;
+  }>;
+  lowStockItems?: Array<{
+    _id: string;
+    name: string;
+    stock: number;
+    price?: number;
+    sku?: string;
+  }>;
+  topProducts?: Array<{
+    _id: string;
+    name: string;
+    totalSold: number;
+    revenue: number;
+  }>;
+  topCustomers?: Array<{
+    _id: string;
+    name?: string;
+    email?: string;
+    totalSpent: number;
+    orderCount: number;
+  }>;
+  topCategories?: Array<{
+    _id: string;
+    revenue: number;
+    units: number;
+  }>;
+  paymentMethods?: Array<{ _id: string; count: number; total: number }>;
+  shippingMethods?: Array<{ _id: string; count: number; total: number }>;
 };
 
 export type RevenueReport = {

@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Package, ShoppingBag, ChevronLeft, Clock, DollarSign, MapPin, CreditCard, CheckCircle } from "lucide-react";
+import { Package, ShoppingBag, ChevronLeft, Clock, DollarSign, MapPin, CreditCard, CheckCircle, Download, Eye, Share2, Printer } from "lucide-react";
 import { useGetOrderQuery } from "@/redux/api/order-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
@@ -11,6 +11,14 @@ import { useRequireCustomerAuth } from "@/hooks/use-require-customer-auth";
 import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
 import { OrderTimeline } from "@/components/orders/order-timeline";
 import { ORDER_STATUS_LABELS } from "@/lib/orders/timeline";
+import {
+  downloadCustomerOrderInvoice,
+  printCustomerOrderInvoice,
+  shareCustomerOrderInvoice,
+  viewCustomerOrderInvoice,
+} from "@/lib/order-invoice";
+import { toast } from "sonner";
+import { useState } from "react";
 
 const statusLabels = ORDER_STATUS_LABELS;
 
@@ -37,6 +45,19 @@ function OrderDetail({ orderId }: { orderId: string }) {
   const { data, isLoading, error } = useGetOrderQuery(orderId);
   const { settings } = useTenant();
   const order = data?.data?.order;
+  const [invoiceBusy, setInvoiceBusy] = useState(false);
+
+  const runInvoice = async (action: () => Promise<unknown>, success?: string) => {
+    setInvoiceBusy(true);
+    try {
+      await action();
+      if (success) toast.success(success);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Invoice action failed");
+    } finally {
+      setInvoiceBusy(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -65,7 +86,7 @@ function OrderDetail({ orderId }: { orderId: string }) {
         <ChevronLeft className="h-4 w-4" /> Back to Orders
       </Link>
 
-      <div className="mb-6 flex items-start justify-between">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-apple-ink">{order.orderNumber}</h1>
           <div className="mt-2 flex items-center gap-3 text-sm text-apple-ink-muted-48">
@@ -79,10 +100,52 @@ function OrderDetail({ orderId }: { orderId: string }) {
             </span>
           </div>
         </div>
-        <span className={`rounded-full px-4 py-1 text-sm font-medium capitalize ${statusStyles[order.status] ?? "bg-apple-canvas-parchment text-apple-ink-muted-80"}`}>
-          {order.status === "delivered" && <CheckCircle className="mr-1 inline h-4 w-4" />}
-          {statusLabels[order.status] ?? order.status}
-        </span>
+        <div className="flex flex-col items-end gap-3">
+          <span className={`rounded-full px-4 py-1 text-sm font-medium capitalize ${statusStyles[order.status] ?? "bg-apple-canvas-parchment text-apple-ink-muted-80"}`}>
+            {order.status === "delivered" && <CheckCircle className="mr-1 inline h-4 w-4" />}
+            {statusLabels[order.status] ?? order.status}
+          </span>
+          {order.status !== "cancelled" ? (
+            <div className="flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                disabled={invoiceBusy}
+                onClick={() => runInvoice(() => viewCustomerOrderInvoice(order._id))}
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium text-apple-ink"
+              >
+                <Eye className="h-3.5 w-3.5" /> View Invoice
+              </button>
+              <button
+                type="button"
+                disabled={invoiceBusy}
+                onClick={() =>
+                  runInvoice(() => downloadCustomerOrderInvoice(order._id, order.orderNumber), "Invoice downloaded")
+                }
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium text-apple-ink"
+              >
+                <Download className="h-3.5 w-3.5" /> Download
+              </button>
+              <button
+                type="button"
+                disabled={invoiceBusy}
+                onClick={() => runInvoice(() => printCustomerOrderInvoice(order._id))}
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium text-apple-ink"
+              >
+                <Printer className="h-3.5 w-3.5" /> Print
+              </button>
+              <button
+                type="button"
+                disabled={invoiceBusy}
+                onClick={() =>
+                  runInvoice(() => shareCustomerOrderInvoice(order._id, order.orderNumber), "Invoice shared")
+                }
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-zinc-900 px-3 text-xs font-medium text-white"
+              >
+                <Share2 className="h-3.5 w-3.5" /> Share
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="space-y-6">

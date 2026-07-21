@@ -8,7 +8,7 @@ import {
 import type { StoreOrder } from "@/redux/api/store-order-api";
 import {
   ShoppingCart, ChevronDown, Package, Truck, CheckCircle, XCircle, Clock,
-  Search,
+  Search, FileText, Download, Printer, Mail, RefreshCw, Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -21,15 +21,19 @@ import { Modal } from "@/components/ui/modal";
 
 import { OrderTimeline } from "@/components/orders/order-timeline";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from "@/lib/orders/timeline";
+import {
+  downloadStoreOrderInvoice,
+  emailStoreOrderInvoice,
+  printStoreOrderInvoice,
+  viewStoreOrderInvoice,
+} from "@/lib/order-invoice";
+import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
+import { formatCurrency } from "@/lib/format-currency";
 
 type OrdersTabProps = { storeId: string };
 
 const statusOptions = [...ORDER_STATUS_OPTIONS];
 const paymentOptions = ["pending", "paid", "partial", "failed", "refunded"];
-
-function formatBDT(v: number) {
-  return new Intl.NumberFormat("en-BD", { style: "currency", currency: "BDT", maximumFractionDigits: 0 }).format(v || 0);
-}
 
 function formatDate(d: string) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(d));
@@ -60,6 +64,11 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<StoreOrder | null>(null);
+  const [invoiceBusy, setInvoiceBusy] = useState(false);
+
+  const { data: settingsData } = useGetStoreSettingsQuery(storeId);
+  const settings = settingsData?.data?.settings;
+  const money = (v: number) => formatCurrency(v || 0, settings);
 
   const { data, isLoading } = useGetStoreOrdersQuery({
     storeId, status: statusFilter || undefined, page: String(page), limit: String(pageSize), search: search || undefined,
@@ -71,6 +80,18 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
   const analytics = data?.data?.analytics;
   const totalPages = data?.data?.totalPages ?? 1;
   const total = data?.data?.total;
+
+  const runInvoice = async (action: () => Promise<unknown>, success?: string) => {
+    setInvoiceBusy(true);
+    try {
+      await action();
+      if (success) toast.success(success);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Invoice action failed");
+    } finally {
+      setInvoiceBusy(false);
+    }
+  };
 
   const handleStatusChange = async (orderId: string, status: string) => {
     try {
@@ -111,7 +132,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
     },
     {
       key: "total", label: "Total", sortable: true,
-      render: (order) => <span className="text-sm font-bold text-apple-ink">{formatBDT(order.total)}</span>,
+      render: (order) => <span className="text-sm font-bold text-apple-ink">{money(order.total)}</span>,
     },
     {
       key: "status", label: "Status",
@@ -152,7 +173,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
         <div className="grid gap-3 sm:grid-cols-5">
           {[
             { label: "Total Orders", value: String(analytics.totalOrders), color: "text-apple-ink" },
-            { label: "Revenue", value: formatBDT(analytics.totalRevenue), color: "text-emerald-600" },
+            { label: "Revenue", value: money(analytics.totalRevenue), color: "text-emerald-600" },
             { label: "Pending", value: String(analytics.pendingOrders), color: "text-amber-600" },
             { label: "Processing", value: String(analytics.processingOrders), color: "text-blue-600" },
             { label: "Delivered", value: String(analytics.deliveredOrders), color: "text-emerald-600" },
@@ -219,7 +240,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
               </div>
               <div className="rounded-xl bg-apple-canvas-parchment p-3">
                 <p className="text-xs font-medium text-apple-ink-muted-48">Total</p>
-                <p className="mt-0.5 text-sm font-semibold text-apple-ink">{formatBDT(selectedOrder.total)}</p>
+                <p className="mt-0.5 text-sm font-semibold text-apple-ink">{money(selectedOrder.total)}</p>
               </div>
               <div className="rounded-xl bg-apple-canvas-parchment p-3">
                 <p className="text-xs font-medium text-apple-ink-muted-48">Date</p>
@@ -235,9 +256,9 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
                     <div>
                       <p className="text-sm font-medium text-apple-ink">{item.name}</p>
                       {item.variantTitle && <p className="text-xs text-apple-ink-muted-48">{item.variantTitle}</p>}
-                      <p className="text-xs text-apple-ink-muted-48">Qty: {item.quantity} × {formatBDT(item.price)}</p>
+                      <p className="text-xs text-apple-ink-muted-48">Qty: {item.quantity} × {money(item.price)}</p>
                     </div>
-                    <p className="text-sm font-semibold text-apple-ink">{formatBDT(item.price * item.quantity)}</p>
+                    <p className="text-sm font-semibold text-apple-ink">{money(item.price * item.quantity)}</p>
                   </div>
                 ))}
               </div>
@@ -263,7 +284,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
               />
             </div>
 
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-wrap gap-2 pt-2">
               <select value={selectedOrder.status} onChange={(e) => handleStatusChange(selectedOrder._id, e.target.value)}
                 className="h-9 rounded-xl border border-apple-hairline bg-white px-3 text-sm outline-none">
                 {statusOptions.map((s) => <option key={s} value={s}>{ORDER_STATUS_LABELS[s] ?? s}</option>)}
@@ -272,6 +293,61 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
                 className="h-9 rounded-xl border border-apple-hairline bg-white px-3 text-sm outline-none">
                 {paymentOptions.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
               </select>
+            </div>
+
+            <div className="flex flex-wrap gap-2 border-t border-apple-hairline pt-3">
+              <button
+                type="button"
+                disabled={invoiceBusy}
+                onClick={() => runInvoice(() => viewStoreOrderInvoice(storeId, selectedOrder._id))}
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-3 text-xs font-medium text-apple-ink"
+              >
+                <Eye className="h-3.5 w-3.5" /> View Invoice
+              </button>
+              <button
+                type="button"
+                disabled={invoiceBusy}
+                onClick={() =>
+                  runInvoice(
+                    () => downloadStoreOrderInvoice(storeId, selectedOrder._id, selectedOrder.orderNumber),
+                    "Invoice downloaded",
+                  )
+                }
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-3 text-xs font-medium text-apple-ink"
+              >
+                <Download className="h-3.5 w-3.5" /> Download PDF
+              </button>
+              <button
+                type="button"
+                disabled={invoiceBusy}
+                onClick={() => runInvoice(() => printStoreOrderInvoice(storeId, selectedOrder._id))}
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-3 text-xs font-medium text-apple-ink"
+              >
+                <Printer className="h-3.5 w-3.5" /> Print
+              </button>
+              <button
+                type="button"
+                disabled={invoiceBusy}
+                onClick={() =>
+                  runInvoice(() => emailStoreOrderInvoice(storeId, selectedOrder._id), "Invoice emailed")
+                }
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-3 text-xs font-medium text-apple-ink"
+              >
+                <Mail className="h-3.5 w-3.5" /> Email Invoice
+              </button>
+              <button
+                type="button"
+                disabled={invoiceBusy}
+                onClick={() =>
+                  runInvoice(
+                    () => downloadStoreOrderInvoice(storeId, selectedOrder._id, selectedOrder.orderNumber),
+                    "Invoice regenerated",
+                  )
+                }
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-apple-primary px-3 text-xs font-medium text-white"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Generate Again
+              </button>
             </div>
           </div>
         )}

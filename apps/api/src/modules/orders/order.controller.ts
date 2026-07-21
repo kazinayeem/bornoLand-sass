@@ -4,6 +4,7 @@ import type { SubdomainRequest } from "../../common/middleware/subdomain.middlew
 import { createOrder, getCustomerOrders, getOrderById, trackOrderByNumber } from "./order.service.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 import jwt from "jsonwebtoken";
+import { generateOrderInvoice } from "./order-invoice.service.js";
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -85,4 +86,27 @@ export async function trackOrderController(request: SubdomainRequest, response: 
   return result.ok
     ? sendSuccess(response, result.data)
     : sendFailure(response, result.message, 404);
+}
+
+export async function downloadOrderInvoiceController(request: SubdomainRequest, response: Response) {
+  const storeId = request.store?._id?.toString();
+  if (!storeId) return sendFailure(response, "Store not found", 404);
+
+  const customerId = getCustomerId(request);
+  if (!customerId) return sendFailure(response, "Not authenticated", 401);
+
+  const result = await generateOrderInvoice({
+    storeId,
+    orderId: request.params.id as string,
+    customerId,
+  });
+
+  if (!result.ok) {
+    return sendFailure(response, result.message, result.message.includes("not found") ? 404 : 500);
+  }
+
+  response.setHeader("Content-Type", "application/pdf");
+  response.setHeader("Content-Disposition", `attachment; filename="${result.filename}"`);
+  response.setHeader("Content-Length", result.buffer.length);
+  return response.send(result.buffer);
 }

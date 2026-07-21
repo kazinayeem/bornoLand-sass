@@ -16,7 +16,7 @@ import {
 import { getStoreSettingsController, updateStoreSettingsController } from "./store-settings.controller.js";
 import { getStoreContactController, updateStoreContactController } from "./store-contact.controller.js";
 import { createHomepageSliderController, deleteHomepageSliderController, listHomepageSlidersController, updateHomepageSliderController } from "./homepage-slider.controller.js";
-import { listStoreOrdersController, getStoreOrderController, updateOrderStatusController, updatePaymentStatusController, addOrderNoteController, processRefundController } from "./store-order.controller.js";
+import { listStoreOrdersController, getStoreOrderController, updateOrderStatusController, updatePaymentStatusController, addOrderNoteController, processRefundController, downloadStoreOrderInvoiceController, emailStoreOrderInvoiceController } from "./store-order.controller.js";
 import { listStoreCustomersController, getStoreCustomerController, updateStoreCustomerController } from "./store-customer.controller.js";
 import { couponRouter } from "../coupons/coupon.route.js";
 import { reviewRouter } from "../reviews/review.route.js";
@@ -56,6 +56,8 @@ storeRouter.delete("/:id", deleteStoreController);
 
 storeRouter.get("/:storeId/orders", listStoreOrdersController);
 storeRouter.get("/:storeId/orders/:id", getStoreOrderController);
+storeRouter.get("/:storeId/orders/:id/invoice.pdf", downloadStoreOrderInvoiceController);
+storeRouter.post("/:storeId/orders/:id/invoice/email", emailStoreOrderInvoiceController);
 storeRouter.put("/:storeId/orders/:id/status", updateOrderStatusController);
 storeRouter.put("/:storeId/orders/:id/payment-status", updatePaymentStatusController);
 storeRouter.post("/:storeId/orders/:id/notes", addOrderNoteController);

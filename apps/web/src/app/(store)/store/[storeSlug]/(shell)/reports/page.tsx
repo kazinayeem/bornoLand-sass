@@ -1,25 +1,42 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { useStorePage } from "@/components/store-dashboard/store-page";
 import { DashboardPageHeader } from "@/components/store-dashboard/dashboard-ui";
-import { useGetReportDashboardQuery, type ReportDateRange } from "@/redux/api/reports-api";
 import {
-  DollarSign, ShoppingCart, Users, TrendingUp, Package, BarChart3,
-  Loader2, ArrowUpRight, Clock, Tag, HardDrive, FileText,
-  AlertTriangle, CheckCircle2, XCircle,
+  useGetReportDashboardQuery,
+  useGetRevenueReportQuery,
+  useGetSummaryReportQuery,
+  type ReportDateRange,
+} from "@/redux/api/reports-api";
+import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
+import { formatCurrency } from "@/lib/format-currency";
+import {
+  DollarSign,
+  ShoppingCart,
+  Users,
+  TrendingUp,
+  Package,
+  Loader2,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  RotateCcw,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-function formatBDT(v: number) {
-  try {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: "BDT", minimumFractionDigits: 0 }).format(v);
-  } catch {
-    return `৳${v.toLocaleString()}`;
-  }
-}
 
 const DATE_PRESETS = [
   { value: "all", label: "All Time" },
@@ -32,24 +49,12 @@ const DATE_PRESETS = [
   { value: "thisYear", label: "This Year" },
 ] as const;
 
-const REPORT_LINKS = [
-  { href: "/reports/revenue", label: "Revenue Report", icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
-  { href: "/reports/orders", label: "Order Report", icon: ShoppingCart, color: "text-amber-600", bg: "bg-amber-50" },
-  { href: "/reports/customers", label: "Customer Report", icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-  { href: "/reports/products", label: "Product Report", icon: Package, color: "text-violet-600", bg: "bg-violet-50" },
-  { href: "/reports/categories", label: "Category Report", icon: Tag, color: "text-rose-600", bg: "bg-rose-50" },
-  { href: "/reports/coupons", label: "Coupon Report", icon: FileText, color: "text-indigo-600", bg: "bg-indigo-50" },
-  { href: "/reports/media", label: "Media Report", icon: HardDrive, color: "text-cyan-600", bg: "bg-cyan-50" },
-  { href: "/reports/summary/daily", label: "Daily Summary", icon: Clock, color: "text-apple-ink-muted-80", bg: "bg-apple-canvas-parchment" },
-];
-
 function KPICard({
   label,
   value,
   icon: Icon,
   color,
   bg,
-  trend,
   delay,
 }: {
   label: string;
@@ -57,7 +62,6 @@ function KPICard({
   icon: React.ComponentType<{ className?: string }>;
   color: string;
   bg: string;
-  trend?: string;
   delay: number;
 }) {
   return (
@@ -67,16 +71,8 @@ function KPICard({
       transition={{ delay, duration: 0.3 }}
       className="dashboard-kpi-card"
     >
-      <div className="flex items-start justify-between">
-        <div className={cn("flex h-10 w-10 items-center justify-center rounded-apple-lg", bg)}>
-          <Icon className={cn("h-5 w-5", color)} />
-        </div>
-        {trend && (
-          <span className="inline-flex items-center gap-0.5 rounded-apple-pill bg-emerald-50 px-2 py-0.5 text-fine-print font-semibold text-emerald-700">
-            <TrendingUp className="h-2.5 w-2.5" />
-            {trend}
-          </span>
-        )}
+      <div className={cn("flex h-10 w-10 items-center justify-center rounded-apple-lg", bg)}>
+        <Icon className={cn("h-5 w-5", color)} />
       </div>
       <p className="mt-3 text-display-md text-apple-ink">{value}</p>
       <p className="mt-0.5 text-caption text-apple-ink-muted-48">{label}</p>
@@ -84,17 +80,58 @@ function KPICard({
   );
 }
 
+function Panel({
+  title,
+  children,
+  className,
+}: {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("rounded-2xl border border-apple-hairline bg-white p-4 sm:p-5", className)}>
+      <h3 className="mb-4 text-sm font-semibold text-apple-ink">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function EmptyHint({ text }: { text: string }) {
+  return <p className="py-8 text-center text-sm text-apple-ink-muted-48">{text}</p>;
+}
+
 export default function ReportsPage() {
-  const { storeId, store, isLoading: storeLoading } = useStorePage();
+  const { storeId, isLoading: storeLoading } = useStorePage();
   const [dateRange, setDateRange] = useState<ReportDateRange>({ preset: "all" });
+
+  const { data: settingsData } = useGetStoreSettingsQuery(storeId ?? "", { skip: !storeId });
+  const settings = settingsData?.data?.settings;
+  const money = (v: number) => formatCurrency(v || 0, settings);
 
   const { data, isLoading } = useGetReportDashboardQuery(
     { storeId: storeId ?? "", range: dateRange },
-    { skip: !storeId }
+    { skip: !storeId },
+  );
+  const { data: revenueData } = useGetRevenueReportQuery(
+    { storeId: storeId ?? "", range: dateRange },
+    { skip: !storeId },
+  );
+  const { data: growthData } = useGetSummaryReportQuery(
+    { storeId: storeId ?? "", period: "monthly" },
+    { skip: !storeId },
   );
 
   const kpis = data?.data;
-  const storeBase = store ? `/store/${store.slug}` : "";
+  const daily = revenueData?.data?.daily ?? [];
+  const growth = (growthData?.data?.data ?? []).map((row) => {
+    const id = row._id as { month?: number; year?: number } | string | number;
+    const label =
+      typeof id === "object" && id
+        ? `${id.month ?? "?"}/${id.year ?? ""}`
+        : String(id ?? "");
+    return { label, revenue: row.revenue, orders: row.orders };
+  });
 
   if (storeLoading || !storeId) {
     return (
@@ -104,11 +141,32 @@ export default function ReportsPage() {
     );
   }
 
+  const cards = kpis
+    ? [
+        { label: "Revenue Today", value: money(kpis.revenueToday), icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
+        { label: "Revenue This Week", value: money(kpis.revenueThisWeek), icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
+        { label: "Revenue This Month", value: money(kpis.revenueThisMonth), icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
+        { label: "Revenue This Year", value: money(kpis.revenueThisYear), icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
+        { label: "Orders Today", value: kpis.ordersToday, icon: ShoppingCart, color: "text-amber-600", bg: "bg-amber-50" },
+        { label: "Pending Orders", value: kpis.pendingOrders, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+        { label: "Completed Orders", value: kpis.completedOrders, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
+        { label: "Cancelled Orders", value: kpis.cancelledOrders, icon: XCircle, color: "text-red-600", bg: "bg-red-50" },
+        { label: "Average Order Value", value: money(kpis.avgOrderValue), icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-50" },
+        { label: "New Customers", value: kpis.newCustomers, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+        { label: "Returning Customers", value: kpis.returningCustomers, icon: RotateCcw, color: "text-blue-600", bg: "bg-blue-50" },
+        { label: "Conversion Rate", value: `${kpis.conversionRate}%`, icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-50" },
+        { label: "Refund Amount", value: money(kpis.refundAmount), icon: XCircle, color: "text-red-600", bg: "bg-red-50" },
+        { label: "Units Sold", value: kpis.productsSold, icon: Package, color: "text-apple-ink-muted-80", bg: "bg-apple-canvas-parchment" },
+        { label: "Low Stock", value: kpis.lowStockProducts, icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-50" },
+        { label: "Total Customers", value: kpis.totalCustomers, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+      ]
+    : [];
+
   return (
     <div className="space-y-6">
       <DashboardPageHeader
         title="Reports"
-        description="Sales, revenue, inventory, and business insights."
+        description="Live ecommerce analytics from your store database."
         actions={
           <select
             value={dateRange.preset || "all"}
@@ -128,61 +186,207 @@ export default function ReportsPage() {
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-apple-primary" />
         </div>
-      ) : kpis ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KPICard label="Total Revenue" value={formatBDT(kpis.totalRevenue)} icon={DollarSign} color="text-emerald-600" bg="bg-emerald-50" delay={0.05} />
-          <KPICard label="Total Orders" value={kpis.totalOrders} icon={ShoppingCart} color="text-amber-600" bg="bg-amber-50" delay={0.1} />
-          <KPICard label="Total Customers" value={kpis.totalCustomers} icon={Users} color="text-blue-600" bg="bg-blue-50" delay={0.15} />
-          <KPICard label="Avg Order Value" value={formatBDT(kpis.avgOrderValue)} icon={TrendingUp} color="text-violet-600" bg="bg-violet-50" delay={0.2} />
-          <KPICard label="Net Profit" value={formatBDT(kpis.netProfit)} icon={DollarSign} color="text-emerald-600" bg="bg-emerald-50" delay={0.25} />
-          <KPICard label="Gross Sales" value={formatBDT(kpis.grossSales)} icon={BarChart3} color="text-blue-600" bg="bg-blue-50" delay={0.3} />
-          <KPICard label="Refund Amount" value={formatBDT(kpis.refundAmount)} icon={XCircle} color="text-red-600" bg="bg-red-50" delay={0.35} />
-          <KPICard label="Pending Orders" value={kpis.pendingOrders} icon={Clock} color="text-amber-600" bg="bg-amber-50" delay={0.4} />
-          <KPICard label="Cancelled Orders" value={kpis.cancelledOrders} icon={XCircle} color="text-red-600" bg="bg-red-50" delay={0.45} />
-          <KPICard label="Completed Orders" value={kpis.completedOrders} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" delay={0.5} />
-          <KPICard label="Conversion Rate" value={`${kpis.conversionRate}%`} icon={TrendingUp} color="text-violet-600" bg="bg-violet-50" delay={0.55} />
-          <KPICard label="Coupons Used" value={kpis.couponsUsed} icon={Tag} color="text-indigo-600" bg="bg-indigo-50" delay={0.6} />
-          <KPICard label="Products" value={kpis.productsSold} icon={Package} color="text-apple-ink-muted-80" bg="bg-apple-canvas-parchment" delay={0.65} />
-          <KPICard label="Low Stock" value={kpis.lowStockProducts} icon={AlertTriangle} color="text-amber-600" bg="bg-amber-50" delay={0.7} />
-          <KPICard label="Media Files" value={kpis.mediaUsage} icon={HardDrive} color="text-cyan-600" bg="bg-cyan-50" delay={0.75} />
-          <KPICard label="Pages" value={kpis.pages} icon={FileText} color="text-apple-ink-muted-80" bg="bg-apple-canvas-parchment" delay={0.8} />
-        </div>
-      ) : null}
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {cards.map((card, i) => (
+              <KPICard key={card.label} {...card} delay={0.03 * i} />
+            ))}
+          </div>
 
-      <div>
-        <h2 className="mb-3 text-body-strong text-apple-ink">Detailed Reports</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {REPORT_LINKS.map((link, i) => {
-            const Icon = link.icon;
-            return (
-              <motion.div
-                key={link.href}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.85 + i * 0.03, duration: 0.3 }}
-              >
-                <Link
-                  href={`${storeBase}${link.href}`}
-                  className="dashboard-kpi-card group flex items-center gap-4 !p-4"
-                >
-                  <div
-                    className={cn(
-                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-apple-lg transition-transform duration-200 group-hover:scale-105",
-                      link.bg
-                    )}
-                  >
-                    <Icon className={cn("h-5 w-5", link.color)} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-caption font-semibold text-apple-ink">{link.label}</p>
-                  </div>
-                  <ArrowUpRight className="h-4 w-4 shrink-0 text-apple-ink-muted-48 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-apple-primary" />
-                </Link>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Panel title="Revenue">
+              {daily.length === 0 ? (
+                <EmptyHint text="No revenue data in this range." />
+              ) : (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={daily}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="_id" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip formatter={(v) => money(Number(v || 0))} />
+                      <Line type="monotone" dataKey="revenue" stroke="#16a34a" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </Panel>
+
+            <Panel title="Orders">
+              {daily.length === 0 ? (
+                <EmptyHint text="No order data in this range." />
+              ) : (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={daily}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="_id" tick={{ fontSize: 11 }} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                      <Tooltip />
+                      <Bar dataKey="orders" fill="#d97706" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </Panel>
+
+            <Panel title="Customer Growth">
+              {growth.length === 0 ? (
+                <EmptyHint text="No growth data yet." />
+              ) : (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={growth}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="orders" stroke="#2563eb" strokeWidth={2} name="Orders" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </Panel>
+
+            <Panel title="Sales by Category">
+              {(kpis?.topCategories ?? []).length === 0 ? (
+                <EmptyHint text="No category sales yet." />
+              ) : (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={kpis?.topCategories ?? []} layout="vertical" margin={{ left: 24 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis type="number" tick={{ fontSize: 11 }} />
+                      <YAxis type="category" dataKey="_id" width={90} tick={{ fontSize: 11 }} />
+                      <Tooltip formatter={(v) => money(Number(v || 0))} />
+                      <Bar dataKey="revenue" fill="#7c3aed" radius={[0, 6, 6, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </Panel>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Panel title="Top Selling Products">
+              {(kpis?.topProducts ?? []).length === 0 ? (
+                <EmptyHint text="No product sales yet." />
+              ) : (
+                <div className="space-y-2">
+                  {(kpis?.topProducts ?? []).map((p) => (
+                    <div key={String(p._id)} className="flex items-center justify-between rounded-xl bg-apple-canvas-parchment px-3 py-2.5">
+                      <div>
+                        <p className="text-sm font-medium text-apple-ink">{p.name}</p>
+                        <p className="text-xs text-apple-ink-muted-48">{p.totalSold} sold</p>
+                      </div>
+                      <p className="text-sm font-semibold text-apple-ink">{money(p.revenue)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Panel>
+
+            <Panel title="Top Customers">
+              {(kpis?.topCustomers ?? []).length === 0 ? (
+                <EmptyHint text="No customer spend yet." />
+              ) : (
+                <div className="space-y-2">
+                  {(kpis?.topCustomers ?? []).map((c) => (
+                    <div key={String(c._id)} className="flex items-center justify-between rounded-xl bg-apple-canvas-parchment px-3 py-2.5">
+                      <div>
+                        <p className="text-sm font-medium text-apple-ink">{c.name || "Customer"}</p>
+                        <p className="text-xs text-apple-ink-muted-48">{c.orderCount} orders · {c.email || "—"}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-apple-ink">{money(c.totalSpent)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Panel>
+
+            <Panel title="Payment Methods">
+              {(kpis?.paymentMethods ?? []).length === 0 ? (
+                <EmptyHint text="No payment data yet." />
+              ) : (
+                <div className="space-y-2">
+                  {(kpis?.paymentMethods ?? []).map((m) => (
+                    <div key={String(m._id)} className="flex items-center justify-between rounded-xl border border-apple-hairline px-3 py-2.5">
+                      <p className="text-sm capitalize text-apple-ink">{m._id || "unknown"}</p>
+                      <p className="text-sm text-apple-ink-muted-80">
+                        {m.count} · {money(m.total)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Panel>
+
+            <Panel title="Shipping Methods">
+              {(kpis?.shippingMethods ?? []).length === 0 ? (
+                <EmptyHint text="No shipping data yet." />
+              ) : (
+                <div className="space-y-2">
+                  {(kpis?.shippingMethods ?? []).map((m) => (
+                    <div key={String(m._id)} className="flex items-center justify-between rounded-xl border border-apple-hairline px-3 py-2.5">
+                      <p className="text-sm text-apple-ink">{m._id || "Unspecified"}</p>
+                      <p className="text-sm text-apple-ink-muted-80">
+                        {m.count} · {money(m.total)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Panel>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Panel title="Latest Orders">
+              {(kpis?.latestOrders ?? []).length === 0 ? (
+                <EmptyHint text="No orders yet." />
+              ) : (
+                <div className="space-y-2">
+                  {(kpis?.latestOrders ?? []).map((o) => {
+                    const customer =
+                      typeof o.customerId === "object" && o.customerId
+                        ? o.customerId.name || o.customerId.email
+                        : "Customer";
+                    return (
+                      <div key={o._id} className="flex items-center justify-between rounded-xl border border-apple-hairline px-3 py-2.5">
+                        <div>
+                          <p className="text-sm font-medium text-apple-ink">{o.orderNumber}</p>
+                          <p className="text-xs text-apple-ink-muted-48">
+                            {customer} · {new Date(o.createdAt).toLocaleDateString()} · {o.status}
+                          </p>
+                        </div>
+                        <p className="text-sm font-semibold">{money(o.total)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Panel>
+
+            <Panel title="Low Stock">
+              {(kpis?.lowStockItems ?? []).length === 0 ? (
+                <EmptyHint text="No low-stock products." />
+              ) : (
+                <div className="space-y-2">
+                  {(kpis?.lowStockItems ?? []).map((p) => (
+                    <div key={p._id} className="flex items-center justify-between rounded-xl border border-apple-hairline px-3 py-2.5">
+                      <div>
+                        <p className="text-sm font-medium text-apple-ink">{p.name}</p>
+                        <p className="text-xs text-apple-ink-muted-48">{p.sku || "No SKU"}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-amber-600">{p.stock} left</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Panel>
+          </div>
+        </>
+      )}
     </div>
   );
 }

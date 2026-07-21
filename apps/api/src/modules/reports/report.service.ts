@@ -9,12 +9,61 @@ import { MediaFileModel } from "../../models/media-file.model.js";
 import { StorePageModel } from "../pages/store-page.model.js";
 import { ReviewModel } from "../../models/review.model.js";
 import { StorageUsageModel } from "../media/storage-usage.model.js";
+import mongoose from "mongoose";
 
 type DateRange = {
   start?: string;
   end?: string;
   preset?: "today" | "yesterday" | "last7" | "last30" | "thisMonth" | "lastMonth" | "thisYear" | "all";
 };
+
+function toOid(id: string) {
+  return new mongoose.Types.ObjectId(id);
+}
+
+function storeMatch(storeId: string, extra: Record<string, unknown> = {}) {
+  return { storeId: toOid(storeId), ...extra };
+}
+
+const REVENUE_STATUS_MATCH = { status: { $nin: ["cancelled", "refunded"] } };
+
+function startOfDay(d = new Date()) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function startOfWeek(d = new Date()) {
+  const day = d.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  const start = startOfDay(d);
+  start.setDate(start.getDate() - diff);
+  return start;
+}
+
+async function sumRevenue(storeId: string, from?: Date, to?: Date) {
+  const match: Record<string, unknown> = {
+    ...storeMatch(storeId),
+    ...REVENUE_STATUS_MATCH,
+  };
+  if (from || to) {
+    match.createdAt = {
+      ...(from ? { $gte: from } : {}),
+      ...(to ? { $lte: to } : {}),
+    };
+  }
+  const rows = await OrderModel.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: null,
+        revenue: {
+          $sum: { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] },
+        },
+        orders: { $sum: 1 },
+      },
+    },
+  ]);
+  return { revenue: rows[0]?.revenue ?? 0, orders: rows[0]?.orders ?? 0 };
+}
 
 function getDateFilter(range: DateRange): { $gte?: Date; $lte?: Date } {
   const now = new Date();
@@ -71,83 +120,312 @@ function buildDateMatch(dateField: string, range: DateRange) {
 
 export async function getDashboardKPIs(storeId: string, range: DateRange) {
   await connectDatabase();
-  const dateMatch = buildDateMatch("createdAt", range);
+  if (!mongoose.Types.ObjectId.isValid(storeId)) {
+    throw new Error("Invalid store ID");
+  }
 
-  const storeFilter = { storeId, ...dateMatch };
+  const dateMatch = buildDateMatch("createdAt", range);
+  const oid = toOid(storeId);
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const weekStart = startOfWeek(now);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const yearStart = new Date(now.getFullYear(), 0, 1);
 
   const [
-    totalOrders,
-    orderStats,
-    totalProducts,
+    periodStats,
+    revenueToday,
+    revenueWeek,
+    revenueMonth,
+    revenueYear,
+    ordersToday,
     totalCustomers,
-    categories,
+    newCustomersInRange,
+    returningAgg,
+    productStock,
+    unitsSold,
+    couponsUsedAgg,
+    reviewsAgg,
     storageUsage,
     pages,
-    couponsUsed,
-    reviews,
+    latestOrders,
+    lowStockList,
+    topProducts,
+    topCustomers,
+    byPayment,
+    byZone,
+    byCategory,
   ] = await Promise.all([
-    OrderModel.countDocuments({ storeId }),
     OrderModel.aggregate([
-      { $match: { storeId, ...dateMatch } },
+      { $match: { storeId: oid, ...dateMatch } },
       {
         $group: {
           _id: null,
-          totalRevenue: { $sum: "$total" },
+          totalRevenue: {
+            $sum: {
+              $cond: [
+                { $in: ["$status", ["cancelled", "refunded"]] },
+                0,
+                { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] },
+              ],
+            },
+          },
           totalOrders: { $sum: 1 },
-          avgOrderValue: { $avg: "$total" },
+          avgOrderValue: {
+            $avg: {
+              $cond: [
+                { $in: ["$status", ["cancelled", "refunded"]] },
+                null,
+                { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] },
+              ],
+            },
+          },
           completedOrders: { $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] } },
-          pendingOrders: { $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] } },
-          cancelledOrders: { $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] } },
-          refundedAmount: { $sum: { $cond: [{ $eq: ["$status", "refunded"] }, "$total", 0] } },
+          pendingOrders: {
+            $sum: {
+              $cond: [{ $in: ["$status", ["pending", "confirmed", "processing", "packed"]] }, 1, 0],
+            },
+          },
+          cancelledOrders: {
+            $sum: { $cond: [{ $in: ["$status", ["cancelled", "refunded", "partial_refund"]] }, 1, 0] },
+          },
+          refundAmount: {
+            $sum: {
+              $cond: [
+                { $gt: [{ $ifNull: ["$refundAmount", 0] }, 0] },
+                "$refundAmount",
+                { $cond: [{ $eq: ["$status", "refunded"] }, "$total", 0] },
+              ],
+            },
+          },
           uniqueCustomers: { $addToSet: "$customerId" },
         },
       },
     ]),
-    ProductModel.countDocuments({ storeId }),
-    CustomerModel.countDocuments({ storeId }),
-    CategoryModel.countDocuments({ storeId }),
-    StorageUsageModel.findOne({ storeId }).lean() as Promise<Record<string, unknown> | null>,
-    StorePageModel.countDocuments({ storeId, deletedAt: null }),
-    CouponModel.countDocuments({ storeId }),
-    ReviewModel.countDocuments({ storeId }),
+    sumRevenue(storeId, todayStart),
+    sumRevenue(storeId, weekStart),
+    sumRevenue(storeId, monthStart),
+    sumRevenue(storeId, yearStart),
+    OrderModel.countDocuments({ storeId: oid, createdAt: { $gte: todayStart } }),
+    CustomerModel.countDocuments({ storeId: oid }),
+    CustomerModel.countDocuments({ storeId: oid, ...dateMatch }),
+    OrderModel.aggregate([
+      { $match: { storeId: oid, ...dateMatch } },
+      { $group: { _id: "$customerId", orders: { $sum: 1 } } },
+      { $match: { orders: { $gt: 1 } } },
+      { $count: "count" },
+    ]),
+    ProductModel.aggregate([
+      { $match: { storeId: oid } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          lowStock: {
+            $sum: {
+              $cond: [{ $and: [{ $lte: ["$stock", 5] }, { $gt: ["$stock", 0] }] }, 1, 0],
+            },
+          },
+          outOfStock: { $sum: { $cond: [{ $lte: ["$stock", 0] }, 1, 0] } },
+          inventoryValue: {
+            $sum: { $multiply: [{ $ifNull: ["$stock", 0] }, { $ifNull: ["$price", 0] }] },
+          },
+        },
+      },
+    ]),
+    OrderModel.aggregate([
+      { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
+      { $unwind: "$items" },
+      { $group: { _id: null, units: { $sum: "$items.quantity" } } },
+    ]),
+    OrderModel.aggregate([
+      {
+        $match: {
+          storeId: oid,
+          ...dateMatch,
+          couponCode: { $exists: true, $nin: [null, ""] },
+        },
+      },
+      { $count: "count" },
+    ]),
+    ReviewModel.aggregate([
+      { $match: { storeId: oid } },
+      { $group: { _id: null, avg: { $avg: "$rating" }, count: { $sum: 1 } } },
+    ]),
+    StorageUsageModel.findOne({ storeId: oid }).lean() as Promise<Record<string, unknown> | null>,
+    StorePageModel.countDocuments({ storeId: oid, deletedAt: null }),
+    OrderModel.find({ storeId: oid })
+      .populate("customerId", "name email")
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select("orderNumber invoiceNumber total status paymentStatus paymentMethod createdAt customerId")
+      .lean(),
+    ProductModel.find({ storeId: oid, stock: { $lte: 5, $gt: 0 } })
+      .select("name stock price sku")
+      .sort({ stock: 1 })
+      .limit(10)
+      .lean(),
+    OrderModel.aggregate([
+      { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.productId",
+          name: { $first: "$items.name" },
+          totalSold: { $sum: "$items.quantity" },
+          revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } },
+        },
+      },
+      { $sort: { revenue: -1 } },
+      { $limit: 8 },
+    ]),
+    OrderModel.aggregate([
+      { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
+      {
+        $group: {
+          _id: "$customerId",
+          totalSpent: {
+            $sum: { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] },
+          },
+          orderCount: { $sum: 1 },
+        },
+      },
+      { $sort: { totalSpent: -1 } },
+      { $limit: 8 },
+      {
+        $lookup: {
+          from: "customers",
+          localField: "_id",
+          foreignField: "_id",
+          as: "customer",
+        },
+      },
+      { $unwind: { path: "$customer", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          name: "$customer.name",
+          email: "$customer.email",
+          totalSpent: 1,
+          orderCount: 1,
+        },
+      },
+    ]),
+    OrderModel.aggregate([
+      { $match: { storeId: oid, ...dateMatch } },
+      {
+        $group: {
+          _id: { $ifNull: ["$paymentMethod", "unknown"] },
+          count: { $sum: 1 },
+          total: { $sum: "$total" },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]),
+    OrderModel.aggregate([
+      { $match: { storeId: oid, ...dateMatch } },
+      {
+        $group: {
+          _id: { $ifNull: ["$deliveryZone", "Unspecified"] },
+          count: { $sum: 1 },
+          total: { $sum: { $ifNull: ["$deliveryCharge", "$shipping"] } },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]),
+    OrderModel.aggregate([
+      { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "items.productId",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "product.categoryId",
+          foreignField: "_id",
+          as: "category",
+        },
+      },
+      { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: { $ifNull: ["$category.name", "Uncategorized"] },
+          revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } },
+          units: { $sum: "$items.quantity" },
+        },
+      },
+      { $sort: { revenue: -1 } },
+      { $limit: 8 },
+    ]),
   ]);
 
-  const stats = orderStats[0] || {
-    totalRevenue: 0, totalOrders: 0, avgOrderValue: 0,
-    completedOrders: 0, pendingOrders: 0, cancelledOrders: 0,
-    refundedAmount: 0, uniqueCustomers: [],
+  const stats = periodStats[0] || {
+    totalRevenue: 0,
+    totalOrders: 0,
+    avgOrderValue: 0,
+    completedOrders: 0,
+    pendingOrders: 0,
+    cancelledOrders: 0,
+    refundAmount: 0,
+    uniqueCustomers: [],
   };
 
-  const uniqueCustomerCount = Array.isArray(stats.uniqueCustomers) ? stats.uniqueCustomers.length : 0;
-  const conversionRate = totalOrders > 0 ? ((stats.totalOrders / Math.max(totalProducts, 1)) * 100) : 0;
+  const uniqueInRange = Array.isArray(stats.uniqueCustomers) ? stats.uniqueCustomers.length : 0;
+  const returningCustomers = returningAgg[0]?.count ?? 0;
+  const stock = productStock[0] || { total: 0, lowStock: 0, outOfStock: 0, inventoryValue: 0 };
+  const productsSold = unitsSold[0]?.units ?? 0;
+  const couponsUsed = couponsUsedAgg[0]?.count ?? 0;
+  const averageRating = reviewsAgg[0]?.avg ?? 0;
+  const conversionRate =
+    totalCustomers > 0 ? Math.round((uniqueInRange / totalCustomers) * 10000) / 100 : 0;
 
   return {
     totalRevenue: stats.totalRevenue || 0,
     totalOrders: stats.totalOrders || 0,
-    totalCustomers,
-    avgOrderValue: stats.avgOrderValue || 0,
-    netProfit: (stats.totalRevenue || 0) - (stats.refundedAmount || 0),
-    grossSales: stats.totalRevenue || 0,
-    refundAmount: stats.refundedAmount || 0,
+    avgOrderValue: Math.round((stats.avgOrderValue || 0) * 100) / 100,
     pendingOrders: stats.pendingOrders || 0,
     cancelledOrders: stats.cancelledOrders || 0,
     completedOrders: stats.completedOrders || 0,
-    conversionRate: Math.round(conversionRate * 100) / 100,
-    returningCustomers: uniqueCustomerCount,
-    newCustomers: totalCustomers,
-    productsSold: totalProducts,
-    lowStockProducts: 0,
-    outOfStockProducts: 0,
-    inventoryValue: 0,
+    refundAmount: stats.refundAmount || 0,
+    grossSales: stats.totalRevenue || 0,
+    netProfit: (stats.totalRevenue || 0) - (stats.refundAmount || 0),
+    revenueToday: revenueToday.revenue,
+    revenueThisWeek: revenueWeek.revenue,
+    revenueThisMonth: revenueMonth.revenue,
+    revenueThisYear: revenueYear.revenue,
+    ordersToday,
+    totalCustomers,
+    newCustomers: newCustomersInRange,
+    returningCustomers,
+    conversionRate,
+    productsSold,
+    lowStockProducts: stock.lowStock || 0,
+    outOfStockProducts: stock.outOfStock || 0,
+    inventoryValue: stock.inventoryValue || 0,
     couponsUsed,
-    averageRating: 0,
-    storageUsage: storageUsage ? {
-      used: storageUsage.usedBytes || 0,
-      limit: storageUsage.limitBytes || 0,
-      percent: storageUsage.percentUsed || 0,
-    } : { used: 0, limit: 0, percent: 0 },
+    averageRating: Math.round((averageRating || 0) * 10) / 10,
+    storageUsage: storageUsage
+      ? {
+          used: storageUsage.usedBytes || 0,
+          limit: storageUsage.limitBytes || 0,
+          percent: storageUsage.percentUsed || 0,
+        }
+      : { used: 0, limit: 0, percent: 0 },
     mediaUsage: storageUsage?.fileCount || 0,
     pages,
+    latestOrders,
+    lowStockItems: lowStockList,
+    topProducts,
+    topCustomers,
+    topCategories: byCategory,
+    paymentMethods: byPayment,
+    shippingMethods: byZone,
   };
 }
 
@@ -156,13 +434,14 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
 export async function getRevenueReport(storeId: string, range: DateRange) {
   await connectDatabase();
   const dateMatch = buildDateMatch("createdAt", range);
+  const oid = toOid(storeId);
 
   const daily = await OrderModel.aggregate([
-    { $match: { storeId, ...dateMatch, paymentStatus: "paid" } },
+    { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
     {
       $group: {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-        revenue: { $sum: "$total" },
+        revenue: { $sum: { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] } },
         orders: { $sum: 1 },
       },
     },
@@ -170,7 +449,7 @@ export async function getRevenueReport(storeId: string, range: DateRange) {
   ]);
 
   const byCategory = await OrderModel.aggregate([
-    { $match: { storeId, ...dateMatch, paymentStatus: "paid" } },
+    { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
     { $unwind: "$items" },
     {
       $lookup: {
@@ -192,7 +471,7 @@ export async function getRevenueReport(storeId: string, range: DateRange) {
     { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
     {
       $group: {
-        _id: "$category.name",
+        _id: { $ifNull: ["$category.name", "Uncategorized"] },
         revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } },
         orders: { $sum: 1 },
       },
@@ -209,20 +488,21 @@ export async function getRevenueReport(storeId: string, range: DateRange) {
 export async function getOrderReport(storeId: string, range: DateRange) {
   await connectDatabase();
   const dateMatch = buildDateMatch("createdAt", range);
+  const oid = toOid(storeId);
 
   const byStatus = await OrderModel.aggregate([
-    { $match: { storeId, ...dateMatch } },
+    { $match: { storeId: oid, ...dateMatch } },
     { $group: { _id: "$status", count: { $sum: 1 }, total: { $sum: "$total" } } },
     { $sort: { count: -1 } },
   ]);
 
   const byPaymentMethod = await OrderModel.aggregate([
-    { $match: { storeId, ...dateMatch } },
+    { $match: { storeId: oid, ...dateMatch } },
     { $group: { _id: "$paymentMethod", count: { $sum: 1 }, total: { $sum: "$total" } } },
     { $sort: { count: -1 } },
   ]);
 
-  const recent = await OrderModel.find({ storeId, ...dateMatch })
+  const recent = await OrderModel.find({ storeId: oid, ...dateMatch })
     .populate("customerId", "name email")
     .sort({ createdAt: -1 })
     .limit(50)
@@ -236,16 +516,17 @@ export async function getOrderReport(storeId: string, range: DateRange) {
 export async function getCustomerReport(storeId: string, range: DateRange) {
   await connectDatabase();
   const dateMatch = buildDateMatch("createdAt", range);
+  const oid = toOid(storeId);
 
-  const total = await CustomerModel.countDocuments({ storeId });
-  const newCustomers = await CustomerModel.countDocuments({ storeId, ...dateMatch });
+  const total = await CustomerModel.countDocuments({ storeId: oid });
+  const newCustomers = await CustomerModel.countDocuments({ storeId: oid, ...dateMatch });
 
   const topCustomers = await OrderModel.aggregate([
-    { $match: { storeId, ...dateMatch } },
+    { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
     {
       $group: {
         _id: "$customerId",
-        totalSpent: { $sum: "$total" },
+        totalSpent: { $sum: { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] } },
         orderCount: { $sum: 1 },
       },
     },
@@ -278,13 +559,14 @@ export async function getCustomerReport(storeId: string, range: DateRange) {
 export async function getProductReport(storeId: string, range: DateRange) {
   await connectDatabase();
   const dateMatch = buildDateMatch("createdAt", range);
+  const oid = toOid(storeId);
 
-  const total = await ProductModel.countDocuments({ storeId });
-  const lowStock = await ProductModel.countDocuments({ storeId, stock: { $lte: 5, $gt: 0 } });
-  const outOfStock = await ProductModel.countDocuments({ storeId, stock: 0 });
+  const total = await ProductModel.countDocuments({ storeId: oid });
+  const lowStock = await ProductModel.countDocuments({ storeId: oid, stock: { $lte: 5, $gt: 0 } });
+  const outOfStock = await ProductModel.countDocuments({ storeId: oid, stock: 0 });
 
   const topProducts = await OrderModel.aggregate([
-    { $match: { storeId, ...dateMatch } },
+    { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
     { $unwind: "$items" },
     {
       $group: {
@@ -306,7 +588,7 @@ export async function getProductReport(storeId: string, range: DateRange) {
     { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
     {
       $project: {
-        name: "$product.name",
+        name: { $ifNull: ["$product.name", "Unknown"] },
         totalSold: 1,
         revenue: 1,
         stock: "$product.stock",
@@ -322,9 +604,10 @@ export async function getProductReport(storeId: string, range: DateRange) {
 export async function getCategoryReport(storeId: string, range: DateRange) {
   await connectDatabase();
   const dateMatch = buildDateMatch("createdAt", range);
+  const oid = toOid(storeId);
 
   const byCategory = await OrderModel.aggregate([
-    { $match: { storeId, ...dateMatch } },
+    { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
     { $unwind: "$items" },
     {
       $lookup: {
@@ -371,12 +654,13 @@ export async function getCategoryReport(storeId: string, range: DateRange) {
 export async function getCouponReport(storeId: string, range: DateRange) {
   await connectDatabase();
   const dateMatch = buildDateMatch("createdAt", range);
+  const oid = toOid(storeId);
 
-  const coupons = await CouponModel.find({ storeId }).lean();
+  const coupons = await CouponModel.find({ storeId: oid }).lean();
   const totalCoupons = coupons.length;
 
   const usedCoupons = await OrderModel.aggregate([
-    { $match: { storeId, ...dateMatch, couponCode: { $exists: true, $ne: "" } } },
+    { $match: { storeId: oid, ...dateMatch, couponCode: { $exists: true, $ne: "" } } },
     {
       $group: {
         _id: "$couponCode",
@@ -395,10 +679,11 @@ export async function getCouponReport(storeId: string, range: DateRange) {
 
 export async function getMediaReport(storeId: string) {
   await connectDatabase();
+  const oid = toOid(storeId);
 
-  const storage = await StorageUsageModel.findOne({ storeId }).lean() as Record<string, unknown> | null;
+  const storage = await StorageUsageModel.findOne({ storeId: oid }).lean() as Record<string, unknown> | null;
   const filesByType = await MediaFileModel.aggregate([
-    { $match: { storeId, isDeleted: { $ne: true } } },
+    { $match: { storeId: oid, isDeleted: { $ne: true } } },
     { $group: { _id: "$fileType", count: { $sum: 1 }, totalSize: { $sum: "$size" } } },
     { $sort: { totalSize: -1 } },
   ]);
@@ -419,12 +704,13 @@ export async function getMediaReport(storeId: string) {
 export async function getActivityReport(storeId: string, range: DateRange) {
   await connectDatabase();
   const dateMatch = buildDateMatch("createdAt", range);
+  const oid = toOid(storeId);
 
   const [products, orders, customers, pages] = await Promise.all([
-    ProductModel.countDocuments({ storeId, ...dateMatch }),
-    OrderModel.countDocuments({ storeId, ...dateMatch }),
-    CustomerModel.countDocuments({ storeId, ...dateMatch }),
-    StorePageModel.countDocuments({ storeId, ...dateMatch, deletedAt: null }),
+    ProductModel.countDocuments({ storeId: oid, ...dateMatch }),
+    OrderModel.countDocuments({ storeId: oid, ...dateMatch }),
+    CustomerModel.countDocuments({ storeId: oid, ...dateMatch }),
+    StorePageModel.countDocuments({ storeId: oid, ...dateMatch, deletedAt: null }),
   ]);
 
   return { products, orders, customers, pages };
@@ -434,6 +720,7 @@ export async function getActivityReport(storeId: string, range: DateRange) {
 
 export async function getSummaryReport(storeId: string, period: "daily" | "weekly" | "monthly" | "yearly") {
   await connectDatabase();
+  const oid = toOid(storeId);
 
   let groupId: Record<string, unknown>;
   let sortKey: Record<string, 1 | -1>;
@@ -445,11 +732,11 @@ export async function getSummaryReport(storeId: string, period: "daily" | "weekl
       break;
     case "weekly":
       groupId = { $isoWeek: "$createdAt", year: { $year: "$createdAt" } };
-      sortKey = { "year": 1, "_id": 1 };
+      sortKey = { year: 1, _id: 1 };
       break;
     case "monthly":
       groupId = { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } };
-      sortKey = { "year": 1, "month": 1 };
+      sortKey = { year: 1, month: 1 };
       break;
     case "yearly":
       groupId = { $year: "$createdAt" };
@@ -458,13 +745,17 @@ export async function getSummaryReport(storeId: string, period: "daily" | "weekl
   }
 
   const data = await OrderModel.aggregate([
-    { $match: { storeId } },
+    { $match: { storeId: oid, ...REVENUE_STATUS_MATCH } },
     {
       $group: {
         _id: groupId,
-        revenue: { $sum: "$total" },
+        revenue: {
+          $sum: { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] },
+        },
         orders: { $sum: 1 },
-        avgOrderValue: { $avg: "$total" },
+        avgOrderValue: {
+          $avg: { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] },
+        },
       },
     },
     { $sort: sortKey },
@@ -480,26 +771,32 @@ export async function getAdminCrossStoreReport() {
   await connectDatabase();
 
   const stores = await StoreModel.find({ status: { $ne: "archived" } }).lean();
-  const storeIds = stores.map((s) => String(s._id));
+  const storeIds = stores.map((s) => s._id);
 
   const [orderStats, storeRevenue] = await Promise.all([
     OrderModel.aggregate([
-      { $match: { storeId: { $in: storeIds } } },
+      { $match: { storeId: { $in: storeIds }, ...REVENUE_STATUS_MATCH } },
       {
         $group: {
           _id: null,
-          totalRevenue: { $sum: "$total" },
+          totalRevenue: {
+            $sum: { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] },
+          },
           totalOrders: { $sum: 1 },
-          avgOrderValue: { $avg: "$total" },
+          avgOrderValue: {
+            $avg: { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] },
+          },
         },
       },
     ]),
     OrderModel.aggregate([
-      { $match: { storeId: { $in: storeIds }, paymentStatus: "paid" } },
+      { $match: { storeId: { $in: storeIds }, ...REVENUE_STATUS_MATCH } },
       {
         $group: {
           _id: "$storeId",
-          revenue: { $sum: "$total" },
+          revenue: {
+            $sum: { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] },
+          },
           orders: { $sum: 1 },
         },
       },

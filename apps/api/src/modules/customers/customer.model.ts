@@ -13,6 +13,8 @@ const customerSchema = new Schema(
     status: { type: String, enum: ["active", "suspended", "inactive"], default: "active" },
     lastLoginAt: { type: Date },
     totalOrders: { type: Number, default: 0 },
+    completedOrders: { type: Number, default: 0 },
+    cancelledOrders: { type: Number, default: 0 },
     totalSpent: { type: Number, default: 0 },
     lastOrderDate: { type: Date },
     averageOrderValue: { type: Number, default: 0 },
@@ -24,6 +26,8 @@ const customerSchema = new Schema(
 );
 
 customerSchema.index({ storeId: 1, email: 1 }, { unique: true });
+customerSchema.index({ storeId: 1, createdAt: -1 });
+customerSchema.index({ storeId: 1, totalSpent: -1 });
 
 export type CustomerDocument = InferSchemaType<typeof customerSchema>;
 export const CustomerModel = models.Customer ?? model("Customer", customerSchema);

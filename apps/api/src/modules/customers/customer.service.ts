@@ -103,26 +103,85 @@ export async function getCustomerById(customerId: string) {
 
 export async function syncCustomerOrderStats(storeId: string, customerId: string) {
   const { OrderModel } = await import("../../models/order.model.js");
+  const mongoose = await import("mongoose");
+
+  if (!mongoose.Types.ObjectId.isValid(storeId) || !mongoose.Types.ObjectId.isValid(customerId)) {
+    return;
+  }
+
+  const storeOid = new mongoose.Types.ObjectId(storeId);
+  const customerOid = new mongoose.Types.ObjectId(customerId);
+
   const stats = await OrderModel.aggregate([
-    { $match: { storeId: storeId as any, customerId: customerId as any } },
+    { $match: { storeId: storeOid, customerId: customerOid } },
     {
       $group: {
         _id: null,
         totalOrders: { $sum: 1 },
-        totalSpent: { $sum: "$total" },
+        completedOrders: {
+          $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] },
+        },
+        cancelledOrders: {
+          $sum: {
+            $cond: [
+              { $in: ["$status", ["cancelled", "refunded", "partial_refund"]] },
+              1,
+              0,
+            ],
+          },
+        },
+        // Spend excludes cancelled/refunded orders
+        totalSpent: {
+          $sum: {
+            $cond: [
+              { $in: ["$status", ["cancelled", "refunded"]] },
+              0,
+              { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] },
+            ],
+          },
+        },
+        revenueOrders: {
+          $sum: {
+            $cond: [{ $in: ["$status", ["cancelled", "refunded"]] }, 0, 1],
+          },
+        },
         lastOrderDate: { $max: "$createdAt" },
       },
     },
   ]);
-  const s = stats[0] || { totalOrders: 0, totalSpent: 0, lastOrderDate: undefined };
+
+  const s = stats[0] || {
+    totalOrders: 0,
+    completedOrders: 0,
+    cancelledOrders: 0,
+    totalSpent: 0,
+    revenueOrders: 0,
+    lastOrderDate: undefined,
+  };
+
   await CustomerModel.findByIdAndUpdate(customerId, {
     $set: {
       totalOrders: s.totalOrders,
-      totalSpent: s.totalSpent,
+      completedOrders: s.completedOrders,
+      cancelledOrders: s.cancelledOrders,
+      totalSpent: Math.round((s.totalSpent || 0) * 100) / 100,
       lastOrderDate: s.lastOrderDate || null,
-      averageOrderValue: s.totalOrders > 0 ? Math.round((s.totalSpent / s.totalOrders) * 100) / 100 : 0,
+      averageOrderValue:
+        s.revenueOrders > 0
+          ? Math.round(((s.totalSpent || 0) / s.revenueOrders) * 100) / 100
+          : 0,
     },
   });
+}
+
+/** Recompute stats for every customer in a store (used after backfill / admin fix). */
+export async function resyncAllCustomerStats(storeId: string) {
+  await connectDatabase();
+  const customers = await CustomerModel.find({ storeId }).select("_id").lean();
+  for (const c of customers) {
+    await syncCustomerOrderStats(storeId, String(c._id));
+  }
+  return { ok: true as const, data: { synced: customers.length } };
 }
 
 export async function listStoreCustomers(storeId: string, options?: { search?: string; page?: number; limit?: number; status?: string }) {
@@ -153,10 +212,24 @@ export async function listStoreCustomers(storeId: string, options?: { search?: s
     CustomerModel.countDocuments(filter),
   ]);
 
+  // Live-correct stats for the page of customers (avoids stale denormalized zeros)
+  await Promise.all(
+    customers.map((c) => syncCustomerOrderStats(storeId, String(c._id))),
+  );
+
+  const refreshed = await CustomerModel.find({
+    _id: { $in: customers.map((c) => c._id) },
+  })
+    .select("-passwordHash")
+    .lean();
+
+  const byId = new Map(refreshed.map((c) => [String(c._id), c]));
+  const ordered = customers.map((c) => byId.get(String(c._id)) ?? c);
+
   return {
     ok: true as const,
     data: {
-      customers,
+      customers: ordered,
       total,
       page,
       limit: limitNum,
@@ -169,14 +242,25 @@ export async function getStoreCustomerDetail(storeId: string, customerId: string
   await connectDatabase();
   const { OrderModel } = await import("../../models/order.model.js");
   const { AddressModel } = await import("./address.model.js");
+  const mongoose = await import("mongoose");
+
+  // Always refresh denormalized stats from live orders
+  await syncCustomerOrderStats(storeId, customerId);
 
   const customer = await CustomerModel.findOne({ _id: customerId, storeId })
     .select("-passwordHash")
     .lean() as any;
   if (!customer) return { ok: false as const, message: "Customer not found" };
 
+  const storeOid = mongoose.Types.ObjectId.isValid(storeId)
+    ? new mongoose.Types.ObjectId(storeId)
+    : storeId;
+  const customerOid = mongoose.Types.ObjectId.isValid(customerId)
+    ? new mongoose.Types.ObjectId(customerId)
+    : customerId;
+
   const [orders, addresses] = await Promise.all([
-    OrderModel.find({ storeId, customerId }).sort({ createdAt: -1 }).lean(),
+    OrderModel.find({ storeId: storeOid, customerId: customerOid }).sort({ createdAt: -1 }).lean(),
     AddressModel.find({ storeId, customerId }).lean(),
   ]);
 

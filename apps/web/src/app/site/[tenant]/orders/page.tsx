@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Package, ArrowRight, Clock, DollarSign } from "lucide-react";
+import { Package, ArrowRight, Clock, DollarSign, Download, FileText } from "lucide-react";
 import { useGetOrdersQuery } from "@/redux/api/order-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
 import { useRequireCustomerAuth } from "@/hooks/use-require-customer-auth";
 import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
+import { downloadCustomerOrderInvoice, viewCustomerOrderInvoice } from "@/lib/order-invoice";
+import { toast } from "sonner";
 
 const statusStyles: Record<string, string> = {
   pending: "bg-amber-50 text-amber-600",
@@ -83,7 +85,38 @@ function OrdersList() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              {order.status !== "cancelled" ? (
+                <>
+                  <button
+                    type="button"
+                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 text-[11px] font-medium text-apple-ink"
+                    onClick={async () => {
+                      try {
+                        await viewCustomerOrderInvoice(order._id);
+                      } catch {
+                        toast.error("Could not open invoice");
+                      }
+                    }}
+                  >
+                    <FileText className="h-3 w-3" /> View
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 text-[11px] font-medium text-apple-ink"
+                    onClick={async () => {
+                      try {
+                        await downloadCustomerOrderInvoice(order._id, order.orderNumber);
+                        toast.success("Invoice downloaded");
+                      } catch {
+                        toast.error("Could not download invoice");
+                      }
+                    }}
+                  >
+                    <Download className="h-3 w-3" /> PDF
+                  </button>
+                </>
+              ) : null}
               <span className={`rounded-full px-3 py-0.5 text-[11px] font-medium capitalize ${statusStyles[order.status] ?? "bg-apple-canvas-parchment text-apple-ink-muted-80"}`}>
                 {order.status}
               </span>

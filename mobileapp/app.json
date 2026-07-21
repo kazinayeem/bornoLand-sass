@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Bornoland",
+    "slug": "bornoland-mobile",
+    "scheme": "bornoland",
+    "version": "1.0.0",
+    "description": "Manage Bornoland stores, products, orders and growth from anywhere.",
+    "orientation": "portrait",
+    "icon": "./assets/logo.png",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Bornoland to select store images and videos.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      "expo-document-picker",
+      "expo-sharing"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bornoland.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/logo.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": true,
+      "package": "com.bornoland.mobile"
+    },
+    "web": {
+      "favicon": "./assets/logo.png"
+    }
+  }
+}

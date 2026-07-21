@@ -68,9 +68,17 @@ export async function clearPageController(request: AuthRequest, response: Respon
 }
 
 export async function getOrCreateHomePageController(request: AuthRequest, response: Response) {
-  const storeId = request.params.storeId as string;
-  const result = await getOrCreateHomePage(storeId);
-  return sendSuccess(response, result.data);
+  try {
+    const storeId = request.params.storeId as string;
+    if (!storeId || !/^[a-f\d]{24}$/i.test(storeId)) {
+      return sendFailure(response, "Invalid store ID", 400);
+    }
+    const result = await getOrCreateHomePage(storeId);
+    return sendSuccess(response, result.data);
+  } catch (error) {
+    console.error("[builder] getOrCreateHomePageController failed:", error instanceof Error ? error.message : error);
+    return sendFailure(response, "Failed to load builder page", 500);
+  }
 }
 
 export async function updatePageController(request: AuthRequest, response: Response) {

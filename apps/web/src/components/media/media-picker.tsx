@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import {
   ImagePlus, Library, RefreshCw, Upload, Loader2, X, Search,
   Image, Video, FileText, Clock, Star, ChevronLeft, ChevronRight,
-  Trash2, Link, ExternalLink, Copy,
+  Trash2, Link, ExternalLink, Copy, Folder,
 } from "lucide-react";
 import type { MediaFile } from "@/redux/api/media-api";
 import {
@@ -23,14 +23,27 @@ import {
   type MediaSelection,
 } from "@/lib/media-selection";
 import { uploadMediaWithProgress, type UploadProgress } from "@/lib/media-upload";
+import {
+  BUILDER_UPLOAD_FOLDER,
+  MEDIA_LIBRARY_FOLDERS,
+  normalizeMediaFolder,
+} from "@/lib/media-folders";
 import { toast } from "sonner";
 import { SmartImage } from "@/components/ui/smart-image";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 24;
+const FAVORITES_KEY = (storeId: string) => `bornoland.media.favorites.${storeId}`;
 
-type SidebarFilter = "all" | "images" | "videos" | "documents" | "recent" | "favorites";
+type SidebarFilter =
+  | "all"
+  | "images"
+  | "videos"
+  | "documents"
+  | "recent"
+  | "favorites"
+  | `folder:${string}`;
 
 const SIDEBAR_ITEMS: { id: SidebarFilter; label: string; icon: typeof Image }[] = [
   { id: "all", label: "All", icon: Image },
@@ -40,6 +53,22 @@ const SIDEBAR_ITEMS: { id: SidebarFilter; label: string; icon: typeof Image }[] 
   { id: "recent", label: "Recent", icon: Clock },
   { id: "favorites", label: "Favorites", icon: Star },
 ];
+
+function readFavorites(storeId: string): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY(storeId));
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw) as string[];
+    return new Set(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function writeFavorites(storeId: string, ids: Set<string>) {
+  localStorage.setItem(FAVORITES_KEY(storeId), JSON.stringify([...ids]));
+}
 
 function fileNameFromUrl(url: string): string {
   try {
@@ -72,7 +101,10 @@ export function MediaPicker({
   billingHref,
   value,
   onChange,
-  folder = "products",
+  /** Upload destination folder in the shared Store Media library (not a list filter). */
+  folder = BUILDER_UPLOAD_FOLDER,
+  /** Optional list filter by folder. Omit to show the entire store library. */
+  listFolder,
   label = "Image",
   compact = false,
   hideLabel = false,
@@ -83,6 +115,7 @@ export function MediaPicker({
   value?: string | MediaSelection | null;
   onChange: (selection: MediaSelection) => void;
   folder?: string;
+  listFolder?: string;
   label?: string;
   compact?: boolean;
   hideLabel?: boolean;
@@ -104,13 +137,19 @@ export function MediaPicker({
   const [uploads, setUploads] = useState<UploadProgress[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [pasteUrl, setPasteUrl] = useState("");
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(() => readFavorites(storeId));
 
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const uploadFolder = normalizeMediaFolder(folder);
 
   const [importMediaFromUrl, { isLoading: isImporting }] = useImportMediaFromUrlMutation();
   const [deleteFile] = useDeleteMediaFileMutation();
+
+  useEffect(() => {
+    setFavoriteIds(readFavorites(storeId));
+  }, [storeId]);
 
   // ─── Current selection info (for the wrapper preview) ──────
   const previewUrl = selectionUrl(value);
@@ -130,35 +169,63 @@ export function MediaPicker({
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, sidebarFilter]);
+  }, [debouncedSearch, sidebarFilter, listFolder]);
+
+  const activeListFolder = useMemo(() => {
+    if (sidebarFilter.startsWith("folder:")) return sidebarFilter.slice("folder:".length);
+    return listFolder || undefined;
+  }, [sidebarFilter, listFolder]);
 
   // ─── Build query params from filter ────────────────────────
   const filterQuery = useMemo(() => {
     switch (sidebarFilter) {
-      case "images": return { fileType: "image" };
-      case "videos": return { fileType: "video" };
-      case "documents": return { fileType: "document" };
-      case "recent": return { sort: "newest" };
+      case "images": return { fileType: "image" as const };
+      case "videos": return { fileType: "video" as const };
+      case "documents": return { fileType: "document" as const };
+      case "recent": return { sort: "newest" as const };
       default: return {};
     }
   }, [sidebarFilter]);
 
-  // ─── Fetch files ─────────────────────────────────────────
+  const skipListQuery = sidebarFilter === "favorites";
+
+  // ─── Fetch files from the shared Store Media library ───────
   const { data, isLoading, isFetching, refetch } = useGetMediaFilesQuery({
     storeId,
     search: debouncedSearch || undefined,
     sort: sidebarFilter === "recent" ? "newest" : undefined,
     page,
     limit: PAGE_SIZE,
-    folder,
+    // Never filter by the Builder upload alias — show the whole store library
+    folder: activeListFolder,
     ...filterQuery,
-  });
+  }, { skip: skipListQuery || !open });
 
-  const files = data?.data?.files ?? [];
-  const totalCount = data?.data?.total ?? 0;
+  const remoteFiles = data?.data?.files ?? [];
+  const favoriteFilesQuery = useGetMediaFilesQuery(
+    {
+      storeId,
+      page: 1,
+      limit: 200,
+      sort: "newest",
+      search: debouncedSearch || undefined,
+    },
+    { skip: !open || sidebarFilter !== "favorites" },
+  );
+
+  const files = useMemo(() => {
+    if (sidebarFilter !== "favorites") return remoteFiles;
+    const all = favoriteFilesQuery.data?.data?.files ?? [];
+    return all.filter((f) => favoriteIds.has(f._id));
+  }, [sidebarFilter, remoteFiles, favoriteFilesQuery.data, favoriteIds]);
+
+  const totalCount = sidebarFilter === "favorites"
+    ? files.length
+    : (data?.data?.total ?? 0);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const hasNextPage = page < totalPages;
+  const hasNextPage = sidebarFilter !== "favorites" && page < totalPages;
   const hasPrevPage = page > 1;
+  const listLoading = sidebarFilter === "favorites" ? favoriteFilesQuery.isLoading : isLoading;
 
   // ─── Scroll lock + Escape key ────────────────────────────
   useEffect(() => {
@@ -204,19 +271,22 @@ export function MediaPicker({
     const arr = Array.from(fileList);
     if (arr.length === 0) return;
     try {
-      const result = await uploadMediaWithProgress(storeId, arr, { folder, onProgress: setUploads });
+      const result = await uploadMediaWithProgress(storeId, arr, {
+        folder: uploadFolder,
+        onProgress: setUploads,
+      });
       const uploaded = (result.files ?? []) as MediaFile[];
       if (uploaded[0]) {
         await refetch();
         setPreviewFile(uploaded[0]);
         setShowUploadDrop(false);
-        toast.success("Image uploaded");
+        toast.success("Uploaded to Store Media");
       }
       setTimeout(() => setUploads([]), 1500);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed");
     }
-  }, [storeId, folder, refetch]);
+  }, [storeId, uploadFolder, refetch]);
 
   const handleImportUrlAction = useCallback(async () => {
     const url = importUrl.trim();
@@ -232,18 +302,28 @@ export function MediaPicker({
       return;
     }
     try {
-      const result = await importMediaFromUrl({ storeId, url, folder }).unwrap();
+      const result = await importMediaFromUrl({ storeId, url, folder: uploadFolder }).unwrap();
       if (result.data?.file) {
         await refetch();
         setPreviewFile(result.data.file as MediaFile);
         setImportUrl("");
         setShowUploadDrop(false);
-        toast.success("Image imported from URL");
+        toast.success("Imported into Store Media");
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Import failed");
     }
-  }, [importUrl, importMediaFromUrl, storeId, folder, refetch]);
+  }, [importUrl, importMediaFromUrl, storeId, uploadFolder, refetch]);
+
+  const toggleFavorite = useCallback((fileId: string) => {
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(fileId)) next.delete(fileId);
+      else next.add(fileId);
+      writeFavorites(storeId, next);
+      return next;
+    });
+  }, [storeId]);
 
   const handleDelete = useCallback(async (file: MediaFile) => {
     if (!confirm(`Delete "${file.displayName || file.originalName}"?`)) return;

@@ -81,22 +81,24 @@ function createProgressItem(file: File): UploadProgress {
 }
 
 function appendFileToCache(storeId: string, file: MediaFile) {
-  // Optimistically append the uploaded file to the first page of the media list cache
-  const selectFromArgs = (args: unknown) => {
-    const a = args as { storeId?: string; page?: number; limit?: number };
-    return a.storeId === storeId && (a.page ?? 1) === 1;
-  };
+  // Optimistically append to the unfiltered first page (Store Media + Builder picker share this)
   store.dispatch(
     mediaApi.util.updateQueryData("getMediaFiles", { storeId, page: 1, limit: 24 }, (draft) => {
       if (draft?.data?.files) {
-        draft.data.files.unshift(file);
-        draft.data.total = (draft.data.total ?? 0) + 1;
+        const exists = draft.data.files.some((f) => f._id === file._id);
+        if (!exists) {
+          draft.data.files.unshift(file);
+          draft.data.total = (draft.data.total ?? 0) + 1;
+        }
       }
     })
   );
-  // Invalidate stats tag so storage bar updates
+  // Invalidate every list/stats query for this store so Builder + Store Media stay in sync
   store.dispatch(
-    mediaApi.util.invalidateTags([{ type: "Media", id: `stats-${storeId}` }])
+    mediaApi.util.invalidateTags([
+      { type: "Media", id: storeId },
+      { type: "Media", id: `stats-${storeId}` },
+    ])
   );
 }
 

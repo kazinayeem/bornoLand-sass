@@ -97,7 +97,7 @@ function SectionContextMenu({
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[100] w-52 rounded-xl border border-apple-hairline bg-white py-1.5 shadow-2xl shadow-black/10"
+      className="fixed z-[10000] w-52 rounded-xl border border-apple-hairline bg-white py-1.5 shadow-2xl shadow-black/10"
       style={{ left: Math.min(x, window.innerWidth - 220), top: Math.min(y, window.innerHeight - 320) }}
     >
       {items.map((item, index) => {
@@ -140,7 +140,6 @@ export function LayersPanel({ title: _title = "Sections" }: { title?: "Layers" |
   const headerSections = useSelector((s: RootState) => s.builder.headerSections);
   const footerSections = useSelector((s: RootState) => s.builder.footerSections);
   const selectedSectionId = useSelector((s: RootState) => s.builder.selectedSectionId);
-  const clipboardSection = useSelector((s: RootState) => s.builder.clipboardSection);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
@@ -347,7 +346,7 @@ export function LayersPanel({ title: _title = "Sections" }: { title?: "Layers" |
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-visible overscroll-contain px-2 py-2">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 py-2">
         {filteredList.length === 0 ? (
           <div className="flex flex-col items-center px-3 py-10 text-center">
             <Layers className="mb-2 h-5 w-5 text-apple-ink-muted-48" />
@@ -379,7 +378,7 @@ export function LayersPanel({ title: _title = "Sections" }: { title?: "Layers" |
               return (
                 <div
                   key={section.id}
-                  className="relative"
+                  className="relative z-0 overflow-visible"
                   onContextMenu={(e) => {
                     e.preventDefault();
                     selectSection(item);
@@ -407,32 +406,36 @@ export function LayersPanel({ title: _title = "Sections" }: { title?: "Layers" |
                       if (!isRenaming) selectSection(item);
                     }}
                     className={cn(
-                      "group flex h-10 cursor-pointer items-center gap-1.5 rounded-lg border px-1.5 transition-colors duration-150",
+                      "group relative flex h-11 min-h-[44px] cursor-pointer items-center gap-1 overflow-visible rounded-lg border pl-0.5 pr-0 transition-colors duration-150",
                       selected
                         ? "border-apple-primary/40 bg-apple-primary/5"
                         : "border-transparent hover:bg-apple-canvas-parchment",
                       isDragging && dragItem.current?.id === section.id && "opacity-50",
-                      !section.visible && "opacity-50",
+                      !section.visible && "opacity-60",
                     )}
                   >
+                    {/* Drag */}
                     <div
-                      className="flex h-7 w-5 shrink-0 cursor-grab items-center justify-center text-apple-ink-muted-48 active:cursor-grabbing"
+                      className="flex h-10 w-8 shrink-0 cursor-grab items-center justify-center text-apple-ink-muted-48 active:cursor-grabbing"
                       onClick={(e) => e.stopPropagation()}
                       title="Drag to reorder"
+                      aria-hidden
                     >
-                      <GripVertical className="h-3.5 w-3.5" />
+                      <GripVertical className="h-4 w-4" />
                     </div>
 
+                    {/* Icon */}
                     <div
                       className={cn(
-                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-md",
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
                         selected ? "bg-apple-primary text-apple-on-primary" : "bg-apple-canvas-parchment text-apple-ink-muted-48",
                       )}
                     >
                       <Icon className="h-3.5 w-3.5" />
                     </div>
 
-                    <div className="min-w-0 flex-1">
+                    {/* Name — truncates; never steals space from actions */}
+                    <div className="min-w-0 flex-1 py-1 pr-1">
                       {isRenaming ? (
                         <input
                           ref={renameInputRef}
@@ -447,41 +450,44 @@ export function LayersPanel({ title: _title = "Sections" }: { title?: "Layers" |
                               setRenamingId(null);
                             }
                           }}
-                          className="h-7 w-full truncate rounded bg-white px-1.5 text-[13px] font-semibold text-apple-ink outline-none ring-2 ring-apple-primary/30"
+                          className="h-8 w-full truncate rounded bg-white px-1.5 text-[13px] font-semibold text-apple-ink outline-none ring-2 ring-apple-primary/30"
                           aria-label="Section name"
                         />
                       ) : (
-                        <p className="truncate text-[13px] font-semibold leading-none text-apple-ink">
+                        <p className="truncate text-[13px] font-semibold leading-tight text-apple-ink">
                           {displayLabel}
                         </p>
                       )}
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-0.5">
+                    {/* Visibility + More — always visible, far right, never shrink */}
+                    <div className="relative z-30 ml-auto flex shrink-0 items-center">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           dispatch(toggleSection(section.id));
                         }}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-apple-ink-muted-48 hover:bg-apple-canvas hover:text-apple-ink"
+                        className="relative z-30 flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-apple-ink-muted-48 hover:bg-apple-canvas hover:text-apple-ink"
                         title={section.visible ? "Hide" : "Show"}
                         aria-label={section.visible ? "Hide section" : "Show section"}
                       >
-                        {section.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5 text-red-400" />}
+                        {section.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-red-400" />}
                       </button>
 
                       <DropdownMenu
                         placement="bottom-end"
                         minWidth={180}
+                        triggerClassName="relative z-30"
                         trigger={
                           <button
                             type="button"
-                            className="flex h-7 w-7 items-center justify-center rounded-md text-apple-ink-muted-48 hover:bg-apple-canvas hover:text-apple-ink"
+                            className="relative z-30 flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-apple-ink-muted-48 hover:bg-apple-canvas hover:text-apple-ink"
                             aria-label="More actions"
                             onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
                           >
-                            <MoreHorizontal className="h-3.5 w-3.5" />
+                            <MoreHorizontal className="h-4 w-4" />
                           </button>
                         }
                         items={menuItems}

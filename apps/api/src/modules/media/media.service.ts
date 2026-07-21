@@ -403,8 +403,10 @@ export async function listMediaFiles(
       { originalName: { $regex: term, $options: "i" } },
       { displayName: { $regex: term, $options: "i" } },
       { tags: { $regex: term, $options: "i" } },
+      { folder: { $regex: term, $options: "i" } },
       { extension: { $regex: term, $options: "i" } },
       { mimeType: { $regex: term, $options: "i" } },
+      { fileType: { $regex: term, $options: "i" } },
     ];
   }
 

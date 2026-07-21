@@ -20,13 +20,8 @@ export function FinalCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-zinc-950 via-zinc-900 to-blue-950 px-6 py-14 shadow-2xl sm:px-12 sm:py-16"
+          className="relative overflow-hidden rounded-lg bg-zinc-950 px-6 py-14 sm:px-12 sm:py-16"
         >
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -right-20 -top-20 h-[400px] w-[400px] rounded-full bg-blue-500/10 blur-3xl" />
-            <div className="absolute -left-20 -bottom-20 h-[300px] w-[300px] rounded-full bg-indigo-500/10 blur-3xl" />
-          </div>
-
           <div className="relative text-center">
             <h2 className="font-[family-name:var(--font-space-grotesk)] text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
               Start Your Online Business Today
@@ -38,14 +33,14 @@ export function FinalCTA() {
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-apple-ink shadow-lg transition-all hover:shadow-xl hover:brightness-105"
+                className="group inline-flex items-center gap-2 rounded-xl bg-apple-canvas px-6 py-3 text-sm font-bold text-apple-ink transition-colors hover:brightness-105"
               >
                 Create Free Store
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="#builder"
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-6 py-3 text-sm font-semibold text-zinc-300 transition-all hover:border-zinc-500 hover:text-white"
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-6 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
               >
                 <Play className="h-4 w-4" />
                 Book Demo

@@ -171,7 +171,7 @@ export function ActionStatusBar() {
             )}
             <div className="min-w-0 max-w-[200px]">
               <p className={`text-sm font-medium truncate ${
-                action.status === "pending" ? "text-zinc-700" : action.status === "success" ? "text-emerald-700" : "text-red-700"
+                action.status === "pending" ? "text-apple-ink-muted-80" : action.status === "success" ? "text-emerald-700" : "text-red-700"
               }`}>
                 {action.status === "pending" ? action.label : (action.message || "Done")}
               </p>
@@ -222,8 +222,8 @@ export function ProgressModal({
               ) : (
                 <AlertTriangle className="h-10 w-10 text-red-500" />
               )}
-              <h3 className="mt-4 text-lg font-semibold text-zinc-900">{title}</h3>
-              {label && <p className="mt-1 text-sm text-zinc-500">{label}</p>}
+              <h3 className="mt-4 text-lg font-semibold text-apple-ink">{title}</h3>
+              {label && <p className="mt-1 text-sm text-apple-ink-muted-48">{label}</p>}
               {status === "pending" && progress != null && (
                 <div className="mt-4 w-full">
                   <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
@@ -232,7 +232,7 @@ export function ProgressModal({
                       style={{ width: `${progress}%` }}
                     />
                   </div>
-                  <p className="mt-1 text-xs text-zinc-400">{Math.round(progress)}%</p>
+                  <p className="mt-1 text-xs text-apple-ink-muted-48">{Math.round(progress)}%</p>
                 </div>
               )}
               {status !== "pending" && onClose && (

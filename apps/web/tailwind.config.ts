@@ -5,48 +5,85 @@ const config: Config = {
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
+      fontFamily: {
+        display: ["SF Pro Display", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        body: ["SF Pro Text", "var(--font-inter)", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+      },
       borderRadius: {
-        xl: "0.875rem",
-        "2xl": "1.25rem"
+        none: "0px",
+        xs: "5px",
+        sm: "8px",
+        md: "11px",
+        lg: "18px",
+        pill: "9999px",
+        full: "9999px",
       },
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))"
+        apple: {
+          primary: "#0066cc",
+          "primary-focus": "#0071e3",
+          "primary-on-dark": "#2997ff",
+          ink: "#1d1d1f",
+          body: "#1d1d1f",
+          "body-on-dark": "#ffffff",
+          "body-muted": "#cccccc",
+          "ink-muted-80": "#333333",
+          "ink-muted-48": "#7a7a7a",
+          "divider-soft": "#f0f0f0",
+          hairline: "#e0e0e0",
+          canvas: "#ffffff",
+          "canvas-parchment": "#f5f5f7",
+          "surface-pearl": "#fafafc",
+          "surface-tile-1": "#272729",
+          "surface-tile-2": "#2a2a2c",
+          "surface-tile-3": "#252527",
+          "surface-black": "#000000",
+          "surface-chip": "#d2d2d7",
+          "on-primary": "#ffffff",
+          "on-dark": "#ffffff",
         },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))"
+        border: "var(--color-border)",
+        input: "var(--color-input)",
+        ring: "var(--color-ring)",
+        background: "var(--color-background)",
+        foreground: "var(--color-foreground)",
+        primary: {
+          DEFAULT: "var(--color-primary)",
+          foreground: "var(--color-primary-foreground)",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))"
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))"
+          DEFAULT: "var(--color-muted)",
+          foreground: "var(--color-muted-foreground)",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))"
+          DEFAULT: "var(--color-destructive)",
+          foreground: "var(--color-destructive-foreground)",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))"
+          DEFAULT: "var(--color-card)",
+          foreground: "var(--color-card-foreground)",
         },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))"
-        }
-      }
-    }
+      },
+      spacing: {
+        xxs: "4px",
+        xs: "8px",
+        sm: "12px",
+        md: "17px",
+        lg: "24px",
+        xl: "32px",
+        xxl: "48px",
+        section: "80px",
+      },
+      boxShadow: {
+        product: "3px 5px 30px 0 rgba(0, 0, 0, 0.22)",
+        none: "none",
+      },
+      transitionTimingFunction: {
+        apple: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      },
+    },
   },
-  plugins: []
+  plugins: [],
 };
 
 export default config;

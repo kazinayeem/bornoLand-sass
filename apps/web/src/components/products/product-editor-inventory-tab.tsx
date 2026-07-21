@@ -3,7 +3,7 @@
 import type { ProductEditorForm } from "@/components/products/product-form";
 
 const inputClass =
-  "h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
+  "h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-apple-ink focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
 
 type InventoryTabProps = {
   form: ProductEditorForm;
@@ -13,18 +13,18 @@ type InventoryTabProps = {
 export function ProductEditorInventoryTab({ form, onChange }: InventoryTabProps) {
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-      <h2 className="text-sm font-semibold text-zinc-900">Inventory</h2>
+      <h2 className="text-sm font-semibold text-apple-ink">Inventory</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">SKU</label>
+          <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">SKU</label>
           <input type="text" value={form.sku} onChange={(e) => onChange({ sku: e.target.value })} className={inputClass} />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Barcode</label>
+          <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Barcode</label>
           <input type="text" value={form.barcode} onChange={(e) => onChange({ barcode: e.target.value })} className={inputClass} />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Stock quantity</label>
+          <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Stock quantity</label>
           <input
             type="number"
             min={0}
@@ -34,7 +34,7 @@ export function ProductEditorInventoryTab({ form, onChange }: InventoryTabProps)
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Low stock alert</label>
+          <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Low stock alert</label>
           <input
             type="number"
             min={0}
@@ -44,7 +44,7 @@ export function ProductEditorInventoryTab({ form, onChange }: InventoryTabProps)
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
+          <label className="inline-flex items-center gap-2 text-sm text-apple-ink-muted-80">
             <input
               type="checkbox"
               checked={form.trackInventory}

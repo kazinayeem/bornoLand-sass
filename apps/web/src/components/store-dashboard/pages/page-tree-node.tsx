@@ -22,9 +22,9 @@ type Props = {
 
 const statusConfig: Record<string, { icon: typeof Globe; className: string; label: string }> = {
   published: { icon: Globe, className: "text-emerald-600 bg-emerald-50 border-emerald-200", label: "Published" },
-  draft: { icon: EyeOff, className: "text-zinc-600 bg-zinc-50 border-zinc-200", label: "Draft" },
+  draft: { icon: EyeOff, className: "text-apple-ink-muted-80 bg-apple-canvas-parchment border-zinc-200", label: "Draft" },
   scheduled: { icon: Clock, className: "text-blue-600 bg-blue-50 border-blue-200", label: "Scheduled" },
-  archived: { icon: Archive, className: "text-zinc-400 bg-zinc-50 border-zinc-200", label: "Archived" },
+  archived: { icon: Archive, className: "text-apple-ink-muted-48 bg-apple-canvas-parchment border-zinc-200", label: "Archived" },
 };
 
 export function PageTreeNode({ page, depth, selectedId, onSelect, onDoubleClick, onContextMenu }: Props) {
@@ -38,7 +38,7 @@ export function PageTreeNode({ page, depth, selectedId, onSelect, onDoubleClick,
       <div
         className={cn(
           "group flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm cursor-pointer transition-all",
-          "hover:bg-zinc-100",
+          "hover:bg-apple-canvas-parchment",
           isSelected && "bg-zinc-100 ring-1 ring-zinc-300",
           depth > 0 && "ml-0"
         )}
@@ -53,14 +53,14 @@ export function PageTreeNode({ page, depth, selectedId, onSelect, onDoubleClick,
             onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
             className="flex h-5 w-5 items-center justify-center rounded hover:bg-zinc-200"
           >
-            {expanded ? <ChevronDown className="h-3.5 w-3.5 text-zinc-400" /> : <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />}
+            {expanded ? <ChevronDown className="h-3.5 w-3.5 text-apple-ink-muted-48" /> : <ChevronRight className="h-3.5 w-3.5 text-apple-ink-muted-48" />}
           </button>
         ) : hasChildren ? (
           <button
             onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
             className="flex h-5 w-5 items-center justify-center rounded hover:bg-zinc-200"
           >
-            {expanded ? <ChevronDown className="h-3.5 w-3.5 text-zinc-400" /> : <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />}
+            {expanded ? <ChevronDown className="h-3.5 w-3.5 text-apple-ink-muted-48" /> : <ChevronRight className="h-3.5 w-3.5 text-apple-ink-muted-48" />}
           </button>
         ) : (
           <div className="w-5" />
@@ -70,11 +70,11 @@ export function PageTreeNode({ page, depth, selectedId, onSelect, onDoubleClick,
         {page.isFolder ? (
           expanded ? <FolderOpen className="h-4 w-4 text-amber-500" /> : <Folder className="h-4 w-4 text-amber-500" />
         ) : (
-          <FileText className={cn("h-4 w-4", page.isHomePage ? "text-blue-500" : "text-zinc-400")} />
+          <FileText className={cn("h-4 w-4", page.isHomePage ? "text-blue-500" : "text-apple-ink-muted-48")} />
         )}
 
         {/* Title */}
-        <span className={cn("flex-1 truncate font-medium", isSelected ? "text-zinc-900" : "text-zinc-700")}>
+        <span className={cn("flex-1 truncate font-medium", isSelected ? "text-apple-ink" : "text-apple-ink-muted-80")}>
           {page.title}
           {page.isHomePage && <span className="ml-1.5 text-[10px] font-normal text-blue-500">HOME</span>}
         </span>
@@ -92,14 +92,14 @@ export function PageTreeNode({ page, depth, selectedId, onSelect, onDoubleClick,
         <div className="hidden group-hover:flex items-center gap-0.5 ml-1">
           <button
             onClick={(e) => { e.stopPropagation(); onDoubleClick(page); }}
-            className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
+            className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-zinc-200 text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
             title="Open in Builder"
           >
             <Layers className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onContextMenu(e, page); }}
-            className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
+            className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-zinc-200 text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
             title="More actions"
           >
             <MoreHorizontal className="h-3.5 w-3.5" />

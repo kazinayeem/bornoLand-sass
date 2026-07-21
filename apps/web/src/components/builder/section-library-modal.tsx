@@ -262,12 +262,12 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ duration: 0.15 }}
           onClick={(e) => e.stopPropagation()}
-          className="flex h-[90vh] w-[90vw] max-w-[1600px] overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-2xl"
+          className="flex h-[90vh] w-[90vw] max-w-[1600px] overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas"
         >
           {/* ── Left Sidebar ───────────────────────────────────────────────── */}
-          <div className="flex w-64 shrink-0 flex-col border-r border-zinc-100 bg-zinc-50/80">
+          <div className="flex w-64 shrink-0 flex-col border-r border-zinc-100 bg-apple-canvas-parchment/80">
             <div className="border-b border-zinc-200 p-4">
-              <h3 className="text-sm font-semibold text-zinc-900">Browse</h3>
+              <h3 className="text-sm font-semibold text-apple-ink">Browse</h3>
             </div>
             <div className="flex-1 overflow-y-auto p-2">
               {/* All */}
@@ -276,19 +276,19 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
                 className={cn(
                   "mb-1 w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
                   quickFilter === "all" && activeCategory === "all"
-                    ? "bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-200/60"
-                    : "text-zinc-600 hover:bg-white/60 hover:text-zinc-900",
+                    ? "bg-white text-apple-ink shadow-sm ring-1 ring-zinc-200/60"
+                    : "text-apple-ink-muted-80 hover:bg-white/60 hover:text-apple-ink",
                 )}
               >
                 <div className="flex items-center justify-between">
                   <span>All Sections</span>
-                  <span className="text-xs text-zinc-400">{sectionRegistry.length}</span>
+                  <span className="text-xs text-apple-ink-muted-48">{sectionRegistry.length}</span>
                 </div>
               </button>
 
               {/* Quick Access */}
               <div className="mb-3 mt-4">
-                <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">
                   Quick Access
                 </p>
                 {recentlyUsedList.length > 0 && (
@@ -297,14 +297,14 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
                     className={cn(
                       "mb-1 w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
                       quickFilter === "recently-used"
-                        ? "bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-200/60"
-                        : "text-zinc-600 hover:bg-white/60 hover:text-zinc-900",
+                        ? "bg-white text-apple-ink shadow-sm ring-1 ring-zinc-200/60"
+                        : "text-apple-ink-muted-80 hover:bg-white/60 hover:text-apple-ink",
                     )}
                   >
                     <div className="flex items-center gap-2">
                       <Clock className="h-3.5 w-3.5" />
                       <span>Recently Used</span>
-                      <span className="ml-auto text-xs text-zinc-400">{recentlyUsedList.length}</span>
+                      <span className="ml-auto text-xs text-apple-ink-muted-48">{recentlyUsedList.length}</span>
                     </div>
                   </button>
                 )}
@@ -314,14 +314,14 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
                     className={cn(
                       "mb-1 w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
                       quickFilter === "favorites"
-                        ? "bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-200/60"
-                        : "text-zinc-600 hover:bg-white/60 hover:text-zinc-900",
+                        ? "bg-white text-apple-ink shadow-sm ring-1 ring-zinc-200/60"
+                        : "text-apple-ink-muted-80 hover:bg-white/60 hover:text-apple-ink",
                     )}
                   >
                     <div className="flex items-center gap-2">
                       <Star className="h-3.5 w-3.5" />
                       <span>Favorites</span>
-                      <span className="ml-auto text-xs text-zinc-400">{favoriteSectionsList.length}</span>
+                      <span className="ml-auto text-xs text-apple-ink-muted-48">{favoriteSectionsList.length}</span>
                     </div>
                   </button>
                 )}
@@ -330,21 +330,21 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
                   className={cn(
                     "mb-1 w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
                     quickFilter === "popular"
-                      ? "bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-200/60"
-                      : "text-zinc-600 hover:bg-white/60 hover:text-zinc-900",
+                      ? "bg-white text-apple-ink shadow-sm ring-1 ring-zinc-200/60"
+                      : "text-apple-ink-muted-80 hover:bg-white/60 hover:text-apple-ink",
                   )}
                 >
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-3.5 w-3.5" />
                     <span>Popular</span>
-                    <span className="ml-auto text-xs text-zinc-400">{popularSections.length}</span>
+                    <span className="ml-auto text-xs text-apple-ink-muted-48">{popularSections.length}</span>
                   </div>
                 </button>
               </div>
 
               {/* Categories */}
               <div>
-                <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">
                   Categories
                 </p>
                 {sectionCategories.map((category) => {
@@ -357,13 +357,13 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
                       className={cn(
                         "mb-1 w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
                         isActive
-                          ? "bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-200/60"
-                          : "text-zinc-600 hover:bg-white/60 hover:text-zinc-900",
+                          ? "bg-white text-apple-ink shadow-sm ring-1 ring-zinc-200/60"
+                          : "text-apple-ink-muted-80 hover:bg-white/60 hover:text-apple-ink",
                       )}
                     >
                       <div className="flex items-center justify-between">
                         <span>{category.label}</span>
-                        <span className="text-xs text-zinc-400">{count}</span>
+                        <span className="text-xs text-apple-ink-muted-48">{count}</span>
                       </div>
                     </button>
                   );
@@ -378,8 +378,8 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
             <div className="border-b border-zinc-100 px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-zinc-900">Section Library</h2>
-                  <p className="mt-0.5 text-sm text-zinc-500">
+                  <h2 className="text-xl font-bold text-apple-ink">Section Library</h2>
+                  <p className="mt-0.5 text-sm text-apple-ink-muted-48">
                     {targetZone
                       ? `Adding to ${targetZone.charAt(0).toUpperCase() + targetZone.slice(1)} — ${filteredSections.length} compatible section${filteredSections.length !== 1 ? "s" : ""}`
                       : insertPosition != null
@@ -395,7 +395,7 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
                   )}
                   <button
                     onClick={handleClose}
-                    className="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
+                    className="rounded-xl p-2 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors"
                     aria-label="Close"
                   >
                     <X className="h-5 w-5" />
@@ -405,19 +405,19 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
 
               {/* Search */}
               <div className="relative mt-4">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
                 <input
                   type="text"
                   value={localSearch}
                   onChange={(e) => setLocalSearch(e.target.value)}
                   placeholder="Search by name, category, or description…"
-                  className="h-11 w-full rounded-2xl border border-zinc-200 bg-zinc-50 pl-10 pr-10 text-sm outline-none transition-all focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-100"
+                  className="h-11 w-full rounded-lg border border-apple-hairline bg-apple-canvas-parchment pl-10 pr-10 text-sm outline-none transition-all focus:border-zinc-400 focus:bg-apple-canvas focus:ring-2 focus:ring-zinc-100"
                   autoFocus
                 />
                 {localSearch && (
                   <button
                     onClick={() => { setLocalSearch(""); dispatch(setSectionLibrarySearch("")); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-zinc-400 hover:text-zinc-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-apple-ink-muted-48 hover:text-apple-ink-muted-80 transition-colors"
                     aria-label="Clear search"
                   >
                     <X className="h-4 w-4" />
@@ -475,7 +475,7 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
                   {/* Quick filter / category heading */}
                   {(quickFilter !== "all" || activeCategory !== "all" || searchTerm) && (
                     <div className="mb-5 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-zinc-900">
+                      <h3 className="text-sm font-semibold text-apple-ink">
                         {searchTerm
                           ? `${filteredSections.length} result${filteredSections.length !== 1 ? "s" : ""} for "${searchTerm}"`
                           : quickFilter === "recently-used"
@@ -489,7 +489,7 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
                       {searchTerm && (
                         <button
                           onClick={() => { setLocalSearch(""); dispatch(setSectionLibrarySearch("")); }}
-                          className="text-xs text-zinc-400 hover:text-zinc-700 underline"
+                          className="text-xs text-apple-ink-muted-48 hover:text-apple-ink-muted-80 underline"
                         >
                           Clear search
                         </button>
@@ -501,10 +501,10 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
                   {filteredSections.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
-                        <Search className="h-5 w-5 text-zinc-400" />
+                        <Search className="h-5 w-5 text-apple-ink-muted-48" />
                       </div>
-                      <p className="text-sm font-medium text-zinc-700">No sections found</p>
-                      <p className="mt-1 text-xs text-zinc-400">
+                      <p className="text-sm font-medium text-apple-ink-muted-80">No sections found</p>
+                      <p className="mt-1 text-xs text-apple-ink-muted-48">
                         {quickFilter === "favorites"
                           ? "Star sections to add them here."
                           : quickFilter === "recently-used"
@@ -514,7 +514,7 @@ export function SectionLibraryModal({ onSectionAdded }: SectionLibraryModalProps
                       {searchTerm && (
                         <button
                           onClick={() => { setLocalSearch(""); dispatch(setSectionLibrarySearch("")); }}
-                          className="mt-3 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+                          className="mt-3 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors"
                         >
                           Clear search
                         </button>
@@ -571,10 +571,10 @@ function SectionGroup({
 }) {
   return (
     <div className="mb-8">
-      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-900">
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-apple-ink">
         {icon}
         {title}
-        <span className="ml-1 text-xs font-normal text-zinc-400">({sections.length})</span>
+        <span className="ml-1 text-xs font-normal text-apple-ink-muted-48">({sections.length})</span>
       </h3>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(340px, 100%), 1fr))" }}>
         {sections.map((section) => (
@@ -613,20 +613,20 @@ function SectionCard({
   return (
     <div
       className={cn(
-        "group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border bg-white transition-all duration-150",
+        "group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-apple-canvas transition-colors duration-150",
         isHovered
-          ? "border-zinc-300 shadow-md ring-1 ring-zinc-200"
-          : "border-zinc-100 hover:border-zinc-200 hover:shadow-sm",
+          ? "border-zinc-300 ring-1 ring-zinc-200"
+          : "border-apple-divider-soft hover:border-apple-hairline",
       )}
       onMouseEnter={() => onHover(section.type)}
       onMouseLeave={() => onHover(null)}
       onClick={() => onAdd(section)}
     >
       {/* Preview area */}
-      <div className="relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-50 to-zinc-100">
+      <div className="relative flex h-36 items-center justify-center overflow-hidden bg-apple-canvas-parchment">
         <div className="flex flex-col items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-          <SectionIcon icon={section.icon} className="h-8 w-8 text-zinc-400" />
-          <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+          <SectionIcon icon={section.icon} className="h-8 w-8 text-apple-ink-muted-48" />
+          <span className="text-[10px] font-medium uppercase tracking-wider text-apple-ink-muted-48">
             {section.category}
           </span>
         </div>
@@ -637,8 +637,8 @@ function SectionCard({
           isHovered ? "opacity-100" : "opacity-0",
         )}>
           <div className="flex items-center gap-1.5 rounded-xl bg-white px-3 py-2 shadow-lg">
-            <Plus className="h-3.5 w-3.5 text-zinc-700" />
-            <span className="text-xs font-semibold text-zinc-900">Add Section</span>
+            <Plus className="h-3.5 w-3.5 text-apple-ink-muted-80" />
+            <span className="text-xs font-semibold text-apple-ink">Add Section</span>
           </div>
         </div>
 
@@ -659,8 +659,8 @@ function SectionCard({
 
       {/* Info */}
       <div className="p-3">
-        <p className="text-sm font-medium leading-tight text-zinc-900">{section.label}</p>
-        <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-zinc-400">
+        <p className="text-sm font-medium leading-tight text-apple-ink">{section.label}</p>
+        <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-apple-ink-muted-48">
           {section.description}
         </p>
       </div>

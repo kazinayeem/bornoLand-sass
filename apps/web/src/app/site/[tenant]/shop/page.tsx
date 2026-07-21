@@ -83,10 +83,10 @@ export default function ShopPage() {
           </div>
           <div className="flex items-center gap-2">
             <div className="relative flex-1 sm:w-64">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
               <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Search products..." autoFocus={!!searchParams.get("search")}
-                className="h-10 w-full rounded-xl border bg-transparent pl-9 pr-4 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2"
+                className="h-10 w-full rounded-xl border bg-transparent pl-9 pr-4 text-sm placeholder:text-apple-ink-muted-48 focus:outline-none focus:ring-2"
                 style={{ borderColor: isDark ? "#27272a" : "#e4e4e7", color: isDark ? "#fafafa" : "#18181b" }} />
             </div>
             <button onClick={() => setShowFilters(!showFilters)}

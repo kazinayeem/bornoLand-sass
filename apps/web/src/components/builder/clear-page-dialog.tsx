@@ -57,9 +57,9 @@ export function ClearPageDialog({ open, onClose }: Props) {
             <AlertTriangle className="h-5 w-5 text-red-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-zinc-900">Clear page?</h3>
-            <p className="mt-1 text-sm leading-6 text-zinc-500">
-              This will remove all {sectionCount} section{sectionCount !== 1 ? "s" : ""} from the page. The page title, slug, SEO, and navigation will be preserved. This action can be undone with <kbd className="rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium text-zinc-600">⌘Z</kbd>.
+            <h3 className="text-base font-semibold text-apple-ink">Clear page?</h3>
+            <p className="mt-1 text-sm leading-6 text-apple-ink-muted-48">
+              This will remove all {sectionCount} section{sectionCount !== 1 ? "s" : ""} from the page. The page title, slug, SEO, and navigation will be preserved. This action can be undone with <kbd className="rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium text-apple-ink-muted-80">⌘Z</kbd>.
             </p>
           </div>
         </div>
@@ -67,7 +67,7 @@ export function ClearPageDialog({ open, onClose }: Props) {
           <button
             onClick={onClose}
             disabled={clearing}
-            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 transition-colors"
+            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-50 transition-colors"
           >
             Cancel
           </button>

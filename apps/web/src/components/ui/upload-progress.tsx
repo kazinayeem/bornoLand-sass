@@ -73,7 +73,7 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
                 : `${doneCount} file${doneCount > 1 ? "s" : ""} uploaded`}
             </span>
           </div>
-          {!isComplete && <span className="shrink-0 text-xs text-zinc-400">{overallProgress}%</span>}
+          {!isComplete && <span className="shrink-0 text-xs text-apple-ink-muted-48">{overallProgress}%</span>}
         </div>
         {!isComplete && (
           <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/60">
@@ -85,25 +85,25 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
+    <div className="rounded-lg border border-apple-hairline bg-apple-canvas">
+      <div className="flex items-center justify-between border-b border-apple-divider-soft px-4 py-3">
         <div className="flex items-center gap-2">
-          <Upload className="h-4 w-4 text-zinc-500" />
-          <span className="text-sm font-medium text-zinc-700">
+          <Upload className="h-4 w-4 text-apple-ink-muted-48" />
+          <span className="text-sm font-medium text-apple-ink-muted-80">
             {activeCount > 0
               ? `Uploading ${activeCount} file${activeCount > 1 ? "s" : ""}`
               : `${doneCount} file${doneCount > 1 ? "s" : ""} uploaded`}
           </span>
           {!isComplete && (
-            <span className="text-xs text-zinc-400">({overallProgress}%)</span>
+            <span className="text-xs text-apple-ink-muted-48">({overallProgress}%)</span>
           )}
         </div>
-        <button onClick={onClear} className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
+        <button onClick={onClear} className="rounded-sm p-1 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
           <X className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="divide-y divide-zinc-100">
+      <div className="divide-y divide-apple-divider-soft">
         {files.map((file) => (
           <div key={file.id} className="px-4 py-3">
             <div className="flex items-center justify-between gap-3">
@@ -116,8 +116,8 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
                   <Loader2 className="h-4 w-4 shrink-0 animate-spin text-blue-500" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-700">{file.name}</p>
-                  <p className="text-xs text-zinc-400">
+                  <p className="truncate text-sm font-medium text-apple-ink-muted-80">{file.name}</p>
+                  <p className="text-xs text-apple-ink-muted-48">
                     {file.status === "uploading" && file.speed != null
                       ? `${formatSpeed(file.speed)}`
                       : formatBytes(file.size)}
@@ -136,7 +136,7 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
                   <span className="text-xs text-red-500">{file.error}</span>
                 )}
                 {file.status !== "uploading" && file.status !== "pending" && (
-                  <button onClick={() => onRemove(file.id)} className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
+                  <button onClick={() => onRemove(file.id)} className="rounded-sm p-1 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
                     <X className="h-3.5 w-3.5" />
                   </button>
                 )}
@@ -144,7 +144,7 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
             </div>
 
             {(file.status === "pending" || file.status === "uploading") && (
-              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-apple-canvas-parchment">
                 <motion.div
                   className="h-full rounded-full bg-blue-500"
                   initial={{ width: 0 }}
@@ -156,7 +156,7 @@ export function UploadProgress({ files, onClear, onRemove, minimal }: UploadProg
 
             {/* Indeterminate progress when pending */}
             {file.status === "pending" && file.progress === 0 && (
-              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-apple-canvas-parchment">
                 <motion.div
                   className="h-full rounded-full bg-blue-400"
                   animate={{ x: ["-100%", "200%"] }}

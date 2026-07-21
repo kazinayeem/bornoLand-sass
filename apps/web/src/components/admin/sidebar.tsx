@@ -63,27 +63,27 @@ export function Sidebar() {
     <motion.aside
       animate={{ width: collapsed ? 72 : 256 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-zinc-200/80 bg-white/95 shadow-sm backdrop-blur-xl"
+      className="fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-apple-hairline bg-apple-canvas/95 backdrop-blur-xl"
     >
       <div
         className={cn(
-          "flex h-16 items-center border-b border-zinc-100 px-4",
+          "flex h-16 items-center border-b border-apple-divider-soft px-4",
           collapsed ? "justify-center" : "justify-between"
         )}
       >
         {!collapsed ? (
           <Link href="/admin/dashboard" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-apple-primary">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
             <div>
-              <span className="text-sm font-bold tracking-tight text-zinc-900">BornoLand</span>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">Super Admin</p>
+              <span className="text-sm font-bold tracking-tight text-apple-ink">BornoLand</span>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-apple-ink-muted-48">Super Admin</p>
             </div>
           </Link>
         ) : (
           <Link href="/admin/dashboard">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-apple-primary">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
           </Link>
@@ -100,13 +100,13 @@ export function Sidebar() {
                   href={item.href}
                   className={cn(
                     "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
-                    active ? "bg-blue-50 text-blue-700" : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
+                    active ? "bg-apple-canvas-parchment text-apple-primary" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink"
                   )}
                 >
                   <item.icon
                     className={cn(
                       "h-[18px] w-[18px] shrink-0",
-                      active ? "text-blue-600" : "text-zinc-400 group-hover:text-zinc-600"
+                      active ? "text-apple-primary" : "text-apple-ink-muted-48 group-hover:text-apple-ink-muted-80"
                     )}
                   />
                   {!collapsed && <span>{item.label}</span>}
@@ -121,7 +121,7 @@ export function Sidebar() {
             <button
               type="button"
               onClick={() => setMoreOpen((v) => !v)}
-              className="mb-1 flex w-full items-center gap-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-400"
+              className="mb-1 flex w-full items-center gap-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48"
             >
               <MoreHorizontal className="h-3.5 w-3.5" />
               More
@@ -136,10 +136,10 @@ export function Sidebar() {
                         href={item.href}
                         className={cn(
                           "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all",
-                          active ? "bg-zinc-100 text-zinc-900" : "text-zinc-500 hover:bg-zinc-50"
+                          active ? "bg-apple-canvas-parchment text-apple-ink" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment"
                         )}
                       >
-                        <item.icon className="h-4 w-4 shrink-0 text-zinc-400" />
+                        <item.icon className="h-4 w-4 shrink-0 text-apple-ink-muted-48" />
                         <span>{item.label}</span>
                       </Link>
                     </li>
@@ -151,22 +151,22 @@ export function Sidebar() {
         )}
       </nav>
 
-      <div className={cn("border-t border-zinc-100 p-3", collapsed && "flex flex-col items-center gap-2")}>
+      <div className={cn("border-t border-apple-divider-soft p-3", collapsed && "flex flex-col items-center gap-2")}>
         {!collapsed && (
-          <div className="mb-2 flex items-center gap-3 rounded-xl bg-zinc-50 p-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-sm font-semibold text-white">
+          <div className="mb-2 flex items-center gap-3 rounded-xl bg-apple-canvas-parchment p-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-apple-primary text-sm font-semibold text-apple-on-primary">
               SA
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-zinc-900">Super Admin</p>
-              <p className="truncate text-xs text-zinc-500">Subscription control</p>
+              <p className="truncate text-sm font-medium text-apple-ink">Super Admin</p>
+              <p className="truncate text-xs text-apple-ink-muted-48">Subscription control</p>
             </div>
           </div>
         )}
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
-          className="flex w-full items-center justify-center rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+          className="flex w-full items-center justify-center rounded-lg p-2 text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80"
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>
@@ -174,7 +174,7 @@ export function Sidebar() {
           type="button"
           onClick={async () => { try { await logout().unwrap(); router.replace(getLoginUrlForCurrentPage("/admin/login")); } catch { toast.error("Failed to sign out"); } }}
           className={cn(
-            "flex items-center gap-2 rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600",
+            "flex items-center gap-2 rounded-lg p-2 text-apple-ink-muted-48 transition-colors hover:bg-red-50 hover:text-red-600",
             collapsed ? "w-full justify-center" : "w-full"
           )}
         >

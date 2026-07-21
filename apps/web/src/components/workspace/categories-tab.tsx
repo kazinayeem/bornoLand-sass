@@ -235,7 +235,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
   }, [flatTree, search]);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>;
+    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" /></div>;
   }
 
   return (
@@ -243,7 +243,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
       <div className="flex items-center justify-between gap-3">
         <SearchBar value={search} onChange={setSearch} placeholder="Search categories..." className="max-w-xs" />
         <div className="flex items-center gap-2">
-          <p className="text-xs text-zinc-400">{categories.length} categories</p>
+          <p className="text-xs text-apple-ink-muted-48">{categories.length} categories</p>
           <button onClick={() => { resetForm(); setShowForm(true); }}
             className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
             <Plus className="h-3.5 w-3.5" /> Add Category
@@ -254,13 +254,13 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
       {sorted.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center">
           <Layers className="mx-auto h-10 w-10 text-zinc-300" />
-          <h3 className="mt-3 text-base font-semibold text-zinc-900">No categories yet</h3>
-          <p className="mt-1 text-sm text-zinc-500">Create categories to organize your products.</p>
+          <h3 className="mt-3 text-base font-semibold text-apple-ink">No categories yet</h3>
+          <p className="mt-1 text-sm text-apple-ink-muted-48">Create categories to organize your products.</p>
         </div>
       ) : (
         <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden">
           {/* Header */}
-          <div className="grid grid-cols-[1fr_100px_80px_80px] gap-4 border-b border-zinc-100 bg-zinc-50/50 px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+          <div className="grid grid-cols-[1fr_100px_80px_80px] gap-4 border-b border-zinc-100 bg-apple-canvas-parchment/50 px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">
             <div className="flex items-center gap-2"><GripVertical className="h-3 w-3 invisible" /> Category</div>
             <div>Slug</div>
             <div className="text-center">Status</div>
@@ -271,7 +271,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
           {filteredTree.length === 0 && search && (
             <div className="p-8 text-center">
               <Search className="mx-auto h-6 w-6 text-zinc-300" />
-              <p className="mt-2 text-sm text-zinc-500">No categories match &quot;{search}&quot;</p>
+              <p className="mt-2 text-sm text-apple-ink-muted-48">No categories match &quot;{search}&quot;</p>
             </div>
           )}
           {filteredTree.map((node, idx) => {
@@ -284,7 +284,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
             return (
               <motion.div key={node.category._id} layout
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                className={`grid grid-cols-[1fr_100px_80px_80px] gap-4 border-b border-zinc-50 px-4 py-3 transition-colors hover:bg-zinc-50/50 ${
+                className={`grid grid-cols-[1fr_100px_80px_80px] gap-4 border-b border-zinc-50 px-4 py-3 transition-colors hover:bg-apple-canvas-parchment/50 ${
                   isDrag ? "opacity-40 bg-blue-50" : ""
                 } ${isOver ? "border-t-2 border-t-blue-400" : ""}`}
                 draggable={canDrag}
@@ -296,13 +296,13 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
                   style={{ paddingLeft: `${node.depth * 20}px` }}>
                   <div className="flex items-center gap-1 shrink-0">
                     <div
-                      className="cursor-grab active:cursor-grabbing text-zinc-300 hover:text-zinc-500 transition-colors"
+                      className="cursor-grab active:cursor-grabbing text-zinc-300 hover:text-apple-ink-muted-48 transition-colors"
                       onMouseDown={(e) => e.stopPropagation()}>
                       <GripVertical className="h-3.5 w-3.5" />
                     </div>
                     {hasChildren ? (
                       <button onClick={() => toggleExpand(node.category._id)}
-                        className="rounded p-0.5 text-zinc-400 hover:text-zinc-600 transition-colors">
+                        className="rounded p-0.5 text-apple-ink-muted-48 hover:text-apple-ink-muted-80 transition-colors">
                         {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                       </button>
                     ) : (
@@ -313,41 +313,41 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
                     {node.category.imageUrl ? (
                       <img src={node.category.imageUrl} alt={node.category.name} className="h-full w-full object-cover" />
                     ) : (
-                      <Layers className="h-4 w-4 text-zinc-400" />
+                      <Layers className="h-4 w-4 text-apple-ink-muted-48" />
                     )}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-medium text-zinc-900 truncate">{node.category.name}</p>
+                      <p className="text-sm font-medium text-apple-ink truncate">{node.category.name}</p>
                       {node.category.featured && <Star className="h-3 w-3 text-amber-500 shrink-0" fill="currentColor" />}
                     </div>
                     {node.depth > 0 && (
-                      <p className="text-[10px] text-zinc-400 truncate">
+                      <p className="text-[10px] text-apple-ink-muted-48 truncate">
                         Subcategory of {getCategoryPath(node.category.parentId!, sorted)}
                       </p>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-xs text-zinc-400 truncate">/{node.category.slug}</span>
+                  <span className="text-xs text-apple-ink-muted-48 truncate">/{node.category.slug}</span>
                 </div>
                 <div className="flex items-center justify-center">
                   <button onClick={() => updateCategory({ storeId, id: node.category._id, data: { active: !node.category.active } }).unwrap()}
                     className={`rounded-lg px-2 py-1 text-[10px] font-semibold transition-colors ${
                       node.category.active
                         ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                        : "bg-zinc-100 text-zinc-400 hover:bg-zinc-200"
+                        : "bg-zinc-100 text-apple-ink-muted-48 hover:bg-zinc-200"
                     }`}>
                     {node.category.active ? "Active" : "Draft"}
                   </button>
                 </div>
                 <div className="flex items-center justify-end gap-0.5">
                   <button onClick={() => openEdit(node.category)}
-                    className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors">
+                    className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button onClick={() => setDeleteTarget(node.category)}
-                    className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                    className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-red-50 hover:text-red-500 transition-colors">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -364,24 +364,24 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-semibold text-zinc-900">{editCat ? "Edit" : "New"} Category</h3>
-              <button onClick={resetForm} className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100"><X className="h-5 w-5" /></button>
+              <h3 className="text-lg font-semibold text-apple-ink">{editCat ? "Edit" : "New"} Category</h3>
+              <button onClick={resetForm} className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Name</label>
+                <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Name</label>
                 <input type="text" value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value, slug: editCat ? form.slug : genSlug(e.target.value) })}
                   className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Slug</label>
+                <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Slug</label>
                 <input type="text" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })}
                   className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">Parent Category</label>
+                  <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Parent Category</label>
                   <select value={form.parentId} onChange={(e) => setForm({ ...form, parentId: e.target.value })}
                     className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
                     <option value="">None (top level)</option>
@@ -391,7 +391,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">Status</label>
+                  <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Status</label>
                   <select value={form.active ? "active" : "inactive"}
                     onChange={(e) => setForm({ ...form, active: e.target.value === "active" })}
                     className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
@@ -401,7 +401,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Description</label>
+                <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Description</label>
                 <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
                   className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
               </div>
@@ -448,39 +448,39 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
                   <input type="checkbox" checked={form.featured}
                     onChange={(e) => setForm({ ...form, featured: e.target.checked })}
                     className="rounded border-zinc-300" />
-                  <span className="text-xs font-medium text-zinc-700">Featured</span>
+                  <span className="text-xs font-medium text-apple-ink-muted-80">Featured</span>
                 </label>
               </div>
 
               {/* SEO Fields */}
               <div className="border-t border-zinc-100 pt-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <Search className="h-4 w-4 text-zinc-400" />
-                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">SEO</span>
+                  <Search className="h-4 w-4 text-apple-ink-muted-48" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">SEO</span>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">Meta Title</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Meta Title</label>
                     <input type="text" value={form.metaTitle}
                       onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
                       className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm"
                       placeholder="SEO title (optional)" maxLength={70} />
-                    <p className="mt-1 text-[10px] text-zinc-400">{form.metaTitle.length}/70 characters</p>
+                    <p className="mt-1 text-[10px] text-apple-ink-muted-48">{form.metaTitle.length}/70 characters</p>
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">Meta Description</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Meta Description</label>
                     <textarea value={form.metaDescription}
                       onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
                       className="h-20 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm resize-none"
                       placeholder="SEO description (optional)" maxLength={160} />
-                    <p className="mt-1 text-[10px] text-zinc-400">{form.metaDescription.length}/160 characters</p>
+                    <p className="mt-1 text-[10px] text-apple-ink-muted-48">{form.metaDescription.length}/160 characters</p>
                   </div>
                 </div>
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={resetForm}
-                className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">Cancel</button>
+                className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Cancel</button>
               <button onClick={handleSave} disabled={saving}
                 className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}

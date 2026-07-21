@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-page";
 
 const RichTextEditor = dynamic(() => import("@/components/cms/rich-text-editor"), {
-  loading: () => <div className="min-h-[240px] rounded-xl border border-zinc-200 bg-zinc-50" />,
+  loading: () => <div className="min-h-[240px] rounded-xl border border-zinc-200 bg-apple-canvas-parchment" />,
 });
 
 export function CmsFaqsEditor() {
@@ -113,7 +113,7 @@ export function CmsFaqsEditor() {
   };
 
   if (storeLoading || !storeId || !store) {
-    return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>;
+    return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" /></div>;
   }
 
   return (
@@ -126,8 +126,8 @@ export function CmsFaqsEditor() {
               <MessageSquare className="h-5 w-5 text-purple-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-zinc-900">FAQ Items</h2>
-              <p className="text-sm text-zinc-500">Manage Q&A entries for your store.</p>
+              <h2 className="text-2xl font-bold tracking-tight text-apple-ink">FAQ Items</h2>
+              <p className="text-sm text-apple-ink-muted-48">Manage Q&A entries for your store.</p>
             </div>
             <span className="rounded-lg bg-purple-50 px-2.5 py-0.5 text-xs font-medium text-purple-600">
               {store.shortName || store.name}
@@ -151,25 +151,25 @@ export function CmsFaqsEditor() {
             className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4"
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold text-zinc-900">{editId ? "Edit FAQ" : "New FAQ"}</h3>
-              <button onClick={resetForm} className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
+              <h3 className="text-base font-semibold text-apple-ink">{editId ? "Edit FAQ" : "New FAQ"}</h3>
+              <button onClick={resetForm} className="rounded-lg p-1 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700">Question</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Question</label>
               <input
                 type="text"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-900 outline-none transition-all focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
+                className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-apple-ink outline-none transition-all focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
                 placeholder="Enter the question"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700">Answer</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Answer</label>
               <RichTextEditor
                 key={editId ?? "new"}
                 content={answer}
@@ -179,12 +179,12 @@ export function CmsFaqsEditor() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-700">Category (optional)</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Category (optional)</label>
               <input
                 type="text"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="h-10 w-full max-w-xs rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-900 outline-none transition-all focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
+                className="h-10 w-full max-w-xs rounded-xl border border-zinc-200 bg-white px-4 text-sm text-apple-ink outline-none transition-all focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
                 placeholder="e.g. Shipping, Orders"
               />
             </div>
@@ -192,7 +192,7 @@ export function CmsFaqsEditor() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={resetForm}
-                className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50"
+                className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
               >
                 Cancel
               </button>
@@ -212,7 +212,7 @@ export function CmsFaqsEditor() {
       {faqsLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl border border-zinc-200 bg-zinc-50 p-5" />
+            <div key={i} className="h-24 animate-pulse rounded-2xl border border-zinc-200 bg-apple-canvas-parchment p-5" />
           ))}
         </div>
       ) : faqs.length === 0 ? (
@@ -222,10 +222,10 @@ export function CmsFaqsEditor() {
           className="rounded-2xl border border-zinc-200 bg-white p-16 text-center"
         >
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100">
-            <MessageSquare className="h-8 w-8 text-zinc-400" />
+            <MessageSquare className="h-8 w-8 text-apple-ink-muted-48" />
           </div>
-          <h3 className="mt-4 text-xl font-semibold text-zinc-900">No FAQs yet</h3>
-          <p className="mt-2 text-sm text-zinc-500">Create your first FAQ entry.</p>
+          <h3 className="mt-4 text-xl font-semibold text-apple-ink">No FAQs yet</h3>
+          <p className="mt-2 text-sm text-apple-ink-muted-48">Create your first FAQ entry.</p>
         </motion.div>
       ) : (
         <div className="space-y-3">
@@ -241,7 +241,7 @@ export function CmsFaqsEditor() {
                   <button
                     onClick={() => handleMoveUp(index)}
                     disabled={index === 0 || reordering}
-                    className="rounded p-0.5 text-zinc-300 hover:text-zinc-600 disabled:opacity-30"
+                    className="rounded p-0.5 text-zinc-300 hover:text-apple-ink-muted-80 disabled:opacity-30"
                   >
                     <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                   </button>
@@ -249,19 +249,19 @@ export function CmsFaqsEditor() {
                   <button
                     onClick={() => handleMoveDown(index)}
                     disabled={index === faqs.length - 1 || reordering}
-                    className="rounded p-0.5 text-zinc-300 hover:text-zinc-600 disabled:opacity-30"
+                    className="rounded p-0.5 text-zinc-300 hover:text-apple-ink-muted-80 disabled:opacity-30"
                   >
                     <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                   </button>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-semibold text-zinc-900">{faq.question}</h4>
+                    <h4 className="text-sm font-semibold text-apple-ink">{faq.question}</h4>
                     {faq.category && (
-                      <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">{faq.category}</span>
+                      <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs text-apple-ink-muted-48">{faq.category}</span>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-zinc-500 line-clamp-2">{faq.answer.replace(/<[^>]*>/g, "")}</p>
+                  <p className="mt-1 text-sm text-apple-ink-muted-48 line-clamp-2">{faq.answer.replace(/<[^>]*>/g, "")}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -269,21 +269,21 @@ export function CmsFaqsEditor() {
                     className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors ${
                       faq.active
                         ? "bg-green-50 text-green-600 hover:bg-green-100"
-                        : "bg-zinc-100 text-zinc-400 hover:bg-zinc-200"
+                        : "bg-zinc-100 text-apple-ink-muted-48 hover:bg-zinc-200"
                     }`}
                   >
                     {faq.active ? "Active" : "Draft"}
                   </button>
                   <button
                     onClick={() => handleEdit(faq)}
-                    className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                    className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(faq._id)}
                     disabled={deleting}
-                    className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500"
+                    className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-red-50 hover:text-red-500"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

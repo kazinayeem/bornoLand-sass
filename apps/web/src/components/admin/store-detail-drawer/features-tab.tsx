@@ -176,7 +176,7 @@ export function FeaturesTab({ helpers }: { helpers: TabHelpers }) {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-apple-ink-muted-48">
         Toggle individual features on/off for this store. The toggle shows the effective state (override if set, else plan default).
         Click <strong>Reset</strong> to revert to plan default.
       </p>
@@ -184,7 +184,7 @@ export function FeaturesTab({ helpers }: { helpers: TabHelpers }) {
       {FEATURE_GROUPS.map((group) => (
         <div key={group.label} className="rounded-xl border border-zinc-200 bg-white">
           <div className="border-b border-zinc-100 px-5 py-3">
-            <h4 className="text-sm font-semibold text-zinc-700">{group.label}</h4>
+            <h4 className="text-sm font-semibold text-apple-ink-muted-80">{group.label}</h4>
           </div>
           <div className="grid gap-px bg-zinc-100 sm:grid-cols-2 lg:grid-cols-3">
             {group.keys.map((key) => {
@@ -194,10 +194,10 @@ export function FeaturesTab({ helpers }: { helpers: TabHelpers }) {
               return (
                 <div key={key} className="flex items-center justify-between gap-2 bg-white px-5 py-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-zinc-700 truncate">
+                    <p className="text-sm font-medium text-apple-ink-muted-80 truncate">
                       {FEATURE_LABELS[key] ?? key}
                     </p>
-                    <p className="text-xs text-zinc-400">
+                    <p className="text-xs text-apple-ink-muted-48">
                       Plan: {getPlanValue(key) ? "On" : "Off"}
                       {isOverridden && " · Overridden"}
                     </p>
@@ -218,7 +218,7 @@ export function FeaturesTab({ helpers }: { helpers: TabHelpers }) {
                     {isOverridden && (
                       <button
                         onClick={() => resetFeature(key)}
-                        className="rounded px-2 py-1 text-xs text-zinc-400 hover:text-zinc-600"
+                        className="rounded px-2 py-1 text-xs text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
                       >
                         Reset
                       </button>

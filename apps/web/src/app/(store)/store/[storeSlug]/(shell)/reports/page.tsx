@@ -44,7 +44,7 @@ const REPORT_LINKS = [
   { href: "/reports/categories", label: "Category Report", icon: Tag, color: "text-rose-600", bg: "bg-rose-50" },
   { href: "/reports/coupons", label: "Coupon Report", icon: FileText, color: "text-indigo-600", bg: "bg-indigo-50" },
   { href: "/reports/media", label: "Media Report", icon: HardDrive, color: "text-cyan-600", bg: "bg-cyan-50" },
-  { href: "/reports/summary/daily", label: "Daily Summary", icon: Clock, color: "text-zinc-600", bg: "bg-zinc-100" },
+  { href: "/reports/summary/daily", label: "Daily Summary", icon: Clock, color: "text-apple-ink-muted-80", bg: "bg-zinc-100" },
 ];
 
 function KPICard({ label, value, icon: Icon, color, bg, trend, delay }: {
@@ -64,8 +64,8 @@ function KPICard({ label, value, icon: Icon, color, bg, trend, delay }: {
           </span>
         )}
       </div>
-      <p className="mt-3 text-2xl font-bold tracking-tight text-zinc-900">{value}</p>
-      <p className="mt-0.5 text-[13px] font-medium text-zinc-500">{label}</p>
+      <p className="mt-3 text-2xl font-bold tracking-tight text-apple-ink">{value}</p>
+      <p className="mt-0.5 text-[13px] font-medium text-apple-ink-muted-48">{label}</p>
     </motion.div>
   );
 }
@@ -83,7 +83,7 @@ export default function ReportsPage() {
   const storeBase = store ? `/store/${store.slug}` : "";
 
   if (storeLoading || !storeId) {
-    return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>;
+    return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" /></div>;
   }
 
   return (
@@ -91,14 +91,14 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Reports</h1>
-          <p className="text-sm text-zinc-500">Sales, revenue, inventory, and business insights.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-apple-ink">Reports</h1>
+          <p className="text-sm text-apple-ink-muted-48">Sales, revenue, inventory, and business insights.</p>
         </div>
         <div className="flex items-center gap-2">
           <select
             value={dateRange.preset || "all"}
             onChange={(e) => setDateRange({ preset: e.target.value as ReportDateRange["preset"] })}
-            className="h-10 rounded-xl border border-[#ececec] bg-white px-3 pr-8 text-sm font-medium text-zinc-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
+            className="h-10 rounded-xl border border-[#ececec] bg-white px-3 pr-8 text-sm font-medium text-apple-ink-muted-80 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
           >
             {DATE_PRESETS.map((p) => (
               <option key={p.value} value={p.value}>{p.label}</option>
@@ -124,16 +124,16 @@ export default function ReportsPage() {
           <KPICard label="Completed Orders" value={kpis.completedOrders} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" delay={0.5} />
           <KPICard label="Conversion Rate" value={`${kpis.conversionRate}%`} icon={TrendingUp} color="text-violet-600" bg="bg-violet-50" delay={0.55} />
           <KPICard label="Coupons Used" value={kpis.couponsUsed} icon={Tag} color="text-indigo-600" bg="bg-indigo-50" delay={0.6} />
-          <KPICard label="Products" value={kpis.productsSold} icon={Package} color="text-zinc-600" bg="bg-zinc-100" delay={0.65} />
+          <KPICard label="Products" value={kpis.productsSold} icon={Package} color="text-apple-ink-muted-80" bg="bg-zinc-100" delay={0.65} />
           <KPICard label="Low Stock" value={kpis.lowStockProducts} icon={AlertTriangle} color="text-amber-600" bg="bg-amber-50" delay={0.7} />
           <KPICard label="Media Files" value={kpis.mediaUsage} icon={HardDrive} color="text-cyan-600" bg="bg-cyan-50" delay={0.75} />
-          <KPICard label="Pages" value={kpis.pages} icon={FileText} color="text-zinc-600" bg="bg-zinc-100" delay={0.8} />
+          <KPICard label="Pages" value={kpis.pages} icon={FileText} color="text-apple-ink-muted-80" bg="bg-zinc-100" delay={0.8} />
         </div>
       ) : null}
 
       {/* Report Links */}
       <div>
-        <h2 className="mb-3 text-sm font-semibold text-zinc-900">Detailed Reports</h2>
+        <h2 className="mb-3 text-sm font-semibold text-apple-ink">Detailed Reports</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {REPORT_LINKS.map((link, i) => {
             const Icon = link.icon;
@@ -146,9 +146,9 @@ export default function ReportsPage() {
                     <Icon className={cn("h-5 w-5", link.color)} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-semibold text-zinc-900">{link.label}</p>
+                    <p className="text-[13px] font-semibold text-apple-ink">{link.label}</p>
                   </div>
-                  <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-300 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-zinc-500" />
+                  <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-300 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-apple-ink-muted-48" />
                 </Link>
               </motion.div>
             );

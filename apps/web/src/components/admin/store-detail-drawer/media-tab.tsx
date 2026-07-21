@@ -47,39 +47,39 @@ export function MediaTab({ helpers }: { helpers: TabHelpers }) {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-zinc-200 bg-white p-4">
           <Image className="h-5 w-5 text-blue-500" />
-          <p className="mt-2 text-2xl font-bold text-zinc-900">{imageCount}</p>
-          <p className="text-xs text-zinc-500">Images</p>
+          <p className="mt-2 text-2xl font-bold text-apple-ink">{imageCount}</p>
+          <p className="text-xs text-apple-ink-muted-48">Images</p>
         </div>
         <div className="rounded-xl border border-zinc-200 bg-white p-4">
           <Film className="h-5 w-5 text-purple-500" />
-          <p className="mt-2 text-2xl font-bold text-zinc-900">{videoCount}</p>
-          <p className="text-xs text-zinc-500">Videos</p>
+          <p className="mt-2 text-2xl font-bold text-apple-ink">{videoCount}</p>
+          <p className="text-xs text-apple-ink-muted-48">Videos</p>
         </div>
         <div className="rounded-xl border border-zinc-200 bg-white p-4">
           <FileText className="h-5 w-5 text-amber-500" />
-          <p className="mt-2 text-2xl font-bold text-zinc-900">{docCount}</p>
-          <p className="text-xs text-zinc-500">Documents</p>
+          <p className="mt-2 text-2xl font-bold text-apple-ink">{docCount}</p>
+          <p className="text-xs text-apple-ink-muted-48">Documents</p>
         </div>
         <div className="rounded-xl border border-zinc-200 bg-white p-4">
           <HardDrive className="h-5 w-5 text-emerald-500" />
-          <p className="mt-2 text-2xl font-bold text-zinc-900">
+          <p className="mt-2 text-2xl font-bold text-apple-ink">
             {formatBytes(Number((storage as Record<string, unknown>)?.usedBytes ?? 0))}
           </p>
-          <p className="text-xs text-zinc-500">Storage Used</p>
+          <p className="text-xs text-apple-ink-muted-48">Storage Used</p>
         </div>
       </div>
 
       {/* Recent Media */}
       {recentMedia.length > 0 && (
         <div className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h4 className="text-sm font-semibold text-zinc-700">Recent Media</h4>
+          <h4 className="text-sm font-semibold text-apple-ink-muted-80">Recent Media</h4>
           <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-8">
             {recentMedia.slice(0, 16).map((file, i) => {
               const url = (file.url as string) || (file.storagePath as string) || "";
               const mime = (file.mimeType as string) || "";
               const isImage = mime.startsWith("image/");
               return (
-                <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50">
+                <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border border-zinc-100 bg-apple-canvas-parchment">
                   {isImage ? (
                     <img
                       src={url}
@@ -105,7 +105,7 @@ export function MediaTab({ helpers }: { helpers: TabHelpers }) {
 
       {/* Actions */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Media Actions</h4>
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Media Actions</h4>
         <div className="mt-3 flex flex-wrap gap-2">
           <LoadingButton
             size="sm"

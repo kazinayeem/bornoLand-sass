@@ -43,7 +43,7 @@ export function CountdownHero({ section }: { section: SectionData }) {
           ))}
         </div>
         {p.buttonText && (
-          <Link href={p.buttonLink || "#"} className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100">
+          <Link href={p.buttonLink || "#"} className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-apple-ink hover:bg-apple-canvas-parchment">
             {p.buttonText}
           </Link>
         )}

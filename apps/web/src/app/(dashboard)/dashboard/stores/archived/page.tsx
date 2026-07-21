@@ -19,7 +19,7 @@ export default function ArchivedStoresPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
       </div>
     );
   }
@@ -32,7 +32,7 @@ export default function ArchivedStoresPage() {
         actions={
           <Link
             href="/dashboard/stores"
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
           >
             View active stores
           </Link>
@@ -42,8 +42,8 @@ export default function ArchivedStoresPage() {
       {archivedStores.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center">
           <Archive className="mx-auto h-10 w-10 text-zinc-300" />
-          <h3 className="mt-3 text-lg font-semibold text-zinc-900">No archived stores</h3>
-          <p className="mt-1 text-sm text-zinc-500">Archived stores will appear here.</p>
+          <h3 className="mt-3 text-lg font-semibold text-apple-ink">No archived stores</h3>
+          <p className="mt-1 text-sm text-apple-ink-muted-48">Archived stores will appear here.</p>
           <Link
             href="/dashboard/stores/create"
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800"
@@ -58,13 +58,13 @@ export default function ArchivedStoresPage() {
             <Link
               key={store._id}
               href={`/store/${store.slug}`}
-              className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white px-4 py-4 transition-colors hover:bg-zinc-50"
+              className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white px-4 py-4 transition-colors hover:bg-apple-canvas-parchment"
             >
               <div>
-                <p className="font-medium text-zinc-900">{store.name}</p>
-                <p className="text-sm text-zinc-500">{store.slug}</p>
+                <p className="font-medium text-apple-ink">{store.name}</p>
+                <p className="text-sm text-apple-ink-muted-48">{store.slug}</p>
               </div>
-              <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
+              <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-apple-ink-muted-80">
                 {store.status}
               </span>
             </Link>

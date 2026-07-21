@@ -30,7 +30,7 @@ export function ProductManagement() {
               {/* Products Table Mockup */}
               <div className="border-b border-zinc-100 px-5 py-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-zinc-900">Products</h3>
+                  <h3 className="text-sm font-bold text-apple-ink">Products</h3>
                   <div className="flex items-center gap-2">
                     <span className="rounded-lg bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-600">1,247 total</span>
                     <span className="rounded-lg bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-600">24 low stock</span>
@@ -46,17 +46,17 @@ export function ProductManagement() {
                 <div key={i} className="flex items-center gap-3 border-b border-zinc-50 px-5 py-3 last:border-0">
                   <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-zinc-100 to-zinc-50" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-zinc-900 truncate">{p.name}</p>
-                    <p className="text-[10px] text-zinc-400">{p.sku} · {p.variant}</p>
+                    <p className="text-xs font-semibold text-apple-ink truncate">{p.name}</p>
+                    <p className="text-[10px] text-apple-ink-muted-48">{p.sku} · {p.variant}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-bold text-zinc-900">{p.price}</p>
-                    <p className={`text-[10px] font-medium ${p.stock < 10 ? "text-red-500" : "text-zinc-400"}`}>{p.stock} in stock</p>
+                    <p className="text-xs font-bold text-apple-ink">{p.price}</p>
+                    <p className={`text-[10px] font-medium ${p.stock < 10 ? "text-red-500" : "text-apple-ink-muted-48"}`}>{p.stock} in stock</p>
                   </div>
                 </div>
               ))}
-              <div className="border-t border-zinc-100 bg-zinc-50 px-5 py-2 text-center">
-                <span className="text-[10px] font-medium text-zinc-500">View all products →</span>
+              <div className="border-t border-zinc-100 bg-apple-canvas-parchment px-5 py-2 text-center">
+                <span className="text-[10px] font-medium text-apple-ink-muted-48">View all products →</span>
               </div>
             </div>
 
@@ -68,7 +68,7 @@ export function ProductManagement() {
               transition={{ delay: 0.4, duration: 0.4 }}
               className="absolute -bottom-3 -right-3 rounded-xl border border-zinc-200/60 bg-white px-3.5 py-2 shadow-lg"
             >
-              <p className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-apple-ink-muted-80">
                 <ShoppingBag className="h-3.5 w-3.5 text-blue-500" />
                 Variants Supported
               </p>
@@ -94,8 +94,8 @@ export function ProductManagement() {
                     <Check className="h-3 w-3 text-blue-600" />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-zinc-900">{f.title}</p>
-                    <p className="text-xs text-zinc-500">{f.description}</p>
+                    <p className="text-sm font-semibold text-apple-ink">{f.title}</p>
+                    <p className="text-xs text-apple-ink-muted-48">{f.description}</p>
                   </div>
                 </div>
               ))}

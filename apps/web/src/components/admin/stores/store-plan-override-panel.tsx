@@ -43,15 +43,15 @@ export function StorePlanOverridePanel({
 
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">
-      <h4 className="text-sm font-semibold text-zinc-900">Plan overrides</h4>
-      <p className="mt-1 text-xs text-zinc-500">
+      <h4 className="text-sm font-semibold text-apple-ink">Plan overrides</h4>
+      <p className="mt-1 text-xs text-apple-ink-muted-48">
         Override quotas for <strong>{store.name}</strong> without changing their assigned plan (
         {assignedPlan?.name ?? store.plan}).
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-zinc-100 bg-white p-3 text-sm">
-          <p className="text-xs text-zinc-400">Plan storage</p>
+          <p className="text-xs text-apple-ink-muted-48">Plan storage</p>
           <p className="font-semibold text-zinc-800">
             {assignedPlan?.limits.storage != null
               ? assignedPlan.limits.storage >= 1024
@@ -61,7 +61,7 @@ export function StorePlanOverridePanel({
           </p>
         </div>
         <div className="rounded-lg border border-zinc-100 bg-white p-3 text-sm">
-          <p className="text-xs text-zinc-400">Currently used</p>
+          <p className="text-xs text-apple-ink-muted-48">Currently used</p>
           <p className="font-semibold text-zinc-800">{row ? formatBytes(row.usedBytes) : "—"}</p>
         </div>
       </div>
@@ -73,7 +73,7 @@ export function StorePlanOverridePanel({
         </label>
         {!unlimited && (
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Custom storage limit (MB)</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Custom storage limit (MB)</label>
             <input
               type="number"
               min={0}
@@ -86,7 +86,7 @@ export function StorePlanOverridePanel({
         )}
       </div>
 
-      <p className="mt-3 text-xs text-zinc-500">
+      <p className="mt-3 text-xs text-apple-ink-muted-48">
         Product, variant, and feature limits still follow the assigned plan. Change plan above for those limits, or edit
         the plan in Plan Builder.
       </p>

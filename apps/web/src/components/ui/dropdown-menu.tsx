@@ -184,7 +184,7 @@ export function DropdownMenu({
             style={{ ...floatingStyles, minWidth, zIndex: 9999 }}
             onKeyDown={handleKeyDown}
             className={cn(
-              "rounded-xl border border-zinc-200/80 bg-white py-1.5 shadow-2xl shadow-black/10 ring-1 ring-black/5 outline-none",
+              "rounded-lg border border-apple-hairline bg-apple-canvas py-1.5 outline-none dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2",
               className
             )}
           >
@@ -194,7 +194,7 @@ export function DropdownMenu({
                   <div
                     key={item.key ?? `divider-${index}`}
                     role="separator"
-                    className="my-1 border-t border-zinc-100"
+                    className="my-1 border-t border-apple-divider-soft"
                   />
                 );
               }
@@ -209,12 +209,12 @@ export function DropdownMenu({
                   disabled={itemDisabled}
                   onClick={() => handleItemClick(item)}
                   className={cn(
-                    "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm font-medium outline-none transition-colors",
-                    "focus-visible:bg-zinc-50",
+                    "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-caption outline-none transition-colors",
+                    "focus-visible:bg-apple-canvas-parchment dark:focus-visible:bg-apple-surface-tile-3",
                     itemDisabled && "cursor-not-allowed opacity-40",
-                    !itemDisabled && danger  && "text-red-600 hover:bg-red-50 focus-visible:bg-red-50",
-                    !itemDisabled && warning && "text-amber-700 hover:bg-amber-50 focus-visible:bg-amber-50",
-                    !itemDisabled && !danger && !warning && "text-zinc-700 hover:bg-zinc-50"
+                    !itemDisabled && danger && "text-red-600 hover:bg-red-50 focus-visible:bg-red-50 dark:hover:bg-red-950/20",
+                    !itemDisabled && warning && "text-amber-700 hover:bg-amber-50 focus-visible:bg-amber-50 dark:hover:bg-amber-950/20",
+                    !itemDisabled && !danger && !warning && "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment dark:text-apple-body-muted dark:hover:bg-apple-surface-tile-3"
                   )}
                 >
                   {Icon && (
@@ -222,19 +222,19 @@ export function DropdownMenu({
                       "h-4 w-4 shrink-0",
                       danger  ? "text-red-500"   : "",
                       warning ? "text-amber-600" : "",
-                      !danger && !warning ? "text-zinc-400" : ""
+                      !danger && !warning ? "text-apple-ink-muted-48" : ""
                     )} />
                   )}
                   <span className="flex-1 min-w-0">
                     <span className="block truncate">{label}</span>
                     {description && (
-                      <span className="block truncate text-[11px] font-normal text-zinc-400 leading-tight mt-0.5">
+                      <span className="mt-0.5 block truncate text-fine-print font-normal leading-tight text-apple-ink-muted-48">
                         {description}
                       </span>
                     )}
                   </span>
                   {badge && (
-                    <span className="ml-2 shrink-0 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500">
+                    <span className="ml-2 shrink-0 rounded-pill bg-apple-canvas-parchment px-1.5 py-0.5 text-fine-print font-semibold text-apple-ink-muted-48">
                       {badge}
                     </span>
                   )}

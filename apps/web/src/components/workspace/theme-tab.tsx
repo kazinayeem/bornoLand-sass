@@ -63,7 +63,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>;
+    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" /></div>;
   }
 
   return (
@@ -72,7 +72,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
         {/* Template */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h3 className="text-base font-semibold text-zinc-900 mb-4">Template</h3>
+          <h3 className="text-base font-semibold text-apple-ink mb-4">Template</h3>
           <select value={templateId} onChange={(e) => setTemplateId(e.target.value)}
             className="h-10 w-full max-w-xs rounded-xl border border-zinc-200 bg-white px-3 text-sm">
             <option value="">Current template</option>
@@ -85,10 +85,10 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
         {/* Colors */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
           className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h3 className="text-base font-semibold text-zinc-900 mb-4">Colors</h3>
+          <h3 className="text-base font-semibold text-apple-ink mb-4">Colors</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-zinc-600">Primary Color</label>
+              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Primary Color</label>
               <div className="flex items-center gap-2">
                 <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)}
                   className="h-10 w-10 shrink-0 rounded-xl border border-zinc-200 bg-white p-1 cursor-pointer" />
@@ -97,7 +97,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
               </div>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-zinc-600">Secondary Color</label>
+              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Secondary Color</label>
               <div className="flex items-center gap-2">
                 <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)}
                   className="h-10 w-10 shrink-0 rounded-xl border border-zinc-200 bg-white p-1 cursor-pointer" />
@@ -111,10 +111,10 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
         {/* Typography & Layout */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h3 className="text-base font-semibold text-zinc-900 mb-4">Typography & Layout</h3>
+          <h3 className="text-base font-semibold text-apple-ink mb-4">Typography & Layout</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-zinc-600">Font</label>
+              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Font</label>
               <select value={font} onChange={(e) => setFont(e.target.value)}
                 className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
                 {["Inter", "Roboto", "Open Sans", "Poppins", "Playfair Display", "Space Grotesk", "Montserrat"].map((f) => (
@@ -123,7 +123,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-zinc-600">Button Style</label>
+              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Button Style</label>
               <select value={buttonStyle} onChange={(e) => setButtonStyle(e.target.value)}
                 className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
                 <option value="rounded-lg">Rounded</option>
@@ -132,7 +132,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-zinc-600">Layout Width</label>
+              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Layout Width</label>
               <select value={layoutWidth} onChange={(e) => setLayoutWidth(e.target.value)}
                 className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
                 <option value="1000px">Narrow (1000px)</option>
@@ -142,7 +142,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-zinc-600">Navbar Style</label>
+              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Navbar Style</label>
               <select value={navbarStyle} onChange={(e) => setNavbarStyle(e.target.value)}
                 className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
                 <option value="fixed">Fixed</option>
@@ -159,12 +159,12 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
           className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-semibold text-zinc-900">Dark Mode</h3>
-              <p className="text-sm text-zinc-500">Enable dark mode for your storefront.</p>
+              <h3 className="text-base font-semibold text-apple-ink">Dark Mode</h3>
+              <p className="text-sm text-apple-ink-muted-48">Enable dark mode for your storefront.</p>
             </div>
             <button onClick={() => setDarkMode(!darkMode)}
               className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-colors ${
-                darkMode ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600"
+                darkMode ? "bg-zinc-900 text-white" : "bg-zinc-100 text-apple-ink-muted-80"
               }`}>
               {darkMode ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
               {darkMode ? "On" : "Off"}
@@ -176,7 +176,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
       {/* Preview Panel */}
       <div className="lg:sticky lg:top-24 space-y-4">
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-semibold text-zinc-900 mb-4">Preview</h3>
+          <h3 className="text-sm font-semibold text-apple-ink mb-4">Preview</h3>
           <div className="rounded-xl border border-zinc-200 overflow-hidden">
             <div className="h-2" style={{ background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})` }} />
             <div className="p-4 space-y-3">
@@ -189,7 +189,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
               <button className="h-8 w-full text-xs font-semibold text-white" style={{ backgroundColor: primaryColor, borderRadius: buttonStyle === "rounded-full" ? "999px" : buttonStyle === "rounded-none" ? "0" : "8px" }}>
                 Shop Now
               </button>
-              <p className="text-[10px] text-zinc-400" style={{ fontFamily: font }}>Preview with {font} font</p>
+              <p className="text-[10px] text-apple-ink-muted-48" style={{ fontFamily: font }}>Preview with {font} font</p>
             </div>
           </div>
         </div>

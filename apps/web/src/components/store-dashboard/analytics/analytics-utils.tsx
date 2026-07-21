@@ -27,7 +27,7 @@ export function AnalyticsLoading() {
 
 export function AnalyticsEmptyState({ icon: Icon, title, description }: { icon: React.ComponentType<{ className?: string }>; title: string; description?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-zinc-400">
+    <div className="flex flex-col items-center justify-center py-24 text-apple-ink-muted-48">
       <Icon className="mb-3 h-12 w-12" />
       <p className="text-sm font-medium">{title}</p>
       {description && <p className="text-xs">{description}</p>}
@@ -47,9 +47,9 @@ export function AnalyticsStatCard({ label, value, sub, icon: Icon, color, bg, de
           <Icon className="h-4 w-4" />
         </div>
         <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">{label}</p>
-          <p className="text-lg font-bold text-zinc-900">{value}</p>
-          {sub && <p className="text-[10px] text-zinc-400">{sub}</p>}
+          <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">{label}</p>
+          <p className="text-lg font-bold text-apple-ink">{value}</p>
+          {sub && <p className="text-[10px] text-apple-ink-muted-48">{sub}</p>}
         </div>
       </div>
     </motion.div>
@@ -60,7 +60,7 @@ export function AnalyticsChartCard({ title, children, delay = 0, className = "" 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
       className={`rounded-xl border border-zinc-200 bg-white p-5 ${className}`}>
-      <h3 className="mb-3 text-sm font-semibold text-zinc-900">{title}</h3>
+      <h3 className="mb-3 text-sm font-semibold text-apple-ink">{title}</h3>
       {children}
     </motion.div>
   );
@@ -70,8 +70,8 @@ export function AnalyticsProgressBar({ name, value, percentage, color = "bg-blue
   return (
     <div>
       <div className="flex items-center justify-between text-xs">
-        <span className="text-zinc-700">{name}</span>
-        <span className="text-zinc-500">{percentage}%</span>
+        <span className="text-apple-ink-muted-80">{name}</span>
+        <span className="text-apple-ink-muted-48">{percentage}%</span>
       </div>
       <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${percentage}%` }} />

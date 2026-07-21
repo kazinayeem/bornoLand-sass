@@ -77,7 +77,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   paid: { label: "Paid", color: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", icon: CheckCircle2 },
   pending: { label: "Pending", color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", icon: Clock },
   rejected: { label: "Failed", color: "text-red-700", bg: "bg-red-50", border: "border-red-200", icon: XCircle },
-  refunded: { label: "Cancelled", color: "text-zinc-600", bg: "bg-zinc-50", border: "border-zinc-200", icon: AlertTriangle },
+  refunded: { label: "Cancelled", color: "text-apple-ink-muted-80", bg: "bg-apple-canvas-parchment", border: "border-zinc-200", icon: AlertTriangle },
 };
 
 export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | null; token: string }) {
@@ -126,13 +126,13 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
 
   if (!invoice) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-apple-canvas-parchment p-4">
         <div className="w-full max-w-md text-center">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-100">
             <XCircle className="h-10 w-10 text-red-500" />
           </div>
-          <h1 className="text-2xl font-bold text-zinc-900">Invalid Invoice</h1>
-          <p className="mt-2 text-sm text-zinc-500">
+          <h1 className="text-2xl font-bold text-apple-ink">Invalid Invoice</h1>
+          <p className="mt-2 text-sm text-apple-ink-muted-48">
             This invoice verification link is invalid or the invoice does not exist.
           </p>
           <Link
@@ -162,15 +162,15 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
   const verificationUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/invoices/verify/${token}`;
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen bg-apple-canvas-parchment">
       {/* Print-only header */}
       <div className="hidden print:block print:min-h-0 print:bg-white print:p-4">
         <div className="flex items-center justify-between border-b border-zinc-200 pb-2">
           <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-zinc-600" />
-            <span className="text-sm font-semibold text-zinc-900">BornoLand</span>
+            <FileText className="h-5 w-5 text-apple-ink-muted-80" />
+            <span className="text-sm font-semibold text-apple-ink">BornoLand</span>
           </div>
-          <span className="text-xs text-zinc-500">Invoice Verification</span>
+          <span className="text-xs text-apple-ink-muted-48">Invoice Verification</span>
         </div>
       </div>
 
@@ -183,7 +183,7 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
           <h1 className={`text-2xl font-bold ${status.color} print:text-lg`}>
             Invoice {status.label}
           </h1>
-          <p className="mt-1 text-sm text-zinc-500 print:text-xs">
+          <p className="mt-1 text-sm text-apple-ink-muted-48 print:text-xs">
             {invoice.invoiceNumber}
           </p>
         </div>
@@ -195,10 +195,10 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-zinc-400" />
-                  <h2 className="text-lg font-bold text-zinc-900">{invoice.invoiceNumber}</h2>
+                  <FileText className="h-5 w-5 text-apple-ink-muted-48" />
+                  <h2 className="text-lg font-bold text-apple-ink">{invoice.invoiceNumber}</h2>
                 </div>
-                <p className="mt-1 text-sm text-zinc-500">{invoice.companyName || "BornoLand"}</p>
+                <p className="mt-1 text-sm text-apple-ink-muted-48">{invoice.companyName || "BornoLand"}</p>
               </div>
               <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${status.border} ${status.bg} ${status.color}`}>
                 <StatusIcon className="h-3.5 w-3.5" />
@@ -212,33 +212,33 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
             {/* Left Column */}
             <div className="space-y-4 border-b border-zinc-100 p-6 sm:border-b-0 sm:border-r print:p-4">
               <div>
-                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
                   <Store className="h-3.5 w-3.5" />
                   Store
                 </h3>
-                <p className="text-sm font-semibold text-zinc-900">{storeName}</p>
+                <p className="text-sm font-semibold text-apple-ink">{storeName}</p>
                 {storeSlug && (
-                  <p className="text-xs text-zinc-500">{storeSlug}.bornoland.com</p>
+                  <p className="text-xs text-apple-ink-muted-48">{storeSlug}.bornoland.com</p>
                 )}
               </div>
               <div>
-                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
                   <User className="h-3.5 w-3.5" />
                   Customer
                 </h3>
-                <p className="text-sm font-semibold text-zinc-900">{customerName}</p>
-                <p className="text-xs text-zinc-500">{customerEmail}</p>
+                <p className="text-sm font-semibold text-apple-ink">{customerName}</p>
+                <p className="text-xs text-apple-ink-muted-48">{customerEmail}</p>
               </div>
               <div>
-                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
                   <CreditCard className="h-3.5 w-3.5" />
                   Payment
                 </h3>
-                <p className="text-sm font-semibold text-zinc-900">
+                <p className="text-sm font-semibold text-apple-ink">
                   {invoice.gateway ? invoice.gateway.charAt(0).toUpperCase() + invoice.gateway.slice(1) : "—"}
                 </p>
                 {invoice.transactionId && (
-                  <p className="font-mono text-xs text-zinc-500">{invoice.transactionId}</p>
+                  <p className="font-mono text-xs text-apple-ink-muted-48">{invoice.transactionId}</p>
                 )}
               </div>
             </div>
@@ -246,42 +246,42 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
             {/* Right Column */}
             <div className="space-y-4 p-6 print:p-4">
               <div>
-                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
                   <FileText className="h-3.5 w-3.5" />
                   Plan
                 </h3>
-                <p className="text-sm font-semibold text-zinc-900">{planName}</p>
-                <p className="text-xs text-zinc-500 capitalize">{invoice.duration?.replace("_", " ")}</p>
+                <p className="text-sm font-semibold text-apple-ink">{planName}</p>
+                <p className="text-xs text-apple-ink-muted-48 capitalize">{invoice.duration?.replace("_", " ")}</p>
               </div>
               <div>
-                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
                   <Calendar className="h-3.5 w-3.5" />
                   Dates
                 </h3>
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs">
-                    <span className="text-zinc-500">Issued</span>
-                    <span className="font-medium text-zinc-900">{formatDate(invoice.issuedAt)}</span>
+                    <span className="text-apple-ink-muted-48">Issued</span>
+                    <span className="font-medium text-apple-ink">{formatDate(invoice.issuedAt)}</span>
                   </div>
                   {invoice.paidAt && (
                     <div className="flex justify-between text-xs">
-                      <span className="text-zinc-500">Paid</span>
-                      <span className="font-medium text-zinc-900">{formatDate(invoice.paidAt)}</span>
+                      <span className="text-apple-ink-muted-48">Paid</span>
+                      <span className="font-medium text-apple-ink">{formatDate(invoice.paidAt)}</span>
                     </div>
                   )}
                   {invoice.billingPeriodEnd && (
                     <div className="flex justify-between text-xs">
-                      <span className="text-zinc-500">Renewal</span>
-                      <span className="font-medium text-zinc-900">{formatDate(invoice.billingPeriodEnd)}</span>
+                      <span className="text-apple-ink-muted-48">Renewal</span>
+                      <span className="font-medium text-apple-ink">{formatDate(invoice.billingPeriodEnd)}</span>
                     </div>
                   )}
                 </div>
               </div>
               <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
                   Approved By
                 </h3>
-                <p className="text-sm font-medium text-zinc-900">{approvedByName}</p>
+                <p className="text-sm font-medium text-apple-ink">{approvedByName}</p>
               </div>
             </div>
           </div>
@@ -290,8 +290,8 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
           <div className="px-6 py-5 print:px-4 print:py-3">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Subtotal</span>
-                <span className="text-zinc-900">{formatBDT(invoice.subtotal)}</span>
+                <span className="text-apple-ink-muted-48">Subtotal</span>
+                <span className="text-apple-ink">{formatBDT(invoice.subtotal)}</span>
               </div>
               {invoice.discount > 0 && (
                 <div className="flex justify-between text-sm">
@@ -301,28 +301,28 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
               )}
               {invoice.vatAmount > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-zinc-500">VAT</span>
-                  <span className="text-zinc-900">{formatBDT(invoice.vatAmount)}</span>
+                  <span className="text-apple-ink-muted-48">VAT</span>
+                  <span className="text-apple-ink">{formatBDT(invoice.vatAmount)}</span>
                 </div>
               )}
               {invoice.taxAmount > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-zinc-500">Tax</span>
-                  <span className="text-zinc-900">{formatBDT(invoice.taxAmount)}</span>
+                  <span className="text-apple-ink-muted-48">Tax</span>
+                  <span className="text-apple-ink">{formatBDT(invoice.taxAmount)}</span>
                 </div>
               )}
               <div className="flex justify-between border-t border-zinc-200 pt-2 text-base font-bold">
-                <span className="text-zinc-900">Total</span>
-                <span className="text-zinc-900">{formatBDT(invoice.total)}</span>
+                <span className="text-apple-ink">Total</span>
+                <span className="text-apple-ink">{formatBDT(invoice.total)}</span>
               </div>
               {invoice.paidAt && (
                 <>
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-500">Paid</span>
+                    <span className="text-apple-ink-muted-48">Paid</span>
                     <span className="font-medium text-emerald-600">{formatBDT(invoice.total)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-500">Remaining</span>
+                    <span className="text-apple-ink-muted-48">Remaining</span>
                     <span className="font-bold text-emerald-600">{formatBDT(0)}</span>
                   </div>
                 </>
@@ -335,28 +335,28 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleDownload}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-50"
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment"
               >
                 <Download className="h-4 w-4" />
                 Download PDF
               </button>
               <button
                 onClick={handlePrint}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-50"
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment"
               >
                 <Printer className="h-4 w-4" />
                 Print
               </button>
               <button
                 onClick={() => copyToClipboard(invoice.invoiceNumber, "Invoice ID")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-50"
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment"
               >
                 <Copy className="h-4 w-4" />
                 {copied === "Invoice ID" ? "Copied!" : "Copy Invoice ID"}
               </button>
               <button
                 onClick={() => copyToClipboard(verificationUrl, "Verification Link")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-50"
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment"
               >
                 <ExternalLink className="h-4 w-4" />
                 {copied === "Verification Link" ? "Copied!" : "Copy Link"}
@@ -366,7 +366,7 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-center text-xs text-zinc-400 print:mt-4">
+        <div className="mt-8 text-center text-xs text-apple-ink-muted-48 print:mt-4">
           <p>Powered by BornoLand · bornoland.com · support@bornoland.com</p>
           <p className="mt-1">
             Generated on {formatDate(new Date().toISOString())}

@@ -38,7 +38,7 @@ export function FooterLinks({ section }: { section: SectionData }) {
                 <li key={link.text}>
                   <BuilderLink
                     href={link.url}
-                    className="text-sm transition-colors hover:text-zinc-900"
+                    className="text-sm transition-colors hover:text-apple-ink"
                     style={{ color: linkColor }}
                   >
                     {link.text}

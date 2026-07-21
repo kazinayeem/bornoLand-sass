@@ -156,13 +156,13 @@ export function DeleteStoreModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
-            className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-[0_32px_120px_-24px_rgba(0,0,0,0.45)]"
+            className="relative w-full max-w-lg overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas"
           >
             {/* Close button */}
             {phase !== "progress" && phase !== "done" && (
               <button
                 onClick={onClose}
-                className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+                className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -185,8 +185,8 @@ export function DeleteStoreModal({
                       <Trash2 className="h-7 w-7 text-red-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-xl font-bold text-zinc-900">Delete Store?</h2>
-                      <p className="mt-1 text-sm text-zinc-500 leading-relaxed">
+                      <h2 className="text-xl font-bold text-apple-ink">Delete Store?</h2>
+                      <p className="mt-1 text-sm text-apple-ink-muted-48 leading-relaxed">
                         You are about to permanently delete{" "}
                         <span className="font-semibold text-zinc-800">{storeName}</span>.
                         This action cannot be undone.
@@ -232,7 +232,7 @@ export function DeleteStoreModal({
                     <button
                       type="button"
                       onClick={onClose}
-                      className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+                      className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
                     >
                       Cancel
                     </button>
@@ -264,18 +264,18 @@ export function DeleteStoreModal({
                       <AlertTriangle className="h-7 w-7 text-red-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-xl font-bold text-zinc-900">Confirm Deletion</h2>
-                      <p className="mt-1 text-sm text-zinc-500">
+                      <h2 className="text-xl font-bold text-apple-ink">Confirm Deletion</h2>
+                      <p className="mt-1 text-sm text-apple-ink-muted-48">
                         Type the store name to confirm. This is your last chance to cancel.
                       </p>
                     </div>
                   </div>
 
                   {/* Store summary card */}
-                  <div className="mt-5 flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                  <div className="mt-5 flex items-center justify-between rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-4 py-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-zinc-900">{store.name}</p>
-                      <p className="text-xs text-zinc-500">{store.subdomain || store.slug}</p>
+                      <p className="truncate text-sm font-semibold text-apple-ink">{store.name}</p>
+                      <p className="text-xs text-apple-ink-muted-48">{store.subdomain || store.slug}</p>
                     </div>
                     <div className="shrink-0 rounded-md bg-red-100 px-2.5 py-1">
                       <span className="text-[11px] font-bold tracking-wider text-red-700">PERMANENT</span>
@@ -284,7 +284,7 @@ export function DeleteStoreModal({
 
                   {/* Type field */}
                   <div className="mt-5">
-                    <label className="block text-sm font-medium text-zinc-700">
+                    <label className="block text-sm font-medium text-apple-ink-muted-80">
                       Type{" "}
                       <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-sm font-bold text-red-600">
                         {storeName}
@@ -304,10 +304,10 @@ export function DeleteStoreModal({
                         spellCheck={false}
                         className={`h-12 w-full rounded-xl border px-4 text-sm transition-all focus:outline-none focus:ring-2 ${
                           typedText.length > 0 && isMatch
-                            ? "border-red-400 bg-red-50/50 text-zinc-900 focus:border-red-500 focus:ring-red-500/20"
+                            ? "border-red-400 bg-red-50/50 text-apple-ink focus:border-red-500 focus:ring-red-500/20"
                             : typedText.length > 0
-                            ? "border-zinc-300 bg-white text-zinc-900 focus:border-zinc-400 focus:ring-zinc-500/10"
-                            : "border-zinc-200 bg-white text-zinc-900 placeholder:text-zinc-300 focus:border-zinc-400 focus:ring-zinc-500/10"
+                            ? "border-zinc-300 bg-white text-apple-ink focus:border-zinc-400 focus:ring-zinc-500/10"
+                            : "border-zinc-200 bg-white text-apple-ink placeholder:text-zinc-300 focus:border-zinc-400 focus:ring-zinc-500/10"
                         }`}
                       />
                       {isMatch && (
@@ -321,9 +321,9 @@ export function DeleteStoreModal({
                       )}
                     </div>
                     {typedText.length > 0 && !isMatch && (
-                      <p className="mt-1.5 text-xs text-zinc-400">
+                      <p className="mt-1.5 text-xs text-apple-ink-muted-48">
                         Name doesn&apos;t match. Expected:{" "}
-                        <span className="font-mono font-semibold text-zinc-600">{storeName}</span>
+                        <span className="font-mono font-semibold text-apple-ink-muted-80">{storeName}</span>
                       </p>
                     )}
                   </div>
@@ -333,7 +333,7 @@ export function DeleteStoreModal({
                     <button
                       type="button"
                       onClick={() => setPhase("warning")}
-                      className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+                      className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
                     >
                       ← Back
                     </button>
@@ -392,13 +392,13 @@ export function DeleteStoreModal({
                       <Trash2 className="h-6 w-6 text-red-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-bold text-zinc-900">Deleting Store…</h3>
-                      <p className="text-sm text-zinc-500">
+                      <h3 className="text-base font-bold text-apple-ink">Deleting Store…</h3>
+                      <p className="text-sm text-apple-ink-muted-48">
                         Please wait. Do not close this window.
                       </p>
                     </div>
                     {/* Step counter */}
-                    <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-500">
+                    <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-apple-ink-muted-48">
                       {Math.min(completedSteps.length + 1, PROGRESS_STEPS.length)}/{PROGRESS_STEPS.length}
                     </span>
                   </div>
@@ -415,7 +415,7 @@ export function DeleteStoreModal({
                         transition={{ ease: "easeOut", duration: 0.3 }}
                       />
                     </div>
-                    <p className="mt-1.5 text-right text-[11px] font-medium text-zinc-400">
+                    <p className="mt-1.5 text-right text-[11px] font-medium text-apple-ink-muted-48">
                       {Math.round((completedSteps.length / PROGRESS_STEPS.length) * 100)}% complete
                     </p>
                   </div>
@@ -436,7 +436,7 @@ export function DeleteStoreModal({
                               ? "bg-emerald-50/80 text-emerald-700"
                               : active
                               ? "bg-red-50 text-red-700 ring-1 ring-red-100"
-                              : "text-zinc-400"
+                              : "text-apple-ink-muted-48"
                           }`}
                         >
                           <span className="flex h-5 w-5 shrink-0 items-center justify-center">
@@ -500,8 +500,8 @@ export function DeleteStoreModal({
                     <CheckCircle2 className="h-10 w-10 text-emerald-500" />
                   </motion.div>
                   <div>
-                    <h3 className="text-xl font-bold text-zinc-900">Store Deleted</h3>
-                    <p className="mt-1 text-sm text-zinc-500">
+                    <h3 className="text-xl font-bold text-apple-ink">Store Deleted</h3>
+                    <p className="mt-1 text-sm text-apple-ink-muted-48">
                       <span className="font-semibold">{storeName}</span> has been permanently removed.
                     </p>
                   </div>

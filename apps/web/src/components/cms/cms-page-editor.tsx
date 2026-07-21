@@ -12,7 +12,7 @@ import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-
 import { revalidateStorefrontAction } from "@/lib/actions/revalidate-storefront";
 
 const RichTextEditor = dynamic(() => import("@/components/cms/rich-text-editor"), {
-  loading: () => <div className="min-h-[240px] rounded-xl border border-zinc-200 bg-zinc-50" />,
+  loading: () => <div className="min-h-[240px] rounded-xl border border-zinc-200 bg-apple-canvas-parchment" />,
 });
 
 const pageMeta: Record<string, { label: string; icon: typeof HelpCircle; description: string }> = {
@@ -64,7 +64,7 @@ export function CmsPageEditor() {
   if (!mounted || storeLoading) {
     return (
       <div className="flex justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
       </div>
     );
   }
@@ -106,8 +106,8 @@ export function CmsPageEditor() {
               <Icon className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-zinc-900">{meta.label}</h2>
-              <p className="text-sm text-zinc-500">{meta.description}</p>
+              <h2 className="text-2xl font-bold tracking-tight text-apple-ink">{meta.label}</h2>
+              <p className="text-sm text-apple-ink-muted-48">{meta.description}</p>
             </div>
             <span className="rounded-lg bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-600">
               {store.shortName || store.name}
@@ -126,7 +126,7 @@ export function CmsPageEditor() {
         {pageLoading ? (
           <div className="space-y-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-40 animate-pulse rounded-2xl border border-zinc-200 bg-zinc-50" />
+              <div key={i} className="h-40 animate-pulse rounded-2xl border border-zinc-200 bg-apple-canvas-parchment" />
             ))}
           </div>
         ) : (
@@ -137,17 +137,17 @@ export function CmsPageEditor() {
               className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-5"
             >
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-700">Page Title</label>
+                <label className="text-sm font-medium text-apple-ink-muted-80">Page Title</label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-900 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-apple-ink outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                   placeholder="Enter page title"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-700">Content</label>
+                <label className="text-sm font-medium text-apple-ink-muted-80">Content</label>
                 <RichTextEditor
                   key={slug}
                   content={htmlContent}
@@ -168,7 +168,7 @@ export function CmsPageEditor() {
                 className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
                   published
                     ? "bg-green-100 text-green-700 hover:bg-green-200"
-                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                    : "bg-zinc-100 text-apple-ink-muted-80 hover:bg-zinc-200"
                 }`}
               >
                 {published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
@@ -184,33 +184,33 @@ export function CmsPageEditor() {
             >
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-zinc-700">SEO Title</label>
+                  <label className="text-sm font-medium text-apple-ink-muted-80">SEO Title</label>
                   <input
                     type="text"
                     value={seoTitle}
                     onChange={(e) => setSeoTitle(e.target.value)}
-                    className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-900 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-apple-ink outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                     placeholder={title}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-zinc-700">OG Image URL</label>
+                  <label className="text-sm font-medium text-apple-ink-muted-80">OG Image URL</label>
                   <input
                     type="text"
                     value={ogImage}
                     onChange={(e) => setOgImage(e.target.value)}
-                    className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-zinc-900 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-4 text-sm text-apple-ink outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                     placeholder="https://..."
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-700">Meta Description</label>
+                <label className="text-sm font-medium text-apple-ink-muted-80">Meta Description</label>
                 <textarea
                   value={seoDescription}
                   onChange={(e) => setSeoDescription(e.target.value)}
                   rows={3}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-apple-ink outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                   placeholder="Brief description for search results..."
                 />
               </div>

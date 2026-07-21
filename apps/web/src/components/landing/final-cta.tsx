@@ -31,14 +31,14 @@ export function FinalCTA() {
             <h2 className="font-[family-name:var(--font-space-grotesk)] text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
               Start Your Online Business Today
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-zinc-400">
+            <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-apple-ink-muted-48">
               Launch your store in minutes and grow your business with BornoLand. No coding, no hassle, no hidden fees.
             </p>
 
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-zinc-900 shadow-lg transition-all hover:shadow-xl hover:brightness-105"
+                className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-apple-ink shadow-lg transition-all hover:shadow-xl hover:brightness-105"
               >
                 Create Free Store
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -59,7 +59,7 @@ export function FinalCTA() {
                     <m.icon className="h-4 w-4 text-blue-400" />
                   </div>
                   <p className="font-[family-name:var(--font-space-grotesk)] text-lg font-bold text-white">{m.value}</p>
-                  <p className="text-xs text-zinc-500">{m.label}</p>
+                  <p className="text-xs text-apple-ink-muted-48">{m.label}</p>
                 </div>
               ))}
             </div>

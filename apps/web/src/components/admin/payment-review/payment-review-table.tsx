@@ -99,8 +99,8 @@ function PaymentDetailModal({
       >
         <div className="border-b border-zinc-100 px-6 py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-900">Payment Review</h2>
-            <p className="text-sm text-zinc-500">{payment.transactionId}</p>
+            <h2 className="text-lg font-semibold text-apple-ink">Payment Review</h2>
+            <p className="text-sm text-apple-ink-muted-48">{payment.transactionId}</p>
           </div>
           <Badge variant={STATUS_BADGE[payment.status]}>{payment.status.replace("_", " ")}</Badge>
         </div>
@@ -108,55 +108,55 @@ function PaymentDetailModal({
         <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Store</p>
-              <p className="text-sm font-medium text-zinc-900">{storeName}</p>
-              {storeSlug && <p className="text-xs text-zinc-500">/{storeSlug}</p>}
+              <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Store</p>
+              <p className="text-sm font-medium text-apple-ink">{storeName}</p>
+              {storeSlug && <p className="text-xs text-apple-ink-muted-48">/{storeSlug}</p>}
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Owner</p>
-              <p className="text-sm font-medium text-zinc-900">{userName}</p>
-              <p className="text-xs text-zinc-500">{userEmail}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Owner</p>
+              <p className="text-sm font-medium text-apple-ink">{userName}</p>
+              <p className="text-xs text-apple-ink-muted-48">{userEmail}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Plan</p>
-              <p className="text-sm font-medium text-zinc-900">{planName}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Plan</p>
+              <p className="text-sm font-medium text-apple-ink">{planName}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Duration</p>
-              <p className="text-sm font-medium text-zinc-900 capitalize">{payment.duration?.replace("_", " ") || "—"}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Duration</p>
+              <p className="text-sm font-medium text-apple-ink capitalize">{payment.duration?.replace("_", " ") || "—"}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Amount</p>
-              <p className="text-lg font-bold text-zinc-900">{formatBDT(payment.amount)}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Amount</p>
+              <p className="text-lg font-bold text-apple-ink">{formatBDT(payment.amount)}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Gateway</p>
-              <p className="text-sm font-medium text-zinc-900">{METHOD_LABELS[payment.paymentMethod] || payment.paymentMethod}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Gateway</p>
+              <p className="text-sm font-medium text-apple-ink">{METHOD_LABELS[payment.paymentMethod] || payment.paymentMethod}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Sender Number</p>
-              <p className="text-sm font-medium text-zinc-900">{payment.senderNumber}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Sender Number</p>
+              <p className="text-sm font-medium text-apple-ink">{payment.senderNumber}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Transaction ID</p>
-              <p className="text-sm font-mono font-medium text-zinc-900">{payment.transactionId}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Transaction ID</p>
+              <p className="text-sm font-mono font-medium text-apple-ink">{payment.transactionId}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Submitted</p>
-              <p className="text-sm text-zinc-900">{formatDate(payment.createdAt)}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Submitted</p>
+              <p className="text-sm text-apple-ink">{formatDate(payment.createdAt)}</p>
             </div>
             {payment.approvedAt && (
               <div className="space-y-1">
-                <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Reviewed</p>
-                <p className="text-sm text-zinc-900">{formatDate(payment.approvedAt)}</p>
+                <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Reviewed</p>
+                <p className="text-sm text-apple-ink">{formatDate(payment.approvedAt)}</p>
               </div>
             )}
           </div>
 
           {payment.screenshotUrl && (
             <div className="space-y-2">
-              <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Payment Screenshot</p>
-              <div className="rounded-xl border border-zinc-200 overflow-hidden bg-zinc-50">
+              <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Payment Screenshot</p>
+              <div className="rounded-xl border border-zinc-200 overflow-hidden bg-apple-canvas-parchment">
                 <img
                   src={payment.screenshotUrl}
                   alt="Payment screenshot"
@@ -168,8 +168,8 @@ function PaymentDetailModal({
 
           {payment.notes && (
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Reference Note</p>
-              <p className="text-sm text-zinc-700 bg-zinc-50 rounded-lg p-3 border border-zinc-100">{payment.notes}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Reference Note</p>
+              <p className="text-sm text-apple-ink-muted-80 bg-apple-canvas-parchment rounded-lg p-3 border border-zinc-100">{payment.notes}</p>
             </div>
           )}
 
@@ -189,7 +189,7 @@ function PaymentDetailModal({
 
           {showRejectInput && (
             <div className="space-y-2">
-              <label className="text-xs font-medium uppercase tracking-wider text-zinc-400">Reason for rejection</label>
+              <label className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Reason for rejection</label>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
@@ -200,7 +200,7 @@ function PaymentDetailModal({
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => { setShowRejectInput(false); setRejectReason(""); }}
-                  className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600"
+                  className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80"
                 >
                   Cancel
                 </button>
@@ -219,7 +219,7 @@ function PaymentDetailModal({
 
           {showInfoInput && (
             <div className="space-y-2">
-              <label className="text-xs font-medium uppercase tracking-wider text-zinc-400">Message to user</label>
+              <label className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Message to user</label>
               <textarea
                 value={infoMessage}
                 onChange={(e) => setInfoMessage(e.target.value)}
@@ -230,7 +230,7 @@ function PaymentDetailModal({
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => { setShowInfoInput(false); setInfoMessage(""); }}
-                  className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600"
+                  className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80"
                 >
                   Cancel
                 </button>
@@ -278,7 +278,7 @@ function PaymentDetailModal({
           <div className="border-t border-zinc-100 px-6 py-4 flex justify-end">
             <button
               onClick={onClose}
-              className="rounded-xl bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-700"
+              className="rounded-xl bg-zinc-100 px-4 py-2 text-sm font-medium text-apple-ink-muted-80"
             >
               Close
             </button>
@@ -343,7 +343,7 @@ export function PaymentReviewTable() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-ink-muted-48" />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -363,7 +363,7 @@ export function PaymentReviewTable() {
           </select>
           <button
             onClick={() => refetch()}
-            className="h-10 px-3 rounded-xl border border-zinc-200 text-zinc-600 hover:bg-zinc-50 text-sm"
+            className="h-10 px-3 rounded-xl border border-zinc-200 text-apple-ink-muted-80 hover:bg-apple-canvas-parchment text-sm"
           >
             <Loader2 className="h-4 w-4" />
           </button>
@@ -372,13 +372,13 @@ export function PaymentReviewTable() {
 
       {isLoading ? (
         <div className="flex justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center">
           <CheckCircle2 className="mx-auto h-10 w-10 text-zinc-300" />
-          <h3 className="mt-3 text-lg font-semibold text-zinc-900">No payments to review</h3>
-          <p className="mt-1 text-sm text-zinc-500">
+          <h3 className="mt-3 text-lg font-semibold text-apple-ink">No payments to review</h3>
+          <p className="mt-1 text-sm text-apple-ink-muted-48">
             {searchQuery || statusFilter ? "Try adjusting your filters." : "All caught up! New payments will appear here."}
           </p>
         </div>
@@ -386,16 +386,16 @@ export function PaymentReviewTable() {
         <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-100 bg-zinc-50/50">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Transaction</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Store</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Owner</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Plan</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Gateway</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Submitted</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">Actions</th>
+              <tr className="border-b border-zinc-100 bg-apple-canvas-parchment/50">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Transaction</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Store</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Owner</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Plan</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Gateway</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Submitted</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -409,26 +409,26 @@ export function PaymentReviewTable() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.02 }}
-                    className="hover:bg-zinc-50/50 cursor-pointer transition-colors"
+                    className="hover:bg-apple-canvas-parchment/50 cursor-pointer transition-colors"
                     onClick={() => setSelectedPayment(payment)}
                   >
                     <td className="px-4 py-3">
-                      <p className="font-mono text-xs font-medium text-zinc-900">{payment.transactionId}</p>
-                      <p className="text-xs text-zinc-400">{payment.senderNumber}</p>
+                      <p className="font-mono text-xs font-medium text-apple-ink">{payment.transactionId}</p>
+                      <p className="text-xs text-apple-ink-muted-48">{payment.senderNumber}</p>
                     </td>
-                    <td className="px-4 py-3 text-sm font-medium text-zinc-900">{storeName}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-apple-ink">{storeName}</td>
                     <td className="px-4 py-3">
-                      <p className="text-sm text-zinc-900">{userName}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-sm text-zinc-900">{planName}</p>
-                      <p className="text-xs text-zinc-400 capitalize">{payment.duration?.replace("_", " ")}</p>
+                      <p className="text-sm text-apple-ink">{userName}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-sm font-semibold text-zinc-900">{formatBDT(payment.amount)}</p>
+                      <p className="text-sm text-apple-ink">{planName}</p>
+                      <p className="text-xs text-apple-ink-muted-48 capitalize">{payment.duration?.replace("_", " ")}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant="default" className="bg-zinc-100 text-zinc-700 border-0">
+                      <p className="text-sm font-semibold text-apple-ink">{formatBDT(payment.amount)}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant="default" className="bg-zinc-100 text-apple-ink-muted-80 border-0">
                         {METHOD_LABELS[payment.paymentMethod] || payment.paymentMethod}
                       </Badge>
                     </td>
@@ -437,13 +437,13 @@ export function PaymentReviewTable() {
                         {payment.status.replace("_", " ")}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-xs text-zinc-500">
+                    <td className="px-4 py-3 text-xs text-apple-ink-muted-48">
                       {formatDate(payment.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={(e) => { e.stopPropagation(); setSelectedPayment(payment); }}
-                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
                       >
                         <Eye className="h-3.5 w-3.5" />
                         Review

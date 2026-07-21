@@ -12,10 +12,10 @@ function Section({ label, children, defaultOpen = true }: { label: string; child
     <div className="border-b border-zinc-100 pb-3 last:border-b-0">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-4 py-2.5 text-xs font-semibold text-zinc-700 hover:text-zinc-900"
+        className="flex w-full items-center justify-between px-4 py-2.5 text-xs font-semibold text-apple-ink-muted-80 hover:text-apple-ink"
       >
         {label}
-        <ChevronDown className={`h-3 w-3 text-zinc-400 transition-transform ${open ? "rotate-0" : "-rotate-90"}`} />
+        <ChevronDown className={`h-3 w-3 text-apple-ink-muted-48 transition-transform ${open ? "rotate-0" : "-rotate-90"}`} />
       </button>
       {open && <div className="space-y-3 px-4 pb-2">{children}</div>}
     </div>
@@ -25,7 +25,7 @@ function Section({ label, children, defaultOpen = true }: { label: string; child
 function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[11px] text-zinc-600">{label}</span>
+      <span className="text-[11px] text-apple-ink-muted-80">{label}</span>
       <button
         onClick={() => onChange(!value)}
         className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${value ? "bg-zinc-900" : "bg-zinc-200"}`}
@@ -39,11 +39,11 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: bool
 function SelectInput({ value, onChange, options, label }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; label: string }) {
   return (
     <div>
-      <label className="mb-1 block text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{label}</label>
+      <label className="mb-1 block text-[10px] font-medium text-apple-ink-muted-48 uppercase tracking-wider">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none"
+        className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 focus:border-zinc-400 focus:outline-none"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -56,13 +56,13 @@ function SelectInput({ value, onChange, options, label }: { value: string; onCha
 function TextInput({ value, onChange, label, placeholder }: { value: string; onChange: (v: string) => void; label: string; placeholder?: string }) {
   return (
     <div>
-      <label className="mb-1 block text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{label}</label>
+      <label className="mb-1 block text-[10px] font-medium text-apple-ink-muted-48 uppercase tracking-wider">{label}</label>
       <input
         type="text"
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none"
+        className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none"
       />
     </div>
   );
@@ -71,7 +71,7 @@ function TextInput({ value, onChange, label, placeholder }: { value: string; onC
 function ColorInput({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
   return (
     <div>
-      <label className="mb-1 block text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{label}</label>
+      <label className="mb-1 block text-[10px] font-medium text-apple-ink-muted-48 uppercase tracking-wider">{label}</label>
       <div className="flex items-center gap-2">
         <input
           type="color"
@@ -84,7 +84,7 @@ function ColorInput({ value, onChange, label }: { value: string; onChange: (v: s
           value={value || ""}
           onChange={(e) => onChange(e.target.value)}
           placeholder="#000000"
-          className="h-7 flex-1 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none"
+          className="h-7 flex-1 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none"
         />
       </div>
     </div>
@@ -103,8 +103,8 @@ export function FooterBuilderSettings() {
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
         <div>
-          <h3 className="text-xs font-semibold text-zinc-900">Footer Settings</h3>
-          <p className="text-[10px] text-zinc-400">Configure global footer appearance</p>
+          <h3 className="text-xs font-semibold text-apple-ink">Footer Settings</h3>
+          <p className="text-[10px] text-apple-ink-muted-48">Configure global footer appearance</p>
         </div>
       </div>
 
@@ -180,8 +180,8 @@ export function FooterBuilderSettings() {
       </div>
 
       {/* Preview */}
-      <div className="border-t border-zinc-100 bg-zinc-50 p-4">
-        <p className="mb-2 text-[10px] font-medium text-zinc-500 uppercase tracking-wider">Preview</p>
+      <div className="border-t border-zinc-100 bg-apple-canvas-parchment p-4">
+        <p className="mb-2 text-[10px] font-medium text-apple-ink-muted-48 uppercase tracking-wider">Preview</p>
         <div
           className="rounded-lg border border-zinc-200 p-4 text-[10px]"
           style={{

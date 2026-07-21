@@ -27,7 +27,7 @@ export function MediaFolderNav({
             className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-colors ${
               activeFolder === item.id
                 ? "bg-zinc-900 text-white"
-                : "border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                : "border border-zinc-200 bg-white text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
             }`}
           >
             <span>{item.icon}</span>
@@ -40,7 +40,7 @@ export function MediaFolderNav({
 
   return (
     <nav className="space-y-1">
-      <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Folders</p>
+      <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Folders</p>
       {items.map((item) => (
         <button
           key={item.id ?? "all"}
@@ -49,7 +49,7 @@ export function MediaFolderNav({
           className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors ${
             activeFolder === item.id
               ? "bg-zinc-900 font-medium text-white"
-              : "text-zinc-700 hover:bg-zinc-100"
+              : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
           }`}
         >
           <span className="text-base leading-none">{item.icon}</span>

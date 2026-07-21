@@ -63,9 +63,9 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
             <div className="flex items-center justify-between border-b border-zinc-100 p-4">
               <div className="flex items-center gap-2">
                 <ShoppingBag className="h-5 w-5" style={{ color: primaryColor }} />
-                <span className="font-semibold text-zinc-900">Cart ({itemCount})</span>
+                <span className="font-semibold text-apple-ink">Cart ({itemCount})</span>
               </div>
-              <button onClick={() => dispatch(closeCart())} aria-label="Close cart" className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100">
+              <button onClick={() => dispatch(closeCart())} aria-label="Close cart" className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -73,7 +73,7 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
             {items.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8">
                 <ShoppingBag className="h-12 w-12 text-zinc-200" />
-                <p className="text-sm text-zinc-400">Your cart is empty</p>
+                <p className="text-sm text-apple-ink-muted-48">Your cart is empty</p>
                 <button onClick={handleContinueShopping}
                   className="rounded-xl bg-zinc-900 px-4 py-2 text-xs font-medium text-white">
                   Continue Shopping
@@ -85,14 +85,14 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                   <div className="space-y-3">
                     {items.map((item) => (
                       <div key={`${item.productId}-${item.variantId ?? ""}`} className="flex gap-3 rounded-xl border border-zinc-100 p-3">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-zinc-50">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-apple-canvas-parchment">
                           <ShoppingBag className="h-6 w-6" style={{ color: `${primaryColor}30` }} />
                         </div>
                         <div className="flex flex-1 flex-col justify-between">
                           <div className="flex justify-between">
                             <div>
-                              <p className="text-sm font-medium text-zinc-900 truncate max-w-[180px]">{item.name}</p>
-                              {item.variantTitle && <p className="text-xs text-zinc-500">{item.variantTitle}</p>}
+                              <p className="text-sm font-medium text-apple-ink truncate max-w-[180px]">{item.name}</p>
+                              {item.variantTitle && <p className="text-xs text-apple-ink-muted-48">{item.variantTitle}</p>}
                             </div>
                             <button onClick={() => handleRemove(item.productId, item.variantId)} aria-label={`Remove ${item.name}`} className="text-zinc-300 hover:text-red-400">
                               <Trash2 className="h-3.5 w-3.5" />
@@ -104,13 +104,13 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                           <div className="flex items-center gap-2">
                             <button onClick={() => handleQuantity(item.productId, item.variantId, item.quantity - 1)}
                               aria-label="Decrease quantity"
-                              className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-200 text-zinc-500 hover:bg-zinc-50">
+                              className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                               <Minus className="h-3 w-3" />
                             </button>
-                            <span className="w-6 text-center text-xs font-medium text-zinc-700">{item.quantity}</span>
+                            <span className="w-6 text-center text-xs font-medium text-apple-ink-muted-80">{item.quantity}</span>
                             <button onClick={() => handleQuantity(item.productId, item.variantId, item.quantity + 1)}
                               aria-label="Increase quantity"
-                              className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-200 text-zinc-500 hover:bg-zinc-50">
+                              className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                               <Plus className="h-3 w-3" />
                             </button>
                           </div>
@@ -122,8 +122,8 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
 
                 <div className="border-t border-zinc-100 p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <span className="text-sm text-zinc-500">Subtotal</span>
-                    <span className="text-lg font-bold text-zinc-900">{formatCurrency(subtotal, settings)}</span>
+                    <span className="text-sm text-apple-ink-muted-48">Subtotal</span>
+                    <span className="text-lg font-bold text-apple-ink">{formatCurrency(subtotal, settings)}</span>
                   </div>
                   <button onClick={handleViewCart}
                     className="flex w-full items-center justify-center gap-2 py-2.5 text-sm font-medium text-white transition-all hover:opacity-90"

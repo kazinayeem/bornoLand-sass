@@ -98,8 +98,8 @@ export function MediaLibraryToolbar({
       {showTitle && !compact && (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">{title}</h2>
-            <p className="mt-1 text-sm text-zinc-500">
+            <h2 className="text-2xl font-semibold tracking-tight text-apple-ink">{title}</h2>
+            <p className="mt-1 text-sm text-apple-ink-muted-48">
               {totalCount != null ? `${totalCount} files` : "All your store files in one place"}
             </p>
           </div>
@@ -107,28 +107,28 @@ export function MediaLibraryToolbar({
         </div>
       )}
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200/80 bg-white p-3 shadow-sm sm:p-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-apple-hairline bg-apple-canvas p-3 sm:p-4">
         {!showTitle && stats && !compact && (
           <StorageUsageBar stats={stats} billingHref={billingHref} compact />
         )}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
             <input
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search filename, extension, mime type…"
-              className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-9 pr-3 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-apple-canvas-parchment/50 pl-9 pr-3 text-sm outline-none transition focus:border-blue-300 focus:bg-apple-canvas focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
             <div className="relative flex-1 sm:flex-initial min-w-[120px]">
-              <SlidersHorizontal className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+              <SlidersHorizontal className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-apple-ink-muted-48" />
               <select
                 value={fileFilter}
                 onChange={(e) => onFilterChange(e.target.value as MediaFileFilter)}
-                className="h-10 w-full appearance-none rounded-xl border border-zinc-200 bg-white pl-9 pr-8 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                className="h-10 w-full appearance-none rounded-xl border border-apple-hairline bg-apple-canvas pl-9 pr-8 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
               >
                 {MEDIA_FILTER_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -141,7 +141,7 @@ export function MediaLibraryToolbar({
             <select
               value={sortOption}
               onChange={(e) => onSortChange(e.target.value as MediaSortOption)}
-              className="h-10 flex-1 sm:flex-initial rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              className="h-10 flex-1 sm:flex-initial rounded-xl border border-apple-hairline bg-apple-canvas px-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
             >
               {MEDIA_SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -157,9 +157,9 @@ export function MediaLibraryToolbar({
                   onClick={uploadDisabled ? undefined : onUploadClick}
                   disabled={uploadDisabled}
                   title={uploadDisabledReason}
-                  className={`inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold shadow-sm transition ${
+                  className={`inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold transition ${
                     uploadDisabled
-                      ? "cursor-not-allowed bg-zinc-300 text-zinc-500"
+                      ? "cursor-not-allowed bg-zinc-300 text-apple-ink-muted-48"
                       : "bg-zinc-900 text-white hover:bg-zinc-800"
                   }`}
                 >
@@ -167,7 +167,7 @@ export function MediaLibraryToolbar({
                   <span className="hidden sm:inline">Upload</span>
                 </button>
                 {uploadDisabled && uploadDisabledReason && (
-                  <span className="absolute -bottom-5 left-0 whitespace-nowrap text-[11px] text-zinc-400">
+                  <span className="absolute -bottom-5 left-0 whitespace-nowrap text-[11px] text-apple-ink-muted-48">
                     {uploadDisabledReason}
                   </span>
                 )}
@@ -176,7 +176,7 @@ export function MediaLibraryToolbar({
                 type="button"
                 onClick={onImportUrlClick}
                 disabled={importDisabled}
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 px-3 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-apple-hairline px-3 text-sm font-medium text-apple-ink-muted-80 transition hover:bg-apple-canvas-parchment disabled:opacity-50"
               >
                 <Link className="h-4 w-4" />
                 <span className="hidden sm:inline">Import URL</span>
@@ -186,7 +186,7 @@ export function MediaLibraryToolbar({
         </div>
 
         {compact && stats && (
-          <div className="border-t border-zinc-100 pt-3">
+          <div className="border-t border-apple-divider-soft pt-3">
             <StorageUsageBar stats={stats} billingHref={billingHref} compact />
           </div>
         )}

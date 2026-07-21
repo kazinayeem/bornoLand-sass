@@ -13,7 +13,7 @@ export default function EditProductPage() {
   if (isLoading || !storeId || !store) {
     return (
       <div className="flex justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
       </div>
     );
   }

@@ -77,15 +77,15 @@ export function DashboardShowcase() {
           className="mt-10"
         >
           {/* Tabs */}
-          <div className="mb-6 flex flex-wrap gap-1.5 rounded-2xl border border-zinc-200/60 bg-zinc-50/50 p-1.5">
+          <div className="mb-6 flex flex-wrap gap-1.5 rounded-2xl border border-zinc-200/60 bg-apple-canvas-parchment/50 p-1.5">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-medium transition-all ${
                   activeTab === tab.id
-                    ? "bg-white text-zinc-900 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
+                    ? "bg-white text-apple-ink shadow-sm"
+                    : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
                 }`}
               >
                 <tab.icon className="h-3.5 w-3.5" />
@@ -105,7 +105,7 @@ export function DashboardShowcase() {
 
             <div className="grid grid-cols-2 gap-4 p-5 sm:grid-cols-4 sm:p-6">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="rounded-xl border border-zinc-100 bg-zinc-50/50 p-3">
+                <div key={i} className="rounded-xl border border-zinc-100 bg-apple-canvas-parchment/50 p-3">
                   <div className="mb-2 h-2 w-16 rounded-full bg-zinc-200" />
                   <div className="h-4 w-20 rounded-md bg-zinc-100" />
                   <div className="mt-2 flex gap-1">

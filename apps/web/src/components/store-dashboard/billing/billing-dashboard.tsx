@@ -62,10 +62,10 @@ function EmptyBillingState({ onUpgrade }: { onUpgrade: () => void }) {
   return (
     <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center">
       <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100">
-        <CreditCard className="h-8 w-8 text-zinc-400" />
+        <CreditCard className="h-8 w-8 text-apple-ink-muted-48" />
       </div>
-      <h3 className="text-lg font-semibold text-zinc-900">No Active Subscription</h3>
-      <p className="mt-2 text-sm text-zinc-500 max-w-md mx-auto">
+      <h3 className="text-lg font-semibold text-apple-ink">No Active Subscription</h3>
+      <p className="mt-2 text-sm text-apple-ink-muted-48 max-w-md mx-auto">
         You don&apos;t have an active subscription yet. Choose a plan to get started with your store.
       </p>
       <button
@@ -188,12 +188,12 @@ export function BillingDashboard() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Billing & Subscription</h1>
-          <p className="text-sm text-zinc-500">Manage your subscription, payments, invoices, and usage limits.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-apple-ink">Billing & Subscription</h1>
+          <p className="text-sm text-apple-ink-muted-48">Manage your subscription, payments, invoices, and usage limits.</p>
         </div>
         <button
           onClick={handleRefresh}
-          className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:border-zinc-300 hover:bg-zinc-50 shrink-0"
+          className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:border-zinc-300 hover:bg-apple-canvas-parchment shrink-0"
         >
           <RefreshCcw className="h-4 w-4" />
           Refresh
@@ -204,13 +204,13 @@ export function BillingDashboard() {
       {sub && subPlan && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Plan", value: subPlan.name || "Free", color: "text-zinc-900" },
+            { label: "Plan", value: subPlan.name || "Free", color: "text-apple-ink" },
             { label: "Status", value: status.replace("_", " "), color: isExpired ? "text-red-600" : isPending ? "text-amber-600" : "text-emerald-600" },
-            { label: "Price", value: subPlan.priceBDT ? formatBDT(subPlan.priceBDT) : "Free", color: "text-zinc-900" },
-            { label: "Renewal", value: sub.renewalDate ? new Date(sub.renewalDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—", color: "text-zinc-900" },
+            { label: "Price", value: subPlan.priceBDT ? formatBDT(subPlan.priceBDT) : "Free", color: "text-apple-ink" },
+            { label: "Renewal", value: sub.renewalDate ? new Date(sub.renewalDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—", color: "text-apple-ink" },
           ].map((item) => (
-            <div key={item.label} className="rounded-xl border border-zinc-200/80 bg-white p-3 shadow-sm">
-              <p className="text-xs font-medium text-zinc-500">{item.label}</p>
+            <div key={item.label} className="rounded-xl border border-apple-hairline bg-white p-3 shadow-sm">
+              <p className="text-xs font-medium text-apple-ink-muted-48">{item.label}</p>
               <p className={`text-base font-bold mt-0.5 capitalize ${item.color}`}>{item.value}</p>
             </div>
           ))}
@@ -229,8 +229,8 @@ export function BillingDashboard() {
                 className={cn(
                   "whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors inline-flex items-center gap-2",
                   activeTab === tab.id
-                    ? "border-zinc-900 text-zinc-900"
-                    : "border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700"
+                    ? "border-zinc-900 text-apple-ink"
+                    : "border-transparent text-apple-ink-muted-48 hover:border-zinc-300 hover:text-apple-ink-muted-80"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -249,8 +249,8 @@ export function BillingDashboard() {
         {activeTab === "plans" && (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900">Plans & Pricing</h2>
-              <p className="text-sm text-zinc-500 mt-1">Choose a plan upgrade or switch billing cycle</p>
+              <h2 className="text-xl font-bold text-apple-ink">Plans & Pricing</h2>
+              <p className="text-sm text-apple-ink-muted-48 mt-1">Choose a plan upgrade or switch billing cycle</p>
             </div>
             <RenewalFlow
               storeId={storeId}
@@ -262,7 +262,7 @@ export function BillingDashboard() {
           </div>
         )}
         {activeTab === "payment" && (
-          <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-apple-hairline bg-white p-6 shadow-sm">
             <PaymentSubmissionFlow
               storeId={storeId}
               plans={plans}

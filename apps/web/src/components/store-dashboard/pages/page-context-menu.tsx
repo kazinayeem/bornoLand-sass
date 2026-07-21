@@ -70,8 +70,8 @@ export function PageContextMenu({ page, x, y, onClose, onAction }: Props) {
       style={{ left: menuX, top: menuY }}
     >
       <div className="px-3 py-2 border-b border-zinc-100">
-        <p className="text-xs font-semibold text-zinc-900 truncate">{page.title}</p>
-        <p className="text-[10px] text-zinc-400 truncate">{page.slug}</p>
+        <p className="text-xs font-semibold text-apple-ink truncate">{page.title}</p>
+        <p className="text-[10px] text-apple-ink-muted-48 truncate">{page.slug}</p>
       </div>
       {items.map((item) => {
         if (item.divider) return <div key={item.action} className="my-1 border-t border-zinc-100" />;
@@ -81,9 +81,9 @@ export function PageContextMenu({ page, x, y, onClose, onAction }: Props) {
             key={item.action}
             disabled={item.disabled}
             onClick={() => { onAction(item.action, page); onClose(); }}
-            className="flex w-full items-center gap-2.5 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex w-full items-center gap-2.5 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            <Icon className="h-3.5 w-3.5 text-zinc-400" />
+            <Icon className="h-3.5 w-3.5 text-apple-ink-muted-48" />
             {item.label}
           </button>
         );

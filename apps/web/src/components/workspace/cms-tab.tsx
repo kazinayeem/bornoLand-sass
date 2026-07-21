@@ -41,7 +41,7 @@ export function CmsTab({ storeId, storeSlug }: CmsTabProps) {
   );
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>;
+    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" /></div>;
   }
 
   return (
@@ -73,11 +73,11 @@ export function CmsTab({ storeId, storeSlug }: CmsTabProps) {
                   <ExternalLink className="h-3.5 w-3.5 text-zinc-300 transition-colors group-hover:text-blue-500" />
                 </div>
               </div>
-              <h3 className="mt-3 text-sm font-semibold text-zinc-900">{page.label}</h3>
-              <p className="mt-1 text-xs text-zinc-400">/{page.slug}</p>
+              <h3 className="mt-3 text-sm font-semibold text-apple-ink">{page.label}</h3>
+              <p className="mt-1 text-xs text-apple-ink-muted-48">/{page.slug}</p>
               <div className="mt-2 flex items-center gap-2">
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                  page.published ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-400"
+                  page.published ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-apple-ink-muted-48"
                 }`}>
                   {page.published ? "Published" : "Draft"}
                 </span>
@@ -105,8 +105,8 @@ export function CmsTab({ storeId, storeSlug }: CmsTabProps) {
             <HelpCircle className="h-6 w-6 text-purple-600" />
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-zinc-900">Manage FAQ Items</h3>
-            <p className="text-xs text-zinc-500">Create and manage Q&A entries for your store.</p>
+            <h3 className="text-sm font-semibold text-apple-ink">Manage FAQ Items</h3>
+            <p className="text-xs text-apple-ink-muted-48">Create and manage Q&A entries for your store.</p>
           </div>
           <ExternalLink className="h-5 w-5 text-zinc-300 group-hover:text-purple-500 transition-colors" />
         </div>

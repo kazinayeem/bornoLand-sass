@@ -14,7 +14,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { formatBDT } from "@/lib/format-bdt";
 
 const PLAN_COLORS: Record<string, string> = {
-  free: "bg-zinc-100 text-zinc-700",
+  free: "bg-zinc-100 text-apple-ink-muted-80",
   starter: "bg-blue-50 text-blue-700",
   growth: "bg-purple-50 text-purple-700",
   business: "bg-amber-50 text-amber-700",
@@ -73,8 +73,8 @@ export default function SubscriptionsPage() {
                 <card.icon className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">{card.label}</p>
-                <p className="mt-0.5 text-lg font-bold text-zinc-900">{String(card.value)}</p>
+                <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">{card.label}</p>
+                <p className="mt-0.5 text-lg font-bold text-apple-ink">{String(card.value)}</p>
               </div>
             </div>
           </motion.div>
@@ -84,12 +84,12 @@ export default function SubscriptionsPage() {
       {/* Plan Breakdown */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         className="rounded-2xl border border-zinc-200 bg-white p-6">
-        <h3 className="mb-1 text-lg font-semibold text-zinc-900">Plan Revenue Breakdown</h3>
-        <p className="mb-4 text-sm text-zinc-500">Revenue and subscriber counts by plan</p>
+        <h3 className="mb-1 text-lg font-semibold text-apple-ink">Plan Revenue Breakdown</h3>
+        <p className="mb-4 text-sm text-apple-ink-muted-48">Revenue and subscriber counts by plan</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+              <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">
                 <th className="px-4 py-3">Plan</th>
                 <th className="px-4 py-3">Price (৳)</th>
                 <th className="px-4 py-3">Subscribers</th>
@@ -104,18 +104,18 @@ export default function SubscriptionsPage() {
                 const monthlyRev = plan.monthlyRevenue as Record<string, unknown> ?? {};
                 const monthlyAmt = typeof monthlyRev === "object" ? String((monthlyRev as Record<string, unknown>).formattedAmount ?? "৳ 0") : String(monthlyRev ?? "৳ 0");
                 return (
-                  <tr key={String(plan._id ?? "")} className="hover:bg-zinc-50">
-                    <td className="px-4 py-3 font-medium text-zinc-900">
+                  <tr key={String(plan._id ?? "")} className="hover:bg-apple-canvas-parchment">
+                    <td className="px-4 py-3 font-medium text-apple-ink">
                       <span className={`rounded-lg px-2 py-0.5 text-xs font-medium ${PLAN_COLORS[String(plan.slug ?? "")] ?? PLAN_COLORS.free}`}>
                         {String(plan.name ?? "")}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-zinc-700">{formatBDT(Number(plan.priceBDT ?? 0))}</td>
-                    <td className="px-4 py-3 font-semibold text-zinc-900">{String(plan.subscribers ?? 0)}</td>
+                    <td className="px-4 py-3 text-apple-ink-muted-80">{formatBDT(Number(plan.priceBDT ?? 0))}</td>
+                    <td className="px-4 py-3 font-semibold text-apple-ink">{String(plan.subscribers ?? 0)}</td>
                     <td className="px-4 py-3 text-emerald-600 font-medium">{String(plan.active ?? 0)}</td>
                     <td className="px-4 py-3 text-amber-600">{String(plan.trialing ?? 0)}</td>
                     <td className="px-4 py-3 text-red-500">{String(plan.expired ?? 0)}</td>
-                    <td className="px-4 py-3 font-semibold text-zinc-900">{monthlyAmt}</td>
+                    <td className="px-4 py-3 font-semibold text-apple-ink">{monthlyAmt}</td>
                   </tr>
                 );
               })}
@@ -128,9 +128,9 @@ export default function SubscriptionsPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
           className="rounded-2xl border border-zinc-200 bg-white p-5">
-          <h4 className="text-sm font-semibold text-zinc-700">Trial Conversion</h4>
-          <p className="mt-1 text-3xl font-bold text-zinc-900">{String(sub.trialConversionRate ?? "0")}%</p>
-          <p className="text-xs text-zinc-500">
+          <h4 className="text-sm font-semibold text-apple-ink-muted-80">Trial Conversion</h4>
+          <p className="mt-1 text-3xl font-bold text-apple-ink">{String(sub.trialConversionRate ?? "0")}%</p>
+          <p className="text-xs text-apple-ink-muted-48">
             {String(sub.trialConverted ?? 0)} converted out of {String(sub.trialTotal ?? 0)} trials
           </p>
         </motion.div>
@@ -138,23 +138,23 @@ export default function SubscriptionsPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           className="rounded-2xl border border-zinc-200 bg-white p-5">
           <div className="flex items-center gap-2">
-            <h4 className="text-sm font-semibold text-zinc-700">Renewal Rate</h4>
+            <h4 className="text-sm font-semibold text-apple-ink-muted-80">Renewal Rate</h4>
             <TrendingUp className="h-4 w-4 text-emerald-500" />
           </div>
           <p className="mt-1 text-3xl font-bold text-emerald-600">
             {Number(sub.totalSubscribers ?? 0) > 0 ? Math.round((activeCount / Math.max(Number(sub.totalSubscribers ?? 0), 1)) * 100) : 0}%
           </p>
-          <p className="text-xs text-zinc-500">Of total subscriptions</p>
+          <p className="text-xs text-apple-ink-muted-48">Of total subscriptions</p>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
           className="rounded-2xl border border-zinc-200 bg-white p-5">
           <div className="flex items-center gap-2">
-            <h4 className="text-sm font-semibold text-zinc-700">Upgrade / Downgrade</h4>
+            <h4 className="text-sm font-semibold text-apple-ink-muted-80">Upgrade / Downgrade</h4>
             <RefreshCw className="h-4 w-4 text-blue-500" />
           </div>
           <p className="mt-1 text-3xl font-bold text-blue-600">—</p>
-          <p className="text-xs text-zinc-500">Tracked via plan change events</p>
+          <p className="text-xs text-apple-ink-muted-48">Tracked via plan change events</p>
         </motion.div>
       </div>
     </div>

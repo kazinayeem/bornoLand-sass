@@ -53,7 +53,7 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
   }, [analytics, orders]);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>;
+    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" /></div>;
   }
 
   const kpiCards = [
@@ -79,8 +79,8 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
                   <Icon className={`h-4 w-4 ${kpi.color}`} />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-zinc-900">{kpi.value}</p>
-              <p className="mt-0.5 text-xs font-medium text-zinc-500">{kpi.label}</p>
+              <p className="text-2xl font-bold text-apple-ink">{kpi.value}</p>
+              <p className="mt-0.5 text-xs font-medium text-apple-ink-muted-48">{kpi.label}</p>
             </motion.div>
           );
         })}
@@ -90,8 +90,8 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
         {/* Payment Analytics */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h3 className="text-base font-semibold text-zinc-900 mb-4 flex items-center gap-2">
-            <CreditCard className="h-4 w-4 text-zinc-400" /> Payment Analytics
+          <h3 className="text-base font-semibold text-apple-ink mb-4 flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-apple-ink-muted-48" /> Payment Analytics
           </h3>
           <div className="space-y-3">
             {[
@@ -101,8 +101,8 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
             ].map((item) => (
               <div key={item.label} className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-zinc-600">{item.label}</span>
-                  <span className="font-semibold text-zinc-900">{item.value}</span>
+                  <span className="text-apple-ink-muted-80">{item.label}</span>
+                  <span className="font-semibold text-apple-ink">{item.value}</span>
                 </div>
                 <div className="h-2 rounded-full bg-zinc-100 overflow-hidden">
                   <div className={`h-full rounded-full ${item.color} transition-all`}
@@ -116,22 +116,22 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
         {/* Top Products */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
           className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h3 className="text-base font-semibold text-zinc-900 mb-4 flex items-center gap-2">
-            <Package className="h-4 w-4 text-zinc-400" /> Top Products
+          <h3 className="text-base font-semibold text-apple-ink mb-4 flex items-center gap-2">
+            <Package className="h-4 w-4 text-apple-ink-muted-48" /> Top Products
           </h3>
           {stats.topProducts.length === 0 ? (
-            <p className="text-sm text-zinc-400 text-center py-8">No product data yet</p>
+            <p className="text-sm text-apple-ink-muted-48 text-center py-8">No product data yet</p>
           ) : (
             <div className="space-y-3">
               {stats.topProducts.map(([name, data], i) => (
                 <div key={name} className="flex items-center justify-between">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <span className="text-xs font-bold text-zinc-300 w-5">{i + 1}</span>
-                    <span className="text-sm text-zinc-700 truncate">{name}</span>
+                    <span className="text-sm text-apple-ink-muted-80 truncate">{name}</span>
                   </div>
                   <div className="flex items-center gap-4 text-xs">
-                    <span className="text-zinc-500">{data.qty} sold</span>
-                    <span className="font-semibold text-zinc-900 w-20 text-right">{formatCurrency(data.revenue, settings)}</span>
+                    <span className="text-apple-ink-muted-48">{data.qty} sold</span>
+                    <span className="font-semibold text-apple-ink w-20 text-right">{formatCurrency(data.revenue, settings)}</span>
                   </div>
                 </div>
               ))}
@@ -143,18 +143,18 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
       {/* Recent Orders Timeline */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-        <h3 className="text-base font-semibold text-zinc-900 mb-4 flex items-center gap-2">
-          <Activity className="h-4 w-4 text-zinc-400" /> Recent Orders
+        <h3 className="text-base font-semibold text-apple-ink mb-4 flex items-center gap-2">
+          <Activity className="h-4 w-4 text-apple-ink-muted-48" /> Recent Orders
         </h3>
         {orders.length === 0 ? (
-          <p className="text-sm text-zinc-400 text-center py-8">No orders yet</p>
+          <p className="text-sm text-apple-ink-muted-48 text-center py-8">No orders yet</p>
         ) : (
           <div className="space-y-2">
             {orders.slice(0, 10).map((order, i) => (
-              <div key={order._id} className="flex items-center justify-between rounded-xl bg-zinc-50 px-4 py-2.5">
+              <div key={order._id} className="flex items-center justify-between rounded-xl bg-apple-canvas-parchment px-4 py-2.5">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <span className="text-xs font-mono font-semibold text-blue-600">{order.orderNumber}</span>
-                  <span className="text-xs text-zinc-500 truncate">{order.customerId?.name || "Guest"}</span>
+                  <span className="text-xs text-apple-ink-muted-48 truncate">{order.customerId?.name || "Guest"}</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs">
                   <span className={`rounded-full px-2 py-0.5 font-medium ${
@@ -163,7 +163,7 @@ export function AnalyticsTab({ storeId }: AnalyticsTabProps) {
                     order.status === "pending" ? "bg-amber-50 text-amber-700" :
                     "bg-blue-50 text-blue-700"
                   }`}>{order.status}</span>
-                  <span className="font-semibold text-zinc-900">{formatCurrency(order.total, settings)}</span>
+                  <span className="font-semibold text-apple-ink">{formatCurrency(order.total, settings)}</span>
                 </div>
               </div>
             ))}

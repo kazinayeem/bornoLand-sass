@@ -53,8 +53,8 @@ function OrdersList() {
     return (
       <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center gap-4 px-4">
         <Package className="h-16 w-16 text-zinc-200" />
-        <h2 className="text-xl font-semibold text-zinc-900">No orders yet</h2>
-        <p className="text-sm text-zinc-500">When you place an order, it will appear here.</p>
+        <h2 className="text-xl font-semibold text-apple-ink">No orders yet</h2>
+        <p className="text-sm text-apple-ink-muted-48">When you place an order, it will appear here.</p>
         <Link href="/" className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90">
           Start Shopping
         </Link>
@@ -64,7 +64,7 @@ function OrdersList() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="mb-8 text-2xl font-bold text-zinc-900">My Orders</h1>
+      <h1 className="mb-8 text-2xl font-bold text-apple-ink">My Orders</h1>
       <div className="space-y-3">
         {orders.map((order, idx) => (
           <motion.div
@@ -74,12 +74,12 @@ function OrdersList() {
             className="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-100 p-4 transition-all hover:border-zinc-200 hover:shadow-sm"
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-50">
-                <Package className="h-6 w-6 text-zinc-400" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-apple-canvas-parchment">
+                <Package className="h-6 w-6 text-apple-ink-muted-48" />
               </div>
               <div>
-                <p className="font-semibold text-zinc-900">{order.orderNumber}</p>
-                <div className="mt-1 flex items-center gap-3 text-xs text-zinc-500">
+                <p className="font-semibold text-apple-ink">{order.orderNumber}</p>
+                <div className="mt-1 flex items-center gap-3 text-xs text-apple-ink-muted-48">
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {new Date(order.createdAt).toLocaleDateString()}
@@ -92,7 +92,7 @@ function OrdersList() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`rounded-full px-3 py-0.5 text-[11px] font-medium capitalize ${statusStyles[order.status] ?? "bg-zinc-50 text-zinc-600"}`}>
+              <span className={`rounded-full px-3 py-0.5 text-[11px] font-medium capitalize ${statusStyles[order.status] ?? "bg-apple-canvas-parchment text-apple-ink-muted-80"}`}>
                 {order.status}
               </span>
               <ArrowRight className="h-4 w-4 text-zinc-300" />

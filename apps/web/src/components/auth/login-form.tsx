@@ -76,7 +76,7 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
           id="login-email"
           type="email"
           placeholder="you@example.com"
-          className="h-11 rounded-xl border-zinc-200 bg-zinc-50/50 px-4 dark:border-zinc-800 dark:bg-zinc-900/50"
+          className="h-11 rounded-sm border-apple-hairline bg-apple-canvas-parchment/50 px-4 dark:border-apple-hairline dark:bg-apple-surface-tile-1/50"
           {...register("email")}
         />
         {errors.email ? <p className="text-xs text-red-500">{errors.email.message}</p> : null}
@@ -89,11 +89,11 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
       </div>
 
       <div className="flex items-center justify-between gap-4">
-        <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <label className="flex items-center gap-2 text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
           <input type="checkbox" {...register("rememberMe")} className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
           Remember me
         </label>
-        <a href="/forgot-password" className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">
+        <a href="/forgot-password" className="text-sm font-medium text-apple-primary hover:text-apple-primary-focus">
           Forgot password?
         </a>
       </div>
@@ -101,24 +101,24 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
       <Button
         type="submit"
         disabled={loading}
-        className="h-11 w-full rounded-xl bg-zinc-900 text-sm font-semibold hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-white"
+        className="h-11 w-full rounded-pill bg-apple-primary text-sm font-semibold text-apple-on-primary hover:bg-apple-primary-focus"
       >
         {loading ? "Signing in..." : loginType === "admin" ? "Admin Sign In" : "Sign in"}
       </Button>
 
       <div className="relative py-1">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+          <span className="w-full border-t border-apple-hairline dark:border-apple-hairline" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-white px-3 text-[11px] font-medium uppercase tracking-[0.28em] text-zinc-400 dark:bg-zinc-950">or continue with</span>
+          <span className="bg-apple-canvas px-3 text-[11px] font-medium uppercase tracking-[0.28em] text-apple-ink-muted-48 dark:bg-apple-surface-black">or continue with</span>
         </div>
       </div>
 
       <GoogleButton label="Continue with Google" />
 
-      <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
-        <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-zinc-500">Quick demo access</p>
+      <div className="rounded-lg border border-dashed border-apple-hairline bg-apple-canvas-parchment/80 p-4 dark:border-apple-hairline dark:bg-apple-surface-tile-1/40">
+        <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Quick demo access</p>
         <div className="grid gap-3 sm:grid-cols-2">
           <QuickLoginButton
             label="Quick user login"
@@ -137,9 +137,9 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
         </div>
       </div>
 
-      <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-center text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
         New here?{" "}
-        <a href="/register" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">
+        <a href="/register" className="font-semibold text-apple-primary hover:text-apple-primary-focus">
           Create an account
         </a>
       </p>

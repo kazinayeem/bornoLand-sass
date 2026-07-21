@@ -108,10 +108,10 @@ export function DataTable<T>({
   }, []);
 
   const sortIcon = (key: string) => {
-    if (!sort || sort.key !== key) return <ChevronsUpDown className="h-3.5 w-3.5 text-zinc-300" />;
+    if (!sort || sort.key !== key) return <ChevronsUpDown className="h-3.5 w-3.5 text-apple-ink-muted-48" />;
     return sort.order === "asc"
-      ? <ChevronUp className="h-3.5 w-3.5 text-zinc-900" />
-      : <ChevronDown className="h-3.5 w-3.5 text-zinc-900" />;
+      ? <ChevronUp className="h-3.5 w-3.5 text-apple-ink" />
+      : <ChevronDown className="h-3.5 w-3.5 text-apple-ink" />;
   };
 
   const handleSort = (key: string) => {
@@ -165,7 +165,7 @@ export function DataTable<T>({
           )}
           {selectMode && bulkActions && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-zinc-500">{selected.size} selected</span>
+              <span className="text-caption text-apple-ink-muted-48">{selected.size} selected</span>
               {bulkActions.map((action) => (
                 <button
                   key={action.label}
@@ -174,34 +174,34 @@ export function DataTable<T>({
                     clearSelection();
                   }}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors",
+                    "btn-press inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-caption transition-colors",
                     action.variant === "danger" ? "bg-red-50 text-red-700 hover:bg-red-100" :
                     action.variant === "warning" ? "bg-amber-50 text-amber-700 hover:bg-amber-100" :
-                    "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                    "bg-apple-canvas-parchment text-apple-ink-muted-80 hover:bg-apple-surface-pearl"
                   )}
                 >
                   {action.icon && <action.icon className="h-3.5 w-3.5" />}
                   {action.label}
                 </button>
               ))}
-              <button onClick={clearSelection} className="ml-2 text-sm text-zinc-400 hover:text-zinc-600">Cancel</button>
+              <button onClick={clearSelection} className="ml-2 text-caption text-apple-ink-muted-48 hover:text-apple-ink">Cancel</button>
             </div>
           )}
         </div>
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-[1.5rem] border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_16px_48px_-30px_rgba(15,23,42,0.24)]">
+      <div className="overflow-x-auto rounded-lg border border-apple-hairline bg-apple-canvas dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2">
         <table className="w-full min-w-[640px]">
           <thead>
-            <tr className={cn("border-b border-zinc-100/80 bg-zinc-50/80", stickyHeader && "sticky top-0 z-10 backdrop-blur-sm")}>
+            <tr className={cn("border-b border-apple-divider-soft bg-apple-canvas-parchment/80", stickyHeader && "sticky top-0 z-10 backdrop-blur-sm dark:bg-apple-surface-tile-3/80")}>
               {bulkActions && (
                 <th className="w-10 px-3 py-3">
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={toggleAll}
-                    className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-2 focus:ring-zinc-900"
+                    className="h-4 w-4 rounded border-apple-hairline text-apple-primary focus:ring-2 focus:ring-apple-primary-focus"
                   />
                 </th>
               )}
@@ -209,8 +209,8 @@ export function DataTable<T>({
                 <th
                   key={col.key}
                   className={cn(
-                    "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500",
-                    col.sortable && "cursor-pointer select-none hover:text-zinc-700",
+                    "px-4 py-3 text-left text-caption-strong uppercase tracking-wider text-apple-ink-muted-48",
+                    col.sortable && "cursor-pointer select-none hover:text-apple-ink",
                     col.hideOnMobile && "hidden sm:table-cell",
                     col.hideOnTablet && "hidden lg:table-cell",
                     col.className
@@ -235,9 +235,9 @@ export function DataTable<T>({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.02 }}
                   className={cn(
-                    "border-b border-zinc-50 transition-colors last:border-0",
-                    onRowClick && "cursor-pointer hover:bg-zinc-50",
-                    selected.has(id) && "bg-blue-50/50",
+                    "border-b border-apple-divider-soft transition-colors last:border-0",
+                    onRowClick && "cursor-pointer hover:bg-apple-canvas-parchment dark:hover:bg-apple-surface-tile-3",
+                    selected.has(id) && "bg-apple-primary/5",
                     rowClassName
                   )}
                   onClick={() => onRowClick?.(item)}
@@ -249,7 +249,7 @@ export function DataTable<T>({
                         checked={selected.has(id)}
                         onChange={() => toggleOne(id)}
                         onClick={(e) => e.stopPropagation()}
-                        className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-2 focus:ring-zinc-900"
+                        className="h-4 w-4 rounded border-apple-hairline text-apple-primary focus:ring-2 focus:ring-apple-primary-focus"
                       />
                     </td>
                   )}
@@ -257,7 +257,7 @@ export function DataTable<T>({
                     <td
                       key={col.key}
                       className={cn(
-                        "px-4 py-3 text-sm text-zinc-700",
+                        "px-4 py-3 text-caption text-apple-ink-muted-80 dark:text-apple-body-muted",
                         col.hideOnMobile && "hidden sm:table-cell",
                         col.hideOnTablet && "hidden lg:table-cell",
                         col.className

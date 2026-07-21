@@ -68,7 +68,7 @@ export default function CreateStorePage() {
       <form onSubmit={handleSubmit} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
         <div className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Store Name</label>
+            <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Store Name</label>
             <input
               type="text"
               value={name}
@@ -79,7 +79,7 @@ export default function CreateStorePage() {
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Subdomain</label>
+            <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Subdomain</label>
             <div className="flex items-center gap-1 rounded-xl border border-zinc-200 px-3 focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-500/20">
               <input
                 type="text"
@@ -88,12 +88,12 @@ export default function CreateStorePage() {
                 placeholder="myshop"
                 className="h-10 flex-1 bg-transparent text-sm focus:outline-none"
               />
-              <span className="text-xs text-zinc-400">.{getRootDomain()}</span>
+              <span className="text-xs text-apple-ink-muted-48">.{getRootDomain()}</span>
             </div>
             {errors.slug && <p className="mt-1 text-xs text-red-500">{errors.slug}</p>}
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Description</label>
+            <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -108,7 +108,7 @@ export default function CreateStorePage() {
           <button
             type="button"
             onClick={() => router.push("/dashboard/stores")}
-            className="text-sm text-zinc-500 hover:text-zinc-700"
+            className="text-sm text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
           >
             Cancel
           </button>

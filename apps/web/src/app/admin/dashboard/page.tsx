@@ -71,7 +71,7 @@ export default function AdminDashboardPage() {
 
       {/* Revenue Cards */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-zinc-700">Revenue Overview</h3>
+        <h3 className="mb-3 text-sm font-semibold text-apple-ink-muted-80">Revenue Overview</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <StatCard title="Total Revenue" value={(revenue?.total as Record<string, unknown>)?.formattedAmount as string ?? "৳ 0"} icon={DollarSign} variant="green" delay={0} />
           <StatCard title="Monthly Revenue" value={(revenue?.monthly as Record<string, unknown>)?.formattedAmount as string ?? "৳ 0"} icon={TrendingUp} variant="blue" delay={0.04} />
@@ -86,7 +86,7 @@ export default function AdminDashboardPage() {
 
       {/* Store & User Cards */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-zinc-700">Platform Overview</h3>
+        <h3 className="mb-3 text-sm font-semibold text-apple-ink-muted-80">Platform Overview</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <StatCard title="Total Stores" value={String(stores?.total ?? 0)} icon={Store} variant="blue" delay={0} />
           <StatCard title="Active" value={String(stores?.active ?? 0)} icon={Globe} variant="green" delay={0.04} />
@@ -105,7 +105,7 @@ export default function AdminDashboardPage() {
 
       {/* Visitor Analytics */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-zinc-700">Platform Visitor Analytics</h3>
+        <h3 className="mb-3 text-sm font-semibold text-apple-ink-muted-80">Platform Visitor Analytics</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard title="Total Visitors" value={String((platformAnalyticsData?.data as Record<string, unknown> | undefined)?.totalUniqueVisitors ?? "—")} icon={Eye} variant="blue" delay={0} />
           <StatCard title="Total Sessions" value={String((platformAnalyticsData?.data as Record<string, unknown> | undefined)?.totalSessions ?? "—")} icon={Activity} variant="purple" delay={0.04} />
@@ -120,8 +120,8 @@ export default function AdminDashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           className="rounded-2xl border border-zinc-200 bg-white p-6">
-          <h3 className="mb-1 text-lg font-semibold text-zinc-900">Revenue Trend</h3>
-          <p className="mb-6 text-sm text-zinc-500">Monthly revenue in ৳ BDT</p>
+          <h3 className="mb-1 text-lg font-semibold text-apple-ink">Revenue Trend</h3>
+          <p className="mb-6 text-sm text-apple-ink-muted-48">Monthly revenue in ৳ BDT</p>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
@@ -148,8 +148,8 @@ export default function AdminDashboardPage() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
           className="rounded-2xl border border-zinc-200 bg-white p-6">
-          <h3 className="mb-1 text-lg font-semibold text-zinc-900">Platform Growth</h3>
-          <p className="mb-6 text-sm text-zinc-500">Monthly users & store growth</p>
+          <h3 className="mb-1 text-lg font-semibold text-apple-ink">Platform Growth</h3>
+          <p className="mb-6 text-sm text-apple-ink-muted-48">Monthly users & store growth</p>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData.map((d) => ({
@@ -173,13 +173,13 @@ export default function AdminDashboardPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
         className="rounded-2xl border border-zinc-200 bg-white">
         <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
-          <h3 className="text-lg font-semibold text-zinc-900">Recent Orders</h3>
-          <span className="text-xs text-zinc-400">{ordersByStatus.pending ?? 0} pending</span>
+          <h3 className="text-lg font-semibold text-apple-ink">Recent Orders</h3>
+          <span className="text-xs text-apple-ink-muted-48">{ordersByStatus.pending ?? 0} pending</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+              <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">
                 <th className="px-6 py-3">Order</th>
                 <th className="px-6 py-3">Store</th>
                 <th className="px-6 py-3">Customer</th>
@@ -191,16 +191,16 @@ export default function AdminDashboardPage() {
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {recentOrders.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-12 text-center text-sm text-zinc-500">No orders yet</td></tr>
+                <tr><td colSpan={7} className="px-6 py-12 text-center text-sm text-apple-ink-muted-48">No orders yet</td></tr>
               ) : (
                 recentOrders.map((order) => {
                   const o = order as Record<string, unknown>;
                   return (
-                    <tr key={String(o._id)} className="transition-colors hover:bg-zinc-50">
-                      <td className="px-6 py-3.5 text-sm font-medium text-zinc-900">#{String(o.orderNumber ?? "")}</td>
-                      <td className="px-6 py-3.5 text-sm text-zinc-700">{(o.storeId as Record<string, unknown>)?.name as string ?? "—"}</td>
-                      <td className="px-6 py-3.5 text-sm text-zinc-700">{(o.customerId as Record<string, unknown>)?.name as string ?? "—"}</td>
-                      <td className="px-6 py-3.5 text-sm font-medium text-zinc-900">{formatBDT(Number(o.total ?? 0))}</td>
+                    <tr key={String(o._id)} className="transition-colors hover:bg-apple-canvas-parchment">
+                      <td className="px-6 py-3.5 text-sm font-medium text-apple-ink">#{String(o.orderNumber ?? "")}</td>
+                      <td className="px-6 py-3.5 text-sm text-apple-ink-muted-80">{(o.storeId as Record<string, unknown>)?.name as string ?? "—"}</td>
+                      <td className="px-6 py-3.5 text-sm text-apple-ink-muted-80">{(o.customerId as Record<string, unknown>)?.name as string ?? "—"}</td>
+                      <td className="px-6 py-3.5 text-sm font-medium text-apple-ink">{formatBDT(Number(o.total ?? 0))}</td>
                       <td className="px-6 py-3.5">
                         <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-medium ${
                           o.status === "delivered" ? "bg-emerald-100 text-emerald-700" :
@@ -213,10 +213,10 @@ export default function AdminDashboardPage() {
                         <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-medium ${
                           o.paymentStatus === "paid" ? "bg-emerald-100 text-emerald-700" :
                           o.paymentStatus === "failed" ? "bg-red-100 text-red-700" :
-                          "bg-zinc-100 text-zinc-600"
+                          "bg-zinc-100 text-apple-ink-muted-80"
                         }`}>{String(o.paymentStatus ?? "")}</span>
                       </td>
-                      <td className="px-6 py-3.5 text-sm text-zinc-500">
+                      <td className="px-6 py-3.5 text-sm text-apple-ink-muted-48">
                         {o.createdAt ? new Date(String(o.createdAt)).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
                       </td>
                     </tr>
@@ -233,14 +233,14 @@ export default function AdminDashboardPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
           className="rounded-2xl border border-zinc-200 bg-white p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-zinc-700">Platform Storage</h3>
-            <span className="text-xs text-zinc-400">{String(storage.totalFiles ?? 0)} files</span>
+            <h3 className="text-sm font-semibold text-apple-ink-muted-80">Platform Storage</h3>
+            <span className="text-xs text-apple-ink-muted-48">{String(storage.totalFiles ?? 0)} files</span>
           </div>
           <div className="mt-3 flex items-center gap-4">
             <div className="flex-1">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-zinc-500">{storage.usedFormatted as string} used</span>
-                <span className="font-medium text-zinc-700">{storage.limitFormatted as string}</span>
+                <span className="text-apple-ink-muted-48">{storage.usedFormatted as string} used</span>
+                <span className="font-medium text-apple-ink-muted-80">{storage.limitFormatted as string}</span>
               </div>
               <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-zinc-100">
                 {(() => {

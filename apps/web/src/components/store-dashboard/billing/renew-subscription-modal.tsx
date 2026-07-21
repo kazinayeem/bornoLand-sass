@@ -86,26 +86,26 @@ export function RenewSubscriptionModal({
     >
       {isPriceLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
         </div>
       ) : (
         <div className="space-y-6">
           {/* Order summary */}
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+          <div className="rounded-xl border border-zinc-200 bg-apple-canvas-parchment p-4">
             <div className="flex justify-between border-b border-zinc-200 pb-3">
-              <span className="text-sm font-medium text-zinc-600">Plan</span>
-              <span className="text-sm font-semibold text-zinc-900">
+              <span className="text-sm font-medium text-apple-ink-muted-80">Plan</span>
+              <span className="text-sm font-semibold text-apple-ink">
                 {planName} ({duration})
               </span>
             </div>
             <div className="flex justify-between border-b border-zinc-200 py-3">
-              <span className="text-sm font-medium text-zinc-600">Amount</span>
-              <span className="text-sm font-semibold text-zinc-900">
+              <span className="text-sm font-medium text-apple-ink-muted-80">Amount</span>
+              <span className="text-sm font-semibold text-apple-ink">
                 ৳{amount?.toLocaleString() ?? "—"}
               </span>
             </div>
             <div className="flex justify-between pt-3">
-              <span className="text-base font-bold text-zinc-900">Total</span>
+              <span className="text-base font-bold text-apple-ink">Total</span>
               <span className="text-base font-bold text-indigo-600">
                 ৳{amount?.toLocaleString() ?? "—"}
               </span>
@@ -114,11 +114,11 @@ export function RenewSubscriptionModal({
 
           {/* Payment method */}
           <div className="space-y-2">
-            <label htmlFor="payment-method-select" className="text-sm font-medium text-zinc-700">
+            <label htmlFor="payment-method-select" className="text-sm font-medium text-apple-ink-muted-80">
               Payment Method
             </label>
             <div className="relative">
-              <CreditCard className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <CreditCard className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
               <select
                 id="payment-method-select"
                 value={paymentMethod}
@@ -149,7 +149,7 @@ export function RenewSubscriptionModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+              className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-50"
             >
               Cancel
             </button>

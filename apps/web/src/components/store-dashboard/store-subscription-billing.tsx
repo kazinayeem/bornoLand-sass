@@ -119,15 +119,15 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
         </CardHeader>
         <CardContent className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-2xl font-semibold text-zinc-900">{currentPlan?.name ?? store.plan}</p>
-            <p className="text-sm text-zinc-500">
+            <p className="text-2xl font-semibold text-apple-ink">{currentPlan?.name ?? store.plan}</p>
+            <p className="text-sm text-apple-ink-muted-48">
               {currentPlan?.isCustomPrice ? "Custom pricing" : `${formatBDT(currentPlan?.priceBDT ?? 0)} / month`}
             </p>
             {remainingDays !== null && remainingDays !== undefined && (
-              <p className="mt-1 text-xs text-zinc-500">{remainingDays} day(s) remaining</p>
+              <p className="mt-1 text-xs text-apple-ink-muted-48">{remainingDays} day(s) remaining</p>
             )}
             {subscription?.expireDate && (
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-apple-ink-muted-48">
                 Expires {new Date(subscription.expireDate).toLocaleDateString()}
               </p>
             )}
@@ -151,10 +151,10 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
                 type="button"
                 onClick={() => setSelectedPlanId(plan._id)}
                 className={`rounded-2xl border-2 p-4 text-left transition-all ${
-                  selectedPlanId === plan._id ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:border-zinc-300"
+                  selectedPlanId === plan._id ? "border-zinc-900 bg-apple-canvas-parchment" : "border-zinc-200 hover:border-zinc-300"
                 }`}
               >
-                <p className="font-semibold text-zinc-900">{plan.name}</p>
+                <p className="font-semibold text-apple-ink">{plan.name}</p>
                 <p className="mt-1 text-lg font-bold">
                   {plan.isCustomPrice ? "Custom" : formatBDT(plan.priceBDT)}
                 </p>
@@ -164,7 +164,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
 
           {enabledDurations.length > 0 && (
             <div>
-              <p className="mb-2 text-sm font-medium text-zinc-700">Billing Duration</p>
+              <p className="mb-2 text-sm font-medium text-apple-ink-muted-80">Billing Duration</p>
               <div className="flex flex-wrap gap-2">
                 {enabledDurations.map((d) => (
                   <button
@@ -172,7 +172,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
                     type="button"
                     onClick={() => setDuration(d)}
                     className={`rounded-lg border px-3 py-2 text-sm ${
-                      duration === d ? "border-zinc-900 bg-zinc-50 font-medium" : "border-zinc-200"
+                      duration === d ? "border-zinc-900 bg-apple-canvas-parchment font-medium" : "border-zinc-200"
                     }`}
                   >
                     {DURATION_LABELS[d]}
@@ -180,8 +180,8 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
                 ))}
               </div>
               {selectedPlan && !selectedPlan.isCustomPrice && (
-                <p className="mt-2 text-sm text-zinc-600">
-                  Total: <span className="font-semibold text-zinc-900">{formatBDT(paymentAmount)}</span>
+                <p className="mt-2 text-sm text-apple-ink-muted-80">
+                  Total: <span className="font-semibold text-apple-ink">{formatBDT(paymentAmount)}</span>
                 </p>
               )}
             </div>
@@ -194,7 +194,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
                 type="button"
                 onClick={() => setPaymentMethod(method.type)}
                 className={`rounded-xl border px-4 py-3 text-left text-sm ${
-                  paymentMethod === method.type ? "border-zinc-900 bg-zinc-50" : "border-zinc-200"
+                  paymentMethod === method.type ? "border-zinc-900 bg-apple-canvas-parchment" : "border-zinc-200"
                 }`}
               >
                 {method.label}
@@ -203,18 +203,18 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
           </div>
 
           {selectedMethod && (
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm">
-              <p className="font-medium text-zinc-900">Send payment to</p>
-              <p className="mt-1 text-lg font-bold tracking-wide text-zinc-900">{selectedMethod.accountNumber}</p>
+            <div className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment p-4 text-sm">
+              <p className="font-medium text-apple-ink">Send payment to</p>
+              <p className="mt-1 text-lg font-bold tracking-wide text-apple-ink">{selectedMethod.accountNumber}</p>
               {selectedMethod.merchantNumber && (
-                <p className="text-zinc-600">Merchant: {selectedMethod.merchantNumber}</p>
+                <p className="text-apple-ink-muted-80">Merchant: {selectedMethod.merchantNumber}</p>
               )}
               {selectedMethod.personalNumber && (
-                <p className="text-zinc-600">Personal: {selectedMethod.personalNumber}</p>
+                <p className="text-apple-ink-muted-80">Personal: {selectedMethod.personalNumber}</p>
               )}
-              {selectedMethod.accountName && <p className="text-zinc-600">{selectedMethod.accountName}</p>}
+              {selectedMethod.accountName && <p className="text-apple-ink-muted-80">{selectedMethod.accountName}</p>}
               {selectedMethod.bankName && (
-                <p className="text-zinc-600">
+                <p className="text-apple-ink-muted-80">
                   {selectedMethod.bankName}
                   {selectedMethod.branchName ? ` · ${selectedMethod.branchName}` : ""}
                 </p>
@@ -222,13 +222,13 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
               {selectedMethod.qrCodeUrl && (
                 <img src={selectedMethod.qrCodeUrl} alt="QR Code" className="mt-3 h-32 w-32 rounded-lg border" />
               )}
-              {selectedMethod.instructions && <p className="mt-2 text-zinc-500">{selectedMethod.instructions}</p>}
+              {selectedMethod.instructions && <p className="mt-2 text-apple-ink-muted-48">{selectedMethod.instructions}</p>}
             </div>
           )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-700">Sender Number</label>
+              <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Sender Number</label>
               <input
                 value={senderNumber}
                 onChange={(e) => setSenderNumber(e.target.value)}
@@ -236,7 +236,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-700">Transaction ID</label>
+              <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Transaction ID</label>
               <input
                 value={transactionId}
                 onChange={(e) => setTransactionId(e.target.value)}
@@ -246,7 +246,7 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Notes (optional)</label>
+            <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Notes (optional)</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -274,10 +274,10 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
         <CardContent>
           {paymentsLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-apple-ink-muted-48" />
             </div>
           ) : payments.length === 0 ? (
-            <p className="py-6 text-center text-sm text-zinc-500">No payments submitted yet.</p>
+            <p className="py-6 text-center text-sm text-apple-ink-muted-48">No payments submitted yet.</p>
           ) : (
             <div className="space-y-2">
               {payments.map((payment) => (
@@ -286,13 +286,13 @@ export function StoreSubscriptionBilling({ store }: { store: Store }) {
                   className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-100 px-4 py-3"
                 >
                   <div>
-                    <p className="text-sm font-medium text-zinc-900">
+                    <p className="text-sm font-medium text-apple-ink">
                       {typeof payment.planId === "object" ? payment.planId.name : "Plan"} · {formatBDT(payment.amount)}
                       {payment.duration && (
-                        <span className="ml-1 text-xs text-zinc-500">({payment.duration.replace("_", " ")})</span>
+                        <span className="ml-1 text-xs text-apple-ink-muted-48">({payment.duration.replace("_", " ")})</span>
                       )}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-apple-ink-muted-48">
                       {payment.paymentMethod} · {payment.transactionId}
                     </p>
                   </div>

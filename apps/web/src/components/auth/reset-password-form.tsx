@@ -41,11 +41,11 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <Button
         type="submit"
         disabled={loading}
-        className="h-11 w-full rounded-xl bg-zinc-900 text-sm font-semibold hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-white"
+        className="h-11 w-full rounded-xl bg-zinc-900 text-sm font-semibold hover:bg-zinc-800 dark:bg-apple-canvas-parchment dark:text-apple-ink dark:hover:bg-white"
       >
         {loading ? "Resetting..." : "Reset password"}
       </Button>
-      <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-center text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
         <a href="/login" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">
           Back to sign in
         </a>

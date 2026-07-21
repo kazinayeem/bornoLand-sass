@@ -13,7 +13,7 @@ import { getStoreDisplayDomain, getStoreUrl } from "@/lib/urls";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 
 const planColors: Record<string, string> = {
-  free: "bg-zinc-100 text-zinc-700", starter: "bg-blue-50 text-blue-700",
+  free: "bg-zinc-100 text-apple-ink-muted-80", starter: "bg-blue-50 text-blue-700",
   growth: "bg-purple-50 text-purple-700", enterprise: "bg-amber-50 text-amber-700"
 };
 const statusColors: Record<string, string> = {
@@ -86,12 +86,12 @@ export default function AdminStoresPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
           <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }}
             placeholder="Search stores..." className="h-10 w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-4 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
         </div>
         <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
-          className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-600">
+          className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-apple-ink-muted-80">
           <option value="all">All Status</option>
           <option value="active">Active</option>
           <option value="suspended">Suspended</option>
@@ -103,7 +103,7 @@ export default function AdminStoresPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-zinc-100 bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              <tr className="border-b border-zinc-100 bg-apple-canvas-parchment text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
                 <th className="px-4 py-3">Store</th>
                 <th className="px-4 py-3">Owner</th>
                 <th className="px-4 py-3">Plan</th>
@@ -118,7 +118,7 @@ export default function AdminStoresPage() {
               {paged.map((s) => (
                 <tr
                   key={s._id}
-                  className="group cursor-pointer transition-colors hover:bg-zinc-50"
+                  className="group cursor-pointer transition-colors hover:bg-apple-canvas-parchment"
                   onClick={() => setSelectedStore(s as AdminStore)}
                 >
                   <td className="px-4 py-3">
@@ -127,23 +127,23 @@ export default function AdminStoresPage() {
                         {s.name[0]}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-zinc-900">{s.name}</p>
-                        <p className="flex items-center gap-1 text-xs text-zinc-500">
+                        <p className="text-sm font-medium text-apple-ink">{s.name}</p>
+                        <p className="flex items-center gap-1 text-xs text-apple-ink-muted-48">
                           <Globe className="h-3 w-3" /> {getStoreDisplayDomain(s.subdomain || s.slug)}
                         </p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-zinc-700">{(s.userId as any)?.name ?? "—"}</td>
+                  <td className="px-4 py-3 text-sm text-apple-ink-muted-80">{(s.userId as any)?.name ?? "—"}</td>
                   <td className="px-4 py-3">
                     <span className={`rounded-lg px-2 py-0.5 text-xs font-medium ${planColors[s.plan] ?? planColors.free}`}>{s.plan}</span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`rounded-lg px-2 py-0.5 text-xs font-medium ${statusColors[s.status] ?? statusColors.draft}`}>{s.status}</span>
                   </td>
-                  <td className="px-4 py-3 text-sm font-medium text-zinc-900">{formatCurrency(s.revenueBDT ?? 0)}</td>
-                  <td className="px-4 py-3 text-sm text-zinc-500">{s.orderCount ?? 0}</td>
-                  <td className="px-4 py-3 text-sm text-zinc-500">
+                  <td className="px-4 py-3 text-sm font-medium text-apple-ink">{formatCurrency(s.revenueBDT ?? 0)}</td>
+                  <td className="px-4 py-3 text-sm text-apple-ink-muted-48">{s.orderCount ?? 0}</td>
+                  <td className="px-4 py-3 text-sm text-apple-ink-muted-48">
                     {new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -153,7 +153,7 @@ export default function AdminStoresPage() {
                       minWidth={176}
                       trigger={
                         <button
-                          className="rounded-lg p-1.5 text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-100 hover:text-zinc-700 group-hover:opacity-100"
+                          className="rounded-lg p-1.5 text-apple-ink-muted-48 opacity-0 transition-opacity hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 group-hover:opacity-100"
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </button>
@@ -179,18 +179,18 @@ export default function AdminStoresPage() {
                 </tr>
               ))}
               {paged.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-sm text-zinc-500">No stores found</td></tr>
+                <tr><td colSpan={8} className="px-4 py-12 text-center text-sm text-apple-ink-muted-48">No stores found</td></tr>
               )}
             </tbody>
           </table>
         </div>
         <div className="flex items-center justify-between border-t border-zinc-100 px-6 py-3">
-          <p className="text-sm text-zinc-500">Showing {(page * perPage) + 1}-{Math.min((page + 1) * perPage, filtered.length)} of {filtered.length}</p>
+          <p className="text-sm text-apple-ink-muted-48">Showing {(page * perPage) + 1}-{Math.min((page + 1) * perPage, filtered.length)} of {filtered.length}</p>
           <div className="flex gap-2">
             <button disabled={page === 0} onClick={() => setPage(page - 1)}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-40">Previous</button>
+              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment disabled:opacity-40">Previous</button>
             <button disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-40">Next</button>
+              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment disabled:opacity-40">Next</button>
           </div>
         </div>
       </div>

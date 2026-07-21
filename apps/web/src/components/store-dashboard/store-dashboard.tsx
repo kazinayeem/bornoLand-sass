@@ -129,10 +129,10 @@ function StatCard({
           </span>
         )}
       </div>
-      <p className="mt-3 text-2xl font-bold tracking-tight text-zinc-900">
+      <p className="mt-3 text-2xl font-bold tracking-tight text-apple-ink">
         {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
       </p>
-      <p className="mt-0.5 text-[13px] font-medium text-zinc-500">{label}</p>
+      <p className="mt-0.5 text-[13px] font-medium text-apple-ink-muted-48">{label}</p>
     </DashboardCard>
   );
 }
@@ -166,10 +166,10 @@ function QuickActionCard({
           <Icon className={cn("h-5 w-5", color)} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-semibold text-zinc-900">{label}</p>
-          <p className="mt-0.5 truncate text-[11px] text-zinc-400">{description}</p>
+          <p className="text-[13px] font-semibold text-apple-ink">{label}</p>
+          <p className="mt-0.5 truncate text-[11px] text-apple-ink-muted-48">{description}</p>
         </div>
-        <ArrowRight className="h-4 w-4 shrink-0 text-zinc-300 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-zinc-500" />
+        <ArrowRight className="h-4 w-4 shrink-0 text-zinc-300 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-apple-ink-muted-48" />
       </Link>
     </DashboardCard>
   );
@@ -202,7 +202,7 @@ function StorageCard({
   return (
     <DashboardCard delay={delay}>
       <div className="flex items-center justify-between">
-        <h3 className="text-[13px] font-semibold text-zinc-900">Storage</h3>
+        <h3 className="text-[13px] font-semibold text-apple-ink">Storage</h3>
         {isHigh && (
           <Link href={billingHref} className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700 transition-colors hover:bg-amber-100">
             <Zap className="h-2.5 w-2.5" />
@@ -211,8 +211,8 @@ function StorageCard({
         )}
       </div>
       <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-2xl font-bold tracking-tight text-zinc-900">{usedLabel}</span>
-        <span className="text-sm text-zinc-400">/ {limitLabel}</span>
+        <span className="text-2xl font-bold tracking-tight text-apple-ink">{usedLabel}</span>
+        <span className="text-sm text-apple-ink-muted-48">/ {limitLabel}</span>
       </div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100">
         <motion.div
@@ -222,7 +222,7 @@ function StorageCard({
           className={cn("h-full rounded-full", barColor)}
         />
       </div>
-      <div className="mt-2 flex items-center justify-between text-[11px] text-zinc-400">
+      <div className="mt-2 flex items-center justify-between text-[11px] text-apple-ink-muted-48">
         <span>{remainingLabel} remaining</span>
         <span className="tabular-nums">{percentUsed}% used</span>
       </div>
@@ -250,27 +250,27 @@ function PlanCard({
   return (
     <DashboardCard delay={delay}>
       <div className="flex items-center justify-between">
-        <h3 className="text-[13px] font-semibold text-zinc-900">Current Plan</h3>
+        <h3 className="text-[13px] font-semibold text-apple-ink">Current Plan</h3>
         <span className="inline-flex items-center rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-semibold text-violet-700">
           {planName}
         </span>
       </div>
       <div className="mt-4 space-y-2.5">
-        <div className="flex items-center justify-between rounded-xl bg-zinc-50 px-3.5 py-2.5">
-          <span className="text-[11px] font-medium text-zinc-400">Storage</span>
-          <span className="text-[11px] font-semibold text-zinc-700">{storage}</span>
+        <div className="flex items-center justify-between rounded-xl bg-apple-canvas-parchment px-3.5 py-2.5">
+          <span className="text-[11px] font-medium text-apple-ink-muted-48">Storage</span>
+          <span className="text-[11px] font-semibold text-apple-ink-muted-80">{storage}</span>
         </div>
-        <div className="flex items-center justify-between rounded-xl bg-zinc-50 px-3.5 py-2.5">
-          <span className="text-[11px] font-medium text-zinc-400">Bandwidth</span>
-          <span className="text-[11px] font-semibold text-zinc-700">{bandwidth}</span>
+        <div className="flex items-center justify-between rounded-xl bg-apple-canvas-parchment px-3.5 py-2.5">
+          <span className="text-[11px] font-medium text-apple-ink-muted-48">Bandwidth</span>
+          <span className="text-[11px] font-semibold text-apple-ink-muted-80">{bandwidth}</span>
         </div>
       </div>
       {features.length > 0 && (
         <div className="mt-4">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Features</p>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Features</p>
           <div className="flex flex-wrap gap-1.5">
             {features.slice(0, 4).map((f) => (
-              <span key={f} className="inline-flex items-center gap-1 rounded-full bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-600">
+              <span key={f} className="inline-flex items-center gap-1 rounded-full bg-apple-canvas-parchment px-2 py-0.5 text-[10px] font-medium text-apple-ink-muted-80">
                 <Shield className="h-2.5 w-2.5 text-emerald-500" />
                 {f}
               </span>
@@ -313,15 +313,15 @@ function PerformanceCard({
 
   return (
     <DashboardCard delay={delay}>
-      <h3 className="text-[13px] font-semibold text-zinc-900">Store Health</h3>
+      <h3 className="text-[13px] font-semibold text-apple-ink">Store Health</h3>
       <div className="mt-4 space-y-3.5">
         {metrics.map((m) => {
           const pct = Math.min(100, Math.round((m.value / m.max) * 100));
           return (
             <div key={m.label}>
               <div className="flex items-center justify-between text-[11px]">
-                <span className="font-medium text-zinc-600">{m.label}</span>
-                <span className="tabular-nums text-zinc-400">{formatCompact(m.value)}</span>
+                <span className="font-medium text-apple-ink-muted-80">{m.label}</span>
+                <span className="tabular-nums text-apple-ink-muted-48">{formatCompact(m.value)}</span>
               </div>
               <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-100">
                 <motion.div
@@ -377,7 +377,7 @@ function ActivityTimeline({
 
   return (
     <DashboardCard delay={delay}>
-      <h3 className="text-[13px] font-semibold text-zinc-900">Activity</h3>
+      <h3 className="text-[13px] font-semibold text-apple-ink">Activity</h3>
       <div className="mt-4 space-y-3.5">
         {items.map((item, i) => {
           const Icon = item.icon;
@@ -387,8 +387,8 @@ function ActivityTimeline({
                 <Icon className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-medium text-zinc-900">{item.label}</p>
-                <p className="text-[11px] text-zinc-400">{item.time}</p>
+                <p className="text-[13px] font-medium text-apple-ink">{item.label}</p>
+                <p className="text-[11px] text-apple-ink-muted-48">{item.time}</p>
               </div>
             </div>
           );
@@ -411,7 +411,7 @@ function StoreDetailsCard({
 }) {
   return (
     <DashboardCard delay={delay}>
-      <h3 className="text-[13px] font-semibold text-zinc-900">Store Details</h3>
+      <h3 className="text-[13px] font-semibold text-apple-ink">Store Details</h3>
       <div className="mt-4 space-y-2.5">
         {[
           { label: "Name", value: store.name },
@@ -420,9 +420,9 @@ function StoreDetailsCard({
           { label: "Plan", value: planName || "Free" },
           { label: "Created", value: new Date(store.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) },
         ].map((item) => (
-          <div key={item.label} className="flex items-center justify-between rounded-xl bg-zinc-50 px-3.5 py-2.5">
-            <span className="text-[11px] font-medium text-zinc-400">{item.label}</span>
-            <span className="max-w-[60%] truncate text-right text-[11px] font-semibold text-zinc-700">
+          <div key={item.label} className="flex items-center justify-between rounded-xl bg-apple-canvas-parchment px-3.5 py-2.5">
+            <span className="text-[11px] font-medium text-apple-ink-muted-48">{item.label}</span>
+            <span className="max-w-[60%] truncate text-right text-[11px] font-semibold text-apple-ink-muted-80">
               {item.value}
             </span>
           </div>
@@ -465,7 +465,7 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl font-bold tracking-tight text-zinc-900">{store.shortName || store.name}</h1>
+                <h1 className="text-xl font-bold tracking-tight text-apple-ink">{store.shortName || store.name}</h1>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className={cn(
@@ -485,12 +485,12 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
                   </span>
                 )}
               </div>
-              <p className="mt-2 text-[13px] text-zinc-500">{store.tagline || store.description || store.slug}</p>
+              <p className="mt-2 text-[13px] text-apple-ink-muted-48">{store.tagline || store.description || store.slug}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={`${storeBase}/settings`}
-                className="inline-flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-4 py-2.5 text-[13px] font-medium text-zinc-700 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover:shadow-sm active:scale-[0.98]"
               >
                 Edit Store
               </Link>
@@ -498,7 +498,7 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
                 href={`https://${store.subdomain}.bornoland.com`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-4 py-2.5 text-[13px] font-medium text-zinc-700 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover:shadow-sm active:scale-[0.98]"
               >
                 <Globe className="h-4 w-4" />
                 Visit Store
@@ -506,7 +506,7 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
               </a>
               <Link
                 href={`${storeBase}/builder`}
-                className="inline-flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-4 py-2.5 text-[13px] font-medium text-zinc-700 transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-sm active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-xl border border-[#ececec] bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover:shadow-sm active:scale-[0.98]"
               >
                 <Palette className="h-4 w-4" />
                 Builder
@@ -615,7 +615,7 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
 
       {/* ── Quick Actions ─────────────────────────────────────── */}
       <div>
-        <h2 className="mb-3 text-[13px] font-semibold text-zinc-900">Quick Actions</h2>
+        <h2 className="mb-3 text-[13px] font-semibold text-apple-ink">Quick Actions</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <QuickActionCard
             label="Create Product"
@@ -685,7 +685,7 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
             description="Manage CMS pages"
             icon={FileText}
             href={`${storeBase}/pages`}
-            color="text-zinc-600"
+            color="text-apple-ink-muted-80"
             bg="bg-zinc-100"
             delay={0.76}
           />

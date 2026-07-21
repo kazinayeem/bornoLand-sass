@@ -259,7 +259,7 @@ export function MediaPicker({
 
   const wrapper = (
     <div className="space-y-2">
-      {!hideLabel && <label className="text-sm font-medium text-zinc-700">{label}</label>}
+      {!hideLabel && <label className="text-sm font-medium text-apple-ink-muted-80">{label}</label>}
 
       <div className="flex flex-wrap items-start gap-3">
         {previewUrl ? (
@@ -273,7 +273,7 @@ export function MediaPicker({
             />
           </div>
         ) : (
-          <div className={cn("flex shrink-0 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-400", wrapperPreviewSize)}>
+          <div className={cn("flex shrink-0 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-apple-canvas-parchment text-apple-ink-muted-48", wrapperPreviewSize)}>
             <ImagePlus className={compact ? "h-5 w-5" : "h-6 w-6"} />
           </div>
         )}
@@ -283,7 +283,7 @@ export function MediaPicker({
             <div className="space-y-0.5">
               <p className="truncate text-[11px] font-medium text-zinc-800">{meta.name}</p>
               {(meta.size || meta.dimensions) && (
-                <p className="text-[10px] text-zinc-500">
+                <p className="text-[10px] text-apple-ink-muted-48">
                   {[meta.size, meta.dimensions].filter(Boolean).join(" \u00B7 ")}
                 </p>
               )}
@@ -295,7 +295,7 @@ export function MediaPicker({
               type="button"
               onClick={openPicker}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 font-medium hover:bg-zinc-50",
+                "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 font-medium hover:bg-apple-canvas-parchment",
                 compact ? "px-2.5 py-1.5 text-[11px]" : "px-4 py-2 text-sm"
               )}
             >
@@ -309,7 +309,7 @@ export function MediaPicker({
                   type="button"
                   onClick={openPicker}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 font-medium hover:bg-zinc-50",
+                    "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 font-medium hover:bg-apple-canvas-parchment",
                     compact ? "px-2.5 py-1.5 text-[11px]" : "px-3 py-2 text-sm"
                   )}
                 >
@@ -352,20 +352,20 @@ export function MediaPicker({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative flex w-full flex-col overflow-hidden rounded-[20px] border border-zinc-200/80 bg-white shadow-[0_32px_80px_-16px_rgba(0,0,0,0.35)]"
+            className="relative flex w-full flex-col overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas"
             style={{ height: "85vh", maxHeight: "85vh", maxWidth: "min(1200px, 95vw)" }}
           >
             {/* ── Header ──────────────────────────────────────── */}
             <div className="flex shrink-0 items-center gap-3 border-b border-zinc-100 px-5 py-3">
-              <h2 className="text-base font-semibold text-zinc-900 whitespace-nowrap">Media Library</h2>
+              <h2 className="text-base font-semibold text-apple-ink whitespace-nowrap">Media Library</h2>
 
               <div className="relative min-w-0 flex-1 max-w-md">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-apple-ink-muted-48" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search files..."
-                  className="h-8 w-full rounded-lg border border-zinc-200 bg-zinc-50 pl-8 pr-3 text-xs outline-none focus:border-zinc-400 focus:bg-white"
+                  className="h-8 w-full rounded-lg border border-zinc-200 bg-apple-canvas-parchment pl-8 pr-3 text-xs outline-none focus:border-zinc-400 focus:bg-white"
                 />
               </div>
 
@@ -393,7 +393,7 @@ export function MediaPicker({
                   "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition",
                   showUploadDrop
                     ? "border-zinc-900 bg-zinc-900 text-white"
-                    : "border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                    : "border-zinc-200 text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
                 )}
               >
                 <Link className="h-3.5 w-3.5" />
@@ -403,7 +403,7 @@ export function MediaPicker({
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="ml-auto flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                className="ml-auto flex h-7 w-7 items-center justify-center rounded-lg text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -419,7 +419,7 @@ export function MediaPicker({
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden border-b border-zinc-100"
                 >
-                  <div className="flex gap-3 p-4 bg-zinc-50">
+                  <div className="flex gap-3 p-4 bg-apple-canvas-parchment">
                     <div
                       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                       onDragLeave={() => setDragOver(false)}
@@ -429,10 +429,10 @@ export function MediaPicker({
                         dragOver ? "border-zinc-900 bg-zinc-100" : "border-zinc-200"
                       )}
                     >
-                      <Upload className="h-5 w-5 text-zinc-400 shrink-0" />
+                      <Upload className="h-5 w-5 text-apple-ink-muted-48 shrink-0" />
                       <div>
-                        <p className="text-xs font-medium text-zinc-700">Drag & drop or click to browse</p>
-                        <p className="text-[10px] text-zinc-400 mt-0.5">Images are optimized automatically</p>
+                        <p className="text-xs font-medium text-apple-ink-muted-80">Drag & drop or click to browse</p>
+                        <p className="text-[10px] text-apple-ink-muted-48 mt-0.5">Images are optimized automatically</p>
                       </div>
                       <button
                         type="button"
@@ -444,7 +444,7 @@ export function MediaPicker({
                     </div>
 
                     <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-                      <Link className="h-4 w-4 text-zinc-400 shrink-0" />
+                      <Link className="h-4 w-4 text-apple-ink-muted-48 shrink-0" />
                       <input
                         ref={importInputRef}
                         type="url"
@@ -469,7 +469,7 @@ export function MediaPicker({
                   {uploads.length > 0 && (
                     <div className="border-t border-zinc-100 bg-white px-4 py-2">
                       {uploads.map((u) => (
-                        <div key={u.fileName} className="flex items-center gap-2 text-[11px] text-zinc-600">
+                        <div key={u.fileName} className="flex items-center gap-2 text-[11px] text-apple-ink-muted-80">
                           <div className="h-1.5 flex-1 rounded-full bg-zinc-100 overflow-hidden">
                             <div className="h-full bg-zinc-900 rounded-full transition-all" style={{ width: `${u.progress}%` }} />
                           </div>
@@ -491,7 +491,7 @@ export function MediaPicker({
                   onClick={() => setSidebarFilter(item.id)}
                   className={cn(
                     "flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap",
-                    sidebarFilter === item.id ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                    sidebarFilter === item.id ? "bg-zinc-900 text-white" : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
                   )}
                 >
                   <item.icon className="h-3 w-3" />
@@ -501,7 +501,7 @@ export function MediaPicker({
             </div>
 
             <div className="flex flex-1 overflow-hidden">
-              <aside className="hidden w-44 shrink-0 border-r border-zinc-100 bg-zinc-50/50 p-2 lg:block">
+              <aside className="hidden w-44 shrink-0 border-r border-zinc-100 bg-apple-canvas-parchment/50 p-2 lg:block">
                 <nav className="space-y-0.5">
                   {SIDEBAR_ITEMS.map((item) => (
                     <button
@@ -510,8 +510,8 @@ export function MediaPicker({
                       className={cn(
                         "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium transition",
                         sidebarFilter === item.id
-                          ? "bg-white text-zinc-900 shadow-sm"
-                          : "text-zinc-600 hover:bg-white/60"
+                          ? "bg-white text-apple-ink shadow-sm"
+                          : "text-apple-ink-muted-80 hover:bg-white/60"
                       )}
                     >
                       <item.icon className="h-3.5 w-3.5" />
@@ -521,7 +521,7 @@ export function MediaPicker({
                 </nav>
 
                 <div className="mt-4 border-t border-zinc-200 pt-3 px-3">
-                  <p className="text-[10px] text-zinc-400">{totalCount} files</p>
+                  <p className="text-[10px] text-apple-ink-muted-48">{totalCount} files</p>
                 </div>
               </aside>
 
@@ -534,8 +534,8 @@ export function MediaPicker({
                   ) : files.length === 0 ? (
                     <div className="flex h-full flex-col items-center justify-center text-center">
                       <Image className="mb-3 h-10 w-10 text-zinc-200" />
-                      <p className="text-sm font-medium text-zinc-600">No files found</p>
-                      <p className="mt-1 text-xs text-zinc-400">Upload an image or adjust your search</p>
+                      <p className="text-sm font-medium text-apple-ink-muted-80">No files found</p>
+                      <p className="mt-1 text-xs text-apple-ink-muted-48">Upload an image or adjust your search</p>
                     </div>
                   ) : (
                     <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}>
@@ -546,7 +546,7 @@ export function MediaPicker({
                           onClick={() => handleClickFile(file)}
                           onDoubleClick={() => handleDoubleClick(file)}
                           className={cn(
-                            "group relative aspect-square overflow-hidden rounded-xl border-2 bg-zinc-50 text-left transition-all",
+                            "group relative aspect-square overflow-hidden rounded-xl border-2 bg-apple-canvas-parchment text-left transition-all",
                             previewFile?._id === file._id
                               ? "border-zinc-900 ring-2 ring-zinc-900/20"
                               : "border-zinc-100 hover:border-zinc-300"
@@ -586,13 +586,13 @@ export function MediaPicker({
 
                 {totalPages > 1 && (
                   <div className="flex shrink-0 items-center justify-between border-t border-zinc-100 px-4 py-2.5">
-                    <p className="text-[11px] text-zinc-400">Page {page} of {totalPages}</p>
+                    <p className="text-[11px] text-apple-ink-muted-48">Page {page} of {totalPages}</p>
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
                         disabled={!hasPrevPage}
                         onClick={() => setPage((p) => p - 1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 disabled:opacity-30"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-30"
                       >
                         <ChevronLeft className="h-3.5 w-3.5" />
                       </button>
@@ -606,7 +606,7 @@ export function MediaPicker({
                             onClick={() => setPage(p)}
                             className={cn(
                               "flex h-7 min-w-[28px] items-center justify-center rounded-lg px-1.5 text-[11px] font-medium",
-                              page === p ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                              page === p ? "bg-zinc-900 text-white" : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
                             )}
                           >
                             {p}
@@ -617,7 +617,7 @@ export function MediaPicker({
                         type="button"
                         disabled={!hasNextPage}
                         onClick={() => setPage((p) => p + 1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 disabled:opacity-30"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-30"
                       >
                         <ChevronRight className="h-3.5 w-3.5" />
                       </button>
@@ -627,7 +627,7 @@ export function MediaPicker({
               </div>
 
               {previewFile && (
-                <aside className="hidden w-72 shrink-0 border-l border-zinc-100 bg-zinc-50/50 p-4 lg:flex lg:flex-col">
+                <aside className="hidden w-72 shrink-0 border-l border-zinc-100 bg-apple-canvas-parchment/50 p-4 lg:flex lg:flex-col">
                   <div className="relative aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-white">
                     {previewFile.fileType === "image" ? (
                       <img
@@ -643,10 +643,10 @@ export function MediaPicker({
                   </div>
 
                   <div className="mt-3 space-y-1.5">
-                    <p className="truncate text-sm font-medium text-zinc-900" title={previewFile.displayName || previewFile.originalName}>
+                    <p className="truncate text-sm font-medium text-apple-ink" title={previewFile.displayName || previewFile.originalName}>
                       {previewFile.displayName || previewFile.originalName}
                     </p>
-                    <div className="space-y-1 text-[11px] text-zinc-500">
+                    <div className="space-y-1 text-[11px] text-apple-ink-muted-48">
                       {previewFile.width && previewFile.height && (
                         <p>{previewFile.width} x {previewFile.height}px</p>
                       )}
@@ -679,7 +679,7 @@ export function MediaPicker({
 
             {previewFile && (
               <div className="flex shrink-0 items-center gap-3 border-t border-zinc-100 bg-white px-4 py-3 lg:hidden">
-                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-apple-canvas-parchment">
                   {previewFile.fileType === "image" ? (
                     <img
                       src={resolveMediaUrl(previewFile.thumbnailUrl || previewFile.publicUrl)}
@@ -693,10 +693,10 @@ export function MediaPicker({
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-zinc-900">
+                  <p className="truncate text-xs font-medium text-apple-ink">
                     {previewFile.displayName || previewFile.originalName}
                   </p>
-                  <p className="text-[10px] text-zinc-400">
+                  <p className="text-[10px] text-apple-ink-muted-48">
                     {previewFile.width && previewFile.height ? `${previewFile.width} x ${previewFile.height} \u00B7 ` : ""}
                     {formatBytes(previewFile.size)}
                   </p>

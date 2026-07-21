@@ -17,7 +17,7 @@ export function HeaderLogo({ section }: { section: SectionData }) {
         </div>
       )}
       {p.showName !== "false" && (
-        <span className="text-lg font-bold text-zinc-900">{p.storeName || "Store"}</span>
+        <span className="text-lg font-bold text-apple-ink">{p.storeName || "Store"}</span>
       )}
     </BuilderLink>
   );

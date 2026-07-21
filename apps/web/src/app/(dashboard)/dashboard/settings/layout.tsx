@@ -26,8 +26,8 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
                 href={tab.href}
                 className={`flex items-center gap-2 border-b-2 px-1 pb-3 text-sm font-medium transition-colors ${
                   active
-                    ? "border-zinc-900 text-zinc-900"
-                    : "border-transparent text-zinc-400 hover:text-zinc-600"
+                    ? "border-zinc-900 text-apple-ink"
+                    : "border-transparent text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
                 }`}
               >
                 <tab.icon className="h-4 w-4" />

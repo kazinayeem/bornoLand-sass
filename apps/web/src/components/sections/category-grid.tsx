@@ -26,16 +26,16 @@ export function CategoryGrid({ section }: { section: SectionData }) {
           {display.map((cat) => (
             <Link key={cat._id} href={`/category/${cat.slug}`}
               className="group flex flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 transition-all hover:shadow-md hover:-translate-y-0.5">
-              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-zinc-50">
+              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-apple-canvas-parchment">
                 {cat.imageUrl ? (
                   <img src={cat.imageUrl} alt={cat.name} className="h-full w-full object-cover" />
                 ) : (
-                  <ImageIcon className="h-6 w-6 text-zinc-400" />
+                  <ImageIcon className="h-6 w-6 text-apple-ink-muted-48" />
                 )}
               </div>
-              <span className="text-sm font-semibold text-zinc-900">{cat.name}</span>
+              <span className="text-sm font-semibold text-apple-ink">{cat.name}</span>
               {p.showProductCount !== "false" && (
-                <span className="text-xs text-zinc-400">{productCount(cat._id)} products</span>
+                <span className="text-xs text-apple-ink-muted-48">{productCount(cat._id)} products</span>
               )}
             </Link>
           ))}

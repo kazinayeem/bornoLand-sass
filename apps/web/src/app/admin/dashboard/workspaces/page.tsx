@@ -84,8 +84,8 @@ export default function WorkspacesPage() {
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-semibold text-zinc-900">{ws.name}</h3>
-                <p className="text-sm text-zinc-500">{ws.email}</p>
+                <h3 className="font-semibold text-apple-ink">{ws.name}</h3>
+                <p className="text-sm text-apple-ink-muted-48">{ws.email}</p>
               </div>
               <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
                 {ws.storeCount} store{ws.storeCount !== 1 ? "s" : ""}
@@ -101,17 +101,17 @@ export default function WorkspacesPage() {
                   >
                     <div>
                       <p className="font-medium text-zinc-800">{store.name}</p>
-                      <p className="text-xs text-zinc-400">/{store.slug}</p>
+                      <p className="text-xs text-apple-ink-muted-48">/{store.slug}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs capitalize text-zinc-500">{store.status}</p>
-                      <p className="text-xs text-zinc-400">{store.plan ?? "—"}</p>
+                      <p className="text-xs capitalize text-apple-ink-muted-48">{store.status}</p>
+                      <p className="text-xs text-apple-ink-muted-48">{store.plan ?? "—"}</p>
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="mt-4 text-sm text-zinc-400">No stores yet.</p>
+              <p className="mt-4 text-sm text-apple-ink-muted-48">No stores yet.</p>
             )}
 
             <Link

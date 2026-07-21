@@ -73,7 +73,7 @@ export default function StoresPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
       </div>
     );
   }
@@ -88,7 +88,7 @@ export default function StoresPage() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -107,8 +107,8 @@ export default function StoresPage() {
       {activeStores.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center shadow-sm">
           <Store className="mx-auto h-10 w-10 text-zinc-300" />
-          <h3 className="mt-3 text-lg font-semibold text-zinc-900">No stores yet</h3>
-          <p className="mt-1 text-sm text-zinc-500">Create your first store to start selling.</p>
+          <h3 className="mt-3 text-lg font-semibold text-apple-ink">No stores yet</h3>
+          <p className="mt-1 text-sm text-apple-ink-muted-48">Create your first store to start selling.</p>
           <Link
             href="/dashboard/stores/create"
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800"

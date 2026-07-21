@@ -186,7 +186,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
         <div className="mt-5 grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-            <div className="relative overflow-hidden rounded-[2rem] border border-zinc-200 bg-zinc-50 shadow-[0_20px_80px_rgba(0,0,0,0.08)]">
+            <div className="relative overflow-hidden rounded-[2rem] border border-zinc-200 bg-apple-canvas-parchment shadow-[0_20px_80px_rgba(0,0,0,0.08)]">
               <div className="group relative aspect-square overflow-hidden bg-white">
                 {displayImage ? (
                   <SmartImage
@@ -203,7 +203,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 )}
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
                 <div className="absolute left-4 top-4 flex flex-col gap-2">
-                  <span className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold text-zinc-700 shadow-sm backdrop-blur">{product.category}</span>
+                  <span className="rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold text-apple-ink-muted-80 shadow-sm backdrop-blur">{product.category}</span>
                   {product.featured && <span className="rounded-full bg-amber-500 px-3 py-1 text-[11px] font-semibold text-white shadow-sm">Featured</span>}
                 </div>
                 {discount > 0 && (
@@ -211,7 +211,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
                     -{discount}%
                   </span>
                 )}
-                <button className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-semibold text-zinc-700 shadow-lg backdrop-blur">
+                <button className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-semibold text-apple-ink-muted-80 shadow-lg backdrop-blur">
                   <ZoomIn className="h-4 w-4" /> Zoom
                 </button>
               </div>
@@ -240,9 +240,9 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 { icon: RefreshCcw, title: "Easy returns", copy: "30 day returns" },
               ].map(({ icon: Icon, title, copy }) => (
                 <div key={title} className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-                  <Icon className="h-5 w-5 text-zinc-900" />
-                  <p className="mt-3 text-sm font-semibold text-zinc-900">{title}</p>
-                  <p className="mt-1 text-xs text-zinc-500">{copy}</p>
+                  <Icon className="h-5 w-5 text-apple-ink" />
+                  <p className="mt-3 text-sm font-semibold text-apple-ink">{title}</p>
+                  <p className="mt-1 text-xs text-apple-ink-muted-48">{copy}</p>
                 </div>
               ))}
             </div>
@@ -250,25 +250,25 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
           <motion.aside initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="lg:sticky lg:top-6 lg:self-start">
             <div className="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.07)]">
-              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-400">
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-apple-ink-muted-48">
                 <span>Premium Product</span>
                 <ChevronRight className="h-3.5 w-3.5" />
                 <span>{activeVariant?.sku || product.sku}</span>
               </div>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-950 sm:text-4xl">{product.name}</h1>
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-apple-ink sm:text-4xl">{product.name}</h1>
 
               <div className="mt-4 flex items-center gap-2">
                 {Array.from({ length: 5 }).map((_, index) => (
                   <Star key={index} className="h-4 w-4 fill-amber-400 text-amber-400" />
                 ))}
-                <span className="text-sm text-zinc-500">4.8 · 24 reviews</span>
+                <span className="text-sm text-apple-ink-muted-48">4.8 · 24 reviews</span>
               </div>
 
               <div className="mt-5 flex items-end gap-3">
-                <span className="text-4xl font-semibold tracking-tight text-zinc-950">{formatCurrency(displayPrice, settings)}</span>
+                <span className="text-4xl font-semibold tracking-tight text-apple-ink">{formatCurrency(displayPrice, settings)}</span>
                 {displayComparePrice && displayComparePrice > displayPrice && (
                   <>
-                    <span className="pb-1 text-lg text-zinc-400 line-through">{formatCurrency(displayComparePrice, settings)}</span>
+                    <span className="pb-1 text-lg text-apple-ink-muted-48 line-through">{formatCurrency(displayComparePrice, settings)}</span>
                     <span className="mb-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">Save {discount}%</span>
                   </>
                 )}
@@ -277,7 +277,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
               {/* Variant Options */}
               {hasVariants && product.options?.map((opt) => (
                 <div key={opt.name} className="mt-5">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">{opt.name}: <span className="text-zinc-900">{selectedOptions[opt.name]}</span></p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">{opt.name}: <span className="text-apple-ink">{selectedOptions[opt.name]}</span></p>
                   <div className="flex flex-wrap gap-2">
                     {opt.values.map((val) => {
                       const testSelection = { ...selectedOptions, [opt.name]: val };
@@ -293,8 +293,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
                             isSelected
                               ? "border-zinc-950 bg-zinc-950 text-white"
                               : isAvailable
-                                ? "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400"
-                                : "border-zinc-100 bg-zinc-50 text-zinc-300 cursor-not-allowed"
+                                ? "border-zinc-200 bg-white text-apple-ink-muted-80 hover:border-zinc-400"
+                                : "border-zinc-100 bg-apple-canvas-parchment text-zinc-300 cursor-not-allowed"
                           }`}
                         >
                           {val}
@@ -306,36 +306,36 @@ export function ProductDetailClient({ product }: { product: Product }) {
               ))}
 
               {product.description ? (
-                <div className="mt-5 prose prose-sm max-w-none text-sm leading-7 text-zinc-600" dangerouslySetInnerHTML={{ __html: product.description }} />
+                <div className="mt-5 prose prose-sm max-w-none text-sm leading-7 text-apple-ink-muted-80" dangerouslySetInnerHTML={{ __html: product.description }} />
               ) : !hasVariants ? (
-                <p className="mt-5 text-sm leading-7 text-zinc-600">No description available.</p>
+                <p className="mt-5 text-sm leading-7 text-apple-ink-muted-80">No description available.</p>
               ) : null}
 
-              <div className="mt-6 flex items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+              <div className="mt-6 flex items-center justify-between rounded-2xl border border-zinc-200 bg-apple-canvas-parchment px-4 py-3">
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Availability</p>
-                  <p className="mt-1 flex items-center gap-2 text-sm font-semibold text-zinc-950">
+                  <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Availability</p>
+                  <p className="mt-1 flex items-center gap-2 text-sm font-semibold text-apple-ink">
                     <Check className="h-4 w-4 text-emerald-600" /> {displayStock > 0 ? `${displayStock} in stock` : "Out of stock"}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">Category</p>
-                  <p className="mt-1 text-sm font-semibold text-zinc-950">{product.category}</p>
+                  <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Category</p>
+                  <p className="mt-1 text-sm font-semibold text-apple-ink">{product.category}</p>
                 </div>
               </div>
 
               <div className="mt-6 flex items-center gap-3">
                 <div className="flex items-center rounded-2xl border border-zinc-200 bg-white p-1">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="flex h-11 w-11 items-center justify-center rounded-xl text-zinc-600 transition-colors hover:bg-zinc-50">
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="flex h-11 w-11 items-center justify-center rounded-xl text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment">
                     <Minus className="h-4 w-4" />
                   </button>
-                  <span className="w-12 text-center text-sm font-semibold text-zinc-950">{quantity}</span>
-                  <button onClick={() => setQuantity(Math.min(displayStock || 999, quantity + 1))} className="flex h-11 w-11 items-center justify-center rounded-xl text-zinc-600 transition-colors hover:bg-zinc-50">
+                  <span className="w-12 text-center text-sm font-semibold text-apple-ink">{quantity}</span>
+                  <button onClick={() => setQuantity(Math.min(displayStock || 999, quantity + 1))} className="flex h-11 w-11 items-center justify-center rounded-xl text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment">
                     <Plus className="h-4 w-4" />
                   </button>
                 </div>
                 <button onClick={() => dispatch(toggleWishlist({ productId: product._id, name: product.name, price: displayPrice, image: displayImage }))}
-                  className="flex h-12 w-12 items-center justify-center rounded-2xl border border-zinc-200 text-zinc-500 transition-colors hover:border-red-200 hover:text-red-500">
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl border border-zinc-200 text-apple-ink-muted-48 transition-colors hover:border-red-200 hover:text-red-500">
                   <Heart className="h-5 w-5" />
                 </button>
               </div>
@@ -352,11 +352,11 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 </button>
               </div>
 
-              <div className="mt-6 flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-                <Award className="h-5 w-5 text-zinc-700" />
+              <div className="mt-6 flex items-center gap-3 rounded-2xl border border-zinc-200 bg-apple-canvas-parchment p-4">
+                <Award className="h-5 w-5 text-apple-ink-muted-80" />
                 <div>
-                  <p className="text-sm font-semibold text-zinc-950">Premium customer experience</p>
-                  <p className="text-xs text-zinc-500">Fast support, smooth checkout, and quality products.</p>
+                  <p className="text-sm font-semibold text-apple-ink">Premium customer experience</p>
+                  <p className="text-xs text-apple-ink-muted-48">Fast support, smooth checkout, and quality products.</p>
                 </div>
               </div>
             </div>
@@ -366,7 +366,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
         <section className="mt-12">
           <div className="flex gap-2 overflow-x-auto border-b border-zinc-200 pb-1">
             {tabs.map((tab) => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`whitespace-nowrap rounded-t-2xl px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab.id ? "border-b-2 border-zinc-950 text-zinc-950" : "text-zinc-500 hover:text-zinc-900"}`}>
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`whitespace-nowrap rounded-t-2xl px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab.id ? "border-b-2 border-zinc-950 text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink"}`}>
                 {tab.label}
               </button>
             ))}
@@ -375,7 +375,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
           <div className="grid gap-8 py-8 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
               {activeTab === "description" && (
-                <div className="prose prose-sm max-w-none text-sm leading-7 text-zinc-600">
+                <div className="prose prose-sm max-w-none text-sm leading-7 text-apple-ink-muted-80">
                   {product.description ? (
                     <div dangerouslySetInnerHTML={{ __html: product.description }} />
                   ) : (
@@ -385,9 +385,9 @@ export function ProductDetailClient({ product }: { product: Product }) {
               )}
 
               {activeTab === "features" && (
-                <ul className="space-y-3 text-sm text-zinc-600">
+                <ul className="space-y-3 text-sm text-apple-ink-muted-80">
                   {features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3 rounded-2xl border border-zinc-100 bg-zinc-50 px-4 py-3">
+                    <li key={feature} className="flex items-start gap-3 rounded-2xl border border-zinc-100 bg-apple-canvas-parchment px-4 py-3">
                       <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
                       <span>{feature}</span>
                     </li>
@@ -398,9 +398,9 @@ export function ProductDetailClient({ product }: { product: Product }) {
               {activeTab === "specs" && (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {specs.map(([label, value]) => (
-                    <div key={label} className="rounded-2xl border border-zinc-100 bg-zinc-50 p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">{label}</p>
-                      <p className="mt-2 text-sm font-medium text-zinc-950">{value}</p>
+                    <div key={label} className="rounded-2xl border border-zinc-100 bg-apple-canvas-parchment p-4">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-apple-ink-muted-48">{label}</p>
+                      <p className="mt-2 text-sm font-medium text-apple-ink">{value}</p>
                     </div>
                   ))}
                 </div>
@@ -409,28 +409,28 @@ export function ProductDetailClient({ product }: { product: Product }) {
               {activeTab === "reviews" && (
                 <div className="space-y-4">
                   {reviews.map((review) => (
-                    <div key={review.name} className="rounded-2xl border border-zinc-100 bg-zinc-50 p-4">
+                    <div key={review.name} className="rounded-2xl border border-zinc-100 bg-apple-canvas-parchment p-4">
                       <div className="flex items-center gap-1">
                         {Array.from({ length: review.rating }).map((_, index) => (
                           <Star key={index} className="h-4 w-4 fill-amber-400 text-amber-400" />
                         ))}
                       </div>
-                      <p className="mt-3 text-sm leading-6 text-zinc-600">{review.text}</p>
-                      <p className="mt-3 text-xs font-semibold text-zinc-900">{review.name}</p>
+                      <p className="mt-3 text-sm leading-6 text-apple-ink-muted-80">{review.text}</p>
+                      <p className="mt-3 text-xs font-semibold text-apple-ink">{review.name}</p>
                     </div>
                   ))}
                 </div>
               )}
 
               {activeTab === "shipping" && (
-                <div className="space-y-4 text-sm leading-7 text-zinc-600">
+                <div className="space-y-4 text-sm leading-7 text-apple-ink-muted-80">
                   <p>Orders usually ship within 24-48 hours. Standard delivery takes 3-5 business days depending on location.</p>
                   <p>Free shipping is available on qualified orders and tracking is provided as soon as your package leaves the warehouse.</p>
                 </div>
               )}
 
               {activeTab === "refund" && (
-                <div className="space-y-4 text-sm leading-7 text-zinc-600">
+                <div className="space-y-4 text-sm leading-7 text-apple-ink-muted-80">
                   <p>We offer a 30-day return window for unopened or defective items. Contact support to start a return.</p>
                   <p>Refunds are processed after inspection and credited to your original payment method.</p>
                 </div>
@@ -438,8 +438,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
             </div>
 
             <div className="space-y-4 rounded-[2rem] border border-zinc-200 bg-white p-6 shadow-sm">
-              <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
-                <MessageSquare className="h-4 w-4 text-zinc-500" /> Customer confidence
+              <div className="flex items-center gap-2 text-sm font-semibold text-apple-ink">
+                <MessageSquare className="h-4 w-4 text-apple-ink-muted-48" /> Customer confidence
               </div>
               <div className="grid gap-3">
                 {[
@@ -448,16 +448,16 @@ export function ProductDetailClient({ product }: { product: Product }) {
                   "Premium packaging",
                   "Easy returns",
                 ].map((item) => (
-                  <div key={item} className="flex items-center gap-3 rounded-2xl bg-zinc-50 px-4 py-3 text-sm text-zinc-700">
+                  <div key={item} className="flex items-center gap-3 rounded-2xl bg-apple-canvas-parchment px-4 py-3 text-sm text-apple-ink-muted-80">
                     <Check className="h-4 w-4 text-emerald-600" /> {item}
                   </div>
                 ))}
               </div>
 
-              <div className="rounded-[1.5rem] bg-zinc-950 p-5 text-white">
+              <div className="rounded-lg bg-zinc-950 p-5 text-white">
                 <p className="text-xs uppercase tracking-[0.24em] text-white/50">Need help?</p>
                 <p className="mt-2 text-lg font-semibold">We can help with sizing, shipping, and returns.</p>
-                <Link href="/contact" className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950">
+                <Link href="/contact" className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-apple-ink">
                   Contact Support <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -469,10 +469,10 @@ export function ProductDetailClient({ product }: { product: Product }) {
           <section className="mt-8">
             <div className="mb-5 flex items-end justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-zinc-400">More from this store</p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">Related Products</h2>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-apple-ink-muted-48">More from this store</p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-apple-ink">Related Products</h2>
               </div>
-              <Link href="/shop" className="text-sm font-medium text-zinc-500 hover:text-zinc-950">View all</Link>
+              <Link href="/shop" className="text-sm font-medium text-apple-ink-muted-48 hover:text-apple-ink">View all</Link>
             </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {relatedProducts.map((p) => (
@@ -485,8 +485,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur-xl lg:hidden">
           <div className="mx-auto flex max-w-7xl items-center gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">Total</p>
-              <p className="truncate text-sm font-semibold text-zinc-950">{formatCurrency(totalPrice, settings)}</p>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-apple-ink-muted-48">Total</p>
+              <p className="truncate text-sm font-semibold text-apple-ink">{formatCurrency(totalPrice, settings)}</p>
             </div>
             <button onClick={() => handleAddToCart()} disabled={!enableAddToCart}
               className="rounded-2xl px-4 py-3 text-sm font-semibold text-white disabled:opacity-50" style={{ backgroundColor: primaryColor }}>

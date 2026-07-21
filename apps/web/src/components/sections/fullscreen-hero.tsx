@@ -13,7 +13,7 @@ export function FullscreenHero({ section }: { section: SectionData }) {
         {p.subheadline && <p className="mt-4 text-sm sm:text-lg text-white/80">{p.subheadline}</p>}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           {p.buttonText && (
-            <Link href={p.buttonLink || "#"} className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-zinc-900 hover:bg-zinc-100">
+            <Link href={p.buttonLink || "#"} className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-apple-ink hover:bg-apple-canvas-parchment">
               {p.buttonText}
             </Link>
           )}

@@ -56,14 +56,14 @@ export function CheckoutTab({ storeId }: CheckoutTabProps) {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>;
+    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" /></div>;
   }
 
   const Toggle = ({ value, onChange, label, desc }: { value: boolean; onChange: (v: boolean) => void; label: string; desc: string }) => (
     <div className="flex items-center justify-between rounded-xl border border-zinc-200 p-4">
       <div>
-        <p className="text-sm font-medium text-zinc-900">{label}</p>
-        <p className="text-xs text-zinc-400">{desc}</p>
+        <p className="text-sm font-medium text-apple-ink">{label}</p>
+        <p className="text-xs text-apple-ink-muted-48">{desc}</p>
       </div>
       <button onClick={() => onChange(!value)}
         className={`relative h-6 w-11 rounded-full transition-colors ${value ? "bg-emerald-500" : "bg-zinc-200"}`}>
@@ -81,8 +81,8 @@ export function CheckoutTab({ storeId }: CheckoutTabProps) {
             <ShoppingCart className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-zinc-900">Checkout Preferences</h3>
-            <p className="text-sm text-zinc-500">Configure how customers check out.</p>
+            <h3 className="text-base font-semibold text-apple-ink">Checkout Preferences</h3>
+            <p className="text-sm text-apple-ink-muted-48">Configure how customers check out.</p>
           </div>
         </div>
         <div className="space-y-3">
@@ -104,19 +104,19 @@ export function CheckoutTab({ storeId }: CheckoutTabProps) {
             <DollarSign className="h-5 w-5 text-amber-600" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-zinc-900">Order Rules</h3>
-            <p className="text-sm text-zinc-500">Minimum amounts and tax configuration.</p>
+            <h3 className="text-base font-semibold text-apple-ink">Order Rules</h3>
+            <p className="text-sm text-apple-ink-muted-48">Minimum amounts and tax configuration.</p>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-600">Minimum Order Amount (BDT)</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Minimum Order Amount (BDT)</label>
             <input type="number" min={0} value={minOrderAmount}
               onChange={(e) => setMinOrderAmount(Number(e.target.value))}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-600">Tax Rate (%)</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Tax Rate (%)</label>
             <input type="number" min={0} max={100} step="0.1" value={taxRate}
               onChange={(e) => setTaxRate(Number(e.target.value))}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />

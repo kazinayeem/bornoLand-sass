@@ -18,30 +18,30 @@ export function FeatureLocked({
   const isTier = feature.type === "tier";
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-6 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-apple-canvas-parchment px-6 py-16 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-200">
-        <Lock className="h-6 w-6 text-zinc-600" />
+        <Lock className="h-6 w-6 text-apple-ink-muted-80" />
       </div>
-      <h3 className="text-lg font-semibold text-zinc-900">{feature.name}</h3>
+      <h3 className="text-lg font-semibold text-apple-ink">{feature.name}</h3>
       {currentPlan && (
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-apple-ink-muted-48">
           Current plan: <span className="font-medium">{currentPlan}</span>
         </p>
       )}
       {isLimit ? (
-        <p className="mt-2 max-w-sm text-sm text-zinc-500">
-          <span className="font-semibold text-zinc-700">
+        <p className="mt-2 max-w-sm text-sm text-apple-ink-muted-48">
+          <span className="font-semibold text-apple-ink-muted-80">
             {feature.current} / {feature.limit} used
           </span>
           . Upgrade to increase your limit.
         </p>
       ) : isTier ? (
-        <p className="mt-2 max-w-sm text-sm text-zinc-500">
-          Requires <span className="font-medium text-zinc-700">{planLabel}</span>
+        <p className="mt-2 max-w-sm text-sm text-apple-ink-muted-48">
+          Requires <span className="font-medium text-apple-ink-muted-80">{planLabel}</span>
         </p>
       ) : (
-        <p className="mt-2 max-w-sm text-sm text-zinc-500">
-          Available in <span className="font-medium text-zinc-700">{planLabel}</span>
+        <p className="mt-2 max-w-sm text-sm text-apple-ink-muted-48">
+          Available in <span className="font-medium text-apple-ink-muted-80">{planLabel}</span>
         </p>
       )}
       <Link
@@ -98,23 +98,23 @@ export function UpgradeModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100">
-          <Lock className="h-5 w-5 text-zinc-700" />
+          <Lock className="h-5 w-5 text-apple-ink-muted-80" />
         </div>
-        <h2 className="text-xl font-semibold text-zinc-900">
+        <h2 className="text-xl font-semibold text-apple-ink">
           {isLimit ? `${feature.name} limit reached` : `Upgrade to unlock ${feature.name}`}
         </h2>
         {currentPlan && (
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-apple-ink-muted-48">
             Current plan: <span className="font-medium">{currentPlan}</span>
           </p>
         )}
         {isLimit ? (
-          <p className="mt-3 text-sm text-zinc-600">
+          <p className="mt-3 text-sm text-apple-ink-muted-80">
             You have used <span className="font-semibold">{feature.current}/{feature.limit}</span>.
             Upgrade to increase your limit.
           </p>
         ) : feature.requiredPlan ? (
-          <p className="mt-3 text-sm text-zinc-600">
+          <p className="mt-3 text-sm text-apple-ink-muted-80">
             Available from <span className="font-semibold">{feature.requiredPlan.name}</span>
             {feature.requiredPlan.priceBDT ? ` — ৳${feature.requiredPlan.priceBDT}/mo` : ""}
           </p>
@@ -129,7 +129,7 @@ export function UpgradeModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-medium text-zinc-700"
+            className="flex-1 rounded-xl border border-zinc-200 py-2.5 text-sm font-medium text-apple-ink-muted-80"
           >
             Cancel
           </button>

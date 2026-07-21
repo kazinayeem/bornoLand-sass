@@ -42,7 +42,7 @@ export function PlatformStoragePanel() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-apple-ink-muted-48">
         Platform-wide storage analytics. Per-plan quotas are configured in Plan Builder → Storage tab.
       </p>
 
@@ -54,10 +54,10 @@ export function PlatformStoragePanel() {
       </div>
 
       {analytics && analytics.totalLimitBytes > 0 && (
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+        <div className="rounded-xl border border-zinc-200 bg-apple-canvas-parchment p-4">
           <div className="mb-2 flex justify-between text-sm">
-            <span className="font-medium text-zinc-700">Capacity</span>
-            <span className="text-zinc-500">{usedPct}% used</span>
+            <span className="font-medium text-apple-ink-muted-80">Capacity</span>
+            <span className="text-apple-ink-muted-48">{usedPct}% used</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-zinc-200">
             <div className="h-full rounded-full bg-blue-600" style={{ width: `${Math.min(usedPct, 100)}%` }} />
@@ -76,7 +76,7 @@ export function PlatformStoragePanel() {
 
       <div className="overflow-hidden rounded-xl border border-zinc-200">
         <table className="min-w-full text-sm">
-          <thead className="bg-zinc-50 text-left text-xs uppercase text-zinc-500">
+          <thead className="bg-apple-canvas-parchment text-left text-xs uppercase text-apple-ink-muted-48">
             <tr>
               <th className="px-4 py-3">Store</th>
               <th className="px-4 py-3">Plan</th>
@@ -105,7 +105,7 @@ export function PlatformStoragePanel() {
                         toast.error("Cleanup failed");
                       }
                     }}
-                    className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-600"
+                    className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-red-50 hover:text-red-600"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

@@ -20,7 +20,7 @@ export function AdminTabs({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-wrap gap-1 rounded-xl border border-zinc-200 bg-zinc-50/80 p-1", className)}>
+    <div className={cn("flex flex-wrap gap-1 rounded-xl border border-zinc-200 bg-apple-canvas-parchment/80 p-1", className)}>
       {tabs.map((tab) => (
         <button
           key={tab.id}
@@ -29,13 +29,13 @@ export function AdminTabs({
           className={cn(
             "rounded-lg px-3.5 py-2 text-sm font-medium transition-all",
             active === tab.id
-              ? "bg-white text-zinc-900 shadow-sm"
-              : "text-zinc-500 hover:text-zinc-800"
+              ? "bg-white text-apple-ink shadow-sm"
+              : "text-apple-ink-muted-48 hover:text-zinc-800"
           )}
         >
           {tab.label}
           {typeof tab.count === "number" ? (
-            <span className="ml-1.5 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-600">
+            <span className="ml-1.5 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-apple-ink-muted-80">
               {tab.count}
             </span>
           ) : null}

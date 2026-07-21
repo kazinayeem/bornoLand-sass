@@ -22,8 +22,8 @@ export default function ConversionPage() {
     return (
       <>
         <div>
-          <h1 className="text-xl font-bold text-zinc-900">Conversion</h1>
-          <p className="text-sm text-zinc-500">Conversion funnel analysis</p>
+          <h1 className="text-xl font-bold text-apple-ink">Conversion</h1>
+          <p className="text-sm text-apple-ink-muted-48">Conversion funnel analysis</p>
         </div>
         <AnalyticsEmptyState icon={TrendingUp} title="No conversion data yet" description="Conversion data will appear once visitors interact with your store." />
       </>
@@ -49,8 +49,8 @@ export default function ConversionPage() {
   return (
     <>
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Conversion Funnel</h1>
-        <p className="text-sm text-zinc-500">Track how visitors progress through your store</p>
+        <h1 className="text-xl font-bold text-apple-ink">Conversion Funnel</h1>
+        <p className="text-sm text-apple-ink-muted-48">Track how visitors progress through your store</p>
       </div>
 
       {/* Conversion Rates */}
@@ -58,9 +58,9 @@ export default function ConversionPage() {
         {conversionRates.map((cr, i) => (
           <motion.div key={cr.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
             className="rounded-xl border border-zinc-200 bg-white p-4 text-center">
-            <p className="text-xs font-medium text-zinc-500 mb-1">{cr.label}</p>
+            <p className="text-xs font-medium text-apple-ink-muted-48 mb-1">{cr.label}</p>
             <p className={`text-3xl font-bold ${cr.color}`}>{cr.rate}</p>
-            <p className="text-[10px] text-zinc-400 mt-1">{cr.desc}</p>
+            <p className="text-[10px] text-apple-ink-muted-48 mt-1">{cr.desc}</p>
           </motion.div>
         ))}
       </div>
@@ -75,13 +75,13 @@ export default function ConversionPage() {
               <div key={step.label}>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-bold text-zinc-500">{i + 1}</span>
-                    <step.icon className="h-3.5 w-3.5 text-zinc-400" />
-                    <span className="font-medium text-zinc-700">{step.label}</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-bold text-apple-ink-muted-48">{i + 1}</span>
+                    <step.icon className="h-3.5 w-3.5 text-apple-ink-muted-48" />
+                    <span className="font-medium text-apple-ink-muted-80">{step.label}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-semibold text-zinc-900">{formatNumber(step.value)}</span>
-                    <span className="text-zinc-400 w-10 text-right">{step.percentage}%</span>
+                    <span className="font-semibold text-apple-ink">{formatNumber(step.value)}</span>
+                    <span className="text-apple-ink-muted-48 w-10 text-right">{step.percentage}%</span>
                   </div>
                 </div>
                 <div className="h-4 w-full overflow-hidden rounded-full bg-zinc-100">
@@ -109,10 +109,10 @@ export default function ConversionPage() {
               { label: "Search", views: Number(conversion.searchViews ?? 0) },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between text-xs">
-                <span className="text-zinc-700">{item.label}</span>
+                <span className="text-apple-ink-muted-80">{item.label}</span>
                 <div className="flex items-center gap-3">
-                  <span className="font-medium text-zinc-900">{formatNumber(item.views)}</span>
-                  {item.unique !== undefined && <span className="text-zinc-400">({item.unique} unique)</span>}
+                  <span className="font-medium text-apple-ink">{formatNumber(item.views)}</span>
+                  {item.unique !== undefined && <span className="text-apple-ink-muted-48">({item.unique} unique)</span>}
                 </div>
               </div>
             ))}
@@ -121,14 +121,14 @@ export default function ConversionPage() {
 
         <AnalyticsChartCard title="Funnel Summary" delay={0.25}>
           <div className="space-y-4">
-            <p className="text-sm text-zinc-600">
-              Out of <strong className="text-zinc-900">{formatNumber(Number(conversion.totalSessions ?? 0))}</strong> total sessions,
-              <strong className="text-zinc-900"> {formatNumber(Number(conversion.totalOrders ?? 0))}</strong> resulted in orders.
+            <p className="text-sm text-apple-ink-muted-80">
+              Out of <strong className="text-apple-ink">{formatNumber(Number(conversion.totalSessions ?? 0))}</strong> total sessions,
+              <strong className="text-apple-ink"> {formatNumber(Number(conversion.totalOrders ?? 0))}</strong> resulted in orders.
             </p>
             <div className="rounded-xl bg-gradient-to-r from-blue-50 to-emerald-50 p-4 text-center">
-              <p className="text-xs text-zinc-500 mb-1">Overall Conversion Rate</p>
+              <p className="text-xs text-apple-ink-muted-48 mb-1">Overall Conversion Rate</p>
               <p className="text-4xl font-bold text-emerald-600">{String(conversion.conversionRate ?? "0.00")}%</p>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-xs text-apple-ink-muted-48 mt-1">
                 {Number(conversion.totalOrders ?? 0)} orders from {formatNumber(Number(conversion.totalSessions ?? 0))} sessions
               </p>
             </div>

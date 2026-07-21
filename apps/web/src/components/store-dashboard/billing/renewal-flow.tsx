@@ -125,17 +125,17 @@ export function RenewalFlow({
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 mb-3">
                 <RefreshCcw className="h-6 w-6 text-blue-600" />
               </div>
-              <h2 className="text-xl font-bold text-zinc-900">Renew Subscription</h2>
-              <p className="text-sm text-zinc-500 mt-1">{storeName}</p>
+              <h2 className="text-xl font-bold text-apple-ink">Renew Subscription</h2>
+              <p className="text-sm text-apple-ink-muted-48 mt-1">{storeName}</p>
               {currentExpireDate && (
-                <p className="text-xs text-zinc-400 mt-1">
+                <p className="text-xs text-apple-ink-muted-48 mt-1">
                   Current expiry: {formatDate(new Date(currentExpireDate))}
                 </p>
               )}
             </div>
 
             <div>
-              <p className="text-sm font-medium text-zinc-700 mb-2">Select Plan</p>
+              <p className="text-sm font-medium text-apple-ink-muted-80 mb-2">Select Plan</p>
               <div className="grid gap-2">
                 {activePlans.map((plan) => (
                   <button
@@ -144,15 +144,15 @@ export function RenewalFlow({
                     onClick={() => setSelectedPlanId(plan._id)}
                     className={`flex items-center justify-between rounded-xl border-2 p-3 text-left transition-all ${
                       selectedPlanId === plan._id
-                        ? "border-zinc-900 bg-zinc-50"
+                        ? "border-zinc-900 bg-apple-canvas-parchment"
                         : "border-zinc-200 hover:border-zinc-300"
                     }`}
                   >
                     <div>
-                      <p className="font-semibold text-zinc-900">{plan.name}</p>
-                      <p className="text-xs text-zinc-500">{plan.description || ""}</p>
+                      <p className="font-semibold text-apple-ink">{plan.name}</p>
+                      <p className="text-xs text-apple-ink-muted-48">{plan.description || ""}</p>
                     </div>
-                    <p className="text-lg font-bold text-zinc-900">
+                    <p className="text-lg font-bold text-apple-ink">
                       {plan.isCustomPrice ? "Custom" : formatBDT(plan.priceBDT ?? 0)}
                     </p>
                   </button>
@@ -161,7 +161,7 @@ export function RenewalFlow({
             </div>
 
             <div>
-              <p className="text-sm font-medium text-zinc-700 mb-2">Renewal Duration</p>
+              <p className="text-sm font-medium text-apple-ink-muted-80 mb-2">Renewal Duration</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {DURATION_OPTIONS.map((d) => {
                   const price = selectedPlan ? getPlanAmount(selectedPlan, d.value) : 0;
@@ -172,12 +172,12 @@ export function RenewalFlow({
                       onClick={() => setDuration(d.value)}
                       className={`rounded-xl border-2 p-3 text-center transition-all ${
                         duration === d.value
-                          ? "border-zinc-900 bg-zinc-50"
+                          ? "border-zinc-900 bg-apple-canvas-parchment"
                           : "border-zinc-200 hover:border-zinc-300"
                       }`}
                     >
-                      <p className="text-sm font-semibold text-zinc-900">{d.label}</p>
-                      <p className="text-xs text-zinc-500">{formatBDT(price)}</p>
+                      <p className="text-sm font-semibold text-apple-ink">{d.label}</p>
+                      <p className="text-xs text-apple-ink-muted-48">{formatBDT(price)}</p>
                     </button>
                   );
                 })}
@@ -212,8 +212,8 @@ export function RenewalFlow({
         {step === "payment" && (
           <motion.div key="payment" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
             <div className="text-center mb-4">
-              <h2 className="text-xl font-bold text-zinc-900">Payment Details</h2>
-              <p className="text-sm text-zinc-500 mt-1">
+              <h2 className="text-xl font-bold text-apple-ink">Payment Details</h2>
+              <p className="text-sm text-apple-ink-muted-48 mt-1">
                 Total: <strong>{formatBDT(paymentAmount)}</strong> for {DURATION_OPTIONS.find((d) => d.value === duration)?.label}
               </p>
             </div>
@@ -226,27 +226,27 @@ export function RenewalFlow({
                   onClick={() => setPaymentMethod(method.type)}
                   className={`rounded-xl border-2 p-3 text-center transition-all ${
                     paymentMethod === method.type
-                      ? "border-zinc-900 bg-zinc-50"
+                      ? "border-zinc-900 bg-apple-canvas-parchment"
                       : "border-zinc-200 hover:border-zinc-300"
                   }`}
                 >
-                  <p className="text-sm font-semibold text-zinc-900">{method.label}</p>
+                  <p className="text-sm font-semibold text-apple-ink">{method.label}</p>
                 </button>
               ))}
             </div>
 
             {selectedMethod && (
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm space-y-1">
-                <p className="font-medium text-zinc-900">Send to:</p>
-                <p className="text-lg font-bold tracking-wide text-zinc-900">{selectedMethod.accountNumber}</p>
-                {selectedMethod.accountName && <p className="text-zinc-600">{selectedMethod.accountName}</p>}
-                {selectedMethod.instructions && <p className="text-xs text-zinc-500 mt-2">{selectedMethod.instructions}</p>}
+              <div className="rounded-xl border border-zinc-200 bg-apple-canvas-parchment p-4 text-sm space-y-1">
+                <p className="font-medium text-apple-ink">Send to:</p>
+                <p className="text-lg font-bold tracking-wide text-apple-ink">{selectedMethod.accountNumber}</p>
+                {selectedMethod.accountName && <p className="text-apple-ink-muted-80">{selectedMethod.accountName}</p>}
+                {selectedMethod.instructions && <p className="text-xs text-apple-ink-muted-48 mt-2">{selectedMethod.instructions}</p>}
               </div>
             )}
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Sender Number</label>
+                <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Sender Number</label>
                 <input
                   value={senderNumber}
                   onChange={(e) => setSenderNumber(e.target.value)}
@@ -255,7 +255,7 @@ export function RenewalFlow({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Transaction ID</label>
+                <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Transaction ID</label>
                 <input
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
@@ -266,7 +266,7 @@ export function RenewalFlow({
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-700">Notes (optional)</label>
+              <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Notes (optional)</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -280,7 +280,7 @@ export function RenewalFlow({
               <button
                 type="button"
                 onClick={() => setStep("plan")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700"
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
               >
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>
@@ -299,28 +299,28 @@ export function RenewalFlow({
         {step === "confirm" && (
           <motion.div key="confirm" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
             <div className="text-center mb-4">
-              <h2 className="text-xl font-bold text-zinc-900">Confirm Renewal</h2>
-              <p className="text-sm text-zinc-500 mt-1">Review before submitting</p>
+              <h2 className="text-xl font-bold text-apple-ink">Confirm Renewal</h2>
+              <p className="text-sm text-apple-ink-muted-48 mt-1">Review before submitting</p>
             </div>
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50/50 p-5 space-y-3">
+            <div className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment/50 p-5 space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Plan</span>
-                <span className="font-semibold text-zinc-900">{selectedPlan?.name}</span>
+                <span className="text-apple-ink-muted-48">Plan</span>
+                <span className="font-semibold text-apple-ink">{selectedPlan?.name}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Duration</span>
-                <span className="font-semibold text-zinc-900 capitalize">{DURATION_OPTIONS.find((d) => d.value === duration)?.label}</span>
+                <span className="text-apple-ink-muted-48">Duration</span>
+                <span className="font-semibold text-apple-ink capitalize">{DURATION_OPTIONS.find((d) => d.value === duration)?.label}</span>
               </div>
               <div className="flex justify-between text-sm border-t border-zinc-200 pt-3">
-                <span className="text-zinc-500">Total</span>
-                <span className="text-lg font-bold text-zinc-900">{formatBDT(paymentAmount)}</span>
+                <span className="text-apple-ink-muted-48">Total</span>
+                <span className="text-lg font-bold text-apple-ink">{formatBDT(paymentAmount)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">New Expiry</span>
-                <span className="font-semibold text-zinc-900">{formatDate(newExpireDate)}</span>
+                <span className="text-apple-ink-muted-48">New Expiry</span>
+                <span className="font-semibold text-apple-ink">{formatDate(newExpireDate)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Method</span>
+                <span className="text-apple-ink-muted-48">Method</span>
                 <Badge variant="default" className="bg-white border border-zinc-200">{selectedMethod?.label || paymentMethod}</Badge>
               </div>
             </div>
@@ -328,7 +328,7 @@ export function RenewalFlow({
               <button
                 type="button"
                 onClick={() => setStep("payment")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700"
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
               >
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>
@@ -351,8 +351,8 @@ export function RenewalFlow({
               <CheckCircle2 className="h-10 w-10 text-emerald-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-zinc-900">Renewal Submitted!</h2>
-              <p className="text-zinc-500 mt-2 max-w-sm mx-auto">
+              <h2 className="text-2xl font-bold text-apple-ink">Renewal Submitted!</h2>
+              <p className="text-apple-ink-muted-48 mt-2 max-w-sm mx-auto">
                 Your renewal payment is pending admin approval. Your store will be updated once approved.
               </p>
             </div>

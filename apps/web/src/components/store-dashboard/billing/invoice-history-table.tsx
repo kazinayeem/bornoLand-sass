@@ -47,7 +47,7 @@ export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
       </div>
     );
   }
@@ -56,8 +56,8 @@ export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
     return (
       <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center shadow-sm">
         <FileText className="mx-auto h-10 w-10 text-zinc-300" />
-        <h3 className="mt-3 text-lg font-semibold text-zinc-900">No invoices yet</h3>
-        <p className="mt-1 text-sm text-zinc-500">Invoices are generated after payment approval.</p>
+        <h3 className="mt-3 text-lg font-semibold text-apple-ink">No invoices yet</h3>
+        <p className="mt-1 text-sm text-apple-ink-muted-48">Invoices are generated after payment approval.</p>
       </div>
     );
   }
@@ -67,14 +67,14 @@ export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
       <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-100 bg-zinc-50/50">
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Invoice</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Date</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Plan</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Duration</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">Amount</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-zinc-500">Status</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">Actions</th>
+            <tr className="border-b border-zinc-100 bg-apple-canvas-parchment/50">
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Invoice</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Date</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Plan</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Duration</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Amount</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Status</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
@@ -86,21 +86,21 @@ export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.02 }}
-                  className="hover:bg-zinc-50/50 transition-colors"
+                  className="hover:bg-apple-canvas-parchment/50 transition-colors"
                 >
                   <td className="px-4 py-3">
-                    <p className="font-mono text-xs font-semibold text-zinc-900">{inv.invoiceNumber}</p>
+                    <p className="font-mono text-xs font-semibold text-apple-ink">{inv.invoiceNumber}</p>
                   </td>
-                  <td className="px-4 py-3 text-xs text-zinc-500">
+                  <td className="px-4 py-3 text-xs text-apple-ink-muted-48">
                     {new Date(inv.createdAt).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
                     })}
                   </td>
-                  <td className="px-4 py-3 text-sm text-zinc-900">{planName}</td>
-                  <td className="px-4 py-3 text-xs text-zinc-500 capitalize">{inv.duration?.replace("_", " ")}</td>
-                  <td className="px-4 py-3 text-right text-sm font-semibold text-zinc-900">{formatBDT(inv.total)}</td>
+                  <td className="px-4 py-3 text-sm text-apple-ink">{planName}</td>
+                  <td className="px-4 py-3 text-xs text-apple-ink-muted-48 capitalize">{inv.duration?.replace("_", " ")}</td>
+                  <td className="px-4 py-3 text-right text-sm font-semibold text-apple-ink">{formatBDT(inv.total)}</td>
                   <td className="px-4 py-3 text-center">
                     <Badge variant="success" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                       {inv.status}
@@ -110,7 +110,7 @@ export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
                     <div className="inline-flex items-center gap-1">
                       <button
                         onClick={() => setSelectedInvoice(inv)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors"
                       >
                         <Eye className="h-3.5 w-3.5" />
                         View
@@ -118,7 +118,7 @@ export function InvoiceHistoryTable({ storeId }: { storeId: string }) {
                       <button
                         onClick={() => handleQuickDownload(inv)}
                         disabled={downloadingId === inv._id}
-                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors disabled:opacity-50"
                         title="Download PDF"
                       >
                         {downloadingId === inv._id ? (

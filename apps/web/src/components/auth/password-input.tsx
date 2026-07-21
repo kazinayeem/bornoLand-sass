@@ -14,7 +14,7 @@ export function PasswordInput({ className, ...props }: React.InputHTMLAttributes
         {...props}
         type={visible ? "text" : "password"}
         className={cn(
-          "h-11 rounded-xl border-zinc-200 bg-zinc-50/50 px-4 pr-12 dark:border-zinc-800 dark:bg-zinc-900/50",
+          "h-11 rounded-xl border-zinc-200 bg-apple-canvas-parchment/50 px-4 pr-12 dark:border-zinc-800 dark:bg-zinc-900/50",
           className
         )}
       />
@@ -22,7 +22,7 @@ export function PasswordInput({ className, ...props }: React.InputHTMLAttributes
         type="button"
         onClick={() => setVisible((current) => !current)}
         aria-label={visible ? "Hide password" : "Show password"}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-apple-ink-muted-48 transition hover:text-apple-ink dark:text-apple-ink-muted-48 dark:hover:text-zinc-100"
       >
         {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </button>

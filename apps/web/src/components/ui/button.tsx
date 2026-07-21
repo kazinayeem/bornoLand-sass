@@ -3,37 +3,59 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:focus-visible:ring-zinc-100",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-body transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-apple-primary-focus focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 btn-press",
   {
     variants: {
       variant: {
-        default: "bg-zinc-950 text-white shadow-[0_10px_24px_-16px_rgba(15,23,42,0.65)] hover:-translate-y-px hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white",
-        outline: "border border-zinc-200/80 bg-white text-zinc-900 shadow-sm hover:-translate-y-px hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-900",
-        ghost: "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:hover:text-white",
-        secondary: "bg-zinc-100 text-zinc-900 shadow-sm hover:-translate-y-px hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700",
-        danger: "bg-red-600 text-white shadow-[0_10px_24px_-16px_rgba(220,38,38,0.7)] hover:-translate-y-px hover:bg-red-700",
-        success: "bg-emerald-600 text-white shadow-[0_10px_24px_-16px_rgba(5,150,105,0.7)] hover:-translate-y-px hover:bg-emerald-700",
-        link: "text-zinc-900 underline-offset-4 hover:underline dark:text-zinc-50"
+        default:
+          "bg-apple-primary text-apple-on-primary rounded-pill px-[22px] py-[11px] text-[17px] font-normal leading-[1.47] tracking-[-0.374px] hover:bg-apple-primary-focus",
+        outline:
+          "border border-apple-primary bg-transparent text-apple-primary rounded-pill px-[22px] py-[11px] text-[17px] font-normal leading-[1.47] tracking-[-0.374px] hover:bg-apple-primary/5",
+        secondary:
+          "bg-apple-surface-pearl text-apple-ink-muted-80 rounded-md px-[14px] py-2 text-caption border-[3px] border-apple-divider-soft",
+        ghost:
+          "text-apple-ink hover:bg-apple-canvas-parchment rounded-sm px-[15px] py-2 text-caption dark:text-apple-body-on-dark dark:hover:bg-apple-surface-tile-2",
+        dark:
+          "bg-apple-ink text-apple-on-dark rounded-sm px-[15px] py-2 text-caption dark:bg-apple-surface-tile-3",
+        danger:
+          "bg-red-600 text-white rounded-pill px-[22px] py-[11px] text-[17px] font-normal",
+        success:
+          "bg-emerald-600 text-white rounded-pill px-[22px] py-[11px] text-[17px] font-normal",
+        link: "text-apple-primary underline-offset-4 hover:underline bg-transparent p-0 rounded-none",
+        hero:
+          "bg-apple-primary text-apple-on-primary rounded-pill px-7 py-[14px] text-[18px] font-light leading-none",
+        pearl:
+          "bg-apple-surface-pearl text-apple-ink-muted-80 rounded-md px-[14px] py-2 text-caption border-[3px] border-apple-divider-soft",
       },
       size: {
-        default: "h-11 px-4 py-2",
-        sm: "h-9 rounded-lg px-3",
-        lg: "h-12 rounded-xl px-6",
-        icon: "h-11 w-11"
-      }
+        default: "h-11 min-h-[44px]",
+        sm: "h-9 min-h-[36px] rounded-sm px-3 text-caption",
+        lg: "h-12 min-h-[48px] rounded-pill px-7",
+        icon: "h-11 w-11 min-h-[44px] min-w-[44px] rounded-full bg-apple-surface-chip/64 text-apple-ink p-0",
+      },
     },
     defaultVariants: {
       variant: "default",
-      size: "default"
-    }
+      size: "default",
+    },
   }
 );
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {}
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, ...props }, ref) => {
-  return <button ref={ref} className={cn(buttonVariants({ variant, size, className }))} {...props} />;
-});
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, ...props }, ref) => {
+    return (
+      <button
+        ref={ref}
+        className={cn(buttonVariants({ variant, size, className }))}
+        {...props}
+      />
+    );
+  }
+);
 Button.displayName = "Button";
 
 export { Button, buttonVariants };

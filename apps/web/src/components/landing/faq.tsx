@@ -48,9 +48,9 @@ export function FAQ() {
                 aria-controls={`faq-answer-${i}`}
                 className="flex w-full items-center justify-between px-5 py-4 text-left"
               >
-                <span className="text-sm font-semibold text-zinc-900 pr-4">{faq.q}</span>
+                <span className="text-sm font-semibold text-apple-ink pr-4">{faq.q}</span>
                 <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
-                  open === i ? "bg-blue-100 text-blue-600" : "bg-zinc-100 text-zinc-400"
+                  open === i ? "bg-blue-100 text-blue-600" : "bg-zinc-100 text-apple-ink-muted-48"
                 }`}>
                   {open === i ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                 </span>
@@ -65,7 +65,7 @@ export function FAQ() {
                     transition={{ duration: 0.2, ease: "easeInOut" }}
                     className="overflow-hidden"
                   >
-                    <p className="px-5 pb-4 text-sm leading-relaxed text-zinc-600">{faq.a}</p>
+                    <p className="px-5 pb-4 text-sm leading-relaxed text-apple-ink-muted-80">{faq.a}</p>
                   </motion.div>
                 )}
               </AnimatePresence>

@@ -36,7 +36,7 @@ function FileTypeIcon({ file }: { file: MediaFile }) {
   if (ext === "xlsx") return <FileSpreadsheet className="h-10 w-10 text-emerald-600" />;
   if (ext === "pptx") return <Presentation className="h-10 w-10 text-orange-600" />;
   if (isOfficeDoc(file) || isPdf(file)) return <FileText className="h-10 w-10 text-blue-600" />;
-  return <FileText className="h-10 w-10 text-zinc-400" />;
+  return <FileText className="h-10 w-10 text-apple-ink-muted-48" />;
 }
 
 function formatDate(iso: string) {
@@ -75,15 +75,15 @@ export const MediaLibraryCard = memo(function MediaLibraryCard({
       layout
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`group relative overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md ${
-        selected ? "border-blue-500 ring-2 ring-blue-100" : "border-zinc-100"
+      className={`group relative overflow-hidden rounded-lg border bg-apple-canvas transition-colors ${
+        selected ? "border-blue-500 ring-2 ring-blue-100" : "border-apple-divider-soft"
       }`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => {
         setHovered(false);
       }}
     >
-      <div className="relative aspect-square overflow-hidden bg-zinc-50">
+      <div className="relative aspect-square overflow-hidden bg-apple-canvas-parchment">
         {isImage(file) && thumb ? (
           <button type="button" onClick={onPreview} className="block h-full w-full">
             <SafeMediaImage src={thumb} alt={name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
@@ -98,7 +98,7 @@ export const MediaLibraryCard = memo(function MediaLibraryCard({
           </button>
         )}
 
-        <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 shadow-sm backdrop-blur-sm">
+        <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-apple-ink-muted-80 shadow-sm backdrop-blur-sm">
           {fileTypeLabel(file)}
         </span>
 
@@ -154,14 +154,14 @@ export const MediaLibraryCard = memo(function MediaLibraryCard({
       </div>
 
       <div className="space-y-1 p-3">
-        <p className="truncate text-sm font-medium text-zinc-900" title={name}>
+        <p className="truncate text-sm font-medium text-apple-ink" title={name}>
           {name}
         </p>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-apple-ink-muted-48">
           {formatBytes(file.size)}
           {file.width && file.height ? ` · ${file.width}×${file.height}` : ""}
         </p>
-        <p className="text-[11px] text-zinc-400">{formatDate(file.createdAt)}</p>
+        <p className="text-[11px] text-apple-ink-muted-48">{formatDate(file.createdAt)}</p>
         {onSelect && (
           <button
             type="button"

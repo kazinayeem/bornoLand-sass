@@ -109,15 +109,15 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
         <div className="border-b border-zinc-100 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
-              <FileText className="h-5 w-5 text-zinc-600" />
+              <FileText className="h-5 w-5 text-apple-ink-muted-80" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-zinc-900">Invoice</h2>
-              <p className="text-sm text-zinc-500">{invoice.invoiceNumber}</p>
+              <h2 className="text-lg font-semibold text-apple-ink">Invoice</h2>
+              <p className="text-sm text-apple-ink-muted-48">{invoice.invoiceNumber}</p>
             </div>
           </div>
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-zinc-100 transition-colors">
-            <X className="h-4 w-4 text-zinc-500" />
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-apple-canvas-parchment transition-colors">
+            <X className="h-4 w-4 text-apple-ink-muted-48" />
           </button>
         </div>
 
@@ -129,7 +129,7 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
               <CheckCircle2 className="h-3 w-3 mr-1" />
               {invoice.status}
             </Badge>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-apple-ink-muted-48">
               Issued: {new Date(invoice.paidAt || invoice.createdAt).toLocaleDateString("en-US", {
                 month: "long",
                 day: "numeric",
@@ -139,50 +139,50 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
           </div>
 
           {/* Business info */}
-          <div className="rounded-xl bg-zinc-50 p-4 text-sm space-y-1">
-            {storeName && <p className="text-zinc-900 font-medium">{storeName}</p>}
-            {ownerName && <p className="text-zinc-500">{ownerName}</p>}
+          <div className="rounded-xl bg-apple-canvas-parchment p-4 text-sm space-y-1">
+            {storeName && <p className="text-apple-ink font-medium">{storeName}</p>}
+            {ownerName && <p className="text-apple-ink-muted-48">{ownerName}</p>}
           </div>
 
           {/* Details */}
           <div className="space-y-3 border-t border-zinc-100 pt-4">
             <div className="flex justify-between text-sm">
-              <span className="text-zinc-500">Plan</span>
-              <span className="font-medium text-zinc-900">{planName}</span>
+              <span className="text-apple-ink-muted-48">Plan</span>
+              <span className="font-medium text-apple-ink">{planName}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-zinc-500">Duration</span>
-              <span className="font-medium text-zinc-900 capitalize">{invoice.duration?.replace("_", " ")}</span>
+              <span className="text-apple-ink-muted-48">Duration</span>
+              <span className="font-medium text-apple-ink capitalize">{invoice.duration?.replace("_", " ")}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-zinc-500">Invoice Number</span>
-              <span className="font-mono font-medium text-zinc-900">{invoice.invoiceNumber}</span>
+              <span className="text-apple-ink-muted-48">Invoice Number</span>
+              <span className="font-mono font-medium text-apple-ink">{invoice.invoiceNumber}</span>
             </div>
           </div>
 
           {/* Pricing */}
           <div className="space-y-2 border-t border-zinc-100 pt-4">
             <div className="flex justify-between text-sm">
-              <span className="text-zinc-500">Subtotal</span>
-              <span className="text-zinc-900">{formatBDT(invoice.subtotal)}</span>
+              <span className="text-apple-ink-muted-48">Subtotal</span>
+              <span className="text-apple-ink">{formatBDT(invoice.subtotal)}</span>
             </div>
             {invoice.vatAmount > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">VAT</span>
-                <span className="text-zinc-900">{formatBDT(invoice.vatAmount)}</span>
+                <span className="text-apple-ink-muted-48">VAT</span>
+                <span className="text-apple-ink">{formatBDT(invoice.vatAmount)}</span>
               </div>
             )}
             {invoice.taxAmount > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Tax</span>
-                <span className="text-zinc-900">{formatBDT(invoice.taxAmount)}</span>
+                <span className="text-apple-ink-muted-48">Tax</span>
+                <span className="text-apple-ink">{formatBDT(invoice.taxAmount)}</span>
               </div>
             )}
             <div className="flex justify-between text-base font-bold border-t border-zinc-200 pt-2">
-              <span className="text-zinc-900">Total</span>
-              <span className="text-zinc-900">{formatBDT(invoice.total)}</span>
+              <span className="text-apple-ink">Total</span>
+              <span className="text-apple-ink">{formatBDT(invoice.total)}</span>
             </div>
-            <p className="text-xs text-zinc-400">{invoice.currency}</p>
+            <p className="text-xs text-apple-ink-muted-48">{invoice.currency}</p>
           </div>
 
           {/* Payment info */}
@@ -208,7 +208,7 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
           <button
             onClick={handleDownload}
             disabled={downloading}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-all duration-200 disabled:opacity-50"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all duration-200 disabled:opacity-50"
           >
             {downloading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -220,7 +220,7 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
           <button
             onClick={handlePrint}
             disabled={printing}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-all duration-200 disabled:opacity-50"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all duration-200 disabled:opacity-50"
           >
             {printing ? (
               <Loader2 className="h-4 w-4 animate-spin" />

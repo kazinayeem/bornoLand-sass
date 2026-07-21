@@ -10,11 +10,11 @@ type AdvancedTabProps = {
 export function ProductEditorAdvancedTab({ form, onChange }: AdvancedTabProps) {
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-      <h2 className="text-sm font-semibold text-zinc-900">Advanced</h2>
-      <p className="mt-1 text-xs text-zinc-500">Internal notes and tags visible only to your team.</p>
+      <h2 className="text-sm font-semibold text-apple-ink">Advanced</h2>
+      <p className="mt-1 text-xs text-apple-ink-muted-48">Internal notes and tags visible only to your team.</p>
       <div className="mt-4 space-y-4">
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Internal notes</label>
+          <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Internal notes</label>
           <textarea
             value={form.internalNotes}
             onChange={(e) => onChange({ internalNotes: e.target.value })}
@@ -24,7 +24,7 @@ export function ProductEditorAdvancedTab({ form, onChange }: AdvancedTabProps) {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Internal tags</label>
+          <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Internal tags</label>
           <input
             type="text"
             value={form.internalTags}

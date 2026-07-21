@@ -34,7 +34,7 @@ function StatusBadge({ status }: { status: string }) {
     pending_payment: { label: "Pending Payment", classes: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock },
     pending_approval: { label: "Pending Approval", classes: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock },
   };
-  const c = config[status] || { label: status, classes: "bg-zinc-50 text-zinc-700 border-zinc-200", icon: CheckCircle2 };
+  const c = config[status] || { label: status, classes: "bg-apple-canvas-parchment text-apple-ink-muted-80 border-zinc-200", icon: CheckCircle2 };
   const Icon = c.icon;
   return (
     <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${c.classes}`}>
@@ -60,22 +60,22 @@ function StatCard({
   status?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+    <div className="rounded-2xl border border-apple-hairline bg-white p-5 shadow-sm transition-all hover:shadow-md">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-50 text-zinc-600 ring-1 ring-zinc-100">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-apple-canvas-parchment text-apple-ink-muted-80 ring-1 ring-zinc-100">
             <Icon className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-medium text-zinc-500">{label}</p>
-            <p className="text-xl font-bold tracking-tight text-zinc-900">{value}</p>
+            <p className="text-sm font-medium text-apple-ink-muted-48">{label}</p>
+            <p className="text-xl font-bold tracking-tight text-apple-ink">{value}</p>
           </div>
         </div>
         {status && <StatusBadge status={status} />}
       </div>
       {subtext && (
         <div className="mt-3 flex items-center gap-2 border-t border-zinc-100 pt-3">
-          <span className="text-xs text-zinc-500">{subtext}</span>
+          <span className="text-xs text-apple-ink-muted-48">{subtext}</span>
           {trend === "up" && <span className="text-[11px] font-medium text-emerald-600">↑ Improving</span>}
           {trend === "down" && <span className="text-[11px] font-medium text-red-600">↓ Needs attention</span>}
         </div>
@@ -192,8 +192,8 @@ export function BillingOverviewCards({ stats, subscription }: Props) {
       </div>
 
       {/* Subscription details card */}
-      <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm">
-        <h3 className="text-sm font-semibold text-zinc-900 mb-4">Subscription Details</h3>
+      <div className="rounded-2xl border border-apple-hairline bg-white p-5 shadow-sm">
+        <h3 className="text-sm font-semibold text-apple-ink mb-4">Subscription Details</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             { label: "Billing Cycle", value: store?.subscriptionDuration ? store.subscriptionDuration.replace("_", " ") : "—" },
@@ -218,9 +218,9 @@ export function BillingOverviewCards({ stats, subscription }: Props) {
               value: subPlan?.priceBDT ? formatBDT(subPlan.priceBDT) : "—",
             },
           ].map((item) => (
-            <div key={item.label} className="rounded-xl bg-zinc-50 p-3">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">{item.label}</p>
-              <p className="mt-1 text-sm font-semibold text-zinc-900 capitalize">{item.value}</p>
+            <div key={item.label} className="rounded-xl bg-apple-canvas-parchment p-3">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-apple-ink-muted-48">{item.label}</p>
+              <p className="mt-1 text-sm font-semibold text-apple-ink capitalize">{item.value}</p>
             </div>
           ))}
         </div>

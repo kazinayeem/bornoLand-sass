@@ -39,7 +39,7 @@ export function VideoHero({ section }: { section: SectionData }) {
         )}
         {p.buttonText && (
           <Link href={p.buttonLink || "#"}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100">
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-apple-ink hover:bg-apple-canvas-parchment">
             {p.buttonText}
           </Link>
         )}

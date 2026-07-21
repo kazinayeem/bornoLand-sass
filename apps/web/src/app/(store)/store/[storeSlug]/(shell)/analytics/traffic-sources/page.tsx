@@ -31,8 +31,8 @@ export default function TrafficSourcesPage() {
   return (
     <>
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Traffic Sources</h1>
-        <p className="text-sm text-zinc-500">Where your visitors come from</p>
+        <h1 className="text-xl font-bold text-apple-ink">Traffic Sources</h1>
+        <p className="text-sm text-apple-ink-muted-48">Where your visitors come from</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -63,16 +63,16 @@ export default function TrafficSourcesPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="rounded-xl border border-zinc-200 bg-white">
           <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
-            <h3 className="text-sm font-semibold text-zinc-900">All Sources</h3>
+            <h3 className="text-sm font-semibold text-apple-ink">All Sources</h3>
             <select value={filter} onChange={(e) => setFilter(e.target.value)}
-              className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-600 outline-none focus:border-blue-400">
+              className="h-8 rounded-lg border border-zinc-200 bg-white px-2 text-xs text-apple-ink-muted-80 outline-none focus:border-blue-400">
               <option value="all">All Types</option>
               {sourceTypes.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-zinc-50 text-left text-[10px] uppercase tracking-wider text-zinc-500">
+              <thead className="bg-apple-canvas-parchment text-left text-[10px] uppercase tracking-wider text-apple-ink-muted-48">
                 <tr>
                   <th className="px-5 py-3">Source</th>
                   <th className="px-5 py-3">Type</th>
@@ -84,22 +84,22 @@ export default function TrafficSourcesPage() {
               </thead>
               <tbody className="divide-y divide-zinc-50">
                 {filteredSources.map((s) => (
-                  <tr key={String(s._id)} className="hover:bg-zinc-50/50">
+                  <tr key={String(s._id)} className="hover:bg-apple-canvas-parchment/50">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
-                        <Globe className="h-3.5 w-3.5 text-zinc-400" />
+                        <Globe className="h-3.5 w-3.5 text-apple-ink-muted-48" />
                         <span className="text-xs font-medium text-zinc-800">{String(s.source)}</span>
                       </div>
                     </td>
                     <td className="px-5 py-3">
-                      <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 capitalize">
+                      <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-apple-ink-muted-80 capitalize">
                         {String(s.type)}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-xs font-medium text-zinc-900">{String(s.visits ?? 0)}</td>
-                    <td className="px-5 py-3 text-xs text-zinc-600">{String(s.uniqueVisitors ?? 0)}</td>
-                    <td className="px-5 py-3 text-xs text-zinc-600">{String(s.pageViews ?? 0)}</td>
-                    <td className="px-5 py-3 text-xs text-zinc-500">
+                    <td className="px-5 py-3 text-xs font-medium text-apple-ink">{String(s.visits ?? 0)}</td>
+                    <td className="px-5 py-3 text-xs text-apple-ink-muted-80">{String(s.uniqueVisitors ?? 0)}</td>
+                    <td className="px-5 py-3 text-xs text-apple-ink-muted-80">{String(s.pageViews ?? 0)}</td>
+                    <td className="px-5 py-3 text-xs text-apple-ink-muted-48">
                       {totalVisits > 0 ? `${((Number(s.visits ?? 0) / totalVisits) * 100).toFixed(1)}%` : "—"}
                     </td>
                   </tr>
@@ -122,7 +122,7 @@ export default function TrafficSourcesPage() {
               {section.data.slice(0, 5).map((d: Record<string, unknown>) => (
                 <AnalyticsProgressBar key={String(d.name ?? d.code)} name={String(d.name ?? d.code ?? "—")} value={String(d.percentage)} percentage={Number(d.percentage)} />
               ))}
-              {section.data.length === 0 && <p className="text-xs text-zinc-400">No data</p>}
+              {section.data.length === 0 && <p className="text-xs text-apple-ink-muted-48">No data</p>}
             </div>
           </AnalyticsChartCard>
         ))}
@@ -135,14 +135,14 @@ export default function TrafficSourcesPage() {
               {(topContent?.topPages as Array<Record<string, unknown>>)?.slice(0, 8).map((p, i) => (
                 <div key={i} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <ExternalLink className="h-3 w-3 text-zinc-400 shrink-0" />
-                    <span className="truncate text-zinc-700">{String(p.title ?? p.path ?? "Unknown")}</span>
+                    <ExternalLink className="h-3 w-3 text-apple-ink-muted-48 shrink-0" />
+                    <span className="truncate text-apple-ink-muted-80">{String(p.title ?? p.path ?? "Unknown")}</span>
                   </div>
-                  <span className="shrink-0 ml-2 font-medium text-zinc-900">{String(p.views ?? 0)} views</span>
+                  <span className="shrink-0 ml-2 font-medium text-apple-ink">{String(p.views ?? 0)} views</span>
                 </div>
               ))}
             </div>
-          ) : <p className="text-xs text-zinc-400 py-4">No data yet</p>}
+          ) : <p className="text-xs text-apple-ink-muted-48 py-4">No data yet</p>}
         </AnalyticsChartCard>
         <AnalyticsChartCard title="Top Search Queries" delay={0.35}>
           {(topContent?.topSearches as Array<Record<string, unknown>>)?.slice(0, 8).length > 0 ? (
@@ -150,14 +150,14 @@ export default function TrafficSourcesPage() {
               {(topContent?.topSearches as Array<Record<string, unknown>>)?.slice(0, 8).map((q, i) => (
                 <div key={i} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1.5">
-                    <Search className="h-3 w-3 text-zinc-400" />
-                    <span className="text-zinc-700">{String(q.query ?? "Unknown")}</span>
+                    <Search className="h-3 w-3 text-apple-ink-muted-48" />
+                    <span className="text-apple-ink-muted-80">{String(q.query ?? "Unknown")}</span>
                   </div>
-                  <span className="font-medium text-zinc-900">{String(q.count ?? 0)}</span>
+                  <span className="font-medium text-apple-ink">{String(q.count ?? 0)}</span>
                 </div>
               ))}
             </div>
-          ) : <p className="text-xs text-zinc-400 py-4">No data yet</p>}
+          ) : <p className="text-xs text-apple-ink-muted-48 py-4">No data yet</p>}
         </AnalyticsChartCard>
       </div>
     </>

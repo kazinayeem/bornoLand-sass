@@ -19,22 +19,22 @@ type LoadingButtonProps = {
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-zinc-900 text-white shadow-sm hover:bg-zinc-800 focus-visible:ring-2 focus-visible:ring-zinc-500 focus-visible:ring-offset-2",
+    "bg-apple-primary text-apple-on-primary hover:bg-apple-primary-focus focus-visible:ring-2 focus-visible:ring-apple-primary focus-visible:ring-offset-2",
   secondary:
-    "border border-zinc-200 bg-white text-zinc-700 shadow-sm hover:bg-zinc-50 focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2",
+    "border border-apple-hairline bg-apple-canvas text-apple-ink-muted-80 hover:bg-apple-canvas-parchment focus-visible:ring-2 focus-visible:ring-apple-hairline focus-visible:ring-offset-2",
   danger:
-    "bg-red-600 text-white shadow-sm hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2",
+    "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2",
   ghost:
-    "text-zinc-600 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-zinc-300",
+    "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment focus-visible:ring-2 focus-visible:ring-apple-hairline",
   outline:
-    "border-2 border-zinc-200 bg-transparent text-zinc-700 hover:bg-zinc-50 focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-offset-2",
+    "border-2 border-apple-hairline bg-transparent text-apple-ink-muted-80 hover:bg-apple-canvas-parchment focus-visible:ring-2 focus-visible:ring-apple-hairline focus-visible:ring-offset-2",
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: "h-8 rounded-lg px-3 text-xs gap-1.5",
-  default: "h-10 rounded-xl px-4 text-sm gap-2",
-  lg: "h-12 rounded-xl px-5 text-sm gap-2",
-  xl: "h-14 rounded-2xl px-6 text-base gap-2.5",
+  sm: "h-8 rounded-sm px-3 text-xs gap-1.5",
+  default: "h-10 rounded-pill px-4 text-sm gap-2",
+  lg: "h-12 rounded-pill px-5 text-sm gap-2",
+  xl: "h-14 rounded-pill px-6 text-base gap-2.5",
 };
 
 export const LoadingButton = forwardRef<HTMLButtonElement, LoadingButtonProps>(

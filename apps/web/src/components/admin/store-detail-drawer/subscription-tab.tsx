@@ -53,14 +53,14 @@ export function SubscriptionTab({ helpers }: { helpers: TabHelpers }) {
     <div className="space-y-6 max-w-2xl">
       {/* Current State */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Current Subscription State</h4>
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Current Subscription State</h4>
         <div className="mt-4 grid grid-cols-2 gap-4">
-          <div className="rounded-lg bg-zinc-50 p-3">
-            <p className="text-xs text-zinc-400">Billing Status</p>
+          <div className="rounded-lg bg-apple-canvas-parchment p-3">
+            <p className="text-xs text-apple-ink-muted-48">Billing Status</p>
             <p className="font-semibold text-zinc-800">{effectiveBilling}</p>
           </div>
-          <div className="rounded-lg bg-zinc-50 p-3">
-            <p className="text-xs text-zinc-400">Subscription Status</p>
+          <div className="rounded-lg bg-apple-canvas-parchment p-3">
+            <p className="text-xs text-apple-ink-muted-48">Subscription Status</p>
             <p className="font-semibold text-zinc-800">{effectiveStatus}</p>
           </div>
         </div>
@@ -71,13 +71,13 @@ export function SubscriptionTab({ helpers }: { helpers: TabHelpers }) {
 
       {/* Override status */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Override Subscription Status</h4>
-        <p className="mt-1 text-xs text-zinc-500">
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Override Subscription Status</h4>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">
           Set a specific status override, or leave as plan default.
         </p>
         <div className="mt-3 grid grid-cols-2 gap-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Subscription Status</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Subscription Status</label>
             <select
               value={localSubStatusOverride ?? ""}
               onChange={(e) => {
@@ -93,7 +93,7 @@ export function SubscriptionTab({ helpers }: { helpers: TabHelpers }) {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Billing Status</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Billing Status</label>
             <select
               value={localBillingStatusOverride ?? ""}
               onChange={(e) => {
@@ -113,7 +113,7 @@ export function SubscriptionTab({ helpers }: { helpers: TabHelpers }) {
 
       {/* Actions */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Subscription Actions</h4>
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Subscription Actions</h4>
         <div className="mt-3 flex flex-wrap gap-2">
           <LoadingButton size="sm" loading={processing === "pause"} onClick={() => doAction("pause")}>Pause</LoadingButton>
           <LoadingButton size="sm" variant="secondary" loading={processing === "resume"} onClick={() => doAction("resume")}>Resume</LoadingButton>

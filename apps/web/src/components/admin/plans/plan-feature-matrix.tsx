@@ -77,7 +77,7 @@ export function PlanFeatureMatrix({ plans }: { plans: Plan[] }) {
 
   if (activePlans.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-12 text-center text-sm text-zinc-500">
+      <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-12 text-center text-sm text-apple-ink-muted-48">
         No active plans to compare.
       </div>
     );
@@ -86,16 +86,16 @@ export function PlanFeatureMatrix({ plans }: { plans: Plan[] }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
       <div className="border-b border-zinc-100 px-5 py-4">
-        <h3 className="text-lg font-semibold text-zinc-900">Plan comparison</h3>
-        <p className="text-sm text-zinc-500">
+        <h3 className="text-lg font-semibold text-apple-ink">Plan comparison</h3>
+        <p className="text-sm text-apple-ink-muted-48">
           Dynamically generated from plan features · {activePlans.length} plans · {featureCount} features
         </p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-100 bg-zinc-50/80 text-left text-xs uppercase tracking-wide text-zinc-500">
-              <th className="sticky left-0 z-10 bg-zinc-50/95 px-5 py-3 font-semibold">Feature</th>
+            <tr className="border-b border-zinc-100 bg-apple-canvas-parchment/80 text-left text-xs uppercase tracking-wide text-apple-ink-muted-48">
+              <th className="sticky left-0 z-10 bg-apple-canvas-parchment/95 px-5 py-3 font-semibold">Feature</th>
               {activePlans.map((plan) => (
                 <th key={plan._id} className="px-4 py-3 text-center font-semibold">
                   <div>{plan.name}</div>
@@ -110,7 +110,7 @@ export function PlanFeatureMatrix({ plans }: { plans: Plan[] }) {
           </thead>
           <tbody>
             {COMPARISON_KEYS.map((key) => (
-              <tr key={key} className="border-b border-zinc-50 hover:bg-zinc-50/50">
+              <tr key={key} className="border-b border-zinc-50 hover:bg-apple-canvas-parchment/50">
                 <td className="sticky left-0 z-10 bg-white px-5 py-3 font-medium text-zinc-800">
                   {COMPARISON_LABELS[key] ?? key}
                 </td>
@@ -129,5 +129,5 @@ export function PlanFeatureMatrix({ plans }: { plans: Plan[] }) {
 function PlanMatrixCell({ planId, featureKey }: { planId: string; featureKey: string }) {
   const { data } = useGetPlanFeatureAssignmentsQuery(planId);
   const feature = data?.data?.features?.find((f) => f.featureKey === featureKey);
-  return <td className="px-4 py-3 text-center text-sm text-zinc-700">{formatCell(feature)}</td>;
+  return <td className="px-4 py-3 text-center text-sm text-apple-ink-muted-80">{formatCell(feature)}</td>;
 }

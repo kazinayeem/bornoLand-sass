@@ -65,44 +65,44 @@ function RegisterForm() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
-            <UserPlus className="h-6 w-6 text-zinc-700" />
+            <UserPlus className="h-6 w-6 text-apple-ink-muted-80" />
           </div>
-          <h1 className="text-2xl font-bold text-zinc-900">Create an account</h1>
-          <p className="mt-1 text-sm text-zinc-500">Start shopping in minutes</p>
+          <h1 className="text-2xl font-bold text-apple-ink">Create an account</h1>
+          <p className="mt-1 text-sm text-apple-ink-muted-48">Start shopping in minutes</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Full Name</label>
+            <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Full Name</label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
               <input type="text" {...reg("name")}
                 placeholder="John Doe"
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                className="h-10 w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment pl-9 pr-4 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Email</label>
+            <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Email</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
               <input type="email" {...reg("email")}
                 placeholder="you@example.com"
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                className="h-10 w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment pl-9 pr-4 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Password</label>
+            <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
               <input type={showPassword ? "text" : "password"} {...reg("password")}
                 placeholder="At least 8 characters"
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-10 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                className="h-10 w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment pl-9 pr-10 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
               <button type="button" onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400">
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-apple-ink-muted-48">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
@@ -110,12 +110,12 @@ function RegisterForm() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Confirm Password</label>
+            <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Confirm Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
               <input type={showPassword ? "text" : "password"} {...reg("confirmPassword")}
                 placeholder="Repeat your password"
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-10 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                className="h-10 w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment pl-9 pr-10 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
             {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>}
           </div>
@@ -137,13 +137,13 @@ function RegisterForm() {
             <div className="w-full border-t border-zinc-200" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-zinc-400">or continue with</span>
+            <span className="bg-white px-2 text-apple-ink-muted-48">or continue with</span>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <button type="button" disabled
-            className="flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-medium text-zinc-600 transition-all hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            className="flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment disabled:opacity-50 disabled:cursor-not-allowed">
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -153,7 +153,7 @@ function RegisterForm() {
             Google
           </button>
           <button type="button" disabled
-            className="flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-medium text-zinc-600 transition-all hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            className="flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment disabled:opacity-50 disabled:cursor-not-allowed">
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#1877F2">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
             </svg>
@@ -161,7 +161,7 @@ function RegisterForm() {
           </button>
         </div>
 
-        <p className="mt-6 text-center text-sm text-zinc-500">
+        <p className="mt-6 text-center text-sm text-apple-ink-muted-48">
           Already have an account?{" "}
           <Link href={`/account/login${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
             className="font-medium underline underline-offset-4" style={{ color: "#18181b" }}>

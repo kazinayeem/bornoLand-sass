@@ -3,28 +3,94 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ── Apple Design System Tokens (DESIGN.md) ───────────────────── */
+
+@theme {
+  /* Colors */
+  --color-apple-primary: #0066cc;
+  --color-apple-primary-focus: #0071e3;
+  --color-apple-primary-on-dark: #2997ff;
+  --color-apple-ink: #1d1d1f;
+  --color-apple-body: #1d1d1f;
+  --color-apple-body-on-dark: #ffffff;
+  --color-apple-body-muted: #cccccc;
+  --color-apple-ink-muted-80: #333333;
+  --color-apple-ink-muted-48: #7a7a7a;
+  --color-apple-divider-soft: #f0f0f0;
+  --color-apple-hairline: #e0e0e0;
+  --color-apple-canvas: #ffffff;
+  --color-apple-canvas-parchment: #f5f5f7;
+  --color-apple-surface-pearl: #fafafc;
+  --color-apple-surface-tile-1: #272729;
+  --color-apple-surface-tile-2: #2a2a2c;
+  --color-apple-surface-tile-3: #252527;
+  --color-apple-surface-black: #000000;
+  --color-apple-surface-chip: #d2d2d7;
+  --color-apple-on-primary: #ffffff;
+  --color-apple-on-dark: #ffffff;
+
+  /* Semantic aliases */
+  --color-background: var(--color-apple-canvas);
+  --color-foreground: var(--color-apple-ink);
+  --color-primary: var(--color-apple-primary);
+  --color-primary-foreground: var(--color-apple-on-primary);
+  --color-muted: var(--color-apple-canvas-parchment);
+  --color-muted-foreground: var(--color-apple-ink-muted-48);
+  --color-border: var(--color-apple-hairline);
+  --color-input: var(--color-apple-hairline);
+  --color-ring: var(--color-apple-primary-focus);
+  --color-card: var(--color-apple-canvas);
+  --color-card-foreground: var(--color-apple-ink);
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+
+  /* Border radius */
+  --radius-none: 0px;
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius-md: 11px;
+  --radius-lg: 18px;
+  --radius-pill: 9999px;
+  --radius-full: 9999px;
+
+  /* Spacing */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 17px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  --spacing-section: 80px;
+
+  /* Typography families */
+  --font-display: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: "SF Pro Text", var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Shadows */
+  --shadow-product: 3px 5px 30px 0 rgba(0, 0, 0, 0.22);
+
+  /* Animation */
+  --ease-apple: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+}
+
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 222.2 84% 4.9%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
-  --radius: 0.875rem;
   color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+  --color-background: var(--color-apple-surface-tile-1);
+  --color-foreground: var(--color-apple-body-on-dark);
+  --color-muted: var(--color-apple-surface-tile-2);
+  --color-muted-foreground: var(--color-apple-body-muted);
+  --color-border: var(--color-apple-surface-tile-3);
+  --color-input: var(--color-apple-surface-tile-3);
+  --color-card: var(--color-apple-surface-tile-2);
+  --color-card-foreground: var(--color-apple-body-on-dark);
 }
 
 html,
@@ -37,32 +103,144 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 24%),
-    radial-gradient(circle at top right, rgba(168, 85, 247, 0.12), transparent 22%),
-    linear-gradient(180deg, #ffffff 0%, #f5f7fb 42%, #eef2ff 100%);
-  color: hsl(var(--foreground));
-  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+  background-color: var(--color-apple-canvas-parchment);
+  color: var(--color-apple-ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.28;
-  background-image: linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.4), transparent 88%);
+.dark body {
+  background-color: var(--color-apple-surface-black);
+  color: var(--color-apple-body-on-dark);
 }
 
 * {
-  border-color: hsl(var(--border));
+  border-color: var(--color-apple-hairline);
 }
 
+/* ── Typography utilities ─────────────────────────────────────── */
+
+.text-hero-display {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5vw, 56px);
+  font-weight: 600;
+  line-height: 1.07;
+  letter-spacing: -0.28px;
+}
+
+.text-display-lg {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.text-display-md {
+  font-family: var(--font-body);
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 600;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+}
+
+.text-lead {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: 0.196px;
+}
+
+.text-tagline {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.19;
+  letter-spacing: 0.231px;
+}
+
+.text-body-strong {
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.374px;
+}
+
+.text-body {
+  font-family: var(--font-body);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+}
+
+.text-caption {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: -0.224px;
+}
+
+.text-caption-strong {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.29;
+  letter-spacing: -0.224px;
+}
+
+.text-fine-print {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.12px;
+}
+
+.text-nav-link {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.12px;
+}
+
+/* ── Frosted glass surfaces ───────────────────────────────────── */
+
+.frosted-bar {
+  background-color: color-mix(in srgb, var(--color-apple-canvas-parchment) 80%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+.dark .frosted-bar {
+  background-color: color-mix(in srgb, var(--color-apple-surface-tile-1) 80%, transparent);
+}
+
+/* ── Button press micro-interaction ───────────────────────────── */
+
+.btn-press:active {
+  transform: scale(0.95);
+}
+
+/* ── Product shadow (photography only) ────────────────────────── */
+
+.shadow-product {
+  box-shadow: var(--shadow-product);
+}
+
+/* ── TipTap / Prose editor tables ─────────────────────────────── */
+
 .tiptap p.is-editor-empty:first-child::before {
-  color: #adb5bd;
+  color: var(--color-apple-ink-muted-48);
   content: attr(data-placeholder);
   float: left;
   height: 0;
@@ -74,13 +252,13 @@ body::before {
   border-collapse: collapse;
   margin: 1rem 0;
   overflow: hidden;
-  font-size: 0.875rem;
+  font-size: 14px;
 }
 
 .tiptap td,
 .tiptap th {
   min-width: 1em;
-  border: 1px solid #d4d4d8;
+  border: 1px solid var(--color-apple-hairline);
   padding: 0.5rem 0.75rem;
   vertical-align: top;
   text-align: left;
@@ -88,16 +266,16 @@ body::before {
 }
 
 .tiptap th {
-  background: #f4f4f5;
+  background: var(--color-apple-canvas-parchment);
   font-weight: 600;
 }
 
 .tiptap table tr:nth-child(even) td {
-  background: #fafafa;
+  background: var(--color-apple-surface-pearl);
 }
 
 .tiptap .selectedCell {
-  background: #dbeafe;
+  background: color-mix(in srgb, var(--color-apple-primary) 12%, transparent);
 }
 
 .ProseMirror-gapcursor {
@@ -112,7 +290,7 @@ body::before {
   position: absolute;
   top: -2px;
   width: 20px;
-  border-top: 1px solid black;
+  border-top: 1px solid var(--color-apple-ink);
 }
 
 .tableWrapper {
@@ -138,11 +316,10 @@ body::before {
   width: 100%;
   border-collapse: collapse;
   margin: 1.5rem 0;
-  font-size: 0.875rem;
+  font-size: 14px;
   overflow: hidden;
-  border-radius: 0.75rem;
-  border-style: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-apple-hairline);
 }
 
 .prose thead {
@@ -158,56 +335,40 @@ body::before {
 }
 
 .prose th {
-  background: #f4f4f5;
+  background: var(--color-apple-canvas-parchment);
   font-weight: 600;
   text-transform: none;
   letter-spacing: normal;
   padding: 0.75rem 1rem;
-  border: 1px solid #e4e4e7;
+  border: 1px solid var(--color-apple-hairline);
   text-align: left;
-  color: #18181b;
+  color: var(--color-apple-ink);
 }
 
 .dark .prose th {
-  background: #27272a;
-  border-color: #3f3f46;
-  color: #fafafa;
+  background: var(--color-apple-surface-tile-2);
+  border-color: var(--color-apple-surface-tile-3);
+  color: var(--color-apple-body-on-dark);
 }
 
 .prose td {
   padding: 0.75rem 1rem;
-  border: 1px solid #e4e4e7;
-  color: #52525b;
+  border: 1px solid var(--color-apple-hairline);
+  color: var(--color-apple-ink-muted-80);
   vertical-align: top;
 }
 
 .dark .prose td {
-  border-color: #3f3f46;
-  color: #a1a1aa;
+  border-color: var(--color-apple-surface-tile-3);
+  color: var(--color-apple-body-muted);
 }
 
 .prose tr:nth-child(even) td {
-  background: #fafafa;
+  background: var(--color-apple-surface-pearl);
 }
 
 .dark .prose tr:nth-child(even) td {
-  background: #18181b;
-}
-
-.prose table tr:first-child th:first-child {
-  border-top-left-radius: 0.75rem;
-}
-
-.prose table tr:first-child th:last-child {
-  border-top-right-radius: 0.75rem;
-}
-
-.prose table tr:last-child td:first-child {
-  border-bottom-left-radius: 0.75rem;
-}
-
-.prose table tr:last-child td:last-child {
-  border-bottom-right-radius: 0.75rem;
+  background: var(--color-apple-surface-tile-3);
 }
 
 .prose table {
@@ -219,7 +380,7 @@ body::before {
 
 @media (max-width: 640px) {
   .prose table {
-    font-size: 0.75rem;
+    font-size: 12px;
   }
   .prose th,
   .prose td {
@@ -227,7 +388,7 @@ body::before {
   }
 }
 
-/* ── Custom Scrollbar ────────────────────────────────────────── */
+/* ── Custom Scrollbar ─────────────────────────────────────────── */
 
 .sidebar-scroll,
 .content-scroll {
@@ -237,7 +398,7 @@ body::before {
 
 .sidebar-scroll:hover,
 .content-scroll:hover {
-  scrollbar-color: #d4d4d8 transparent;
+  scrollbar-color: var(--color-apple-surface-chip) transparent;
 }
 
 .sidebar-scroll::-webkit-scrollbar,
@@ -258,10 +419,10 @@ body::before {
 
 .sidebar-scroll:hover::-webkit-scrollbar-thumb,
 .content-scroll:hover::-webkit-scrollbar-thumb {
-  background-color: #d4d4d8;
+  background-color: var(--color-apple-surface-chip);
 }
 
-/* ── Slide-in Animation ──────────────────────────────────────── */
+/* ── Animations ───────────────────────────────────────────────── */
 
 @keyframes slide-in-left {
   from {
@@ -272,6 +433,41 @@ body::before {
   }
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-slide-in-left {
-  animation: slide-in-left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation: slide-in-left var(--duration-slow) var(--ease-apple);
+}
+
+.animate-fade-in {
+  animation: fade-in var(--duration-normal) var(--ease-apple);
+}
+
+/* ── Sonner toast overrides ─────────────────────────────────────── */
+
+[data-sonner-toaster] [data-sonner-toast] {
+  font-family: var(--font-body) !important;
+  font-size: 14px !important;
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--color-apple-hairline) !important;
+  box-shadow: none !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="success"] {
+  background: var(--color-apple-canvas) !important;
+  color: var(--color-apple-ink) !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="error"] {
+  background: var(--color-apple-canvas) !important;
+  color: #dc2626 !important;
 }

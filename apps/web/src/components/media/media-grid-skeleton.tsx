@@ -16,10 +16,10 @@ export function MediaGridSkeleton({ count = 24 }: { count?: number }) {
           <div className="aspect-square animate-pulse bg-gradient-to-br from-zinc-100 to-zinc-200/80" />
           <div className="space-y-2 p-3">
             <div className="h-3 w-4/5 animate-pulse rounded-md bg-zinc-100" />
-            <div className="h-2.5 w-3/5 animate-pulse rounded-md bg-zinc-50" />
+            <div className="h-2.5 w-3/5 animate-pulse rounded-md bg-apple-canvas-parchment" />
             <div className="flex items-center justify-between pt-1">
               <div className="h-5 w-12 animate-pulse rounded-full bg-zinc-100" />
-              <div className="h-5 w-14 animate-pulse rounded-full bg-zinc-50" />
+              <div className="h-5 w-14 animate-pulse rounded-full bg-apple-canvas-parchment" />
             </div>
           </div>
         </motion.div>

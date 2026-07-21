@@ -99,7 +99,7 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100">
             <MapPin className="h-4 w-4 text-blue-600" />
           </div>
-          <span className="text-sm font-semibold text-zinc-900">{z.name}</span>
+          <span className="text-sm font-semibold text-apple-ink">{z.name}</span>
         </div>
       ),
     },
@@ -109,7 +109,7 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
     },
     {
       key: "estimatedDays", label: "Est. Time", hideOnMobile: true,
-      render: (z) => <span className="text-sm text-zinc-500">{z.estimatedDays || "—"}</span>,
+      render: (z) => <span className="text-sm text-apple-ink-muted-48">{z.estimatedDays || "—"}</span>,
     },
     {
       key: "status", label: "Status",
@@ -124,11 +124,11 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
       render: (z) => (
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <button onClick={() => openEdit(z)}
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
+            className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
             <Pencil className="h-3.5 w-3.5" />
           </button>
           <button onClick={() => setDeleteId(z._id)}
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500">
+            className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-red-50 hover:text-red-500">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -140,7 +140,7 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-500">{zones.length} zone{zones.length !== 1 ? "s" : ""}</p>
+        <p className="text-sm text-apple-ink-muted-48">{zones.length} zone{zones.length !== 1 ? "s" : ""}</p>
         <button onClick={() => { resetForm(); setShowForm(true); }}
           className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
           <Plus className="h-3.5 w-3.5" /> Add Zone
@@ -167,17 +167,17 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
         title={editId ? "Edit Delivery Zone" : "Add Delivery Zone"} size="md">
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Zone Name</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Zone Name</label>
             <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" placeholder="e.g. Dhaka City" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Delivery Charge ({settingsData?.data?.settings?.currencyCode ?? "BDT"})</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Delivery Charge ({settingsData?.data?.settings?.currencyCode ?? "BDT"})</label>
             <input type="number" min={0} value={form.charge} onChange={(e) => setForm({ ...form, charge: e.target.value })}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Estimated Delivery Time</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Estimated Delivery Time</label>
             <input type="text" value={form.estimatedDays} onChange={(e) => setForm({ ...form, estimatedDays: e.target.value })}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" placeholder="e.g. 1-3 business days" />
           </div>
@@ -186,13 +186,13 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
               <input type="checkbox" checked={form.enabled}
                 onChange={(e) => setForm({ ...form, enabled: e.target.checked })}
                 className="rounded border-zinc-300" />
-              <span className="text-xs font-medium text-zinc-700">Active</span>
+              <span className="text-xs font-medium text-apple-ink-muted-80">Active</span>
             </label>
           </div>
         </div>
         <div className="mt-6 flex justify-end gap-3">
           <button onClick={resetForm}
-            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">Cancel</button>
+            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Cancel</button>
           <button onClick={handleSave} disabled={saving}
             className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}

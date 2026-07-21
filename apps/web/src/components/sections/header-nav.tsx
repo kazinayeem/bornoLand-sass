@@ -27,7 +27,7 @@ export function HeaderNav({ section }: { section: SectionData }) {
           <BuilderLink
             key={link.text}
             href={link.url}
-            className="font-medium transition-colors hover:text-zinc-900"
+            className="font-medium transition-colors hover:text-apple-ink"
             style={{ color: linkColor, fontSize: `${fontSize}px` }}
             onMouseEnter={(e) => { e.currentTarget.style.color = hoverColor; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = linkColor; }}

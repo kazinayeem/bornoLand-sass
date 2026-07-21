@@ -188,7 +188,7 @@ function ToolbarBtn({
   activeColor?: "zinc" | "red" | "orange";
 }) {
   const colorMap = {
-    zinc: "bg-zinc-100 text-zinc-900",
+    zinc: "bg-zinc-100 text-apple-ink",
     red: "bg-red-50 text-red-600",
     orange: "bg-orange-50 text-orange-600",
   };
@@ -206,7 +206,7 @@ function ToolbarBtn({
           ? "text-red-600 hover:bg-red-50 hover:text-red-700"
           : active
           ? colorMap[activeColor]
-          : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900",
+          : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink",
       )}
     >
       {icon}

@@ -159,14 +159,14 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
               className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl"
               onClick={(e) => e.stopPropagation()}>
               <button onClick={() => setShowDemo(false)}
-                className="absolute right-4 top-4 rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100">
+                className="absolute right-4 top-4 rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                 <X className="h-5 w-5" />
               </button>
-              <h3 className="mb-4 text-lg font-bold text-zinc-900">How {store.name} Works</h3>
+              <h3 className="mb-4 text-lg font-bold text-apple-ink">How {store.name} Works</h3>
               <div className="aspect-video rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200 flex items-center justify-center">
                 <Play className="h-16 w-16 text-zinc-300" />
               </div>
-              <p className="mt-4 text-sm text-zinc-500">Browse our collection, add items to cart, and checkout in seconds.</p>
+              <p className="mt-4 text-sm text-apple-ink-muted-48">Browse our collection, add items to cart, and checkout in seconds.</p>
             </motion.div>
           </motion.div>
         )}

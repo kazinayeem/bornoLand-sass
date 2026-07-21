@@ -84,14 +84,14 @@ export function SaveIndicator({ status, lastSaved, className, compact, errorMess
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
         className={cn(
-          "inline-flex items-center gap-2 rounded-xl border px-3 py-1.5",
+          "inline-flex items-center gap-2 rounded-lg border px-3 py-1.5",
           c.bg, c.border, className
         )}
       >
         <c.icon className={cn("h-3.5 w-3.5", status === "saving" && "animate-spin", c.color)} />
         <span className={cn("text-xs font-medium", c.color)}>{c.label}</span>
         {(status === "saved" || showLastSaved) && lastSaved && (
-          <span className="text-xs text-zinc-400">at {formatTime(lastSaved)}</span>
+          <span className="text-xs text-apple-ink-muted-48">at {formatTime(lastSaved)}</span>
         )}
       </motion.div>
     </AnimatePresence>

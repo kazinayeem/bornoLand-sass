@@ -82,7 +82,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-zinc-400" /></div>;
+    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" /></div>;
   }
 
   return (
@@ -95,13 +95,13 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             <DollarSign className="h-5 w-5 text-emerald-600" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-zinc-900">Currency</h3>
-            <p className="text-sm text-zinc-500">Manage store currency and localization.</p>
+            <h3 className="text-base font-semibold text-apple-ink">Currency</h3>
+            <p className="text-sm text-apple-ink-muted-48">Manage store currency and localization.</p>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-600">Currency Code</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Currency Code</label>
             <select value={currencyCode} onChange={(e) => handleCurrencyChange(e.target.value)}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
               <option value="BDT">BDT (৳)</option>
@@ -111,12 +111,12 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-600">Symbol</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Symbol</label>
             <input type="text" value={currencySymbol} onChange={(e) => setCurrencySymbol(e.target.value)}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-600">Position</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Position</label>
             <select value={currencyPosition} onChange={(e) => setCurrencyPosition(e.target.value as "before" | "after")}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
               <option value="before">Before ({currencySymbol}100)</option>
@@ -124,15 +124,15 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-600">Decimal Places</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Decimal Places</label>
             <input type="number" min={0} max={4} value={decimalPlaces}
               onChange={(e) => setDecimalPlaces(Number(e.target.value))}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
           </div>
         </div>
-        <div className="mt-4 p-3 rounded-xl bg-zinc-50">
-          <p className="text-xs text-zinc-500">Preview:</p>
-          <p className="text-xl font-bold text-zinc-900">
+        <div className="mt-4 p-3 rounded-xl bg-apple-canvas-parchment">
+          <p className="text-xs text-apple-ink-muted-48">Preview:</p>
+          <p className="text-xl font-bold text-apple-ink">
             {currencyPosition === "before" ? `${currencySymbol}1,234${decimalPlaces > 0 ? "." + "0".repeat(decimalPlaces) : ""}` : `1,234${decimalPlaces > 0 ? "." + "0".repeat(decimalPlaces) : ""}${currencySymbol}`}
           </p>
         </div>
@@ -146,13 +146,13 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             <Globe className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-zinc-900">Localization</h3>
-            <p className="text-sm text-zinc-500">Date format, timezone, and language settings.</p>
+            <h3 className="text-base font-semibold text-apple-ink">Localization</h3>
+            <p className="text-sm text-apple-ink-muted-48">Date format, timezone, and language settings.</p>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-600">Date Format</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Date Format</label>
             <select value={dateFormat} onChange={(e) => setDateFormat(e.target.value)}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
               <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -161,7 +161,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-600">Timezone</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Timezone</label>
             <select value={timezone} onChange={(e) => setTimezone(e.target.value)}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
               <option value="UTC">UTC</option>
@@ -172,7 +172,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-zinc-600">Language</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Language</label>
             <select value={language} onChange={(e) => setLanguage(e.target.value)}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
               <option value="en">English</option>
@@ -191,17 +191,17 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             <Clock className="h-5 w-5 text-amber-600" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-zinc-900">Tax</h3>
-            <p className="text-sm text-zinc-500">Default tax rate for products.</p>
+            <h3 className="text-base font-semibold text-apple-ink">Tax</h3>
+            <p className="text-sm text-apple-ink-muted-48">Default tax rate for products.</p>
           </div>
         </div>
         <div className="max-w-xs">
-          <label className="mb-1.5 block text-xs font-medium text-zinc-600">Tax Rate (%)</label>
+          <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Tax Rate (%)</label>
           <div className="flex items-center gap-2">
             <input type="number" min={0} max={100} step="0.1" value={taxRate}
               onChange={(e) => setTaxRate(Number(e.target.value))}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
-            <span className="text-sm text-zinc-400">%</span>
+            <span className="text-sm text-apple-ink-muted-48">%</span>
           </div>
         </div>
       </motion.div>

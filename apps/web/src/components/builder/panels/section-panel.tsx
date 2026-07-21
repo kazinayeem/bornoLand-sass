@@ -68,9 +68,9 @@ export function SectionPanel() {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-zinc-100 px-4 py-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Components</p>
-        <h2 className="mt-1 text-sm font-semibold text-zinc-900">Insert blocks without crowding the canvas</h2>
-        <p className="mt-1 text-xs leading-5 text-zinc-500">Browse a focused set here or open the full gallery for large previews and search.</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Components</p>
+        <h2 className="mt-1 text-sm font-semibold text-apple-ink">Insert blocks without crowding the canvas</h2>
+        <p className="mt-1 text-xs leading-5 text-apple-ink-muted-48">Browse a focused set here or open the full gallery for large previews and search.</p>
         <div className="mt-4 flex gap-2">
           <button
             onClick={() => setShowPicker(true)}
@@ -80,7 +80,7 @@ export function SectionPanel() {
           </button>
           <button
             onClick={() => dispatch(setActiveTab("layers"))}
-            className="rounded-xl border border-zinc-200 px-3 py-2 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50"
+            className="rounded-xl border border-zinc-200 px-3 py-2 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
           >
             Manage Layers
           </button>
@@ -88,8 +88,8 @@ export function SectionPanel() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="mb-4 rounded-3xl border border-zinc-100 bg-zinc-50/70 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Popular blocks</p>
+        <div className="mb-4 rounded-3xl border border-zinc-100 bg-apple-canvas-parchment/70 p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Popular blocks</p>
           <div className="mt-3 grid gap-2">
             {featuredSections.map((section) => (
               <button
@@ -98,12 +98,12 @@ export function SectionPanel() {
                 onClick={() => handleAdd(section.type)}
                 className="flex items-center gap-3 rounded-2xl border border-transparent bg-white px-3 py-3 text-left transition-all hover:border-zinc-200 hover:shadow-sm"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-500">
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-zinc-100 text-apple-ink-muted-48">
                   <SectionIcon icon={section.icon} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900">{section.label}</p>
-                  <p className="truncate text-[11px] text-zinc-500">{section.description}</p>
+                  <p className="truncate text-sm font-medium text-apple-ink">{section.label}</p>
+                  <p className="truncate text-[11px] text-apple-ink-muted-48">{section.description}</p>
                 </div>
                 <Plus className="h-4 w-4 text-zinc-300" />
               </button>
@@ -111,7 +111,7 @@ export function SectionPanel() {
           </div>
         </div>
         <div className="rounded-3xl border border-zinc-100 bg-white p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Browse by category</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Browse by category</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {sectionCategories.map((category) => (
               <button
@@ -121,7 +121,7 @@ export function SectionPanel() {
                   setActiveCategory(category.id);
                   setShowPicker(true);
                 }}
-                className="rounded-full border border-zinc-200 px-3 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50"
+                className="rounded-full border border-zinc-200 px-3 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
               >
                 {category.label}
               </button>
@@ -137,17 +137,17 @@ export function SectionPanel() {
             onClick={(e) => { if (e.target === e.currentTarget) { setShowPicker(false); setSearch(""); setActiveCategory("all"); } }}>
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               className="flex w-full max-w-5xl max-h-[88vh] overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-[0_30px_90px_-32px_rgba(0,0,0,0.35)]">
-              <div className="w-48 shrink-0 border-r border-zinc-100 overflow-y-auto p-3 space-y-1 bg-zinc-50/60">
+              <div className="w-48 shrink-0 border-r border-zinc-100 overflow-y-auto p-3 space-y-1 bg-apple-canvas-parchment/60">
                 <button onClick={() => setActiveCategory("all")}
                   className={`w-full rounded-xl px-3 py-2.5 text-left text-[11px] font-medium transition-colors ${
-                    activeCategory === "all" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:bg-white/60"
+                    activeCategory === "all" ? "bg-white text-apple-ink shadow-sm" : "text-apple-ink-muted-48 hover:bg-white/60"
                   }`}>
                   All Sections
                 </button>
                 {sectionCategories.map((cat) => (
                   <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
                     className={`w-full rounded-xl px-3 py-2.5 text-left text-[11px] font-medium transition-colors ${
-                      activeCategory === cat.id ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:bg-white/60"
+                      activeCategory === cat.id ? "bg-white text-apple-ink shadow-sm" : "text-apple-ink-muted-48 hover:bg-white/60"
                     }`}>
                     {cat.label}
                   </button>
@@ -155,16 +155,16 @@ export function SectionPanel() {
               </div>
               <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="border-b border-zinc-100 p-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Component Gallery</p>
-                  <h3 className="mt-1 text-lg font-semibold text-zinc-900">Insert prebuilt sections</h3>
-                  <p className="mt-1 text-sm text-zinc-500">Search, preview, and add without keeping the library open all the time.</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Component Gallery</p>
+                  <h3 className="mt-1 text-lg font-semibold text-apple-ink">Insert prebuilt sections</h3>
+                  <p className="mt-1 text-sm text-apple-ink-muted-48">Search, preview, and add without keeping the library open all the time.</p>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+                    <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-apple-ink-muted-48" />
                     <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
                       placeholder={`Search ${filteredSections.length} sections...`}
-                      className="mt-4 h-11 w-full rounded-2xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-sm outline-none focus:border-zinc-400 focus:bg-white" />
+                      className="mt-4 h-11 w-full rounded-2xl border border-zinc-200 bg-apple-canvas-parchment pl-9 pr-3 text-sm outline-none focus:border-zinc-400 focus:bg-white" />
                     {search && (
-                      <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
+                      <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-apple-ink-muted-48 hover:text-apple-ink-muted-80">
                         <X className="h-3.5 w-3.5" />
                       </button>
                     )}
@@ -174,20 +174,20 @@ export function SectionPanel() {
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {filteredSections.map((st) => (
                       <button key={st.type} onClick={() => handleAdd(st.type)}
-                        className="flex min-h-28 flex-col items-start gap-3 rounded-3xl border border-zinc-100 bg-zinc-50/70 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-zinc-200 hover:bg-white hover:shadow-sm">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-zinc-500 shadow-sm">
+                        className="flex min-h-28 flex-col items-start gap-3 rounded-3xl border border-zinc-100 bg-apple-canvas-parchment/70 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-zinc-200 hover:bg-white hover:shadow-sm">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-apple-ink-muted-48 shadow-sm">
                           <SectionIcon icon={st.icon} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-zinc-900">{st.label}</p>
-                          <p className="mt-1 text-xs leading-5 text-zinc-500">{st.description}</p>
+                          <p className="text-sm font-medium text-apple-ink">{st.label}</p>
+                          <p className="mt-1 text-xs leading-5 text-apple-ink-muted-48">{st.description}</p>
                         </div>
-                        <span className="mt-auto rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-zinc-500 shadow-sm">Insert</span>
+                        <span className="mt-auto rounded-full bg-white px-2.5 py-1 text-[10px] font-medium text-apple-ink-muted-48 shadow-sm">Insert</span>
                       </button>
                     ))}
                     {filteredSections.length === 0 && (
                       <div className="py-8 text-center">
-                        <p className="text-xs text-zinc-400">No sections found</p>
+                        <p className="text-xs text-apple-ink-muted-48">No sections found</p>
                       </div>
                     )}
                   </div>

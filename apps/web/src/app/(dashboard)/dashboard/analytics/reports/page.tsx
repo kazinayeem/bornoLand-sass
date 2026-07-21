@@ -53,7 +53,7 @@ export default function ReportsPage() {
   };
 
   if (!storeId) {
-    return <div className="flex h-[60vh] items-center justify-center"><p className="text-zinc-500">Create a store to view reports.</p></div>;
+    return <div className="flex h-[60vh] items-center justify-center"><p className="text-apple-ink-muted-48">Create a store to view reports.</p></div>;
   }
 
   const tabs: { id: ReportTab; label: string }[] = [
@@ -67,8 +67,8 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Analytics Reports</h1>
-        <p className="text-sm text-zinc-500">Generate and export analytics reports</p>
+        <h1 className="text-xl font-bold text-apple-ink">Analytics Reports</h1>
+        <p className="text-sm text-apple-ink-muted-48">Generate and export analytics reports</p>
       </div>
 
       {/* Tab bar */}
@@ -76,7 +76,7 @@ export default function ReportsPage() {
         {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition-all ${
-              tab === t.id ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-800"
+              tab === t.id ? "bg-zinc-900 text-white shadow-sm" : "text-apple-ink-muted-48 hover:text-zinc-800"
             }`}>
             {t.label}
           </button>
@@ -85,11 +85,11 @@ export default function ReportsPage() {
 
       {/* Date Range */}
       <div className="flex items-center gap-2">
-        <span className="text-xs text-zinc-500">Period:</span>
+        <span className="text-xs text-apple-ink-muted-48">Period:</span>
         {["24h", "7d", "30d", "90d", "1y"].map((d) => (
           <button key={d} onClick={() => setDateRange(d)}
             className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-              dateRange === d ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+              dateRange === d ? "bg-zinc-900 text-white" : "bg-zinc-100 text-apple-ink-muted-80 hover:bg-zinc-200"
             }`}>
             {d === "24h" ? "Today" : d === "7d" ? "7 Days" : d === "30d" ? "30 Days" : d === "90d" ? "90 Days" : "1 Year"}
           </button>
@@ -101,9 +101,9 @@ export default function ReportsPage() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl border border-zinc-200 bg-white p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-zinc-900">Visitor Report</h3>
+            <h3 className="text-sm font-semibold text-apple-ink">Visitor Report</h3>
             <button onClick={() => exportCSV("visitors", ["Metric", "Value"], Object.entries(stats ?? {}).map(([k, v]) => [k, String(v)]))}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50">
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
               <FileDown className="h-3.5 w-3.5" /> CSV
             </button>
           </div>
@@ -118,9 +118,9 @@ export default function ReportsPage() {
               { label: "Bounce Rate", value: `${String(stats?.bounceRate ?? 0)}%` },
               { label: "Avg Session", value: `${String(stats?.avgSessionDuration ?? 0)}s` },
             ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{item.label}</p>
-                <p className="mt-0.5 text-lg font-bold text-zinc-900">{item.value}</p>
+              <div key={item.label} className="rounded-xl border border-zinc-100 bg-apple-canvas-parchment p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">{item.label}</p>
+                <p className="mt-0.5 text-lg font-bold text-apple-ink">{item.value}</p>
               </div>
             ))}
           </div>
@@ -131,15 +131,15 @@ export default function ReportsPage() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl border border-zinc-200 bg-white">
           <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-3">
-            <h3 className="text-sm font-semibold text-zinc-900">Traffic Sources Report</h3>
+            <h3 className="text-sm font-semibold text-apple-ink">Traffic Sources Report</h3>
             <button onClick={() => exportCSV("traffic-sources", ["Source", "Type", "Visits", "Unique", "Page Views"], sources.map((s) => [String(s.source), String(s.type), String(s.visits ?? 0), String(s.uniqueVisitors ?? 0), String(s.pageViews ?? 0)]))}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50">
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
               <FileDown className="h-3.5 w-3.5" /> CSV
             </button>
           </div>
           <div className="overflow-x-auto p-6 pt-0">
             <table className="w-full text-sm">
-              <thead className="bg-zinc-50 text-left text-[10px] uppercase text-zinc-500">
+              <thead className="bg-apple-canvas-parchment text-left text-[10px] uppercase text-apple-ink-muted-48">
                 <tr>
                   <th className="px-3 py-2">Source</th>
                   <th className="px-3 py-2">Type</th>
@@ -150,12 +150,12 @@ export default function ReportsPage() {
               </thead>
               <tbody className="divide-y divide-zinc-50">
                 {sources.map((s) => (
-                  <tr key={String(s._id)} className="hover:bg-zinc-50/50">
+                  <tr key={String(s._id)} className="hover:bg-apple-canvas-parchment/50">
                     <td className="px-3 py-2.5 text-xs font-medium text-zinc-800">{String(s.source)}</td>
-                    <td className="px-3 py-2.5 text-xs capitalize text-zinc-500">{String(s.type)}</td>
-                    <td className="px-3 py-2.5 text-xs text-zinc-700">{String(s.visits ?? 0)}</td>
-                    <td className="px-3 py-2.5 text-xs text-zinc-500">{String(s.uniqueVisitors ?? 0)}</td>
-                    <td className="px-3 py-2.5 text-xs text-zinc-500">{String(s.pageViews ?? 0)}</td>
+                    <td className="px-3 py-2.5 text-xs capitalize text-apple-ink-muted-48">{String(s.type)}</td>
+                    <td className="px-3 py-2.5 text-xs text-apple-ink-muted-80">{String(s.visits ?? 0)}</td>
+                    <td className="px-3 py-2.5 text-xs text-apple-ink-muted-48">{String(s.uniqueVisitors ?? 0)}</td>
+                    <td className="px-3 py-2.5 text-xs text-apple-ink-muted-48">{String(s.pageViews ?? 0)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -175,9 +175,9 @@ export default function ReportsPage() {
           ].map((section) => (
             <div key={section.key} className="rounded-2xl border border-zinc-200 bg-white p-5">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-zinc-900">{section.title}</h3>
+                <h3 className="text-sm font-semibold text-apple-ink">{section.title}</h3>
                 <button onClick={() => exportCSV(section.key.toLowerCase(), ["Name", "Percentage"], section.data.map((d) => [String(d.name ?? d.code ?? ""), String(d.percentage ?? "0")]))}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-zinc-500 hover:bg-zinc-50">
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                   <Download className="h-3 w-3" /> CSV
                 </button>
               </div>
@@ -185,15 +185,15 @@ export default function ReportsPage() {
                 {section.data.map((d: Record<string, unknown>) => (
                   <div key={String(d.name ?? d.code)}>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-zinc-700">{String(d.name ?? d.code ?? "—")}</span>
-                      <span className="text-zinc-500">{String(d.percentage ?? "0")}%</span>
+                      <span className="text-apple-ink-muted-80">{String(d.name ?? d.code ?? "—")}</span>
+                      <span className="text-apple-ink-muted-48">{String(d.percentage ?? "0")}%</span>
                     </div>
                     <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
                       <div className="h-full rounded-full bg-blue-500" style={{ width: `${String(d.percentage ?? 0)}%` }} />
                     </div>
                   </div>
                 ))}
-                {section.data.length === 0 && <p className="text-xs text-zinc-400">No data</p>}
+                {section.data.length === 0 && <p className="text-xs text-apple-ink-muted-48">No data</p>}
               </div>
             </div>
           ))}
@@ -205,38 +205,38 @@ export default function ReportsPage() {
           className="space-y-4">
           <div className="rounded-2xl border border-zinc-200 bg-white p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-zinc-900">Top Products</h3>
+              <h3 className="text-sm font-semibold text-apple-ink">Top Products</h3>
               <button onClick={() => exportCSV("top-products", ["Product", "Views"], ((topContent?.topProducts ?? []) as Array<Record<string, unknown>>).map((p) => [String(p.name ?? ""), String(p.views ?? "0")]))}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-zinc-500 hover:bg-zinc-50">
+                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                 <Download className="h-3 w-3" /> CSV
               </button>
             </div>
             <div className="space-y-2">
               {((topContent?.topProducts ?? []) as Array<Record<string, unknown>>).map((p, i) => (
                 <div key={i} className="flex items-center justify-between text-xs">
-                  <span className="text-zinc-700">{String(p.name ?? "Unknown")}</span>
-                  <span className="font-medium text-zinc-900">{String(p.views ?? 0)} views</span>
+                  <span className="text-apple-ink-muted-80">{String(p.name ?? "Unknown")}</span>
+                  <span className="font-medium text-apple-ink">{String(p.views ?? 0)} views</span>
                 </div>
               ))}
-              {((topContent?.topProducts ?? []) as Array<Record<string, unknown>>).length === 0 && <p className="text-xs text-zinc-400">No data</p>}
+              {((topContent?.topProducts ?? []) as Array<Record<string, unknown>>).length === 0 && <p className="text-xs text-apple-ink-muted-48">No data</p>}
             </div>
           </div>
           <div className="rounded-2xl border border-zinc-200 bg-white p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-zinc-900">Top Categories</h3>
+              <h3 className="text-sm font-semibold text-apple-ink">Top Categories</h3>
               <button onClick={() => exportCSV("top-categories", ["Category", "Views"], ((topContent?.topCategories ?? []) as Array<Record<string, unknown>>).map((c) => [String(c.name ?? ""), String(c.views ?? "0")]))}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-zinc-500 hover:bg-zinc-50">
+                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                 <Download className="h-3 w-3" /> CSV
               </button>
             </div>
             <div className="space-y-2">
               {((topContent?.topCategories ?? []) as Array<Record<string, unknown>>).map((c, i) => (
                 <div key={i} className="flex items-center justify-between text-xs">
-                  <span className="text-zinc-700">{String(c.name ?? "Unknown")}</span>
-                  <span className="font-medium text-zinc-900">{String(c.views ?? 0)} views</span>
+                  <span className="text-apple-ink-muted-80">{String(c.name ?? "Unknown")}</span>
+                  <span className="font-medium text-apple-ink">{String(c.views ?? 0)} views</span>
                 </div>
               ))}
-              {((topContent?.topCategories ?? []) as Array<Record<string, unknown>>).length === 0 && <p className="text-xs text-zinc-400">No data</p>}
+              {((topContent?.topCategories ?? []) as Array<Record<string, unknown>>).length === 0 && <p className="text-xs text-apple-ink-muted-48">No data</p>}
             </div>
           </div>
         </motion.div>
@@ -246,7 +246,7 @@ export default function ReportsPage() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           className="space-y-4">
           <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-            <h3 className="text-sm font-semibold text-zinc-900 mb-4">Export All Data</h3>
+            <h3 className="text-sm font-semibold text-apple-ink mb-4">Export All Data</h3>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 { label: "Visitor Statistics", desc: "All visitor metrics", filename: "visitor-stats", icon: FileText },
@@ -258,12 +258,12 @@ export default function ReportsPage() {
               ].map((exportItem) => (
                 <button key={exportItem.filename} onClick={() => exportJSON(exportItem.filename, { stats, charts, sources, devices, topContent, exportedAt: new Date().toISOString() })}
                   className="flex items-start gap-3 rounded-xl border border-zinc-200 p-4 text-left transition-all hover:border-blue-200 hover:bg-blue-50/50">
-                  <div className="rounded-lg bg-zinc-100 p-2 text-zinc-600">
+                  <div className="rounded-lg bg-zinc-100 p-2 text-apple-ink-muted-80">
                     <exportItem.icon className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-zinc-900">{exportItem.label}</p>
-                    <p className="text-xs text-zinc-500">{exportItem.desc}</p>
+                    <p className="text-sm font-medium text-apple-ink">{exportItem.label}</p>
+                    <p className="text-xs text-apple-ink-muted-48">{exportItem.desc}</p>
                   </div>
                 </button>
               ))}

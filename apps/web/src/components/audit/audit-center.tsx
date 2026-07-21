@@ -30,7 +30,7 @@ export function AuditFilters({ filters, onChange, showWorkspaceFilter, showStore
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
           <Input
             className="pl-9"
             placeholder="Search user, store, product, order, IP, action..."
@@ -51,17 +51,17 @@ export function AuditFilters({ filters, onChange, showWorkspaceFilter, showStore
       </div>
 
       {open && (
-        <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 rounded-2xl border border-zinc-200 bg-apple-canvas-parchment/80 p-4 md:grid-cols-2 lg:grid-cols-4">
           <label className="space-y-1 text-sm">
-            <span className="text-zinc-500">From</span>
+            <span className="text-apple-ink-muted-48">From</span>
             <Input type="date" value={filters.from?.slice(0, 10) ?? ""} onChange={(e) => onChange({ ...filters, from: e.target.value, page: 1 })} />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-zinc-500">To</span>
+            <span className="text-apple-ink-muted-48">To</span>
             <Input type="date" value={filters.to?.slice(0, 10) ?? ""} onChange={(e) => onChange({ ...filters, to: e.target.value, page: 1 })} />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-zinc-500">Module</span>
+            <span className="text-apple-ink-muted-48">Module</span>
             <select
               className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm"
               value={filters.module ?? ""}
@@ -72,7 +72,7 @@ export function AuditFilters({ filters, onChange, showWorkspaceFilter, showStore
             </select>
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-zinc-500">Status</span>
+            <span className="text-apple-ink-muted-48">Status</span>
             <select
               className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm"
               value={filters.status ?? ""}
@@ -83,22 +83,22 @@ export function AuditFilters({ filters, onChange, showWorkspaceFilter, showStore
             </select>
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-zinc-500">Action</span>
+            <span className="text-apple-ink-muted-48">Action</span>
             <Input value={filters.action ?? ""} onChange={(e) => onChange({ ...filters, action: e.target.value || undefined, page: 1 })} placeholder="e.g. product_updated" />
           </label>
           <label className="space-y-1 text-sm">
-            <span className="text-zinc-500">IP Address</span>
+            <span className="text-apple-ink-muted-48">IP Address</span>
             <Input value={filters.ipAddress ?? ""} onChange={(e) => onChange({ ...filters, ipAddress: e.target.value || undefined, page: 1 })} />
           </label>
           {showStoreFilter && (
             <label className="space-y-1 text-sm">
-              <span className="text-zinc-500">Store ID</span>
+              <span className="text-apple-ink-muted-48">Store ID</span>
               <Input value={filters.storeId ?? ""} onChange={(e) => onChange({ ...filters, storeId: e.target.value || undefined, page: 1 })} />
             </label>
           )}
           {showWorkspaceFilter && (
             <label className="space-y-1 text-sm">
-              <span className="text-zinc-500">Workspace ID</span>
+              <span className="text-apple-ink-muted-48">Workspace ID</span>
               <Input value={filters.tenantId ?? ""} onChange={(e) => onChange({ ...filters, tenantId: e.target.value || undefined, page: 1 })} />
             </label>
           )}
@@ -120,11 +120,11 @@ function formatValue(value: unknown) {
 
 export function AuditTimeline({ items, isLoading }: { items: AuditLog[]; isLoading?: boolean }) {
   if (isLoading) {
-    return <div className="py-12 text-center text-sm text-zinc-500">Loading activity...</div>;
+    return <div className="py-12 text-center text-sm text-apple-ink-muted-48">Loading activity...</div>;
   }
 
   if (items.length === 0) {
-    return <div className="rounded-2xl border border-dashed border-zinc-200 py-16 text-center text-sm text-zinc-500">No activity found for the selected filters.</div>;
+    return <div className="rounded-2xl border border-dashed border-zinc-200 py-16 text-center text-sm text-apple-ink-muted-48">No activity found for the selected filters.</div>;
   }
 
   return (
@@ -136,14 +136,14 @@ export function AuditTimeline({ items, isLoading }: { items: AuditLog[]; isLoadi
           <div className="min-w-0 flex-1 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-apple-ink-muted-48">
                   {new Date(log.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
-                <p className="mt-1 text-sm font-semibold text-zinc-900">
+                <p className="mt-1 text-sm font-semibold text-apple-ink">
                   {log.actorName || "System"}
-                  <span className="font-normal text-zinc-500"> · {formatAction(log.action)}</span>
+                  <span className="font-normal text-apple-ink-muted-48"> · {formatAction(log.action)}</span>
                 </p>
-                {log.entityName && <p className="text-sm text-zinc-700">{log.entityName}</p>}
+                {log.entityName && <p className="text-sm text-apple-ink-muted-80">{log.entityName}</p>}
               </div>
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${log.status === "failure" ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
                 {log.status}
@@ -151,20 +151,20 @@ export function AuditTimeline({ items, isLoading }: { items: AuditLog[]; isLoadi
             </div>
 
             {log.changes?.length > 0 && (
-              <div className="mt-3 space-y-1 rounded-xl bg-zinc-50 p-3 text-sm">
+              <div className="mt-3 space-y-1 rounded-xl bg-apple-canvas-parchment p-3 text-sm">
                 {log.changes.slice(0, 4).map((change) => (
-                  <p key={`${log.id}-${change.field}`} className="text-zinc-600">
+                  <p key={`${log.id}-${change.field}`} className="text-apple-ink-muted-80">
                     <span className="font-medium text-zinc-800">{change.field}</span>
                     {" "}
-                    <span className="text-zinc-400">{formatValue(change.oldValue)}</span>
+                    <span className="text-apple-ink-muted-48">{formatValue(change.oldValue)}</span>
                     {" → "}
-                    <span className="text-zinc-900">{formatValue(change.newValue)}</span>
+                    <span className="text-apple-ink">{formatValue(change.newValue)}</span>
                   </p>
                 ))}
               </div>
             )}
 
-            <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-zinc-500">
+            <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-apple-ink-muted-48">
               {log.storeName && <span>{log.storeName}</span>}
               {log.workspaceName && <span>· {log.workspaceName}</span>}
               {log.module && <span>· {log.module}</span>}

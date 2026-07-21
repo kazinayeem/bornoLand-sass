@@ -36,40 +36,40 @@ export function NotificationDropdown({ compact = false }: { compact?: boolean })
   return (
     <div ref={rootRef} className="relative">
       <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={`${unreadCount} unread notifications`}
-        className={cn("relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-500 transition hover:bg-zinc-50", compact && "border-[#ececec] text-zinc-400")}>
+        className={cn("relative flex h-9 w-9 items-center justify-center rounded-sm border border-apple-hairline bg-apple-canvas text-apple-ink-muted-48 transition hover:bg-apple-canvas-parchment", compact && "border-apple-hairline text-apple-ink-muted-48")}>
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && <span className="absolute -right-1.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-bold leading-4 text-white">{unreadCount > 99 ? "99+" : unreadCount}</span>}
       </button>
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0, y: -6, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: .98 }} transition={{ duration: .16 }}
-            className="fixed inset-x-3 top-16 z-[70] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-[calc(100%+10px)] sm:w-[390px]">
-            <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3.5">
-              <div><h2 className="text-sm font-semibold text-zinc-950">Notifications</h2><p className="text-xs text-zinc-500">{unreadCount ? `${unreadCount} unread` : "You're all caught up"}{isFetching && !isLoading ? " · Updating" : ""}</p></div>
-              {unreadCount > 0 && <button type="button" disabled={markingAll} onClick={async () => { try { await markAll().unwrap(); toast.success("All notifications marked as read"); } catch { toast.error("Could not mark all as read"); } }} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100">
+            className="fixed inset-x-3 top-16 z-[70] overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas sm:absolute sm:inset-x-auto sm:right-0 sm:top-[calc(100%+10px)] sm:w-[390px]">
+            <div className="flex items-center justify-between border-b border-apple-divider-soft px-4 py-3.5">
+              <div><h2 className="text-sm font-semibold text-apple-ink">Notifications</h2><p className="text-xs text-apple-ink-muted-48">{unreadCount ? `${unreadCount} unread` : "You're all caught up"}{isFetching && !isLoading ? " · Updating" : ""}</p></div>
+              {unreadCount > 0 && <button type="button" disabled={markingAll} onClick={async () => { try { await markAll().unwrap(); toast.success("All notifications marked as read"); } catch { toast.error("Could not mark all as read"); } }} className="inline-flex items-center gap-1.5 rounded-sm px-2 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
                 {markingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />} Mark all read
               </button>}
             </div>
             <div className="max-h-[min(65vh,430px)] overflow-y-auto">
-              {isLoading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="flex animate-pulse gap-3 border-b border-zinc-50 p-4"><div className="h-10 w-10 rounded-xl bg-zinc-100"/><div className="flex-1 space-y-2"><div className="h-3 w-1/3 rounded bg-zinc-100"/><div className="h-3 w-4/5 rounded bg-zinc-100"/></div></div>) : notifications.length === 0 ? (
-                <div className="px-6 py-12 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-500"><Bell className="h-5 w-5"/></div><p className="mt-3 text-sm font-medium text-zinc-900">No notifications yet</p><p className="mt-1 text-xs text-zinc-500">Updates about your stores and account will appear here.</p></div>
+              {isLoading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="flex animate-pulse gap-3 border-b border-apple-divider-soft p-4"><div className="h-10 w-10 rounded-lg bg-apple-canvas-parchment"/><div className="flex-1 space-y-2"><div className="h-3 w-1/3 rounded bg-apple-canvas-parchment"/><div className="h-3 w-4/5 rounded bg-apple-canvas-parchment"/></div></div>) : notifications.length === 0 ? (
+                <div className="px-6 py-12 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-apple-canvas-parchment text-apple-ink-muted-48"><Bell className="h-5 w-5"/></div><p className="mt-3 text-sm font-medium text-apple-ink">No notifications yet</p><p className="mt-1 text-xs text-apple-ink-muted-48">Updates about your stores and account will appear here.</p></div>
               ) : notifications.map((notification) => {
                 const style = getNotificationStyle(notification.type); const Icon = style.icon;
-                return <div key={notification._id} className={cn("group relative flex gap-3 border-b border-zinc-100 p-3.5 transition hover:bg-zinc-50", !notification.isRead && "bg-blue-50/40")}>
-                  <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", style.className)}><Icon className="h-4 w-4"/></div>
+                return <div key={notification._id} className={cn("group relative flex gap-3 border-b border-apple-divider-soft p-3.5 transition hover:bg-apple-canvas-parchment", !notification.isRead && "bg-apple-canvas-parchment/60")}>
+                  <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", style.className)}><Icon className="h-4 w-4"/></div>
                   <Link href={notification.actionUrl || "/dashboard/notifications"} onClick={() => { if (!notification.isRead) void handleRead(notification._id); setOpen(false); }} className="min-w-0 flex-1 pr-12">
-                    <div className="flex items-center gap-2"><p className="truncate text-sm font-semibold text-zinc-900">{notification.title}</p>{!notification.isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500"/>}</div>
-                    <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-zinc-600">{notification.message}</p>
-                    <div className="mt-1 flex items-center gap-2 text-[11px] text-zinc-400"><span className="capitalize">{style.label}</span><span>•</span><time>{timeAgo(notification.createdAt)}</time></div>
+                    <div className="flex items-center gap-2"><p className="truncate text-sm font-semibold text-apple-ink">{notification.title}</p>{!notification.isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-apple-primary"/>}</div>
+                    <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-apple-ink-muted-80">{notification.message}</p>
+                    <div className="mt-1 flex items-center gap-2 text-[11px] text-apple-ink-muted-48"><span className="capitalize">{style.label}</span><span>•</span><time>{timeAgo(notification.createdAt)}</time></div>
                   </Link>
                   <div className="absolute right-2 top-3 flex opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
-                    {!notification.isRead && <button type="button" onClick={() => void handleRead(notification._id)} title="Mark as read" className="rounded-lg p-1.5 text-zinc-400 hover:bg-white hover:text-zinc-700"><Check className="h-3.5 w-3.5"/></button>}
-                    <button type="button" onClick={async () => { try { await remove(notification._id).unwrap(); toast.success("Notification deleted"); } catch { toast.error("Could not delete notification"); } }} title="Delete" className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-3.5 w-3.5"/></button>
+                    {!notification.isRead && <button type="button" onClick={() => void handleRead(notification._id)} title="Mark as read" className="rounded-sm p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas hover:text-apple-ink-muted-80"><Check className="h-3.5 w-3.5"/></button>}
+                    <button type="button" onClick={async () => { try { await remove(notification._id).unwrap(); toast.success("Notification deleted"); } catch { toast.error("Could not delete notification"); } }} title="Delete" className="rounded-sm p-1.5 text-apple-ink-muted-48 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-3.5 w-3.5"/></button>
                   </div>
                 </div>;
               })}
             </div>
-            <Link href="/dashboard/notifications" onClick={() => setOpen(false)} className="flex items-center justify-center border-t border-zinc-100 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">View all notifications</Link>
+            <Link href="/dashboard/notifications" onClick={() => setOpen(false)} className="flex items-center justify-center border-t border-apple-divider-soft px-4 py-3 text-sm font-medium text-apple-ink-muted-80 transition hover:bg-apple-canvas-parchment">View all notifications</Link>
           </motion.div>
         )}
       </AnimatePresence>

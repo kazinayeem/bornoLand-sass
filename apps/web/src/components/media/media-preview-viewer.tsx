@@ -172,7 +172,7 @@ export function MediaPreviewViewer({
               <a
                 href={mediaDownloadHref(file)}
                 download
-                className="mt-6 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-semibold text-zinc-900"
+                className="mt-6 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-semibold text-apple-ink"
               >
                 Download file
               </a>

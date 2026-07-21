@@ -10,12 +10,12 @@ export function SessionRestoreScreen() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center bg-[#f8f9fb] px-4" role="status" aria-live="polite">
       <div className="flex flex-col items-center text-center">
-        <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-zinc-700 shadow-sm ring-1 ring-zinc-200">
+        <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-apple-ink-muted-80 shadow-sm ring-1 ring-zinc-200">
           <ShieldCheck className="h-6 w-6" />
           <Loader2 className="absolute -bottom-1 -right-1 h-5 w-5 animate-spin rounded-full bg-white p-0.5 text-blue-600" />
         </div>
-        <p className="mt-4 text-sm font-semibold text-zinc-900">Restoring your session</p>
-        <p className="mt-1 text-xs text-zinc-500">Taking you back to where you left off…</p>
+        <p className="mt-4 text-sm font-semibold text-apple-ink">Restoring your session</p>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">Taking you back to where you left off…</p>
       </div>
     </div>
   );

@@ -61,20 +61,20 @@ export function StoreNavbar({ store }: { store: Store }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 hidden border-b border-[#ececec] bg-white/80 px-8 py-4 backdrop-blur-xl lg:block">
+    <header className="sticky top-0 z-30 hidden border-b border-apple-hairline bg-apple-canvas/80 px-8 py-4 backdrop-blur-xl lg:block">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-lg font-bold tracking-tight text-zinc-900">{pageTitle}</h1>
-          <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-zinc-400">
+          <h1 className="text-lg font-bold tracking-tight text-apple-ink">{pageTitle}</h1>
+          <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-apple-ink-muted-48">
             {breadcrumbs.map((item, index) => (
               <span key={`${item.label}-${index}`} className="inline-flex items-center gap-1">
                 {index > 0 && <ChevronRight className="h-3 w-3 text-zinc-300" />}
                 {item.href ? (
-                  <Link href={item.href} className="transition-colors hover:text-zinc-700">
+                  <Link href={item.href} className="transition-colors hover:text-apple-ink-muted-80">
                     {item.label}
                   </Link>
                 ) : (
-                  <span className="text-zinc-600">{item.label}</span>
+                  <span className="text-apple-ink-muted-80">{item.label}</span>
                 )}
               </span>
             ))}
@@ -83,11 +83,11 @@ export function StoreNavbar({ store }: { store: Store }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="hidden h-9 items-center gap-2 rounded-xl border border-[#ececec] bg-zinc-50/80 px-3 text-sm text-zinc-400 transition-all duration-200 hover:border-zinc-300 hover:bg-white sm:inline-flex"
+            className="hidden h-9 items-center gap-2 rounded-sm border border-apple-hairline bg-apple-canvas-parchment/80 px-3 text-sm text-apple-ink-muted-48 transition-colors hover:border-apple-hairline hover:bg-apple-canvas sm:inline-flex"
           >
             <Search className="h-3.5 w-3.5" />
             <span>Search</span>
-            <kbd className="ml-2 inline-flex items-center gap-0.5 rounded-md border border-zinc-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+            <kbd className="ml-2 inline-flex items-center gap-0.5 rounded-sm border border-apple-hairline bg-apple-canvas px-1.5 py-0.5 text-[10px] font-medium text-apple-ink-muted-48">
               <Command className="h-2.5 w-2.5" />K
             </kbd>
           </button>

@@ -30,8 +30,8 @@ export function EcommerceModuleShell({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">{title}</h1>
-          {description && <p className="mt-1 text-sm text-zinc-500">{description}</p>}
+          <h1 className="text-xl font-semibold text-apple-ink">{title}</h1>
+          {description && <p className="mt-1 text-sm text-apple-ink-muted-48">{description}</p>}
         </div>
         {comingSoon && <ComingSoonBadge />}
       </div>
@@ -42,11 +42,11 @@ export function EcommerceModuleShell({
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-lg font-semibold text-zinc-900">Upcoming</h2>
-          <p className="mt-2 max-w-md text-sm leading-relaxed text-zinc-500">
+          <h2 className="text-lg font-semibold text-apple-ink">Upcoming</h2>
+          <p className="mt-2 max-w-md text-sm leading-relaxed text-apple-ink-muted-48">
             This feature is on the way. Please wait — we&apos;re rolling it out soon.
           </p>
-          <Link href={billingHref} className="mt-6 text-sm font-semibold text-zinc-700 underline hover:text-zinc-900">
+          <Link href={billingHref} className="mt-6 text-sm font-semibold text-apple-ink-muted-80 underline hover:text-apple-ink">
             View plans
           </Link>
         </div>

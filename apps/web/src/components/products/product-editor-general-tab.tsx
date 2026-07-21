@@ -4,11 +4,11 @@ import dynamic from "next/dynamic";
 import type { ProductEditorForm } from "@/components/products/product-form";
 
 const RichTextEditor = dynamic(() => import("@/components/cms/rich-text-editor"), {
-  loading: () => <div className="min-h-[240px] rounded-xl border border-zinc-200 bg-zinc-50" />,
+  loading: () => <div className="min-h-[240px] rounded-xl border border-zinc-200 bg-apple-canvas-parchment" />,
 });
 
 const inputClass =
-  "h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
+  "h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-apple-ink focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
 
 type GeneralTabProps = {
   form: ProductEditorForm;
@@ -22,10 +22,10 @@ export function ProductEditorGeneralTab({ form, categories, isEdit, onChange, on
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-semibold text-zinc-900">General</h2>
+        <h2 className="text-sm font-semibold text-apple-ink">General</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Product name</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Product name</label>
             <input
               type="text"
               value={form.name}
@@ -35,7 +35,7 @@ export function ProductEditorGeneralTab({ form, categories, isEdit, onChange, on
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Slug</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Slug</label>
             <input
               type="text"
               value={form.slug}
@@ -44,7 +44,7 @@ export function ProductEditorGeneralTab({ form, categories, isEdit, onChange, on
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Brand</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Brand</label>
             <input
               type="text"
               value={form.brand}
@@ -53,7 +53,7 @@ export function ProductEditorGeneralTab({ form, categories, isEdit, onChange, on
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Short description</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Short description</label>
             <textarea
               value={form.shortDescription}
               onChange={(e) => onChange({ shortDescription: e.target.value })}
@@ -63,7 +63,7 @@ export function ProductEditorGeneralTab({ form, categories, isEdit, onChange, on
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Full description</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Full description</label>
             <RichTextEditor
               content={form.description}
               onChange={(html) => onChange({ description: html })}
@@ -74,10 +74,10 @@ export function ProductEditorGeneralTab({ form, categories, isEdit, onChange, on
       </section>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-semibold text-zinc-900">Organization</h2>
+        <h2 className="text-sm font-semibold text-apple-ink">Organization</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Category</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Category</label>
             <select
               value={form.category}
               onChange={(e) => onChange({ category: e.target.value })}
@@ -92,7 +92,7 @@ export function ProductEditorGeneralTab({ form, categories, isEdit, onChange, on
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Vendor</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Vendor</label>
             <input
               type="text"
               value={form.vendor}
@@ -101,7 +101,7 @@ export function ProductEditorGeneralTab({ form, categories, isEdit, onChange, on
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Tags</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Tags</label>
             <input
               type="text"
               value={form.tags}
@@ -109,17 +109,17 @@ export function ProductEditorGeneralTab({ form, categories, isEdit, onChange, on
               className={inputClass}
               placeholder="summer, cotton, bestseller"
             />
-            <p className="mt-1 text-xs text-zinc-500">Comma-separated tags</p>
+            <p className="mt-1 text-xs text-apple-ink-muted-48">Comma-separated tags</p>
           </div>
         </div>
       </section>
 
       {form.productType === "simple" && (
         <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-zinc-900">Pricing</h2>
+          <h2 className="text-sm font-semibold text-apple-ink">Pricing</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">Price</label>
+              <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Price</label>
               <input
                 type="number"
                 min={0}
@@ -130,7 +130,7 @@ export function ProductEditorGeneralTab({ form, categories, isEdit, onChange, on
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">Compare at price</label>
+              <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Compare at price</label>
               <input
                 type="number"
                 min={0}
@@ -142,7 +142,7 @@ export function ProductEditorGeneralTab({ form, categories, isEdit, onChange, on
             </div>
             {!isEdit && (
               <div>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">Initial stock</label>
+                <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Initial stock</label>
                 <input
                   type="number"
                   min={0}

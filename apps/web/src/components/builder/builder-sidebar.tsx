@@ -34,13 +34,13 @@ export function BuilderSidebar() {
     <button
       type="button"
       onClick={() => dispatch(openSectionLibrary({ insertPosition: null }))}
-      className="mb-2 flex w-full items-center justify-between rounded-2xl border border-zinc-200 bg-zinc-950 px-3 py-2.5 text-left text-white shadow-sm transition hover:bg-zinc-800"
+      className="mb-2 flex w-full items-center justify-between rounded-lg border border-apple-hairline bg-zinc-950 px-3 py-2.5 text-left text-white transition hover:bg-zinc-800"
     >
       <span className="flex items-center gap-2 text-sm font-medium">
         <Blocks className="h-4 w-4" />
         Sections
       </span>
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Add</span>
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Add</span>
     </button>
   );
 
@@ -71,43 +71,43 @@ export function BuilderSidebar() {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="border-b border-zinc-200/60 bg-zinc-50/80 p-3">
+      <div className="border-b border-apple-hairline/60 bg-apple-canvas-parchment/80 p-3">
         {sectionButton}
         <div className="grid grid-cols-2 gap-2">
-          <button className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-left text-xs font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">
+          <button className="rounded-xl border border-apple-hairline bg-apple-canvas px-3 py-2 text-left text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
             Pages
-            <div className="mt-0.5 text-[10px] font-normal text-zinc-400">Manage routes</div>
+            <div className="mt-0.5 text-[10px] font-normal text-apple-ink-muted-48">Manage routes</div>
           </button>
-          <button className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-left text-xs font-medium text-zinc-700 shadow-sm hover:bg-zinc-50">
+          <button className="rounded-xl border border-apple-hairline bg-apple-canvas px-3 py-2 text-left text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
             History
-            <div className="mt-0.5 text-[10px] font-normal text-zinc-400">Undo / redo stack</div>
+            <div className="mt-0.5 text-[10px] font-normal text-apple-ink-muted-48">Undo / redo stack</div>
           </button>
         </div>
       </div>
       {/* Icon rail */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="flex min-h-0 w-14 flex-col items-center gap-1 border-r border-zinc-200/60 bg-zinc-50/80 py-2">
+        <div className="flex min-h-0 w-14 flex-col items-center gap-1 border-r border-apple-hairline/60 bg-apple-canvas-parchment/80 py-2">
         {tabs.map(({ key, icon: Icon, label, meta }) => (
           <button
             key={key}
             title={label}
             onClick={() => handleTabClick(key)}
             className={cn(
-              "flex w-11 flex-col items-center justify-center rounded-2xl px-1 py-2 text-[9px] font-medium transition-all",
+              "flex w-11 flex-col items-center justify-center rounded-lg px-1 py-2 text-[9px] font-medium transition-all",
               activeTab === key
-                ? "bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-200/50"
-                : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100/50"
+                ? "bg-apple-canvas text-apple-ink ring-1 ring-apple-hairline/50"
+                : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80 hover:bg-apple-canvas-parchment/50"
             )}
           >
             <Icon className="h-4 w-4" />
             <span className="mt-0.5 leading-none">{label}</span>
-            {meta && <span className="text-[8px] text-zinc-400 leading-none mt-0.5">{meta}</span>}
+            {meta && <span className="text-[8px] text-apple-ink-muted-48 leading-none mt-0.5">{meta}</span>}
           </button>
         ))}
         <button
           type="button"
           onClick={() => dispatch(toggleLeftPanel())}
-          className="mt-auto flex w-11 flex-col items-center rounded-2xl px-1 py-2 text-[9px] font-medium text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100/50 transition-all"
+          className="mt-auto flex w-11 flex-col items-center rounded-lg px-1 py-2 text-[9px] font-medium text-apple-ink-muted-48 hover:text-apple-ink-muted-80 hover:bg-apple-canvas-parchment/50 transition-all"
           title="Close sidebar"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -116,7 +116,7 @@ export function BuilderSidebar() {
         </div>
 
       {/* Panel content */}
-      <div className="min-h-0 flex-1 overflow-hidden bg-white">
+      <div className="min-h-0 flex-1 overflow-hidden bg-apple-canvas">
         {renderPanel()}
       </div>
       </div>

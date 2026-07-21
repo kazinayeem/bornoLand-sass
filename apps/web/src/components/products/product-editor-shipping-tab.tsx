@@ -3,7 +3,7 @@
 import type { ProductEditorForm } from "@/components/products/product-form";
 
 const inputClass =
-  "h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
+  "h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-apple-ink focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
 
 type ShippingTabProps = {
   form: ProductEditorForm;
@@ -13,10 +13,10 @@ type ShippingTabProps = {
 export function ProductEditorShippingTab({ form, onChange }: ShippingTabProps) {
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-      <h2 className="text-sm font-semibold text-zinc-900">Shipping</h2>
+      <h2 className="text-sm font-semibold text-apple-ink">Shipping</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Weight</label>
+          <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Weight</label>
           <input
             type="number"
             min={0}
@@ -27,7 +27,7 @@ export function ProductEditorShippingTab({ form, onChange }: ShippingTabProps) {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Weight unit</label>
+          <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Weight unit</label>
           <select
             value={form.weightUnit}
             onChange={(e) => onChange({ weightUnit: e.target.value })}
@@ -40,7 +40,7 @@ export function ProductEditorShippingTab({ form, onChange }: ShippingTabProps) {
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Length</label>
+          <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Length</label>
           <input
             type="number"
             min={0}
@@ -50,7 +50,7 @@ export function ProductEditorShippingTab({ form, onChange }: ShippingTabProps) {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Width</label>
+          <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Width</label>
           <input
             type="number"
             min={0}
@@ -60,7 +60,7 @@ export function ProductEditorShippingTab({ form, onChange }: ShippingTabProps) {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Height</label>
+          <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Height</label>
           <input
             type="number"
             min={0}
@@ -70,7 +70,7 @@ export function ProductEditorShippingTab({ form, onChange }: ShippingTabProps) {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Dimension unit</label>
+          <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Dimension unit</label>
           <select
             value={form.dimensionsUnit}
             onChange={(e) => onChange({ dimensionsUnit: e.target.value })}

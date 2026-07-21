@@ -32,28 +32,28 @@ export function TrialTab({ helpers }: { helpers: TabHelpers }) {
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Trial Status</h4>
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Trial Status</h4>
         <div className="mt-4 grid grid-cols-2 gap-4">
-          <div className="rounded-lg bg-zinc-50 p-3">
-            <p className="text-xs text-zinc-400">Status</p>
+          <div className="rounded-lg bg-apple-canvas-parchment p-3">
+            <p className="text-xs text-apple-ink-muted-48">Status</p>
             <p className="font-semibold text-zinc-800">
               {isTrialing ? "Active" : "Inactive"}
             </p>
           </div>
-          <div className="rounded-lg bg-zinc-50 p-3">
-            <p className="text-xs text-zinc-400">Enabled</p>
+          <div className="rounded-lg bg-apple-canvas-parchment p-3">
+            <p className="text-xs text-apple-ink-muted-48">Enabled</p>
             <p className="font-semibold text-zinc-800">
               {localTrialEnabled ? "Yes" : localTrialEnabled === false ? "No" : "Plan default"}
             </p>
           </div>
-          <div className="rounded-lg bg-zinc-50 p-3">
-            <p className="text-xs text-zinc-400">Started</p>
+          <div className="rounded-lg bg-apple-canvas-parchment p-3">
+            <p className="text-xs text-apple-ink-muted-48">Started</p>
             <p className="font-semibold text-zinc-800">
               {trialStart ? new Date(trialStart).toLocaleDateString() : "—"}
             </p>
           </div>
-          <div className="rounded-lg bg-zinc-50 p-3">
-            <p className="text-xs text-zinc-400">Ends</p>
+          <div className="rounded-lg bg-apple-canvas-parchment p-3">
+            <p className="text-xs text-apple-ink-muted-48">Ends</p>
             <p className="font-semibold text-zinc-800">
               {localTrialEndsAt
                 ? new Date(localTrialEndsAt).toLocaleDateString()
@@ -67,7 +67,7 @@ export function TrialTab({ helpers }: { helpers: TabHelpers }) {
 
       {/* Toggle */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Enable / Disable Trial</h4>
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Enable / Disable Trial</h4>
         <div className="mt-3 flex items-center gap-3">
           <button
             onClick={() => {
@@ -84,7 +84,7 @@ export function TrialTab({ helpers }: { helpers: TabHelpers }) {
               }`}
             />
           </button>
-          <span className="text-sm text-zinc-600">
+          <span className="text-sm text-apple-ink-muted-80">
             {localTrialEnabled ? "Trial enabled" : localTrialEnabled === false ? "Trial disabled" : "Using plan default"}
           </span>
         </div>
@@ -92,8 +92,8 @@ export function TrialTab({ helpers }: { helpers: TabHelpers }) {
 
       {/* Custom expiry */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Custom Trial Expiry</h4>
-        <p className="mt-1 text-xs text-zinc-500">Set a specific date for trial to end.</p>
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Custom Trial Expiry</h4>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">Set a specific date for trial to end.</p>
         <div className="mt-3 flex items-center gap-3">
           <input
             type="date"
@@ -109,7 +109,7 @@ export function TrialTab({ helpers }: { helpers: TabHelpers }) {
               setLocalTrialEndsAt("");
               markDirty();
             }}
-            className="rounded-lg border border-zinc-200 px-3 py-2 text-xs text-zinc-500 hover:bg-zinc-50"
+            className="rounded-lg border border-zinc-200 px-3 py-2 text-xs text-apple-ink-muted-48 hover:bg-apple-canvas-parchment"
           >
             Reset
           </button>
@@ -118,10 +118,10 @@ export function TrialTab({ helpers }: { helpers: TabHelpers }) {
 
       {/* Actions */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Trial Actions</h4>
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Trial Actions</h4>
         <div className="mt-3 space-y-3">
           <div className="flex items-center gap-2">
-            <label className="text-sm text-zinc-600">Days:</label>
+            <label className="text-sm text-apple-ink-muted-80">Days:</label>
             <input
               type="number"
               min={1}

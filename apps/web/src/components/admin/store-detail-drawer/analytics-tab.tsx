@@ -61,23 +61,23 @@ export function AnalyticsTab({ helpers }: { helpers: TabHelpers }) {
         {statCards.map((card) => (
           <div key={card.label} className="rounded-xl border border-zinc-200 bg-white p-4">
             <card.icon className={`h-5 w-5 ${card.color}`} />
-            <p className="mt-3 text-2xl font-bold text-zinc-900">{card.value}</p>
-            <p className="text-xs text-zinc-500">{card.label}</p>
+            <p className="mt-3 text-2xl font-bold text-apple-ink">{card.value}</p>
+            <p className="text-xs text-apple-ink-muted-48">{card.label}</p>
           </div>
         ))}
       </div>
 
       {/* Visitor Stats */}
       <div>
-        <h4 className="mb-3 text-sm font-semibold text-zinc-700">Visitor Analytics</h4>
+        <h4 className="mb-3 text-sm font-semibold text-apple-ink-muted-80">Visitor Analytics</h4>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visitorCards.map((card) => (
             <div key={card.label} className="rounded-xl border border-zinc-200 bg-white p-3">
               <div className="flex items-center gap-2">
                 <card.icon className={`h-4 w-4 ${card.color}`} />
-                <p className="text-xs text-zinc-500">{card.label}</p>
+                <p className="text-xs text-apple-ink-muted-48">{card.label}</p>
               </div>
-              <p className="mt-1 text-lg font-bold text-zinc-900">{card.value}</p>
+              <p className="mt-1 text-lg font-bold text-apple-ink">{card.value}</p>
             </div>
           ))}
         </div>
@@ -86,16 +86,16 @@ export function AnalyticsTab({ helpers }: { helpers: TabHelpers }) {
       {/* Monthly Sales Chart */}
       {monthlySales.length > 0 && (
         <div className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h4 className="text-sm font-semibold text-zinc-700">Monthly Sales</h4>
+          <h4 className="text-sm font-semibold text-apple-ink-muted-80">Monthly Sales</h4>
           <div className="mt-4 flex items-end gap-2" style={{ height: 160 }}>
             {[...monthlySales].reverse().map((m, i) => {
               const maxRevenue = Math.max(...monthlySales.map((s) => s.revenue), 1);
               const height = (m.revenue / maxRevenue) * 100;
               return (
                 <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                  <span className="text-[10px] text-zinc-400">৳{(m.revenue / 1000).toFixed(0)}k</span>
+                  <span className="text-[10px] text-apple-ink-muted-48">৳{(m.revenue / 1000).toFixed(0)}k</span>
                   <div className="w-full rounded-t bg-blue-500 transition-all" style={{ height: `${Math.max(height, 4)}%` }} />
-                  <span className="text-[10px] text-zinc-400">{monthNames[m._id.month - 1]}</span>
+                  <span className="text-[10px] text-apple-ink-muted-48">{monthNames[m._id.month - 1]}</span>
                 </div>
               );
             })}
@@ -105,27 +105,27 @@ export function AnalyticsTab({ helpers }: { helpers: TabHelpers }) {
 
       {/* Conversion Rate */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Conversion</h4>
-        <p className="mt-2 text-2xl font-bold text-zinc-900">
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Conversion</h4>
+        <p className="mt-2 text-2xl font-bold text-apple-ink">
           {customers > 0 ? ((orders / customers) * 100).toFixed(1) : "0"}%
         </p>
-        <p className="text-xs text-zinc-500">Order-to-customer conversion rate</p>
+        <p className="text-xs text-apple-ink-muted-48">Order-to-customer conversion rate</p>
       </div>
 
       {/* Best Selling Products */}
       {bestSelling.length > 0 && (
         <div className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h4 className="text-sm font-semibold text-zinc-700">Best Selling Products</h4>
+          <h4 className="text-sm font-semibold text-apple-ink-muted-80">Best Selling Products</h4>
           <div className="mt-3 divide-y divide-zinc-100">
             {bestSelling.slice(0, 5).map((item, i) => (
               <div key={i} className="flex items-center justify-between py-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-zinc-400">#{i + 1}</span>
-                  <p className="text-sm text-zinc-700">{item.name}</p>
+                  <span className="text-xs font-medium text-apple-ink-muted-48">#{i + 1}</span>
+                  <p className="text-sm text-apple-ink-muted-80">{item.name}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-zinc-900">{item.totalSold} sold</p>
-                  <p className="text-xs text-zinc-400">৳{item.revenue.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-apple-ink">{item.totalSold} sold</p>
+                  <p className="text-xs text-apple-ink-muted-48">৳{item.revenue.toLocaleString()}</p>
                 </div>
               </div>
             ))}
@@ -134,7 +134,7 @@ export function AnalyticsTab({ helpers }: { helpers: TabHelpers }) {
       )}
 
       {!stats && !visitorStats && (
-        <div className="flex h-40 items-center justify-center text-sm text-zinc-400">
+        <div className="flex h-40 items-center justify-center text-sm text-apple-ink-muted-48">
           <TrendingUp className="mr-2 h-5 w-5" />
           No analytics data available yet
         </div>

@@ -13,16 +13,16 @@ export function MediaPanel({ billingHref }: { billingHref?: string }) {
   return (
     <div className="h-full overflow-y-auto overscroll-contain p-4">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Media</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Media</p>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[10px] font-medium text-zinc-600"
+          className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[10px] font-medium text-apple-ink-muted-80"
         >
           <ImagePlus className="mr-1 inline h-3 w-3" /> Open library
         </button>
       </div>
-      <p className="text-xs text-zinc-500">
+      <p className="text-xs text-apple-ink-muted-48">
         Upload and manage builder assets from the media library.
       </p>
       <Drawer

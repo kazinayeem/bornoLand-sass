@@ -35,13 +35,13 @@ export function PlanTab({ helpers }: { helpers: TabHelpers }) {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h3 className="text-sm font-semibold text-zinc-700">Current Plan</h3>
-        <p className="mt-1 text-2xl font-bold text-zinc-900">{currentPlanName}</p>
+        <h3 className="text-sm font-semibold text-apple-ink-muted-80">Current Plan</h3>
+        <p className="mt-1 text-2xl font-bold text-apple-ink">{currentPlanName}</p>
       </div>
 
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Change Plan</h4>
-        <p className="mt-1 text-xs text-zinc-500">
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Change Plan</h4>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">
           Select a new plan for this store. The change takes effect immediately.
         </p>
 
@@ -61,8 +61,8 @@ export function PlanTab({ helpers }: { helpers: TabHelpers }) {
                     : "border-zinc-200 hover:border-zinc-300"
                 }`}
               >
-                <p className="font-semibold text-zinc-900">{plan.name}</p>
-                <p className="mt-1 text-sm text-zinc-500">
+                <p className="font-semibold text-apple-ink">{plan.name}</p>
+                <p className="mt-1 text-sm text-apple-ink-muted-48">
                   ${plan.priceBDT ?? 0}/mo
                 </p>
                 {isActive && (
@@ -87,7 +87,7 @@ export function PlanTab({ helpers }: { helpers: TabHelpers }) {
         </LoadingButton>
       </div>
 
-      <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 text-sm text-zinc-600">
+      <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 text-sm text-apple-ink-muted-80">
         <strong className="text-zinc-800">Note:</strong> Changing the plan updates both the store record and the
         override. Overrides with specific limits/features will still take priority over plan defaults.
       </div>

@@ -116,8 +116,8 @@ export default function PlansPage() {
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-zinc-900">Plan comparison</h2>
-                <p className="text-sm text-zinc-500">Auto-generated from live plan configuration</p>
+                <h2 className="text-lg font-semibold text-apple-ink">Plan comparison</h2>
+                <p className="text-sm text-apple-ink-muted-48">Auto-generated from live plan configuration</p>
               </div>
             </div>
             <PlanFeatureMatrix plans={plans} />

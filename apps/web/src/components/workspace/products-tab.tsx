@@ -311,26 +311,26 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
       render: (p) => (
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 shrink-0 rounded-lg bg-zinc-100 flex items-center justify-center overflow-hidden">
-            {getProductImageUrl(p) ? <img src={getProductImageUrl(p)} alt={p.name} className="h-full w-full object-cover" /> : <Package className="h-4 w-4 text-zinc-400" />}
+            {getProductImageUrl(p) ? <img src={getProductImageUrl(p)} alt={p.name} className="h-full w-full object-cover" /> : <Package className="h-4 w-4 text-apple-ink-muted-48" />}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-zinc-900 truncate max-w-[200px]">{p.name}</p>
-            <p className="text-xs text-zinc-400">/{p.slug}</p>
+            <p className="text-sm font-medium text-apple-ink truncate max-w-[200px]">{p.name}</p>
+            <p className="text-xs text-apple-ink-muted-48">/{p.slug}</p>
           </div>
         </div>
       ),
     },
     {
       key: "sku", label: "SKU", hideOnMobile: true,
-      render: (p) => <span className="text-xs text-zinc-500">{p.sku || "—"}</span>,
+      render: (p) => <span className="text-xs text-apple-ink-muted-48">{p.sku || "—"}</span>,
     },
     {
       key: "price", label: "Price", sortable: true,
       render: (p) => (
         <div>
-          <span className="text-sm font-medium text-zinc-900">{fmt(p.price)}</span>
+          <span className="text-sm font-medium text-apple-ink">{fmt(p.price)}</span>
           {p.comparePrice && Number(p.comparePrice) > Number(p.price) && (
-            <span className="ml-1.5 text-xs text-zinc-400 line-through">{fmt(p.comparePrice)}</span>
+            <span className="ml-1.5 text-xs text-apple-ink-muted-48 line-through">{fmt(p.comparePrice)}</span>
           )}
         </div>
       ),
@@ -359,21 +359,21 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
       render: (p) => (
         <div className="flex items-center justify-end gap-1">
           <button onClick={() => toggleFeatured(p)}
-            className={`rounded-lg p-1.5 transition-colors ${p.featured ? "text-amber-500 hover:bg-amber-50" : "text-zinc-300 hover:bg-zinc-100"}`}
+            className={`rounded-lg p-1.5 transition-colors ${p.featured ? "text-amber-500 hover:bg-amber-50" : "text-zinc-300 hover:bg-apple-canvas-parchment"}`}
             title={p.featured ? "Unfeature" : "Feature"}>
             <Star className="h-3.5 w-3.5" fill={p.featured ? "currentColor" : "none"} />
           </button>
           <button onClick={() => handleDuplicate(p)}
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
+            className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors"
             title="Duplicate">
             <Copy className="h-3.5 w-3.5" />
           </button>
           <button onClick={() => openEdit(p)}
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors">
+            className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors">
             <Pencil className="h-3.5 w-3.5" />
           </button>
           <button onClick={() => setDeleteTarget(p)}
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+            className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-red-50 hover:text-red-500 transition-colors">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -398,7 +398,7 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
             className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
               showAdvancedFilters || hasActiveFilters
                 ? "border-blue-200 bg-blue-50 text-blue-700"
-                : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
+                : "border-zinc-200 bg-white text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
             }`}>
             <Filter className="h-3.5 w-3.5" />
             Advanced
@@ -412,23 +412,23 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
         <div className="flex items-center gap-2">
           <div className="flex overflow-hidden rounded-xl border border-zinc-200 bg-white">
             <button onClick={() => setViewMode("table")}
-              className={`p-2 transition-colors ${viewMode === "table" ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-600"}`}
+              className={`p-2 transition-colors ${viewMode === "table" ? "bg-zinc-100 text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"}`}
               title="Table view">
               <List className="h-4 w-4" />
             </button>
             <button onClick={() => setViewMode("grid")}
-              className={`p-2 transition-colors ${viewMode === "grid" ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-600"}`}
+              className={`p-2 transition-colors ${viewMode === "grid" ? "bg-zinc-100 text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"}`}
               title="Grid view">
               <LayoutGrid className="h-4 w-4" />
             </button>
           </div>
           <button onClick={handleExportCSV}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors"
             title="Export CSV">
             <Download className="h-3.5 w-3.5" /> Export
           </button>
           <button onClick={() => fileInputRef.current?.click()} disabled={importing}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors disabled:opacity-50"
             title="Import CSV">
             <Upload className="h-3.5 w-3.5" /> {importing ? "Importing..." : "Import"}
           </button>
@@ -446,44 +446,44 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
           className="rounded-2xl border border-zinc-200 bg-white p-4">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             <div>
-              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Category</label>
+              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Category</label>
               <select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
-                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-zinc-700">
+                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80">
                 <option value="">All</option>
                 {categories.map((c) => <option key={c._id} value={c.name}>{c.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Stock</label>
+              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Stock</label>
               <select value={stockFilter} onChange={(e) => { setStockFilter(e.target.value); setPage(1); }}
-                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-zinc-700">
+                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80">
                 <option value="">All</option>
                 <option value="in">In Stock</option>
                 <option value="out">Out of Stock</option>
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Featured</label>
+              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Featured</label>
               <select value={featuredFilter} onChange={(e) => { setFeaturedFilter(e.target.value); setPage(1); }}
-                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-zinc-700">
+                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80">
                 <option value="">All</option>
                 <option value="true">Featured</option>
                 <option value="false">Not Featured</option>
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Min Price</label>
+              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Min Price</label>
               <input type="number" min={0} value={priceMin} onChange={(e) => { setPriceMin(e.target.value); setPage(1); }}
-                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-zinc-700" placeholder="0" />
+                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80" placeholder="0" />
             </div>
             <div>
-              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Max Price</label>
+              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Max Price</label>
               <input type="number" min={0} value={priceMax} onChange={(e) => { setPriceMax(e.target.value); setPage(1); }}
-                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-zinc-700" placeholder="9999" />
+                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs text-apple-ink-muted-80" placeholder="9999" />
             </div>
             <div className="flex items-end">
               <button onClick={() => { setCategoryFilter(""); setStockFilter(""); setFeaturedFilter(""); setPriceMin(""); setPriceMax(""); }}
-                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs font-medium text-zinc-500 hover:bg-zinc-50 transition-colors">
+                className="h-9 w-full rounded-xl border border-zinc-200 bg-white px-2.5 text-xs font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
                 Clear
               </button>
             </div>
@@ -497,7 +497,7 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
           {paginated.map((p) => (
             <motion.div key={p._id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
               className="group relative rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm hover:shadow-lg transition-all">
-              <div className="mb-3 aspect-square overflow-hidden rounded-xl bg-zinc-50">
+              <div className="mb-3 aspect-square overflow-hidden rounded-xl bg-apple-canvas-parchment">
                 {getProductImageUrl(p) ? (
                   <img src={getProductImageUrl(p)} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 ) : (
@@ -507,9 +507,9 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
                 )}
               </div>
               <div className="space-y-1.5">
-                <p className="text-xs font-semibold text-zinc-900 truncate">{p.name}</p>
+                <p className="text-xs font-semibold text-apple-ink truncate">{p.name}</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-zinc-900">{fmt(p.price)}</span>
+                  <span className="text-sm font-bold text-apple-ink">{fmt(p.price)}</span>
                   <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
                     p.stock > 0 ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"
                   }`}>
@@ -519,12 +519,12 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
                 <div className="flex items-center gap-1.5 pt-1">
                   <button onClick={() => toggleStatus(p)}
                     className={`flex-1 rounded-lg py-1 text-[10px] font-semibold transition-colors ${
-                      p.status === "active" ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "bg-zinc-100 text-zinc-400 hover:bg-zinc-200"
+                      p.status === "active" ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "bg-zinc-100 text-apple-ink-muted-48 hover:bg-zinc-200"
                     }`}>
                     {p.status === "active" ? "Active" : "Inactive"}
                   </button>
                   <button onClick={() => openEdit(p)}
-                    className="rounded-lg p-1.5 text-zinc-300 hover:bg-zinc-100 hover:text-zinc-600 transition-colors">
+                    className="rounded-lg p-1.5 text-zinc-300 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors">
                     <Pencil className="h-3 w-3" />
                   </button>
                   <button onClick={() => setDeleteTarget(p)}

@@ -91,7 +91,7 @@ export function DangerTab({ helpers }: { helpers: TabHelpers }) {
             {deleteSummary.map((item) => (
               <div key={item.label} className="text-center">
                 <p className="text-lg font-bold text-zinc-800">{String(item.value)}</p>
-                <p className="text-[10px] text-zinc-500">{item.label}</p>
+                <p className="text-[10px] text-apple-ink-muted-48">{item.label}</p>
               </div>
             ))}
           </div>
@@ -100,7 +100,7 @@ export function DangerTab({ helpers }: { helpers: TabHelpers }) {
         {/* Step 1: Type DELETE */}
         {deleteStep === "initial" && (
           <div className="mt-4">
-            <p className="mb-2 text-xs font-medium text-zinc-600">
+            <p className="mb-2 text-xs font-medium text-apple-ink-muted-80">
               Type <strong>DELETE</strong> to continue:
             </p>
             <div className="flex items-center gap-2">
@@ -156,7 +156,7 @@ export function DangerTab({ helpers }: { helpers: TabHelpers }) {
                   setDeleteStep("initial");
                   setDeleteConfirm("");
                 }}
-                className="rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50"
+                className="rounded-xl border border-zinc-200 px-3 py-2 text-sm text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
               >
                 Cancel
               </button>
@@ -167,8 +167,8 @@ export function DangerTab({ helpers }: { helpers: TabHelpers }) {
 
       {/* Reset Options */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Reset Options</h4>
-        <p className="mt-1 text-xs text-zinc-500">
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Reset Options</h4>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">
           Reset various store metrics and caches.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -213,8 +213,8 @@ export function DangerTab({ helpers }: { helpers: TabHelpers }) {
 
       {/* Recalculate & Sync */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Recalculate & Sync</h4>
-        <p className="mt-1 text-xs text-zinc-500">
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Recalculate & Sync</h4>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">
           Recalculate store metrics or sync subscription state.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">

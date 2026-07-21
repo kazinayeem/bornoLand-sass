@@ -37,7 +37,7 @@ export default function VisitorsPage() {
 
   const statCards = [
     { label: "Today", value: String(stats?.today ?? 0), sub: `${String(stats?.todayUnique ?? 0)} unique`, icon: Activity, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Yesterday", value: String(stats?.yesterday ?? 0), sub: `${String(stats?.yesterdayUnique ?? 0)} unique`, icon: Clock, color: "text-zinc-600", bg: "bg-zinc-50" },
+    { label: "Yesterday", value: String(stats?.yesterday ?? 0), sub: `${String(stats?.yesterdayUnique ?? 0)} unique`, icon: Clock, color: "text-apple-ink-muted-80", bg: "bg-apple-canvas-parchment" },
     { label: "This Week", value: String(stats?.week ?? 0), icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: "This Month", value: String(stats?.month ?? 0), sub: `${String(stats?.monthUnique ?? 0)} unique`, icon: Users, color: "text-purple-600", bg: "bg-purple-50" },
     { label: "Last Month", value: String(stats?.lastMonth ?? 0), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
@@ -46,15 +46,15 @@ export default function VisitorsPage() {
     { label: "Returning", value: String(stats?.returningVisitors ?? 0), icon: RefreshCw, color: "text-indigo-600", bg: "bg-indigo-50" },
     { label: "Avg Session", value: formatDuration(Number(stats?.avgSessionDuration ?? 0)), icon: Clock, color: "text-teal-600", bg: "bg-teal-50" },
     { label: "Bounce Rate", value: `${String(stats?.bounceRate ?? 0)}%`, icon: Activity, color: "text-red-600", bg: "bg-red-50" },
-    { label: "Total Visitors", value: formatNumber(Number(stats?.totalVisitors ?? 0)), icon: Users, color: "text-zinc-600", bg: "bg-zinc-50" },
+    { label: "Total Visitors", value: formatNumber(Number(stats?.totalVisitors ?? 0)), icon: Users, color: "text-apple-ink-muted-80", bg: "bg-apple-canvas-parchment" },
     { label: "Live Now", value: String(stats?.liveVisitors ?? 0), icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
   ];
 
   return (
     <>
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Visitor Analytics</h1>
-        <p className="text-sm text-zinc-500">Track visitors, sessions, and engagement</p>
+        <h1 className="text-xl font-bold text-apple-ink">Visitor Analytics</h1>
+        <p className="text-sm text-apple-ink-muted-48">Track visitors, sessions, and engagement</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

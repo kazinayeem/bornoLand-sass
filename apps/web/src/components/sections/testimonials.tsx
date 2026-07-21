@@ -31,14 +31,14 @@ export function Testimonials({ section }: { section: SectionData }) {
                     <Star key={j} className={`h-4 w-4 ${j < Number(t.rating) ? "text-amber-400" : "text-zinc-200"}`} fill={j < Number(t.rating) ? "currentColor" : "none"} />
                   ))}
                 </div>
-                <p className="text-sm text-zinc-600 leading-relaxed">&ldquo;{t.text}&rdquo;</p>
+                <p className="text-sm text-apple-ink-muted-80 leading-relaxed">&ldquo;{t.text}&rdquo;</p>
                 <div className="mt-4 flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-600 overflow-hidden">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-apple-ink-muted-80 overflow-hidden">
                     {avatarSrc ? <img src={avatarSrc} alt="" className="h-full w-full object-cover" /> : t.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-zinc-900">{t.name}</p>
-                    <p className="text-[10px] text-zinc-400">{t.role}</p>
+                    <p className="text-xs font-semibold text-apple-ink">{t.name}</p>
+                    <p className="text-[10px] text-apple-ink-muted-48">{t.role}</p>
                   </div>
                 </div>
               </div>
@@ -46,7 +46,7 @@ export function Testimonials({ section }: { section: SectionData }) {
             })}
           </ColumnGrid>
         ) : (
-          <p className="text-sm text-zinc-400 text-center py-8">No testimonials yet. Add them in the Content tab.</p>
+          <p className="text-sm text-apple-ink-muted-48 text-center py-8">No testimonials yet. Add them in the Content tab.</p>
         )}
       </div>
     </SectionWrapper>

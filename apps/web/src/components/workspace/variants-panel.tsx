@@ -227,8 +227,8 @@ export function VariantsPanel({
   if (options.length === 0 && variants.length === 0) {
     return (
       <div className="py-8 text-center">
-        <p className="mb-2 text-sm font-medium text-zinc-700">No variants yet</p>
-        <p className="mb-4 text-sm text-zinc-500">
+        <p className="mb-2 text-sm font-medium text-apple-ink-muted-80">No variants yet</p>
+        <p className="mb-4 text-sm text-apple-ink-muted-48">
           Add options like Color or Size to create product variants.
         </p>
         <button
@@ -246,13 +246,13 @@ export function VariantsPanel({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-900">Variant Builder</h3>
-          <p className="text-xs text-zinc-500">Create options, then fill each generated combination.</p>
+          <h3 className="text-sm font-semibold text-apple-ink">Variant Builder</h3>
+          <p className="text-xs text-apple-ink-muted-48">Create options, then fill each generated combination.</p>
         </div>
         <button
           type="button"
           onClick={addOption}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
         >
           <Plus className="h-3 w-3" /> Add Option
         </button>
@@ -260,7 +260,7 @@ export function VariantsPanel({
 
       <div className="space-y-3">
         {options.map((option, optionIndex) => (
-          <div key={optionIndex} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+          <div key={optionIndex} className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment p-4">
             <div className="mb-3 flex items-center gap-3">
               <GripVertical className="h-4 w-4 text-zinc-300" />
               <input
@@ -273,7 +273,7 @@ export function VariantsPanel({
               <button
                 type="button"
                 onClick={() => removeOption(optionIndex)}
-                className="rounded-lg p-1.5 text-zinc-400 hover:text-red-500"
+                className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:text-red-500"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -301,7 +301,7 @@ export function VariantsPanel({
               <button
                 type="button"
                 onClick={() => addOptionValue(optionIndex)}
-                className="inline-flex h-8 items-center gap-1 rounded-lg border border-dashed border-zinc-300 px-2.5 text-xs text-zinc-500"
+                className="inline-flex h-8 items-center gap-1 rounded-lg border border-dashed border-zinc-300 px-2.5 text-xs text-apple-ink-muted-48"
               >
                 <Plus className="h-3 w-3" /> Add value
               </button>
@@ -311,7 +311,7 @@ export function VariantsPanel({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 pt-2">
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-apple-ink-muted-48">
           {combosWithData.length > 0
             ? `${combosWithData.length} variant${combosWithData.length !== 1 ? "s" : ""} ready`
             : "Complete option names and values to generate combinations"}
@@ -326,8 +326,8 @@ export function VariantsPanel({
       </div>
 
       {selectedKeys.size > 0 && (
-        <div className="flex flex-wrap items-end gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-          <p className="w-full text-xs font-medium text-zinc-700">{selectedKeys.size} selected</p>
+        <div className="flex flex-wrap items-end gap-2 rounded-xl border border-zinc-200 bg-apple-canvas-parchment p-3">
+          <p className="w-full text-xs font-medium text-apple-ink-muted-80">{selectedKeys.size} selected</p>
           <input
             type="number"
             placeholder="Bulk price"
@@ -374,26 +374,26 @@ export function VariantsPanel({
         <div className="overflow-x-auto rounded-2xl border border-zinc-200">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50">
+              <tr className="border-b border-zinc-200 bg-apple-canvas-parchment">
                 <th className="px-2 py-2.5" />
-                <th className="px-3 py-2.5 text-left font-semibold text-zinc-600">Variant</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-zinc-600">Image</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-zinc-600">SKU</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-zinc-600">Barcode</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-zinc-600">Price</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-zinc-600">Compare</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-zinc-600">Cost</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-zinc-600">Stock</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-zinc-600">Weight</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-zinc-600">Status</th>
-                <th className="px-3 py-2.5 text-center font-semibold text-zinc-600">Enabled</th>
+                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Variant</th>
+                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Image</th>
+                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">SKU</th>
+                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Barcode</th>
+                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Price</th>
+                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Compare</th>
+                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Cost</th>
+                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Stock</th>
+                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Weight</th>
+                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Status</th>
+                <th className="px-3 py-2.5 text-center font-semibold text-apple-ink-muted-80">Enabled</th>
               </tr>
             </thead>
             <tbody>
               {combosWithData.map((variant, index) => {
                 const key = comboKey(variant.optionValues);
                 return (
-                  <tr key={key} className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/50">
+                  <tr key={key} className="border-b border-zinc-100 last:border-b-0 hover:bg-apple-canvas-parchment/50">
                     <td className="px-2 py-2">
                       <input
                         type="checkbox"
@@ -404,7 +404,7 @@ export function VariantsPanel({
                     <td className="px-3 py-2">
                       <div className="min-w-[140px]">
                         <p className="text-sm font-medium text-zinc-800">{variant.title || buildVariantTitle(variant.optionValues)}</p>
-                        <p className="text-[11px] text-zinc-500">
+                        <p className="text-[11px] text-apple-ink-muted-48">
                           {Object.entries(variant.optionValues)
                             .map(([optionName, value]) => `${optionName}: ${value}`)
                             .join(" · ")}

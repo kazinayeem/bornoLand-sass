@@ -54,17 +54,17 @@ export function FloatingAdminBar({ storeSlug, primaryColor }: FloatingAdminBarPr
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setExpanded(false)}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900"
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment hover:text-apple-ink"
                 >
                   <link.icon className="h-3.5 w-3.5" /> {link.label}
-                  <ExternalLink className="h-3 w-3 text-zinc-400" />
+                  <ExternalLink className="h-3 w-3 text-apple-ink-muted-48" />
                 </a>
               ) : (
                 <Link
                   key={link.label}
                   href={link.href}
                   onClick={() => setExpanded(false)}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900"
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment hover:text-apple-ink"
                 >
                   <link.icon className="h-3.5 w-3.5" /> {link.label}
                 </Link>

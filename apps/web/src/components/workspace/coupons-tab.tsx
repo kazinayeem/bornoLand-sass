@@ -72,7 +72,7 @@ export function CouponsTab({ storeId }: { storeId: string }) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
       </div>
     );
   }
@@ -80,7 +80,7 @@ export function CouponsTab({ storeId }: { storeId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-500">{coupons.length} coupons</p>
+        <p className="text-sm text-apple-ink-muted-48">{coupons.length} coupons</p>
         <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white">
           <Plus className="h-4 w-4" />
           New Coupon
@@ -95,8 +95,8 @@ export function CouponsTab({ storeId }: { storeId: string }) {
                 <Ticket className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <p className="font-medium text-zinc-900">{coupon.name}</p>
-                <p className="text-xs text-zinc-500">{coupon.code} · {coupon.type}</p>
+                <p className="font-medium text-apple-ink">{coupon.name}</p>
+                <p className="text-xs text-apple-ink-muted-48">{coupon.code} · {coupon.type}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -116,7 +116,7 @@ export function CouponsTab({ storeId }: { storeId: string }) {
           </div>
         ))}
         {coupons.length === 0 && (
-          <p className="rounded-xl border border-dashed border-zinc-200 py-12 text-center text-sm text-zinc-500">
+          <p className="rounded-xl border border-dashed border-zinc-200 py-12 text-center text-sm text-apple-ink-muted-48">
             No coupons yet. Create percentage, fixed, free shipping, or buy X get Y discounts.
           </p>
         )}

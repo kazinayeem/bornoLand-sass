@@ -22,7 +22,7 @@ export default function SubscriptionPage() {
   if (isLoading || !store) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
       </div>
     );
   }
@@ -37,25 +37,25 @@ export default function SubscriptionPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-            <h3 className="text-lg font-semibold text-zinc-900">Plan Details</h3>
+            <h3 className="text-lg font-semibold text-apple-ink">Plan Details</h3>
             <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
-              <div className="rounded-xl bg-zinc-50 p-3">
-                <p className="text-xs text-zinc-500">Plan</p>
-                <p className="mt-0.5 text-base font-bold text-zinc-900">{stats?.plan?.name ?? "—"}</p>
+              <div className="rounded-xl bg-apple-canvas-parchment p-3">
+                <p className="text-xs text-apple-ink-muted-48">Plan</p>
+                <p className="mt-0.5 text-base font-bold text-apple-ink">{stats?.plan?.name ?? "—"}</p>
               </div>
-              <div className="rounded-xl bg-zinc-50 p-3">
-                <p className="text-xs text-zinc-500">Status</p>
-                <p className="mt-0.5 text-base font-bold text-zinc-900 capitalize">{store.subscriptionStatus}</p>
+              <div className="rounded-xl bg-apple-canvas-parchment p-3">
+                <p className="text-xs text-apple-ink-muted-48">Status</p>
+                <p className="mt-0.5 text-base font-bold text-apple-ink capitalize">{store.subscriptionStatus}</p>
               </div>
-              <div className="rounded-xl bg-zinc-50 p-3">
-                <p className="text-xs text-zinc-500">Billing</p>
-                <p className="mt-0.5 text-base font-bold text-zinc-900 capitalize">{store.billingStatus}</p>
+              <div className="rounded-xl bg-apple-canvas-parchment p-3">
+                <p className="text-xs text-apple-ink-muted-48">Billing</p>
+                <p className="mt-0.5 text-base font-bold text-apple-ink capitalize">{store.billingStatus}</p>
               </div>
             </div>
 
             {stats?.plan && (
               <div className="mt-6">
-                <h4 className="text-sm font-semibold text-zinc-700">Feature Access</h4>
+                <h4 className="text-sm font-semibold text-apple-ink-muted-80">Feature Access</h4>
                 <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                   {Object.entries(stats.plan.featureToggles)
                     .filter(([, v]) => v)

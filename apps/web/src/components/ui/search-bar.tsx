@@ -12,18 +12,28 @@ type SearchBarProps = {
   debounceMs?: number;
 };
 
-export function SearchBar({ value, onChange, placeholder = "Search...", className, debounceMs = 300 }: SearchBarProps) {
+export function SearchBar({
+  value,
+  onChange,
+  placeholder = "Search...",
+  className,
+  debounceMs = 300,
+}: SearchBarProps) {
   const [local, setLocal] = useState(value);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { setLocal(value); }, [value]);
+  useEffect(() => {
+    setLocal(value);
+  }, [value]);
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       if (local !== value) onChange(local);
     }, debounceMs);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [local, value, onChange, debounceMs]);
 
   const handleClear = useCallback(() => {
@@ -33,16 +43,20 @@ export function SearchBar({ value, onChange, placeholder = "Search...", classNam
 
   return (
     <div className={cn("relative", className)}>
-      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+      <Search className="pointer-events-none absolute left-5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-apple-ink-muted-48" />
       <input
         type="text"
         value={local}
         onChange={(e) => setLocal(e.target.value)}
         placeholder={placeholder}
-        className="h-10 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-9 text-sm text-zinc-900 outline-none transition-all placeholder:text-zinc-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+        className="h-11 min-h-[44px] w-full rounded-pill border border-black/[0.08] bg-apple-canvas pl-11 pr-9 text-body text-apple-ink outline-none transition-all placeholder:text-apple-ink-muted-48 focus-visible:ring-2 focus-visible:ring-apple-primary-focus focus-visible:ring-offset-2 dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2 dark:text-apple-body-on-dark"
       />
       {local && (
-        <button onClick={handleClear} className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100">
+        <button
+          onClick={handleClear}
+          className="btn-press absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink"
+          aria-label="Clear search"
+        >
           <X className="h-3.5 w-3.5" />
         </button>
       )}

@@ -33,28 +33,28 @@ export function PlanPreviewCard({
   return (
     <div className="mx-auto max-w-sm">
       <div
-        className={`overflow-hidden rounded-2xl border bg-white shadow-xl ${
-          form.isRecommended ? "border-blue-300 ring-2 ring-blue-500/20" : "border-zinc-200"
+        className={`overflow-hidden rounded-lg border bg-apple-canvas ${
+          form.isRecommended ? "border-blue-300 ring-2 ring-blue-500/20" : "border-apple-hairline"
         }`}
       >
         {form.isRecommended && (
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-1.5 text-center text-xs font-semibold text-white">
+          <div className="bg-apple-primary px-4 py-1.5 text-center text-xs font-semibold text-white">
             <Star className="mr-1 inline h-3 w-3" />
             Most Popular
           </div>
         )}
         <div className="p-6">
-          <h3 className="text-xl font-bold text-zinc-900">{form.name || plan.name}</h3>
-          {form.description && <p className="mt-1 text-sm text-zinc-500">{form.description}</p>}
+          <h3 className="text-xl font-bold text-apple-ink">{form.name || plan.name}</h3>
+          {form.description && <p className="mt-1 text-sm text-apple-ink-muted-48">{form.description}</p>}
 
           <div className="mt-5">
-            <span className="text-4xl font-bold text-zinc-900">
+            <span className="text-4xl font-bold text-apple-ink">
               {formatCurrency(monthly, { currencySymbol: "৳", currencyPosition: "before", decimalPlaces: 0 })}
             </span>
-            <span className="text-sm text-zinc-500">/mo</span>
+            <span className="text-sm text-apple-ink-muted-48">/mo</span>
           </div>
           {yearly > 0 && (
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-xs text-apple-ink-muted-48">
               or {formatCurrency(yearly, { currencySymbol: "৳", currencyPosition: "before", decimalPlaces: 0 })}/yr
             </p>
           )}
@@ -64,7 +64,7 @@ export function PlanPreviewCard({
 
           <ul className="mt-6 space-y-2">
             {(bullets.length > 0 ? bullets : plan.features).slice(0, 8).map((feature) => (
-              <li key={feature} className="flex items-start gap-2 text-sm text-zinc-600">
+              <li key={feature} className="flex items-start gap-2 text-sm text-apple-ink-muted-80">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
                 {feature}
               </li>
@@ -83,7 +83,7 @@ export function PlanPreviewCard({
           )}
         </div>
       </div>
-      <p className="mt-4 text-center text-xs text-zinc-400">Live preview — exactly how merchants see this plan</p>
+      <p className="mt-4 text-center text-xs text-apple-ink-muted-48">Live preview — exactly how merchants see this plan</p>
     </div>
   );
 }

@@ -1,13 +1,13 @@
 import { cn } from "@/lib/utils";
 
 const badgeVariants = {
-  default: "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/70",
-  primary: "bg-blue-50 text-blue-700 ring-1 ring-blue-200/70",
-  success: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70",
-  warning: "bg-amber-50 text-amber-700 ring-1 ring-amber-200/70",
-  danger: "bg-red-50 text-red-700 ring-1 ring-red-200/70",
-  violet: "bg-violet-50 text-violet-700 ring-1 ring-violet-200/70",
-  slate: "bg-slate-50 text-slate-700 ring-1 ring-slate-200/70",
+  default: "bg-apple-canvas-parchment text-apple-ink-muted-80 ring-1 ring-apple-hairline",
+  primary: "bg-apple-primary/10 text-apple-primary ring-1 ring-apple-primary/20",
+  success: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-400",
+  warning: "bg-amber-50 text-amber-700 ring-1 ring-amber-200/70 dark:bg-amber-950/30 dark:text-amber-400",
+  danger: "bg-red-50 text-red-700 ring-1 ring-red-200/70 dark:bg-red-950/30 dark:text-red-400",
+  violet: "bg-apple-canvas-parchment text-apple-ink-muted-80 ring-1 ring-apple-hairline",
+  slate: "bg-apple-surface-pearl text-apple-ink-muted-80 ring-1 ring-apple-hairline",
 };
 
 type BadgeProps = {
@@ -19,14 +19,22 @@ type BadgeProps = {
 
 export function Badge({ variant = "default", children, className, dot }: BadgeProps) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm", badgeVariants[variant], className)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-pill px-2.5 py-0.5 text-fine-print font-normal",
+        badgeVariants[variant],
+        className
+      )}
+    >
       {dot && <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />}
       {children}
     </span>
   );
 }
 
-export const statusBadge = (status: string): { label: string; variant: keyof typeof badgeVariants } => {
+export const statusBadge = (
+  status: string
+): { label: string; variant: keyof typeof badgeVariants } => {
   const map: Record<string, { label: string; variant: keyof typeof badgeVariants }> = {
     active: { label: "Active", variant: "success" },
     inactive: { label: "Inactive", variant: "default" },

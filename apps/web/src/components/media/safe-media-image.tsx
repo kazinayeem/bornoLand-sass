@@ -44,7 +44,7 @@ export function SafeMediaImage({ src, alt, className, lazy = true, onClick }: Sa
     return (
       <div
         ref={ref}
-        className={cn("flex h-full w-full flex-col items-center justify-center gap-1 bg-zinc-100 text-zinc-400", className)}
+        className={cn("flex h-full w-full flex-col items-center justify-center gap-1 bg-zinc-100 text-apple-ink-muted-48", className)}
         onClick={onClick}
         role={onClick ? "button" : undefined}
       >

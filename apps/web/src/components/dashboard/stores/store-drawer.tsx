@@ -46,7 +46,7 @@ function statusClasses(status?: string) {
     case "suspended":
       return "bg-rose-50 text-rose-700 ring-1 ring-rose-200";
     default:
-      return "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200";
+      return "bg-zinc-100 text-apple-ink-muted-80 ring-1 ring-zinc-200";
   }
 }
 
@@ -153,10 +153,10 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
           {/* Header */}
           <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">Manage store</p>
-              <h3 className="mt-0.5 text-lg font-bold text-zinc-900">{store.name}</h3>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-apple-ink-muted-48">Manage store</p>
+              <h3 className="mt-0.5 text-lg font-bold text-apple-ink">{store.name}</h3>
             </div>
-            <button onClick={onClose} className="rounded-xl border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-50 transition-colors">
+            <button onClick={onClose} className="rounded-xl border border-zinc-200 p-2 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -168,7 +168,7 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
               return (
                 <button key={t.key} onClick={() => setTab(t.key)}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    tab === t.key ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-100"
+                    tab === t.key ? "bg-zinc-900 text-white" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment"
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" /> {t.label}
@@ -184,23 +184,23 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
               <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">Store name</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Store name</label>
                     <input value={name} onChange={(e) => setName(e.target.value)}
                       className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500/20" />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">Category</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Category</label>
                     <input value={category} onChange={(e) => setCategory(e.target.value)}
                       className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500/20" />
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">Description</label>
+                  <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Description</label>
                   <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
                     className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500/20" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">Status</label>
+                  <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Status</label>
                   <select value={storeStatus} onChange={(e) => setStoreStatus(e.target.value)}
                     className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-zinc-400 focus:outline-none">
                     <option value="active">Active</option>
@@ -214,26 +214,26 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
                 </button>
 
                 <div className="border-t border-zinc-100 pt-4">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-400">Quick links</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Quick links</p>
                   <div className="grid grid-cols-2 gap-2">
                     <a href={getStoreUrl(store.subdomain || store.slug)} target="_blank" rel="noreferrer"
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors">
                       <ExternalLink className="h-3.5 w-3.5" /> Storefront
                     </a>
                     <button onClick={() => router.push(`/store/${store.slug}/builder`)}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors">
                       <Palette className="h-3.5 w-3.5" /> Builder
                     </button>
                     <button onClick={() => router.push(`/store/${store.slug}/products`)}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors">
                       Products
                     </button>
                     <button onClick={() => router.push(`/store/${store.slug}/orders`)}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors">
                       Orders
                     </button>
                     <button onClick={() => router.push(`/store/${store.slug}/settings`)}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors">
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 text-xs font-semibold text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors">
                       <CreditCard className="h-3.5 w-3.5" /> Settings
                     </button>
                   </div>
@@ -244,18 +244,18 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
             {/* Billing */}
             {tab === "billing" && (
               <div className="space-y-4">
-                <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                <div className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Current plan</p>
-                      <h4 className="mt-1.5 text-xl font-bold text-zinc-900">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Current plan</p>
+                      <h4 className="mt-1.5 text-xl font-bold text-apple-ink">
                         {selectedPlan?.name ?? (store.planId && typeof store.planId === "object" ? store.planId.name : store.plan)}
                       </h4>
-                      <p className="mt-0.5 text-xs text-zinc-500">Renewal: {formatDate(renewalDate || store.renewalDate)}</p>
+                      <p className="mt-0.5 text-xs text-apple-ink-muted-48">Renewal: {formatDate(renewalDate || store.renewalDate)}</p>
                     </div>
-                    <p className="text-xl font-bold text-zinc-900">
+                    <p className="text-xl font-bold text-apple-ink">
                       {selectedPlan ? formatBDT(selectedPlan.priceBDT) : "BDT 0"}
-                      <span className="text-xs font-normal text-zinc-400">/mo</span>
+                      <span className="text-xs font-normal text-apple-ink-muted-48">/mo</span>
                     </p>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-1.5">
@@ -269,7 +269,7 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">Plan</label>
+                  <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Plan</label>
                   <select value={planId} onChange={(e) => {
                     const next = plans.find((p) => p._id === e.target.value) ?? null;
                     setPlanId(e.target.value);
@@ -290,7 +290,7 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">Billing status</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Billing status</label>
                     <select value={billingStatus} onChange={(e) => setBillingStatus(e.target.value)}
                       className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-zinc-400 focus:outline-none">
                       <option value="trial">Trial</option>
@@ -301,7 +301,7 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">Subscription</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Subscription</label>
                     <select value={subscriptionStatus} onChange={(e) => setSubscriptionStatus(e.target.value)}
                       className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-zinc-400 focus:outline-none">
                       <option value="trialing">Trialing</option>
@@ -314,7 +314,7 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">Renewal date</label>
+                  <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Renewal date</label>
                   <input type="date" value={renewalDate} onChange={(e) => setRenewalDate(e.target.value)}
                     className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-zinc-400 focus:outline-none" />
                 </div>
@@ -330,7 +330,7 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
             {tab === "theme" && (
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">Template</label>
+                  <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Template</label>
                   <select value={templateId} onChange={(e) => setTemplateId(e.target.value)}
                     className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-zinc-400 focus:outline-none">
                     <option value="">Current template</option>
@@ -341,7 +341,7 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">Primary color</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Primary color</label>
                     <div className="flex items-center gap-2">
                       <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)}
                         className="h-10 w-10 rounded-xl border border-zinc-200 bg-white p-1 cursor-pointer" />
@@ -350,7 +350,7 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">Secondary color</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Secondary color</label>
                     <div className="flex items-center gap-2">
                       <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)}
                         className="h-10 w-10 rounded-xl border border-zinc-200 bg-white p-1 cursor-pointer" />
@@ -360,7 +360,7 @@ export function StoreDrawer({ store, plans, templates, isOpen, onClose, onDelete
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">Font</label>
+                  <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Font</label>
                   <select value={font} onChange={(e) => setFont(e.target.value)}
                     className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-zinc-400 focus:outline-none">
                     {["Inter", "Roboto", "Poppins", "Playfair Display", "Space Grotesk", "Montserrat"].map((f) => (

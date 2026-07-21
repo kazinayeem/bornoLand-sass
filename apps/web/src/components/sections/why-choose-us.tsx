@@ -24,12 +24,12 @@ export function WhyChooseUs({ section }: { section: SectionData }) {
             const Icon = iconMap[f.icon] || Package;
             return (
               <div key={i} className="flex items-start gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-50">
-                  <Icon className="h-6 w-6 text-zinc-700" />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-apple-canvas-parchment">
+                  <Icon className="h-6 w-6 text-apple-ink-muted-80" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-zinc-900">{f.text}</h3>
-                  <p className="mt-1 text-xs text-zinc-400">Lorem ipsum dolor sit amet consectetur.</p>
+                  <h3 className="text-sm font-semibold text-apple-ink">{f.text}</h3>
+                  <p className="mt-1 text-xs text-apple-ink-muted-48">Lorem ipsum dolor sit amet consectetur.</p>
                 </div>
               </div>
             );

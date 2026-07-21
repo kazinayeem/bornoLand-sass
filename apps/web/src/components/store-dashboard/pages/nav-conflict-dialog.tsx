@@ -55,32 +55,32 @@ export function NavConflictDialog({ page, storeId, onClose, onConfirmDelete }: P
             <AlertTriangle className="h-5 w-5 text-red-500" />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-semibold text-zinc-900">
+            <h2 className="text-lg font-semibold text-apple-ink">
               Delete &ldquo;{page.title}&rdquo;?
             </h2>
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-1 text-sm text-apple-ink-muted-48">
               This page will be moved to trash. {hasConflicts
                 ? "It is referenced in navigations and may break links."
                 : "It is not referenced in any navigation."}
             </p>
           </div>
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-zinc-100 shrink-0">
-            <X className="h-4 w-4 text-zinc-500" />
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-apple-canvas-parchment shrink-0">
+            <X className="h-4 w-4 text-apple-ink-muted-48" />
           </button>
         </div>
 
         {/* Loading state */}
         {isLoading && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl bg-zinc-50 px-4 py-3">
-            <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
-            <span className="text-xs text-zinc-500">Checking navigation usage...</span>
+          <div className="mt-4 flex items-center gap-2 rounded-xl bg-apple-canvas-parchment px-4 py-3">
+            <Loader2 className="h-4 w-4 animate-spin text-apple-ink-muted-48" />
+            <span className="text-xs text-apple-ink-muted-48">Checking navigation usage...</span>
           </div>
         )}
 
         {/* Conflicts list */}
         {!isLoading && hasConflicts && (
           <div className="mt-4 space-y-2">
-            <p className="text-xs font-semibold text-zinc-700 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-apple-ink-muted-80 uppercase tracking-wider">
               Used in {usedIn.length} navigation {usedIn.length === 1 ? "item" : "items"}
             </p>
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
@@ -98,7 +98,7 @@ export function NavConflictDialog({ page, storeId, onClose, onConfirmDelete }: P
                 </div>
               ))}
             </div>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-apple-ink-muted-48">
               If you delete this page, these navigation links will break.
             </p>
           </div>
@@ -116,7 +116,7 @@ export function NavConflictDialog({ page, storeId, onClose, onConfirmDelete }: P
           <button
             onClick={onClose}
             disabled={deleting}
-            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-50"
           >
             Cancel
           </button>

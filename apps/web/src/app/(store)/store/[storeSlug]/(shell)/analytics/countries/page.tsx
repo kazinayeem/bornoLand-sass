@@ -17,8 +17,8 @@ export default function CountriesPage() {
   return (
     <>
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Countries</h1>
-        <p className="text-sm text-zinc-500">Geographic distribution of your visitors</p>
+        <h1 className="text-xl font-bold text-apple-ink">Countries</h1>
+        <p className="text-sm text-apple-ink-muted-48">Geographic distribution of your visitors</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -44,19 +44,19 @@ export default function CountriesPage() {
           <div className="space-y-3">
             {countries.slice(0, 15).map((c, i) => (
               <div key={String(c.code)} className="flex items-center gap-3">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-bold text-zinc-600 uppercase">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-bold text-apple-ink-muted-80 uppercase">
                   {String(c.code ?? "??").slice(0, 2)}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-sm font-medium text-zinc-800">{String(c.code)}</span>
-                    <span className="text-xs font-semibold text-zinc-600">{String(c.count)}</span>
+                    <span className="text-xs font-semibold text-apple-ink-muted-80">{String(c.count)}</span>
                   </div>
                   <AnalyticsProgressBar name="" value={String(c.percentage)} percentage={Number(c.percentage)} color={`hsl(${180 + i * 15}, 50%, 50%)`} />
                 </div>
               </div>
             ))}
-            {countries.length === 0 && <p className="text-xs text-zinc-400 py-8 text-center">No country data yet</p>}
+            {countries.length === 0 && <p className="text-xs text-apple-ink-muted-48 py-8 text-center">No country data yet</p>}
           </div>
         </AnalyticsChartCard>
       </div>

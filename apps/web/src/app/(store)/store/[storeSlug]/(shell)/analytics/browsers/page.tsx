@@ -17,8 +17,8 @@ export default function BrowsersPage() {
   return (
     <>
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Browsers</h1>
-        <p className="text-sm text-zinc-500">Browser breakdown of your visitors</p>
+        <h1 className="text-xl font-bold text-apple-ink">Browsers</h1>
+        <p className="text-sm text-apple-ink-muted-48">Browser breakdown of your visitors</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -44,17 +44,17 @@ export default function BrowsersPage() {
           <div className="space-y-4">
             {browsers.slice(0, 10).map((b, i) => (
               <div key={String(b.name)} className="flex items-center gap-3">
-                <Globe className="h-4 w-4 text-zinc-400 shrink-0" />
+                <Globe className="h-4 w-4 text-apple-ink-muted-48 shrink-0" />
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-sm font-medium text-zinc-800">{String(b.name)}</span>
-                    <span className="text-xs font-semibold text-zinc-600">{String(b.count)}</span>
+                    <span className="text-xs font-semibold text-apple-ink-muted-80">{String(b.count)}</span>
                   </div>
                   <AnalyticsProgressBar name="" value={String(b.percentage)} percentage={Number(b.percentage)} color={`hsl(${i * 40}, 60%, 50%)`} />
                 </div>
               </div>
             ))}
-            {browsers.length === 0 && <p className="text-xs text-zinc-400 py-8 text-center">No browser data yet</p>}
+            {browsers.length === 0 && <p className="text-xs text-apple-ink-muted-48 py-8 text-center">No browser data yet</p>}
           </div>
         </AnalyticsChartCard>
       </div>

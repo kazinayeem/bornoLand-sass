@@ -16,8 +16,8 @@ export function ProductEditorMediaTab({ form, storeId, billingHref, onChange }: 
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-semibold text-zinc-900">Featured image</h2>
-        <p className="mt-1 text-xs text-zinc-500">Used in product cards, search results, and social previews.</p>
+        <h2 className="text-sm font-semibold text-apple-ink">Featured image</h2>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">Used in product cards, search results, and social previews.</p>
         <div className="mt-4">
           <MediaPicker
             storeId={storeId}
@@ -37,8 +37,8 @@ export function ProductEditorMediaTab({ form, storeId, billingHref, onChange }: 
       </section>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-semibold text-zinc-900">Gallery</h2>
-        <p className="mt-1 text-xs text-zinc-500">Upload, choose from library, drag to reorder.</p>
+        <h2 className="text-sm font-semibold text-apple-ink">Gallery</h2>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">Upload, choose from library, drag to reorder.</p>
         <div className="mt-4">
           <MediaGalleryPicker
             storeId={storeId}

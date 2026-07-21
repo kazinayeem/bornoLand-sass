@@ -70,7 +70,7 @@ export default function VisitorsAnalyticsPage() {
   if (!storeId) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
-        <p className="text-zinc-500">Create a store to view analytics.</p>
+        <p className="text-apple-ink-muted-48">Create a store to view analytics.</p>
       </div>
     );
   }
@@ -89,7 +89,7 @@ export default function VisitorsAnalyticsPage() {
 
   const statCards = [
     { label: "Today", value: String(stats?.today ?? 0), sub: `${String(stats?.todayUnique ?? 0)} unique`, icon: Activity, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Yesterday", value: String(stats?.yesterday ?? 0), sub: `${String(stats?.yesterdayUnique ?? 0)} unique`, icon: Clock, color: "text-zinc-600", bg: "bg-zinc-50" },
+    { label: "Yesterday", value: String(stats?.yesterday ?? 0), sub: `${String(stats?.yesterdayUnique ?? 0)} unique`, icon: Clock, color: "text-apple-ink-muted-80", bg: "bg-apple-canvas-parchment" },
     { label: "This Week", value: String(stats?.week ?? 0), icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: "This Month", value: String(stats?.month ?? 0), sub: `${String(stats?.monthUnique ?? 0)} unique`, icon: Users, color: "text-purple-600", bg: "bg-purple-50" },
     { label: "Last Month", value: String(stats?.lastMonth ?? 0), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
@@ -98,7 +98,7 @@ export default function VisitorsAnalyticsPage() {
     { label: "Returning", value: String(stats?.returningVisitors ?? 0), icon: RefreshCw, color: "text-indigo-600", bg: "bg-indigo-50" },
     { label: "Avg Session", value: formatDuration(Number(stats?.avgSessionDuration ?? 0)), icon: Clock, color: "text-teal-600", bg: "bg-teal-50" },
     { label: "Bounce Rate", value: `${String(stats?.bounceRate ?? 0)}%`, icon: Activity, color: "text-red-600", bg: "bg-red-50" },
-    { label: "Total Visitors", value: formatNumber(Number(stats?.totalVisitors ?? 0)), icon: Users, color: "text-zinc-600", bg: "bg-zinc-50" },
+    { label: "Total Visitors", value: formatNumber(Number(stats?.totalVisitors ?? 0)), icon: Users, color: "text-apple-ink-muted-80", bg: "bg-apple-canvas-parchment" },
     { label: "Live Now", value: String(liveCount), icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
   ];
 
@@ -111,8 +111,8 @@ export default function VisitorsAnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Visitor Analytics</h1>
-        <p className="text-sm text-zinc-500">Track visitors, page views, and engagement</p>
+        <h1 className="text-xl font-bold text-apple-ink">Visitor Analytics</h1>
+        <p className="text-sm text-apple-ink-muted-48">Track visitors, page views, and engagement</p>
       </div>
 
       {/* Stat cards */}
@@ -125,9 +125,9 @@ export default function VisitorsAnalyticsPage() {
                 <card.icon className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">{card.label}</p>
-                <p className="text-lg font-bold text-zinc-900">{String(card.value)}</p>
-                {card.sub && <p className="text-[10px] text-zinc-400">{card.sub}</p>}
+                <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">{card.label}</p>
+                <p className="text-lg font-bold text-apple-ink">{String(card.value)}</p>
+                {card.sub && <p className="text-[10px] text-apple-ink-muted-48">{card.sub}</p>}
               </div>
             </div>
           </motion.div>
@@ -139,7 +139,7 @@ export default function VisitorsAnalyticsPage() {
         {/* Visitors by Day */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-1 text-sm font-semibold text-zinc-900">Visitors by Day (This Month)</h3>
+          <h3 className="mb-1 text-sm font-semibold text-apple-ink">Visitors by Day (This Month)</h3>
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={visitorsByDay}>
@@ -163,7 +163,7 @@ export default function VisitorsAnalyticsPage() {
         {/* Visitors by Month */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-1 text-sm font-semibold text-zinc-900">Visitors by Month</h3>
+          <h3 className="mb-1 text-sm font-semibold text-apple-ink">Visitors by Month</h3>
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={visitorsByMonth}>
@@ -182,7 +182,7 @@ export default function VisitorsAnalyticsPage() {
       {/* Hourly chart */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h3 className="mb-1 text-sm font-semibold text-zinc-900">Visitors by Hour (Today)</h3>
+        <h3 className="mb-1 text-sm font-semibold text-apple-ink">Visitors by Hour (Today)</h3>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={visitorsByHour}>
@@ -202,52 +202,52 @@ export default function VisitorsAnalyticsPage() {
         {/* Devices */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900">Devices</h3>
+          <h3 className="mb-3 text-sm font-semibold text-apple-ink">Devices</h3>
           <div className="space-y-3">
             {(devices?.devices as Array<Record<string, unknown>>)?.map((d: Record<string, unknown>) => (
               <div key={String(d.name)} className="flex items-center gap-3">
-                {String(d.name) === "Desktop" && <Monitor className="h-4 w-4 text-zinc-400" />}
-                {String(d.name) === "Mobile" && <Smartphone className="h-4 w-4 text-zinc-400" />}
-                {String(d.name) === "Tablet" && <Tablet className="h-4 w-4 text-zinc-400" />}
+                {String(d.name) === "Desktop" && <Monitor className="h-4 w-4 text-apple-ink-muted-48" />}
+                {String(d.name) === "Mobile" && <Smartphone className="h-4 w-4 text-apple-ink-muted-48" />}
+                {String(d.name) === "Tablet" && <Tablet className="h-4 w-4 text-apple-ink-muted-48" />}
                 <div className="flex-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-zinc-700">{String(d.name)}</span>
-                    <span className="text-zinc-500">{String(d.percentage)}%</span>
+                    <span className="font-medium text-apple-ink-muted-80">{String(d.name)}</span>
+                    <span className="text-apple-ink-muted-48">{String(d.percentage)}%</span>
                   </div>
                   <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
                     <div className="h-full rounded-full bg-blue-500" style={{ width: `${String(d.percentage)}%` }} />
                   </div>
                 </div>
               </div>
-            )) ?? <p className="text-xs text-zinc-400">No data yet</p>}
+            )) ?? <p className="text-xs text-apple-ink-muted-48">No data yet</p>}
           </div>
         </motion.div>
 
         {/* Browsers */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900">Browsers</h3>
+          <h3 className="mb-3 text-sm font-semibold text-apple-ink">Browsers</h3>
           <div className="space-y-2">
             {(devices?.browsers as Array<Record<string, unknown>>)?.slice(0, 6).map((b: Record<string, unknown>) => (
               <div key={String(b.name)} className="flex items-center justify-between text-xs">
-                <span className="text-zinc-700">{String(b.name)}</span>
-                <span className="text-zinc-500">{String(b.percentage)}%</span>
+                <span className="text-apple-ink-muted-80">{String(b.name)}</span>
+                <span className="text-apple-ink-muted-48">{String(b.percentage)}%</span>
               </div>
-            )) ?? <p className="text-xs text-zinc-400">No data yet</p>}
+            )) ?? <p className="text-xs text-apple-ink-muted-48">No data yet</p>}
           </div>
         </motion.div>
 
         {/* OS */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900">Operating Systems</h3>
+          <h3 className="mb-3 text-sm font-semibold text-apple-ink">Operating Systems</h3>
           <div className="space-y-2">
             {(devices?.operatingSystems as Array<Record<string, unknown>>)?.slice(0, 6).map((o: Record<string, unknown>) => (
               <div key={String(o.name)} className="flex items-center justify-between text-xs">
-                <span className="text-zinc-700">{String(o.name)}</span>
-                <span className="text-zinc-500">{String(o.percentage)}%</span>
+                <span className="text-apple-ink-muted-80">{String(o.name)}</span>
+                <span className="text-apple-ink-muted-48">{String(o.percentage)}%</span>
               </div>
-            )) ?? <p className="text-xs text-zinc-400">No data yet</p>}
+            )) ?? <p className="text-xs text-apple-ink-muted-48">No data yet</p>}
           </div>
         </motion.div>
       </div>
@@ -255,12 +255,12 @@ export default function VisitorsAnalyticsPage() {
       {/* Traffic Sources */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
         className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-900">Traffic Sources</h3>
+        <h3 className="mb-3 text-sm font-semibold text-apple-ink">Traffic Sources</h3>
         {sourcesList.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-zinc-100 text-left text-zinc-500">
+                <tr className="border-b border-zinc-100 text-left text-apple-ink-muted-48">
                   <th className="px-3 py-2 font-medium">Source</th>
                   <th className="px-3 py-2 font-medium">Type</th>
                   <th className="px-3 py-2 font-medium">Visits</th>
@@ -269,18 +269,18 @@ export default function VisitorsAnalyticsPage() {
               </thead>
               <tbody className="divide-y divide-zinc-50">
                 {sourcesList.map((s) => (
-                  <tr key={String(s._id)} className="hover:bg-zinc-50">
-                    <td className="px-3 py-2 font-medium text-zinc-900">{String(s.source)}</td>
-                    <td className="px-3 py-2 capitalize text-zinc-500">{String(s.type)}</td>
-                    <td className="px-3 py-2 text-zinc-700">{String(s.visits ?? 0)}</td>
-                    <td className="px-3 py-2 text-zinc-700">{String(s.pageViews ?? 0)}</td>
+                  <tr key={String(s._id)} className="hover:bg-apple-canvas-parchment">
+                    <td className="px-3 py-2 font-medium text-apple-ink">{String(s.source)}</td>
+                    <td className="px-3 py-2 capitalize text-apple-ink-muted-48">{String(s.type)}</td>
+                    <td className="px-3 py-2 text-apple-ink-muted-80">{String(s.visits ?? 0)}</td>
+                    <td className="px-3 py-2 text-apple-ink-muted-80">{String(s.pageViews ?? 0)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="text-xs text-zinc-400">No traffic data yet</p>
+          <p className="text-xs text-apple-ink-muted-48">No traffic data yet</p>
         )}
       </motion.div>
 
@@ -288,35 +288,35 @@ export default function VisitorsAnalyticsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900">Most Viewed Products</h3>
+          <h3 className="mb-3 text-sm font-semibold text-apple-ink">Most Viewed Products</h3>
           {topProducts.length > 0 ? (
             <div className="space-y-2">
               {topProducts.slice(0, 8).map((p: Record<string, unknown>, i: number) => (
                 <div key={String(p.productId ?? i)} className="flex items-center justify-between text-xs">
-                  <span className="truncate text-zinc-700">{String(p.name ?? "Unknown")}</span>
-                  <span className="ml-2 shrink-0 font-medium text-zinc-900">{String(p.views ?? 0)} views</span>
+                  <span className="truncate text-apple-ink-muted-80">{String(p.name ?? "Unknown")}</span>
+                  <span className="ml-2 shrink-0 font-medium text-apple-ink">{String(p.views ?? 0)} views</span>
                 </div>
               ))}
             </div>
-          ) : <p className="text-xs text-zinc-400">No product view data yet</p>}
+          ) : <p className="text-xs text-apple-ink-muted-48">No product view data yet</p>}
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900">Top Search Queries</h3>
+          <h3 className="mb-3 text-sm font-semibold text-apple-ink">Top Search Queries</h3>
           {topSearchesList.length > 0 ? (
             <div className="space-y-2">
               {topSearchesList.slice(0, 8).map((q: Record<string, unknown>, i: number) => (
                 <div key={String(q.query ?? i)} className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1 text-zinc-700">
-                    <Search className="h-3 w-3 text-zinc-400" />
+                  <span className="flex items-center gap-1 text-apple-ink-muted-80">
+                    <Search className="h-3 w-3 text-apple-ink-muted-48" />
                     {String(q.query ?? "")}
                   </span>
-                  <span className="shrink-0 font-medium text-zinc-900">{String(q.count ?? 0)}</span>
+                  <span className="shrink-0 font-medium text-apple-ink">{String(q.count ?? 0)}</span>
                 </div>
               ))}
             </div>
-          ) : <p className="text-xs text-zinc-400">No search data yet</p>}
+          ) : <p className="text-xs text-apple-ink-muted-48">No search data yet</p>}
         </motion.div>
       </div>
 
@@ -326,16 +326,16 @@ export default function VisitorsAnalyticsPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <h3 className="text-sm font-semibold text-zinc-900">Live Visitors</h3>
+            <h3 className="text-sm font-semibold text-apple-ink">Live Visitors</h3>
             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
               {String(liveCount)} online
             </span>
           </div>
-          <button onClick={() => refetchLive()} className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
+          <button onClick={() => refetchLive()} className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
             <RefreshCw className="h-3.5 w-3.5" />
           </button>
         </div>
-        <p className="mt-1 text-xs text-zinc-500">Auto-refreshes every 10 seconds</p>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">Auto-refreshes every 10 seconds</p>
       </motion.div>
     </div>
   );

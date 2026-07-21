@@ -40,18 +40,18 @@ export function Integrations() {
           className="mt-10 grid gap-5 sm:grid-cols-3"
         >
           {integrations.map((group) => (
-            <div key={group.category} className="rounded-2xl border border-zinc-200/60 bg-white p-5 shadow-sm">
+            <div key={group.category} className="rounded-lg border border-apple-hairline bg-apple-canvas p-5">
               <div className="mb-4 flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-apple-canvas-parchment">
                   <group.icon className="h-4.5 w-4.5 text-blue-600" />
                 </div>
-                <h3 className="text-sm font-bold text-zinc-900">{group.category}</h3>
+                <h3 className="text-sm font-bold text-apple-ink">{group.category}</h3>
               </div>
               <div className="flex flex-wrap gap-2">
                 {group.items.map((item) => (
                   <span
                     key={item}
-                    className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-600"
+                    className="rounded-lg border border-apple-divider-soft bg-apple-canvas-parchment px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80"
                   >
                     {item}
                   </span>

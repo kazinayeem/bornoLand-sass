@@ -77,8 +77,8 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
       key: "order", label: "Order",
       render: (order) => (
         <div>
-          <p className="text-sm font-semibold text-zinc-900">{order.orderNumber}</p>
-          <p className="text-xs text-zinc-400">{formatDate(order.createdAt)}</p>
+          <p className="text-sm font-semibold text-apple-ink">{order.orderNumber}</p>
+          <p className="text-xs text-apple-ink-muted-48">{formatDate(order.createdAt)}</p>
         </div>
       ),
     },
@@ -86,18 +86,18 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
       key: "customer", label: "Customer", hideOnMobile: true,
       render: (order) => (
         <div className="text-sm">
-          <p className="text-zinc-900">{order.customerId?.name || "Guest"}</p>
-          <p className="text-xs text-zinc-400">{order.shippingAddress?.city || "—"}</p>
+          <p className="text-apple-ink">{order.customerId?.name || "Guest"}</p>
+          <p className="text-xs text-apple-ink-muted-48">{order.shippingAddress?.city || "—"}</p>
         </div>
       ),
     },
     {
       key: "items", label: "Items", hideOnTablet: true,
-      render: (order) => <span className="text-sm text-zinc-600">{order.items?.length || 0} items</span>,
+      render: (order) => <span className="text-sm text-apple-ink-muted-80">{order.items?.length || 0} items</span>,
     },
     {
       key: "total", label: "Total", sortable: true,
-      render: (order) => <span className="text-sm font-bold text-zinc-900">{formatBDT(order.total)}</span>,
+      render: (order) => <span className="text-sm font-bold text-apple-ink">{formatBDT(order.total)}</span>,
     },
     {
       key: "status", label: "Status",
@@ -137,14 +137,14 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
       {analytics && (
         <div className="grid gap-3 sm:grid-cols-5">
           {[
-            { label: "Total Orders", value: String(analytics.totalOrders), color: "text-zinc-900" },
+            { label: "Total Orders", value: String(analytics.totalOrders), color: "text-apple-ink" },
             { label: "Revenue", value: formatBDT(analytics.totalRevenue), color: "text-emerald-600" },
             { label: "Pending", value: String(analytics.pendingOrders), color: "text-amber-600" },
             { label: "Processing", value: String(analytics.processingOrders), color: "text-blue-600" },
             { label: "Delivered", value: String(analytics.deliveredOrders), color: "text-emerald-600" },
           ].map((s) => (
             <div key={s.label} className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">{s.label}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">{s.label}</p>
               <p className={`mt-1 text-lg font-bold ${s.color}`}>{s.value}</p>
             </div>
           ))}
@@ -154,7 +154,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
       {/* Filters */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
           <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search orders..."
             className="h-9 w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
@@ -195,35 +195,35 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
         {selectedOrder && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl bg-zinc-50 p-3">
-                <p className="text-xs font-medium text-zinc-500">Status</p>
-                <p className="mt-0.5 text-sm font-semibold text-zinc-900 capitalize">{selectedOrder.status}</p>
+              <div className="rounded-xl bg-apple-canvas-parchment p-3">
+                <p className="text-xs font-medium text-apple-ink-muted-48">Status</p>
+                <p className="mt-0.5 text-sm font-semibold text-apple-ink capitalize">{selectedOrder.status}</p>
               </div>
-              <div className="rounded-xl bg-zinc-50 p-3">
-                <p className="text-xs font-medium text-zinc-500">Payment</p>
-                <p className="mt-0.5 text-sm font-semibold text-zinc-900 capitalize">{selectedOrder.paymentStatus}</p>
+              <div className="rounded-xl bg-apple-canvas-parchment p-3">
+                <p className="text-xs font-medium text-apple-ink-muted-48">Payment</p>
+                <p className="mt-0.5 text-sm font-semibold text-apple-ink capitalize">{selectedOrder.paymentStatus}</p>
               </div>
-              <div className="rounded-xl bg-zinc-50 p-3">
-                <p className="text-xs font-medium text-zinc-500">Total</p>
-                <p className="mt-0.5 text-sm font-semibold text-zinc-900">{formatBDT(selectedOrder.total)}</p>
+              <div className="rounded-xl bg-apple-canvas-parchment p-3">
+                <p className="text-xs font-medium text-apple-ink-muted-48">Total</p>
+                <p className="mt-0.5 text-sm font-semibold text-apple-ink">{formatBDT(selectedOrder.total)}</p>
               </div>
-              <div className="rounded-xl bg-zinc-50 p-3">
-                <p className="text-xs font-medium text-zinc-500">Date</p>
-                <p className="mt-0.5 text-sm font-semibold text-zinc-900">{formatDate(selectedOrder.createdAt)}</p>
+              <div className="rounded-xl bg-apple-canvas-parchment p-3">
+                <p className="text-xs font-medium text-apple-ink-muted-48">Date</p>
+                <p className="mt-0.5 text-sm font-semibold text-apple-ink">{formatDate(selectedOrder.createdAt)}</p>
               </div>
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-zinc-900 mb-2">Items</h4>
+              <h4 className="text-sm font-semibold text-apple-ink mb-2">Items</h4>
               <div className="space-y-2">
                 {selectedOrder.items?.map((item, i) => (
                   <div key={i} className="flex items-center justify-between rounded-xl border border-zinc-100 p-3">
                     <div>
-                      <p className="text-sm font-medium text-zinc-900">{item.name}</p>
-                      {item.variantTitle && <p className="text-xs text-zinc-500">{item.variantTitle}</p>}
-                      <p className="text-xs text-zinc-400">Qty: {item.quantity} × {formatBDT(item.price)}</p>
+                      <p className="text-sm font-medium text-apple-ink">{item.name}</p>
+                      {item.variantTitle && <p className="text-xs text-apple-ink-muted-48">{item.variantTitle}</p>}
+                      <p className="text-xs text-apple-ink-muted-48">Qty: {item.quantity} × {formatBDT(item.price)}</p>
                     </div>
-                    <p className="text-sm font-semibold text-zinc-900">{formatBDT(item.price * item.quantity)}</p>
+                    <p className="text-sm font-semibold text-apple-ink">{formatBDT(item.price * item.quantity)}</p>
                   </div>
                 ))}
               </div>
@@ -231,8 +231,8 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
 
             {selectedOrder.shippingAddress && (
               <div>
-                <h4 className="text-sm font-semibold text-zinc-900 mb-2">Shipping</h4>
-                <div className="rounded-xl border border-zinc-100 p-3 text-sm text-zinc-600">
+                <h4 className="text-sm font-semibold text-apple-ink mb-2">Shipping</h4>
+                <div className="rounded-xl border border-zinc-100 p-3 text-sm text-apple-ink-muted-80">
                   <p>{selectedOrder.shippingAddress.fullName}</p>
                   <p>{selectedOrder.shippingAddress.street}</p>
                   <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.zip}</p>

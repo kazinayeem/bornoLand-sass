@@ -64,12 +64,12 @@ export default function AnalyticsOverviewPage() {
     <>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900">Analytics Overview</h1>
-          <p className="text-sm text-zinc-500">{store?.name} — visitor analytics dashboard</p>
+          <h1 className="text-xl font-bold text-apple-ink">Analytics Overview</h1>
+          <p className="text-sm text-apple-ink-muted-48">{store?.name} — visitor analytics dashboard</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => exportCSV("analytics-overview", ["Metric", "Value"], statCards.map((c) => [c.label, c.value]))}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors">
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors">
             <FileDown className="h-3.5 w-3.5" /> Export CSV
           </button>
         </div>
@@ -92,11 +92,11 @@ export default function AnalyticsOverviewPage() {
               <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-zinc-900">{liveCount} visitors online now</p>
-              <p className="text-xs text-zinc-500">Auto-refreshes every 15 seconds</p>
+              <p className="text-sm font-semibold text-apple-ink">{liveCount} visitors online now</p>
+              <p className="text-xs text-apple-ink-muted-48">Auto-refreshes every 15 seconds</p>
             </div>
           </div>
-          <button onClick={() => refetchLive()} className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
+          <button onClick={() => refetchLive()} className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
             <RefreshCw className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -141,7 +141,7 @@ export default function AnalyticsOverviewPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <AnalyticsChartCard title="Revenue vs Visitors" delay={0.14}>
-          <div className="flex h-48 items-center justify-center text-sm text-zinc-400">
+          <div className="flex h-48 items-center justify-center text-sm text-apple-ink-muted-48">
             Revenue data available in Sales Analytics
           </div>
         </AnalyticsChartCard>
@@ -173,12 +173,12 @@ export default function AnalyticsOverviewPage() {
           <div className="space-y-2">
             {topPagesList.slice(0, 8).map((p, i) => (
               <div key={i} className="flex items-center justify-between text-xs">
-                <span className="truncate text-zinc-700">{String(p.title ?? p.url ?? "Unknown")}</span>
-                <span className="ml-2 shrink-0 font-medium text-zinc-900">{String(p.views ?? 0)} views</span>
+                <span className="truncate text-apple-ink-muted-80">{String(p.title ?? p.url ?? "Unknown")}</span>
+                <span className="ml-2 shrink-0 font-medium text-apple-ink">{String(p.views ?? 0)} views</span>
               </div>
             ))}
           </div>
-        ) : <p className="text-xs text-zinc-400 py-4">No page data yet</p>}
+        ) : <p className="text-xs text-apple-ink-muted-48 py-4">No page data yet</p>}
       </AnalyticsChartCard>
 
       {/* Traffic Sources Pie */}
@@ -205,14 +205,14 @@ export default function AnalyticsOverviewPage() {
           <div className="space-y-3">
             {(devices?.devices as Array<Record<string, unknown>>)?.map((d) => (
               <div key={String(d.name)} className="flex items-center gap-3">
-                {String(d.name) === "Desktop" && <Monitor className="h-4 w-4 text-zinc-400" />}
-                {String(d.name) === "Mobile" && <Smartphone className="h-4 w-4 text-zinc-400" />}
-                {String(d.name) === "Tablet" && <Tablet className="h-4 w-4 text-zinc-400" />}
+                {String(d.name) === "Desktop" && <Monitor className="h-4 w-4 text-apple-ink-muted-48" />}
+                {String(d.name) === "Mobile" && <Smartphone className="h-4 w-4 text-apple-ink-muted-48" />}
+                {String(d.name) === "Tablet" && <Tablet className="h-4 w-4 text-apple-ink-muted-48" />}
                 <div className="flex-1">
                   <AnalyticsProgressBar name={String(d.name)} value={String(d.percentage)} percentage={Number(d.percentage)} />
                 </div>
               </div>
-            )) ?? <p className="text-xs text-zinc-400">No data yet</p>}
+            )) ?? <p className="text-xs text-apple-ink-muted-48">No data yet</p>}
           </div>
         </AnalyticsChartCard>
 
@@ -220,7 +220,7 @@ export default function AnalyticsOverviewPage() {
           <div className="space-y-2">
             {(devices?.browsers as Array<Record<string, unknown>>)?.slice(0, 6).map((b) => (
               <AnalyticsProgressBar key={String(b.name)} name={String(b.name)} value={String(b.percentage)} percentage={Number(b.percentage)} />
-            )) ?? <p className="text-xs text-zinc-400">No data yet</p>}
+            )) ?? <p className="text-xs text-apple-ink-muted-48">No data yet</p>}
           </div>
         </AnalyticsChartCard>
 
@@ -228,10 +228,10 @@ export default function AnalyticsOverviewPage() {
           <div className="space-y-2">
             {(devices?.countries as Array<Record<string, unknown>>)?.slice(0, 6).map((c) => (
               <div key={String(c.code)} className="flex items-center gap-2">
-                <MapPin className="h-3 w-3 text-zinc-400 shrink-0" />
+                <MapPin className="h-3 w-3 text-apple-ink-muted-48 shrink-0" />
                 <AnalyticsProgressBar name={String(c.code)} value={String(c.percentage)} percentage={Number(c.percentage)} />
               </div>
-            )) ?? <p className="text-xs text-zinc-400">No data yet</p>}
+            )) ?? <p className="text-xs text-apple-ink-muted-48">No data yet</p>}
           </div>
         </AnalyticsChartCard>
       </div>

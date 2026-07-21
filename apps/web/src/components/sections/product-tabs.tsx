@@ -26,7 +26,7 @@ export function ProductTabs({ section }: { section: SectionData }) {
         <div className="mb-6 flex justify-center gap-2">
           {tabs.map((tab, i) => (
             <button key={i} onClick={() => setActiveTab(i)}
-              className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all ${activeTab === i ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"}`}>
+              className={`rounded-lg px-4 py-2 text-xs font-semibold transition-all ${activeTab === i ? "bg-zinc-900 text-white" : "bg-zinc-100 text-apple-ink-muted-80 hover:bg-zinc-200"}`}>
               {tab.label}
             </button>
           ))}

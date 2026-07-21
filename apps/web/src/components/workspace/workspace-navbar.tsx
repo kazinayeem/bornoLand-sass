@@ -106,19 +106,19 @@ export function WorkspaceNavbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-200/80 bg-white/80 px-4 backdrop-blur-xl sm:px-6">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-apple-hairline bg-white/80 px-4 backdrop-blur-xl sm:px-6">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => dispatch(toggleMobileSidebar())}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 text-zinc-600 lg:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-sm border border-apple-hairline text-apple-ink-muted-80 lg:hidden"
             aria-label="Open menu"
           >
             <Menu className="h-4 w-4" />
           </button>
           <div>
-            <h1 className="text-lg font-semibold tracking-tight text-zinc-950">{pageTitle}</h1>
-            <p className="hidden text-xs leading-5 text-zinc-500 sm:block">
+            <h1 className="text-lg font-semibold tracking-tight text-apple-ink">{pageTitle}</h1>
+            <p className="hidden text-xs leading-5 text-apple-ink-muted-48 sm:block">
               <span>{contextTitle}</span>
               <span className="mx-1 text-zinc-300">/</span>
               {segments.map((s, i) => (
@@ -135,11 +135,11 @@ export function WorkspaceNavbar() {
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="hidden w-52 items-center gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-3.5 py-2 text-sm text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-white sm:inline-flex lg:w-64"
+            className="hidden w-52 items-center gap-2 rounded-sm border border-apple-hairline bg-apple-canvas-parchment/80 px-3.5 py-2 text-sm text-apple-ink-muted-48 transition-colors hover:border-apple-hairline hover:bg-apple-canvas sm:inline-flex lg:w-64"
           >
             <Search className="h-4 w-4 shrink-0" />
             <span className="flex-1 text-left">Search...</span>
-            <kbd className="flex h-5 items-center gap-0.5 rounded-md border border-zinc-200 bg-white px-1.5 text-[10px] font-medium text-zinc-400">
+            <kbd className="flex h-5 items-center gap-0.5 rounded-sm border border-apple-hairline bg-apple-canvas px-1.5 text-[10px] font-medium text-apple-ink-muted-48">
               <Command className="h-2.5 w-2.5" />K
             </kbd>
           </button>
@@ -147,7 +147,7 @@ export function WorkspaceNavbar() {
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 text-zinc-500 sm:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-sm border border-apple-hairline text-apple-ink-muted-48 sm:hidden"
             aria-label="Search"
           >
             <Search className="h-4 w-4" />
@@ -157,7 +157,7 @@ export function WorkspaceNavbar() {
             <button
               type="button"
               onClick={() => setQuickOpen(!quickOpen)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-zinc-950 px-3 text-sm font-medium text-white shadow-[0_10px_24px_-16px_rgba(15,23,42,0.75)] transition-colors hover:bg-zinc-800"
+              className="inline-flex h-9 items-center gap-1.5 rounded-pill bg-apple-primary px-3 text-sm font-medium text-apple-on-primary transition-colors hover:bg-apple-primary-focus"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Quick Create</span>
@@ -165,12 +165,12 @@ export function WorkspaceNavbar() {
             {quickOpen && (
               <>
                 <button type="button" className="fixed inset-0 z-40" onClick={() => setQuickOpen(false)} aria-label="Close menu" />
-                <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-52 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white py-1 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.5)]">
+                <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-52 overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas py-1">
                   {quickActions.map((action) =>
                     action.disabled ? (
                       <span
                         key={action.label}
-                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-400"
+                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-apple-ink-muted-48"
                       >
                         <action.icon className="h-4 w-4" />
                         {action.label}
@@ -180,7 +180,7 @@ export function WorkspaceNavbar() {
                         key={action.label}
                         href={action.href}
                         onClick={() => setQuickOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50"
+                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
                       >
                         <action.icon className="h-4 w-4" />
                         {action.label}
@@ -211,38 +211,38 @@ export function WorkspaceNavbar() {
               initial={{ opacity: 0, scale: 0.96, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: -10 }}
-              className="relative w-full max-w-lg overflow-hidden rounded-[1.5rem] border border-zinc-200/80 bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.5)]"
+              className="relative w-full max-w-lg overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas"
             >
-              <div className="flex items-center gap-3 border-b border-zinc-100 px-4 py-3">
-                <Search className="h-5 w-5 shrink-0 text-zinc-400" />
+              <div className="flex items-center gap-3 border-b border-apple-divider-soft px-4 py-3">
+                <Search className="h-5 w-5 shrink-0 text-apple-ink-muted-48" />
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search stores, pages..."
-                  className="flex-1 text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
+                  className="flex-1 text-sm text-apple-ink outline-none placeholder:text-apple-ink-muted-48"
                   autoFocus
                 />
-                <kbd className="hidden h-6 items-center rounded-md border border-zinc-200 bg-zinc-50 px-1.5 text-[10px] font-medium text-zinc-400 sm:flex">
+                <kbd className="hidden h-6 items-center rounded-sm border border-apple-hairline bg-apple-canvas-parchment px-1.5 text-[10px] font-medium text-apple-ink-muted-48 sm:flex">
                   ESC
                 </kbd>
               </div>
               <div className="max-h-72 overflow-y-auto p-2">
                 {searchResults.length === 0 ? (
-                  <p className="px-3 py-8 text-center text-sm text-zinc-400">No results found</p>
+                  <p className="px-3 py-8 text-center text-sm text-apple-ink-muted-48">No results found</p>
                 ) : (
                   searchResults.map((item) => (
                     <button
                       key={`${item.href}-${item.label}`}
                       type="button"
                       onClick={() => handleSelect(item.href)}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-zinc-50"
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-apple-canvas-parchment"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-zinc-900">{item.label}</p>
-                        <p className="text-xs text-zinc-500">{item.sub}</p>
+                        <p className="text-sm font-medium text-apple-ink">{item.label}</p>
+                        <p className="text-xs text-apple-ink-muted-48">{item.sub}</p>
                       </div>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">{item.type}</span>
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-apple-ink-muted-48">{item.type}</span>
                     </button>
                   ))
                 )}

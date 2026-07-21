@@ -152,7 +152,7 @@ function SectionContextMenu({
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[100] w-56 rounded-xl border border-zinc-200/80 bg-white py-1.5 shadow-2xl shadow-black/10 ring-1 ring-black/5"
+      className="fixed z-[100] w-56 rounded-xl border border-apple-hairline bg-white py-1.5 shadow-2xl shadow-black/10 ring-1 ring-black/5"
       style={{ left: menuX, top: menuY }}
     >
       {items.map((item, index) => {
@@ -176,13 +176,13 @@ function SectionContextMenu({
               "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm font-medium outline-none transition-colors",
               i.disabled && "cursor-not-allowed opacity-40",
               !i.disabled && i.danger && "text-red-600 hover:bg-red-50",
-              !i.disabled && !i.danger && "text-zinc-700 hover:bg-zinc-50"
+              !i.disabled && !i.danger && "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
             )}
           >
             {Icon && (
               <Icon className={cn(
                 "h-4 w-4 shrink-0",
-                i.danger ? "text-red-500" : "text-zinc-400"
+                i.danger ? "text-red-500" : "text-apple-ink-muted-48"
               )} />
             )}
             <span className="truncate">{i.label}</span>
@@ -534,7 +534,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
             "group/section mb-1 cursor-pointer rounded-xl border px-2.5 py-2 transition-all duration-150",
             selected
               ? "border-blue-300 bg-blue-50/80 shadow-sm ring-1 ring-blue-200"
-              : "border-transparent bg-white hover:border-zinc-200 hover:bg-zinc-50/50",
+              : "border-transparent bg-white hover:border-zinc-200 hover:bg-apple-canvas-parchment/50",
             isDragging && "opacity-50 scale-[0.98]"
           )}
         >
@@ -545,7 +545,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
               className={cn(
                 "flex h-5 w-5 shrink-0 items-center justify-center rounded transition-all",
                 hasChildren
-                  ? "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                  ? "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80"
                   : "text-transparent cursor-default"
               )}
             >
@@ -564,7 +564,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
             {/* Section type icon */}
             <div className={cn(
               "flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition-all",
-              selected ? "bg-blue-500 text-white" : "bg-zinc-100 text-zinc-500"
+              selected ? "bg-blue-500 text-white" : "bg-zinc-100 text-apple-ink-muted-48"
             )}>
               <Icon className="h-3 w-3" />
             </div>
@@ -578,11 +578,11 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
                 onChange={(e) => dispatch(updateSectionMeta({ id: section.id, label: e.target.value }))}
                 className={cn(
                   "w-full truncate bg-transparent text-xs font-semibold outline-none rounded px-1 -mx-1 py-0.5 transition-all",
-                  selected ? "text-blue-900" : "text-zinc-900",
+                  selected ? "text-blue-900" : "text-apple-ink",
                   "focus:bg-white focus:ring-1 focus:ring-blue-200"
                 )}
               />
-              <p className="text-[10px] text-zinc-400 leading-tight px-1">{def?.label || normalizeSectionType(section.type)}</p>
+              <p className="text-[10px] text-apple-ink-muted-48 leading-tight px-1">{def?.label || normalizeSectionType(section.type)}</p>
             </div>
 
             {/* Action buttons */}
@@ -591,7 +591,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
               <button
                 onClick={(e) => { e.stopPropagation(); if (currentIndex > 0) dispatch(moveSection({ from: currentIndex, to: currentIndex - 1 })); }}
                 disabled={currentIndex === 0}
-                className="rounded-md p-1 text-zinc-400 opacity-0 group-hover/section:opacity-100 hover:text-zinc-600 hover:bg-zinc-100 transition-all disabled:opacity-0 disabled:cursor-not-allowed"
+                className="rounded-md p-1 text-apple-ink-muted-48 opacity-0 group-hover/section:opacity-100 hover:text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all disabled:opacity-0 disabled:cursor-not-allowed"
                 title="Move up"
               >
                 <MoveUp className="h-3 w-3" />
@@ -599,7 +599,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
               <button
                 onClick={(e) => { e.stopPropagation(); if (currentIndex < totalCount - 1) dispatch(moveSection({ from: currentIndex, to: currentIndex + 1 })); }}
                 disabled={currentIndex >= totalCount - 1}
-                className="rounded-md p-1 text-zinc-400 opacity-0 group-hover/section:opacity-100 hover:text-zinc-600 hover:bg-zinc-100 transition-all disabled:opacity-0 disabled:cursor-not-allowed"
+                className="rounded-md p-1 text-apple-ink-muted-48 opacity-0 group-hover/section:opacity-100 hover:text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all disabled:opacity-0 disabled:cursor-not-allowed"
                 title="Move down"
               >
                 <MoveDown className="h-3 w-3" />
@@ -610,7 +610,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
                 onClick={(e) => { e.stopPropagation(); dispatch(toggleSection(section.id)); }}
                 className={cn(
                   "rounded-md p-1 opacity-0 group-hover/section:opacity-100 transition-all",
-                  section.visible ? "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100" : "text-red-400 hover:bg-red-50"
+                  section.visible ? "text-apple-ink-muted-48 hover:text-apple-ink-muted-80 hover:bg-apple-canvas-parchment" : "text-red-400 hover:bg-red-50"
                 )}
                 title={section.visible ? "Hide section" : "Show section"}
               >
@@ -622,7 +622,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
                 onClick={(e) => { e.stopPropagation(); dispatch(toggleSectionLock(section.id)); }}
                 className={cn(
                   "rounded-md p-1 opacity-0 group-hover/section:opacity-100 transition-all",
-                  section.locked ? "text-amber-500" : "text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100"
+                  section.locked ? "text-amber-500" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
                 )}
                 title={section.locked ? "Unlock section" : "Lock section"}
               >
@@ -635,7 +635,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
                 trigger={
                   <button
                     type="button"
-                    className="flex h-6 w-6 items-center justify-center rounded-md text-zinc-400 opacity-0 group-hover/section:opacity-100 hover:bg-zinc-100 hover:text-zinc-600 transition-all"
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-apple-ink-muted-48 opacity-0 group-hover/section:opacity-100 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-all"
                     aria-label="Section actions"
                   >
                     <MoreHorizontal className="h-3.5 w-3.5" />
@@ -652,7 +652,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
               {children.map((child) => (
                 <div
                   key={child}
-                  className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] text-zinc-500 hover:bg-zinc-100 transition-colors cursor-default"
+                  className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors cursor-default"
                 >
                   <div className="h-1 w-1 rounded-full bg-zinc-300" />
                   {child}
@@ -679,7 +679,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
     const filteredSections = sectionList.filter(filterSection);
 
     return (
-      <div className={cn("mb-2 rounded-xl border transition-all duration-150", isActive ? "border-zinc-200 bg-zinc-50/50" : "border-transparent")}>
+      <div className={cn("mb-2 rounded-xl border transition-all duration-150", isActive ? "border-zinc-200 bg-apple-canvas-parchment/50" : "border-transparent")}>
         {/* Region header */}
         <div
           role="button"
@@ -694,14 +694,14 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
           }}
           className={cn(
             "group flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition-all outline-none",
-            isActive ? "bg-zinc-100/80" : "hover:bg-zinc-50"
+            isActive ? "bg-zinc-100/80" : "hover:bg-apple-canvas-parchment"
           )}
         >
           <div className={cn("flex h-5 w-5 items-center justify-center rounded-md text-white", colorClass)}>
             {createElement(icon, { className: "h-2.5 w-2.5" })}
           </div>
-          <span className="flex-1 text-[11px] font-bold uppercase tracking-wider text-zinc-500">{label}</span>
-          <span className="text-[10px] font-medium text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded-full">
+          <span className="flex-1 text-[11px] font-bold uppercase tracking-wider text-apple-ink-muted-48">{label}</span>
+          <span className="text-[10px] font-medium text-apple-ink-muted-48 bg-zinc-100 px-1.5 py-0.5 rounded-full">
             {filteredSections.length}
           </span>
           <button
@@ -715,7 +715,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
-          {isCollapsed ? <ChevronRight className="h-3.5 w-3.5 text-zinc-400" /> : <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />}
+          {isCollapsed ? <ChevronRight className="h-3.5 w-3.5 text-apple-ink-muted-48" /> : <ChevronDown className="h-3.5 w-3.5 text-apple-ink-muted-48" />}
         </div>
 
         {/* Region sections */}
@@ -723,7 +723,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
           <div className="px-2 pb-2">
             {filteredSections.length === 0 ? (
               <div className="px-3 py-4 text-center">
-                <p className="text-[11px] text-zinc-400">
+                <p className="text-[11px] text-apple-ink-muted-48">
                   {searchQuery || typeFilter !== "all"
                     ? "No matching sections"
                     : zone === "header" ? "No header sections yet"
@@ -808,16 +808,16 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
       <div className="border-b border-zinc-100 px-3 py-2.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-apple-ink-muted-80">
               <PanelLeft className="h-3.5 w-3.5" />
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{title}</p>
-              <p className="text-xs font-semibold text-zinc-900">Page Structure</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">{title}</p>
+              <p className="text-xs font-semibold text-apple-ink">Page Structure</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] font-medium text-zinc-400 mr-1">{totalSections}</span>
+            <span className="text-[10px] font-medium text-apple-ink-muted-48 mr-1">{totalSections}</span>
           </div>
         </div>
       </div>
@@ -838,14 +838,14 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
         <div className="h-4 w-px bg-zinc-200 mx-0.5" />
         <button
           onClick={expandAll}
-          className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-all"
+          className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-all"
           title="Expand all sections"
         >
           <ChevronsUpDown className="h-3 w-3" />
         </button>
         <button
           onClick={collapseAll}
-          className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-all"
+          className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-all"
           title="Collapse all sections"
         >
           <ChevronsDownUp className="h-3 w-3" />
@@ -856,15 +856,15 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
       <div className="px-2.5 pb-1.5 pt-1.5 space-y-1.5">
         {/* Search input */}
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-zinc-400" />
+          <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-apple-ink-muted-48" />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search sections..."
-            className="h-7 w-full rounded-lg border border-zinc-200 bg-zinc-50 pl-6 pr-6 text-[11px] text-zinc-700 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all"
+            className="h-7 w-full rounded-lg border border-zinc-200 bg-apple-canvas-parchment pl-6 pr-6 text-[11px] text-apple-ink-muted-80 placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-200 transition-all"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-all">
+            <button onClick={() => setSearchQuery("")} className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-apple-ink-muted-48 hover:text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all">
               <X className="h-3 w-3" />
             </button>
           )}
@@ -880,7 +880,7 @@ export function LayersPanel({ title = "Layers" }: { title?: "Layers" | "Navigato
                 "flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium transition-all",
                 typeFilter === id
                   ? "bg-blue-500 text-white shadow-sm"
-                  : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700"
+                  : "bg-zinc-100 text-apple-ink-muted-48 hover:bg-zinc-200 hover:text-apple-ink-muted-80"
               )}
             >
               <FilterIcon className="h-2.5 w-2.5" />

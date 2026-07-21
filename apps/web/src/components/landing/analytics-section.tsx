@@ -48,8 +48,8 @@ export function AnalyticsSection() {
                     {s.change} <ArrowUpRight className="h-3 w-3" />
                   </span>
                 </div>
-                <p className="font-[family-name:var(--font-space-grotesk)] text-2xl font-bold text-zinc-900">{s.value}</p>
-                <p className="text-xs font-medium text-zinc-500">{s.label}</p>
+                <p className="font-[family-name:var(--font-space-grotesk)] text-2xl font-bold text-apple-ink">{s.value}</p>
+                <p className="text-xs font-medium text-apple-ink-muted-48">{s.label}</p>
               </div>
             ))}
           </div>
@@ -57,7 +57,7 @@ export function AnalyticsSection() {
           <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
             {/* Chart Area */}
             <div className="rounded-2xl border border-zinc-200/60 bg-white p-5 shadow-sm">
-              <h3 className="mb-4 text-sm font-bold text-zinc-900">Revenue Overview</h3>
+              <h3 className="mb-4 text-sm font-bold text-apple-ink">Revenue Overview</h3>
               <div className="flex items-end gap-2 h-40">
                 {[28, 35, 22, 42, 30, 48, 38, 52, 45, 58, 50, 65, 55, 72, 62, 78, 68, 85, 75, 90].map((h, i) => (
                   <div
@@ -75,24 +75,24 @@ export function AnalyticsSection() {
                   />
                 ))}
               </div>
-              <div className="mt-3 flex justify-between text-[10px] font-medium text-zinc-400">
+              <div className="mt-3 flex justify-between text-[10px] font-medium text-apple-ink-muted-48">
                 <span>Week 1</span><span>Week 2</span><span>Week 3</span><span>Week 4</span>
               </div>
             </div>
 
             {/* Top Products */}
             <div className="rounded-2xl border border-zinc-200/60 bg-white p-5 shadow-sm">
-              <h3 className="mb-3 text-sm font-bold text-zinc-900">Top Products</h3>
+              <h3 className="mb-3 text-sm font-bold text-apple-ink">Top Products</h3>
               <div className="space-y-3">
                 {topProducts.map((p, i) => (
                   <div key={p.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span className="text-[10px] font-bold text-zinc-300 w-4">{i + 1}</span>
-                      <span className="text-xs font-medium text-zinc-700 truncate">{p.name}</span>
+                      <span className="text-xs font-medium text-apple-ink-muted-80 truncate">{p.name}</span>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-bold text-zinc-900">{p.revenue}</p>
-                      <p className="text-[10px] text-zinc-400">{p.orders} orders</p>
+                      <p className="text-xs font-bold text-apple-ink">{p.revenue}</p>
+                      <p className="text-[10px] text-apple-ink-muted-48">{p.orders} orders</p>
                     </div>
                   </div>
                 ))}

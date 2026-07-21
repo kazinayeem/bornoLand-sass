@@ -50,11 +50,11 @@ export function CurrentSubscriptionCard({
   const billingCycle = store.subscriptionDuration || "monthly";
 
   return (
-    <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-apple-hairline bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-900">Current Subscription</h2>
-          <p className="mt-1 text-sm text-zinc-500">Manage your current plan and billing cycle.</p>
+          <h2 className="text-lg font-semibold text-apple-ink">Current Subscription</h2>
+          <p className="mt-1 text-sm text-apple-ink-muted-48">Manage your current plan and billing cycle.</p>
         </div>
         <div className="flex items-center gap-2">
           {isTrial ? (
@@ -64,19 +64,19 @@ export function CurrentSubscriptionCard({
           ) : isActive ? (
             <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Active</Badge>
           ) : (
-            <Badge className="bg-zinc-100 text-zinc-800 hover:bg-zinc-100">{store.billingStatus || "Unknown"}</Badge>
+            <Badge className="bg-zinc-100 text-zinc-800 hover:bg-apple-canvas-parchment">{store.billingStatus || "Unknown"}</Badge>
           )}
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col gap-6 rounded-xl bg-zinc-50 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6 flex flex-col gap-6 rounded-xl bg-apple-canvas-parchment p-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
             <Zap className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-zinc-900">{plan.name} Plan</h3>
-            <p className="text-sm font-medium text-zinc-600">
+            <h3 className="text-xl font-bold text-apple-ink">{plan.name} Plan</h3>
+            <p className="text-sm font-medium text-apple-ink-muted-80">
               {plan.priceBDT ? `${plan.priceBDT.toLocaleString()} ৳ / ${DURATION_LABELS[billingCycle]?.toLowerCase() || "month"}` : "Free"}
             </p>
           </div>
@@ -84,14 +84,14 @@ export function CurrentSubscriptionCard({
 
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:flex sm:items-center sm:gap-8">
           <div>
-            <p className="text-xs font-medium text-zinc-500">Billing Cycle</p>
-            <p className="mt-1 text-sm font-semibold text-zinc-900">{DURATION_LABELS[billingCycle] || "Monthly"}</p>
+            <p className="text-xs font-medium text-apple-ink-muted-48">Billing Cycle</p>
+            <p className="mt-1 text-sm font-semibold text-apple-ink">{DURATION_LABELS[billingCycle] || "Monthly"}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-zinc-500">Next Renewal</p>
+            <p className="text-xs font-medium text-apple-ink-muted-48">Next Renewal</p>
             <div className="mt-1 flex items-center gap-1">
-              <CalendarDays className="h-4 w-4 text-zinc-400" />
-              <p className="text-sm font-semibold text-zinc-900">
+              <CalendarDays className="h-4 w-4 text-apple-ink-muted-48" />
+              <p className="text-sm font-semibold text-apple-ink">
                 {renewalDate
                   ? new Date(renewalDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                   : "—"}
@@ -100,7 +100,7 @@ export function CurrentSubscriptionCard({
           </div>
           {daysRemaining !== null && (
             <div>
-              <p className="text-xs font-medium text-zinc-500">Days Remaining</p>
+              <p className="text-xs font-medium text-apple-ink-muted-48">Days Remaining</p>
               <p className={cn(
                 "mt-1 text-sm font-semibold",
                 daysRemaining <= 7 ? "text-red-600" : daysRemaining <= 30 ? "text-amber-600" : "text-emerald-600"
@@ -115,8 +115,8 @@ export function CurrentSubscriptionCard({
       <div className="mt-6 flex items-center justify-between border-t border-zinc-100 pt-6">
         <div className="flex items-start gap-3">
           <div>
-            <h4 className="text-sm font-medium text-zinc-900">Auto Renewal</h4>
-            <p className="mt-1 text-sm text-zinc-500">Automatically renew your subscription at the end of the billing cycle.</p>
+            <h4 className="text-sm font-medium text-apple-ink">Auto Renewal</h4>
+            <p className="mt-1 text-sm text-apple-ink-muted-48">Automatically renew your subscription at the end of the billing cycle.</p>
           </div>
         </div>
         <button

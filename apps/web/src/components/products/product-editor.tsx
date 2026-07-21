@@ -261,7 +261,7 @@ export function ProductEditor({
   if ((mode === "edit" || mode === "duplicate") && loadingProduct) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
       </div>
     );
   }
@@ -287,15 +287,15 @@ export function ProductEditor({
         <div className="min-w-0 flex-1">
           {(isEdit || mode === "duplicate") && (
             <section className="mb-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">
+              <h2 className="text-2xl font-semibold tracking-tight text-apple-ink">
                 {form.name || (mode === "duplicate" ? "Duplicate Product" : "Product")}
               </h2>
-              <p className="mt-1 text-sm text-zinc-500">{storeName}</p>
+              <p className="mt-1 text-sm text-apple-ink-muted-48">{storeName}</p>
               <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-                <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 font-medium text-zinc-700">
+                <span className="rounded-full border border-zinc-200 bg-apple-canvas-parchment px-2.5 py-1 font-medium text-apple-ink-muted-80">
                   Status: {form.status}
                 </span>
-                <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 font-medium text-zinc-700">
+                <span className="rounded-full border border-zinc-200 bg-apple-canvas-parchment px-2.5 py-1 font-medium text-apple-ink-muted-80">
                   SKU: {form.sku || "—"}
                 </span>
               </div>
@@ -310,8 +310,8 @@ export function ProductEditor({
                 onClick={() => setActiveTab(tab.id)}
                 className={`shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
                   activeTab === tab.id
-                    ? "border-zinc-900 text-zinc-900"
-                    : "border-transparent text-zinc-500 hover:text-zinc-700"
+                    ? "border-zinc-900 text-apple-ink"
+                    : "border-transparent text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
                 }`}
               >
                 {tab.label}

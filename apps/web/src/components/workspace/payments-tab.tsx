@@ -32,7 +32,7 @@ const methodColors: Record<string, string> = {
   bank: "bg-violet-100 text-violet-600",
   stripe: "bg-indigo-100 text-indigo-600",
   sslcommerz: "bg-amber-100 text-amber-600",
-  manual: "bg-zinc-100 text-zinc-600",
+  manual: "bg-zinc-100 text-apple-ink-muted-80",
 };
 
 export function PaymentsTab({ storeId }: PaymentsTabProps) {
@@ -101,15 +101,15 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
       key: "method", label: "Method",
       render: (m) => {
         const Icon = methodIcons[m.type] || CreditCard;
-        const colorClass = methodColors[m.type] || "bg-zinc-100 text-zinc-600";
+        const colorClass = methodColors[m.type] || "bg-zinc-100 text-apple-ink-muted-80";
         return (
           <div className="flex items-center gap-3">
             <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${colorClass}`}>
               <Icon className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-zinc-900">{m.label}</p>
-              <span className="text-[10px] uppercase font-semibold text-zinc-400">{m.type}</span>
+              <p className="text-sm font-semibold text-apple-ink">{m.label}</p>
+              <span className="text-[10px] uppercase font-semibold text-apple-ink-muted-48">{m.type}</span>
             </div>
           </div>
         );
@@ -117,7 +117,7 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
     },
     {
       key: "account", label: "Account",
-      render: (m) => <span className="text-sm text-zinc-600">{m.accountNumber || "—"}</span>,
+      render: (m) => <span className="text-sm text-apple-ink-muted-80">{m.accountNumber || "—"}</span>,
       hideOnMobile: true,
     },
     {
@@ -133,11 +133,11 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
       render: (m) => (
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <button onClick={() => openEdit(m)}
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
+            className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
             <Pencil className="h-3.5 w-3.5" />
           </button>
           <button onClick={() => setDeleteId(m._id)}
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500">
+            className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-red-50 hover:text-red-500">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -149,7 +149,7 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-500">{methods.length} method{methods.length !== 1 ? "s" : ""}</p>
+        <p className="text-sm text-apple-ink-muted-48">{methods.length} method{methods.length !== 1 ? "s" : ""}</p>
         <button onClick={() => { resetForm(); setShowForm(true); }}
           className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
           <Plus className="h-3.5 w-3.5" /> Add Method
@@ -176,7 +176,7 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
         title={editMethod ? "Edit Payment Method" : "Add Payment Method"} size="md">
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Type</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Type</label>
             <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as any })}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
               <option value="cod">Cash on Delivery</option>
@@ -190,17 +190,17 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Label</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Label</label>
             <input type="text" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" placeholder="e.g. bKash Personal" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Account / Merchant Number</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Account / Merchant Number</label>
             <input type="text" value={form.accountNumber ?? ""} onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Account Type</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Account Type</label>
             <select value={form.accountType} onChange={(e) => setForm({ ...form, accountType: e.target.value as any })}
               className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm">
               <option value="personal">Personal</option>
@@ -209,7 +209,7 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-600">Instructions (shown at checkout)</label>
+            <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Instructions (shown at checkout)</label>
             <textarea rows={3} value={form.instructions ?? ""} onChange={(e) => setForm({ ...form, instructions: e.target.value })}
               className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm" placeholder="e.g. Send payment to this number..." />
           </div>
@@ -218,13 +218,13 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
               <input type="checkbox" checked={form.enabled}
                 onChange={(e) => setForm({ ...form, enabled: e.target.checked })}
                 className="rounded border-zinc-300" />
-              <span className="text-xs font-medium text-zinc-700">Enabled</span>
+              <span className="text-xs font-medium text-apple-ink-muted-80">Enabled</span>
             </label>
           </div>
         </div>
         <div className="mt-6 flex justify-end gap-3">
           <button onClick={resetForm}
-            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">Cancel</button>
+            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Cancel</button>
           <button onClick={handleSave} disabled={saving}
             className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}

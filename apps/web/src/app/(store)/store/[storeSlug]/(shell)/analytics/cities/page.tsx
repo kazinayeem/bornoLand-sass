@@ -20,8 +20,8 @@ export default function CitiesPage() {
     return (
       <>
         <div>
-          <h1 className="text-xl font-bold text-zinc-900">Cities</h1>
-          <p className="text-sm text-zinc-500">City-level breakdown of your visitors</p>
+          <h1 className="text-xl font-bold text-apple-ink">Cities</h1>
+          <p className="text-sm text-apple-ink-muted-48">City-level breakdown of your visitors</p>
         </div>
         <AnalyticsEmptyState icon={Building} title="No city data yet" description="City data will appear once visitors browse your store." />
       </>
@@ -33,8 +33,8 @@ export default function CitiesPage() {
   return (
     <>
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Cities</h1>
-        <p className="text-sm text-zinc-500">City-level breakdown of your visitors — this month</p>
+        <h1 className="text-xl font-bold text-apple-ink">Cities</h1>
+        <p className="text-sm text-apple-ink-muted-48">City-level breakdown of your visitors — this month</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -46,13 +46,13 @@ export default function CitiesPage() {
                 <Building className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-zinc-900 truncate">{String(city.city ?? "Unknown")}</p>
-                <p className="text-xs text-zinc-500">{String(city.country ?? "")}</p>
+                <p className="text-sm font-semibold text-apple-ink truncate">{String(city.city ?? "Unknown")}</p>
+                <p className="text-xs text-apple-ink-muted-48">{String(city.country ?? "")}</p>
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between text-xs">
-              <span className="text-zinc-500">{String(city.count ?? 0)} visits</span>
-              <span className="text-zinc-400">{String(city.uniqueVisitors ?? 0)} unique</span>
+              <span className="text-apple-ink-muted-48">{String(city.count ?? 0)} visits</span>
+              <span className="text-apple-ink-muted-48">{String(city.uniqueVisitors ?? 0)} unique</span>
             </div>
             <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
               <div className="h-full rounded-full bg-blue-500" style={{ width: `${(Number(city.count ?? 0) / maxCount) * 100}%` }} />
@@ -63,10 +63,10 @@ export default function CitiesPage() {
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-900">All Cities</h3>
+        <h3 className="mb-3 text-sm font-semibold text-apple-ink">All Cities</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-zinc-50 text-left text-[10px] uppercase tracking-wider text-zinc-500">
+            <thead className="bg-apple-canvas-parchment text-left text-[10px] uppercase tracking-wider text-apple-ink-muted-48">
               <tr>
                 <th className="px-4 py-2">City</th>
                 <th className="px-4 py-2">Country</th>
@@ -79,12 +79,12 @@ export default function CitiesPage() {
               {cities.map((city, i) => {
                 const total = cities.reduce((s, c) => s + Number(c.count ?? 0), 0);
                 return (
-                  <tr key={String(city.city ?? i)} className="hover:bg-zinc-50/50">
+                  <tr key={String(city.city ?? i)} className="hover:bg-apple-canvas-parchment/50">
                     <td className="px-4 py-2.5 text-xs font-medium text-zinc-800">{String(city.city ?? "Unknown")}</td>
-                    <td className="px-4 py-2.5 text-xs text-zinc-500">{String(city.country ?? "—")}</td>
-                    <td className="px-4 py-2.5 text-xs font-medium text-zinc-900">{String(city.count ?? 0)}</td>
-                    <td className="px-4 py-2.5 text-xs text-zinc-500">{String(city.uniqueVisitors ?? 0)}</td>
-                    <td className="px-4 py-2.5 text-xs text-zinc-500">
+                    <td className="px-4 py-2.5 text-xs text-apple-ink-muted-48">{String(city.country ?? "—")}</td>
+                    <td className="px-4 py-2.5 text-xs font-medium text-apple-ink">{String(city.count ?? 0)}</td>
+                    <td className="px-4 py-2.5 text-xs text-apple-ink-muted-48">{String(city.uniqueVisitors ?? 0)}</td>
+                    <td className="px-4 py-2.5 text-xs text-apple-ink-muted-48">
                       {total > 0 ? `${((Number(city.count ?? 0) / total) * 100).toFixed(1)}%` : "—"}
                     </td>
                   </tr>

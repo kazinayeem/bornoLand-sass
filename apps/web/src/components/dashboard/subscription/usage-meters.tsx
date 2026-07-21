@@ -14,12 +14,12 @@ type Props = {
 function UsageBar({ current, limit, percent, label, isDisabled, isUnlimited, icon: Icon }: UsageItem & { icon: React.ElementType; label: string }) {
   if (isDisabled) {
     return (
-      <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
+      <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-apple-canvas-parchment px-3 py-2">
         <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-zinc-400" />
-          <span className="text-sm text-zinc-500">{label}</span>
+          <Icon className="h-4 w-4 text-apple-ink-muted-48" />
+          <span className="text-sm text-apple-ink-muted-48">{label}</span>
         </div>
-        <span className="text-xs font-medium text-zinc-400">Not available</span>
+        <span className="text-xs font-medium text-apple-ink-muted-48">Not available</span>
       </div>
     );
   }
@@ -28,8 +28,8 @@ function UsageBar({ current, limit, percent, label, isDisabled, isUnlimited, ico
     return (
       <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-3 py-2">
         <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-zinc-500" />
-          <span className="text-sm text-zinc-700">{label}</span>
+          <Icon className="h-4 w-4 text-apple-ink-muted-48" />
+          <span className="text-sm text-apple-ink-muted-80">{label}</span>
         </div>
         <span className="text-xs font-medium text-emerald-600">Unlimited</span>
       </div>
@@ -42,10 +42,10 @@ function UsageBar({ current, limit, percent, label, isDisabled, isUnlimited, ico
     <div className="space-y-1">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-zinc-500" />
-          <span className="text-sm text-zinc-700">{label}</span>
+          <Icon className="h-4 w-4 text-apple-ink-muted-48" />
+          <span className="text-sm text-apple-ink-muted-80">{label}</span>
         </div>
-        <span className="text-xs font-medium text-zinc-600">
+        <span className="text-xs font-medium text-apple-ink-muted-80">
           <span className={percent >= 90 ? "text-red-600" : percent >= 75 ? "text-amber-600" : ""}>
             {current}
           </span>
@@ -87,8 +87,8 @@ export function UsageMeters({ usage, storage, planName, trialEndsAt }: Props) {
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Current Plan</p>
-            <p className="text-lg font-bold text-zinc-900">{planName}</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Current Plan</p>
+            <p className="text-lg font-bold text-apple-ink">{planName}</p>
           </div>
           <button className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
             Upgrade
@@ -106,12 +106,12 @@ export function UsageMeters({ usage, storage, planName, trialEndsAt }: Props) {
       {/* Storage */}
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
         <div className="mb-2 flex items-center gap-2">
-          <HardDrive className="h-4 w-4 text-zinc-500" />
-          <span className="text-sm font-medium text-zinc-700">Storage</span>
+          <HardDrive className="h-4 w-4 text-apple-ink-muted-48" />
+          <span className="text-sm font-medium text-apple-ink-muted-80">Storage</span>
         </div>
         <div className="flex items-baseline justify-between">
-          <span className="text-lg font-bold text-zinc-900">{storage.usedFormatted}</span>
-          <span className="text-sm text-zinc-500">/ {storage.limitFormatted}</span>
+          <span className="text-lg font-bold text-apple-ink">{storage.usedFormatted}</span>
+          <span className="text-sm text-apple-ink-muted-48">/ {storage.limitFormatted}</span>
         </div>
         <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-zinc-100">
           <div
@@ -121,12 +121,12 @@ export function UsageMeters({ usage, storage, planName, trialEndsAt }: Props) {
             style={{ width: `${Math.min(storage.percent, 100)}%` }}
           />
         </div>
-        <p className="mt-1 text-xs text-zinc-400">{storage.percent}% used</p>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">{storage.percent}% used</p>
       </div>
 
       {/* Usage meters */}
       <div className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Resource Usage</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Resource Usage</p>
         <div className="space-y-3">
           {usage.map((item) => {
             const { key: _key, label, ...rest } = item;

@@ -55,11 +55,11 @@ export function QuickViewModal({ product, onClose }: Props) {
       <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} aria-label="Close" className="absolute right-3 top-3 z-10 rounded-lg bg-white/80 p-1.5 text-zinc-400 hover:bg-white hover:text-zinc-600 shadow-sm">
+        <button onClick={onClose} aria-label="Close" className="absolute right-3 top-3 z-10 rounded-lg bg-white/80 p-1.5 text-apple-ink-muted-48 hover:bg-white hover:text-apple-ink-muted-80 shadow-sm">
           <X className="h-5 w-5" />
         </button>
 
-        <div className="flex aspect-square items-center justify-center bg-zinc-50 p-8">
+        <div className="flex aspect-square items-center justify-center bg-apple-canvas-parchment p-8">
           {getProductImageUrl(product) ? (
             <div className="relative h-full w-full">
               <SmartImage
@@ -77,12 +77,12 @@ export function QuickViewModal({ product, onClose }: Props) {
 
         <div className="p-5">
           <p className="text-xs font-medium uppercase tracking-wider" style={{ color: primaryColor }}>{product.category}</p>
-          <h2 className="mt-1 text-lg font-bold text-zinc-900">{product.name}</h2>
+          <h2 className="mt-1 text-lg font-bold text-apple-ink">{product.name}</h2>
 
           <div className="mt-2 flex items-center gap-3">
-            <span className="text-2xl font-bold text-zinc-900">{formatCurrency(product.price, settings)}</span>
+            <span className="text-2xl font-bold text-apple-ink">{formatCurrency(product.price, settings)}</span>
             {product.comparePrice && product.comparePrice > product.price && (
-              <span className="text-sm text-zinc-400 line-through">{formatCurrency(product.comparePrice, settings)}</span>
+              <span className="text-sm text-apple-ink-muted-48 line-through">{formatCurrency(product.comparePrice, settings)}</span>
             )}
             {discount > 0 && (
               <span className="rounded-md bg-red-50 px-2 py-0.5 text-xs font-bold text-red-500">-{discount}%</span>
@@ -93,26 +93,26 @@ export function QuickViewModal({ product, onClose }: Props) {
             {[1, 2, 3, 4, 5].map((star) => (
               <Star key={star} className={`h-3.5 w-3.5 ${star <= 4 ? "fill-amber-400 text-amber-400" : "text-zinc-200"}`} />
             ))}
-            <span className="ml-1 text-xs text-zinc-400">(24 reviews)</span>
+            <span className="ml-1 text-xs text-apple-ink-muted-48">(24 reviews)</span>
           </div>
 
-          <p className="mt-3 text-sm leading-relaxed text-zinc-600">{product.description || "No description available."}</p>
+          <p className="mt-3 text-sm leading-relaxed text-apple-ink-muted-80">{product.description || "No description available."}</p>
 
           <div className="mt-4 flex items-center gap-3">
-            <span className="text-xs text-zinc-400">{product.stock} in stock</span>
+            <span className="text-xs text-apple-ink-muted-48">{product.stock} in stock</span>
           </div>
 
           <div className="mt-4 flex items-center gap-3">
             <div className="flex items-center gap-2 rounded-xl border border-zinc-200 p-1">
               <button onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 aria-label="Decrease quantity"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-50">
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                 <Minus className="h-4 w-4" />
               </button>
-              <span className="w-8 text-center text-sm font-medium text-zinc-700">{quantity}</span>
+              <span className="w-8 text-center text-sm font-medium text-apple-ink-muted-80">{quantity}</span>
               <button onClick={() => setQuantity(quantity + 1)}
                 aria-label="Increase quantity"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-50">
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                 <Plus className="h-4 w-4" />
               </button>
             </div>

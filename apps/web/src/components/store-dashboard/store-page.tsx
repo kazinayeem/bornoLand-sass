@@ -5,7 +5,7 @@ import { useStoreContext } from "@/providers/store-context";
 
 export function StorePageCard({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-6">
+    <div className="rounded-2xl border border-apple-hairline bg-white p-4 shadow-sm sm:p-6">
       {children}
     </div>
   );

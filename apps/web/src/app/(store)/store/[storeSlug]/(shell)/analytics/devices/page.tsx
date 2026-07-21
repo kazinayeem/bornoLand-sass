@@ -19,8 +19,8 @@ export default function DevicesPage() {
   return (
     <>
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Devices</h1>
-        <p className="text-sm text-zinc-500">Device type breakdown of your visitors</p>
+        <h1 className="text-xl font-bold text-apple-ink">Devices</h1>
+        <p className="text-sm text-apple-ink-muted-48">Device type breakdown of your visitors</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -49,12 +49,12 @@ export default function DevicesPage() {
               return (
                 <div key={String(d.name)} className="flex items-center gap-4">
                   <div className="rounded-lg bg-zinc-100 p-3">
-                    <Icon className="h-6 w-6 text-zinc-600" />
+                    <Icon className="h-6 w-6 text-apple-ink-muted-80" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-semibold text-zinc-900">{String(d.name)}</span>
-                      <span className="text-sm font-bold text-zinc-900">{String(d.count)}</span>
+                      <span className="text-sm font-semibold text-apple-ink">{String(d.name)}</span>
+                      <span className="text-sm font-bold text-apple-ink">{String(d.count)}</span>
                     </div>
                     <AnalyticsProgressBar name="" value={String(d.percentage)} percentage={Number(d.percentage)} color="bg-blue-500" />
                   </div>

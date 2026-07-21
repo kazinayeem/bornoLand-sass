@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import {
   UserPlus, Store, Package, CreditCard, Globe, DollarSign,
-  ArrowDown,
 } from "lucide-react";
 import { SectionHeading } from "./section-heading";
 
@@ -33,10 +32,9 @@ export function HowItWorks() {
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="mt-12"
         >
-          {/* Desktop Timeline */}
           <div className="hidden lg:block">
             <div className="relative mx-auto max-w-4xl">
-              <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-gradient-to-b from-blue-200 via-indigo-200 to-purple-200" />
+              <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-apple-hairline" />
               <div className="space-y-12">
                 {steps.map((step, i) => (
                   <motion.div
@@ -48,20 +46,20 @@ export function HowItWorks() {
                     className={`relative flex items-center ${i % 2 === 0 ? "flex-row" : "flex-row-reverse"}`}
                   >
                     <div className={`w-[calc(50%-2rem)] ${i % 2 === 0 ? "text-right" : "text-left"}`}>
-                      <div className={`inline-block rounded-2xl border border-zinc-200/60 bg-white p-5 shadow-sm ${
+                      <div className={`inline-block rounded-lg border border-apple-hairline bg-apple-canvas p-5 ${
                         i % 2 === 0 ? "text-right" : "text-left"
                       }`}>
                         <div className={`flex items-center gap-3 mb-1 ${i % 2 === 0 ? "flex-row-reverse" : ""}`}>
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-apple-canvas-parchment">
                             <step.icon className="h-4 w-4 text-blue-600" />
                           </div>
                           <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Step {i + 1}</span>
                         </div>
-                        <h3 className="text-sm font-bold text-zinc-900">{step.title}</h3>
-                        <p className="mt-1 text-xs text-zinc-500">{step.description}</p>
+                        <h3 className="text-sm font-bold text-apple-ink">{step.title}</h3>
+                        <p className="mt-1 text-xs text-apple-ink-muted-48">{step.description}</p>
                       </div>
                     </div>
-                    <div className="absolute left-1/2 z-10 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white shadow-md">
+                    <div className="absolute left-1/2 z-10 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full border-2 border-apple-canvas bg-apple-primary text-xs font-bold text-white">
                       {i + 1}
                     </div>
                     <div className="w-[calc(50%-2rem)]" />
@@ -71,7 +69,6 @@ export function HowItWorks() {
             </div>
           </div>
 
-          {/* Mobile Timeline */}
           <div className="space-y-4 lg:hidden">
             {steps.map((step, i) => (
               <motion.div
@@ -83,17 +80,17 @@ export function HowItWorks() {
                 className="flex gap-4"
               >
                 <div className="flex flex-col items-center">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white shadow-sm">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-apple-primary text-xs font-bold text-white">
                     {i + 1}
                   </div>
-                  {i < steps.length - 1 && <div className="mt-1 w-px flex-1 bg-gradient-to-b from-blue-200 to-indigo-100" />}
+                  {i < steps.length - 1 && <div className="mt-1 w-px flex-1 bg-apple-hairline" />}
                 </div>
-                <div className="mb-4 flex-1 rounded-xl border border-zinc-100 bg-white p-3.5 shadow-sm">
+                <div className="mb-4 flex-1 rounded-xl border border-apple-divider-soft bg-apple-canvas p-3.5">
                   <div className="flex items-center gap-2 mb-0.5">
                     <step.icon className="h-3.5 w-3.5 text-blue-600" />
-                    <h3 className="text-sm font-semibold text-zinc-900">{step.title}</h3>
+                    <h3 className="text-sm font-semibold text-apple-ink">{step.title}</h3>
                   </div>
-                  <p className="text-xs text-zinc-500">{step.description}</p>
+                  <p className="text-xs text-apple-ink-muted-48">{step.description}</p>
                 </div>
               </motion.div>
             ))}

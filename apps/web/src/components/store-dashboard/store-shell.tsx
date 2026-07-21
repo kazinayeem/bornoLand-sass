@@ -34,10 +34,10 @@ export function StoreShell({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f8f9fb]">
+      <div className="flex h-screen items-center justify-center bg-apple-canvas-parchment">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-          <p className="text-sm text-zinc-400">Loading store...</p>
+          <Loader2 className="h-6 w-6 animate-spin text-apple-primary" />
+          <p className="text-sm text-apple-ink-muted-48">Loading store...</p>
         </div>
       </div>
     );
@@ -45,16 +45,16 @@ export function StoreShell({ children }: { children: ReactNode }) {
 
   if (isError || !store) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f8f9fb] p-6">
-        <div className="rounded-2xl border border-[#ececec] bg-white p-10 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100">
+      <div className="flex h-screen items-center justify-center bg-apple-canvas-parchment p-6">
+        <div className="rounded-lg border border-apple-hairline bg-apple-canvas p-10 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-apple-canvas-parchment">
             <StoreBrandMark store={{ name: "?", shortName: "?", logoUrl: "", brandColor: "#6366f1" }} size={28} />
           </div>
-          <h2 className="text-lg font-semibold text-zinc-900">Store not found</h2>
-          <p className="mt-1.5 text-sm text-zinc-500">This store doesn&apos;t exist or you don&apos;t have access.</p>
+          <h2 className="text-lg font-semibold text-apple-ink">Store not found</h2>
+          <p className="mt-1.5 text-sm text-apple-ink-muted-48">This store doesn&apos;t exist or you don&apos;t have access.</p>
           <Link
             href="/dashboard/stores"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-zinc-800 hover:shadow-lg"
+            className="mt-5 inline-flex items-center gap-2 rounded-pill bg-apple-primary px-5 py-2.5 text-sm font-medium text-apple-on-primary transition-colors hover:bg-apple-primary-focus"
           >
             Back to stores
           </Link>
@@ -64,7 +64,7 @@ export function StoreShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="grid h-screen grid-cols-[auto_1fr] overflow-hidden bg-[#f8f9fb]">
+    <div className="grid h-screen grid-cols-[auto_1fr] overflow-hidden bg-apple-canvas-parchment">
       <StoreBrandingSync store={store} />
 
       {/* ── Desktop Sidebar ──────────────────────────────────── */}
@@ -75,17 +75,17 @@ export function StoreShell({ children }: { children: ReactNode }) {
       {/* ── Main Content Area ────────────────────────────────── */}
       <div className="flex min-w-0 flex-col overflow-hidden">
         {/* Mobile Header */}
-        <div className="flex items-center gap-3 border-b border-[#ececec] bg-white px-4 py-3 lg:hidden">
+        <div className="flex items-center gap-3 border-b border-apple-hairline bg-apple-canvas px-4 py-3 lg:hidden">
           <button
             type="button"
             onClick={() => setMobileNavOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#ececec] transition-colors hover:bg-zinc-50"
+            className="flex h-9 w-9 items-center justify-center rounded-sm border border-apple-hairline transition-colors hover:bg-apple-canvas-parchment"
             aria-label="Open store menu"
           >
-            <Menu className="h-4 w-4 text-zinc-600" />
+            <Menu className="h-4 w-4 text-apple-ink-muted-80" />
           </button>
           <StoreBrandMark store={store} size={32} roundedClassName="rounded-lg" />
-          <p className="truncate text-sm font-semibold text-zinc-900">{store.shortName || store.name}</p>
+          <p className="truncate text-sm font-semibold text-apple-ink">{store.shortName || store.name}</p>
         </div>
 
         {/* Scrollable Content */}
@@ -107,12 +107,12 @@ export function StoreShell({ children }: { children: ReactNode }) {
             aria-hidden="true"
           />
           {/* Drawer */}
-          <div className="absolute inset-y-0 left-0 flex w-[280px] animate-slide-in-left flex-col bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#ececec] px-4 py-3">
-              <p className="text-sm font-semibold text-zinc-900">{store.shortName || store.name}</p>
+          <div className="absolute inset-y-0 left-0 flex w-[280px] animate-slide-in-left flex-col bg-apple-canvas">
+            <div className="flex items-center justify-between border-b border-apple-hairline px-4 py-3">
+              <p className="text-sm font-semibold text-apple-ink">{store.shortName || store.name}</p>
               <button
                 onClick={closeMobileNav}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+                className="flex h-8 w-8 items-center justify-center rounded-sm text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80"
                 aria-label="Close menu"
               >
                 <X className="h-4 w-4" />

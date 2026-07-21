@@ -50,27 +50,27 @@ export function OverviewTab({ helpers }: { helpers: TabHelpers }) {
       {/* Store Info Grid */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {infoCards.map((card) => (
-          <div key={card.label} className="rounded-xl border border-zinc-100 bg-zinc-50/50 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">{card.label}</p>
-            <p className={`mt-1 font-semibold text-zinc-900 ${card.mono ? "font-mono text-xs" : "text-sm"}`}>
+          <div key={card.label} className="rounded-xl border border-zinc-100 bg-apple-canvas-parchment/50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-apple-ink-muted-48">{card.label}</p>
+            <p className={`mt-1 font-semibold text-apple-ink ${card.mono ? "font-mono text-xs" : "text-sm"}`}>
               {card.value}
             </p>
-            {card.sub && <p className="mt-0.5 text-xs text-zinc-500">{card.sub}</p>}
+            {card.sub && <p className="mt-0.5 text-xs text-apple-ink-muted-48">{card.sub}</p>}
           </div>
         ))}
       </div>
 
       {/* Usage Stats */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-zinc-700">Usage Overview</h3>
+        <h3 className="mb-3 text-sm font-semibold text-apple-ink-muted-80">Usage Overview</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map((card) => (
             <div key={card.label} className="rounded-xl border border-zinc-100 bg-white p-4">
-              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-400">
+              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-apple-ink-muted-48">
                 <card.icon className="h-3.5 w-3.5" />
                 {card.label}
               </div>
-              <p className="mt-1 text-lg font-semibold text-zinc-900">{card.value}</p>
+              <p className="mt-1 text-lg font-semibold text-apple-ink">{card.value}</p>
             </div>
           ))}
         </div>
@@ -80,8 +80,8 @@ export function OverviewTab({ helpers }: { helpers: TabHelpers }) {
       {usage && (
         <div className="rounded-xl border border-zinc-100 bg-white p-4">
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium text-zinc-700">Storage</span>
-            <span className="text-zinc-500">
+            <span className="font-medium text-apple-ink-muted-80">Storage</span>
+            <span className="text-apple-ink-muted-48">
               {usage.storageUsedFormatted} / {usage.storageLimitFormatted}
             </span>
           </div>
@@ -93,7 +93,7 @@ export function OverviewTab({ helpers }: { helpers: TabHelpers }) {
               style={{ width: `${Math.min(usage.storagePercent, 100)}%` }}
             />
           </div>
-          <p className="mt-1 text-right text-xs text-zinc-400">{usage.storagePercent}% used</p>
+          <p className="mt-1 text-right text-xs text-apple-ink-muted-48">{usage.storagePercent}% used</p>
         </div>
       )}
     </div>

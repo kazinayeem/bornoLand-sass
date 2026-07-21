@@ -40,7 +40,7 @@ export function HeaderBar({ section }: { section: SectionData }) {
                   {storeName[0]}
                 </div>
               )}
-              {showName && <span className="text-lg font-bold text-zinc-900">{storeName}</span>}
+              {showName && <span className="text-lg font-bold text-apple-ink">{storeName}</span>}
             </BuilderLink>
           </div>
           <div className="hidden items-center gap-6 md:flex">
@@ -48,7 +48,7 @@ export function HeaderBar({ section }: { section: SectionData }) {
               <BuilderLink
                 key={link.text}
                 href={link.url}
-                className="text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900"
+                className="text-sm font-medium text-apple-ink-muted-48 transition-colors hover:text-apple-ink"
               >
                 {link.text}
               </BuilderLink>

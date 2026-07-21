@@ -124,8 +124,8 @@ export function OverviewTab({ storeId, store }: OverviewTabProps) {
                   <Icon className={`h-4 w-4 ${stat.color}`} />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-zinc-900">{stat.value}</p>
-              <p className="mt-0.5 text-xs font-medium text-zinc-500">{stat.label}</p>
+              <p className="text-2xl font-bold text-apple-ink">{stat.value}</p>
+              <p className="mt-0.5 text-xs font-medium text-apple-ink-muted-48">{stat.label}</p>
             </motion.div>
           );
         })}
@@ -141,12 +141,12 @@ export function OverviewTab({ storeId, store }: OverviewTabProps) {
             transition={{ delay: 0.2 + i * 0.05 }}
             className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
           >
-            <h3 className="text-base font-semibold text-zinc-900 mb-4">{card.title}</h3>
+            <h3 className="text-base font-semibold text-apple-ink mb-4">{card.title}</h3>
             <div className="space-y-3">
               {card.items.map((item) => (
-                <div key={item.label} className="flex items-center justify-between rounded-xl bg-zinc-50 px-4 py-2.5">
-                  <span className="text-sm text-zinc-500">{item.label}</span>
-                  <span className="text-sm font-medium text-zinc-900 max-w-[60%] truncate text-right">
+                <div key={item.label} className="flex items-center justify-between rounded-xl bg-apple-canvas-parchment px-4 py-2.5">
+                  <span className="text-sm text-apple-ink-muted-48">{item.label}</span>
+                  <span className="text-sm font-medium text-apple-ink max-w-[60%] truncate text-right">
                     {item.value}
                   </span>
                 </div>
@@ -163,15 +163,15 @@ export function OverviewTab({ storeId, store }: OverviewTabProps) {
         transition={{ delay: 0.3 }}
         className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm"
       >
-        <h3 className="text-base font-semibold text-zinc-900 mb-4">Quick Stats</h3>
+        <h3 className="text-base font-semibold text-apple-ink mb-4">Quick Stats</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex items-center gap-3 rounded-xl border border-zinc-100 p-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100">
               <Package className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-xs text-zinc-500">Products / Order</p>
-              <p className="text-sm font-semibold text-zinc-900">
+              <p className="text-xs text-apple-ink-muted-48">Products / Order</p>
+              <p className="text-sm font-semibold text-apple-ink">
                 {store.orderCount && store.orderCount > 0
                   ? ((store.productCount ?? 0) / store.orderCount).toFixed(1)
                   : "—"}
@@ -183,8 +183,8 @@ export function OverviewTab({ storeId, store }: OverviewTabProps) {
               <BarChart3 className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-xs text-zinc-500">Revenue / Order</p>
-              <p className="text-sm font-semibold text-zinc-900">
+              <p className="text-xs text-apple-ink-muted-48">Revenue / Order</p>
+              <p className="text-sm font-semibold text-apple-ink">
                 {store.orderCount && store.orderCount > 0
                   ? formatBDT((store.revenueBDT ?? 0) / store.orderCount)
                   : "—"}
@@ -196,8 +196,8 @@ export function OverviewTab({ storeId, store }: OverviewTabProps) {
               <Users className="h-5 w-5 text-violet-600" />
             </div>
             <div>
-              <p className="text-xs text-zinc-500">Revenue / Product</p>
-              <p className="text-sm font-semibold text-zinc-900">
+              <p className="text-xs text-apple-ink-muted-48">Revenue / Product</p>
+              <p className="text-sm font-semibold text-apple-ink">
                 {store.productCount && store.productCount > 0
                   ? formatBDT((store.revenueBDT ?? 0) / store.productCount)
                   : "—"}
@@ -209,8 +209,8 @@ export function OverviewTab({ storeId, store }: OverviewTabProps) {
               <Activity className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-xs text-zinc-500">Order Rate</p>
-              <p className="text-sm font-semibold text-zinc-900">
+              <p className="text-xs text-apple-ink-muted-48">Order Rate</p>
+              <p className="text-sm font-semibold text-apple-ink">
                 {store.productCount && store.productCount > 0
                   ? `${((store.orderCount ?? 0) / store.productCount * 100).toFixed(1)}%`
                   : "—"}

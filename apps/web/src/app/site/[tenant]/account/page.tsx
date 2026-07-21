@@ -40,12 +40,12 @@ export default function AccountPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-4 rounded-2xl border p-6"
           style={{ borderColor: "#e4e4e7" }}>
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-2xl font-bold text-zinc-700">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-2xl font-bold text-apple-ink-muted-80">
             {customer.name[0].toUpperCase()}
           </div>
           <div className="flex-1">
-            <h1 className="text-xl font-bold text-zinc-900">{customer.name}</h1>
-            <p className="mt-1 flex items-center gap-1 text-sm text-zinc-500">
+            <h1 className="text-xl font-bold text-apple-ink">{customer.name}</h1>
+            <p className="mt-1 flex items-center gap-1 text-sm text-apple-ink-muted-48">
               <Mail className="h-3.5 w-3.5" /> {customer.email}
             </p>
           </div>
@@ -61,11 +61,11 @@ export default function AccountPage() {
               className="flex items-center gap-4 rounded-xl border p-4 transition-all hover:shadow-sm"
               style={{ borderColor: "#e4e4e7" }}>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100">
-                <link.icon className="h-5 w-5 text-zinc-600" />
+                <link.icon className="h-5 w-5 text-apple-ink-muted-80" />
               </div>
               <div className="flex-1">
-                <p className="font-medium text-zinc-900">{link.label}</p>
-                <p className="text-xs text-zinc-500">{link.desc}</p>
+                <p className="font-medium text-apple-ink">{link.label}</p>
+                <p className="text-xs text-apple-ink-muted-48">{link.desc}</p>
               </div>
               <ChevronRight className="h-5 w-5 text-zinc-300" />
             </Link>

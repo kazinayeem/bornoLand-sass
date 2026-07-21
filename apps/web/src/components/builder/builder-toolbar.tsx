@@ -201,16 +201,16 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
   ];
 
   return (
-    <header className="sticky top-0 z-40 flex min-h-16 flex-col gap-2 border-b border-zinc-200/70 bg-white/90 px-3 py-2 shadow-[0_1px_0_rgba(255,255,255,0.75)] backdrop-blur-xl">
+    <header className="sticky top-0 z-40 flex min-h-16 flex-col gap-2 border-b border-apple-hairline/70 bg-apple-canvas/90 px-3 py-2 backdrop-blur-xl">
       <div className="flex items-center justify-between gap-2">
       {/* Left */}
       <div className="flex min-w-0 items-center gap-2">
-        <button onClick={onBack} className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
+        <button onClick={onBack} className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="h-4 w-px bg-zinc-200" />
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className="max-w-[140px] truncate text-sm font-semibold text-zinc-900">{store.shortName || store.name}</span>
+          <span className="max-w-[140px] truncate text-sm font-semibold text-apple-ink">{store.shortName || store.name}</span>
         </div>
         {/* Save status pill */}
         <div className="flex items-center gap-1.5 ml-2">
@@ -227,7 +227,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
             </span>
           )}
           {!saving && !lastSaveError && isDirty && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500 border border-zinc-200/50">
+            <span className="inline-flex items-center gap-1 rounded-full bg-apple-canvas-parchment px-2 py-0.5 text-[10px] font-medium text-apple-ink-muted-48 border border-apple-hairline/50">
               Unsaved
             </span>
           )}
@@ -242,7 +242,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
       {/* Center */}
         <div className="hidden items-center gap-1 md:flex">
         {/* Editing Zone Switcher */}
-        <div className="flex rounded-lg border border-zinc-200 bg-white p-0.5">
+        <div className="flex rounded-lg border border-apple-hairline bg-apple-canvas p-0.5">
           {[
             { key: "body" as const, label: "Body", icon: Layers },
             { key: "header" as const, label: "Header", icon: PanelRightOpen },
@@ -250,7 +250,7 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
           ].map(({ key, label, icon: Icon }) => (
             <button key={key} title={label} onClick={() => dispatch(setEditingZone(key))}
               className={cn("rounded-md px-2 py-1 text-[10px] font-medium transition-colors inline-flex items-center gap-1",
-                editingZone === key ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-600")}>
+                editingZone === key ? "bg-apple-canvas-parchment text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80")}>
               <Icon className="h-3 w-3" />
               {label}
             </button>
@@ -259,10 +259,10 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
         <div className="h-4 w-px bg-zinc-200 mx-1" />
 
         {/* Device switcher */}
-        <div className="flex rounded-lg border border-zinc-200 bg-white p-0.5">
+        <div className="flex rounded-lg border border-apple-hairline bg-apple-canvas p-0.5">
           {devices.map(({ key, icon: Icon, label }) => (
             <button key={key} title={label} onClick={() => dispatch(setDevice(key))}
-              className={cn("rounded-md p-1.5 transition-colors", device === key ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-600")}>
+              className={cn("rounded-md p-1.5 transition-colors", device === key ? "bg-apple-canvas-parchment text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80")}>
               <Icon className="h-3.5 w-3.5" />
             </button>
           ))}
@@ -271,61 +271,61 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
 
         {/* Undo/Redo */}
         <button onClick={() => dispatch(undoBuilder())} disabled={pastCount === 0}
-          className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-30 transition-all">
+          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-30 transition-all">
           <Undo2 className="h-3.5 w-3.5" />
         </button>
         <button onClick={() => dispatch(redoBuilder())} disabled={futureCount === 0}
-          className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-30 transition-all">
+          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-30 transition-all">
           <Redo2 className="h-3.5 w-3.5" />
         </button>
 
         <div className="h-4 w-px bg-zinc-200 mx-1" />
 
         {/* Zoom */}
-        <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1">
-          <button type="button" onClick={() => dispatch(setZoom(zoom - 25))} className="rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700" title="Zoom out"><ZoomOut className="h-3 w-3" /></button>
+        <div className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1">
+          <button type="button" onClick={() => dispatch(setZoom(zoom - 25))} className="rounded p-0.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80" title="Zoom out"><ZoomOut className="h-3 w-3" /></button>
           <select value={zoom} onChange={(e) => dispatch(setZoom(Number(e.target.value)))}
-            className="bg-transparent text-[11px] text-zinc-600 outline-none w-12">
+            className="bg-transparent text-[11px] text-apple-ink-muted-80 outline-none w-12">
             {[25, 50, 75, 90, 100, 125, 150, 200, 300, 400].map((v) => <option key={v} value={v}>{v}%</option>)}
           </select>
-          <button type="button" onClick={() => dispatch(setZoom(zoom + 25))} className="rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700" title="Zoom in"><ZoomIn className="h-3 w-3" /></button>
+          <button type="button" onClick={() => dispatch(setZoom(zoom + 25))} className="rounded p-0.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80" title="Zoom in"><ZoomIn className="h-3 w-3" /></button>
         </div>
 
         <div className="h-4 w-px bg-zinc-200 mx-1" />
 
         {/* Quick add */}
         <button onClick={() => onOpenSectionLibrary?.()}
-          className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50">
+          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
           <Plus className="h-3.5 w-3.5" /> Add
         </button>
 
         {/* Tools */}
         <button onClick={() => dispatch(toggleGuides())}
-          className={cn("rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-all", showGuides ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50")}
+          className={cn("rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-all", showGuides ? "border-zinc-900 bg-zinc-900 text-white" : "border-apple-hairline bg-apple-canvas text-apple-ink-muted-80 hover:bg-apple-canvas-parchment")}
           title="Show guides">
           Guides
         </button>
 
         {/* History drawer */}
         <button onClick={() => setHistoryOpen(true)}
-          className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50">
+          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
           <History className="h-3.5 w-3.5" /> History
         </button>
 
         {/* Export/Import */}
         <button onClick={handleExport}
-          className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50">
+          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
           <Download className="h-3.5 w-3.5" />
         </button>
         <button onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50">
+          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
           <Upload className="h-3.5 w-3.5" />
         </button>
         <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
 
         <div className="h-4 w-px bg-zinc-200 mx-1" />
         <button onClick={onClearPage}
-          className="flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-50">
+          className="flex items-center gap-1 rounded-lg border border-red-200 bg-apple-canvas px-2 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-50">
           <Trash2 className="h-3.5 w-3.5" /> Clear
         </button>
       </div>
@@ -334,32 +334,32 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
       <div className="flex items-center gap-1.5">
         {/* Search */}
         <button onClick={() => setCommandPaletteOpen((isOpen) => !isOpen)}
-          className="hidden lg:flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] text-zinc-500">
+          className="hidden lg:flex items-center gap-1.5 rounded-lg border border-apple-hairline bg-apple-canvas px-2.5 py-1.5 text-[11px] text-apple-ink-muted-48">
           <Search className="h-3 w-3" /> Search
-          <span className="rounded bg-zinc-100 px-1 py-0.5 text-[9px] text-zinc-400">⌘K</span>
+          <span className="rounded bg-apple-canvas-parchment px-1 py-0.5 text-[9px] text-apple-ink-muted-48">⌘K</span>
         </button>
 
         <div className="h-4 w-px bg-zinc-200" />
 
         <button onClick={() => setStylesOpen(true)}
-          className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50">
+          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">
           <Palette className="h-3.5 w-3.5" /> Styles
         </button>
 
         <button onClick={handlePreview}
-          className="hidden items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50 lg:flex">
+          className="hidden items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment lg:flex">
           <ExternalLink className="h-3.5 w-3.5" /> Preview
         </button>
 
         <button disabled
-          className="hidden items-center gap-1 rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-[11px] font-medium text-zinc-400 lg:flex"
+          className="hidden items-center gap-1 rounded-lg border border-dashed border-apple-hairline bg-apple-canvas-parchment px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-48 lg:flex"
           title="AI assistant coming soon">
           <Sparkles className="h-3.5 w-3.5" /> AI Assistant
         </button>
 
         {/* Save */}
         <button onClick={handleSave} disabled={saving || !isDirty}
-          className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-30">
+          className="flex items-center gap-1 rounded-lg border border-apple-hairline bg-apple-canvas px-2.5 py-1.5 text-[11px] font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-30">
           {saving ? <div className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" /> : <Save className="h-3.5 w-3.5" />}
           Save
         </button>
@@ -380,17 +380,17 @@ export function BuilderToolbar({ onBack, saving, publishing, isDirty, onOpenSect
       <Drawer open={historyOpen} onClose={() => setHistoryOpen(false)} title="History & Snapshots" description="Restore previous builder snapshots." side="right" size="lg">
         <div className="space-y-2">
           {historySnapshots.length === 0 && (
-            <div className="rounded-xl border border-dashed border-zinc-200 p-6 text-center text-sm text-zinc-500">No history yet. Start editing sections to create snapshots.</div>
+            <div className="rounded-xl border border-dashed border-apple-hairline p-6 text-center text-sm text-apple-ink-muted-48">No history yet. Start editing sections to create snapshots.</div>
           )}
           {[...historySnapshots].reverse().map((snapshot, index) => {
             const originalIndex = historySnapshots.length - 1 - index;
             const totalSections = (snapshot.sections?.length ?? 0) + (snapshot.headerSections?.length ?? 0) + (snapshot.footerSections?.length ?? 0);
             return (
-              <div key={originalIndex} className="rounded-xl border border-zinc-200 bg-white p-3.5">
+              <div key={originalIndex} className="rounded-xl border border-apple-hairline bg-apple-canvas p-3.5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-medium text-zinc-900">Snapshot {historySnapshots.length - index}</p>
-                    <p className="mt-0.5 text-xs text-zinc-500">{totalSections} sections</p>
+                    <p className="text-sm font-medium text-apple-ink">Snapshot {historySnapshots.length - index}</p>
+                    <p className="mt-0.5 text-xs text-apple-ink-muted-48">{totalSections} sections</p>
                   </div>
                   <button onClick={() => { dispatch(restoreHistorySnapshot(snapshot)); setHistoryOpen(false); }}
                     className="rounded-lg bg-zinc-900 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-zinc-800">

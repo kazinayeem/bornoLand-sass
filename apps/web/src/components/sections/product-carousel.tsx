@@ -27,8 +27,8 @@ export function ProductCarousel({ section }: { section: SectionData }) {
           <SectionTitle title={p.title || "Products"} subtitle={p.subtitle || ""} textColor={p.textColor} textAlignment={p.textAlignment} />
           {p.showArrows !== "false" && (
             <div className="flex gap-1">
-              <button onClick={() => scroll("left")} className="rounded-lg border border-zinc-200 p-2 hover:bg-zinc-50"><ChevronLeft className="h-4 w-4" /></button>
-              <button onClick={() => scroll("right")} className="rounded-lg border border-zinc-200 p-2 hover:bg-zinc-50"><ChevronRight className="h-4 w-4" /></button>
+              <button onClick={() => scroll("left")} className="rounded-lg border border-zinc-200 p-2 hover:bg-apple-canvas-parchment"><ChevronLeft className="h-4 w-4" /></button>
+              <button onClick={() => scroll("right")} className="rounded-lg border border-zinc-200 p-2 hover:bg-apple-canvas-parchment"><ChevronRight className="h-4 w-4" /></button>
             </div>
           )}
         </div>

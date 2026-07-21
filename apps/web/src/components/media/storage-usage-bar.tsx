@@ -30,8 +30,8 @@ export function StorageUsageBar({
     return (
       <div className="min-w-[180px] space-y-1.5">
         <div className="flex items-center justify-between gap-3 text-xs">
-          <span className="font-medium text-zinc-600">Storage</span>
-          <span className="tabular-nums text-zinc-500">
+          <span className="font-medium text-apple-ink-muted-80">Storage</span>
+          <span className="tabular-nums text-apple-ink-muted-48">
             {noStorage
               ? "Not included"
               : stats.unlimited
@@ -62,10 +62,10 @@ export function StorageUsageBar({
   }
 
   return (
-    <div className="space-y-2 rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm">
+    <div className="space-y-2 rounded-2xl border border-apple-hairline bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-2 text-sm">
-        <span className="font-semibold text-zinc-900">Storage usage</span>
-        <span className="tabular-nums text-zinc-500">
+        <span className="font-semibold text-apple-ink">Storage usage</span>
+        <span className="tabular-nums text-apple-ink-muted-48">
           {noStorage
             ? "Not included"
             : stats.unlimited
@@ -91,7 +91,7 @@ export function StorageUsageBar({
           />
         </div>
       ) : null}
-      <p className="text-xs text-zinc-500">
+      <p className="text-xs text-apple-ink-muted-48">
         {noStorage
           ? "Your current plan does not include media storage."
           : `${stats.fileCount} files · ${stats.imageCount} images · ${stats.documentCount} documents

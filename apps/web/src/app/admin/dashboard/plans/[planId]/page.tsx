@@ -27,7 +27,7 @@ export default function PlanBuilderPage({ params }: { params: Promise<{ planId: 
   if (!plan) {
     return (
       <div className="rounded-2xl border border-zinc-200 bg-white p-12 text-center">
-        <p className="text-zinc-600">Plan not found.</p>
+        <p className="text-apple-ink-muted-80">Plan not found.</p>
         <Link href="/admin/dashboard/plans" className="mt-4 inline-block text-sm text-blue-600 hover:underline">
           Back to plans
         </Link>
@@ -39,7 +39,7 @@ export default function PlanBuilderPage({ params }: { params: Promise<{ planId: 
     <div className="space-y-6">
       <Link
         href="/admin/dashboard/plans"
-        className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-800"
+        className="inline-flex items-center gap-1.5 text-sm text-apple-ink-muted-48 hover:text-zinc-800"
       >
         <ArrowLeft className="h-4 w-4" />
         All plans

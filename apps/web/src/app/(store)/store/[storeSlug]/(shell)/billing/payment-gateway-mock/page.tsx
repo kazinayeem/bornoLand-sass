@@ -13,7 +13,7 @@ export default function PaymentGatewayMockPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
         </div>
       }
     >

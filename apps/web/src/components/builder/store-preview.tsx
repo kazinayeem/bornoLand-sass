@@ -195,26 +195,26 @@ export function StorePreview({ store, theme, products = [], categories = [], set
     <div ref={canvasScrollerRef} onScroll={syncCanvasMetrics} onWheel={handleCanvasWheel} onDoubleClick={(event) => { if (event.target === event.currentTarget) dispatch(setZoom(100)); }} className="relative flex items-start justify-center overflow-x-hidden overflow-y-auto p-2 sm:p-3"
       style={{ backgroundColor: theme.darkMode ? "#09090b" : "#f4f4f5", minHeight: "100%", backgroundImage: showGrid ? "linear-gradient(rgba(59,130,246,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,.14) 1px, transparent 1px)" : undefined, backgroundSize: showGrid ? "20px 20px" : undefined }}>
       {showGuides && <><div className="pointer-events-none fixed inset-y-0 left-1/2 z-20 w-px bg-pink-400/60" /><div className="pointer-events-none fixed inset-x-0 top-1/2 z-20 h-px bg-pink-400/60" /></>}
-      {showGuides && <div className="pointer-events-none absolute left-0 top-0 z-20 h-5 w-full border-b border-zinc-300 bg-white/80 text-[9px] text-zinc-400">0&nbsp;&nbsp;&nbsp;&nbsp;100&nbsp;&nbsp;&nbsp;&nbsp;200&nbsp;&nbsp;&nbsp;&nbsp;300&nbsp;&nbsp;&nbsp;&nbsp;400&nbsp;&nbsp;&nbsp;&nbsp;500</div>}
+      {showGuides && <div className="pointer-events-none absolute left-0 top-0 z-20 h-5 w-full border-b border-zinc-300 bg-white/80 text-[9px] text-apple-ink-muted-48">0&nbsp;&nbsp;&nbsp;&nbsp;100&nbsp;&nbsp;&nbsp;&nbsp;200&nbsp;&nbsp;&nbsp;&nbsp;300&nbsp;&nbsp;&nbsp;&nbsp;400&nbsp;&nbsp;&nbsp;&nbsp;500</div>}
       <div
         className="relative overflow-hidden rounded-[2rem] border border-white/60 bg-white shadow-[0_24px_80px_-40px_rgba(0,0,0,0.32)] transition-all duration-300"
         style={{ width: previewWidth, maxWidth: "100%", transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}>
         {renderZoneLabel()}
         {!isZoneMode && selectedSection && quickEditFields && quickEditMode !== "text" && (
-          <div className="absolute right-3 top-3 z-20 w-72 rounded-2xl border border-zinc-200/80 bg-white/95 p-3 shadow-lg backdrop-blur">
+          <div className="absolute right-3 top-3 z-20 w-72 rounded-2xl border border-apple-hairline bg-white/95 p-3 shadow-lg backdrop-blur">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Quick Edit</p>
-                <p className="text-sm font-semibold text-zinc-900">{quickEditMode === "button" ? "Button editing" : "Image editing"}</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Quick Edit</p>
+                <p className="text-sm font-semibold text-apple-ink">{quickEditMode === "button" ? "Button editing" : "Image editing"}</p>
               </div>
-              <button onClick={() => setQuickEditMode(null)} className="rounded-full p-1.5 text-zinc-400 hover:bg-zinc-100">
+              <button onClick={() => setQuickEditMode(null)} className="rounded-full p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                 {quickEditMode === "button" ? <Copy className="h-3.5 w-3.5" /> : <ImagePlus className="h-3.5 w-3.5" />}
               </button>
             </div>
             <div className="mt-4 space-y-3">
               {quickEditFields.map((field) => (
                 <div key={field.key}>
-                  <label className="mb-1 block text-[11px] font-medium text-zinc-500">{field.label}</label>
+                  <label className="mb-1 block text-[11px] font-medium text-apple-ink-muted-48">{field.label}</label>
                   {field.kind === "image" ? (
                     <BuilderMediaField
                       storeId={store._id}
@@ -232,12 +232,12 @@ export function StorePreview({ store, theme, products = [], categories = [], set
                     <input
                       value={selectedSection.props[field.key] ?? ""}
                       onChange={(event) => updateQuickEditField(field.key, event.target.value)}
-                      className="h-10 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 outline-none transition-colors focus:border-zinc-400 focus:bg-white"
+                      className="h-10 w-full rounded-2xl border border-zinc-200 bg-apple-canvas-parchment px-3 text-sm text-apple-ink outline-none transition-colors focus:border-zinc-400 focus:bg-white"
                     />
                   )}
                 </div>
               ))}
-              <p className="text-[11px] leading-5 text-zinc-500">
+              <p className="text-[11px] leading-5 text-apple-ink-muted-48">
                 Double-click text in the canvas to edit copy directly. Click images or buttons in the preview to jump into focused quick edits instead of opening the full inspector.
               </p>
             </div>
@@ -332,16 +332,16 @@ function SpacingOverlay({ section }: { section: { id: string; style?: { paddingT
       <span className="rounded bg-orange-100 px-1.5 py-0.5 text-orange-700">Margin {margin}</span>
       <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-700">Padding {padding}</span>
       <span className="rounded bg-violet-100 px-1.5 py-0.5 text-violet-700">Gap {gap}</span>
-      <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-600">{Math.round(rect.width)} × {Math.round(rect.height)}</span>
+      <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-apple-ink-muted-80">{Math.round(rect.width)} × {Math.round(rect.height)}</span>
     </div>
   </>;
 }
 
 function CanvasControls({ zoom, showGrid, showGuides, onZoom, onGrid, onGuides, onFit, onReset, onToggleMinimap }: { zoom: number; showGrid: boolean; showGuides: boolean; onZoom: (value: number) => void; onGrid: () => void; onGuides: () => void; onFit: () => void; onReset: () => void; onToggleMinimap: () => void }) {
-  const button = "flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900";
+  const button = "flex h-8 w-8 items-center justify-center rounded-lg text-apple-ink-muted-48 transition hover:bg-apple-canvas-parchment hover:text-apple-ink";
   return <div className="sticky bottom-4 z-40 ml-auto mt-auto flex w-fit items-center gap-1 rounded-xl border border-zinc-200/90 bg-white/95 p-1.5 shadow-xl backdrop-blur">
     <button type="button" className={button} title="Zoom out" onClick={() => onZoom(zoom - 25)}><Minus className="h-3.5 w-3.5" /></button>
-    <button type="button" className="min-w-12 rounded-lg px-1 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-100" title="Reset zoom" onClick={onReset}>{zoom}%</button>
+    <button type="button" className="min-w-12 rounded-lg px-1 text-[11px] font-semibold text-apple-ink-muted-80 hover:bg-apple-canvas-parchment" title="Reset zoom" onClick={onReset}>{zoom}%</button>
     <button type="button" className={button} title="Zoom in" onClick={() => onZoom(zoom + 25)}><Plus className="h-3.5 w-3.5" /></button>
     <i className="mx-0.5 h-5 w-px bg-zinc-200" />
     <button type="button" className={button} title="Fit canvas" onClick={onFit}><Maximize2 className="h-3.5 w-3.5" /></button>
@@ -355,7 +355,7 @@ function MiniMap({ sections, metrics, onNavigate }: { sections: StorefrontSectio
   const height = Math.max(36, Math.min(112, (metrics.clientHeight / metrics.scrollHeight) * 112));
   const top = Math.min(112 - height, (metrics.scrollTop / Math.max(1, metrics.scrollHeight - metrics.clientHeight)) * (112 - height));
   return <button type="button" onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); onNavigate(Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height))); }} className="sticky bottom-4 right-0 z-40 ml-4 mt-auto block h-32 w-24 shrink-0 overflow-hidden rounded-xl border border-zinc-200 bg-white/95 p-2 text-left shadow-xl backdrop-blur" title="Navigate page">
-    <div className="mb-1 flex items-center gap-1 text-[9px] font-semibold text-zinc-500"><Map className="h-3 w-3" /> MAP</div>
+    <div className="mb-1 flex items-center gap-1 text-[9px] font-semibold text-apple-ink-muted-48"><Map className="h-3 w-3" /> MAP</div>
     <div className="relative h-28 overflow-hidden rounded bg-zinc-100 p-1">
       <div className="space-y-1">{sections.map((section, index) => <div key={section.id} className="h-2 rounded bg-zinc-300" style={{ width: `${55 + ((index * 19) % 42)}%` }} />)}</div>
       <div className="absolute left-0 right-0 border border-blue-500 bg-blue-400/15" style={{ top, height }} />

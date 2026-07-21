@@ -142,29 +142,29 @@ export default function CheckoutPage() {
           className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
           <CheckCircle className="h-10 w-10 text-green-600" />
         </motion.div>
-        <h1 className="text-3xl font-bold text-zinc-900">Order Placed!</h1>
-        <p className="mt-2 text-zinc-500">
+        <h1 className="text-3xl font-bold text-apple-ink">Order Placed!</h1>
+        <p className="mt-2 text-apple-ink-muted-48">
           {selectedPm?.type === "cod"
             ? "Pay when you receive your order."
             : `Complete payment using ${PAYMENT_LABELS[selectedPm?.type ?? ""] ?? selectedPm?.label}.`}
         </p>
 
         {selectedPm && selectedPm.type !== "cod" && selectedPm.accountNumber && (
-          <div className="mt-4 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-left">
-            <p className="text-xs font-medium text-zinc-500">Send payment to:</p>
-            <p className="mt-1 text-lg font-bold text-zinc-900">{selectedPm.accountNumber}</p>
+          <div className="mt-4 rounded-xl border border-zinc-100 bg-apple-canvas-parchment p-4 text-left">
+            <p className="text-xs font-medium text-apple-ink-muted-48">Send payment to:</p>
+            <p className="mt-1 text-lg font-bold text-apple-ink">{selectedPm.accountNumber}</p>
             {selectedPm.accountType && (
-              <p className="text-xs text-zinc-400 capitalize">{selectedPm.accountType}</p>
+              <p className="text-xs text-apple-ink-muted-48 capitalize">{selectedPm.accountType}</p>
             )}
             {selectedPm.instructions && (
-              <p className="mt-2 text-xs text-zinc-500">{selectedPm.instructions}</p>
+              <p className="mt-2 text-xs text-apple-ink-muted-48">{selectedPm.instructions}</p>
             )}
           </div>
         )}
 
-        <div className="mt-6 rounded-xl border border-zinc-100 bg-zinc-50 p-4">
-          <p className="text-sm text-zinc-500">Order Number</p>
-          <p className="text-lg font-bold text-zinc-900">{orderSuccess.orderNumber}</p>
+        <div className="mt-6 rounded-xl border border-zinc-100 bg-apple-canvas-parchment p-4">
+          <p className="text-sm text-apple-ink-muted-48">Order Number</p>
+          <p className="text-lg font-bold text-apple-ink">{orderSuccess.orderNumber}</p>
         </div>
 
         <div className="mt-8 flex justify-center gap-3">
@@ -173,7 +173,7 @@ export default function CheckoutPage() {
             View Order
           </Link>
           <Link href="/"
-            className="rounded-xl border border-zinc-200 px-6 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-50">
+            className="rounded-xl border border-zinc-200 px-6 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment">
             Continue Shopping
           </Link>
         </div>
@@ -185,7 +185,7 @@ export default function CheckoutPage() {
     return (
       <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center gap-4 px-4">
         <Loader2 className="h-8 w-8 animate-spin text-zinc-300" />
-        <p className="text-sm text-zinc-400">Loading your cart...</p>
+        <p className="text-sm text-apple-ink-muted-48">Loading your cart...</p>
       </div>
     );
   }
@@ -194,8 +194,8 @@ export default function CheckoutPage() {
     return (
       <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center gap-4 px-4">
         <ShoppingBag className="h-16 w-16 text-zinc-200" />
-        <h2 className="text-xl font-semibold text-zinc-900">Your cart is empty</h2>
-        <p className="text-sm text-zinc-500">Add some items before checking out.</p>
+        <h2 className="text-xl font-semibold text-apple-ink">Your cart is empty</h2>
+        <p className="text-sm text-apple-ink-muted-48">Add some items before checking out.</p>
         <Link href="/" className="flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90">
           <ArrowLeft className="h-4 w-4" /> Continue Shopping
         </Link>
@@ -206,12 +206,12 @@ export default function CheckoutPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center gap-3">
-        <Link href="/cart" className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
+        <Link href="/cart" className="flex h-8 w-8 items-center justify-center rounded-lg text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Checkout</h1>
-          <p className="text-sm text-zinc-500">{items.length} item{items.length !== 1 ? "s" : ""}</p>
+          <h1 className="text-2xl font-bold text-apple-ink">Checkout</h1>
+          <p className="text-sm text-apple-ink-muted-48">{items.length} item{items.length !== 1 ? "s" : ""}</p>
         </div>
       </div>
 
@@ -221,48 +221,48 @@ export default function CheckoutPage() {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               className="rounded-xl border border-zinc-100 p-5">
               <div className="mb-4 flex items-center gap-2">
-                <Truck className="h-5 w-5 text-zinc-700" />
-                <h2 className="font-semibold text-zinc-900">Shipping Address</h2>
+                <Truck className="h-5 w-5 text-apple-ink-muted-80" />
+                <h2 className="font-semibold text-apple-ink">Shipping Address</h2>
               </div>
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">Full Name *</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Full Name *</label>
                     <input type="text" value={form.fullName} onChange={handleChange("fullName")} required
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                      className="h-10 w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-3 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">Phone *</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Phone *</label>
                     <input type="tel" value={form.phone} onChange={handleChange("phone")} required
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                      className="h-10 w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-3 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">Street Address *</label>
+                  <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Street Address *</label>
                   <input type="text" value={form.street} onChange={handleChange("street")} required
-                    className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    className="h-10 w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-3 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">City *</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">City *</label>
                     <input type="text" value={form.city} onChange={handleChange("city")} required
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                      className="h-10 w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-3 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">State</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">State</label>
                     <input type="text" value={form.state} onChange={handleChange("state")}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                      className="h-10 w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-3 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-zinc-600">ZIP</label>
+                    <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">ZIP</label>
                     <input type="text" value={form.zip} onChange={handleChange("zip")}
-                      className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                      className="h-10 w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-3 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">Order Notes</label>
+                  <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Order Notes</label>
                   <textarea value={form.notes} onChange={handleChange("notes")} rows={2} placeholder="Optional"
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                    className="w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-3 py-2 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
                 </div>
               </div>
             </motion.div>
@@ -271,8 +271,8 @@ export default function CheckoutPage() {
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
                 className="rounded-xl border border-zinc-100 p-5">
                 <div className="mb-4 flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-zinc-700" />
-                  <h2 className="font-semibold text-zinc-900">Delivery Area</h2>
+                  <Truck className="h-5 w-5 text-apple-ink-muted-80" />
+                  <h2 className="font-semibold text-apple-ink">Delivery Area</h2>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {deliveryZones.map((zone) => (
@@ -280,19 +280,19 @@ export default function CheckoutPage() {
                       onClick={() => setSelectedZoneId(zone._id)}
                       className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all ${
                         selectedZoneId === zone._id
-                          ? "border-zinc-900 bg-zinc-50"
+                          ? "border-zinc-900 bg-apple-canvas-parchment"
                           : "border-zinc-100 hover:border-zinc-200"
                       }`}>
                       <input type="radio" name="zone" checked={selectedZoneId === zone._id}
                         onChange={() => setSelectedZoneId(zone._id)} className="sr-only" />
                       <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                        selectedZoneId === zone._id ? "bg-zinc-900 text-white" : "bg-zinc-50 text-zinc-400"
+                        selectedZoneId === zone._id ? "bg-zinc-900 text-white" : "bg-apple-canvas-parchment text-apple-ink-muted-48"
                       }`}>
                         <Truck className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-zinc-900">{zone.name}</p>
-                        <p className="text-xs text-zinc-400">{formatCurrency(zone.charge, settings)} · {zone.estimatedDays}</p>
+                        <p className="text-sm font-medium text-apple-ink">{zone.name}</p>
+                        <p className="text-xs text-apple-ink-muted-48">{formatCurrency(zone.charge, settings)} · {zone.estimatedDays}</p>
                       </div>
                     </label>
                   ))}
@@ -304,8 +304,8 @@ export default function CheckoutPage() {
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                 className="rounded-xl border border-zinc-100 p-5">
                 <div className="mb-4 flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-zinc-700" />
-                  <h2 className="font-semibold text-zinc-900">Payment Method</h2>
+                  <CreditCard className="h-5 w-5 text-apple-ink-muted-80" />
+                  <h2 className="font-semibold text-apple-ink">Payment Method</h2>
                 </div>
                 <div className="grid gap-2">
                   {paymentMethods.map((pm) => {
@@ -315,20 +315,20 @@ export default function CheckoutPage() {
                         onClick={() => setSelectedPayment(pm._id)}
                         className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all ${
                           selectedPayment === pm._id
-                            ? "border-zinc-900 bg-zinc-50"
+                            ? "border-zinc-900 bg-apple-canvas-parchment"
                             : "border-zinc-100 hover:border-zinc-200"
                         }`}>
                         <input type="radio" name="payment" checked={selectedPayment === pm._id}
                           onChange={() => setSelectedPayment(pm._id)} className="sr-only" />
                         <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${
-                          selectedPayment === pm._id ? "bg-zinc-900 text-white" : "bg-zinc-50 text-zinc-500"
+                          selectedPayment === pm._id ? "bg-zinc-900 text-white" : "bg-apple-canvas-parchment text-apple-ink-muted-48"
                         }`}>
                           <Icon className="h-4 w-4" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-zinc-900">{pm.label}</p>
+                          <p className="text-sm font-medium text-apple-ink">{pm.label}</p>
                           {pm.accountNumber && (
-                            <p className="text-xs text-zinc-400">{pm.accountNumber}</p>
+                            <p className="text-xs text-apple-ink-muted-48">{pm.accountNumber}</p>
                           )}
                         </div>
                         {!pm.enabled && (
@@ -356,12 +356,12 @@ export default function CheckoutPage() {
 
           <div className="lg:col-span-2">
             <div className="rounded-xl border border-zinc-100 p-5">
-              <h2 className="mb-4 font-semibold text-zinc-900">Order Summary</h2>
+              <h2 className="mb-4 font-semibold text-apple-ink">Order Summary</h2>
 
               <div className="space-y-3">
                 {items.map((item) => (
                   <div key={item.productId} className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-50">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-apple-canvas-parchment">
                       {item.image ? (
                         <img src={item.image} alt={item.name} className="h-full w-full rounded-lg object-cover" />
                       ) : (
@@ -369,10 +369,10 @@ export default function CheckoutPage() {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-zinc-900">{item.name}</p>
-                      <p className="text-xs text-zinc-400">Qty: {item.quantity}</p>
+                      <p className="truncate text-xs font-medium text-apple-ink">{item.name}</p>
+                      <p className="text-xs text-apple-ink-muted-48">Qty: {item.quantity}</p>
                     </div>
-                    <span className="shrink-0 text-xs font-semibold text-zinc-900">
+                    <span className="shrink-0 text-xs font-semibold text-apple-ink">
                       {formatCurrency(item.price * item.quantity, settings)}
                     </span>
                   </div>
@@ -380,32 +380,32 @@ export default function CheckoutPage() {
               </div>
 
               <div className="mt-4 space-y-1.5 border-t border-zinc-100 pt-4 text-sm">
-                <div className="flex justify-between text-zinc-500">
+                <div className="flex justify-between text-apple-ink-muted-48">
                   <span>Subtotal</span>
                   <span>{formatCurrency(subtotal, settings)}</span>
                 </div>
-                <div className="flex justify-between text-zinc-500">
+                <div className="flex justify-between text-apple-ink-muted-48">
                   <span>Delivery ({selectedZone?.name ?? "—"})</span>
                   <span>{deliveryCharge === 0 ? "Free" : formatCurrency(deliveryCharge, settings)}</span>
                 </div>
                 {taxAmount > 0 && (
-                  <div className="flex justify-between text-zinc-500">
+                  <div className="flex justify-between text-apple-ink-muted-48">
                     <span>Tax ({taxRate}%)</span>
                     <span>{formatCurrency(taxAmount, settings)}</span>
                   </div>
                 )}
-                <div className="flex justify-between border-t border-zinc-100 pt-2 font-semibold text-zinc-900">
+                <div className="flex justify-between border-t border-zinc-100 pt-2 font-semibold text-apple-ink">
                   <span>Total</span>
                   <span>{formatCurrency(total, settings)}</span>
                 </div>
               </div>
 
               {selectedPm && selectedPm.type !== "cod" && selectedPm.accountNumber && (
-                <div className="mt-3 rounded-lg border border-zinc-100 bg-zinc-50 p-3">
-                  <p className="text-[11px] font-medium text-zinc-500">Send payment to:</p>
-                  <p className="text-sm font-bold text-zinc-900">{selectedPm.accountNumber}</p>
+                <div className="mt-3 rounded-lg border border-zinc-100 bg-apple-canvas-parchment p-3">
+                  <p className="text-[11px] font-medium text-apple-ink-muted-48">Send payment to:</p>
+                  <p className="text-sm font-bold text-apple-ink">{selectedPm.accountNumber}</p>
                   {selectedPm.accountType && (
-                    <p className="text-[11px] capitalize text-zinc-400">{selectedPm.accountType}</p>
+                    <p className="text-[11px] capitalize text-apple-ink-muted-48">{selectedPm.accountType}</p>
                   )}
                 </div>
               )}

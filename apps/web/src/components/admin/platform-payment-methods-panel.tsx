@@ -62,7 +62,7 @@ export function AdminPlatformPaymentMethodsPanel({ compact = false }: { compact?
           <span
             key={method.type}
             className={`rounded-full px-3 py-1 text-xs font-medium ${
-              method.enabled ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-500"
+              method.enabled ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-apple-ink-muted-48"
             }`}
           >
             {method.label}
@@ -79,12 +79,12 @@ export function AdminPlatformPaymentMethodsPanel({ compact = false }: { compact?
           <div key={method.type} className="rounded-2xl border border-zinc-200 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-semibold text-zinc-900">{method.label}</p>
-                <p className="text-sm text-zinc-500">{method.accountNumber}</p>
+                <p className="font-semibold text-apple-ink">{method.label}</p>
+                <p className="text-sm text-apple-ink-muted-48">{method.accountNumber}</p>
               </div>
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  method.enabled ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-500"
+                  method.enabled ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-apple-ink-muted-48"
                 }`}
               >
                 {method.enabled ? "Enabled" : "Disabled"}
@@ -102,8 +102,8 @@ export function AdminPlatformPaymentMethodsPanel({ compact = false }: { compact?
       </div>
 
       {editing && (
-        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5">
-          <h3 className="text-lg font-semibold text-zinc-900">Edit {editing.label}</h3>
+        <div className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment p-5">
+          <h3 className="text-lg font-semibold text-apple-ink">Edit {editing.label}</h3>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {[
               ["label", "Label"],
@@ -117,7 +117,7 @@ export function AdminPlatformPaymentMethodsPanel({ compact = false }: { compact?
               ["sortOrder", "Sort Order"],
             ].map(([key, label]) => (
               <div key={key}>
-                <label className="mb-1 block text-xs font-medium text-zinc-600">{label}</label>
+                <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">{label}</label>
                 <input
                   type={key === "sortOrder" ? "number" : "text"}
                   value={String(form[key as keyof PlatformPaymentMethod] ?? "")}
@@ -132,7 +132,7 @@ export function AdminPlatformPaymentMethodsPanel({ compact = false }: { compact?
               </div>
             ))}
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-zinc-600">Instructions</label>
+              <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Instructions</label>
               <textarea
                 value={form.instructions ?? ""}
                 onChange={(e) => setForm((prev) => ({ ...prev, instructions: e.target.value }))}
@@ -140,7 +140,7 @@ export function AdminPlatformPaymentMethodsPanel({ compact = false }: { compact?
                 className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm"
               />
             </div>
-            <label className="flex items-center gap-2 text-sm text-zinc-700">
+            <label className="flex items-center gap-2 text-sm text-apple-ink-muted-80">
               <input
                 type="checkbox"
                 checked={form.enabled ?? true}
@@ -162,7 +162,7 @@ export function AdminPlatformPaymentMethodsPanel({ compact = false }: { compact?
             <button
               type="button"
               onClick={() => setEditing(null)}
-              className="rounded-lg border border-zinc-200 px-4 py-2 text-sm text-zinc-600"
+              className="rounded-lg border border-zinc-200 px-4 py-2 text-sm text-apple-ink-muted-80"
             >
               Cancel
             </button>

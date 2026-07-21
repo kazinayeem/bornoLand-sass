@@ -20,10 +20,10 @@ export function ProductHero({ section }: { section: SectionData }) {
         <div className="flex-1 text-center md:text-left">
           {p.badge && <span className="inline-block rounded-full bg-blue-500 px-3 py-1 text-xs font-bold text-white mb-3">{p.badge}</span>}
           {p.productName && <h1 className="text-3xl font-bold sm:text-4xl" style={{ color: p.textColor || "#18181b" }}>{p.productName}</h1>}
-          {p.description && <p className="mt-3 text-sm text-zinc-600">{p.description}</p>}
+          {p.description && <p className="mt-3 text-sm text-apple-ink-muted-80">{p.description}</p>}
           <div className="mt-4 flex items-center justify-center md:justify-start gap-3">
-            {p.productPrice && <span className="text-2xl font-bold text-zinc-900">{p.productPrice}</span>}
-            {p.originalPrice && <span className="text-lg text-zinc-400 line-through">{p.originalPrice}</span>}
+            {p.productPrice && <span className="text-2xl font-bold text-apple-ink">{p.productPrice}</span>}
+            {p.originalPrice && <span className="text-lg text-apple-ink-muted-48 line-through">{p.originalPrice}</span>}
           </div>
           {p.buttonText && (
             <Link href={p.buttonLink || "#"} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white hover:bg-zinc-800">

@@ -74,52 +74,52 @@ export default function AdminOrdersPage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Orders</h2>
-        <p className="mt-1 text-sm text-zinc-500">{total} orders on the platform</p>
+        <h2 className="text-2xl font-bold tracking-tight text-apple-ink">Orders</h2>
+        <p className="mt-1 text-sm text-apple-ink-muted-48">{total} orders on the platform</p>
       </motion.div>
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
           <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search order # or customer..." className="h-10 w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-4 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
         </div>
 
         <div className="relative">
-          <Store className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+          <Store className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48 pointer-events-none" />
           <select value={storeFilter} onChange={(e) => { setStoreFilter(e.target.value); setPage(1); }}
-            className="h-10 w-44 rounded-xl border border-zinc-200 bg-white pl-9 pr-8 text-sm text-zinc-600 appearance-none cursor-pointer focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+            className="h-10 w-44 rounded-xl border border-zinc-200 bg-white pl-9 pr-8 text-sm text-apple-ink-muted-80 appearance-none cursor-pointer focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
             <option value="all">All Stores</option>
             {stores.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
           </select>
-          <ChevronDown className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+          <ChevronDown className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48 pointer-events-none" />
         </div>
 
         <div className="relative">
-          <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+          <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48 pointer-events-none" />
           <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="h-10 w-40 rounded-xl border border-zinc-200 bg-white pl-9 pr-8 text-sm text-zinc-600 appearance-none cursor-pointer focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+            className="h-10 w-40 rounded-xl border border-zinc-200 bg-white pl-9 pr-8 text-sm text-apple-ink-muted-80 appearance-none cursor-pointer focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
             <option value="all">All Status</option>
             {orderStatuses.slice(1).map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
           </select>
-          <ChevronDown className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+          <ChevronDown className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48 pointer-events-none" />
         </div>
 
         <select value={paymentStatusFilter} onChange={(e) => { setPaymentStatusFilter(e.target.value); setPage(1); }}
-          className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-600">
+          className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-apple-ink-muted-80">
           <option value="all">All Payment</option>
           {paymentStatuses.slice(1).map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
         </select>
 
         <input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
-          className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-600 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+          className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-apple-ink-muted-80 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
 
         <input type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setPage(1); }}
-          className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-600 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+          className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-apple-ink-muted-80 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
 
         {(fromDate || toDate || storeFilter !== "all" || statusFilter !== "all" || paymentStatusFilter !== "all" || search) && (
           <button onClick={() => { setSearch(""); setStoreFilter("all"); setStatusFilter("all"); setPaymentStatusFilter("all"); setFromDate(""); setToDate(""); setPage(1); }}
-            className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-500 hover:bg-zinc-50 transition-colors">
+            className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
             Clear
           </button>
         )}
@@ -129,7 +129,7 @@ export default function AdminOrdersPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-zinc-100 bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              <tr className="border-b border-zinc-100 bg-apple-canvas-parchment text-left text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
                 <th className="px-6 py-3">Order #</th>
                 <th className="px-6 py-3">Store</th>
                 <th className="px-6 py-3">Customer</th>
@@ -143,63 +143,63 @@ export default function AdminOrdersPage() {
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {filtered.map((order) => (
-                <tr key={order._id} className="group transition-colors hover:bg-zinc-50">
+                <tr key={order._id} className="group transition-colors hover:bg-apple-canvas-parchment">
                   <td className="px-6 py-3.5">
-                    <span className="text-sm font-medium text-zinc-900">#{order.orderNumber}</span>
+                    <span className="text-sm font-medium text-apple-ink">#{order.orderNumber}</span>
                   </td>
                   <td className="px-6 py-3.5">
-                    <span className="inline-flex items-center gap-1.5 text-sm text-zinc-700">
-                      <Store className="h-3.5 w-3.5 text-zinc-400" />
+                    <span className="inline-flex items-center gap-1.5 text-sm text-apple-ink-muted-80">
+                      <Store className="h-3.5 w-3.5 text-apple-ink-muted-48" />
                       {order.storeId?.name ?? "—"}
                     </span>
                   </td>
                   <td className="px-6 py-3.5">
-                    <span className="text-sm text-zinc-700">{order.customerId?.name ?? "—"}</span>
+                    <span className="text-sm text-apple-ink-muted-80">{order.customerId?.name ?? "—"}</span>
                   </td>
                   <td className="px-6 py-3.5">
-                    <span className="inline-flex items-center gap-1.5 text-sm text-zinc-500">
-                      <ShoppingCart className="h-3.5 w-3.5 text-zinc-400" />
+                    <span className="inline-flex items-center gap-1.5 text-sm text-apple-ink-muted-48">
+                      <ShoppingCart className="h-3.5 w-3.5 text-apple-ink-muted-48" />
                       {order.items?.length ?? 0}
                     </span>
                   </td>
-                  <td className="px-6 py-3.5 text-sm font-medium text-zinc-900">{formatCurrency(order.total ?? 0)}</td>
+                  <td className="px-6 py-3.5 text-sm font-medium text-apple-ink">{formatCurrency(order.total ?? 0)}</td>
                   <td className="px-6 py-3.5">
-                    <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-medium ${statusColors[order.status] ?? "bg-zinc-100 text-zinc-600"}`}>
+                    <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-medium ${statusColors[order.status] ?? "bg-zinc-100 text-apple-ink-muted-80"}`}>
                       {order.status}
                     </span>
                   </td>
                   <td className="px-6 py-3.5">
-                    <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-medium ${paymentColors[order.paymentStatus] ?? "bg-zinc-100 text-zinc-600"}`}>
+                    <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-medium ${paymentColors[order.paymentStatus] ?? "bg-zinc-100 text-apple-ink-muted-80"}`}>
                       {order.paymentStatus}
                     </span>
                   </td>
-                  <td className="px-6 py-3.5 text-sm text-zinc-500">
+                  <td className="px-6 py-3.5 text-sm text-apple-ink-muted-48">
                     {new Date(order.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </td>
                   <td className="px-6 py-3.5">
-                    <button className="rounded-lg p-1.5 text-zinc-400 opacity-0 transition-opacity hover:bg-zinc-100 hover:text-zinc-700 group-hover:opacity-100">
+                    <button className="rounded-lg p-1.5 text-apple-ink-muted-48 opacity-0 transition-opacity hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 group-hover:opacity-100">
                       <Eye className="h-4 w-4" />
                     </button>
                   </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={9} className="px-6 py-12 text-center text-sm text-zinc-500">No orders found</td></tr>
+                <tr><td colSpan={9} className="px-6 py-12 text-center text-sm text-apple-ink-muted-48">No orders found</td></tr>
               )}
             </tbody>
           </table>
         </div>
         <div className="flex items-center justify-between border-t border-zinc-100 px-6 py-3">
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-apple-ink-muted-48">
             {total > 0
               ? `Showing {(page - 1) * 10 + 1}-{Math.min(page * 10, total)} of {total}`
               : "No results"}
           </p>
           <div className="flex gap-2">
             <button disabled={page <= 1} onClick={() => handlePageChange(page - 1)}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-40">Previous</button>
+              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment disabled:opacity-40">Previous</button>
             <button disabled={page >= totalPages} onClick={() => handlePageChange(page + 1)}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-40">Next</button>
+              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment disabled:opacity-40">Next</button>
           </div>
         </div>
       </div>

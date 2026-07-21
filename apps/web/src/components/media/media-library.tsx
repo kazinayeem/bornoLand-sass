@@ -367,7 +367,7 @@ export function MediaLibrary({
       />
 
       {showImportUrl && (
-        <div className="flex gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+        <div className="flex gap-2 rounded-xl border border-zinc-200 bg-apple-canvas-parchment p-3">
           <input
             type="url"
             value={importUrlValue}
@@ -408,7 +408,7 @@ export function MediaLibrary({
 
       {selected.size > 0 && (
         <div className="flex items-center gap-3 rounded-xl border border-red-100 bg-red-50/50 px-4 py-2.5">
-          <span className="text-sm text-zinc-700">{selected.size} selected</span>
+          <span className="text-sm text-apple-ink-muted-80">{selected.size} selected</span>
           <button
             type="button"
             onClick={() => void handleBulkDelete()}
@@ -417,7 +417,7 @@ export function MediaLibrary({
             <Trash2 className="h-4 w-4" />
             Delete selected
           </button>
-          <button type="button" onClick={() => setSelected(new Set())} className="ml-auto text-sm text-zinc-500 hover:text-zinc-700">
+          <button type="button" onClick={() => setSelected(new Set())} className="ml-auto text-sm text-apple-ink-muted-48 hover:text-apple-ink-muted-80">
             Clear
           </button>
         </div>
@@ -439,7 +439,7 @@ export function MediaLibrary({
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               <div className="absolute inset-0 animate-ping rounded-full bg-blue-400/30" />
             </div>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading your media...</p>
+            <p className="text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">Loading your media...</p>
           </div>
         </div>
       ) : showLimitState ? (

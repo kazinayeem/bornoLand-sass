@@ -45,7 +45,7 @@ export function EcommerceFooter({ section }: { section: SectionData }) {
                 <input type="email" placeholder="your@email.com"
                   className="h-9 flex-1 rounded-l-lg border border-zinc-700 bg-transparent px-3 text-xs outline-none"
                   style={{ borderColor: p.textColor ? `${p.textColor}30` : "#27272a" }} />
-                <button className="h-9 rounded-r-lg bg-white px-3 text-xs font-semibold text-zinc-900">→</button>
+                <button className="h-9 rounded-r-lg bg-white px-3 text-xs font-semibold text-apple-ink">→</button>
               </div>
             </div>
           )}

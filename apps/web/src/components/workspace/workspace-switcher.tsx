@@ -35,7 +35,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex w-full items-center gap-2.5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-2.5 text-left transition-all hover:border-zinc-300 hover:bg-white",
+          "flex w-full items-center gap-2.5 rounded-xl border border-apple-hairline bg-apple-canvas-parchment/80 p-2.5 text-left transition-all hover:border-zinc-300 hover:bg-white",
           collapsed && "justify-center p-2"
         )}
         aria-expanded={open}
@@ -47,10 +47,10 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
         {!collapsed && (
           <>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-zinc-900">{workspaceName}</p>
-              <p className="truncate text-xs text-zinc-500">{stores.length} store{stores.length !== 1 ? "s" : ""}</p>
+              <p className="truncate text-sm font-semibold text-apple-ink">{workspaceName}</p>
+              <p className="truncate text-xs text-apple-ink-muted-48">{stores.length} store{stores.length !== 1 ? "s" : ""}</p>
             </div>
-            <ChevronsUpDown className="h-4 w-4 shrink-0 text-zinc-400" />
+            <ChevronsUpDown className="h-4 w-4 shrink-0 text-apple-ink-muted-48" />
           </>
         )}
       </button>
@@ -58,14 +58,14 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
       {open && (
         <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl">
           <div className="border-b border-zinc-100 px-3 py-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Workspace</p>
-            <p className="truncate text-sm font-medium text-zinc-900">{workspaceName}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Workspace</p>
+            <p className="truncate text-sm font-medium text-apple-ink">{workspaceName}</p>
           </div>
 
           <div className="max-h-52 overflow-y-auto p-1.5">
-            <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Stores</p>
+            <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Stores</p>
             {stores.length === 0 ? (
-              <p className="px-2 py-3 text-xs text-zinc-500">No stores yet</p>
+              <p className="px-2 py-3 text-xs text-apple-ink-muted-48">No stores yet</p>
             ) : (
               stores.map((store) => (
                 <button
@@ -75,12 +75,12 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
                     setOpen(false);
                     router.push(`/store/${store.slug}/dashboard`);
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-50"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
                 >
                   <StoreBrandMark store={store} size={28} roundedClassName="rounded-md" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{store.shortName || store.name}</p>
-                    <p className="truncate text-xs text-zinc-400">
+                    <p className="truncate text-xs text-apple-ink-muted-48">
                       {typeof store.planId === "object" && store.planId ? store.planId.name : store.plan}
                     </p>
                   </div>
@@ -94,7 +94,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
             <Link
               href="/dashboard/stores/create"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
             >
               <Plus className="h-4 w-4" />
               Create Store
@@ -102,7 +102,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
             <Link
               href="/dashboard/stores"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
             >
               <Store className="h-4 w-4" />
               All Stores

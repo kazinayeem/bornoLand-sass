@@ -96,7 +96,7 @@ export function LimitsTab({ helpers }: { helpers: TabHelpers }) {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-apple-ink-muted-48">
         Override individual plan limits for this store. Leave a field empty to use the plan default.
         Set to <strong>-1</strong> for unlimited.
       </p>
@@ -108,16 +108,16 @@ export function LimitsTab({ helpers }: { helpers: TabHelpers }) {
         return (
           <div key={group.label} className="rounded-xl border border-zinc-200 bg-white">
             <div className="border-b border-zinc-100 px-5 py-3">
-              <h4 className="text-sm font-semibold text-zinc-700">{group.label}</h4>
+              <h4 className="text-sm font-semibold text-apple-ink-muted-80">{group.label}</h4>
             </div>
             <div className="divide-y divide-zinc-50">
               {groupKeys.map((key) => (
                 <div key={key} className="flex items-center gap-4 px-5 py-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-700">
+                    <p className="text-sm font-medium text-apple-ink-muted-80">
                       {LIMIT_LABELS[key] ?? key}
                     </p>
-                    <p className="text-xs text-zinc-400">
+                    <p className="text-xs text-apple-ink-muted-48">
                       Plan: {getPlanValue(key)} · Override: {getOverrideValue(key)}
                     </p>
                   </div>
@@ -135,7 +135,7 @@ export function LimitsTab({ helpers }: { helpers: TabHelpers }) {
                     />
                     <button
                       onClick={() => resetLimit(key)}
-                      className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500"
+                      className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-red-50 hover:text-red-500"
                       title="Reset to plan default"
                     >
                       <XCircle className="h-4 w-4" />

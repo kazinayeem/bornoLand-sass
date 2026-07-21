@@ -75,8 +75,8 @@ export function AuditCenterPanel({ scope, storeId, title, description, useQuery 
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">{title}</h1>
-          <p className="mt-1 text-sm text-zinc-500">{description}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-apple-ink">{title}</h1>
+          <p className="mt-1 text-sm text-apple-ink-muted-48">{description}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => handleExport("csv")}>
@@ -102,7 +102,7 @@ export function AuditCenterPanel({ scope, storeId, title, description, useQuery 
       />
 
       {(isLoading || isFetching) && (
-        <div className="flex items-center gap-2 text-sm text-zinc-500">
+        <div className="flex items-center gap-2 text-sm text-apple-ink-muted-48">
           <Loader2 className="h-4 w-4 animate-spin" /> Refreshing...
         </div>
       )}
@@ -111,7 +111,7 @@ export function AuditCenterPanel({ scope, storeId, title, description, useQuery 
 
       {pagination && pagination.pages > 1 && (
         <div className="flex items-center justify-between border-t border-zinc-100 pt-4 text-sm">
-          <span className="text-zinc-500">{pagination.total} events</span>
+          <span className="text-apple-ink-muted-48">{pagination.total} events</span>
           <div className="flex gap-2">
             <Button
               type="button"

@@ -22,8 +22,8 @@ export default function ReferrersPage() {
     return (
       <>
         <div>
-          <h1 className="text-xl font-bold text-zinc-900">Referrers</h1>
-          <p className="text-sm text-zinc-500">Websites that refer traffic to your store</p>
+          <h1 className="text-xl font-bold text-apple-ink">Referrers</h1>
+          <p className="text-sm text-apple-ink-muted-48">Websites that refer traffic to your store</p>
         </div>
         <AnalyticsEmptyState icon={Link2} title="No referral data yet" description="Referral traffic appears when other websites link to your store." />
       </>
@@ -35,8 +35,8 @@ export default function ReferrersPage() {
   return (
     <>
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Referrers</h1>
-        <p className="text-sm text-zinc-500">Websites that refer traffic to your store</p>
+        <h1 className="text-xl font-bold text-apple-ink">Referrers</h1>
+        <p className="text-sm text-apple-ink-muted-48">Websites that refer traffic to your store</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -60,17 +60,17 @@ export default function ReferrersPage() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900">All Referrers</h3>
+          <h3 className="mb-3 text-sm font-semibold text-apple-ink">All Referrers</h3>
           <div className="space-y-2">
             {referrers.map((r) => (
-              <div key={String(r._id)} className="flex items-center justify-between rounded-lg bg-zinc-50 p-3 text-xs">
+              <div key={String(r._id)} className="flex items-center justify-between rounded-lg bg-apple-canvas-parchment p-3 text-xs">
                 <div className="flex items-center gap-2">
-                  <Link2 className="h-3.5 w-3.5 text-zinc-400" />
+                  <Link2 className="h-3.5 w-3.5 text-apple-ink-muted-48" />
                   <span className="font-medium text-zinc-800">{String(r.source)}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-zinc-500">{String(r.visits ?? 0)} visits</span>
-                  <span className="text-zinc-400 w-12 text-right">
+                  <span className="text-apple-ink-muted-48">{String(r.visits ?? 0)} visits</span>
+                  <span className="text-apple-ink-muted-48 w-12 text-right">
                     {totalVisits > 0 ? `${((Number(r.visits ?? 0) / totalVisits) * 100).toFixed(1)}%` : "—"}
                   </span>
                 </div>

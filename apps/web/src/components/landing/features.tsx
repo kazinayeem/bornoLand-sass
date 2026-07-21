@@ -60,13 +60,13 @@ export function Features() {
             <motion.div
               key={f.title}
               variants={cardVariants}
-              className="group rounded-2xl border border-zinc-200/60 bg-white p-5 shadow-sm transition-all duration-300 hover:border-blue-200/80 hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-0.5"
+              className="group rounded-lg border border-apple-hairline bg-apple-canvas p-5 transition-colors duration-300 hover:border-blue-200/80"
             >
-              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 transition-colors group-hover:from-blue-100 group-hover:to-indigo-100">
+              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-apple-canvas-parchment transition-colors group-hover:bg-blue-50">
                 <f.icon className="h-4.5 w-4.5 text-blue-600" />
               </div>
-              <h3 className="text-sm font-semibold text-zinc-900">{f.title}</h3>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-500">{f.description}</p>
+              <h3 className="text-sm font-semibold text-apple-ink">{f.title}</h3>
+              <p className="mt-1 text-xs leading-relaxed text-apple-ink-muted-48">{f.description}</p>
             </motion.div>
           ))}
         </motion.div>

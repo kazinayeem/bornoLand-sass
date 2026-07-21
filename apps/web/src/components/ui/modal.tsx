@@ -29,12 +29,26 @@ const sizeClasses = {
   full: "max-w-6xl",
 };
 
-export function Modal({ open, onClose, title, description, children, size = "md", className, showClose = true, stickyHeader, stickyFooter, footer }: ModalProps) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  size = "md",
+  className,
+  showClose = true,
+  stickyHeader,
+  stickyFooter,
+  footer,
+}: ModalProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", handler);
@@ -52,8 +66,11 @@ export function Modal({ open, onClose, title, description, children, size = "md"
       {open && (
         <div className="fixed inset-0 z-[300] flex items-start justify-center overflow-y-auto p-4 pt-8 sm:pt-12">
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-zinc-950/75 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-apple-surface-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div
@@ -61,25 +78,37 @@ export function Modal({ open, onClose, title, description, children, size = "md"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
             className={cn(
-              "relative flex max-h-[90vh] w-full flex-col rounded-3xl border border-zinc-200/80 bg-white shadow-[0_24px_100px_-36px_rgba(15,23,42,0.45)]",
-              sizeClasses[size], className
+              "relative flex max-h-[90vh] w-full flex-col rounded-lg border border-apple-hairline bg-apple-canvas dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2",
+              sizeClasses[size],
+              className
             )}
           >
-            {/* Sticky header */}
             {(hasHeader || showClose) && (
-              <div className={cn(
-                "flex items-start justify-between gap-4 p-6 pb-4",
-                stickyHeader && "sticky top-0 z-10 border-b border-zinc-100 bg-white rounded-t-3xl"
-              )}>
+              <div
+                className={cn(
+                  "flex items-start justify-between gap-4 p-lg pb-4",
+                  stickyHeader &&
+                    "sticky top-0 z-10 rounded-t-lg border-b border-apple-divider-soft bg-apple-canvas dark:bg-apple-surface-tile-2"
+                )}
+              >
                 <div className="min-w-0 flex-1">
-                  {title && <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>}
-                  {description && <p className="mt-1 text-sm text-zinc-500">{description}</p>}
+                  {title && (
+                    <h2 className="text-body-strong text-apple-ink dark:text-apple-body-on-dark">
+                      {title}
+                    </h2>
+                  )}
+                  {description && (
+                    <p className="mt-1 text-caption text-apple-ink-muted-48 dark:text-apple-body-muted">
+                      {description}
+                    </p>
+                  )}
                 </div>
                 {showClose && (
                   <button
                     onClick={onClose}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+                    className="btn-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-apple-surface-chip/64 text-apple-ink transition-colors hover:bg-apple-surface-chip dark:text-apple-body-on-dark"
                     aria-label="Close modal"
                   >
                     <X className="h-4 w-4" />
@@ -88,24 +117,23 @@ export function Modal({ open, onClose, title, description, children, size = "md"
               </div>
             )}
 
-            {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto px-6 pb-6">
-              {children}
-            </div>
+            <div className="flex-1 overflow-y-auto px-lg pb-lg">{children}</div>
 
-            {/* Sticky footer */}
             {footer && (
-              <div className={cn(
-                "px-6 py-4",
-                stickyFooter && "sticky bottom-0 border-t border-zinc-100 bg-white rounded-b-3xl"
-              )}>
+              <div
+                className={cn(
+                  "px-lg py-4",
+                  stickyFooter &&
+                    "sticky bottom-0 rounded-b-lg border-t border-apple-divider-soft bg-apple-canvas dark:bg-apple-surface-tile-2"
+                )}
+              >
                 {footer}
               </div>
             )}
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
-    , document.body,
+    </AnimatePresence>,
+    document.body
   );
 }

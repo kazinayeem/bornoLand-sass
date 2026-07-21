@@ -121,7 +121,7 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
               "mx-3 flex items-center gap-2 rounded-full border shadow-lg transition-all duration-200 whitespace-nowrap",
               isHovered || isClicked
                 ? "bg-blue-500 border-blue-600 text-white px-4 py-2 hover:bg-blue-600 hover:shadow-xl scale-100"
-                : "bg-white border-zinc-300 text-zinc-600 px-3 py-1.5 scale-95"
+                : "bg-white border-zinc-300 text-apple-ink-muted-80 px-3 py-1.5 scale-95"
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -251,7 +251,7 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
       )}
       {contextMenu && (
         <div className="fixed z-[80] w-44 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-2xl" style={{ top: contextMenu.y, left: contextMenu.x }} onClick={(event) => event.stopPropagation()}>
-          <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{selectedLabel ?? "Section"}</p>
+          <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">{selectedLabel ?? "Section"}</p>
           <CanvasMenuItem icon={<Pencil />} label="Edit" onClick={() => { onQuickEditRequest?.({ sectionId: contextMenu.sectionId, mode: "text" }); setContextMenu(null); }} />
           <CanvasMenuItem icon={<Copy />} label="Duplicate" onClick={() => { onSectionAction?.({ sectionId: contextMenu.sectionId, action: "duplicate" }); setContextMenu(null); }} />
           <CanvasMenuItem icon={<Copy />} label="Copy" onClick={() => { onSectionAction?.({ sectionId: contextMenu.sectionId, action: "copy" }); setContextMenu(null); }} />
@@ -267,5 +267,5 @@ export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId
 }
 
 function CanvasMenuItem({ icon, label, onClick, destructive = false }: { icon: React.ReactNode; label: string; onClick: () => void; destructive?: boolean }) {
-  return <button type="button" onClick={onClick} className={cn("flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs font-medium hover:bg-zinc-100", destructive ? "text-red-600 hover:bg-red-50" : "text-zinc-700")}><span className="h-3.5 w-3.5">{icon}</span>{label}</button>;
+  return <button type="button" onClick={onClick} className={cn("flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs font-medium hover:bg-apple-canvas-parchment", destructive ? "text-red-600 hover:bg-red-50" : "text-apple-ink-muted-80")}><span className="h-3.5 w-3.5">{icon}</span>{label}</button>;
 }

@@ -12,13 +12,13 @@ const styles: Record<string, { icon: LucideIcon; label: string; className: strin
   staff_invitation: { icon: UserPlus, label: "Staff invitation", className: "bg-indigo-50 text-indigo-600" },
   invoice_generated: { icon: FileText, label: "Invoice generated", className: "bg-cyan-50 text-cyan-600" },
   security_alert: { icon: ShieldAlert, label: "Security alert", className: "bg-red-50 text-red-600" },
-  system_update: { icon: Bell, label: "System update", className: "bg-zinc-100 text-zinc-600" },
+  system_update: { icon: Bell, label: "System update", className: "bg-zinc-100 text-apple-ink-muted-80" },
   subscription_expiring: { icon: Receipt, label: "Subscription", className: "bg-amber-50 text-amber-600" },
   subscription_expired: { icon: AlertTriangle, label: "Subscription expired", className: "bg-red-50 text-red-600" },
 };
 
 export function getNotificationStyle(type: string) {
-  return styles[type] ?? { icon: Bell, label: type.replace(/_/g, " "), className: "bg-zinc-100 text-zinc-600" };
+  return styles[type] ?? { icon: Bell, label: type.replace(/_/g, " "), className: "bg-zinc-100 text-apple-ink-muted-80" };
 }
 
 export function timeAgo(value: string) {

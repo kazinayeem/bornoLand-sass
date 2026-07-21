@@ -80,7 +80,7 @@ export default function WorkspaceDashboardPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
       </div>
     );
   }
@@ -95,7 +95,7 @@ export default function WorkspaceDashboardPage() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -136,7 +136,7 @@ export default function WorkspaceDashboardPage() {
 
       {/* Visitor Analytics Section */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-zinc-700">Visitor Analytics</h3>
+        <h3 className="mb-3 text-sm font-semibold text-apple-ink-muted-80">Visitor Analytics</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { label: "Visitors Today", value: String(visitorStats?.today ?? 0), icon: Activity, color: "blue", href: "/dashboard/analytics/visitors" },
@@ -175,7 +175,7 @@ export default function WorkspaceDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             {recentStores.length === 0 ? (
-              <p className="py-8 text-center text-sm text-zinc-500">No stores yet. Create your first store to get started.</p>
+              <p className="py-8 text-center text-sm text-apple-ink-muted-48">No stores yet. Create your first store to get started.</p>
             ) : (
               recentStores.map((store) => {
                 const status = resolveStoreStatus(store);
@@ -185,15 +185,15 @@ export default function WorkspaceDashboardPage() {
                     key={store._id}
                     type="button"
                     onClick={() => router.push(`/store/${store.slug}`)}
-                    className="flex w-full items-center justify-between gap-4 rounded-2xl border border-zinc-100 bg-zinc-50/80 px-4 py-3 text-left transition-all hover:border-zinc-200 hover:bg-white"
+                    className="flex w-full items-center justify-between gap-4 rounded-2xl border border-zinc-100 bg-apple-canvas-parchment/80 px-4 py-3 text-left transition-all hover:border-zinc-200 hover:bg-white"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-zinc-900">{store.name}</p>
-                      <p className="truncate text-xs text-zinc-500">{store.slug}</p>
+                      <p className="truncate text-sm font-medium text-apple-ink">{store.name}</p>
+                      <p className="truncate text-xs text-apple-ink-muted-48">{store.slug}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant={config.variant}>{config.label}</Badge>
-                      <ArrowRight className="h-4 w-4 text-zinc-400" />
+                      <ArrowRight className="h-4 w-4 text-apple-ink-muted-48" />
                     </div>
                   </button>
                 );
@@ -209,7 +209,7 @@ export default function WorkspaceDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             {recentActivity.length === 0 ? (
-              <p className="py-8 text-center text-sm text-zinc-500">No activity yet.</p>
+              <p className="py-8 text-center text-sm text-apple-ink-muted-48">No activity yet.</p>
             ) : (
               recentActivity.map((item) => (
                 <div
@@ -217,12 +217,12 @@ export default function WorkspaceDashboardPage() {
                   className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-100 px-4 py-3"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-zinc-900">{item.title}</p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="truncate text-sm font-medium text-apple-ink">{item.title}</p>
+                    <p className="text-xs text-apple-ink-muted-48">
                       {item.description} · {item.time}
                     </p>
                   </div>
-                  <span className="shrink-0 text-sm font-semibold text-zinc-900">{item.meta}</span>
+                  <span className="shrink-0 text-sm font-semibold text-apple-ink">{item.meta}</span>
                 </div>
               ))
             )}
@@ -250,7 +250,7 @@ export default function WorkspaceDashboardPage() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100 transition-colors group-hover:bg-zinc-900 group-hover:text-white">
                   <action.icon className="h-5 w-5" />
                 </div>
-                <span className="text-sm font-medium text-zinc-900">{action.label}</span>
+                <span className="text-sm font-medium text-apple-ink">{action.label}</span>
               </Link>
             ))}
           </div>

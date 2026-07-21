@@ -37,7 +37,7 @@ export default function HelpPage() {
           <Card key={item.title} className="transition-all hover:shadow-md">
             <CardHeader>
               <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
-                <item.icon className="h-5 w-5 text-zinc-600" />
+                <item.icon className="h-5 w-5 text-apple-ink-muted-80" />
               </div>
               <CardTitle className="text-lg">{item.title}</CardTitle>
               <CardDescription>{item.description}</CardDescription>
@@ -45,7 +45,7 @@ export default function HelpPage() {
             <CardContent>
               <Link
                 href={item.href}
-                className="text-sm font-medium text-zinc-900 underline-offset-4 hover:underline"
+                className="text-sm font-medium text-apple-ink underline-offset-4 hover:underline"
               >
                 Learn more
               </Link>

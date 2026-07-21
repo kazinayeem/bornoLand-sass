@@ -85,7 +85,7 @@ export function NewsletterSection({ section }: { section?: StorefrontSectionLike
                 <label htmlFor="newsletter-email" className="sr-only">Email address</label>
                 <input id="newsletter-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                   placeholder={inputPlaceholder}
-                  className="h-12 flex-1 rounded-xl border bg-white px-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="h-12 flex-1 rounded-xl border bg-white px-4 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   style={{ borderColor: `${primaryColor}30` }}
                   onFocus={(e) => e.target.style.borderColor = primaryColor}
                   onBlur={(e) => e.target.style.borderColor = `${primaryColor}30`} />

@@ -60,23 +60,23 @@ export function PlanCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: (index ?? 0) * 0.04 }}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white transition-all hover:-translate-y-0.5 hover:shadow-xl ${
+      className={`group relative flex flex-col overflow-hidden rounded-lg border bg-apple-canvas transition-colors ${
         plan.isRecommended
           ? "border-blue-200 ring-1 ring-blue-400/40"
           : plan.isActive
-            ? "border-zinc-200"
-            : "border-zinc-100 opacity-75"
+            ? "border-apple-hairline"
+            : "border-apple-divider-soft opacity-75"
       }`}
     >
       {plan.isRecommended && (
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-600" />
+        <div className="absolute inset-x-0 top-0 h-1 bg-apple-primary" />
       )}
 
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="truncate text-lg font-bold text-zinc-900">{plan.name}</h3>
+              <h3 className="truncate text-lg font-bold text-apple-ink">{plan.name}</h3>
               {plan.isRecommended && (
                 <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-50">
                   <Star className="mr-1 h-3 w-3" />
@@ -84,24 +84,24 @@ export function PlanCard({
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-zinc-400">/{plan.slug}</p>
+            <p className="text-xs text-apple-ink-muted-48">/{plan.slug}</p>
             {plan.description && (
-              <p className="mt-2 line-clamp-2 text-sm text-zinc-500">{plan.description}</p>
+              <p className="mt-2 line-clamp-2 text-sm text-apple-ink-muted-48">{plan.description}</p>
             )}
           </div>
           <Badge variant={plan.isActive ? "success" : "warning"}>{plan.isActive ? "Active" : "Archived"}</Badge>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-xl bg-zinc-50 p-3">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">Monthly</p>
-            <p className="mt-1 text-xl font-bold text-zinc-900">
+          <div className="rounded-xl bg-apple-canvas-parchment p-3">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-apple-ink-muted-48">Monthly</p>
+            <p className="mt-1 text-xl font-bold text-apple-ink">
               {formatCurrency(plan.priceBDT, { currencySymbol: "৳", currencyPosition: "before", decimalPlaces: 0 })}
             </p>
           </div>
-          <div className="rounded-xl bg-zinc-50 p-3">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">Yearly</p>
-            <p className="mt-1 text-xl font-bold text-zinc-900">
+          <div className="rounded-xl bg-apple-canvas-parchment p-3">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-apple-ink-muted-48">Yearly</p>
+            <p className="mt-1 text-xl font-bold text-apple-ink">
               {yearly > 0
                 ? formatCurrency(yearly, { currencySymbol: "৳", currencyPosition: "before", decimalPlaces: 0 })
                 : "—"}
@@ -136,7 +136,7 @@ export function PlanCard({
         <div className="mt-auto flex flex-wrap gap-2 border-t border-zinc-100 pt-4">
           <Link
             href={`/admin/dashboard/plans/${plan._id}?tab=preview`}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
           >
             <Eye className="h-3.5 w-3.5" />
             View
@@ -151,14 +151,14 @@ export function PlanCard({
           <button
             type="button"
             onClick={() => onDuplicate(plan._id)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
           >
             <Copy className="h-3.5 w-3.5" />
           </button>
           <button
             type="button"
             onClick={() => onArchive(plan._id)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-red-50 hover:text-red-600"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-red-50 hover:text-red-600"
           >
             <Archive className="h-3.5 w-3.5" />
           </button>
@@ -179,9 +179,9 @@ function Metric({
 }) {
   return (
     <div className="flex items-center gap-2 rounded-lg border border-zinc-100 px-2.5 py-2">
-      <Icon className="h-3.5 w-3.5 text-zinc-400" />
+      <Icon className="h-3.5 w-3.5 text-apple-ink-muted-48" />
       <div className="min-w-0">
-        <p className="text-[10px] text-zinc-400">{label}</p>
+        <p className="text-[10px] text-apple-ink-muted-48">{label}</p>
         <p className="truncate font-semibold text-zinc-800">{value}</p>
       </div>
     </div>

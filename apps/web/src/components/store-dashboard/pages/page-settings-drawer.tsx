@@ -56,8 +56,8 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
     onClose();
   };
 
-  const inputClass = "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400";
-  const labelClass = "block text-xs font-medium text-zinc-500 mb-1";
+  const inputClass = "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400";
+  const labelClass = "block text-xs font-medium text-apple-ink-muted-48 mb-1";
   const sectionClass = "space-y-4";
 
   return (
@@ -77,11 +77,11 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
         {/* Header */}
         <div className="sticky top-0 z-10 border-b border-zinc-100 bg-white px-6 py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-900">Page Settings</h2>
-            <p className="text-xs text-zinc-400">{page.title} — /{page.slug}</p>
+            <h2 className="text-lg font-semibold text-apple-ink">Page Settings</h2>
+            <p className="text-xs text-apple-ink-muted-48">{page.title} — /{page.slug}</p>
           </div>
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-zinc-100">
-            <X className="h-4 w-4 text-zinc-500" />
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-apple-canvas-parchment">
+            <X className="h-4 w-4 text-apple-ink-muted-48" />
           </button>
         </div>
 
@@ -97,8 +97,8 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
                   className={cn(
                     "whitespace-nowrap border-b-2 px-1 pb-3 pt-4 text-xs font-medium transition-colors inline-flex items-center gap-1.5",
                     activeTab === tab.id
-                      ? "border-zinc-900 text-zinc-900"
-                      : "border-transparent text-zinc-400 hover:text-zinc-600"
+                      ? "border-zinc-900 text-apple-ink"
+                      : "border-transparent text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -173,9 +173,9 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
                   type="checkbox"
                   checked={seo.noIndex ?? false}
                   onChange={(e) => setSeo({ ...seo, noIndex: e.target.checked })}
-                  className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                  className="h-4 w-4 rounded border-zinc-300 text-apple-ink focus:ring-zinc-900"
                 />
-                <span className="text-sm text-zinc-700">No Index — hide from search engines</span>
+                <span className="text-sm text-apple-ink-muted-80">No Index — hide from search engines</span>
               </label>
             </div>
           )}
@@ -252,7 +252,7 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
                   value={settings.customCss ?? ""}
                   onChange={(e) => setSettings({ ...settings, customCss: e.target.value })}
                   rows={6}
-                  className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-mono text-zinc-900 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                  className="w-full rounded-lg border border-zinc-200 bg-apple-canvas-parchment px-3 py-2 text-xs font-mono text-apple-ink focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
                   placeholder="/* Add custom CSS for this page */"
                 />
               </div>
@@ -262,7 +262,7 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
                   value={settings.customJs ?? ""}
                   onChange={(e) => setSettings({ ...settings, customJs: e.target.value })}
                   rows={6}
-                  className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-mono text-zinc-900 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                  className="w-full rounded-lg border border-zinc-200 bg-apple-canvas-parchment px-3 py-2 text-xs font-mono text-apple-ink focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
                   placeholder="// Add custom JavaScript for this page"
                 />
               </div>
@@ -289,13 +289,13 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
                         className={cn(
                           "flex flex-col items-center gap-1 rounded-xl border p-3 text-xs transition-all",
                           isActive
-                            ? "border-zinc-900 bg-zinc-50 text-zinc-900"
-                            : "border-zinc-200 text-zinc-500 hover:border-zinc-300"
+                            ? "border-zinc-900 bg-apple-canvas-parchment text-apple-ink"
+                            : "border-zinc-200 text-apple-ink-muted-48 hover:border-zinc-300"
                         )}
                       >
                         <Icon className="h-5 w-5" />
                         <span className="font-medium">{opt.label}</span>
-                        <span className="text-[10px] text-zinc-400">{opt.desc}</span>
+                        <span className="text-[10px] text-apple-ink-muted-48">{opt.desc}</span>
                       </button>
                     );
                   })}
@@ -347,36 +347,36 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
                     type="checkbox"
                     checked={settings.showHeader !== false}
                     onChange={(e) => setSettings({ ...settings, showHeader: e.target.checked })}
-                    className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                    className="h-4 w-4 rounded border-zinc-300 text-apple-ink focus:ring-zinc-900"
                   />
-                  <span className="text-sm text-zinc-700">Show Header</span>
+                  <span className="text-sm text-apple-ink-muted-80">Show Header</span>
                 </label>
                 <label className="flex items-center gap-2.5">
                   <input
                     type="checkbox"
                     checked={settings.showFooter !== false}
                     onChange={(e) => setSettings({ ...settings, showFooter: e.target.checked })}
-                    className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                    className="h-4 w-4 rounded border-zinc-300 text-apple-ink focus:ring-zinc-900"
                   />
-                  <span className="text-sm text-zinc-700">Show Footer</span>
+                  <span className="text-sm text-apple-ink-muted-80">Show Footer</span>
                 </label>
                 <label className="flex items-center gap-2.5">
                   <input
                     type="checkbox"
                     checked={settings.transparentHeader ?? false}
                     onChange={(e) => setSettings({ ...settings, transparentHeader: e.target.checked })}
-                    className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                    className="h-4 w-4 rounded border-zinc-300 text-apple-ink focus:ring-zinc-900"
                   />
-                  <span className="text-sm text-zinc-700">Transparent Header</span>
+                  <span className="text-sm text-apple-ink-muted-80">Transparent Header</span>
                 </label>
                 <label className="flex items-center gap-2.5">
                   <input
                     type="checkbox"
                     checked={settings.stickyHeader ?? false}
                     onChange={(e) => setSettings({ ...settings, stickyHeader: e.target.checked })}
-                    className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                    className="h-4 w-4 rounded border-zinc-300 text-apple-ink focus:ring-zinc-900"
                   />
-                  <span className="text-sm text-zinc-700">Sticky Header</span>
+                  <span className="text-sm text-apple-ink-muted-80">Sticky Header</span>
                 </label>
               </div>
               <div>
@@ -400,7 +400,7 @@ export function PageSettingsDrawer({ page, storeId, onClose }: Props) {
         <div className="sticky bottom-0 border-t border-zinc-100 bg-white px-6 py-4 flex items-center justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
           >
             Cancel
           </button>

@@ -57,25 +57,25 @@ export function MediaUploadQueuePanel({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 12 }}
-        className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-lg shadow-zinc-900/5"
+        className="overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas"
       >
-        <div className="flex items-center justify-between gap-3 border-b border-zinc-100 bg-zinc-50/80 px-4 py-3">
+        <div className="flex items-center justify-between gap-3 border-b border-apple-divider-soft bg-apple-canvas-parchment/80 px-4 py-3">
           <div>
-            <p className="text-sm font-semibold text-zinc-900">
+            <p className="text-sm font-semibold text-apple-ink">
               {active ? "Uploading…" : hasErrors ? "Upload finished with errors" : "Upload complete"}
             </p>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-apple-ink-muted-48">
               {uploads.filter((u) => u.status === "done").length} of {uploads.length} files
             </p>
           </div>
           <div className="flex items-center gap-1">
             {active && queueHandle && (
               paused ? (
-                <button type="button" onClick={onResume} className="rounded-lg p-2 text-zinc-600 hover:bg-white" title="Resume">
+                <button type="button" onClick={onResume} className="rounded-lg p-2 text-apple-ink-muted-80 hover:bg-white" title="Resume">
                   <Play className="h-4 w-4" />
                 </button>
               ) : (
-                <button type="button" onClick={onPause} className="rounded-lg p-2 text-zinc-600 hover:bg-white" title="Pause">
+                <button type="button" onClick={onPause} className="rounded-lg p-2 text-apple-ink-muted-80 hover:bg-white" title="Pause">
                   <Pause className="h-4 w-4" />
                 </button>
               )
@@ -90,7 +90,7 @@ export function MediaUploadQueuePanel({
               </button>
             )}
             {!active && (
-              <button type="button" onClick={onClose} className="rounded-lg p-2 text-zinc-500 hover:bg-white">
+              <button type="button" onClick={onClose} className="rounded-lg p-2 text-apple-ink-muted-48 hover:bg-white">
                 <X className="h-4 w-4" />
               </button>
             )}
@@ -102,8 +102,8 @@ export function MediaUploadQueuePanel({
             <div key={item.id} className="space-y-2 px-4 py-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900">{item.fileName}</p>
-                  <p className="text-xs text-zinc-500">{statusLabel(item.status)}</p>
+                  <p className="truncate text-sm font-medium text-apple-ink">{item.fileName}</p>
+                  <p className="text-xs text-apple-ink-muted-48">{statusLabel(item.status)}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   {item.status === "done" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
@@ -112,7 +112,7 @@ export function MediaUploadQueuePanel({
                     <button
                       type="button"
                       onClick={() => queueHandle.retry(item.id)}
-                      className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100"
+                      className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment"
                       title="Retry"
                     >
                       <RotateCcw className="h-3.5 w-3.5" />
@@ -122,19 +122,19 @@ export function MediaUploadQueuePanel({
                     <button
                       type="button"
                       onClick={() => queueHandle.cancel(item.id)}
-                      className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100"
+                      className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment"
                       title="Cancel"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
                   )}
-                  <span className="w-10 text-right text-xs font-semibold tabular-nums text-zinc-600">
+                  <span className="w-10 text-right text-xs font-semibold tabular-nums text-apple-ink-muted-80">
                     {item.status === "waiting" ? "—" : `${item.progress}%`}
                   </span>
                 </div>
               </div>
 
-              <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
+              <div className="h-2 overflow-hidden rounded-full bg-apple-canvas-parchment">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${item.progress}%` }}
@@ -152,7 +152,7 @@ export function MediaUploadQueuePanel({
               </div>
 
               {item.status === "uploading" && (
-                <div className="flex flex-wrap gap-x-4 text-[11px] text-zinc-500">
+                <div className="flex flex-wrap gap-x-4 text-[11px] text-apple-ink-muted-48">
                   <span>
                     {formatBytes(item.bytesLoaded)} / {formatBytes(item.bytesTotal)}
                   </span>

@@ -49,14 +49,14 @@ export function ProductEditorActionBar({
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
           </button>
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold text-zinc-900">{title}</h1>
-            <p className="text-xs text-zinc-500">
+            <h1 className="truncate text-lg font-semibold text-apple-ink">{title}</h1>
+            <p className="text-xs text-apple-ink-muted-48">
               {autoSaveStatus === "saving" && "Saving…"}
               {autoSaveStatus === "saved" && "All changes saved"}
               {autoSaveStatus === "error" && "Auto-save failed"}
@@ -71,7 +71,7 @@ export function ProductEditorActionBar({
             <Link
               href={previewHref}
               target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
             >
               <Eye className="h-4 w-4" />
               Preview
@@ -81,7 +81,7 @@ export function ProductEditorActionBar({
             <button
               type="button"
               onClick={onDuplicate}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
             >
               <Copy className="h-4 w-4" />
               Duplicate
@@ -101,7 +101,7 @@ export function ProductEditorActionBar({
             type="button"
             onClick={onSaveDraft}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save Draft

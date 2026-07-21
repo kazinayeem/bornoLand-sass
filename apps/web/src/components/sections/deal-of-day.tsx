@@ -37,16 +37,16 @@ export function DealOfDay({ section }: { section: SectionData }) {
           </div>
           <div className="flex-1 text-center md:text-left">
             <h2 className="text-2xl font-bold sm:text-3xl" style={{ color: p.textColor || "#18181b" }}>{p.title || "Deal of the Day"}</h2>
-            {p.productName && <p className="mt-2 text-lg font-semibold text-zinc-600">{p.productName}</p>}
+            {p.productName && <p className="mt-2 text-lg font-semibold text-apple-ink-muted-80">{p.productName}</p>}
             <div className="mt-4 flex items-center justify-center md:justify-start gap-3">
               {p.price && <span className="text-3xl font-bold text-red-600">{p.price}</span>}
-              {p.originalPrice && <span className="text-lg text-zinc-400 line-through">{p.originalPrice}</span>}
+              {p.originalPrice && <span className="text-lg text-apple-ink-muted-48 line-through">{p.originalPrice}</span>}
             </div>
             <div className="mt-4 flex justify-center md:justify-start gap-2">
               {Object.entries(timeLeft).map(([k, v]) => (
                 <div key={k} className="rounded-lg bg-zinc-100 px-3 py-2 min-w-[50px] text-center">
-                  <span className="text-lg font-bold text-zinc-900">{String(v).padStart(2, "0")}</span>
-                  <p className="text-[10px] uppercase text-zinc-500">{k}</p>
+                  <span className="text-lg font-bold text-apple-ink">{String(v).padStart(2, "0")}</span>
+                  <p className="text-[10px] uppercase text-apple-ink-muted-48">{k}</p>
                 </div>
               ))}
             </div>

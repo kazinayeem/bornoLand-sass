@@ -256,7 +256,7 @@ export function ImageCarousel({ section }: { section: SectionData }) {
                       {slide.buttonText && (
                         <Link
                         href={slide.buttonUrl || slide.buttonLink || "#"}
-                          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-zinc-950 shadow-lg shadow-black/15 transition-transform hover:-translate-y-0.5"
+                          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-apple-ink shadow-lg shadow-black/15 transition-transform hover:-translate-y-0.5"
                         >
                           {slide.buttonText}
                           <Maximize2 className="h-4 w-4" />

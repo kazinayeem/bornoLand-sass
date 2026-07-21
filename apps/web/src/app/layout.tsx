@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { AppProviders } from "@/providers/app-providers";
@@ -12,12 +12,8 @@ export const viewport: Viewport = {
 
 const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-inter"
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk"
+  variable: "--font-inter",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -45,11 +41,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} scroll-smooth`}>
-      <body className="bg-white text-zinc-950 antialiased">
+    <html lang="en" className={`${inter.variable} scroll-smooth`}>
+      <body className="font-body text-body text-apple-ink antialiased">
         <AppProviders>
           {children}
-          <Toaster richColors position="top-right" />
+          <Toaster position="top-right" toastOptions={{ className: "font-body" }} />
         </AppProviders>
       </body>
     </html>

@@ -247,10 +247,10 @@ function PlaceholderSection({ section }: { section: SectionData }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100 mb-4">
-        <span className="text-2xl text-zinc-400">⊞</span>
+        <span className="text-2xl text-apple-ink-muted-48">⊞</span>
       </div>
-      <h3 className="text-lg font-semibold text-zinc-700">{def?.label || section.type}</h3>
-      <p className="mt-1 text-sm text-zinc-400">{def?.description || "Section placeholder"}</p>
+      <h3 className="text-lg font-semibold text-apple-ink-muted-80">{def?.label || section.type}</h3>
+      <p className="mt-1 text-sm text-apple-ink-muted-48">{def?.description || "Section placeholder"}</p>
     </div>
   );
 }

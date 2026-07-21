@@ -70,13 +70,13 @@ function Select({ value, onChange, options, label }: {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none rounded-xl border border-zinc-200 bg-white px-4 py-2.5 pr-10 text-sm text-zinc-900 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+        className="w-full appearance-none rounded-xl border border-zinc-200 bg-white px-4 py-2.5 pr-10 text-sm text-apple-ink outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
     </div>
   );
 }
@@ -168,17 +168,17 @@ export default function SettingsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Store Settings</h2>
-            <p className="mt-1 text-sm text-zinc-500">Configure your store preferences, currency, and localization.</p>
+            <h2 className="text-2xl font-bold tracking-tight text-apple-ink">Store Settings</h2>
+            <p className="mt-1 text-sm text-apple-ink-muted-48">Configure your store preferences, currency, and localization.</p>
           </div>
         </div>
         {stores.length === 0 ? (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-zinc-200 bg-white p-16 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100">
-              <Store className="h-8 w-8 text-zinc-400" />
+              <Store className="h-8 w-8 text-apple-ink-muted-48" />
             </div>
-            <h3 className="mt-4 text-xl font-semibold text-zinc-900">No stores yet</h3>
-            <p className="mt-2 text-sm text-zinc-500">Create a store to configure settings.</p>
+            <h3 className="mt-4 text-xl font-semibold text-apple-ink">No stores yet</h3>
+            <p className="mt-2 text-sm text-apple-ink-muted-48">Create a store to configure settings.</p>
           </motion.div>
         ) : (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -189,8 +189,8 @@ export default function SettingsPage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-lg font-bold text-white shadow-sm">
                   {s.name[0]}
                 </div>
-                <h3 className="mt-3 font-semibold text-zinc-900">{s.name}</h3>
-                <p className="text-xs text-zinc-400">{getStoreDisplayDomain(s.subdomain || s.slug)}</p>
+                <h3 className="mt-3 font-semibold text-apple-ink">{s.name}</h3>
+                <p className="text-xs text-apple-ink-muted-48">{getStoreDisplayDomain(s.subdomain || s.slug)}</p>
               </motion.button>
             ))}
           </motion.div>
@@ -205,16 +205,16 @@ export default function SettingsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Store Settings</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-apple-ink">Store Settings</h2>
             <span className="rounded-lg bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">{currentStore?.name}</span>
           </div>
-          <p className="mt-1 text-sm text-zinc-500">Configure your store preferences, currency, and localization.</p>
+          <p className="mt-1 text-sm text-apple-ink-muted-48">Configure your store preferences, currency, and localization.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => refetch()} className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50">
+          <button onClick={() => refetch()} className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment">
             <RefreshCw className="h-4 w-4" /> Refresh
           </button>
-          <button onClick={() => clearStore()} className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50">
+          <button onClick={() => clearStore()} className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment">
             <Store className="h-4 w-4" /> Change Store
           </button>
           <button
@@ -250,18 +250,18 @@ export default function SettingsPage() {
                 <DollarSign className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-zinc-900">Currency</h3>
-                <p className="text-sm text-zinc-500">Set the currency for your storefront pricing.</p>
+                <h3 className="text-base font-semibold text-apple-ink">Currency</h3>
+                <p className="text-sm text-apple-ink-muted-48">Set the currency for your storefront pricing.</p>
               </div>
             </div>
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-700">Currency</label>
+                <label className="text-sm font-medium text-apple-ink-muted-80">Currency</label>
                 <Select value={currencyCode} onChange={setCurrencyCode} options={currencyOptions.map((c) => ({ value: c.value, label: c.label }))} label="Currency" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-700">Preview</label>
-                <div className="flex h-10 items-center rounded-xl border border-zinc-200 bg-zinc-50 px-4 text-sm text-zinc-600">
+                <label className="text-sm font-medium text-apple-ink-muted-80">Preview</label>
+                <div className="flex h-10 items-center rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-4 text-sm text-apple-ink-muted-80">
                   {(() => {
                     const cur = currencyOptions.find((c) => c.value === currencyCode);
                     if (!cur) return "$100.00";
@@ -280,17 +280,17 @@ export default function SettingsPage() {
                 <Globe className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-zinc-900">Localization</h3>
-                <p className="text-sm text-zinc-500">Configure date format, timezone, and language preferences.</p>
+                <h3 className="text-base font-semibold text-apple-ink">Localization</h3>
+                <p className="text-sm text-apple-ink-muted-48">Configure date format, timezone, and language preferences.</p>
               </div>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-700 flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-zinc-400" /> Date Format
+                <label className="text-sm font-medium text-apple-ink-muted-80 flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-apple-ink-muted-48" /> Date Format
                 </label>
                 <Select value={dateFormat} onChange={setDateFormat} options={dateFormatOptions} label="Date Format" />
-                <p className="text-xs text-zinc-400">Preview: {(() => {
+                <p className="text-xs text-apple-ink-muted-48">Preview: {(() => {
                   const d = new Date();
                   const mm = String(d.getMonth() + 1).padStart(2, "0");
                   const dd = String(d.getDate()).padStart(2, "0");
@@ -303,14 +303,14 @@ export default function SettingsPage() {
                 })()}</p>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-700 flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-zinc-400" /> Timezone
+                <label className="text-sm font-medium text-apple-ink-muted-80 flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-apple-ink-muted-48" /> Timezone
                 </label>
                 <Select value={timezone} onChange={setTimezone} options={timezoneOptions} label="Timezone" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-700 flex items-center gap-1.5">
-                  <Languages className="h-3.5 w-3.5 text-zinc-400" /> Language
+                <label className="text-sm font-medium text-apple-ink-muted-80 flex items-center gap-1.5">
+                  <Languages className="h-3.5 w-3.5 text-apple-ink-muted-48" /> Language
                 </label>
                 <Select value={language} onChange={setLanguage} options={languageOptions} label="Language" />
               </div>
@@ -324,8 +324,8 @@ export default function SettingsPage() {
                 <CheckCircle className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-zinc-900">Checkout & Tax</h3>
-                <p className="text-sm text-zinc-500">Configure tax rate applied to orders.</p>
+                <h3 className="text-base font-semibold text-apple-ink">Checkout & Tax</h3>
+                <p className="text-sm text-apple-ink-muted-48">Configure tax rate applied to orders.</p>
               </div>
             </div>
 
@@ -334,7 +334,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => setTaxEnabled(!taxEnabled)}
                 className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
-                  taxEnabled ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-500"
+                  taxEnabled ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-apple-ink-muted-48"
                 }`}
               >
                 {taxEnabled ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
@@ -345,21 +345,21 @@ export default function SettingsPage() {
             {taxEnabled && (
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-zinc-700">Tax Rate (%)</label>
+                  <label className="text-sm font-medium text-apple-ink-muted-80">Tax Rate (%)</label>
                   <input type="number" min="0" max="100" step="0.01" value={taxRate}
                     onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                    className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-apple-ink outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                   />
-                  <p className="text-xs text-zinc-400">Applied as a percentage to the order subtotal.</p>
+                  <p className="text-xs text-apple-ink-muted-48">Applied as a percentage to the order subtotal.</p>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-zinc-700">Tax Inclusion</label>
+                  <label className="text-sm font-medium text-apple-ink-muted-80">Tax Inclusion</label>
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={() => setTaxIncluded(false)}
                       className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
-                        !taxIncluded ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                        !taxIncluded ? "bg-zinc-900 text-white" : "bg-zinc-100 text-apple-ink-muted-80 hover:bg-zinc-200"
                       }`}
                     >
                       Tax Excluded
@@ -368,13 +368,13 @@ export default function SettingsPage() {
                       type="button"
                       onClick={() => setTaxIncluded(true)}
                       className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
-                        taxIncluded ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                        taxIncluded ? "bg-zinc-900 text-white" : "bg-zinc-100 text-apple-ink-muted-80 hover:bg-zinc-200"
                       }`}
                     >
                       Tax Included
                     </button>
                   </div>
-                  <p className="text-xs text-zinc-400">
+                  <p className="text-xs text-apple-ink-muted-48">
                     {taxIncluded
                       ? "Prices already include tax. No extra tax added at checkout."
                       : "Tax is added on top of the subtotal at checkout."}

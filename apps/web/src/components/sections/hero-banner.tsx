@@ -39,7 +39,7 @@ export function HeroBanner({ section }: { section: SectionData }) {
             <div className={`mt-2 flex flex-wrap gap-3 ${contentAlign}`}>
               {p.buttonText && (
                 <Link href={p.buttonLink || "#"}
-                  className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-all hover:bg-zinc-100 active:scale-95">
+                  className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-apple-ink transition-all hover:bg-apple-canvas-parchment active:scale-95">
                   {p.buttonText}
                 </Link>
               )}

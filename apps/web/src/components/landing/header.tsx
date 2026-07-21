@@ -26,82 +26,106 @@ export function Header() {
   }, []);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 lg:px-8">
-      <nav
-        className={`mx-auto flex max-w-7xl items-center justify-between rounded-2xl px-5 py-3 transition-all duration-300 ${
-          scrolled
-            ? "border border-white/20 bg-white/80 shadow-[0_8px_32px_rgba(0,0,0,0.06)] backdrop-blur-xl"
-            : "bg-white/40 backdrop-blur-sm"
-        }`}
-      >
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.png" alt="BornoLand" width={36} height={36} priority className="h-8 w-8 rounded-lg object-contain shadow-sm" />
-          <span className="text-base font-bold tracking-tight text-zinc-950">BornoLand</span>
-        </Link>
+    <header className="fixed inset-x-0 top-0 z-50">
+      {/* Global nav — Apple black bar */}
+      <nav className="flex h-11 items-center justify-center bg-apple-surface-black px-4 sm:px-6">
+        <div className="flex w-full max-w-[1440px] items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="BornoLand"
+              width={20}
+              height={20}
+              priority
+              className="h-5 w-5 object-contain"
+            />
+            <span className="text-nav-link text-apple-body-on-dark">BornoLand</span>
+          </Link>
 
-        <div className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) => (
+          <div className="hidden items-center gap-5 md:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="text-nav-link text-apple-body-on-dark/80 transition-colors hover:text-apple-body-on-dark"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="hidden items-center gap-3 md:flex">
             <Link
-              key={link.label}
-              href={link.href}
-              className="rounded-lg px-3.5 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+              href="/login"
+              className="btn-press rounded-sm bg-apple-ink px-[15px] py-2 text-caption text-apple-on-dark"
             >
-              {link.label}
+              Log In
             </Link>
-          ))}
-        </div>
+            <Link
+              href="/register"
+              className="btn-press rounded-pill bg-apple-primary px-[22px] py-[11px] text-body text-apple-on-primary"
+            >
+              Start Free
+            </Link>
+          </div>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/login"
-            className="rounded-xl px-4 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100"
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle mobile menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-menu"
+            className="rounded-sm p-2 text-apple-body-on-dark md:hidden"
           >
-            Log In
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:brightness-110"
-          >
-            Start Free
-          </Link>
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
-
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle mobile menu"
-          aria-expanded={mobileOpen}
-          aria-controls="mobile-menu"
-          className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 md:hidden"
-        >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
       </nav>
 
+      {/* Sub-nav frosted bar */}
+      <div
+        className={`frosted-bar border-b border-apple-hairline/50 transition-all duration-300 ${
+          scrolled ? "shadow-none" : ""
+        }`}
+      >
+        <div className="mx-auto flex h-[52px] max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8">
+          <span className="text-tagline text-apple-ink dark:text-apple-body-on-dark">Platform</span>
+          <Link
+            href="/register"
+            className="btn-press hidden rounded-pill bg-apple-primary px-[22px] py-[11px] text-body text-apple-on-primary sm:inline-flex"
+          >
+            Get Started
+          </Link>
+        </div>
+      </div>
+
       {mobileOpen && (
-        <div id="mobile-menu" className="mx-auto mt-2 max-w-7xl rounded-2xl border border-zinc-200 bg-white p-4 shadow-xl backdrop-blur-xl md:hidden">
+        <div
+          id="mobile-menu"
+          className="border-b border-apple-hairline bg-apple-canvas px-4 py-4 dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2 md:hidden"
+        >
           <div className="flex flex-col gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg px-3.5 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900"
+                className="rounded-sm px-3.5 py-2.5 text-caption text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment hover:text-apple-ink"
               >
                 {link.label}
               </Link>
             ))}
-            <hr className="my-2 border-zinc-100" />
+            <hr className="my-2 border-apple-divider-soft" />
             <Link
               href="/login"
               onClick={() => setMobileOpen(false)}
-              className="rounded-lg px-3.5 py-2.5 text-sm font-semibold text-zinc-700"
+              className="rounded-sm px-3.5 py-2.5 text-caption-strong text-apple-ink"
             >
               Log In
             </Link>
             <Link
               href="/register"
               onClick={() => setMobileOpen(false)}
-              className="mt-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-md"
+              className="btn-press mt-1 rounded-pill bg-apple-primary px-3.5 py-2.5 text-center text-body text-apple-on-primary"
             >
               Start Free
             </Link>

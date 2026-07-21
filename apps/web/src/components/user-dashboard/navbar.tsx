@@ -48,10 +48,10 @@ export function UserNavbar() {
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-200 bg-white/80 px-6 backdrop-blur-xl">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-lg font-semibold tracking-tight text-zinc-900">
+            <h1 className="text-lg font-semibold tracking-tight text-apple-ink">
               {crumbs.length > 1 ? crumbs[crumbs.length - 1].label : "Dashboard"}
             </h1>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-apple-ink-muted-48">
               {crumbs.map((c, i) => (
                 <span key={c.href}>
                   {i > 0 && <span className="mx-1 text-zinc-300">/</span>}
@@ -70,11 +70,11 @@ export function UserNavbar() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSearchOpen(true)}
-            className="hidden sm:inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-sm text-zinc-400 transition-colors hover:border-zinc-300 hover:text-zinc-600 w-56"
+            className="hidden sm:inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-3.5 py-2 text-sm text-apple-ink-muted-48 transition-colors hover:border-zinc-300 hover:text-apple-ink-muted-80 w-56"
           >
             <SearchIcon className="h-4 w-4 shrink-0" />
             <span>Quick search...</span>
-            <kbd className="ml-auto flex h-5 items-center gap-0.5 rounded-md border border-zinc-200 bg-white px-1.5 text-[10px] font-medium text-zinc-400">
+            <kbd className="ml-auto flex h-5 items-center gap-0.5 rounded-md border border-zinc-200 bg-white px-1.5 text-[10px] font-medium text-apple-ink-muted-48">
               <Command className="h-2.5 w-2.5" />K
             </kbd>
           </button>
@@ -99,33 +99,33 @@ export function UserNavbar() {
               className="relative w-full max-w-lg rounded-2xl border border-zinc-200 bg-white shadow-2xl overflow-hidden"
             >
               <div className="flex items-center gap-3 border-b border-zinc-100 px-4 py-3">
-                <SearchIcon className="h-5 w-5 text-zinc-400 shrink-0" />
+                <SearchIcon className="h-5 w-5 text-apple-ink-muted-48 shrink-0" />
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search products, orders, customers..."
-                  className="flex-1 text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
+                  className="flex-1 text-sm text-apple-ink outline-none placeholder:text-apple-ink-muted-48"
                   autoFocus
                 />
-                <kbd className="flex h-6 items-center rounded-md border border-zinc-200 bg-zinc-50 px-1.5 text-[10px] font-medium text-zinc-400">ESC</kbd>
+                <kbd className="flex h-6 items-center rounded-md border border-zinc-200 bg-apple-canvas-parchment px-1.5 text-[10px] font-medium text-apple-ink-muted-48">ESC</kbd>
               </div>
               <div className="max-h-64 overflow-y-auto p-2">
                 {filteredActions.length === 0 && query && (
-                  <p className="px-3 py-6 text-center text-sm text-zinc-400">No results found</p>
+                  <p className="px-3 py-6 text-center text-sm text-apple-ink-muted-48">No results found</p>
                 )}
                 {filteredActions.map((action) => (
                   <button
                     key={action.label}
                     onClick={() => handleSelect(action.href)}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-50"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
                   >
                     <span className="flex-1 text-left">{action.label}</span>
-                    <kbd className="flex h-6 items-center rounded-md border border-zinc-200 bg-white px-1.5 text-[10px] font-medium text-zinc-400">{action.shortcut}</kbd>
+                    <kbd className="flex h-6 items-center rounded-md border border-zinc-200 bg-white px-1.5 text-[10px] font-medium text-apple-ink-muted-48">{action.shortcut}</kbd>
                   </button>
                 ))}
                 {!query && (
-                  <p className="px-3 py-3 text-xs text-zinc-400">Type to search across your store</p>
+                  <p className="px-3 py-3 text-xs text-apple-ink-muted-48">Type to search across your store</p>
                 )}
               </div>
             </motion.div>

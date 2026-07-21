@@ -13,7 +13,7 @@ const statusConfig: Record<string, { dot: string; bg: string; text: string; labe
   high: { dot: "bg-red-500", bg: "bg-red-50", text: "text-red-700", label: "High" },
   medium: { dot: "bg-amber-500", bg: "bg-amber-50", text: "text-amber-700", label: "Medium" },
   low: { dot: "bg-blue-500", bg: "bg-blue-50", text: "text-blue-700", label: "Low" },
-  default: { dot: "bg-zinc-400", bg: "bg-zinc-100", text: "text-zinc-600", label: "Unknown" }
+  default: { dot: "bg-zinc-400", bg: "bg-zinc-100", text: "text-apple-ink-muted-80", label: "Unknown" }
 };
 
 export function StatusBadge({ status, className }: { status: string; className?: string }) {

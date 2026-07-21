@@ -358,8 +358,8 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900">{plan.name}</h1>
-          <p className="text-sm text-zinc-500">/{plan.slug}</p>
+          <h1 className="text-xl font-bold text-apple-ink">{plan.name}</h1>
+          <p className="text-sm text-apple-ink-muted-48">/{plan.slug}</p>
         </div>
         <button
           onClick={handleSave}
@@ -378,25 +378,25 @@ export function PlanBuilder({ plan, initialTab }: Props) {
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-zinc-700">Plan Name</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Plan Name</label>
               <input value={name} onChange={(e) => setName(e.target.value)}
                 className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
             <div>
-              <label className="text-sm font-medium text-zinc-700">Slug</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Slug</label>
               <input value={slug} onChange={(e) => setSlug(e.target.value)}
                 className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm font-mono focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
           </div>
 
           <div>
-            <label className="text-sm font-medium text-zinc-700">Description</label>
+            <label className="text-sm font-medium text-apple-ink-muted-80">Description</label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
               className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
           </div>
 
           <div>
-            <label className="text-sm font-medium text-zinc-700">Feature Bullets (one per line)</label>
+            <label className="text-sm font-medium text-apple-ink-muted-80">Feature Bullets (one per line)</label>
             <textarea value={featureText} onChange={(e) => setFeatureText(e.target.value)} rows={5}
               placeholder="Up to 50 products&#10;Free custom domain&#10;24/7 support"
               className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
@@ -404,7 +404,7 @@ export function PlanBuilder({ plan, initialTab }: Props) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-zinc-700">Sort Order</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Sort Order</label>
               <input type="number" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))}
                 className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
@@ -417,32 +417,32 @@ export function PlanBuilder({ plan, initialTab }: Props) {
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             <div>
-              <label className="text-sm font-medium text-zinc-700">Monthly (BDT)</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Monthly (BDT)</label>
               <input type="number" value={pricing.monthly} onChange={(e) => setPricing((p) => ({ ...p, monthly: Number(e.target.value) }))}
                 className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
             <div>
-              <label className="text-sm font-medium text-zinc-700">Quarterly (BDT)</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Quarterly (BDT)</label>
               <input type="number" value={pricing.quarterly} onChange={(e) => setPricing((p) => ({ ...p, quarterly: Number(e.target.value) }))}
                 className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
             <div>
-              <label className="text-sm font-medium text-zinc-700">Half Yearly (BDT)</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Half Yearly (BDT)</label>
               <input type="number" value={pricing.halfYearly} onChange={(e) => setPricing((p) => ({ ...p, halfYearly: Number(e.target.value) }))}
                 className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
             <div>
-              <label className="text-sm font-medium text-zinc-700">Yearly (BDT)</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Yearly (BDT)</label>
               <input type="number" value={pricing.yearly} onChange={(e) => setPricing((p) => ({ ...p, yearly: Number(e.target.value) }))}
                 className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
             <div>
-              <label className="text-sm font-medium text-zinc-700">Lifetime (BDT)</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Lifetime (BDT)</label>
               <input type="number" value={pricing.lifetime} onChange={(e) => setPricing((p) => ({ ...p, lifetime: Number(e.target.value) }))}
                 className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
             <div>
-              <label className="text-sm font-medium text-zinc-700">Yearly Discounted (BDT)</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Yearly Discounted (BDT)</label>
               <input type="number" value={priceYearly} onChange={(e) => setPriceYearly(Number(e.target.value))}
                 className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
@@ -451,7 +451,7 @@ export function PlanBuilder({ plan, initialTab }: Props) {
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={isCustomPrice} onChange={(e) => setIsCustomPrice(e.target.checked)}
               className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
-            <span className="text-sm text-zinc-700">Custom price (contact us)</span>
+            <span className="text-sm text-apple-ink-muted-80">Custom price (contact us)</span>
           </label>
         </div>
       )}
@@ -461,11 +461,11 @@ export function PlanBuilder({ plan, initialTab }: Props) {
         <div className="space-y-8">
           {LIMIT_GROUPS.map((group) => (
             <div key={group.key}>
-              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">{group.label}</h3>
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-apple-ink-muted-48">{group.label}</h3>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {group.fields.map((field) => (
                   <div key={field.key}>
-                    <label className="text-xs font-medium text-zinc-600">{field.label}</label>
+                    <label className="text-xs font-medium text-apple-ink-muted-80">{field.label}</label>
                     <div className="relative mt-1">
                       <input
                         type="number" min={0}
@@ -473,9 +473,9 @@ export function PlanBuilder({ plan, initialTab }: Props) {
                         onChange={(e) => updateLimit(field.key, Number(e.target.value))}
                         className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                       />
-                      {field.suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">{field.suffix}</span>}
+                      {field.suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-apple-ink-muted-48">{field.suffix}</span>}
                     </div>
-                    <p className="mt-0.5 text-[10px] text-zinc-400">0 = unlimited</p>
+                    <p className="mt-0.5 text-[10px] text-apple-ink-muted-48">0 = unlimited</p>
                   </div>
                 ))}
               </div>
@@ -489,12 +489,12 @@ export function PlanBuilder({ plan, initialTab }: Props) {
         <div className="space-y-8">
           {FEATURE_GROUPS.map((group) => (
             <div key={group.key}>
-              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">{group.label}</h3>
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-apple-ink-muted-48">{group.label}</h3>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {group.toggles.map((feat) => (
                   <label
                     key={feat.key}
-                    className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors hover:bg-zinc-50 ${
+                    className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors hover:bg-apple-canvas-parchment ${
                       toggles[feat.key] ? "border-blue-200 bg-blue-50/50" : "border-zinc-200"
                     } ${feat.alwaysEnabled ? "opacity-75" : ""}`}
                   >
@@ -506,9 +506,9 @@ export function PlanBuilder({ plan, initialTab }: Props) {
                       className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
                     />
                     <div>
-                      <p className="text-sm font-medium text-zinc-900">{feat.label}</p>
+                      <p className="text-sm font-medium text-apple-ink">{feat.label}</p>
                       {feat.description && (
-                        <p className="mt-0.5 text-xs text-zinc-500">{feat.description}</p>
+                        <p className="mt-0.5 text-xs text-apple-ink-muted-48">{feat.description}</p>
                       )}
                       {feat.alwaysEnabled && (
                         <p className="mt-0.5 text-[10px] font-medium text-blue-600">Always enabled</p>
@@ -527,28 +527,28 @@ export function PlanBuilder({ plan, initialTab }: Props) {
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-zinc-700">Storage Limit (MB)</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Storage Limit (MB)</label>
               <input
                 type="number" min={0}
                 value={limits.storage}
                 onChange={(e) => updateLimit("storage", Number(e.target.value))}
                 className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
-              <p className="mt-1 text-xs text-zinc-400">
+              <p className="mt-1 text-xs text-apple-ink-muted-48">
                 {limits.storage >= 1024
                   ? `= ${(limits.storage / 1024).toFixed(1)} GB`
                   : `${limits.storage} MB`}
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium text-zinc-700">Media Uploads</label>
+              <label className="text-sm font-medium text-apple-ink-muted-80">Media Uploads</label>
               <input
                 type="number" min={0}
                 value={limits.mediaUploads}
                 onChange={(e) => updateLimit("mediaUploads", Number(e.target.value))}
                 className="mt-1 h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
-              <p className="mt-1 text-xs text-zinc-400">0 = unlimited</p>
+              <p className="mt-1 text-xs text-apple-ink-muted-48">0 = unlimited</p>
             </div>
           </div>
         </div>
@@ -558,14 +558,14 @@ export function PlanBuilder({ plan, initialTab }: Props) {
       {activeTab === "trial" && (
         <div className="space-y-5">
           <div>
-            <label className="text-sm font-medium text-zinc-700">Trial Days</label>
+            <label className="text-sm font-medium text-apple-ink-muted-80">Trial Days</label>
             <input
               type="number" min={0}
               value={trialDays}
               onChange={(e) => setTrialDays(Number(e.target.value))}
               className="mt-1 h-10 w-full max-w-xs rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
-            <p className="mt-1 text-xs text-zinc-400">Set to 0 to disable trial</p>
+            <p className="mt-1 text-xs text-apple-ink-muted-48">Set to 0 to disable trial</p>
           </div>
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
             <p className="text-sm text-amber-700">
@@ -584,48 +584,48 @@ export function PlanBuilder({ plan, initialTab }: Props) {
               <input type="checkbox" checked={visible} onChange={(e) => setVisible(e.target.checked)}
                 className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
               <div>
-                <p className="text-sm font-medium text-zinc-900">Visible</p>
-                <p className="text-xs text-zinc-500">Show this plan on the pricing page</p>
+                <p className="text-sm font-medium text-apple-ink">Visible</p>
+                <p className="text-xs text-apple-ink-muted-48">Show this plan on the pricing page</p>
               </div>
             </label>
             <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4">
               <input type="checkbox" checked={isRecommended} onChange={(e) => setIsRecommended(e.target.checked)}
                 className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
               <div>
-                <p className="text-sm font-medium text-zinc-900">Recommended</p>
-                <p className="text-xs text-zinc-500">Highlight as "Most Popular"</p>
+                <p className="text-sm font-medium text-apple-ink">Recommended</p>
+                <p className="text-xs text-apple-ink-muted-48">Highlight as "Most Popular"</p>
               </div>
             </label>
             <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4">
               <input type="checkbox" checked={isPopular} onChange={(e) => setIsPopular(e.target.checked)}
                 className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
               <div>
-                <p className="text-sm font-medium text-zinc-900">Most Popular</p>
-                <p className="text-xs text-zinc-500">Show a separate popular badge on the public pricing page</p>
+                <p className="text-sm font-medium text-apple-ink">Most Popular</p>
+                <p className="text-xs text-apple-ink-muted-48">Show a separate popular badge on the public pricing page</p>
               </div>
             </label>
             <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4">
               <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)}
                 className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
               <div>
-                <p className="text-sm font-medium text-zinc-900">Active</p>
-                <p className="text-xs text-zinc-500">Allow new subscriptions</p>
+                <p className="text-sm font-medium text-apple-ink">Active</p>
+                <p className="text-xs text-apple-ink-muted-48">Allow new subscriptions</p>
               </div>
             </label>
             <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4">
               <input type="checkbox" checked={customDomain} onChange={(e) => setCustomDomain(e.target.checked)}
                 className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
               <div>
-                <p className="text-sm font-medium text-zinc-900">Custom Domain</p>
-                <p className="text-xs text-zinc-500">Allow custom domain mapping</p>
+                <p className="text-sm font-medium text-apple-ink">Custom Domain</p>
+                <p className="text-xs text-apple-ink-muted-48">Allow custom domain mapping</p>
               </div>
             </label>
             <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-4">
               <input type="checkbox" checked={prioritySupport} onChange={(e) => setPrioritySupport(e.target.checked)}
                 className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
               <div>
-                <p className="text-sm font-medium text-zinc-900">Priority Support</p>
-                <p className="text-xs text-zinc-500">24/7 priority support</p>
+                <p className="text-sm font-medium text-apple-ink">Priority Support</p>
+                <p className="text-xs text-apple-ink-muted-48">24/7 priority support</p>
               </div>
             </label>
           </div>

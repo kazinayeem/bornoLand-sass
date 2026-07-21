@@ -33,8 +33,8 @@ export function CountdownTimer({ section }: { section: SectionData }) {
         <div className="mt-4 flex justify-center gap-3">
           {Object.entries(remaining).map(([key, val]) => (
             <div key={key} className={`${boxSize} rounded-xl border border-zinc-200 bg-white shadow-sm`}>
-              <span className={`${textSize} font-bold text-zinc-900`}>{String(val).padStart(2, "0")}</span>
-              {p.showLabels !== "false" && <p className="text-[10px] uppercase tracking-wider text-zinc-500 mt-0.5">{key}</p>}
+              <span className={`${textSize} font-bold text-apple-ink`}>{String(val).padStart(2, "0")}</span>
+              {p.showLabels !== "false" && <p className="text-[10px] uppercase tracking-wider text-apple-ink-muted-48 mt-0.5">{key}</p>}
             </div>
           ))}
         </div>

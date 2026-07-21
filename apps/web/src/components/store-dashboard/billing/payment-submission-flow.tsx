@@ -191,19 +191,19 @@ export function PaymentSubmissionFlow({
             const isCurrent = s === step;
             return (
               <div key={s} className="flex items-center">
-                <div className={`flex items-center gap-2 ${isActive ? "text-zinc-900" : "text-zinc-300"}`}>
+                <div className={`flex items-center gap-2 ${isActive ? "text-apple-ink" : "text-zinc-300"}`}>
                   <div
                     className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all ${
                       isCurrent
                         ? "bg-zinc-900 text-white"
                         : isActive
                         ? "bg-emerald-100 text-emerald-700"
-                        : "bg-zinc-100 text-zinc-400"
+                        : "bg-zinc-100 text-apple-ink-muted-48"
                     }`}
                   >
                     {isActive && s !== step ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
                   </div>
-                  <span className={`text-xs font-medium capitalize ${isCurrent ? "text-zinc-900" : ""}`}>
+                  <span className={`text-xs font-medium capitalize ${isCurrent ? "text-apple-ink" : ""}`}>
                     {s === "payment" ? "Pay" : s}
                   </span>
                 </div>
@@ -218,8 +218,8 @@ export function PaymentSubmissionFlow({
         {step === "plan" && (
           <motion.div key="plan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
             <div className="text-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900">Choose a Plan</h2>
-              <p className="text-sm text-zinc-500 mt-1">Select the plan that fits your needs</p>
+              <h2 className="text-xl font-bold text-apple-ink">Choose a Plan</h2>
+              <p className="text-sm text-apple-ink-muted-48 mt-1">Select the plan that fits your needs</p>
             </div>
             <div className="grid gap-3">
               {activePlans.map((plan) => {
@@ -232,24 +232,24 @@ export function PaymentSubmissionFlow({
                     onClick={() => { setSelectedPlanId(plan._id); }}
                     className={`relative flex items-center justify-between rounded-2xl border-2 p-4 text-left transition-all ${
                       isSelected
-                        ? "border-zinc-900 bg-zinc-50 shadow-sm"
-                        : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/50"
+                        ? "border-zinc-900 bg-apple-canvas-parchment shadow-sm"
+                        : "border-zinc-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment/50"
                     }`}
                   >
                     <div className="flex items-center gap-4">
                       <div className={`flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold ${
-                        isSelected ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600"
+                        isSelected ? "bg-zinc-900 text-white" : "bg-zinc-100 text-apple-ink-muted-80"
                       }`}>
                         {plan.name.charAt(0)}
                       </div>
                       <div>
-                        <p className="font-semibold text-zinc-900">{plan.name}</p>
-                        <p className="text-sm text-zinc-500">{plan.description || "—"}</p>
+                        <p className="font-semibold text-apple-ink">{plan.name}</p>
+                        <p className="text-sm text-apple-ink-muted-48">{plan.description || "—"}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-zinc-900">{formatBDT(price)}</p>
-                      <p className="text-xs text-zinc-500">/mo</p>
+                      <p className="text-xl font-bold text-apple-ink">{formatBDT(price)}</p>
+                      <p className="text-xs text-apple-ink-muted-48">/mo</p>
                     </div>
                     {plan.isRecommended && (
                       <Badge variant="primary" className="absolute -top-2 -right-2 bg-indigo-500 text-white border-0">
@@ -276,8 +276,8 @@ export function PaymentSubmissionFlow({
         {step === "duration" && (
           <motion.div key="duration" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
             <div className="text-center mb-6">
-              <h2 className="text-xl font-bold text-zinc-900">Select Duration</h2>
-              <p className="text-sm text-zinc-500 mt-1">Choose your billing cycle</p>
+              <h2 className="text-xl font-bold text-apple-ink">Select Duration</h2>
+              <p className="text-sm text-apple-ink-muted-48 mt-1">Choose your billing cycle</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {enabledDurations.map((d) => {
@@ -293,14 +293,14 @@ export function PaymentSubmissionFlow({
                     onClick={() => setDuration(d)}
                     className={`relative rounded-2xl border-2 p-4 text-center transition-all ${
                       isSelected
-                        ? "border-zinc-900 bg-zinc-50 shadow-sm ring-1 ring-zinc-900/10"
+                        ? "border-zinc-900 bg-apple-canvas-parchment shadow-sm ring-1 ring-zinc-900/10"
                         : "border-zinc-200 hover:border-zinc-300"
                     }`}
                   >
-                    <p className="text-sm font-semibold text-zinc-900">{DURATION_LABELS[d]}</p>
-                    <p className="mt-1 text-lg font-bold text-zinc-900">{formatBDT(price)}</p>
+                    <p className="text-sm font-semibold text-apple-ink">{DURATION_LABELS[d]}</p>
+                    <p className="mt-1 text-lg font-bold text-apple-ink">{formatBDT(price)}</p>
                     {totalMonths && (
-                      <p className="text-[11px] text-zinc-500">
+                      <p className="text-[11px] text-apple-ink-muted-48">
                         {formatBDT(Math.round(price / totalMonths))}/mo
                       </p>
                     )}
@@ -317,7 +317,7 @@ export function PaymentSubmissionFlow({
               <button
                 type="button"
                 onClick={() => setStep("plan")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700"
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
               >
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>
@@ -335,8 +335,8 @@ export function PaymentSubmissionFlow({
         {step === "payment" && (
           <motion.div key="payment" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
             <div className="text-center mb-4">
-              <h2 className="text-xl font-bold text-zinc-900">Payment Details</h2>
-              <p className="text-sm text-zinc-500 mt-1">
+              <h2 className="text-xl font-bold text-apple-ink">Payment Details</h2>
+              <p className="text-sm text-apple-ink-muted-48 mt-1">
                 Pay {formatBDT(finalTotal)} for {DURATION_LABELS[duration]} of <strong>{selectedPlan?.name}</strong>
                 {couponApplied && <span className="text-emerald-600 ml-1">(with discount)</span>}
               </p>
@@ -344,7 +344,7 @@ export function PaymentSubmissionFlow({
 
             {/* Payment method selection */}
             <div>
-              <p className="text-sm font-medium text-zinc-700 mb-2">Select Payment Method</p>
+              <p className="text-sm font-medium text-apple-ink-muted-80 mb-2">Select Payment Method</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {methods.map((method) => {
                   const Icon = METHOD_ICONS[method.type] || CreditCard;
@@ -356,14 +356,14 @@ export function PaymentSubmissionFlow({
                       onClick={() => setPaymentMethod(method.type)}
                       className={`relative rounded-xl border-2 p-3 text-center transition-all ${
                         isSelected
-                          ? "border-zinc-900 bg-zinc-50 shadow-sm"
+                          ? "border-zinc-900 bg-apple-canvas-parchment shadow-sm"
                           : "border-zinc-200 hover:border-zinc-300"
                       }`}
                     >
                       <div className={`mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${METHOD_COLORS[method.type] || "from-zinc-500 to-zinc-600"} text-white`}>
                         <Icon className="h-5 w-5" />
                       </div>
-                      <p className="mt-1.5 text-xs font-semibold text-zinc-900">{method.label}</p>
+                      <p className="mt-1.5 text-xs font-semibold text-apple-ink">{method.label}</p>
                     </button>
                   );
                 })}
@@ -375,40 +375,40 @@ export function PaymentSubmissionFlow({
               <div className="rounded-2xl border border-zinc-200 bg-gradient-to-br from-zinc-50 to-white p-5">
                 <div className="flex items-center gap-3 mb-3">
                   <ShieldCheck className="h-5 w-5 text-emerald-500" />
-                  <p className="text-sm font-semibold text-zinc-900">Send payment to the following account</p>
+                  <p className="text-sm font-semibold text-apple-ink">Send payment to the following account</p>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-zinc-500">Account Number</span>
-                    <span className="font-bold text-zinc-900 text-lg tracking-wide">{selectedMethod.accountNumber}</span>
+                    <span className="text-apple-ink-muted-48">Account Number</span>
+                    <span className="font-bold text-apple-ink text-lg tracking-wide">{selectedMethod.accountNumber}</span>
                   </div>
                   {selectedMethod.merchantNumber && (
                     <div className="flex justify-between">
-                      <span className="text-zinc-500">Merchant Number</span>
-                      <span className="font-medium text-zinc-900">{selectedMethod.merchantNumber}</span>
+                      <span className="text-apple-ink-muted-48">Merchant Number</span>
+                      <span className="font-medium text-apple-ink">{selectedMethod.merchantNumber}</span>
                     </div>
                   )}
                   {selectedMethod.accountName && (
                     <div className="flex justify-between">
-                      <span className="text-zinc-500">Account Name</span>
-                      <span className="font-medium text-zinc-900">{selectedMethod.accountName}</span>
+                      <span className="text-apple-ink-muted-48">Account Name</span>
+                      <span className="font-medium text-apple-ink">{selectedMethod.accountName}</span>
                     </div>
                   )}
                   {selectedMethod.bankName && (
                     <div className="flex justify-between">
-                      <span className="text-zinc-500">Bank</span>
-                      <span className="font-medium text-zinc-900">{selectedMethod.bankName}</span>
+                      <span className="text-apple-ink-muted-48">Bank</span>
+                      <span className="font-medium text-apple-ink">{selectedMethod.bankName}</span>
                     </div>
                   )}
                   {selectedMethod.branchName && (
                     <div className="flex justify-between">
-                      <span className="text-zinc-500">Branch</span>
-                      <span className="font-medium text-zinc-900">{selectedMethod.branchName}</span>
+                      <span className="text-apple-ink-muted-48">Branch</span>
+                      <span className="font-medium text-apple-ink">{selectedMethod.branchName}</span>
                     </div>
                   )}
                   {selectedMethod.instructions && (
-                    <div className="mt-3 rounded-lg bg-zinc-100 p-3 text-xs text-zinc-600">
-                      <p className="font-medium text-zinc-700 mb-1">Instructions:</p>
+                    <div className="mt-3 rounded-lg bg-zinc-100 p-3 text-xs text-apple-ink-muted-80">
+                      <p className="font-medium text-apple-ink-muted-80 mb-1">Instructions:</p>
                       {selectedMethod.instructions}
                     </div>
                   )}
@@ -424,7 +424,7 @@ export function PaymentSubmissionFlow({
             {/* User input fields */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Your Sender Number</label>
+                <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Your Sender Number</label>
                 <input
                   value={senderNumber}
                   onChange={(e) => setSenderNumber(e.target.value)}
@@ -433,7 +433,7 @@ export function PaymentSubmissionFlow({
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-700">Transaction ID</label>
+                <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Transaction ID</label>
                 <input
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
@@ -445,7 +445,7 @@ export function PaymentSubmissionFlow({
 
             {/* Screenshot upload */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-700">Payment Screenshot (optional)</label>
+              <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Payment Screenshot (optional)</label>
               <div
                 className="relative flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 p-6 hover:border-zinc-300 transition-colors"
                 onClick={() => document.getElementById("screenshot-upload")?.click()}
@@ -464,8 +464,8 @@ export function PaymentSubmissionFlow({
                 ) : (
                   <div className="text-center">
                     <Upload className="mx-auto h-8 w-8 text-zinc-300" />
-                    <p className="mt-2 text-sm text-zinc-500">Upload payment screenshot</p>
-                    <p className="text-xs text-zinc-400">PNG, JPG or JPEG</p>
+                    <p className="mt-2 text-sm text-apple-ink-muted-48">Upload payment screenshot</p>
+                    <p className="text-xs text-apple-ink-muted-48">PNG, JPG or JPEG</p>
                   </div>
                 )}
                 <input
@@ -480,7 +480,7 @@ export function PaymentSubmissionFlow({
 
             {/* Coupon Code */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-700">Coupon Code (optional)</label>
+              <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Coupon Code (optional)</label>
               {couponApplied ? (
                 <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
                   <div className="flex items-center gap-2">
@@ -508,7 +508,7 @@ export function PaymentSubmissionFlow({
                     type="button"
                     onClick={handleApplyCoupon}
                     disabled={!couponCode.trim() || applyingCoupon}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-40 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-40 transition-colors"
                   >
                     {applyingCoupon ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Tag className="h-3.5 w-3.5" />}
                     Apply
@@ -518,10 +518,10 @@ export function PaymentSubmissionFlow({
             </div>
 
             {/* Pricing Summary */}
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 space-y-2">
+            <div className="rounded-xl border border-zinc-200 bg-apple-canvas-parchment p-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Subtotal</span>
-                <span className="text-zinc-900">{formatBDT(paymentAmount)}</span>
+                <span className="text-apple-ink-muted-48">Subtotal</span>
+                <span className="text-apple-ink">{formatBDT(paymentAmount)}</span>
               </div>
               {couponApplied && (
                 <div className="flex justify-between text-sm">
@@ -531,18 +531,18 @@ export function PaymentSubmissionFlow({
               )}
               {taxAmount > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-zinc-500">Tax</span>
-                  <span className="text-zinc-900">{formatBDT(taxAmount)}</span>
+                  <span className="text-apple-ink-muted-48">Tax</span>
+                  <span className="text-apple-ink">{formatBDT(taxAmount)}</span>
                 </div>
               )}
               <div className="flex justify-between text-base font-bold border-t border-zinc-200 pt-2">
-                <span className="text-zinc-900">Total</span>
-                <span className="text-zinc-900">{formatBDT(finalTotal)}</span>
+                <span className="text-apple-ink">Total</span>
+                <span className="text-apple-ink">{formatBDT(finalTotal)}</span>
               </div>
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-700">Notes (optional)</label>
+              <label className="mb-1.5 block text-sm font-medium text-apple-ink-muted-80">Notes (optional)</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -556,7 +556,7 @@ export function PaymentSubmissionFlow({
               <button
                 type="button"
                 onClick={() => setStep("duration")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700"
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
               >
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>
@@ -575,22 +575,22 @@ export function PaymentSubmissionFlow({
         {step === "confirm" && (
           <motion.div key="confirm" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
             <div className="text-center mb-4">
-              <h2 className="text-xl font-bold text-zinc-900">Confirm Payment</h2>
-              <p className="text-sm text-zinc-500 mt-1">Review your payment details before submitting</p>
+              <h2 className="text-xl font-bold text-apple-ink">Confirm Payment</h2>
+              <p className="text-sm text-apple-ink-muted-48 mt-1">Review your payment details before submitting</p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 bg-zinc-50/50 p-5 space-y-4">
+            <div className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment/50 p-5 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
-                <span className="text-sm text-zinc-600">Plan</span>
-                <span className="text-sm font-semibold text-zinc-900">{selectedPlan?.name}</span>
+                <span className="text-sm text-apple-ink-muted-80">Plan</span>
+                <span className="text-sm font-semibold text-apple-ink">{selectedPlan?.name}</span>
               </div>
               <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
-                <span className="text-sm text-zinc-600">Duration</span>
-                <span className="text-sm font-semibold text-zinc-900 capitalize">{DURATION_LABELS[duration]}</span>
+                <span className="text-sm text-apple-ink-muted-80">Duration</span>
+                <span className="text-sm font-semibold text-apple-ink capitalize">{DURATION_LABELS[duration]}</span>
               </div>
               <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
-                <span className="text-sm text-zinc-600">Subtotal</span>
-                <span className="text-sm text-zinc-900">{formatBDT(paymentAmount)}</span>
+                <span className="text-sm text-apple-ink-muted-80">Subtotal</span>
+                <span className="text-sm text-apple-ink">{formatBDT(paymentAmount)}</span>
               </div>
               {couponApplied && (
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
@@ -600,27 +600,27 @@ export function PaymentSubmissionFlow({
               )}
               {taxAmount > 0 && (
                 <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
-                  <span className="text-sm text-zinc-600">Tax</span>
-                  <span className="text-sm text-zinc-900">{formatBDT(taxAmount)}</span>
+                  <span className="text-sm text-apple-ink-muted-80">Tax</span>
+                  <span className="text-sm text-apple-ink">{formatBDT(taxAmount)}</span>
                 </div>
               )}
               <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
-                <span className="text-sm font-semibold text-zinc-900">Total</span>
-                <span className="text-lg font-bold text-zinc-900">{formatBDT(finalTotal)}</span>
+                <span className="text-sm font-semibold text-apple-ink">Total</span>
+                <span className="text-lg font-bold text-apple-ink">{formatBDT(finalTotal)}</span>
               </div>
               <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
-                <span className="text-sm text-zinc-600">Payment Method</span>
-                <Badge variant="default" className="bg-white border border-zinc-200 text-zinc-700">
+                <span className="text-sm text-apple-ink-muted-80">Payment Method</span>
+                <Badge variant="default" className="bg-white border border-zinc-200 text-apple-ink-muted-80">
                   {selectedMethod?.label || paymentMethod}
                 </Badge>
               </div>
               <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
-                <span className="text-sm text-zinc-600">Sender Number</span>
-                <span className="text-sm font-mono font-medium text-zinc-900">{senderNumber}</span>
+                <span className="text-sm text-apple-ink-muted-80">Sender Number</span>
+                <span className="text-sm font-mono font-medium text-apple-ink">{senderNumber}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-600">Transaction ID</span>
-                <span className="text-sm font-mono font-medium text-zinc-900">{transactionId}</span>
+                <span className="text-sm text-apple-ink-muted-80">Transaction ID</span>
+                <span className="text-sm font-mono font-medium text-apple-ink">{transactionId}</span>
               </div>
             </div>
 
@@ -633,7 +633,7 @@ export function PaymentSubmissionFlow({
               <button
                 type="button"
                 onClick={() => setStep("payment")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700"
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80"
               >
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>
@@ -656,8 +656,8 @@ export function PaymentSubmissionFlow({
               <CheckCircle2 className="h-10 w-10 text-emerald-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-zinc-900">Payment Submitted!</h2>
-              <p className="text-zinc-500 mt-2 max-w-sm mx-auto">
+              <h2 className="text-2xl font-bold text-apple-ink">Payment Submitted!</h2>
+              <p className="text-apple-ink-muted-48 mt-2 max-w-sm mx-auto">
                 Your payment is pending admin approval. We will notify you once it is reviewed.
               </p>
             </div>

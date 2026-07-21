@@ -37,7 +37,7 @@ function FileIconPreview({ file }: { file: MediaFile }) {
   if (file.mimeType?.startsWith("audio/")) return <FileAudio className="h-16 w-16 text-pink-600" />;
   if (["zip", "rar", "7z"].includes(file.extension)) return <FileArchive className="h-16 w-16 text-amber-600" />;
   if (isOfficeDoc(file)) return <OfficeIcon extension={file.extension} />;
-  return <FileText className="h-16 w-16 text-zinc-500" />;
+  return <FileText className="h-16 w-16 text-apple-ink-muted-48" />;
 }
 
 export function MediaPreviewModal({ file, open, onClose }: MediaPreviewModalProps) {
@@ -52,17 +52,17 @@ export function MediaPreviewModal({ file, open, onClose }: MediaPreviewModalProp
         <iframe
           src={pdfSrc}
           title={title}
-          className="h-[70vh] w-full rounded-xl border border-zinc-200 bg-zinc-50"
+          className="h-[70vh] w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment"
         />
       ) : (
         <div className="flex flex-col items-center justify-center gap-4 py-12">
           <FileIconPreview file={file} />
           <div className="text-center">
-            <p className="font-medium text-zinc-900">{title}</p>
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="font-medium text-apple-ink">{title}</p>
+            <p className="mt-1 text-sm text-apple-ink-muted-48">
               {fileTypeLabel(file)} · {formatBytes(file.size)}
             </p>
-            <p className="mt-1 text-xs text-zinc-400">Preview not available for this file type</p>
+            <p className="mt-1 text-xs text-apple-ink-muted-48">Preview not available for this file type</p>
           </div>
           <a
             href={mediaDownloadHref(file)}

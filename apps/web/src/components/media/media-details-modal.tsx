@@ -30,8 +30,8 @@ type MediaDetailsModalProps = {
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 border-b border-zinc-100 py-2 text-sm last:border-0">
-      <span className="shrink-0 text-zinc-500">{label}</span>
-      <span className="min-w-0 text-right font-medium text-zinc-900">{value}</span>
+      <span className="shrink-0 text-apple-ink-muted-48">{label}</span>
+      <span className="min-w-0 text-right font-medium text-apple-ink">{value}</span>
     </div>
   );
 }
@@ -59,7 +59,7 @@ export function MediaDetailsModal({ storeId, file, open, onClose }: MediaDetails
   return (
     <Modal open={open} onClose={onClose} title="Media details" size="lg">
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50">
+        <div className="overflow-hidden rounded-xl border border-zinc-100 bg-apple-canvas-parchment">
           {isImage(detail ?? file) ? (
             <SafeMediaImage
               src={mediaThumbnailSrc(detail ?? file)}
@@ -74,14 +74,14 @@ export function MediaDetailsModal({ storeId, file, open, onClose }: MediaDetails
               className="aspect-[4/3] w-full"
             />
           ) : (
-            <div className="flex aspect-square items-center justify-center text-2xl font-bold uppercase text-zinc-400">
+            <div className="flex aspect-square items-center justify-center text-2xl font-bold uppercase text-apple-ink-muted-48">
               {(detail ?? file).extension}
             </div>
           )}
         </div>
 
         <div className="space-y-1">
-          {isLoading && <p className="text-xs text-zinc-400">Loading details…</p>}
+          {isLoading && <p className="text-xs text-apple-ink-muted-48">Loading details…</p>}
           <DetailRow label="Name" value={detail?.displayName || detail?.originalName || file.originalName} />
           <DetailRow label="Extension" value={(detail ?? file).extension.toUpperCase() || "—"} />
           <DetailRow label="File type" value={fileTypeLabel(detail ?? file)} />
@@ -100,13 +100,13 @@ export function MediaDetailsModal({ storeId, file, open, onClose }: MediaDetails
           )}
 
           {usage && Object.keys(usage.byEntityType).length > 0 && (
-            <div className="mt-4 rounded-xl border border-zinc-100 bg-zinc-50 p-3">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Used by</p>
+            <div className="mt-4 rounded-xl border border-zinc-100 bg-apple-canvas-parchment p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-apple-ink-muted-48">Used by</p>
               <div className="space-y-1">
                 {Object.entries(usage.byEntityType).map(([type, count]) => (
                   <div key={type} className="flex justify-between text-sm">
-                    <span className="text-zinc-600">{entityTypeLabel(type)}</span>
-                    <span className="font-medium text-zinc-900">{count}</span>
+                    <span className="text-apple-ink-muted-80">{entityTypeLabel(type)}</span>
+                    <span className="font-medium text-apple-ink">{count}</span>
                   </div>
                 ))}
               </div>

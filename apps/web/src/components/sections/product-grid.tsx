@@ -19,7 +19,7 @@ export function ProductGrid({ section }: { section: SectionData }) {
         <SectionTitle title={p.title || "Products"} subtitle={p.subtitle || ""} textColor={p.textColor} textAlignment={p.textAlignment} />
         {display.length ? <ColumnGrid columns={cols}>
           {display.map((pr) => <ProductCard key={pr._id} product={pr} />)}
-        </ColumnGrid> : <div className="rounded-2xl border border-dashed border-zinc-200 px-5 py-10 text-center text-sm text-zinc-500">No products yet. Add products to see them in your storefront preview.</div>}
+        </ColumnGrid> : <div className="rounded-2xl border border-dashed border-zinc-200 px-5 py-10 text-center text-sm text-apple-ink-muted-48">No products yet. Add products to see them in your storefront preview.</div>}
       </div>
     </SectionWrapper>
   );

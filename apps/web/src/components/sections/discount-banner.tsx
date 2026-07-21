@@ -14,7 +14,7 @@ export function DiscountBanner({ section }: { section: SectionData }) {
         {p.headline && <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl" style={{ color: p.textColor || "#ffffff" }}>{p.headline}</h2>}
         {p.subheadline && <p className="mt-2 text-sm text-white/80">{p.subheadline}</p>}
         {p.buttonText && (
-          <Link href={p.buttonLink || "#"} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-100">
+          <Link href={p.buttonLink || "#"} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-apple-ink hover:bg-apple-canvas-parchment">
             {p.buttonText}
           </Link>
         )}

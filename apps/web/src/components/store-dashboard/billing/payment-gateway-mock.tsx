@@ -62,8 +62,8 @@ export function PaymentGatewayMock() {
       <div className="flex min-h-screen items-center justify-center bg-[#f8f9fb]">
         <div className="rounded-2xl border border-red-200 bg-white p-8 text-center shadow-md">
           <XCircle className="mx-auto mb-3 h-10 w-10 text-red-500" />
-          <h2 className="text-lg font-semibold text-zinc-900">Invalid Payment Link</h2>
-          <p className="mt-1 text-sm text-zinc-500">No payment ID was provided.</p>
+          <h2 className="text-lg font-semibold text-apple-ink">Invalid Payment Link</h2>
+          <p className="mt-1 text-sm text-apple-ink-muted-48">No payment ID was provided.</p>
           <button
             onClick={() => router.push(`/store/${store?.slug}/billing`)}
             className="mt-4 rounded-lg bg-zinc-900 px-5 py-2 text-sm font-medium text-white hover:bg-zinc-800"
@@ -77,15 +77,15 @@ export function PaymentGatewayMock() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-200/80 bg-white p-8 shadow-xl">
+      <div className="w-full max-w-md rounded-2xl border border-apple-hairline bg-white p-8 shadow-xl">
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100">
             <ShieldCheck className="h-5 w-5 text-indigo-600" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-zinc-900">Secure Payment</h1>
-            <p className="text-xs text-zinc-500">BornoLand Payment Gateway (Sandbox)</p>
+            <h1 className="text-lg font-bold text-apple-ink">Secure Payment</h1>
+            <p className="text-xs text-apple-ink-muted-48">BornoLand Payment Gateway (Sandbox)</p>
           </div>
         </div>
 
@@ -100,10 +100,10 @@ export function PaymentGatewayMock() {
         {state === "pending" && (
           <div className="space-y-6">
             <div className="space-y-2 text-center">
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-apple-ink-muted-48">
                 Simulate a payment outcome for your subscription.
               </p>
-              <p className="text-xs text-zinc-400">Payment ID: {paymentId}</p>
+              <p className="text-xs text-apple-ink-muted-48">Payment ID: {paymentId}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -129,8 +129,8 @@ export function PaymentGatewayMock() {
         {state === "confirming" && (
           <div className="flex flex-col items-center gap-4 py-6">
             <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
-            <p className="text-sm font-medium text-zinc-700">Confirming payment…</p>
-            <p className="text-xs text-zinc-400">Please wait while we activate your subscription.</p>
+            <p className="text-sm font-medium text-apple-ink-muted-80">Confirming payment…</p>
+            <p className="text-xs text-apple-ink-muted-48">Please wait while we activate your subscription.</p>
           </div>
         )}
 
@@ -141,13 +141,13 @@ export function PaymentGatewayMock() {
               <CheckCircle2 className="h-8 w-8 text-emerald-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-zinc-900">Payment Successful!</h2>
-              <p className="mt-1 text-sm text-zinc-500">
+              <h2 className="text-xl font-bold text-apple-ink">Payment Successful!</h2>
+              <p className="mt-1 text-sm text-apple-ink-muted-48">
                 Your subscription has been activated successfully.
               </p>
             </div>
             <div className="mt-2 rounded-lg bg-zinc-100 px-4 py-2">
-              <p className="text-sm text-zinc-600">
+              <p className="text-sm text-apple-ink-muted-80">
                 Redirecting to Billing in{" "}
                 <span className="font-bold text-indigo-600">{countdown}s</span>
               </p>
@@ -168,13 +168,13 @@ export function PaymentGatewayMock() {
               <XCircle className="h-8 w-8 text-red-500" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-zinc-900">Payment Cancelled</h2>
-              <p className="mt-1 text-sm text-zinc-500">
+              <h2 className="text-xl font-bold text-apple-ink">Payment Cancelled</h2>
+              <p className="mt-1 text-sm text-apple-ink-muted-48">
                 Your payment was not completed. Your subscription was not changed.
               </p>
             </div>
             <div className="mt-2 rounded-lg bg-zinc-100 px-4 py-2">
-              <p className="text-sm text-zinc-600">
+              <p className="text-sm text-apple-ink-muted-80">
                 Redirecting to Billing in{" "}
                 <span className="font-bold text-red-500">{countdown}s</span>
               </p>
@@ -182,7 +182,7 @@ export function PaymentGatewayMock() {
             <div className="flex gap-2">
               <button
                 onClick={() => setState("pending")}
-                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
               >
                 Try Again
               </button>

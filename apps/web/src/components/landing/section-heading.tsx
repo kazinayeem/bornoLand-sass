@@ -16,11 +16,11 @@ export function SectionHeading({ eyebrow, title, description, align = "center", 
           {eyebrow}
         </span>
       )}
-      <h2 className="font-[family-name:var(--font-space-grotesk)] text-3xl font-bold tracking-tight text-zinc-950 sm:text-4xl lg:text-5xl">
+      <h2 className="font-[family-name:var(--font-space-grotesk)] text-3xl font-bold tracking-tight text-apple-ink sm:text-4xl lg:text-5xl">
         {title}
       </h2>
       {description && (
-        <p className="mt-4 text-base leading-relaxed text-zinc-500 sm:text-lg max-w-2xl mx-auto">
+        <p className="mt-4 text-base leading-relaxed text-apple-ink-muted-48 sm:text-lg max-w-2xl mx-auto">
           {description}
         </p>
       )}

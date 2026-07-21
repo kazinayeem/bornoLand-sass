@@ -27,7 +27,7 @@ export function PlanDistributionChart() {
           <Legend
             verticalAlign="bottom"
             height={36}
-            formatter={(value: string) => <span className="text-sm text-zinc-600">{value}</span>}
+            formatter={(value: string) => <span className="text-sm text-apple-ink-muted-80">{value}</span>}
           />
         </PieChart>
       </ResponsiveContainer>

@@ -33,21 +33,21 @@ export function SectionEditor() {
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
             className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold text-zinc-900">Edit {section.label}</h3>
+              <h3 className="text-base font-semibold text-apple-ink">Edit {section.label}</h3>
               <button onClick={() => dispatch(setEditingSection(null))}
-                className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100">
+                className="rounded-lg p-1 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="mt-4 space-y-3">
               {Object.entries(section.props).map(([key, value]) => (
                 <div key={key}>
-                  <label className="mb-1 block text-xs font-medium text-zinc-500">
+                  <label className="mb-1 block text-xs font-medium text-apple-ink-muted-48">
                     {labels[key] ?? key.replace(/([A-Z])/g, " $1").trim()}
                   </label>
                   <input type="text" value={value}
                     onChange={(e) => handleChange(key, e.target.value)}
-                    className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500/20" />
+                    className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-500/20" />
                 </div>
               ))}
             </div>

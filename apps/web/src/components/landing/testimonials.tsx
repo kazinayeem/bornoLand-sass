@@ -92,8 +92,8 @@ export function Testimonials() {
                     {t.avatar}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-zinc-900">{t.name}</p>
-                    <p className="text-xs text-zinc-500">{t.role} · {t.business}</p>
+                    <p className="text-sm font-bold text-apple-ink">{t.name}</p>
+                    <p className="text-xs text-apple-ink-muted-48">{t.role} · {t.business}</p>
                   </div>
                 </div>
                 <div className="mb-4 flex gap-0.5">
@@ -101,12 +101,12 @@ export function Testimonials() {
                     <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="text-sm leading-relaxed text-zinc-600">&ldquo;{t.text}&rdquo;</p>
+                <p className="text-sm leading-relaxed text-apple-ink-muted-80">&ldquo;{t.text}&rdquo;</p>
               </motion.div>
             </AnimatePresence>
 
             <div className="mt-5 flex items-center justify-center gap-3">
-              <button onClick={prev} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-zinc-500 hover:bg-zinc-50 transition-colors">
+              <button onClick={prev} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <div className="flex gap-1.5">
@@ -120,7 +120,7 @@ export function Testimonials() {
                   />
                 ))}
               </div>
-              <button onClick={next} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-zinc-500 hover:bg-zinc-50 transition-colors">
+              <button onClick={next} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment transition-colors">
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>

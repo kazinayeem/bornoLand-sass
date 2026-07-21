@@ -134,7 +134,7 @@ function getDiffClass(
 ): string {
   if (format === "boolean") {
     if (compare === true && current === false) return "text-emerald-600 font-semibold";
-    if (compare === false && current === true) return "text-zinc-400";
+    if (compare === false && current === true) return "text-apple-ink-muted-48";
     return "";
   }
   const c = Number(current);
@@ -142,7 +142,7 @@ function getDiffClass(
   // For pricing, lower is better (but we highlight the *plan's* advantage, so skip pricing diff)
   if (c === v) return "";
   if (v > c) return "text-emerald-600 font-semibold";
-  if (v < c && v >= 0) return "text-zinc-400";
+  if (v < c && v >= 0) return "text-apple-ink-muted-48";
   return "";
 }
 
@@ -156,7 +156,7 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
       </div>
     );
   }
@@ -177,8 +177,8 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
     <div className="space-y-8">
       {/* Header & Toggle */}
       <div className="flex flex-col items-center gap-4">
-        <h2 className="text-xl font-semibold text-zinc-900">Choose the right plan for your store</h2>
-        <p className="max-w-lg text-center text-sm text-zinc-500">
+        <h2 className="text-xl font-semibold text-apple-ink">Choose the right plan for your store</h2>
+        <p className="max-w-lg text-center text-sm text-apple-ink-muted-48">
           Compare all plans side by side. Pick the one that matches your store&apos;s needs.
         </p>
         <div className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-sm">
@@ -186,7 +186,7 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
             onClick={() => setIsYearly(false)}
             className={cn(
               "rounded-full px-5 py-2 text-sm font-medium transition-all",
-              !isYearly ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-600 hover:bg-zinc-100"
+              !isYearly ? "bg-zinc-900 text-white shadow-sm" : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
             )}
           >
             Monthly
@@ -195,7 +195,7 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
             onClick={() => setIsYearly(true)}
             className={cn(
               "rounded-full px-5 py-2 text-sm font-medium transition-all",
-              isYearly ? "bg-zinc-900 text-white shadow-sm" : "text-zinc-600 hover:bg-zinc-100"
+              isYearly ? "bg-zinc-900 text-white shadow-sm" : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
             )}
           >
             Yearly <span className="ml-1 text-xs text-emerald-500">(Save up to 20%)</span>
@@ -221,7 +221,7 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
                   ? "border-emerald-500 bg-emerald-50/40 shadow-emerald-100 ring-1 ring-emerald-500/20"
                   : plan.isRecommended
                   ? "border-indigo-500 shadow-indigo-100 ring-1 ring-indigo-500/20"
-                  : "border-zinc-200/80"
+                  : "border-apple-hairline"
               )}
             >
               {/* Top Badges */}
@@ -242,16 +242,16 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
 
               {/* Plan Name & Description */}
               <div className="mb-4">
-                <h3 className="text-lg font-bold text-zinc-900">{plan.name}</h3>
-                <p className="mt-1 min-h-[40px] text-sm text-zinc-500">{plan.description || "—"}</p>
+                <h3 className="text-lg font-bold text-apple-ink">{plan.name}</h3>
+                <p className="mt-1 min-h-[40px] text-sm text-apple-ink-muted-48">{plan.description || "—"}</p>
               </div>
 
               {/* Price */}
               <div className="mb-6 flex items-baseline gap-1">
-                <span className="text-3xl font-bold tracking-tight text-zinc-900">
+                <span className="text-3xl font-bold tracking-tight text-apple-ink">
                   ৳{(price || 0).toLocaleString()}
                 </span>
-                <span className="text-sm font-medium text-zinc-500">/{isYearly ? "yr" : "mo"}</span>
+                <span className="text-sm font-medium text-apple-ink-muted-48">/{isYearly ? "yr" : "mo"}</span>
               </div>
 
               {/* Action Button */}
@@ -266,7 +266,7 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
                     ? plan.isRecommended
                       ? "bg-indigo-600 text-white hover:bg-indigo-700"
                       : "bg-zinc-900 text-white hover:bg-zinc-800"
-                    : "border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+                    : "border border-zinc-300 bg-white text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
                 )}
               >
                 {buttonState === "current" ? (
@@ -294,7 +294,7 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
                   const rows = COMPARISON_ROWS.filter((r) => r.category === category);
                   return (
                     <div key={category}>
-                      <h4 className="py-2 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                      <h4 className="py-2 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
                         {category === "pricing" ? "Pricing" : category === "limits" ? "Limits & Quotas" : "Features"}
                       </h4>
                       {rows.map((row) => {
@@ -313,8 +313,8 @@ export function PlansList({ storeId, currentPlanId }: { storeId: string; current
                               diffClass ? diffClass : ""
                             )}
                           >
-                            <span className="text-zinc-600">{row.label}</span>
-                            <span className={cn("font-medium", diffClass || "text-zinc-900")}>
+                            <span className="text-apple-ink-muted-80">{row.label}</span>
+                            <span className={cn("font-medium", diffClass || "text-apple-ink")}>
                               {row.format === "boolean" ? (
                                 value ? (
                                   <Check className="h-4 w-4 text-emerald-500" />

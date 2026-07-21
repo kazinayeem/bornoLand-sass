@@ -13,7 +13,7 @@ export function Gallery({ section }: { section: SectionData }) {
       <SectionWrapper section={section}>
         <div className="px-4 sm:px-6 lg:px-8 py-12 text-center">
           <SectionTitle title={p.title || "Gallery"} subtitle={p.subtitle || ""} textColor={p.textColor} textAlignment={p.textAlignment} />
-          <p className="mt-4 text-sm text-zinc-400">No gallery images yet. Add them in the Content tab.</p>
+          <p className="mt-4 text-sm text-apple-ink-muted-48">No gallery images yet. Add them in the Content tab.</p>
         </div>
       </SectionWrapper>
     );

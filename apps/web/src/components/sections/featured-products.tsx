@@ -20,11 +20,11 @@ export function FeaturedProducts({ section }: { section: SectionData }) {
         <SectionTitle title={p.title || "Featured Products"} subtitle={p.subtitle || ""} textColor={p.textColor} textAlignment={p.textAlignment} />
         {display.length ? <ColumnGrid columns={cols}>
           {display.map((pr) => <ProductCard key={pr._id} product={pr} />)}
-        </ColumnGrid> : <div className="rounded-2xl border border-dashed border-zinc-200 px-5 py-10 text-center text-sm text-zinc-500">No products yet. Add products to see them in your storefront preview.</div>}
+        </ColumnGrid> : <div className="rounded-2xl border border-dashed border-zinc-200 px-5 py-10 text-center text-sm text-apple-ink-muted-48">No products yet. Add products to see them in your storefront preview.</div>}
         {showViewAll && (
           <div className="mt-8 text-center">
             <Link href={p.viewAllLink || "/shop"}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-5 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-all">
+              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-5 py-2.5 text-sm font-semibold text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all">
               View All →</Link>
           </div>
         )}

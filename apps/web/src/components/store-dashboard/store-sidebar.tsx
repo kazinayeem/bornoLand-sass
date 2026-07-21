@@ -150,25 +150,25 @@ function NavItem({
       className={cn(
         "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
         active
-          ? "bg-blue-50/80 text-blue-700"
-          : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900",
+          ? "bg-apple-canvas-parchment text-apple-primary"
+          : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment hover:text-apple-ink",
         locked && !active && "opacity-60",
         collapsed && "justify-center px-0"
       )}
     >
       {/* Active indicator */}
       {active && (
-        <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-600" />
+        <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-apple-primary" />
       )}
       <Icon className={cn(
         "h-[18px] w-[18px] shrink-0 transition-colors duration-200",
-        active ? "text-blue-600" : "text-zinc-400 group-hover:text-zinc-600"
+        active ? "text-apple-primary" : "text-apple-ink-muted-48 group-hover:text-apple-ink-muted-80"
       )} />
       {!collapsed && (
         <>
           <span className="flex-1 truncate">{label}</span>
           {comingSoon && !locked && <ComingSoonBadge className="scale-90" />}
-          {locked && <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />}
+          {locked && <Lock className="h-3.5 w-3.5 shrink-0 text-apple-ink-muted-48" />}
         </>
       )}
     </Link>
@@ -179,9 +179,9 @@ function NavItem({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   const { collapsed } = useSidebar();
-  if (collapsed) return <div className="mx-3 my-2 h-px bg-zinc-100" />;
+  if (collapsed) return <div className="mx-3 my-2 h-px bg-apple-divider-soft" />;
   return (
-    <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+    <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">
       {children}
     </p>
   );
@@ -233,18 +233,18 @@ export function StoreSidebar({ store }: { store: Store }) {
     <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
       <aside
         className={cn(
-          "sticky top-0 flex h-screen flex-col border-r border-[#ececec] bg-white transition-all duration-300 ease-in-out",
+          "sticky top-0 flex h-screen flex-col border-r border-apple-hairline bg-apple-canvas transition-all duration-300 ease-in-out",
           collapsed ? "w-[72px]" : "w-[280px]"
         )}
         role="navigation"
         aria-label="Store navigation"
       >
         {/* ── Store Card ──────────────────────────────────────── */}
-        <div className={cn("shrink-0 border-b border-[#ececec]", collapsed ? "px-2 py-3" : "px-4 py-4")}>
+        <div className={cn("shrink-0 border-b border-apple-hairline", collapsed ? "px-2 py-3" : "px-4 py-4")}>
           <Link
             href="/dashboard/stores"
             className={cn(
-              "mb-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-400 transition-colors hover:text-zinc-700",
+              "mb-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-apple-ink-muted-48 transition-colors hover:text-apple-ink-muted-80",
               collapsed && "mx-auto justify-center"
             )}
             title="All Stores"
@@ -257,10 +257,10 @@ export function StoreSidebar({ store }: { store: Store }) {
             <StoreBrandMark store={store} size={collapsed ? 36 : 40} />
             {!collapsed && (
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-semibold text-zinc-900">
+                <p className="truncate text-[13px] font-semibold text-apple-ink">
                   {store.shortName || store.name}
                 </p>
-                <p className="truncate text-[11px] text-zinc-400">
+                <p className="truncate text-[11px] text-apple-ink-muted-48">
                   {store.subdomain}.bornoland.com
                 </p>
               </div>
@@ -289,16 +289,16 @@ export function StoreSidebar({ store }: { store: Store }) {
               </div>
 
               {/* Storage */}
-              <div className="mt-3 rounded-lg bg-zinc-50 p-2.5">
-                <div className="flex items-center justify-between text-[10px] font-medium text-zinc-500">
+              <div className="mt-3 rounded-lg bg-apple-canvas-parchment p-2.5">
+                <div className="flex items-center justify-between text-[10px] font-medium text-apple-ink-muted-48">
                   <span>Storage</span>
                   <span className="tabular-nums">{usedLabel} / {storageLabel}</span>
                 </div>
-                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-200">
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-apple-hairline">
                   <div
                     className={cn(
                       "h-full rounded-full transition-all duration-500",
-                      storagePercent >= 80 ? "bg-gradient-to-r from-amber-500 to-orange-500" : "bg-gradient-to-r from-blue-500 to-indigo-500"
+                      storagePercent >= 80 ? "bg-amber-500" : "bg-apple-primary"
                     )}
                     style={{ width: `${storagePercent}%` }}
                   />
@@ -334,18 +334,18 @@ export function StoreSidebar({ store }: { store: Store }) {
               className={cn(
                 "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
                 pathname.startsWith(`${basePath}/analytics`)
-                  ? "bg-blue-50/80 text-blue-700"
-                  : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900",
+                  ? "bg-apple-canvas-parchment text-apple-primary"
+                  : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment hover:text-apple-ink",
                 collapsed && "justify-center px-0"
               )}
               title={collapsed ? "Analytics" : undefined}
             >
               {pathname.startsWith(`${basePath}/analytics`) && (
-                <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-600" />
+                <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-apple-primary" />
               )}
               <BarChart3 className={cn(
                 "h-[18px] w-[18px] shrink-0 transition-colors duration-200",
-                pathname.startsWith(`${basePath}/analytics`) ? "text-blue-600" : "text-zinc-400 group-hover:text-zinc-600"
+                pathname.startsWith(`${basePath}/analytics`) ? "text-apple-primary" : "text-apple-ink-muted-48 group-hover:text-apple-ink-muted-80"
               )} />
               {!collapsed && (
                 <>
@@ -419,7 +419,7 @@ export function StoreSidebar({ store }: { store: Store }) {
           </div>
 
           {/* Bottom Links */}
-          <div className="mt-4 border-t border-zinc-100 pt-3">
+          <div className="mt-4 border-t border-apple-divider-soft pt-3">
             <ul className="space-y-0.5">
               {bottomLinks.map((link) => {
                 const meta = resolveLink(link);
@@ -440,11 +440,11 @@ export function StoreSidebar({ store }: { store: Store }) {
         </nav>
 
         {/* ── Bottom: Collapse + Profile ──────────────────────── */}
-        <div className="shrink-0 border-t border-[#ececec] p-3">
+        <div className="shrink-0 border-t border-apple-hairline p-3">
           <button
             onClick={() => setCollapsed(!collapsed)}
             className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-zinc-500 transition-all duration-200 hover:bg-zinc-50 hover:text-zinc-700",
+              "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-apple-ink-muted-48 transition-all duration-200 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80",
               collapsed && "justify-center px-0"
             )}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}

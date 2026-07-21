@@ -31,14 +31,14 @@ export function UsersTab({ helpers }: { helpers: TabHelpers }) {
     <div className="space-y-6 max-w-2xl">
       {/* Owner */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Store Owner</h4>
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Store Owner</h4>
         <div className="mt-3 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-sm font-bold text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-apple-primary text-sm font-bold text-white">
             {owner?.name?.[0] ?? "?"}
           </div>
           <div>
-            <p className="font-medium text-zinc-900">{owner?.name ?? "—"}</p>
-            <p className="text-sm text-zinc-500">{owner?.email ?? "—"}</p>
+            <p className="font-medium text-apple-ink">{owner?.name ?? "—"}</p>
+            <p className="text-sm text-apple-ink-muted-48">{owner?.email ?? "—"}</p>
           </div>
           <div className="ml-auto">
             <span className="rounded-lg bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
@@ -50,8 +50,8 @@ export function UsersTab({ helpers }: { helpers: TabHelpers }) {
 
       {/* Staff area (placeholder) */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Staff</h4>
-        <p className="mt-1 text-xs text-zinc-400">
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Staff</h4>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">
           Staff management is handled through the Team Members section. Use the buttons below for quick actions.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -68,15 +68,15 @@ export function UsersTab({ helpers }: { helpers: TabHelpers }) {
 
       {/* Access Controls */}
       <div className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Access Controls</h4>
-        <p className="mt-1 text-xs text-zinc-500">
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Access Controls</h4>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">
           Temporarily restrict access to this store.
         </p>
         <div className="mt-4 space-y-4">
           <label className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-zinc-400" />
-              <span className="text-sm text-zinc-700">Maintenance Mode</span>
+              <Shield className="h-4 w-4 text-apple-ink-muted-48" />
+              <span className="text-sm text-apple-ink-muted-80">Maintenance Mode</span>
             </div>
             <button
               onClick={() => {
@@ -97,8 +97,8 @@ export function UsersTab({ helpers }: { helpers: TabHelpers }) {
 
           <label className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <UserX className="h-4 w-4 text-zinc-400" />
-              <span className="text-sm text-zinc-700">Disable Login</span>
+              <UserX className="h-4 w-4 text-apple-ink-muted-48" />
+              <span className="text-sm text-apple-ink-muted-80">Disable Login</span>
             </div>
             <button
               onClick={() => {
@@ -121,8 +121,8 @@ export function UsersTab({ helpers }: { helpers: TabHelpers }) {
 
       {/* Quick Staff Actions */}
       <div className="rounded-xl border border-red-100 bg-red-50/30 p-5">
-        <h4 className="text-sm font-semibold text-zinc-700">Staff Actions</h4>
-        <p className="mt-1 text-xs text-zinc-500">
+        <h4 className="text-sm font-semibold text-apple-ink-muted-80">Staff Actions</h4>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">
           These actions are available for the store owner. For managing team members, use the
           Team Members page inside the store.
         </p>

@@ -145,12 +145,12 @@ export function StoreNavbar({ headerSections: _headerSections, headerSettings: _
                   {store.name[0]}
                 </div>
               )}
-              <span className="text-lg font-bold text-zinc-900">{store.name}</span>
+              <span className="text-lg font-bold text-apple-ink">{store.name}</span>
             </Link>
             <div className="hidden items-center gap-6 md:flex">
               {navLinks.map((link) => (
                 <Link key={link.name} href={link.href}
-                  className="text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900">
+                  className="text-sm font-medium text-apple-ink-muted-48 transition-colors hover:text-apple-ink">
                   {link.name}
                 </Link>
               ))}
@@ -161,20 +161,20 @@ export function StoreNavbar({ headerSections: _headerSections, headerSettings: _
             {showSearch && (
               <button onClick={() => setSearchOpen(true)}
                 aria-label="Open search"
-                className="hidden rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 sm:block">
+                className="hidden rounded-lg p-2 text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 sm:block">
                 <Search className="h-5 w-5" />
               </button>
             )}
             {showWishlist && (
               <Link href="/account" aria-label="Wishlist"
-                className="hidden rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 sm:block">
+                className="hidden rounded-lg p-2 text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 sm:block">
                 <Heart className="h-5 w-5" />
               </Link>
             )}
             {showCart && (
               <button onClick={() => dispatch(openCart())}
                 aria-label="View cart"
-                className="relative rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600">
+                className="relative rounded-lg p-2 text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
                 <ShoppingCart className="h-5 w-5" />
                 {itemCount > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: primaryColor }}>
@@ -186,18 +186,18 @@ export function StoreNavbar({ headerSections: _headerSections, headerSettings: _
             {showProfile && customer.isAuthenticated ? (
               <div className="hidden items-center gap-1 sm:flex">
                 <Link href="/orders"
-                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100">
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment">
                   <Package className="h-4 w-4" /> Orders
                 </Link>
                 <button onClick={handleLogout}
                   aria-label="Sign out"
-                  className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-red-500">
+                  className="rounded-lg p-2 text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas-parchment hover:text-red-500">
                   <LogOut className="h-4 w-4" />
                 </button>
               </div>
             ) : showProfile ? (
               <Link href="/account/login"
-                className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 sm:flex">
+                className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment sm:flex">
                 <LogIn className="h-4 w-4" /> Sign In
               </Link>
             ) : null}
@@ -205,7 +205,7 @@ export function StoreNavbar({ headerSections: _headerSections, headerSettings: _
               aria-label="Open menu"
               aria-expanded={mobileOpen}
               aria-controls="store-mobile-menu"
-              className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 md:hidden">
+              className="rounded-lg p-2 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment md:hidden">
               <Menu className="h-5 w-5" />
             </button>
           </div>
@@ -228,22 +228,22 @@ export function StoreNavbar({ headerSections: _headerSections, headerSettings: _
               onClick={(e) => e.stopPropagation()}
             >
               <form onSubmit={handleSearch} className="flex items-center gap-3 border-b border-zinc-100 px-4 py-3">
-                <Search className="h-5 w-5 shrink-0 text-zinc-400" />
+                <Search className="h-5 w-5 shrink-0 text-apple-ink-muted-48" />
                 <input
                   ref={searchInputRef}
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search products..."
-                  className="flex-1 text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
+                  className="flex-1 text-sm text-apple-ink outline-none placeholder:text-apple-ink-muted-48"
                 />
                 <button type="button" onClick={() => setSearchOpen(false)}
-                  className="flex h-7 items-center rounded-md border border-zinc-200 bg-zinc-50 px-2 text-[10px] font-medium text-zinc-400 hover:text-zinc-600">
+                  className="flex h-7 items-center rounded-md border border-zinc-200 bg-apple-canvas-parchment px-2 text-[10px] font-medium text-apple-ink-muted-48 hover:text-apple-ink-muted-80">
                   ESC
                 </button>
               </form>
               <div className="p-4">
-                <p className="text-xs text-zinc-400">Search across all products in this store</p>
+                <p className="text-xs text-apple-ink-muted-48">Search across all products in this store</p>
                 {searchQuery && (
                   <button type="submit" onClick={handleSearch}
                     className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700">
@@ -272,41 +272,41 @@ export function StoreNavbar({ headerSections: _headerSections, headerSettings: _
                     style={{ backgroundColor: primaryColor }}>
                     {store.name[0]}
                   </div>
-                  <span className="text-lg font-bold text-zinc-900">{store.name}</span>
+                  <span className="text-lg font-bold text-apple-ink">{store.name}</span>
                 </div>
                 <button onClick={() => setMobileOpen(false)}
                   aria-label="Close menu"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100">
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
                   <X className="h-5 w-5" />
                 </button>
               </div>
               <div className="flex flex-col h-[calc(100%-4rem)] overflow-y-auto">
                 <div className="p-4 space-y-1">
-                  <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Navigation</p>
+                  <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Navigation</p>
                   {navLinks.map((link, i) => (
                     <motion.button key={link.name}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.05 }}
                       onClick={() => handleNavClick(link.href)}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50">
-                      <link.icon className="h-4 w-4 text-zinc-400" />
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment">
+                      <link.icon className="h-4 w-4 text-apple-ink-muted-48" />
                       {link.name}
                     </motion.button>
                   ))}
                 </div>
 
                 <div className="border-t border-zinc-100 p-4 space-y-1">
-                  <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Account</p>
+                  <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Account</p>
                   {customer.isAuthenticated ? (
                     <>
                       <button onClick={() => handleNavClick("/account")}
-                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50">
-                        <User className="h-4 w-4 text-zinc-400" /> My Account
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment">
+                        <User className="h-4 w-4 text-apple-ink-muted-48" /> My Account
                       </button>
                       <button onClick={() => handleNavClick("/orders")}
-                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50">
-                        <Package className="h-4 w-4 text-zinc-400" /> Orders
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment">
+                        <Package className="h-4 w-4 text-apple-ink-muted-48" /> Orders
                       </button>
                       <button onClick={() => { handleLogout(); setMobileOpen(false); }}
                         className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50">
@@ -316,18 +316,18 @@ export function StoreNavbar({ headerSections: _headerSections, headerSettings: _
                   ) : (
                     <>
                       <button onClick={() => handleNavClick("/account/login")}
-                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50">
-                        <LogIn className="h-4 w-4 text-zinc-400" /> Sign In
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment">
+                        <LogIn className="h-4 w-4 text-apple-ink-muted-48" /> Sign In
                       </button>
                       <button onClick={() => handleNavClick("/account/register")}
-                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50">
-                        <User className="h-4 w-4 text-zinc-400" /> Register
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment">
+                        <User className="h-4 w-4 text-apple-ink-muted-48" /> Register
                       </button>
                     </>
                   )}
                   <button onClick={() => handleNavClick("/account")}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50">
-                    <Heart className="h-4 w-4 text-zinc-400" /> Wishlist
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment">
+                    <Heart className="h-4 w-4 text-apple-ink-muted-48" /> Wishlist
                   </button>
                 </div>
               </div>

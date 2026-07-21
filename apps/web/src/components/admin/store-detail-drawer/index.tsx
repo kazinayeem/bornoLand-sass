@@ -252,12 +252,12 @@ export function StoreDetailDrawer({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-lg font-bold text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-apple-primary text-lg font-bold text-white">
               {store.name[0]}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-zinc-900">{store.name}</h2>
-              <p className="text-xs text-zinc-500">
+              <h2 className="text-lg font-semibold text-apple-ink">{store.name}</h2>
+              <p className="text-xs text-apple-ink-muted-48">
                 {store.subdomain || store.slug} · {planName}
               </p>
             </div>
@@ -286,7 +286,7 @@ export function StoreDetailDrawer({
               className={`relative shrink-0 px-3 py-3 text-sm font-medium transition-colors ${
                 activeTab === tab.id
                   ? "text-blue-600"
-                  : "text-zinc-500 hover:text-zinc-800"
+                  : "text-apple-ink-muted-48 hover:text-zinc-800"
               }`}
             >
               {tab.label}
@@ -323,7 +323,7 @@ export function StoreDetailDrawer({
         {/* Sticky Save Bar */}
         {dirty && (
           <div className="sticky bottom-0 left-0 right-0 flex items-center justify-between border-t border-zinc-200 bg-white/95 px-6 py-3 backdrop-blur-sm">
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-apple-ink-muted-48">
               Unsaved changes
             </p>
             <div className="flex gap-2">

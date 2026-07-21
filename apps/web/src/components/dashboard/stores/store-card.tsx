@@ -307,9 +307,9 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
       <div className="flex flex-1 flex-col gap-3 p-4">
 
         {/* Domain */}
-        <div className="flex items-center gap-2 rounded-lg bg-zinc-50 px-3 py-2">
-          <Globe className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-          <span className="truncate text-xs font-medium text-zinc-600">{domain}</span>
+        <div className="flex items-center gap-2 rounded-lg bg-apple-canvas-parchment px-3 py-2">
+          <Globe className="h-3.5 w-3.5 shrink-0 text-apple-ink-muted-48" />
+          <span className="truncate text-xs font-medium text-apple-ink-muted-80">{domain}</span>
         </div>
 
         {/* Stats grid: Products · Orders · Revenue · Customers */}
@@ -320,12 +320,12 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
             { label: "Revenue",  value: formatBDT(store.revenueBDT ?? 0),   icon: TrendingUp,    color: "text-emerald-500" },
             { label: "Staff",    value: store.staffCount ?? 0,              icon: Users,         color: "text-amber-500"  },
           ].map((stat) => (
-            <div key={stat.label} className="flex flex-col items-center gap-0.5 rounded-xl bg-zinc-50 px-1.5 py-2.5 text-center">
+            <div key={stat.label} className="flex flex-col items-center gap-0.5 rounded-xl bg-apple-canvas-parchment px-1.5 py-2.5 text-center">
               <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
-              <p className="mt-0.5 text-sm font-bold text-zinc-900 leading-none">
+              <p className="mt-0.5 text-sm font-bold text-apple-ink leading-none">
                 {typeof stat.value === "number" ? stat.value.toLocaleString() : stat.value}
               </p>
-              <p className="text-[9px] font-semibold uppercase tracking-wide text-zinc-400">{stat.label}</p>
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-apple-ink-muted-48">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -334,10 +334,10 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
         {showStorage && (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-500">
+              <span className="flex items-center gap-1.5 text-[11px] font-medium text-apple-ink-muted-48">
                 <HardDrive className="h-3 w-3" /> Storage
               </span>
-              <span className="text-[11px] font-semibold text-zinc-700">{storage.text}</span>
+              <span className="text-[11px] font-semibold text-apple-ink-muted-80">{storage.text}</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100">
               <motion.div
@@ -365,9 +365,9 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
             },
           ].map((row) => (
             <div key={row.label} className="flex items-center gap-1.5">
-              <row.icon className={`h-3 w-3 shrink-0 ${row.label === "Expired" ? "text-red-400" : "text-zinc-400"}`} />
-              <span className="truncate text-[10px] text-zinc-500">
-                <span className="font-medium text-zinc-700">{row.label}: </span>{row.value}
+              <row.icon className={`h-3 w-3 shrink-0 ${row.label === "Expired" ? "text-red-400" : "text-apple-ink-muted-48"}`} />
+              <span className="truncate text-[10px] text-apple-ink-muted-48">
+                <span className="font-medium text-apple-ink-muted-80">{row.label}: </span>{row.value}
               </span>
             </div>
           ))}
@@ -390,7 +390,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
             <button
               type="button"
               onClick={() => router.push(`/store/${store.slug}/dashboard`)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-xs font-semibold text-zinc-700 transition-all hover:bg-zinc-50 active:scale-95"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-xs font-semibold text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment active:scale-95"
             >
               <LayoutGrid className="h-3.5 w-3.5" /> Dashboard
             </button>
@@ -411,7 +411,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
                 type="button"
                 title={label}
                 onClick={action}
-                className={`group/btn relative flex h-8 flex-1 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition-all duration-150 active:scale-95 ${cls}`}
+                className={`group/btn relative flex h-8 flex-1 items-center justify-center rounded-lg border border-zinc-200 bg-white text-apple-ink-muted-48 transition-all duration-150 active:scale-95 ${cls}`}
               >
                 <Icon className="h-3.5 w-3.5" />
                 <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-zinc-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 transition-opacity group-hover/btn:opacity-100 z-10">

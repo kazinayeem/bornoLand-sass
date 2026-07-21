@@ -14,7 +14,7 @@ export function PaymentHistoryTable({ storeId }: { storeId?: string }) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
       </div>
     );
   }
@@ -23,21 +23,21 @@ export function PaymentHistoryTable({ storeId }: { storeId?: string }) {
 
   if (payments.length === 0) {
     return (
-      <div className="rounded-2xl border border-zinc-200/80 bg-white p-12 text-center shadow-sm">
-        <p className="text-sm font-medium text-zinc-500">No payment history found for this store.</p>
+      <div className="rounded-2xl border border-apple-hairline bg-white p-12 text-center shadow-sm">
+        <p className="text-sm font-medium text-apple-ink-muted-48">No payment history found for this store.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-200/80 bg-white shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-zinc-200/80">
-        <h2 className="text-lg font-semibold text-zinc-900">Payment History</h2>
-        <p className="text-sm text-zinc-500">Review your past transactions and payments.</p>
+    <div className="rounded-2xl border border-apple-hairline bg-white shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-apple-hairline">
+        <h2 className="text-lg font-semibold text-apple-ink">Payment History</h2>
+        <p className="text-sm text-apple-ink-muted-48">Review your past transactions and payments.</p>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm text-zinc-600">
-          <thead className="bg-zinc-50/50 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+        <table className="w-full text-left text-sm text-apple-ink-muted-80">
+          <thead className="bg-apple-canvas-parchment/50 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
             <tr>
               <th className="px-6 py-4">Transaction ID</th>
               <th className="px-6 py-4">Gateway</th>
@@ -49,14 +49,14 @@ export function PaymentHistoryTable({ storeId }: { storeId?: string }) {
           </thead>
           <tbody className="divide-y divide-zinc-200/80 bg-white">
             {payments.map((payment) => (
-              <tr key={payment._id} className="transition-colors hover:bg-zinc-50/50">
-                <td className="px-6 py-4 font-medium text-zinc-900">{payment.transactionId || payment._id.slice(-8)}</td>
+              <tr key={payment._id} className="transition-colors hover:bg-apple-canvas-parchment/50">
+                <td className="px-6 py-4 font-medium text-apple-ink">{payment.transactionId || payment._id.slice(-8)}</td>
                 <td className="px-6 py-4 capitalize">{payment.paymentMethod}</td>
                 <td className="px-6 py-4">{formatDate(payment.createdAt)}</td>
-                <td className="px-6 py-4 font-medium text-zinc-900">
+                <td className="px-6 py-4 font-medium text-apple-ink">
                   {payment.amount.toLocaleString()} {payment.currency}
                 </td>
-                <td className="px-6 py-4 text-xs text-zinc-500 max-w-[200px] truncate" title={payment.transactionId}>
+                <td className="px-6 py-4 text-xs text-apple-ink-muted-48 max-w-[200px] truncate" title={payment.transactionId}>
                   {payment.transactionId}
                 </td>
                 <td className="px-6 py-4 text-right">

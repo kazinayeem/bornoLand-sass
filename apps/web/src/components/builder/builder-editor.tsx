@@ -136,7 +136,7 @@ const ResizeHandle = memo(function ResizeHandle({
       onMouseDown={onMouseDown}
       className={cn(
         "group relative flex w-[5px] shrink-0 cursor-col-resize items-center justify-center transition-colors",
-        "bg-zinc-200/50 hover:bg-zinc-400 active:bg-zinc-500"
+        "bg-zinc-200/50 hover:bg-zinc-400 active:bg-apple-canvas-parchment0"
       )}
       aria-label={`Resize ${side} panel`}
     >
@@ -483,7 +483,7 @@ export function BuilderEditor() {
   // ─── Loading state ─────────────────────────────────────────────────────────
   if (pagesLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-zinc-50">
+      <div className="flex h-screen items-center justify-center bg-apple-canvas-parchment">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900" />
       </div>
     );
@@ -493,7 +493,7 @@ export function BuilderEditor() {
     <div
       ref={containerRef}
       className={cn(
-        "flex h-dvh min-h-0 flex-col overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.96),_rgba(244,244,245,0.9)_40%,_rgba(228,228,231,0.8))] transition-all duration-200",
+        "flex h-dvh min-h-0 flex-col overflow-hidden bg-apple-canvas-parchment transition-all duration-200",
         fullscreen && "fixed inset-0 z-50",
         presentationMode && "bg-black"
       )}
@@ -514,7 +514,7 @@ export function BuilderEditor() {
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {!presentationMode && leftPanelOpen && (
           <div
-            className="min-h-0 flex-shrink-0 overflow-hidden border-r border-zinc-200/60 bg-white/90 shadow-[8px_0_40px_-24px_rgba(0,0,0,0.25)] backdrop-blur-xl"
+            className="min-h-0 flex-shrink-0 overflow-hidden border-r border-apple-hairline/60 bg-apple-canvas/90 backdrop-blur-xl"
             style={{ width: leftPanelWidth }}
           >
             <BuilderSidebar />
@@ -547,7 +547,7 @@ export function BuilderEditor() {
 
         {!presentationMode && rightPanelOpen && (selectedSectionId || editingZone !== "body") && (
           <div
-            className="min-h-0 flex-shrink-0 overflow-hidden border-l border-zinc-200/60 bg-white/90 shadow-[-8px_0_40px_-24px_rgba(0,0,0,0.25)] backdrop-blur-xl"
+            className="min-h-0 flex-shrink-0 overflow-hidden border-l border-apple-hairline/60 bg-apple-canvas/90 backdrop-blur-xl"
             style={{ width: rightPanelWidth }}
           >
             <PropertiesPanel />
@@ -557,10 +557,10 @@ export function BuilderEditor() {
 
       {/* Canvas toggle buttons - floating */}
       {!presentationMode && !fullscreen && (
-        <div className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 flex items-center gap-1.5 rounded-2xl border border-zinc-200/80 bg-white/90 px-2.5 py-1.5 shadow-lg backdrop-blur-md">
+        <div className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 flex items-center gap-1.5 rounded-lg border border-apple-hairline bg-apple-canvas/90 px-2.5 py-1.5 backdrop-blur-md">
           <button
             onClick={() => dispatch(toggleLeftPanel())}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors"
             title={leftPanelOpen ? "Hide sidebar" : "Show sidebar"}
           >
             {leftPanelOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
@@ -569,7 +569,7 @@ export function BuilderEditor() {
           <div className="h-4 w-px bg-zinc-200" />
           <button
             onClick={() => dispatch(setFullscreen(true))}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors"
             title="Fullscreen"
           >
             <Maximize className="h-3.5 w-3.5" />
@@ -577,7 +577,7 @@ export function BuilderEditor() {
           </button>
           <button
             onClick={() => dispatch(setPresentationMode(true))}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors"
             title="Presentation mode"
           >
             <Maximize className="h-3.5 w-3.5" />
@@ -586,7 +586,7 @@ export function BuilderEditor() {
           <div className="h-4 w-px bg-zinc-200" />
           <button
             onClick={() => dispatch(toggleRightPanel())}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors"
             title={rightPanelOpen ? "Hide inspector" : "Show inspector"}
           >
             {rightPanelOpen ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
@@ -621,7 +621,7 @@ export function BuilderEditor() {
       {presentationMode && (
         <button
           onClick={() => dispatch(setPresentationMode(false))}
-          className="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-xl bg-white/90 px-3 py-2 text-xs font-medium text-zinc-900 shadow-lg backdrop-blur-sm hover:bg-white transition-colors"
+          className="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-xl bg-apple-canvas/90 px-3 py-2 text-xs font-medium text-apple-ink backdrop-blur-sm hover:bg-apple-canvas transition-colors"
         >
           <Minimize className="h-3.5 w-3.5" />
           Exit presentation

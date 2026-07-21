@@ -39,19 +39,19 @@ export function ForgotPasswordForm() {
           type="email"
           name="email"
           placeholder="you@example.com"
-          className="h-11 rounded-xl border-zinc-200 bg-zinc-50/50 px-4 dark:border-zinc-800 dark:bg-zinc-900/50"
+          className="h-11 rounded-sm border-apple-hairline bg-apple-canvas-parchment/50 px-4 dark:border-apple-hairline dark:bg-apple-surface-tile-1/50"
         />
       </div>
       <Button
         type="submit"
         disabled={loading}
-        className="h-11 w-full rounded-xl bg-zinc-900 text-sm font-semibold hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-white"
+        className="h-11 w-full rounded-pill bg-apple-primary text-sm font-semibold text-apple-on-primary hover:bg-apple-primary-focus"
       >
         {loading ? "Sending..." : "Send reset link"}
       </Button>
-      <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-center text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
         Remember your password?{" "}
-        <a href="/login" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">
+        <a href="/login" className="font-semibold text-apple-primary hover:text-apple-primary-focus">
           Back to sign in
         </a>
       </p>

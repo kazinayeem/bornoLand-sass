@@ -17,7 +17,7 @@ import { SmartImage } from "@/components/ui/smart-image";
 const MediaLibrary = dynamic(
   () => import("@/components/media/media-library").then((module) => module.MediaLibrary),
   {
-    loading: () => <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-8 text-sm text-zinc-500">Loading media library...</div>,
+    loading: () => <div className="rounded-2xl border border-zinc-200 bg-apple-canvas-parchment p-8 text-sm text-apple-ink-muted-48">Loading media library...</div>,
   }
 );
 
@@ -82,7 +82,7 @@ export function MediaGalleryPicker({
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-zinc-700">{label}</label>
+      <label className="text-sm font-medium text-apple-ink-muted-80">{label}</label>
       <div className="flex flex-wrap gap-3">
         {value.map((item, index) => (
           <div
@@ -121,7 +121,7 @@ export function MediaGalleryPicker({
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-zinc-400 hover:border-zinc-300"
+            className="flex h-20 w-20 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-apple-canvas-parchment text-apple-ink-muted-48 hover:border-zinc-300"
           >
             <ImagePlus className="h-6 w-6" />
           </button>
@@ -130,7 +130,7 @@ export function MediaGalleryPicker({
 
       <Modal open={open} onClose={() => setOpen(false)} title="Add gallery images" size="xl">
         <div className="mb-4 flex gap-2">
-          <label className="cursor-pointer rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium hover:bg-zinc-50">
+          <label className="cursor-pointer rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium hover:bg-apple-canvas-parchment">
             Upload new
             <input
               type="file"

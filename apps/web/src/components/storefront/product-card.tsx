@@ -88,7 +88,7 @@ export function ProductCard({ product, badge }: ProductCardProps) {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border bg-white p-3 transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_48px_-28px_rgba(15,23,42,0.28)]"
+        className="group relative flex flex-col overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas p-3 transition-colors"
         style={{
           borderColor: isDark ? "#27272a" : "#e4e4e7",
           fontFamily: font,
@@ -187,7 +187,7 @@ export function ProductCard({ product, badge }: ProductCardProps) {
           <button
             type="button"
             onClick={handleQuickView}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-zinc-600 shadow-lg transition-transform hover:scale-110"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-apple-ink-muted-80 shadow-lg transition-transform hover:scale-110"
             aria-label={`Quick view ${product.name}`}
           >
             <Eye className="h-5 w-5" />
@@ -195,7 +195,7 @@ export function ProductCard({ product, badge }: ProductCardProps) {
           <button
             type="button"
             onClick={handleWishlist}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-zinc-600 shadow-lg transition-transform hover:scale-110 hover:text-red-400"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-apple-ink-muted-80 shadow-lg transition-transform hover:scale-110 hover:text-red-400"
             aria-label={`Save ${product.name} to wishlist`}
           >
             <Heart className="h-5 w-5" />

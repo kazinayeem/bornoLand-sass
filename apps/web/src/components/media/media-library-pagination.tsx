@@ -38,9 +38,9 @@ export function MediaLibraryPagination({
 
   return (
     <div className="flex flex-col items-center justify-between gap-4 border-t border-zinc-100 pt-6 sm:flex-row">
-      <p className="text-sm text-zinc-500">
-        Showing <span className="font-medium text-zinc-700">{from}–{to}</span> of{" "}
-        <span className="font-medium text-zinc-700">{total}</span> files
+      <p className="text-sm text-apple-ink-muted-48">
+        Showing <span className="font-medium text-apple-ink-muted-80">{from}–{to}</span> of{" "}
+        <span className="font-medium text-apple-ink-muted-80">{total}</span> files
       </p>
       <div className="flex items-center gap-1">
         <PaginationBtn
@@ -53,7 +53,7 @@ export function MediaLibraryPagination({
         </PaginationBtn>
         {pages.map((p, i) =>
           p === "ellipsis" ? (
-            <span key={`e-${i}`} className="px-2 text-sm text-zinc-400">
+            <span key={`e-${i}`} className="px-2 text-sm text-apple-ink-muted-48">
               …
             </span>
           ) : (
@@ -65,7 +65,7 @@ export function MediaLibraryPagination({
                 "flex h-9 min-w-9 items-center justify-center rounded-xl px-3 text-sm font-medium transition",
                 p === page
                   ? "bg-zinc-900 text-white shadow-sm"
-                  : "text-zinc-600 hover:bg-zinc-100",
+                  : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment",
               )}
             >
               {p}
@@ -96,7 +96,7 @@ function PaginationBtn({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="inline-flex h-9 items-center gap-1 rounded-xl border border-zinc-200 px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+      className="inline-flex h-9 items-center gap-1 rounded-xl border border-zinc-200 px-3 text-sm font-medium text-apple-ink-muted-80 transition hover:bg-apple-canvas-parchment disabled:cursor-not-allowed disabled:opacity-40"
       {...props}
     >
       {children}

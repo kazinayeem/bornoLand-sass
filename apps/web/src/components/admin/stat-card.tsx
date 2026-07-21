@@ -16,7 +16,7 @@ interface StatCardProps {
 }
 
 const variants = {
-  default: "bg-white border-zinc-200",
+  default: "bg-apple-canvas border-apple-hairline",
   blue: "bg-blue-50/50 border-blue-200",
   green: "bg-emerald-50/50 border-emerald-200",
   amber: "bg-amber-50/50 border-amber-200",
@@ -39,24 +39,23 @@ export function StatCard({ title, value, change, icon: Icon, variant = "default"
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
       className={cn(
-        "group relative overflow-hidden rounded-[1.5rem] border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_48px_-28px_rgba(15,23,42,0.32)]",
+        "group relative overflow-hidden rounded-lg border p-5 transition-colors duration-300",
         variants[variant]
       )}
     >
-      <div className="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-gradient-to-br from-blue-500/5 to-transparent" />
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <p className="text-sm font-medium tracking-wide text-zinc-500">{title}</p>
+          <p className="text-sm font-medium tracking-wide text-apple-ink-muted-48">{title}</p>
           <div className="flex items-baseline gap-1.5">
-            {prefix && <span className="text-sm text-zinc-400">{prefix}</span>}
-            <span className="text-3xl font-semibold tracking-tight text-zinc-950">{value}</span>
-            {suffix && <span className="text-sm text-zinc-400">{suffix}</span>}
+            {prefix && <span className="text-sm text-apple-ink-muted-48">{prefix}</span>}
+            <span className="text-3xl font-semibold tracking-tight text-apple-ink">{value}</span>
+            {suffix && <span className="text-sm text-apple-ink-muted-48">{suffix}</span>}
           </div>
           {change !== undefined && (
             <div className={cn("flex items-center gap-1 text-sm font-medium", isPositive ? "text-emerald-600" : "text-red-600")}>
               <span>{isPositive ? "↑" : "↓"}</span>
               <span>{Math.abs(change)}%</span>
-              <span className="font-normal text-zinc-400">vs last month</span>
+              <span className="font-normal text-apple-ink-muted-48">vs last month</span>
             </div>
           )}
         </div>

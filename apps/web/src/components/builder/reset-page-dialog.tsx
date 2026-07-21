@@ -63,10 +63,10 @@ export function ResetPageDialog({ open, onClose, storeId, pageId, title, isHome,
             <RefreshCw className="h-5 w-5 text-amber-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-zinc-900">Reset &ldquo;{title}&rdquo; to template?</h3>
-            <p className="mt-1 text-sm leading-6 text-zinc-500">
+            <h3 className="text-base font-semibold text-apple-ink">Reset &ldquo;{title}&rdquo; to template?</h3>
+            <p className="mt-1 text-sm leading-6 text-apple-ink-muted-48">
               All current sections will be replaced with the default template (Hero, Featured Products, Newsletter, Footer). 
-              This action can be undone with <kbd className="rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium text-zinc-600">⌘Z</kbd>.
+              This action can be undone with <kbd className="rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium text-apple-ink-muted-80">⌘Z</kbd>.
             </p>
           </div>
         </div>
@@ -74,7 +74,7 @@ export function ResetPageDialog({ open, onClose, storeId, pageId, title, isHome,
           <button
             onClick={onClose}
             disabled={resetting}
-            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 transition-colors"
+            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment disabled:opacity-50 transition-colors"
           >
             Cancel
           </button>

@@ -78,8 +78,8 @@ export default function PlatformPage() {
             <div className={`inline-flex rounded-xl ${card.bg} p-2.5 ${card.color}`}>
               <card.icon className="h-5 w-5" />
             </div>
-            <p className="mt-2 text-lg font-bold text-zinc-900">{String(card.value)}</p>
-            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">{card.label}</p>
+            <p className="mt-2 text-lg font-bold text-apple-ink">{String(card.value)}</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">{card.label}</p>
           </motion.div>
         ))}
       </div>
@@ -88,8 +88,8 @@ export default function PlatformPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
           className="rounded-2xl border border-zinc-200 bg-white p-6">
-          <h3 className="mb-1 text-lg font-semibold text-zinc-900">Revenue Distribution</h3>
-          <p className="mb-4 text-sm text-zinc-500">Breakdown of platform finances</p>
+          <h3 className="mb-1 text-lg font-semibold text-apple-ink">Revenue Distribution</h3>
+          <p className="mb-4 text-sm text-apple-ink-muted-48">Breakdown of platform finances</p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <RPieChart>
@@ -104,7 +104,7 @@ export default function PlatformPage() {
                   contentStyle={{ background: "#fff", border: "1px solid #e4e4e7", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
                 />
                 <Legend verticalAlign="bottom" height={36}
-                  formatter={(value) => <span className="text-sm text-zinc-700">{value}</span>} />
+                  formatter={(value) => <span className="text-sm text-apple-ink-muted-80">{value}</span>} />
               </RPieChart>
             </ResponsiveContainer>
           </div>
@@ -112,8 +112,8 @@ export default function PlatformPage() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
           className="rounded-2xl border border-zinc-200 bg-white p-6">
-          <h3 className="mb-1 text-lg font-semibold text-zinc-900">Financial Summary</h3>
-          <p className="mb-4 text-sm text-zinc-500">Revenue, fees, and refunds</p>
+          <h3 className="mb-1 text-lg font-semibold text-apple-ink">Financial Summary</h3>
+          <p className="mb-4 text-sm text-apple-ink-muted-48">Revenue, fees, and refunds</p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={[
@@ -142,8 +142,8 @@ export default function PlatformPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
         className="rounded-2xl border border-zinc-200 bg-white">
         <div className="border-b border-zinc-100 px-6 py-4">
-          <h3 className="text-lg font-semibold text-zinc-900">Reports</h3>
-          <p className="text-sm text-zinc-500">Export reports in ৳ BDT</p>
+          <h3 className="text-lg font-semibold text-apple-ink">Reports</h3>
+          <p className="text-sm text-apple-ink-muted-48">Export reports in ৳ BDT</p>
         </div>
 
         {/* Report type tabs */}
@@ -151,7 +151,7 @@ export default function PlatformPage() {
           {(["revenue", "stores", "subscriptions", "payments", "orders"] as const).map((tab) => (
             <button key={tab} onClick={() => setReportTab(tab)}
               className={`relative px-3 py-3 text-sm font-medium capitalize transition-colors ${
-                reportTab === tab ? "text-blue-600" : "text-zinc-500 hover:text-zinc-800"
+                reportTab === tab ? "text-blue-600" : "text-apple-ink-muted-48 hover:text-zinc-800"
               }`}>
               {tab}
               {reportTab === tab && <div className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-blue-600" />}
@@ -167,7 +167,7 @@ export default function PlatformPage() {
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-apple-ink-muted-48">
                   {reportTab === "revenue" && "Revenue report with total and per-order breakdown"}
                   {reportTab === "stores" && "All stores with revenue, orders, and plan info"}
                   {reportTab === "subscriptions" && "Subscription plan breakdown"}
@@ -186,12 +186,12 @@ export default function PlatformPage() {
 
               {/* Report totals */}
               {!!report?.total && (
-                <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
-                  <p className="text-xs text-zinc-400">Report Total</p>
-                  <p className="text-xl font-bold text-zinc-900">
+                <div className="rounded-xl border border-zinc-100 bg-apple-canvas-parchment p-4">
+                  <p className="text-xs text-apple-ink-muted-48">Report Total</p>
+                  <p className="text-xl font-bold text-apple-ink">
                     {(report.total as Record<string, unknown>)?.formattedAmount as string ?? "৳ 0"}
                   </p>
-                  <p className="text-xs text-zinc-400">{String(report.count ?? 0)} entries</p>
+                  <p className="text-xs text-apple-ink-muted-48">{String(report.count ?? 0)} entries</p>
                 </div>
               )}
 
@@ -200,7 +200,7 @@ export default function PlatformPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+                      <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">
                         <th className="px-3 py-2">Order</th>
                         <th className="px-3 py-2">Store</th>
                         <th className="px-3 py-2">Total (৳)</th>
@@ -210,12 +210,12 @@ export default function PlatformPage() {
                     </thead>
                     <tbody className="divide-y divide-zinc-50">
                       {(report.orders as Array<Record<string, unknown>>)?.slice(0, 10).map((o: Record<string, unknown>, i: number) => (
-                        <tr key={i} className="hover:bg-zinc-50">
-                          <td className="px-3 py-2 font-medium text-zinc-900">#{String(o.orderNumber ?? "")}</td>
-                          <td className="px-3 py-2 text-zinc-700">{String(o.storeName ?? "")}</td>
-                          <td className="px-3 py-2 font-semibold text-zinc-900">{(o.total as Record<string, unknown>)?.formattedAmount as string ?? "৳ 0"}</td>
-                          <td className="px-3 py-2 capitalize text-zinc-600">{String(o.paymentMethod ?? "")}</td>
-                          <td className="px-3 py-2 text-zinc-400">{o.createdAt ? new Date(String(o.createdAt)).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}</td>
+                        <tr key={i} className="hover:bg-apple-canvas-parchment">
+                          <td className="px-3 py-2 font-medium text-apple-ink">#{String(o.orderNumber ?? "")}</td>
+                          <td className="px-3 py-2 text-apple-ink-muted-80">{String(o.storeName ?? "")}</td>
+                          <td className="px-3 py-2 font-semibold text-apple-ink">{(o.total as Record<string, unknown>)?.formattedAmount as string ?? "৳ 0"}</td>
+                          <td className="px-3 py-2 capitalize text-apple-ink-muted-80">{String(o.paymentMethod ?? "")}</td>
+                          <td className="px-3 py-2 text-apple-ink-muted-48">{o.createdAt ? new Date(String(o.createdAt)).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -227,7 +227,7 @@ export default function PlatformPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+                      <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">
                         <th className="px-3 py-2">Store</th>
                         <th className="px-3 py-2">Owner</th>
                         <th className="px-3 py-2">Plan</th>
@@ -239,16 +239,16 @@ export default function PlatformPage() {
                     </thead>
                     <tbody className="divide-y divide-zinc-50">
                       {(report.stores as Array<Record<string, unknown>>)?.slice(0, 10).map((s: Record<string, unknown>, i: number) => (
-                        <tr key={i} className="hover:bg-zinc-50">
-                          <td className="px-3 py-2 font-medium text-zinc-900">{String(s.name ?? "")}</td>
-                          <td className="px-3 py-2 text-zinc-600">{String(s.owner ?? "")}</td>
+                        <tr key={i} className="hover:bg-apple-canvas-parchment">
+                          <td className="px-3 py-2 font-medium text-apple-ink">{String(s.name ?? "")}</td>
+                          <td className="px-3 py-2 text-apple-ink-muted-80">{String(s.owner ?? "")}</td>
                           <td className="px-3 py-2">
                             <span className="rounded bg-zinc-100 px-2 py-0.5 text-xs font-medium">{String(s.plan ?? "")}</span>
                           </td>
-                          <td className="px-3 py-2 text-zinc-600">{String(s.status ?? "")}</td>
-                          <td className="px-3 py-2 text-zinc-700">{String(s.orders ?? 0)}</td>
-                          <td className="px-3 py-2 text-zinc-700">{String(s.products ?? 0)}</td>
-                          <td className="px-3 py-2 font-semibold text-zinc-900">{(s.revenue as Record<string, unknown>)?.formattedAmount as string ?? "৳ 0"}</td>
+                          <td className="px-3 py-2 text-apple-ink-muted-80">{String(s.status ?? "")}</td>
+                          <td className="px-3 py-2 text-apple-ink-muted-80">{String(s.orders ?? 0)}</td>
+                          <td className="px-3 py-2 text-apple-ink-muted-80">{String(s.products ?? 0)}</td>
+                          <td className="px-3 py-2 font-semibold text-apple-ink">{(s.revenue as Record<string, unknown>)?.formattedAmount as string ?? "৳ 0"}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -260,7 +260,7 @@ export default function PlatformPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+                      <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">
                         <th className="px-3 py-2">Plan</th>
                         <th className="px-3 py-2">Price (৳)</th>
                         <th className="px-3 py-2">Subscribers</th>
@@ -271,10 +271,10 @@ export default function PlatformPage() {
                     </thead>
                     <tbody className="divide-y divide-zinc-50">
                       {(report.plans as Array<Record<string, unknown>>)?.map((p: Record<string, unknown>, i: number) => (
-                        <tr key={i} className="hover:bg-zinc-50">
-                          <td className="px-3 py-2 font-medium text-zinc-900">{String(p.name ?? "")}</td>
-                          <td className="px-3 py-2 text-zinc-700">{formatBDT(Number(p.priceBDT ?? 0))}</td>
-                          <td className="px-3 py-2 font-semibold text-zinc-900">{String(p.subscribers ?? 0)}</td>
+                        <tr key={i} className="hover:bg-apple-canvas-parchment">
+                          <td className="px-3 py-2 font-medium text-apple-ink">{String(p.name ?? "")}</td>
+                          <td className="px-3 py-2 text-apple-ink-muted-80">{formatBDT(Number(p.priceBDT ?? 0))}</td>
+                          <td className="px-3 py-2 font-semibold text-apple-ink">{String(p.subscribers ?? 0)}</td>
                           <td className="px-3 py-2 text-emerald-600">{String(p.active ?? 0)}</td>
                           <td className="px-3 py-2 text-amber-600">{String(p.trialing ?? 0)}</td>
                           <td className="px-3 py-2 text-red-500">{String(p.expired ?? 0)}</td>
@@ -289,7 +289,7 @@ export default function PlatformPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+                      <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">
                         <th className="px-3 py-2">Order</th>
                         <th className="px-3 py-2">Store</th>
                         <th className="px-3 py-2">Method</th>
@@ -301,16 +301,16 @@ export default function PlatformPage() {
                     </thead>
                     <tbody className="divide-y divide-zinc-50">
                       {(report.payments as Array<Record<string, unknown>>)?.slice(0, 10).map((p: Record<string, unknown>, i: number) => (
-                        <tr key={i} className="hover:bg-zinc-50">
-                          <td className="px-3 py-2 font-medium text-zinc-900">#{String(p.orderNumber ?? "")}</td>
-                          <td className="px-3 py-2 text-zinc-600">{String(p.storeName ?? "")}</td>
-                          <td className="px-3 py-2 capitalize text-zinc-600">{String(p.method ?? "")}</td>
+                        <tr key={i} className="hover:bg-apple-canvas-parchment">
+                          <td className="px-3 py-2 font-medium text-apple-ink">#{String(p.orderNumber ?? "")}</td>
+                          <td className="px-3 py-2 text-apple-ink-muted-80">{String(p.storeName ?? "")}</td>
+                          <td className="px-3 py-2 capitalize text-apple-ink-muted-80">{String(p.method ?? "")}</td>
                           <td className="px-3 py-2"><span className={`rounded px-1.5 py-0.5 text-xs font-medium ${
-                            p.status === "paid" ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-600"
+                            p.status === "paid" ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-apple-ink-muted-80"
                           }`}>{String(p.status ?? "")}</span></td>
-                          <td className="px-3 py-2 font-semibold text-zinc-900">{(p.amount as Record<string, unknown>)?.formattedAmount as string ?? "৳ 0"}</td>
+                          <td className="px-3 py-2 font-semibold text-apple-ink">{(p.amount as Record<string, unknown>)?.formattedAmount as string ?? "৳ 0"}</td>
                           <td className="px-3 py-2 text-red-500">{(p.refunded as Record<string, unknown>)?.formattedAmount as string ?? "৳ 0"}</td>
-                          <td className="px-3 py-2 text-zinc-400">{p.createdAt ? new Date(String(p.createdAt)).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}</td>
+                          <td className="px-3 py-2 text-apple-ink-muted-48">{p.createdAt ? new Date(String(p.createdAt)).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -322,7 +322,7 @@ export default function PlatformPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+                      <tr className="border-b border-zinc-100 text-left text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">
                         <th className="px-3 py-2">Order</th>
                         <th className="px-3 py-2">Store</th>
                         <th className="px-3 py-2">Customer</th>
@@ -334,14 +334,14 @@ export default function PlatformPage() {
                     </thead>
                     <tbody className="divide-y divide-zinc-50">
                       {(report.orders as Array<Record<string, unknown>>)?.slice(0, 10).map((o: Record<string, unknown>, i: number) => (
-                        <tr key={i} className="hover:bg-zinc-50">
-                          <td className="px-3 py-2 font-medium text-zinc-900">#{String(o.orderNumber ?? "")}</td>
-                          <td className="px-3 py-2 text-zinc-600">{String(o.storeName ?? "")}</td>
-                          <td className="px-3 py-2 text-zinc-600">{String(o.customerName ?? "")}</td>
-                          <td className="px-3 py-2 font-semibold text-zinc-900">{(o.total as Record<string, unknown>)?.formattedAmount as string ?? "৳ 0"}</td>
+                        <tr key={i} className="hover:bg-apple-canvas-parchment">
+                          <td className="px-3 py-2 font-medium text-apple-ink">#{String(o.orderNumber ?? "")}</td>
+                          <td className="px-3 py-2 text-apple-ink-muted-80">{String(o.storeName ?? "")}</td>
+                          <td className="px-3 py-2 text-apple-ink-muted-80">{String(o.customerName ?? "")}</td>
+                          <td className="px-3 py-2 font-semibold text-apple-ink">{(o.total as Record<string, unknown>)?.formattedAmount as string ?? "৳ 0"}</td>
                           <td className="px-3 py-2"><span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-medium">{String(o.status ?? "")}</span></td>
-                          <td className="px-3 py-2 capitalize text-zinc-600">{String(o.paymentMethod ?? "")}</td>
-                          <td className="px-3 py-2 text-zinc-400">{o.createdAt ? new Date(String(o.createdAt)).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}</td>
+                          <td className="px-3 py-2 capitalize text-apple-ink-muted-80">{String(o.paymentMethod ?? "")}</td>
+                          <td className="px-3 py-2 text-apple-ink-muted-48">{o.createdAt ? new Date(String(o.createdAt)).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -350,7 +350,7 @@ export default function PlatformPage() {
               )}
 
               {(!report || !Object.keys(report).length) && (
-                <p className="py-8 text-center text-sm text-zinc-400">No data available for this report</p>
+                <p className="py-8 text-center text-sm text-apple-ink-muted-48">No data available for this report</p>
               )}
             </div>
           )}

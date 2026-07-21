@@ -34,7 +34,7 @@ function ColorInput({ value, onChange }: { value: string; onChange: (v: string) 
       <input type="color" value={value || "#000000"} onChange={(e) => onChange(e.target.value)}
         className="h-7 w-7 cursor-pointer rounded border border-zinc-200 p-0.5" />
       <input type="text" value={value} onChange={(e) => onChange(e.target.value)}
-        placeholder="#000000" className="h-7 flex-1 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
+        placeholder="#000000" className="h-7 flex-1 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
     </div>
   );
 }
@@ -48,8 +48,8 @@ function RangeInput({ value, onChange, min, max, step, suffix }: { value: string
         className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-zinc-200 accent-zinc-900" />
       <input type="number" value={num} onChange={(e) => onChange(e.target.value)}
         min={min} max={max} step={step}
-        className="h-7 w-14 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 text-center focus:border-zinc-400 focus:outline-none" />
-      {suffix && <span className="text-[9px] text-zinc-400 w-4">{suffix}</span>}
+        className="h-7 w-14 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 text-center focus:border-zinc-400 focus:outline-none" />
+      {suffix && <span className="text-[9px] text-apple-ink-muted-48 w-4">{suffix}</span>}
     </div>
   );
 }
@@ -58,13 +58,13 @@ function SpacingInput({ value, onChange, label }: { value: string; onChange: (v:
   const num = Number(value) || 0;
   return (
     <div className="flex items-center gap-1.5">
-      <span className="w-12 text-[10px] font-medium text-zinc-500">{label}</span>
+      <span className="w-12 text-[10px] font-medium text-apple-ink-muted-48">{label}</span>
       <input type="range" min={0} max={200} step={1} value={num}
         onChange={(e) => onChange(e.target.value)}
         className="h-1 flex-1 appearance-none rounded-full bg-zinc-200 accent-zinc-900" />
       <input type="number" value={num} onChange={(e) => onChange(e.target.value)}
-        className="h-6 w-12 rounded border border-zinc-200 bg-transparent px-1 text-[10px] text-zinc-700 text-center focus:border-zinc-400 focus:outline-none" />
-      <span className="text-[9px] text-zinc-400">px</span>
+        className="h-6 w-12 rounded border border-zinc-200 bg-transparent px-1 text-[10px] text-apple-ink-muted-80 text-center focus:border-zinc-400 focus:outline-none" />
+      <span className="text-[9px] text-apple-ink-muted-48">px</span>
     </div>
   );
 }
@@ -72,7 +72,7 @@ function SpacingInput({ value, onChange, label }: { value: string; onChange: (v:
 function SelectInput({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { label: string; value: string }[] }) {
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)}
-      className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none">
+      className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 focus:border-zinc-400 focus:outline-none">
       {options.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
     </select>
   );
@@ -92,7 +92,7 @@ function TextInput({ value, onChange, placeholder }: { value: string; onChange: 
   return (
     <input type="text" value={value} onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
+      className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
   );
 }
 
@@ -114,9 +114,9 @@ function ControlRenderer({
     case "grid-columns":
       return <SelectInput value={value || ""} onChange={onChange} options={propDef.options ?? []} />;
     case "textarea": return <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} placeholder={propDef.placeholder}
-      className="h-auto min-h-[56px] w-full resize-none rounded-lg border border-zinc-200 bg-transparent px-2 py-1.5 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />;
+      className="h-auto min-h-[56px] w-full resize-none rounded-lg border border-zinc-200 bg-transparent px-2 py-1.5 text-[11px] text-apple-ink-muted-80 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />;
     case "number": return <input type="number" value={value} onChange={(e) => onChange(e.target.value)} placeholder={propDef.placeholder}
-      className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />;
+      className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />;
     case "video":
     case "url": return <TextInput value={value} onChange={onChange} placeholder={propDef.placeholder} />;
     default: return <TextInput value={value} onChange={onChange} placeholder={propDef.placeholder} />;
@@ -167,7 +167,7 @@ function CollapsibleGroup({
   return (
     <div>
       <button onClick={onToggle}
-        className="flex w-full items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 hover:bg-zinc-50">
+        className="flex w-full items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
         <span className="flex items-center gap-1.5">
           {icon}
           {label}
@@ -184,7 +184,7 @@ function CollapsibleGroup({
 function ControlRow({ label, children, responsive }: { label: string; children: React.ReactNode; responsive?: boolean }) {
   return (
     <div>
-      <label className="mb-0.5 flex items-center gap-1 text-[10px] font-medium text-zinc-500">
+      <label className="mb-0.5 flex items-center gap-1 text-[10px] font-medium text-apple-ink-muted-48">
         {label}
         {responsive && <span className="rounded bg-blue-50 px-1 text-[8px] font-bold text-blue-500">R</span>}
       </label>
@@ -199,8 +199,8 @@ function StyleBackgroundInput({ value, onChange }: { value: string; onChange: (v
   return (
     <div className="space-y-2">
       <div className="flex gap-1">
-        <button onClick={() => setMode("picker")} className={cn("flex-1 rounded-lg border px-2 py-1 text-[9px] font-medium transition-all", mode === "picker" ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 text-zinc-500 hover:bg-zinc-50")}>Image</button>
-        <button onClick={() => { setMode("none"); onChange(""); }} className={cn("flex-1 rounded-lg border px-2 py-1 text-[9px] font-medium transition-all", mode === "none" ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 text-zinc-500 hover:bg-zinc-50")}>None</button>
+        <button onClick={() => setMode("picker")} className={cn("flex-1 rounded-lg border px-2 py-1 text-[9px] font-medium transition-all", mode === "picker" ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment")}>Image</button>
+        <button onClick={() => { setMode("none"); onChange(""); }} className={cn("flex-1 rounded-lg border px-2 py-1 text-[9px] font-medium transition-all", mode === "none" ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment")}>None</button>
       </div>
       {mode === "picker" && (
         <MediaPicker
@@ -336,10 +336,10 @@ export function PropertiesPanel() {
       <div className="flex h-full items-center justify-center p-4">
         <div className="text-center">
           <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100">
-            <Layers className="h-5 w-5 text-zinc-400" />
+            <Layers className="h-5 w-5 text-apple-ink-muted-48" />
           </div>
-          <p className="text-sm font-medium text-zinc-600">Select a section</p>
-          <p className="mt-1 text-xs text-zinc-400">Click on any section in the canvas to edit its properties</p>
+          <p className="text-sm font-medium text-apple-ink-muted-80">Select a section</p>
+          <p className="mt-1 text-xs text-apple-ink-muted-48">Click on any section in the canvas to edit its properties</p>
         </div>
       </div>
     );
@@ -391,7 +391,7 @@ export function PropertiesPanel() {
         return (
           <div key={group}>
             <button onClick={() => toggleGroup(group)}
-              className="flex w-full items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 hover:bg-zinc-50">
+              className="flex w-full items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48 hover:bg-apple-canvas-parchment">
               <span className="flex items-center gap-1.5">
                 <GroupIcon group={group} />
                 {groupLabels[group] || group}
@@ -499,7 +499,7 @@ export function PropertiesPanel() {
             <input type="text" value={s.backgroundGradient ?? ""}
               onChange={(e) => handleStyleChange("backgroundGradient", e.target.value)}
               placeholder="linear-gradient(135deg, #000, #fff)"
-              className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] font-mono text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
+              className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] font-mono text-apple-ink-muted-80 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
           </ControlRow>
 
           <ControlRow label="Overlay Color">
@@ -575,7 +575,7 @@ export function PropertiesPanel() {
           </ControlRow>
           <ControlRow label="Style">
             <select value={s.borderStyle ?? "solid"} onChange={(e) => handleStyleChange("borderStyle", e.target.value)}
-              className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none">
+              className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 focus:border-zinc-400 focus:outline-none">
               <option value="solid">Solid</option>
               <option value="dashed">Dashed</option>
               <option value="dotted">Dotted</option>
@@ -602,7 +602,7 @@ export function PropertiesPanel() {
               ].map((opt) => (
                 <button key={opt.label} onClick={() => handleStyleChange("shadow", opt.value)}
                   className={`flex-1 rounded-lg border px-2 py-1 text-[9px] font-medium transition-all ${
-                    s.shadow === opt.value ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 text-zinc-500 hover:bg-zinc-50"
+                    s.shadow === opt.value ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment"
                   }`}>
                   {opt.label}
                 </button>
@@ -789,10 +789,10 @@ export function PropertiesPanel() {
     return (
       <div className="divide-y divide-zinc-100">
         <div className="px-3 py-3">
-          <p className="text-[11px] text-zinc-500 mb-3">Control visibility and layout per device</p>
+          <p className="text-[11px] text-apple-ink-muted-48 mb-3">Control visibility and layout per device</p>
 
           <div className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Visibility</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Visibility</p>
             {devices.map((dev) => {
               const isHidden = dev.key === "desktop" ? style.hideOnDesktop
                 : dev.key === "tablet" ? style.hideOnTablet
@@ -803,10 +803,10 @@ export function PropertiesPanel() {
               return (
                 <div key={dev.key} className="flex items-center justify-between rounded-lg border border-zinc-100 px-3 py-2">
                   <div className="flex items-center gap-2">
-                    <div className={`flex h-6 w-6 items-center justify-center rounded-md ${isActive ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-500"}`}>
+                    <div className={`flex h-6 w-6 items-center justify-center rounded-md ${isActive ? "bg-zinc-900 text-white" : "bg-zinc-100 text-apple-ink-muted-48"}`}>
                       <Icon className="h-3 w-3" />
                     </div>
-                    <span className="text-xs font-medium text-zinc-700">{dev.label}</span>
+                    <span className="text-xs font-medium text-apple-ink-muted-80">{dev.label}</span>
                   </div>
                   <button
                     onClick={() => dispatch(updateSectionResponsive({ id: section.id, device: dev.key, hide: !isHidden }))}
@@ -819,16 +819,16 @@ export function PropertiesPanel() {
             })}
           </div>
 
-          <div className="mt-4 rounded-lg bg-zinc-50 p-3">
+          <div className="mt-4 rounded-lg bg-apple-canvas-parchment p-3">
             <div className="flex items-center gap-2">
               {device === "mobile" && <Smartphone className="h-4 w-4 text-blue-500" />}
               {device === "tablet" && <Tablet className="h-4 w-4 text-blue-500" />}
               {device === "desktop" && <Monitor className="h-4 w-4 text-blue-500" />}
-              <span className="text-xs font-medium text-zinc-700">
+              <span className="text-xs font-medium text-apple-ink-muted-80">
                 Editing for {device === "desktop" ? "Desktop" : device === "tablet" ? "Tablet" : "Mobile"}
               </span>
             </div>
-            <p className="mt-1 text-[10px] text-zinc-400">
+            <p className="mt-1 text-[10px] text-apple-ink-muted-48">
               Switch device view in the toolbar to see per-device changes
             </p>
           </div>
@@ -859,7 +859,7 @@ export function PropertiesPanel() {
           <ControlRow label="Animation">
             <select value={style.animation ?? "none"}
               onChange={(e) => handleStyleChange("animation", e.target.value)}
-              className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none">
+              className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 focus:border-zinc-400 focus:outline-none">
               {animOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
           </ControlRow>
@@ -874,7 +874,7 @@ export function PropertiesPanel() {
               <ControlRow label="Trigger">
                 <select value={style.animationTrigger ?? "on-scroll"}
                   onChange={(e) => handleStyleChange("animationTrigger", e.target.value)}
-                  className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none">
+                  className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 focus:border-zinc-400 focus:outline-none">
                   <option value="on-load">On Load</option>
                   <option value="on-scroll">On Scroll</option>
                   <option value="on-hover">On Hover</option>
@@ -901,7 +901,7 @@ export function PropertiesPanel() {
     return (
       <div className="divide-y divide-zinc-100">
         <div className="px-3 py-3 space-y-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Section SEO</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Section SEO</p>
           <ControlRow label="HTML ID">
             <TextInput value={seo["htmlId"] ?? ""} onChange={(v) => handlePropChange("htmlId", v)} placeholder="section-id" />
           </ControlRow>
@@ -924,7 +924,7 @@ export function PropertiesPanel() {
             onChange={(e) => handleStyleChange("customCss", e.target.value)}
             rows={4}
             placeholder=".my-class { color: red; }"
-            className="h-auto min-h-[80px] w-full resize-none rounded-lg border border-zinc-200 bg-transparent px-2 py-1.5 text-[11px] font-mono text-zinc-700 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
+            className="h-auto min-h-[80px] w-full resize-none rounded-lg border border-zinc-200 bg-transparent px-2 py-1.5 text-[11px] font-mono text-apple-ink-muted-80 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none" />
         </ControlRow>
       </div>
     </div>
@@ -949,21 +949,21 @@ export function PropertiesPanel() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-zinc-100">
-              <Layers className="h-3 w-3 text-zinc-500" />
+              <Layers className="h-3 w-3 text-apple-ink-muted-48" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-zinc-900">{section.label}</p>
-              <p className="truncate text-[10px] text-zinc-400">{section.type}</p>
+              <p className="truncate text-sm font-semibold text-apple-ink">{section.label}</p>
+              <p className="truncate text-[10px] text-apple-ink-muted-48">{section.type}</p>
             </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <button onClick={() => dispatch(setRightPanelPinned(!rightPanelPinned))}
-              className={`rounded p-1 transition-colors ${rightPanelPinned ? "text-zinc-900" : "text-zinc-400 hover:text-zinc-600"}`}
+              className={`rounded p-1 transition-colors ${rightPanelPinned ? "text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"}`}
               title={rightPanelPinned ? "Unpin" : "Pin"}>
               <Pin className={`h-3.5 w-3.5 ${rightPanelPinned ? "rotate-45" : ""}`} />
             </button>
             <button onClick={() => dispatch(toggleRightPanel())}
-              className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600">
+              className="rounded p-1 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -972,7 +972,7 @@ export function PropertiesPanel() {
         <div className="mt-2">
           <input type="text" value={section.label}
             onChange={(e) => dispatch(updateSectionMeta({ id: section.id, label: e.target.value }))}
-            className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-zinc-700 focus:border-zinc-400 focus:outline-none" />
+            className="h-7 w-full rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 focus:border-zinc-400 focus:outline-none" />
         </div>
 
         <div className="mt-3 flex flex-wrap gap-0.5 rounded-xl bg-zinc-100/80 p-0.5">
@@ -981,7 +981,7 @@ export function PropertiesPanel() {
             return (
               <button key={tab.key} type="button" onClick={() => dispatch(setActiveRightTab(tab.key))}
                 className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[9px] font-medium transition-all ${
-                  activeRightTab === tab.key ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"
+                  activeRightTab === tab.key ? "bg-white text-apple-ink shadow-sm" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
                 }`}>
                 <Icon className="h-3 w-3" />
                 <span className="hidden sm:inline">{tab.label}</span>
@@ -996,7 +996,7 @@ export function PropertiesPanel() {
 
         {controls.length === 0 && activeRightTab === "content" && (
           <div className="p-4 text-center">
-            <p className="text-xs text-zinc-400">No editable properties for this section type</p>
+            <p className="text-xs text-apple-ink-muted-48">No editable properties for this section type</p>
           </div>
         )}
       </div>

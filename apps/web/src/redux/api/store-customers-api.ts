@@ -56,6 +56,23 @@ type CustomerDetailResponse = {
   data: {
     customer: StoreCustomer;
     orders: CustomerOrder[];
+    wishlist?: Array<{ productId?: string; name?: string; price?: number; image?: string }>;
+    activity?: Array<{
+      type: string;
+      orderNumber?: string;
+      status?: string;
+      note?: string;
+      createdAt?: string;
+    }>;
+    analytics?: {
+      totalOrders: number;
+      completedOrders: number;
+      cancelledOrders: number;
+      totalSpent: number;
+      averageOrderValue: number;
+      lastOrderDate: string | null;
+      wishlistCount: number;
+    };
   };
 };
 

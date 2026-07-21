@@ -45,6 +45,12 @@ type OrderInvoicePayload = {
     tax?: number;
     total?: number;
     notes?: string;
+    paymentVerification?: {
+      transactionId?: string;
+      status?: string;
+      reviewedAt?: Date | string;
+    };
+    paidAt?: Date | string;
     shippingAddress?: {
       fullName?: string;
       phone?: string;
@@ -515,6 +521,42 @@ export async function generateOrderInvoicePdf(payload: OrderInvoicePayload): Pro
         drawInfoRow(doc, F.regular, F.medium, "Order Status", orderBadge.label, LM + halfCardW + cardGap + 12, y + 38, 56, halfCardW - 68);
         y += 82;
 
+        const txnId = order.paymentVerification?.transactionId?.trim();
+        if (txnId || order.paymentStatus === "paid") {
+          ensureSpace(54);
+          renderSectionTitle("Payment Information");
+          drawRoundedCard(doc, LM, y, PW, 44, 8, C.bgTable, C.border);
+          drawInfoRow(doc, F.regular, F.medium, "Method", titleCase(order.paymentMethod), LM + 12, y + 8, 70, PW * 0.28);
+          drawInfoRow(doc, F.regular, F.medium, "Txn ID", txnId || "—", LM + 12, y + 22, 70, PW * 0.28);
+          drawInfoRow(
+            doc,
+            F.regular,
+            F.medium,
+            "Gateway",
+            titleCase(order.paymentMethod),
+            LM + PW * 0.42,
+            y + 8,
+            70,
+            PW * 0.28,
+          );
+          drawInfoRow(
+            doc,
+            F.regular,
+            F.medium,
+            "Paid Date",
+            formatDateTime(
+              order.paymentVerification?.reviewedAt || order.paidAt || (order.paymentStatus === "paid" ? order.updatedAt : undefined),
+              locale,
+              timezone,
+            ),
+            LM + PW * 0.42,
+            y + 22,
+            70,
+            PW * 0.28,
+          );
+          y += 56;
+        }
+
         ensureSpace(92);
         renderSectionTitle("Customer & Shipping");
         drawRoundedCard(doc, LM, y, halfCardW, 82, 8, C.bgTable, C.border);
@@ -535,29 +577,93 @@ export async function generateOrderInvoicePdf(payload: OrderInvoicePayload): Pro
         });
         y += 94;
 
-        ensureSpace(92);
-        renderSectionTitle("Timeline");
-        drawRoundedCard(doc, LM, y, PW, 82, 8, C.bgTable, C.border);
-        const timeline = Array.isArray(order.timeline) ? order.timeline.slice(-4) : [];
-        if (timeline.length === 0) {
-          doc.font(F.regular).fontSize(8).fillColor(C.muted);
-          doc.text("No timeline events available.", LM + 12, y + 20);
-        } else {
-          const availableWidth = PW - 24;
-          const itemWidth = Math.max(availableWidth / timeline.length, 120);
-          timeline.forEach((event, index) => {
-            const startX = LM + 12 + index * itemWidth;
-            const badge = mapOrderStatus(event.status);
-            drawBadge(doc, F.bold, titleCase(event.status).toUpperCase(), startX, y + 12, badge.color, badge.bg);
-            doc.font(F.regular).fontSize(7.2).fillColor(C.muted);
-            doc.text(formatDateTime(event.createdAt, locale, timezone), startX, y + 30, { width: itemWidth - 14 });
-            if (event.note) {
-              doc.font(F.regular).fontSize(6.8).fillColor(C.text);
-              doc.text(event.note, startX, y + 42, { width: itemWidth - 14, ellipsis: true });
-            }
-          });
+        const pipeline =
+          order.status === "cancelled" || order.status === "refunded"
+            ? [
+                { key: "pending", label: "Order Placed" },
+                { key: "cancelled", label: titleCase(order.status) },
+              ]
+            : [
+                { key: "pending", label: "Order Placed" },
+                { key: "paid", label: "Payment Received" },
+                { key: "processing", label: "Processing" },
+                { key: "packed", label: "Packed" },
+                { key: "shipped", label: "Shipped" },
+                { key: "out_for_delivery", label: "Out for Delivery" },
+                { key: "delivered", label: "Delivered" },
+              ];
+
+        const timelineEvents = Array.isArray(order.timeline) ? order.timeline : [];
+        const eventByStatus = new Map<string, OrderTimelineEvent>();
+        for (const event of timelineEvents) {
+          if (event.status) eventByStatus.set(event.status, event);
         }
-        y += 94;
+        if (order.createdAt) {
+          eventByStatus.set("pending", eventByStatus.get("pending") || { status: "pending", createdAt: order.createdAt });
+        }
+        if (order.paymentStatus === "paid") {
+          eventByStatus.set(
+            "paid",
+            eventByStatus.get("paid") || {
+              status: "paid",
+              createdAt: order.paymentVerification?.reviewedAt || order.updatedAt || order.createdAt,
+            },
+          );
+        }
+
+        const statusOrder = [
+          "pending",
+          "confirmed",
+          "paid",
+          "processing",
+          "packed",
+          "shipped",
+          "out_for_delivery",
+          "delivered",
+          "cancelled",
+          "refunded",
+        ];
+        const currentIdx = Math.max(
+          0,
+          statusOrder.indexOf(order.status || "pending"),
+          order.paymentStatus === "paid" ? statusOrder.indexOf("paid") : -1,
+        );
+
+        ensureSpace(110);
+        renderSectionTitle("Tracking Timeline");
+        drawRoundedCard(doc, LM, y, PW, 98, 8, C.bgTable, C.border);
+        const availableWidth = PW - 24;
+        const itemWidth = availableWidth / pipeline.length;
+        pipeline.forEach((step, index) => {
+          const startX = LM + 12 + index * itemWidth;
+          const event = eventByStatus.get(step.key);
+          const stepIdx = statusOrder.indexOf(step.key === "paid" ? "paid" : step.key);
+          const completed =
+            Boolean(event) ||
+            (step.key === "paid"
+              ? order.paymentStatus === "paid"
+              : stepIdx >= 0 && currentIdx >= stepIdx && !(order.status === "cancelled" && step.key !== "cancelled" && step.key !== "pending"));
+          const isCurrent =
+            step.key === order.status ||
+            (step.key === "paid" && order.paymentStatus === "paid" && !["delivered", "shipped", "out_for_delivery"].includes(order.status || ""));
+          const badgeColor = completed ? C.success : isCurrent ? primary : C.muted;
+          const badgeBg = completed ? C.successLight : C.borderLight;
+          drawBadge(doc, F.bold, step.label.toUpperCase(), startX, y + 12, badgeColor, badgeBg);
+          doc.font(F.regular).fontSize(6.6).fillColor(C.muted);
+          doc.text(
+            event?.createdAt ? formatDateTime(event.createdAt, locale, timezone) : completed ? "Completed" : "Pending",
+            startX,
+            y + 34,
+            { width: itemWidth - 8 },
+          );
+          doc.font(F.semiBold).fontSize(6.4).fillColor(badgeColor);
+          doc.text(isCurrent ? "Current" : completed ? "Done" : "—", startX, y + 48, { width: itemWidth - 8 });
+          if (index < pipeline.length - 1) {
+            doc.font(F.regular).fontSize(10).fillColor(C.border);
+            doc.text("↓", startX + itemWidth - 14, y + 20);
+          }
+        });
+        y += 110;
 
         ensureSpace(40);
         renderSectionTitle("Items");

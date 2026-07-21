@@ -1,22 +1,16 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { useState } from "react";
 import {
   useGetStoreOrdersQuery, useUpdateOrderStatusMutation, useUpdatePaymentStatusMutation,
 } from "@/redux/api/store-order-api";
 import type { StoreOrder } from "@/redux/api/store-order-api";
 import {
-  ShoppingCart, ChevronDown, Package, Truck, CheckCircle, XCircle, Clock,
-  Search, FileText, Download, Printer, Mail, RefreshCw, Eye,
+  ShoppingCart, Clock, Search, Download, Printer, Mail, RefreshCw, Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { Badge } from "@/components/ui/badge";
-import { SearchBar } from "@/components/ui/search-bar";
 import { Pagination } from "@/components/ui/pagination";
-import { TableSkeleton, StatCardSkeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
 
 import { OrderTimeline } from "@/components/orders/order-timeline";
@@ -38,25 +32,6 @@ const paymentOptions = ["pending", "paid", "partial", "failed", "refunded"];
 function formatDate(d: string) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(d));
 }
-
-const statusBadgeVariant: Record<string, "warning" | "primary" | "violet" | "success" | "danger"> = {
-  pending: "warning",
-  confirmed: "primary",
-  processing: "primary",
-  packed: "violet",
-  shipped: "violet",
-  out_for_delivery: "violet",
-  delivered: "success",
-  cancelled: "danger",
-};
-
-const paymentBadgeVariant: Record<string, "warning" | "success" | "danger" | "primary"> = {
-  pending: "warning",
-  paid: "success",
-  refunded: "danger",
-  partial: "primary",
-  failed: "danger",
-};
 
 export function OrdersTab({ storeId }: OrdersTabProps) {
   const [page, setPage] = useState(1);

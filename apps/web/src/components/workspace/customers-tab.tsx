@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 type CustomersTabProps = { storeId: string };
 
-type ProfileTab = "overview" | "orders" | "invoices" | "addresses" | "notes";
+type ProfileTab = "overview" | "orders" | "invoices" | "addresses" | "wishlist" | "activity" | "notes" | "analytics";
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
@@ -57,6 +57,9 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
   const total = data?.data?.total ?? 0;
   const selectedCust = detailData?.data?.customer ?? null;
   const orders = (detailData?.data?.orders ?? []) as CustomerOrder[];
+  const wishlist = detailData?.data?.wishlist ?? [];
+  const activity = detailData?.data?.activity ?? [];
+  const analytics = detailData?.data?.analytics;
 
   const money = (v: number) => formatCurrency(v || 0, settings);
 
@@ -157,7 +160,10 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
     { id: "orders", label: "Orders" },
     { id: "invoices", label: "Invoices" },
     { id: "addresses", label: "Addresses" },
+    { id: "wishlist", label: "Wishlist" },
+    { id: "activity", label: "Activity" },
     { id: "notes", label: "Notes" },
+    { id: "analytics", label: "Analytics" },
   ];
 
   return (
@@ -336,11 +342,67 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
               </div>
             ) : null}
 
+            {profileTab === "wishlist" ? (
+              <div className="space-y-2">
+                {wishlist.length === 0 ? (
+                  <p className="text-sm text-apple-ink-muted-48">Wishlist is empty.</p>
+                ) : (
+                  wishlist.map((item, idx) => (
+                    <div key={`${item.productId ?? idx}`} className="flex items-center justify-between rounded-xl border border-apple-hairline px-4 py-3">
+                      <div>
+                        <p className="text-sm font-medium text-apple-ink">{item.name || "Product"}</p>
+                        <p className="text-xs text-apple-ink-muted-48">{money(item.price || 0)}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : null}
+
+            {profileTab === "activity" ? (
+              <div className="space-y-2">
+                {activity.length === 0 ? (
+                  <p className="text-sm text-apple-ink-muted-48">No activity yet.</p>
+                ) : (
+                  activity.slice(0, 40).map((event, idx) => (
+                    <div key={`${event.orderNumber}-${idx}`} className="rounded-xl border border-apple-hairline px-4 py-3">
+                      <p className="text-sm font-medium text-apple-ink">
+                        {event.orderNumber} · {event.status}
+                      </p>
+                      <p className="text-xs text-apple-ink-muted-48">
+                        {formatDate(event.createdAt)}{event.note ? ` · ${event.note}` : ""}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : null}
+
             {profileTab === "notes" ? (
               <div className="rounded-xl border border-apple-hairline p-4">
                 <p className="text-sm text-apple-ink-muted-80 whitespace-pre-wrap">
                   {selectedCust.notes || "No notes."}
                 </p>
+              </div>
+            ) : null}
+
+            {profileTab === "analytics" ? (
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: "Total orders", value: String(analytics?.totalOrders ?? selectedCust.totalOrders) },
+                  { label: "Completed", value: String(analytics?.completedOrders ?? selectedCust.completedOrders ?? 0) },
+                  { label: "Cancelled", value: String(analytics?.cancelledOrders ?? selectedCust.cancelledOrders ?? 0) },
+                  { label: "Total spent", value: money(analytics?.totalSpent ?? selectedCust.totalSpent) },
+                  { label: "Avg order value", value: money(analytics?.averageOrderValue ?? selectedCust.averageOrderValue) },
+                  { label: "Wishlist items", value: String(analytics?.wishlistCount ?? wishlist.length) },
+                ].map((card) => (
+                  <div key={card.label} className="rounded-xl border border-apple-hairline p-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-apple-ink-muted-48">
+                      {card.label}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-apple-ink">{card.value}</p>
+                  </div>
+                ))}
               </div>
             ) : null}
           </div>

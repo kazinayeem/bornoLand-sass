@@ -242,6 +242,7 @@ export async function getStoreCustomerDetail(storeId: string, customerId: string
   await connectDatabase();
   const { OrderModel } = await import("../../models/order.model.js");
   const { AddressModel } = await import("./address.model.js");
+  const { WishlistModel } = await import("../../models/wishlist.model.js");
   const mongoose = await import("mongoose");
 
   // Always refresh denormalized stats from live orders
@@ -259,14 +260,55 @@ export async function getStoreCustomerDetail(storeId: string, customerId: string
     ? new mongoose.Types.ObjectId(customerId)
     : customerId;
 
-  const [orders, addresses] = await Promise.all([
+  const [orders, addresses, wishlist] = await Promise.all([
     OrderModel.find({ storeId: storeOid, customerId: customerOid }).sort({ createdAt: -1 }).lean(),
     AddressModel.find({ storeId, customerId }).lean(),
+    WishlistModel.findOne({ storeId: storeOid, customerId: customerOid }).lean() as Promise<{
+      items?: Array<{ productId?: unknown; name?: string; price?: number; image?: string }>;
+    } | null>,
   ]);
+
+  const activity = orders.flatMap((order) => {
+    const events = Array.isArray(order.timeline) ? order.timeline : [];
+    if (events.length === 0) {
+      return [
+        {
+          type: "order",
+          orderNumber: order.orderNumber,
+          status: order.status,
+          note: "Order created",
+          createdAt: order.createdAt,
+        },
+      ];
+    }
+    return events.map((event) => ({
+      type: "order",
+      orderNumber: order.orderNumber,
+      status: event.status,
+      note: event.note || "",
+      createdAt: event.createdAt,
+    }));
+  }).sort((a, b) => new Date(String(b.createdAt)).getTime() - new Date(String(a.createdAt)).getTime());
+
+  const analytics = {
+    totalOrders: customer.totalOrders || 0,
+    completedOrders: customer.completedOrders || 0,
+    cancelledOrders: customer.cancelledOrders || 0,
+    totalSpent: customer.totalSpent || 0,
+    averageOrderValue: customer.averageOrderValue || 0,
+    lastOrderDate: customer.lastOrderDate || null,
+    wishlistCount: wishlist?.items?.length || 0,
+  };
 
   return {
     ok: true as const,
-    data: { customer: { ...customer, addresses }, orders },
+    data: {
+      customer: { ...customer, addresses },
+      orders,
+      wishlist: wishlist?.items || [],
+      activity,
+      analytics,
+    },
   };
 }
 

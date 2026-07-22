@@ -4,10 +4,24 @@
  */
 
 import {
-  extractStoreSlugFromHost,
-  isPlatformHost,
-} from "@/lib/tenant-resolution";
+  classifyHost,
+  isLoopbackHostname,
+  isIpHostname,
+} from "@/lib/host-resolution";
 
+/** Extract store/tenant slug from a Host header value (subdomain only). */
+export function extractSubdomainFromHost(host: string): string | null {
+  const c = classifyHost(host);
+  return c.kind === "tenant-subdomain" ? c.storeKey : null;
+}
+
+/**
+ * Platform apex hosts (landing / dashboard), never a custom-domain tenant.
+ */
+export function isRootHost(host: string): boolean {
+  const c = classifyHost(host);
+  return c.kind === "platform" || isLoopbackHostname(host) || isIpHostname(host);
+}
 export type AppUrlConfig = {
   appEnv: string;
   protocol: string;
@@ -131,19 +145,6 @@ export function getApiUrl(): string {
 
 export function getTenantCanonicalUrl(tenantSlug: string, path = "/"): string {
   return getStoreUrl(tenantSlug, path);
-}
-
-/** Extract store/tenant slug from a Host header value (subdomain only). */
-export function extractSubdomainFromHost(host: string): string | null {
-  return extractStoreSlugFromHost(host);
-}
-
-/**
- * Platform apex hosts (landing / dashboard), never a custom-domain tenant.
- * Includes loopback, bare IPs, PLATFORM_HOSTS, and ROOT_DOMAIN.
- */
-export function isRootHost(host: string): boolean {
-  return isPlatformHost(host);
 }
 
 export function resolveStoreSlug(

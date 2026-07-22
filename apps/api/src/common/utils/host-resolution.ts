@@ -107,7 +107,7 @@ function firstLabel(prefix: string): string | null {
 }
 
 export type HostResolutionConfig = {
-  /** e.g. bornosoft.site or localhost:3000 — from env only */
+  /** e.g. example.com or localhost:3000 — value comes from env only */
   rootDomain: string;
   rootHostname: string;
   /** Extra wildcard bases from PLATFORM_BASES env (never hardcoded) */
@@ -281,15 +281,17 @@ export function getDefaultTenantSlug(): string | null {
 
 /**
  * Resolve what storefront key (if any) middleware should rewrite to.
- * Platform apex → null (landing). Optional DEFAULT_TENANT only on loopback/IP.
+ * Platform marketing apex (ROOT / www.ROOT) → null (landing).
+ * Optional DEFAULT_TENANT only on provisional platform hosts (loopback, IP, IP-encoded apex).
  */
 export function resolveStoreKeyForRequest(host: string): {
   storeKey: string | null;
   classification: HostClassification;
   source: "subdomain" | "custom-domain" | "default-tenant" | "platform";
 } {
-  const classification = classifyHost(host);
-  const { kind, storeKey, isLoopback, isIp } = classification;
+  const config = readHostResolutionConfig();
+  const classification = classifyHost(host, config);
+  const { kind, storeKey, isLoopback, isIp, hostname } = classification;
 
   if (kind === "tenant-subdomain" && storeKey) {
     return { storeKey, classification, source: "subdomain" };
@@ -299,10 +301,17 @@ export function resolveStoreKeyForRequest(host: string): {
     return { storeKey, classification, source: "custom-domain" };
   }
 
-  // Dev convenience: bare IP / loopback may map to a default store from env
-  if ((isLoopback || isIp) && kind === "platform") {
+  // Marketing apex must never be forced onto a default storefront
+  const { rootHostname } = config;
+  const isMarketingApex =
+    Boolean(rootHostname) &&
+    (hostname === rootHostname || hostname === `www.${rootHostname}`);
+
+  if (!isMarketingApex) {
     const fallback = getDefaultTenantSlug();
-    if (fallback) {
+    // Provisional hosts: loopback, bare IP, or any other non-marketing platform apex
+    // (includes IP-encoded wildcard DNS apexes without naming providers)
+    if (fallback && (isLoopback || isIp || kind === "platform")) {
       return {
         storeKey: fallback,
         classification,

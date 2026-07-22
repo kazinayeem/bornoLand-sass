@@ -51,6 +51,22 @@ function getConfiguredPlatformHosts(): string[] {
     .filter(Boolean);
 }
 
+const RESERVED_SUBDOMAINS = new Set([
+  "www",
+  "api",
+  "admin",
+  "app",
+  "cdn",
+  "static",
+  "assets",
+  "mail",
+  "ftp",
+  "m",
+  "mobile",
+  "status",
+  "docs",
+]);
+
 function isIpv4Octets(parts: string[]): boolean {
   return (
     parts.length === 4 &&
@@ -114,6 +130,10 @@ function isPlatformHost(host: string): boolean {
   if (rootDomain && (lowerHost === rootDomain || hostname === rootHostname)) {
     return true;
   }
+  // www.{ROOT} is marketing apex, not a tenant
+  if (rootHostname && hostname === `www.${rootHostname}`) {
+    return true;
+  }
   return false;
 }
 
@@ -126,9 +146,9 @@ export function normalizeStoreSlug(value: string | undefined | null): string | n
   const slug = value.trim().toLowerCase();
   if (!slug) return null;
   if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(slug)) return null;
+  if (RESERVED_SUBDOMAINS.has(slug)) return null;
   return slug;
 }
-
 export function extractSubdomain(host: string): string | null {
   if (!host) return null;
 

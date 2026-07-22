@@ -3,14 +3,18 @@
  *
  * Priority:
  * 1. Subdomain of ROOT_DOMAIN / *.localhost / *.nip.io / *.sslip.io → first label as store slug
- * 2. Platform host (localhost, loopback, bare IP, IP.*.nip.io/sslip.io apex, PLATFORM_HOSTS, ROOT_DOMAIN)
- *    → NEXT_PUBLIC_DEFAULT_TENANT when set, otherwise no storefront tenant
- * 3. Anything else → custom domain (hostname is the lookup key)
+ *    (reserved labels like "www" are never tenants)
+ * 2. Marketing apex (ROOT_DOMAIN, www.ROOT_DOMAIN, APP_URL host) → SaaS landing (no storefront)
+ * 3. Dev platform (localhost, bare IP, nip/sslip apex, PLATFORM_HOSTS)
+ *    → NEXT_PUBLIC_DEFAULT_TENANT when set, otherwise landing
+ * 4. Anything else → custom domain (hostname is the lookup key)
  *
  * Examples:
- *   nayeem.13.201.93.77.nip.io  → storeSlug = "nayeem"
- *   demo.13.201.93.77.sslip.io   → storeSlug = "demo"
- *   store1.bornoland.com         → storeSlug = "store1" (when ROOT_DOMAIN=bornoland.com)
+ *   bornosoft.site                 → platform (landing)
+ *   www.bornosoft.site             → platform (landing)
+ *   nayeem.bornosoft.site          → storeSlug = "nayeem"
+ *   nayeem.13.201.93.77.nip.io     → storeSlug = "nayeem"
+ *   shop.localhost                 → storeSlug = "shop"
  */
 
 export type TenantHostSource =
@@ -38,6 +42,23 @@ const IPV4_RE = /^(?:\d{1,3}\.){3}\d{1,3}$/;
 const IPV6_RE = /^\[?[0-9a-f:]+\]?$/i;
 const STORE_SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 
+/** Labels that must never be treated as store tenants under ROOT_DOMAIN. */
+const RESERVED_SUBDOMAINS = new Set([
+  "www",
+  "api",
+  "admin",
+  "app",
+  "cdn",
+  "static",
+  "assets",
+  "mail",
+  "ftp",
+  "m",
+  "mobile",
+  "status",
+  "docs",
+]);
+
 function stripPort(host: string): string {
   const trimmed = host.trim().toLowerCase();
   if (!trimmed) return "";
@@ -50,6 +71,16 @@ function stripPort(host: string): string {
     return trimmed.slice(0, colon);
   }
   return trimmed;
+}
+
+function hostnameFromUrl(value: string | undefined): string | null {
+  if (!value?.trim()) return null;
+  try {
+    const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    return stripPort(new URL(withProtocol).host);
+  } catch {
+    return stripPort(value);
+  }
 }
 
 function readRootConfig() {
@@ -66,10 +97,40 @@ function readRootConfig() {
   return { rootDomain, rootHostname };
 }
 
+/**
+ * Hostnames that serve the SaaS marketing/app apex (landing, /login, /dashboard).
+ * Derived from ROOT_DOMAIN plus APP_URL / WEB_URL so a mis-synced ROOT_DOMAIN
+ * still treats the public site host as platform (not a custom-domain tenant).
+ */
+function getMarketingApexHostnames(): string[] {
+  const hosts = new Set<string>();
+  const { rootHostname } = readRootConfig();
+  if (rootHostname && !isIpHostname(rootHostname)) {
+    hosts.add(rootHostname);
+    hosts.add(`www.${rootHostname}`);
+  }
+
+  for (const envKey of [
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.APP_URL,
+    process.env.WEB_URL,
+    process.env.NEXT_PUBLIC_WEB_URL,
+  ]) {
+    const host = hostnameFromUrl(envKey);
+    if (!host || isIpHostname(host)) continue;
+    hosts.add(host);
+    if (!host.startsWith("www.")) hosts.add(`www.${host}`);
+    if (host.startsWith("www.")) hosts.add(host.slice(4));
+  }
+
+  return [...hosts];
+}
+
 function normalizeStoreSlug(value: string | null | undefined): string | null {
   if (!value) return null;
   const slug = value.trim().toLowerCase();
   if (!slug || !STORE_SLUG_RE.test(slug)) return null;
+  if (RESERVED_SUBDOMAINS.has(slug)) return null;
   return slug;
 }
 
@@ -92,7 +153,7 @@ function isIpv4Octets(parts: string[]): boolean {
 }
 
 /**
- * Parse nip.io / sslip.io hosts.
+ * Parse nip.io / sslip.io hosts (EC2 / no-DNS testing).
  * Apex (platform):  13.201.93.77.nip.io  |  13-201-93-77.sslip.io
  * Tenant:           nayeem.13.201.93.77.nip.io  |  demo.13-201-93-77.sslip.io
  */
@@ -109,7 +170,6 @@ function parseDevWildcardDns(hostname: string): {
   if (base === null) return null;
   if (!base) return { storeSlug: null, isApex: true };
 
-  // Dashed IPv4 form used by sslip.io: [slug.]a-b-c-d
   const dashed = base.match(/^(?:(.+)\.)?(\d{1,3}-\d{1,3}-\d{1,3}-\d{1,3})$/);
   if (dashed) {
     const ipParts = (dashed[2] ?? "").split("-");
@@ -119,7 +179,6 @@ function parseDevWildcardDns(hostname: string): {
     return { storeSlug: firstLabel(prefix), isApex: false };
   }
 
-  // Dotted IPv4 form: [slug.]a.b.c.d
   const parts = base.split(".").filter(Boolean);
   if (parts.length < 4) return null;
 
@@ -164,10 +223,20 @@ export function isIpHostname(hostname: string): boolean {
 }
 
 /**
- * Platform apex hosts must never be treated as tenant custom domains.
- * Includes loopback, bare IPs, IP.*.nip.io / *.sslip.io apex, PLATFORM_HOSTS, and ROOT_DOMAIN.
+ * Marketing / SaaS apex — must show the landing page, never rewrite to /site/{slug}.
+ * Includes bornosoft.site, www.bornosoft.site, and hosts from APP_URL / WEB_URL.
  */
-export function isPlatformHost(host: string): boolean {
+export function isMarketingApexHost(host: string): boolean {
+  const hostname = stripPort(host);
+  if (!hostname) return false;
+  return getMarketingApexHostnames().includes(hostname);
+}
+
+/**
+ * Dev / provisional platform hosts (no real marketing domain in play).
+ * DEFAULT_TENANT may apply here; it must NOT apply on marketing apex.
+ */
+export function isDevPlatformHost(host: string): boolean {
   const hostname = stripPort(host);
   if (!hostname) return false;
 
@@ -185,9 +254,25 @@ export function isPlatformHost(host: string): boolean {
   const wildcard = parseDevWildcardDns(hostname);
   if (wildcard?.isApex) return true;
 
-  const configured = getConfiguredPlatformHosts();
-  if (configured.includes(hostname)) return true;
+  if (getConfiguredPlatformHosts().includes(hostname)) return true;
 
+  // ROOT_DOMAIN like localhost:3000 — apex is a local platform host
+  const { rootHostname } = readRootConfig();
+  if (rootHostname === "localhost" || rootHostname === "127.0.0.1") {
+    if (hostname === rootHostname) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Platform apex hosts must never be treated as tenant custom domains.
+ */
+export function isPlatformHost(host: string): boolean {
+  if (isMarketingApexHost(host)) return true;
+  if (isDevPlatformHost(host)) return true;
+
+  const hostname = stripPort(host);
   const { rootDomain, rootHostname } = readRootConfig();
   const lowerHost = host.trim().toLowerCase();
   if (rootDomain && (lowerHost === rootDomain || hostname === rootHostname)) {
@@ -200,6 +285,7 @@ export function isPlatformHost(host: string): boolean {
 /**
  * Extract store slug from a subdomain host.
  * Always returns only the first DNS label (never multi-label prefixes).
+ * Reserved labels (www, api, …) return null so callers treat the host as platform.
  */
 export function extractStoreSlugFromHost(host: string): string | null {
   const lowerHost = host.trim().toLowerCase();
@@ -208,7 +294,11 @@ export function extractStoreSlugFromHost(host: string): string | null {
   const { rootDomain, rootHostname } = readRootConfig();
   const hostname = stripPort(lowerHost);
 
-  // Bare platform apex — no tenant in the hostname
+  // Bare platform / marketing apex — no tenant in the hostname
+  if (isMarketingApexHost(hostname) || isDevPlatformHost(hostname)) {
+    return null;
+  }
+
   if (
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
@@ -219,7 +309,7 @@ export function extractStoreSlugFromHost(host: string): string | null {
     return null;
   }
 
-  // *.nip.io / *.sslip.io (including multi-label IP bases)
+  // *.nip.io / *.sslip.io
   const wildcard = parseDevWildcardDns(hostname);
   if (wildcard) {
     return wildcard.isApex ? null : wildcard.storeSlug;
@@ -230,7 +320,7 @@ export function extractStoreSlugFromHost(host: string): string | null {
     return null;
   }
 
-  // {slug}.….{ROOT_DOMAIN}  → first label only
+  // {slug}.….{ROOT_DOMAIN}  → first label only (www → null via reserved list)
   if (rootDomain && lowerHost.endsWith(`.${rootDomain}`)) {
     const prefix = lowerHost.slice(0, -(rootDomain.length + 1));
     return firstLabel(prefix);
@@ -242,10 +332,20 @@ export function extractStoreSlugFromHost(host: string): string | null {
     return firstLabel(prefix);
   }
 
-  // {slug}.….{rootHostname} when ROOT_DOMAIN includes a port (e.g. localhost:3000)
+  // {slug}.….{rootHostname} when ROOT_DOMAIN includes a port
   if (rootHostname && hostname !== rootHostname && hostname.endsWith(`.${rootHostname}`)) {
     const prefix = hostname.slice(0, -(rootHostname.length + 1));
     return firstLabel(prefix);
+  }
+
+  // Fallback: derive from APP_URL / WEB_URL apex when ROOT_DOMAIN was not baked
+  // into the client bundle (common after switching from nip.io → real domain).
+  for (const apex of getMarketingApexHostnames()) {
+    if (!apex || apex.startsWith("www.") || apex === "localhost") continue;
+    if (hostname === apex || hostname === `www.${apex}`) continue;
+    if (hostname.endsWith(`.${apex}`)) {
+      return firstLabel(hostname.slice(0, -(apex.length + 1)));
+    }
   }
 
   return null;
@@ -284,13 +384,28 @@ export function resolveTenantFromHost(
     };
   }
 
-  if (isPlatformHost(normalizedHost)) {
-    const defaultSlug = getDefaultTenantSlug();
+  // Marketing apex (bornosoft.site / www) → always landing, never DEFAULT_TENANT rewrite
+  if (isMarketingApexHost(normalizedHost)) {
     return {
       hostname,
       host: normalizedHost,
-      storeSlug: defaultSlug,
-      source: defaultSlug ? "default-tenant" : "platform",
+      storeSlug: null,
+      source: "platform",
+      isPlatformHost: true,
+      isCustomDomain: false,
+    };
+  }
+
+  // Dev platform (IP / localhost / nip apex) → optional DEFAULT_TENANT
+  if (isDevPlatformHost(normalizedHost) || isPlatformHost(normalizedHost)) {
+    const defaultSlug = getDefaultTenantSlug();
+    // Only apply default tenant on true dev/provisional hosts, not marketing apex
+    const useDefault = Boolean(defaultSlug) && isDevPlatformHost(normalizedHost);
+    return {
+      hostname,
+      host: normalizedHost,
+      storeSlug: useDefault ? defaultSlug : null,
+      source: useDefault ? "default-tenant" : "platform",
       isPlatformHost: true,
       isCustomDomain: false,
     };

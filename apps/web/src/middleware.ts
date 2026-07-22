@@ -77,7 +77,8 @@ export default async function middleware(request: NextRequest) {
   const tenant = resolveTenantFromHost(host);
   const debugRouting = process.env.NODE_ENV === "development" || process.env.DEBUG_TENANT_ROUTING === "1";
 
-  // Subdomain, custom domain, or platform host with NEXT_PUBLIC_DEFAULT_TENANT
+  // Subdomain / custom domain storefront rewrite.
+  // Marketing apex (bornosoft.site / www) has storeSlug=null → falls through to landing.
   if (tenant.storeSlug) {
     if (pathname.startsWith("/api")) {
       return NextResponse.next();

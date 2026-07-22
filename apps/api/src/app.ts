@@ -89,8 +89,23 @@ const allowedOriginPatterns: RegExp[] = [
   /^https?:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)?(?:25[0-5]|2[0-4]\d|1?\d?\d)-(?:25[0-5]|2[0-4]\d|1?\d?\d)-(?:25[0-5]|2[0-4]\d|1?\d?\d)-(?:25[0-5]|2[0-4]\d|1?\d?\d)\.sslip\.io(?::\d+)?$/i,
 ];
 
-// Real production / staging wildcard: https://store.{ROOT_HOSTNAME}
-if (ROOT_HOSTNAME) {
+// Real production domain: apex, www, and tenant subdomains
+// e.g. https://bornosoft.site | https://www.bornosoft.site | https://nayeem.bornosoft.site
+if (ROOT_HOSTNAME && ROOT_HOSTNAME !== "localhost" && ROOT_HOSTNAME !== "127.0.0.1") {
+  const escapedRoot = ROOT_HOSTNAME.replace(/\./g, "\\.");
+  // Apex (marketing landing) — was missing before; only subdomain pattern existed
+  allowedOriginPatterns.push(new RegExp(`^https?://${escapedRoot}(?::\\d+)?$`, "i"));
+  // www apex (also marketing, never a tenant)
+  allowedOriginPatterns.push(new RegExp(`^https?://www\\.${escapedRoot}(?::\\d+)?$`, "i"));
+  // Tenant / app subdomains
+  allowedOriginPatterns.push(
+    new RegExp(
+      `^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.${escapedRoot}(?::\\d+)?$`,
+      "i",
+    ),
+  );
+} else if (ROOT_HOSTNAME) {
+  // localhost:3000 style root — subdomain tenants only (apex covered by loopback patterns)
   allowedOriginPatterns.push(
     new RegExp(
       `^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.${ROOT_HOSTNAME.replace(/\./g, "\\.")}(?::\\d+)?$`,

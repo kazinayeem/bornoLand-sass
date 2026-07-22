@@ -22,6 +22,7 @@ export {
 export {
   getDefaultTenantSlug,
   getStorefrontTenantHeaders,
+  isMarketingApexHost,
   isPlatformHost,
   resolveTenantFromHost,
 } from "@/lib/tenant-resolution";

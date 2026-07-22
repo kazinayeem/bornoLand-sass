@@ -62,22 +62,52 @@ const configuredOrigins = [
   ...(process.env.CORS_ORIGINS?.split(",").map((origin) => origin.trim()) ?? [])
 ].filter((origin): origin is string => Boolean(origin));
 
+/**
+ * Origins allowed via pattern (credentials:true requires echoing a specific Origin —
+ * never use `*`). Keep localhost / lvh.me / ROOT_HOSTNAME for local + real domains.
+ * Also allow IP-based wildcard DNS used for EC2 testing without a custom domain:
+ *   http://nayeem.13.201.93.77.nip.io:3000
+ *   http://demo.13-201-93-77.sslip.io:3000
+ */
 const allowedOriginPatterns: RegExp[] = [
+  // Loopback apex (with optional port)
   /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/,
+  // store.localhost:3000 — local multi-tenant
   /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.localhost(:\d+)?$/i,
+  // store.127.0.0.1:3000
   /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.127\.0\.0\.1(:\d+)?$/i,
+  // store.localhost.com (legacy local wildcard)
   /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.localhost\.com(:\d+)?$/i,
+  // store.lvh.me
   /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.lvh\.me(:\d+)?$/i,
-  new RegExp(`^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.${ROOT_HOSTNAME.replace(/\./g, "\\.")}(:\\d+)?$`, "i"),
+  // nip.io — optional single tenant label + dotted IPv4 apex (with optional port)
+  // e.g. http://13.201.93.77.nip.io:3000 or http://nayeem.13.201.93.77.nip.io:3000
+  /^https?:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)?(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\.nip\.io(?::\d+)?$/i,
+  // sslip.io — same dotted-IP form as nip.io
+  /^https?:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)?(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\.sslip\.io(?::\d+)?$/i,
+  // sslip.io — dashed IPv4 form (e.g. nayeem.13-201-93-77.sslip.io:3000)
+  /^https?:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)?(?:25[0-5]|2[0-4]\d|1?\d?\d)-(?:25[0-5]|2[0-4]\d|1?\d?\d)-(?:25[0-5]|2[0-4]\d|1?\d?\d)-(?:25[0-5]|2[0-4]\d|1?\d?\d)\.sslip\.io(?::\d+)?$/i,
 ];
+
+// Real production / staging wildcard: https://store.{ROOT_HOSTNAME}
+if (ROOT_HOSTNAME) {
+  allowedOriginPatterns.push(
+    new RegExp(
+      `^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.${ROOT_HOSTNAME.replace(/\./g, "\\.")}(?::\\d+)?$`,
+      "i",
+    ),
+  );
+}
 
 const corsOptions: CorsOptions = {
   origin(origin, callback) {
+    // Same-origin / non-browser / server-to-server (no Origin header)
     if (!origin) {
       callback(null, true);
       return;
     }
 
+    // Explicit allow-list from WEB_URL / APP_URL / CORS_ORIGINS
     if (configuredOrigins.includes(origin)) {
       callback(null, true);
       return;
@@ -85,6 +115,7 @@ const corsOptions: CorsOptions = {
 
     for (const pattern of allowedOriginPatterns) {
       if (pattern.test(origin)) {
+        // Reflect the request Origin (required for credentials: true)
         callback(null, true);
         return;
       }
@@ -103,6 +134,7 @@ const corsOptions: CorsOptions = {
     "x-store-slug",
     "x-session-id",
   ],
+  // Handle OPTIONS here so browsers get Access-Control-Allow-* on preflight
   preflightContinue: false,
   optionsSuccessStatus: 204,
 };

@@ -87,7 +87,7 @@ export function getSessionCookieOptions(maxAgeSeconds: number) {
 
   const options: Record<string, unknown> = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookies(),
     sameSite: "strict" as const,
     path: "/",
     maxAge: maxAgeSeconds * 1000,
@@ -110,7 +110,8 @@ export function getLegacySessionCookieOptions(maxAgeSeconds: number) {
 
 /**
  * Only scope cookies to a parent domain when the app is actually served from
- * that domain tree. Omitting domain on bare localhost keeps cookies attachable.
+ * that domain tree. Omitting domain on bare localhost / nip.io keeps cookies
+ * host-scoped so they attach to the request Origin.
  */
 function resolveCookieDomain(): string | undefined {
   const wildcard = process.env.WILDCARD_DOMAIN?.trim();
@@ -118,6 +119,12 @@ function resolveCookieDomain(): string | undefined {
 
   const normalized = wildcard.startsWith(".") ? wildcard : `.${wildcard}`;
   const bare = normalized.slice(1);
+
+  // Never scope cookies to nip.io / sslip.io — those are multi-tenant test hosts;
+  // a shared parent domain would leak sessions across unrelated storefronts.
+  if (bare.endsWith("nip.io") || bare.endsWith("sslip.io")) {
+    return undefined;
+  }
 
   const rootDomain = (
     process.env.ROOT_DOMAIN ??
@@ -142,4 +149,29 @@ function resolveCookieDomain(): string | undefined {
   }
 
   return normalized;
+}
+
+/**
+ * Decide Secure cookie flag without breaking HTTP EC2 / nip.io deployments.
+ * - COOKIE_SECURE=true|false overrides
+ * - else https APP_URL / WEB_URL → Secure
+ * - else http APP_URL / WEB_URL → not Secure
+ * - else fall back to NODE_ENV === "production"
+ */
+function shouldUseSecureCookies(): boolean {
+  const explicit = process.env.COOKIE_SECURE?.trim().toLowerCase();
+  if (explicit === "true" || explicit === "1") return true;
+  if (explicit === "false" || explicit === "0") return false;
+
+  const urls = [
+    process.env.APP_URL,
+    process.env.WEB_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.NEXT_PUBLIC_PROTOCOL,
+  ].filter(Boolean) as string[];
+
+  if (urls.some((u) => u === "https" || u.startsWith("https://"))) return true;
+  if (urls.some((u) => u === "http" || u.startsWith("http://"))) return false;
+
+  return process.env.NODE_ENV === "production";
 }

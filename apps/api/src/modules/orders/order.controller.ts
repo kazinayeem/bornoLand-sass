@@ -29,7 +29,11 @@ export async function createOrderController(request: SubdomainRequest, response:
   const storeId = request.store?._id?.toString();
   if (!storeId) return sendFailure(response, "Store not found", 404);
 
-  const sessionId = (request.headers["x-session-id"] as string) ?? crypto.randomUUID();
+  const sessionHeader = request.headers["x-session-id"];
+  const sessionId =
+    typeof sessionHeader === "string" && sessionHeader.trim().length > 0
+      ? sessionHeader.trim()
+      : crypto.randomUUID();
 
   let customerId = getCustomerId(request);
 
@@ -41,6 +45,14 @@ export async function createOrderController(request: SubdomainRequest, response:
     const guest = await createGuestCustomer(storeId, guestEmail, request.body?.shippingAddress?.fullName);
     customerId = String(guest.data.customer._id);
   }
+
+  console.info("[orders] createOrder request", {
+    storeId,
+    customerId,
+    sessionId,
+    cartId: request.body?.cartId ?? null,
+    itemCount: Array.isArray(request.body?.items) ? request.body.items.length : 0,
+  });
 
   const result = await createOrder(storeId, customerId, sessionId, request.body);
   return result.ok

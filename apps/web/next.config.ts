@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Required for optimized multi-stage Docker images (copies only the standalone server).
+  output: "standalone",
   experimental: {},
   images: {
     formats: ["image/avif", "image/webp"],
@@ -36,6 +38,8 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
+        // Server-side proxy target. In Docker Compose use http://backend:4000.
+        // Browser clients should use NEXT_PUBLIC_API_URL=/api (same-origin).
         destination: `${process.env.API_URL ?? ""}/:path*`
       }
     ];

@@ -138,9 +138,10 @@ app.use("/uploads", express.static(getUploadRoot()));
 app.get(["/health", "/api/health"], (_req, res) => {
   const dbState = mongoose.connection.readyState;
   const dbStatus = dbState === 1 ? "connected" : dbState === 2 ? "connecting" : "disconnected";
+  const healthy = dbState === 1;
 
-  res.json({
-    status: dbState === 1 ? "healthy" : "unhealthy",
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? "healthy" : "unhealthy",
     service: "bornoland-api",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),

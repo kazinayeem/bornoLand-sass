@@ -70,6 +70,14 @@ export async function createOrder(
     paymentMethod?: string;
     deliveryZoneId?: string;
     notes?: string;
+    cartId?: string;
+    items?: Array<{
+      productId: string;
+      variantId?: string;
+      quantity: number;
+      price?: number;
+      name?: string;
+    }>;
   }
 ) {
   await connectDatabase();
@@ -84,17 +92,105 @@ export async function createOrder(
     return { ok: false as const, message: limitCheck.message ?? "Order limit reached" };
   }
 
+  // Prefer customer cart; if empty/missing, claim guest session cart.
   let cart = await CartModel.findOne({ storeId, customerId });
-  if (!cart) {
-    cart = await CartModel.findOne({ storeId, sessionId });
+  const sessionCart =
+    sessionId && (!cart || cart.items.length === 0)
+      ? await CartModel.findOne({ storeId, sessionId })
+      : null;
+
+  console.info("[orders] createOrder cart query", {
+    storeId,
+    customerId,
+    sessionId: sessionId || null,
+    payloadCartId: payload.cartId ?? null,
+    customerCartId: cart?._id ? String(cart._id) : null,
+    customerItemCount: cart?.items?.length ?? 0,
+    sessionCartId: sessionCart?._id ? String(sessionCart._id) : null,
+    sessionItemCount: sessionCart?.items?.length ?? 0,
+    frontendItemCount: payload.items?.length ?? 0,
+  });
+
+  if ((!cart || cart.items.length === 0) && sessionCart && sessionCart.items.length > 0) {
+    if (!cart) {
+      sessionCart.customerId = customerId as never;
+      await sessionCart.save();
+      cart = sessionCart;
+    } else {
+      cart.items = sessionCart.items;
+      cart.couponCode = sessionCart.couponCode || cart.couponCode;
+      cart.discount = sessionCart.discount || cart.discount;
+      await cart.save();
+      if (String(sessionCart._id) !== String(cart._id)) {
+        await CartModel.deleteOne({ _id: sessionCart._id });
+      }
+    }
   }
+
+  // Frontend still has items but Mongo cart is empty — sync from payload lines.
+  if ((!cart || cart.items.length === 0) && payload.items && payload.items.length > 0) {
+    const { syncCartItems } = await import("../cart/cart.service.js");
+    const synced = await syncCartItems(
+      storeId,
+      payload.items.map((item) => ({
+        productId: item.productId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+      })),
+      customerId,
+      sessionId,
+    );
+    if (!synced.ok) {
+      return { ok: false as const, message: synced.message ?? "Cart is empty" };
+    }
+    cart = await CartModel.findOne({ storeId, customerId });
+    if (!cart) cart = await CartModel.findOne({ storeId, sessionId });
+  }
+
   if (!cart || cart.items.length === 0) {
+    console.warn("[orders] createOrder rejected — empty cart", {
+      storeId,
+      customerId,
+      sessionId,
+      frontendItemCount: payload.items?.length ?? 0,
+    });
     return { ok: false as const, message: "Cart is empty" };
   }
 
   if (!cart.customerId) {
     cart.customerId = customerId as never;
     await cart.save();
+  }
+
+  // Optional integrity check: frontend lines should match backend cart.
+  if (payload.items && payload.items.length > 0) {
+    const backendKeys = new Set(
+      cart.items.map(
+        (item: { productId: unknown; variantId?: unknown }) =>
+          `${String(item.productId)}::${String(item.variantId ?? "")}`,
+      ),
+    );
+    const frontendKeys = new Set(
+      payload.items.map((item) => `${item.productId}::${item.variantId ?? ""}`),
+    );
+    const missingOnBackend = [...frontendKeys].filter((key) => !backendKeys.has(key));
+    if (missingOnBackend.length > 0) {
+      const { syncCartItems } = await import("../cart/cart.service.js");
+      await syncCartItems(
+        storeId,
+        payload.items.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+        })),
+        customerId,
+        sessionId,
+      );
+      cart = await CartModel.findOne({ storeId, customerId });
+      if (!cart || cart.items.length === 0) {
+        return { ok: false as const, message: "Cart is empty" };
+      }
+    }
   }
 
   const subtotal = cart.items.reduce((sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity, 0);

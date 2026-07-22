@@ -17,7 +17,7 @@ async function startServer() {
     startBillingCronScheduler();
     startStorageCronScheduler();
     startEmailQueue();
-    const server = app.listen(port, () => {
+    const server = app.listen(port, "0.0.0.0", () => {
       console.log(`BornoLand API listening on port ${port}`);
       console.log("MongoDB connection established");
 

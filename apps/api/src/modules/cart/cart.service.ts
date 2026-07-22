@@ -48,7 +48,13 @@ export async function getCart(storeId: string, customerId?: string, sessionId?: 
   await connectDatabase();
 
   let cart = customerId ? await CartModel.findOne({ storeId, customerId }) : null;
-  if (!cart && sessionId) cart = await CartModel.findOne({ storeId, sessionId });
+  // Empty customer cart must not hide a guest session cart that still has items.
+  if ((!cart || cart.items.length === 0) && sessionId) {
+    const sessionCart = await CartModel.findOne({ storeId, sessionId });
+    if (sessionCart && sessionCart.items.length > 0) {
+      cart = sessionCart;
+    }
+  }
 
   const settings = await getTaxSettings(storeId);
   if (!cart) {
@@ -160,6 +166,186 @@ export async function removeFromCart(
       !(String(i.productId) === productId && String(i.variantId ?? "") === (variantId || ""))
   );
   await cart.save();
+  const settings = await getTaxSettings(storeId);
+  return { ok: true as const, data: { cart: cartResponse(cart, settings ?? {}) } };
+}
+
+/**
+ * Claim a guest session cart into the authenticated customer cart.
+ * Merges quantities for matching product/variant lines.
+ */
+export async function mergeGuestCartIntoCustomer(
+  storeId: string,
+  customerId: string,
+  sessionId?: string,
+) {
+  await connectDatabase();
+
+  let customerCart = await CartModel.findOne({ storeId, customerId });
+  const sessionCart =
+    sessionId && sessionId.length > 0
+      ? await CartModel.findOne({ storeId, sessionId })
+      : null;
+
+  if (!sessionCart || sessionCart.items.length === 0) {
+    const settings = await getTaxSettings(storeId);
+    if (!customerCart) {
+      return {
+        ok: true as const,
+        data: {
+          cart: { items: [], subtotal: 0, discount: 0, tax: 0, total: 0, itemCount: 0 },
+          merged: false,
+        },
+      };
+    }
+    return {
+      ok: true as const,
+      data: { cart: cartResponse(customerCart, settings ?? {}), merged: false },
+    };
+  }
+
+  // Same document — just ensure customerId is set
+  if (customerCart && String(customerCart._id) === String(sessionCart._id)) {
+    if (!customerCart.customerId) {
+      customerCart.customerId = customerId as never;
+      await customerCart.save();
+    }
+    const settings = await getTaxSettings(storeId);
+    return {
+      ok: true as const,
+      data: { cart: cartResponse(customerCart, settings ?? {}), merged: true },
+    };
+  }
+
+  if (!customerCart) {
+    sessionCart.customerId = customerId as never;
+    await sessionCart.save();
+    const settings = await getTaxSettings(storeId);
+    return {
+      ok: true as const,
+      data: { cart: cartResponse(sessionCart, settings ?? {}), merged: true },
+    };
+  }
+
+  if (customerCart.items.length === 0) {
+    customerCart.items = sessionCart.items;
+    customerCart.couponCode = sessionCart.couponCode || customerCart.couponCode;
+    customerCart.discount = sessionCart.discount || customerCart.discount;
+    (customerCart as { couponId?: unknown }).couponId =
+      (sessionCart as { couponId?: unknown }).couponId ??
+      (customerCart as { couponId?: unknown }).couponId;
+    if (!customerCart.sessionId && sessionId) customerCart.sessionId = sessionId;
+    await customerCart.save();
+    if (String(sessionCart._id) !== String(customerCart._id)) {
+      await CartModel.deleteOne({ _id: sessionCart._id });
+    }
+    const settings = await getTaxSettings(storeId);
+    return {
+      ok: true as const,
+      data: { cart: cartResponse(customerCart, settings ?? {}), merged: true },
+    };
+  }
+
+  for (const guestItem of sessionCart.items) {
+    const idx = customerCart.items.findIndex(
+      (i: { productId: unknown; variantId?: unknown }) =>
+        String(i.productId) === String(guestItem.productId) &&
+        String(i.variantId ?? "") === String(guestItem.variantId ?? ""),
+    );
+    if (idx >= 0) {
+      customerCart.items[idx].quantity += guestItem.quantity;
+      customerCart.items[idx].price = guestItem.price;
+    } else {
+      customerCart.items.push(guestItem);
+    }
+  }
+
+  await customerCart.save();
+  if (String(sessionCart._id) !== String(customerCart._id)) {
+    await CartModel.deleteOne({ _id: sessionCart._id });
+  }
+  const settings = await getTaxSettings(storeId);
+  return {
+    ok: true as const,
+    data: { cart: cartResponse(customerCart, settings ?? {}), merged: true },
+  };
+}
+
+/**
+ * Ensure the authenticated/session cart contains the provided lines.
+ * Used when checkout UI has items but the Mongo cart is empty/out of sync.
+ */
+export async function syncCartItems(
+  storeId: string,
+  items: Array<{
+    productId: string;
+    variantId?: string;
+    quantity: number;
+  }>,
+  customerId?: string,
+  sessionId?: string,
+) {
+  await connectDatabase();
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return { ok: false as const, message: "No items to sync" };
+  }
+
+  if (customerId && sessionId) {
+    await mergeGuestCartIntoCustomer(storeId, customerId, sessionId);
+  }
+
+  let cart = customerId ? await CartModel.findOne({ storeId, customerId }) : null;
+  if (!cart && sessionId) cart = await CartModel.findOne({ storeId, sessionId });
+  if (!cart) {
+    cart = await CartModel.create({ storeId, customerId, sessionId, items: [] });
+  } else if (customerId && !cart.customerId) {
+    cart.customerId = customerId as never;
+  }
+
+  // Rebuild from authoritative client lines (validated against live products)
+  const nextItems: Array<{
+    productId: unknown;
+    variantId?: unknown;
+    variantTitle: string;
+    name: string;
+    price: number;
+    quantity: number;
+    image: string;
+  }> = [];
+
+  for (const line of items) {
+    if (!line.productId || line.quantity <= 0) continue;
+    const product = (await ProductModel.findOne({
+      _id: line.productId,
+      storeId,
+      status: { $in: ["active", "scheduled"] },
+    }).lean()) as { _id: unknown; name: string } | null;
+    if (!product) continue;
+
+    const resolved = await resolveVariantForCart(storeId, line.productId, line.variantId);
+    if (!resolved.ok) continue;
+
+    const { price, image, variantTitle, stock } = resolved.data;
+    const quantity = Math.min(line.quantity, Math.max(1, stock || line.quantity));
+    nextItems.push({
+      productId: product._id,
+      variantId: line.variantId || undefined,
+      variantTitle,
+      name: product.name,
+      price,
+      quantity,
+      image,
+    });
+  }
+
+  if (nextItems.length === 0) {
+    return { ok: false as const, message: "Could not sync cart items — products unavailable" };
+  }
+
+  cart.items = nextItems as never;
+  await cart.save();
+
   const settings = await getTaxSettings(storeId);
   return { ok: true as const, data: { cart: cartResponse(cart, settings ?? {}) } };
 }

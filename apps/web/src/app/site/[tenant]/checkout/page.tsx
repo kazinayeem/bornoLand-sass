@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
@@ -19,8 +19,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 import type { RootState } from "@/store/store";
-import { clearCart } from "@/redux/slices/cart-slice";
+import { clearCart, setCartItems } from "@/redux/slices/cart-slice";
 import { useCreateOrderMutation } from "@/redux/api/order-api";
+import { useGetCartQuery, useSyncCartMutation } from "@/redux/api/cart-api";
 import { useGetPublicPaymentMethodsQuery } from "@/redux/api/payment-api";
 import { useGetPublicDeliveryZonesQuery } from "@/redux/api/delivery-api";
 import { useTenant } from "@/providers/tenant-provider";
@@ -29,6 +30,11 @@ import { useRequireCustomerAuth } from "@/hooks/use-require-customer-auth";
 import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
 import { CustomerAddressBook } from "@/components/storefront/customer-address-book";
 import type { CustomerAddress } from "@/redux/api/customer-api";
+import {
+  cartIdentityDebug,
+  logCartDebug,
+  summarizeCartItems,
+} from "@/lib/cart-session";
 
 const PAYMENT_ICONS: Record<string, typeof Banknote> = {
   cod: Banknote,
@@ -82,13 +88,23 @@ export default function CheckoutPage() {
   const router = useRouter();
   const pathname = usePathname() || "";
   const dispatch = useDispatch();
-  const { items, hydrated } = useSelector((state: RootState) => state.cart);
+  const localCart = useSelector((state: RootState) => state.cart);
+  const customer = useSelector((state: RootState) => state.customer.customer);
   const [createOrder, { isLoading }] = useCreateOrderMutation();
-  const { settings } = useTenant();
+  const [syncCart, { isLoading: isSyncing }] = useSyncCartMutation();
+  const { store, settings } = useTenant();
   const [mounted, setMounted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; orderId: string } | null>(null);
   const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string | null>(null);
+
+  const { showLoader, ready } = useRequireCustomerAuth("/checkout");
+  const {
+    data: cartData,
+    isLoading: cartLoading,
+    isFetching: cartFetching,
+    refetch: refetchCart,
+  } = useGetCartQuery(undefined, { skip: !ready });
 
   const { data: pmData } = useGetPublicPaymentMethodsQuery();
   const { data: dzData } = useGetPublicDeliveryZonesQuery();
@@ -99,12 +115,86 @@ export default function CheckoutPage() {
   const [form, setForm] = useState<CheckoutFormState>(EMPTY_FORM);
   const [selectedZoneId, setSelectedZoneId] = useState("");
   const [selectedPayment, setSelectedPayment] = useState("");
+  const checkoutSyncAttempted = useRef(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const { showLoader, ready } = useRequireCustomerAuth("/checkout");
+  // Authenticated checkout: backend cart is the single source of truth.
+  const backendCart = cartData?.data?.cart;
+  const backendItems = (backendCart?.items ?? []).map((item) => ({
+    productId: typeof item.productId === "object" ? String((item.productId as { _id?: string })._id ?? item.productId) : String(item.productId),
+    variantId: item.variantId,
+    variantTitle: item.variantTitle,
+    name: item.name,
+    price: item.price,
+    quantity: item.quantity,
+    image: item.image,
+  }));
+
+  const items = backendItems.length > 0 ? backendItems : ready ? [] : localCart.items;
+  const cartReady = mounted && localCart.hydrated && ready && !cartLoading;
+  const awaitingBackendSync =
+    ready &&
+    !cartLoading &&
+    backendItems.length === 0 &&
+    localCart.items.length > 0 &&
+    (cartFetching || isSyncing);
+
+  useEffect(() => {
+    if (!ready || cartLoading || !backendCart) return;
+    logCartDebug("checkout cart state", {
+      cartId: backendCart._id ?? null,
+      storeId: store._id || backendCart.storeId || null,
+      customerId: customer?._id ?? backendCart.customerId ?? null,
+      backend: summarizeCartItems(backendItems),
+      frontendLocal: summarizeCartItems(localCart.items),
+      ...cartIdentityDebug(),
+    });
+  }, [ready, cartLoading, backendCart, backendItems, localCart.items, store._id, customer?._id]);
+
+  // If backend is empty but local still has lines, sync before allowing checkout UI.
+  useEffect(() => {
+    if (!ready || cartLoading || cartFetching) return;
+    if (backendItems.length > 0 || localCart.items.length === 0) return;
+    if (checkoutSyncAttempted.current) return;
+    checkoutSyncAttempted.current = true;
+    void (async () => {
+      try {
+        logCartDebug("checkout auto-sync local → backend", summarizeCartItems(localCart.items));
+        const result = await syncCart({
+          items: localCart.items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: item.quantity,
+          })),
+        }).unwrap();
+        const synced = (result.data?.cart?.items ?? []).map((item) => ({
+          productId: String(item.productId),
+          variantId: item.variantId,
+          variantTitle: item.variantTitle,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+        }));
+        dispatch(setCartItems(synced));
+        await refetchCart();
+      } catch (error) {
+        logCartDebug("checkout auto-sync failed", { error: String(error) });
+      }
+    })();
+  }, [
+    ready,
+    cartLoading,
+    cartFetching,
+    backendItems.length,
+    localCart.items,
+    syncCart,
+    dispatch,
+    refetchCart,
+  ]);
 
   useEffect(() => {
     if (deliveryZones.length > 0 && !selectedZoneId) {
@@ -193,13 +283,77 @@ export default function CheckoutPage() {
     setErrorMsg("");
 
     if (!ready) return;
-    if (!hasItems) {
+
+    // Final sync + refetch so Place Order never uses a stale empty backend cart.
+    let orderItems = items;
+    let cartId = backendCart?._id;
+
+    try {
+      if (orderItems.length === 0 && localCart.items.length > 0) {
+        const synced = await syncCart({
+          items: localCart.items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: item.quantity,
+          })),
+        }).unwrap();
+        orderItems = (synced.data?.cart?.items ?? []).map((item) => ({
+          productId: String(item.productId),
+          variantId: item.variantId,
+          variantTitle: item.variantTitle,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+        }));
+        cartId = synced.data?.cart?._id;
+        dispatch(setCartItems(orderItems));
+      } else if (orderItems.length > 0) {
+        const latest = await refetchCart().unwrap();
+        const latestItems = latest.data?.cart?.items ?? [];
+        if (latestItems.length === 0) {
+          const synced = await syncCart({
+            items: orderItems.map((item) => ({
+              productId: item.productId,
+              variantId: item.variantId,
+              quantity: item.quantity,
+            })),
+          }).unwrap();
+          orderItems = (synced.data?.cart?.items ?? []).map((item) => ({
+            productId: String(item.productId),
+            variantId: item.variantId,
+            variantTitle: item.variantTitle,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image,
+          }));
+          cartId = synced.data?.cart?._id;
+        } else {
+          orderItems = latestItems.map((item) => ({
+            productId: String(item.productId),
+            variantId: item.variantId,
+            variantTitle: item.variantTitle,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image,
+          }));
+          cartId = latest.data?.cart?._id;
+        }
+      }
+    } catch (error: any) {
+      setErrorMsg(error?.data?.message ?? "Could not synchronize your cart. Please try again.");
+      return;
+    }
+
+    if (orderItems.length === 0) {
       setErrorMsg("Your cart is empty. Please add items before checking out.");
       return;
     }
 
     try {
-      const result = await createOrder({
+      const payload = {
         shippingAddress: {
           label: form.label,
           fullName: form.fullName,
@@ -218,7 +372,27 @@ export default function CheckoutPage() {
         paymentMethod: selectedPm?.type ?? "cod",
         deliveryZoneId: selectedZoneId || undefined,
         notes: form.notes || undefined,
-      }).unwrap();
+        cartId,
+        storeId: store._id || undefined,
+        customerId: customer?._id || undefined,
+        items: orderItems.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          price: item.price,
+          name: item.name,
+        })),
+      };
+
+      logCartDebug("placing order", {
+        cartId: payload.cartId ?? null,
+        storeId: payload.storeId ?? null,
+        customerId: payload.customerId ?? null,
+        ...summarizeCartItems(payload.items),
+        ...cartIdentityDebug(),
+      });
+
+      const result = await createOrder(payload).unwrap();
 
       if (result.success && result.data) {
         dispatch(clearCart());
@@ -234,8 +408,8 @@ export default function CheckoutPage() {
     }
   };
 
-  const isLoadingState = !mounted || !hydrated;
-  const showEmpty = mounted && hydrated && !hasItems;
+  const isLoadingState = !cartReady || awaitingBackendSync;
+  const showEmpty = cartReady && !awaitingBackendSync && !hasItems;
 
   if (orderSuccess) {
     return (
@@ -273,7 +447,9 @@ export default function CheckoutPage() {
     return (
       <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center gap-4 px-4">
         <Loader2 className="h-8 w-8 animate-spin text-zinc-300" />
-        <p className="text-sm text-apple-ink-muted-48">Loading your cart...</p>
+        <p className="text-sm text-apple-ink-muted-48">
+          {awaitingBackendSync ? "Syncing your cart…" : "Loading your cart..."}
+        </p>
       </div>
     );
   }
@@ -428,7 +604,7 @@ export default function CheckoutPage() {
                 <div className="flex justify-between border-t border-zinc-100 pt-2 font-semibold text-apple-ink"><span>Grand total</span><span>{formatCurrency(total, settings)}</span></div>
               </div>
               {errorMsg ? <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2.5"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" /><p className="text-sm text-red-600">{errorMsg}</p></div> : null}
-              <button type="submit" disabled={isLoading} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3 text-sm font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
+              <button type="submit" disabled={isLoading || isSyncing || cartFetching} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3 text-sm font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
                 {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Placing Order...</> : `Place Order — ${formatCurrency(total, settings)}`}
               </button>
             </div>

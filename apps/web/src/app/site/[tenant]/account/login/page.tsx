@@ -59,6 +59,7 @@ function LoginForm() {
         localStorage.setItem("customer_token", result.data.token);
         dispatch(setCustomer({ customer: result.data.customer, token: result.data.token }));
         window.dispatchEvent(new Event("auth-change"));
+        // CartProvider listens for auth-change and merges guest → customer cart.
         redirectedRef.current = true;
         router.replace(resolveStoreHref(redirectTo, pathname));
       } else {

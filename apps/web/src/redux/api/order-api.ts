@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/api/base-api";
+import { getCartAuthHeaders, logCartDebug, summarizeCartItems, cartIdentityDebug } from "@/lib/cart-session";
 
 type OrderItemData = {
   productId: string;
@@ -64,40 +65,54 @@ type ApiResponse<T> = {
   message?: string;
 };
 
-function getAuthHeaders(): Record<string, string> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("customer_token") : null;
-  if (token) {
-    return { Authorization: `Bearer ${token}` };
-  }
-  const sessionId = typeof window !== "undefined" ? localStorage.getItem("session_id") : null;
-  return sessionId ? { "x-session-id": sessionId } : {};
-}
+export type CreateOrderPayload = {
+  shippingAddress: ShippingAddress;
+  paymentMethod?: string;
+  deliveryZoneId?: string;
+  notes?: string;
+  cartId?: string;
+  storeId?: string;
+  customerId?: string;
+  items: Array<{
+    productId: string;
+    variantId?: string;
+    quantity: number;
+    price: number;
+    name?: string;
+  }>;
+};
 
 export const orderApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createOrder: builder.mutation<
-      ApiResponse<{ order: OrderData }>,
-      { shippingAddress: ShippingAddress; paymentMethod?: string; deliveryZoneId?: string; notes?: string }
-    >({
-      query: (body) => ({
-        url: "/orders/create",
-        method: "POST",
-        body,
-        headers: getAuthHeaders(),
-      }),
+    createOrder: builder.mutation<ApiResponse<{ order: OrderData }>, CreateOrderPayload>({
+      query: (body) => {
+        logCartDebug("create order payload", {
+          ...cartIdentityDebug(),
+          cartId: body.cartId ?? null,
+          storeId: body.storeId ?? null,
+          customerId: body.customerId ?? null,
+          ...summarizeCartItems(body.items),
+        });
+        return {
+          url: "/orders/create",
+          method: "POST",
+          body,
+          headers: getCartAuthHeaders(),
+        };
+      },
       invalidatesTags: ["Cart", "Orders", "Customer"],
     }),
     getOrders: builder.query<ApiResponse<{ orders: OrderData[] }>, void>({
       query: () => ({
         url: "/orders",
-        headers: getAuthHeaders(),
+        headers: getCartAuthHeaders(),
       }),
       providesTags: ["Orders"],
     }),
     getOrder: builder.query<ApiResponse<{ order: OrderData }>, string>({
       query: (id) => ({
         url: `/orders/${id}`,
-        headers: getAuthHeaders(),
+        headers: getCartAuthHeaders(),
       }),
       providesTags: ["Orders"],
     }),

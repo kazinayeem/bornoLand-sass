@@ -1,24 +1,49 @@
-FROM node:24-alpine AS base
-WORKDIR /app
-RUN corepack enable
+# syntax=docker/dockerfile:1
 
+############################################
+# Backend (Express) — pnpm monorepo package
+# Build context: repository root
+############################################
+
+ARG NODE_VERSION=22
+
+FROM node:${NODE_VERSION}-alpine AS base
+WORKDIR /app
+RUN apk add --no-cache libc6-compat \
+  && corepack enable
+
+# ── Dependencies (cached unless lockfile / package.json change) ──
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY apps/api/package.json ./apps/api/package.json
-COPY packages/ui/package.json ./packages/ui/package.json
-COPY packages/types/package.json ./packages/types/package.json
-COPY packages/config/package.json ./packages/config/package.json
-RUN pnpm install --frozen-lockfile=false
+# Install only the API workspace and its dependency graph
+RUN pnpm install --frozen-lockfile --filter @bornoland/api...
 
+# ── Build TypeScript → dist ──
 FROM base AS builder
-COPY . .
-RUN pnpm --filter @bornoland/api build
-
-FROM node:24-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY apps/api ./apps/api
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+RUN pnpm --filter @bornoland/api build \
+  && pnpm --filter @bornoland/api deploy --prod --legacy /deploy
+
+# ── Production runner (minimal) ──
+FROM node:${NODE_VERSION}-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    PORT=4000
+
+RUN apk add --no-cache libc6-compat wget \
+  && addgroup -S bornoland && adduser -S bornoland -G bornoland
+
+COPY --from=builder --chown=bornoland:bornoland /deploy ./
+
+USER bornoland
 EXPOSE 4000
-CMD ["pnpm", "--filter", "@bornoland/api", "start"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:4000/health >/dev/null || exit 1
+
+CMD ["node", "dist/index.js"]

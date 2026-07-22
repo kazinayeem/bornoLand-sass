@@ -1,24 +1,90 @@
-version: "3.9"
+# BornoLand production stack
+# - frontend (Next.js) :3000
+# - backend  (Express) :4000
+# - MongoDB Atlas ONLY (no Mongo container)
+#
+# Usage:
+#   cp .env.production.example .env.production   # fill secrets (esp. MONGODB_URI, JWT_SECRET)
+#   docker compose --env-file .env.production build
+#   docker compose --env-file .env.production up -d
+
+name: bornoland
 
 services:
-  redis:
-    image: redis:7-alpine
+  backend:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      args:
+        NODE_VERSION: "22"
+    image: bornoland-api:latest
+    container_name: bornoland-backend
+    restart: unless-stopped
     ports:
-      - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - redis-data:/data
-
-  mongodb:
-    image: mongo:7
-    ports:
-      - "27017:27017"
+      - "${BACKEND_HOST_PORT:-4000}:4000"
+    env_file:
+      - path: ${ENV_FILE:-.env.production}
+        required: true
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: rootpassword
-    volumes:
-      - mongo-data:/data/db
+      NODE_ENV: production
+      PORT: "4000"
+    networks:
+      - bornoland-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
 
-volumes:
-  redis-data:
-  mongo-data:
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NODE_VERSION: "22"
+        NODE_ENV: production
+        NEXT_PUBLIC_APP_ENV: ${NEXT_PUBLIC_APP_ENV:-production}
+        NEXT_PUBLIC_PROTOCOL: ${NEXT_PUBLIC_PROTOCOL:-http}
+        NEXT_PUBLIC_ROOT_DOMAIN: ${NEXT_PUBLIC_ROOT_DOMAIN:-localhost:3000}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-BornoLand}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+        NEXT_PUBLIC_ASSET_URL: ${NEXT_PUBLIC_ASSET_URL:-http://localhost:3000}
+        NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:3000}
+        NEXT_PUBLIC_DEFAULT_CURRENCY: ${NEXT_PUBLIC_DEFAULT_CURRENCY:-BDT}
+        NEXT_PUBLIC_DEFAULT_LOCALE: ${NEXT_PUBLIC_DEFAULT_LOCALE:-en}
+        NEXT_PUBLIC_ENABLE_SUBDOMAIN: ${NEXT_PUBLIC_ENABLE_SUBDOMAIN:-true}
+        NEXT_PUBLIC_ENABLE_AI: ${NEXT_PUBLIC_ENABLE_AI:-true}
+        NEXT_PUBLIC_ENABLE_ANALYTICS: ${NEXT_PUBLIC_ENABLE_ANALYTICS:-true}
+        NEXT_PUBLIC_ENABLE_BUILDER: ${NEXT_PUBLIC_ENABLE_BUILDER:-true}
+        # Next.js rewrite target inside the Compose network
+        API_URL: ${API_URL:-http://backend:4000}
+    image: bornoland-web:latest
+    container_name: bornoland-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_HOST_PORT:-3000}:3000"
+    env_file:
+      - path: ${ENV_FILE:-.env.production}
+        required: true
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      API_URL: ${API_URL:-http://backend:4000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - bornoland-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+
+networks:
+  bornoland-net:
+    driver: bridge

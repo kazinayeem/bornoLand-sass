@@ -1,5 +1,4 @@
 # Root .dockerignore — build context is the monorepo root for both images.
-# Keep this aggressive so secrets and local artifacts never enter the build context.
 
 .git
 .gitignore
@@ -13,17 +12,17 @@
 **/.cache
 **/*.tsbuildinfo
 
-# Local env / secrets (Compose injects env at runtime; build uses ARG for public vars)
+# Local env / secrets (Compose injects env at runtime)
 .env
 .env.*
 !.env.production.example
 !**/.env.example
 
-# Mobile / unrelated apps
+# Mobile / unrelated
 mobileapp
 project_image
 
-# Docs / design / IDE
+# Docs / IDE
 DESIGN.md
 README.md
 **/*.md
@@ -32,16 +31,12 @@ README.md
 .cursor
 **/.DS_Store
 
-# Test / misc
+# Tests
 **/__tests__
 **/*.test.ts
 **/*.test.tsx
 **/*.spec.ts
 **/*.spec.tsx
 
-# Docker noise (avoid recursive context weirdness)
-**/Dockerfile*
-!apps/web/Dockerfile
-!apps/api/Dockerfile
-docker-compose*.yml
+# Deploy examples are not needed inside images
 deploy

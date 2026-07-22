@@ -2,7 +2,7 @@
 
 ############################################
 # Backend (Express) — pnpm monorepo package
-# Build context: repository root
+# Build context MUST be the repository root
 ############################################
 
 ARG NODE_VERSION=22
@@ -12,23 +12,17 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat \
   && corepack enable
 
-# ── Dependencies (cached unless lockfile / package.json change) ──
-FROM base AS deps
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
-COPY apps/api/package.json ./apps/api/package.json
-# Install only the API workspace and its dependency graph
-RUN pnpm install --frozen-lockfile --filter @bornoland/api...
-
-# ── Build TypeScript → dist ──
+# ── Install + build in one stage (pnpm store stays consistent) ──
 FROM base AS builder
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY apps/api/package.json ./apps/api/package.json
+RUN pnpm install --frozen-lockfile --filter @bornoland/api...
+
 COPY apps/api ./apps/api
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 RUN pnpm --filter @bornoland/api build \
   && pnpm --filter @bornoland/api deploy --prod --legacy /deploy
 
-# ── Production runner (minimal) ──
+# ── Minimal production image ──
 FROM node:${NODE_VERSION}-alpine AS runner
 WORKDIR /app
 
@@ -36,8 +30,10 @@ ENV NODE_ENV=production \
     PORT=4000
 
 RUN apk add --no-cache libc6-compat wget \
-  && addgroup -S bornoland && adduser -S bornoland -G bornoland
+  && addgroup -S bornoland \
+  && adduser -S bornoland -G bornoland
 
+# `pnpm deploy` produces a portable package with prod node_modules + dist
 COPY --from=builder --chown=bornoland:bornoland /deploy ./
 
 USER bornoland

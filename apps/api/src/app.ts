@@ -59,70 +59,80 @@ const ROOT_HOSTNAME = ROOT_DOMAIN.includes(":") ? ROOT_DOMAIN.split(":")[0] : RO
 const configuredOrigins = [
   process.env.WEB_URL,
   process.env.APP_URL,
-  ...(process.env.CORS_ORIGINS?.split(",").map((origin) => origin.trim()) ?? [])
+  process.env.NEXT_PUBLIC_APP_URL,
+  process.env.NEXT_PUBLIC_WEB_URL,
+  ...(process.env.CORS_ORIGINS?.split(",").map((origin) => origin.trim()) ?? []),
 ].filter((origin): origin is string => Boolean(origin));
 
 /**
- * Origins allowed via pattern (credentials:true requires echoing a specific Origin —
- * never use `*`). Keep localhost / lvh.me / ROOT_HOSTNAME for local + real domains.
- * Also allow IP-based wildcard DNS used for EC2 testing without a custom domain:
- *   http://nayeem.13.201.93.77.nip.io:3000
- *   http://demo.13-201-93-77.sslip.io:3000
+ * CORS allow-list — no product domains hardcoded.
+ * Patterns are structural (loopback, IP-encoded wildcards) or driven by ROOT_DOMAIN / CORS_ORIGINS.
  */
+const IPV4_OCTET = String.raw`(?:25[0-5]|2[0-4]\d|1?\d?\d)`;
+const IPV4_DOTTED = String.raw`${IPV4_OCTET}(?:\.${IPV4_OCTET}){3}`;
+const IPV4_DASHED = String.raw`${IPV4_OCTET}(?:-${IPV4_OCTET}){3}`;
+const DNS_LABEL = String.raw`[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?`;
+
 const allowedOriginPatterns: RegExp[] = [
-  // Loopback apex (with optional port)
-  /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/,
-  // store.localhost:3000 — local multi-tenant
-  /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.localhost(:\d+)?$/i,
-  // store.127.0.0.1:3000
-  /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.127\.0\.0\.1(:\d+)?$/i,
-  // store.localhost.com (legacy local wildcard)
-  /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.localhost\.com(:\d+)?$/i,
-  // store.lvh.me
-  /^https?:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.lvh\.me(:\d+)?$/i,
-  // nip.io — optional single tenant label + dotted IPv4 apex (with optional port)
-  // e.g. http://13.201.93.77.nip.io:3000 or http://nayeem.13.201.93.77.nip.io:3000
-  /^https?:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)?(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\.nip\.io(?::\d+)?$/i,
-  // sslip.io — same dotted-IP form as nip.io
-  /^https?:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)?(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\.sslip\.io(?::\d+)?$/i,
-  // sslip.io — dashed IPv4 form (e.g. nayeem.13-201-93-77.sslip.io:3000)
-  /^https?:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)?(?:25[0-5]|2[0-4]\d|1?\d?\d)-(?:25[0-5]|2[0-4]\d|1?\d?\d)-(?:25[0-5]|2[0-4]\d|1?\d?\d)-(?:25[0-5]|2[0-4]\d|1?\d?\d)\.sslip\.io(?::\d+)?$/i,
+  // Loopback apex
+  /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/i,
+  // {tenant}.localhost
+  new RegExp(String.raw`^https?://${DNS_LABEL}\.localhost(?::\d+)?$`, "i"),
+  // {tenant}.127.0.0.1
+  new RegExp(String.raw`^https?://${DNS_LABEL}\.127\.0\.0\.1(?::\d+)?$`, "i"),
+  // Provider-agnostic IP-encoded wildcard DNS origins:
+  //   http://{slug}.{A.B.C.D}.{suffix}[:port]
+  //   http://{slug}.{A-B-C-D}.{suffix}[:port]
+  //   http://{A.B.C.D}.{suffix}[:port]
+  new RegExp(
+    String.raw`^https?://(?:${DNS_LABEL}\.)?${IPV4_DOTTED}\.[a-z0-9.-]+(?::\d+)?$`,
+    "i",
+  ),
+  new RegExp(
+    String.raw`^https?://(?:${DNS_LABEL}\.)?${IPV4_DASHED}\.[a-z0-9.-]+(?::\d+)?$`,
+    "i",
+  ),
 ];
 
-// Real production domain: apex, www, and tenant subdomains
-// e.g. https://bornosoft.site | https://www.bornosoft.site | https://nayeem.bornosoft.site
+// Env-configured platform bases (PLATFORM_BASES) → allow http(s)://{base} and http(s)://*.{base}
+const platformBases = (
+  process.env.PLATFORM_BASES ??
+  process.env.NEXT_PUBLIC_PLATFORM_BASES ??
+  process.env.PLATFORM_HOSTS ??
+  process.env.NEXT_PUBLIC_PLATFORM_HOSTS ??
+  ""
+)
+  .split(",")
+  .map((part) => part.trim().toLowerCase().replace(/:\d+$/, ""))
+  .filter(Boolean);
+
+for (const base of platformBases) {
+  const escaped = base.replace(/\./g, "\\.");
+  allowedOriginPatterns.push(new RegExp(String.raw`^https?://${escaped}(?::\d+)?$`, "i"));
+  allowedOriginPatterns.push(
+    new RegExp(String.raw`^https?://${DNS_LABEL}\.${escaped}(?::\d+)?$`, "i"),
+  );
+}
+
+// ROOT_DOMAIN apex + www + tenant subdomains (value from env only)
 if (ROOT_HOSTNAME && ROOT_HOSTNAME !== "localhost" && ROOT_HOSTNAME !== "127.0.0.1") {
   const escapedRoot = ROOT_HOSTNAME.replace(/\./g, "\\.");
-  // Apex (marketing landing) — was missing before; only subdomain pattern existed
-  allowedOriginPatterns.push(new RegExp(`^https?://${escapedRoot}(?::\\d+)?$`, "i"));
-  // www apex (also marketing, never a tenant)
-  allowedOriginPatterns.push(new RegExp(`^https?://www\\.${escapedRoot}(?::\\d+)?$`, "i"));
-  // Tenant / app subdomains
+  allowedOriginPatterns.push(new RegExp(String.raw`^https?://${escapedRoot}(?::\d+)?$`, "i"));
+  allowedOriginPatterns.push(new RegExp(String.raw`^https?://www\.${escapedRoot}(?::\d+)?$`, "i"));
   allowedOriginPatterns.push(
-    new RegExp(
-      `^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.${escapedRoot}(?::\\d+)?$`,
-      "i",
-    ),
+    new RegExp(String.raw`^https?://${DNS_LABEL}\.${escapedRoot}(?::\d+)?$`, "i"),
   );
-} else if (ROOT_HOSTNAME) {
-  // localhost:3000 style root — subdomain tenants only (apex covered by loopback patterns)
-  allowedOriginPatterns.push(
-    new RegExp(
-      `^https?://[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.${ROOT_HOSTNAME.replace(/\./g, "\\.")}(?::\\d+)?$`,
-      "i",
-    ),
-  );
+} else if (ROOT_HOSTNAME === "localhost" || ROOT_DOMAIN.startsWith("localhost")) {
+  // covered by loopback patterns above
 }
 
 const corsOptions: CorsOptions = {
   origin(origin, callback) {
-    // Same-origin / non-browser / server-to-server (no Origin header)
     if (!origin) {
       callback(null, true);
       return;
     }
 
-    // Explicit allow-list from WEB_URL / APP_URL / CORS_ORIGINS
     if (configuredOrigins.includes(origin)) {
       callback(null, true);
       return;
@@ -130,7 +140,6 @@ const corsOptions: CorsOptions = {
 
     for (const pattern of allowedOriginPatterns) {
       if (pattern.test(origin)) {
-        // Reflect the request Origin (required for credentials: true)
         callback(null, true);
         return;
       }
@@ -149,7 +158,6 @@ const corsOptions: CorsOptions = {
     "x-store-slug",
     "x-session-id",
   ],
-  // Handle OPTIONS here so browsers get Access-Control-Allow-* on preflight
   preflightContinue: false,
   optionsSuccessStatus: 204,
 };

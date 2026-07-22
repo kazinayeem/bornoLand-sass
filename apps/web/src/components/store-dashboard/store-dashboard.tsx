@@ -30,7 +30,8 @@ import type { Store } from "@/redux/api/store-api";
 import { useGetMediaStatsQuery } from "@/redux/api/media-api";
 import { useGetStoreSubscriptionQuery } from "@/redux/api/subscription-api";
 import { useGetStoreFeatureAccessQuery } from "@/redux/api/feature-api";
-import { resolveStoreStatus, storeStatusConfig, getTrialDaysRemaining } from "@/lib/store-status";
+import { resolveStoreStatus, storeStatusConfig, getTrialDaysRemaining, getStoreDisplayDomain } from "@/lib/store-status";
+import { getStoreUrl } from "@/lib/urls";
 import { cn } from "@/lib/utils";
 
 /* ── Helpers ──────────────────────────────────────────────────── */
@@ -416,7 +417,7 @@ function StoreDetailsCard({
         {[
           { label: "Name", value: store.name },
           { label: "Category", value: store.category || "—" },
-          { label: "Subdomain", value: `${store.subdomain}.bornoland.com` },
+          { label: "Subdomain", value: getStoreDisplayDomain(store.subdomain || store.slug) },
           { label: "Plan", value: planName || "Free" },
           { label: "Created", value: new Date(store.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) },
         ].map((item) => (
@@ -495,7 +496,7 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
                 Edit Store
               </Link>
               <a
-                href={`https://${store.subdomain}.bornoland.com`}
+                href={getStoreUrl(store.subdomain || store.slug)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover: active:scale-[0.98]"

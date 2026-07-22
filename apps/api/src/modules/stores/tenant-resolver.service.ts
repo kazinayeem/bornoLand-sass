@@ -22,6 +22,50 @@ export type TenantStoreResponse = {
   contact?: Record<string, unknown> | null;
 };
 
+/**
+ * Database is the source of truth for tenant identity.
+ * Looks up by customDomains[], Tenant.customDomain, subdomain, then slug.
+ */
+export async function findStoreByHostKey(key: string): Promise<Record<string, unknown> | null> {
+  await connectDatabase();
+  const normalized = key.trim().toLowerCase();
+  if (!normalized) return null;
+
+  let store = (await StoreModel.findOne({
+    customDomains: normalized,
+    status: "active",
+  }).lean()) as Record<string, unknown> | null;
+
+  if (!store) {
+    const tenant = (await TenantModel.findOne({
+      customDomain: normalized,
+      status: { $ne: "suspended" },
+    }).lean()) as { _id?: unknown } | null;
+    if (tenant?._id) {
+      store = (await StoreModel.findOne({
+        tenantId: tenant._id,
+        status: "active",
+      }).lean()) as Record<string, unknown> | null;
+    }
+  }
+
+  if (!store) {
+    store = (await StoreModel.findOne({
+      subdomain: normalized,
+      status: "active",
+    }).lean()) as Record<string, unknown> | null;
+  }
+
+  if (!store) {
+    store = (await StoreModel.findOne({
+      slug: normalized,
+      status: "active",
+    }).lean()) as Record<string, unknown> | null;
+  }
+
+  return store;
+}
+
 function buildMenuItemTree(items: Array<Record<string, unknown>>) {
   const map = new Map<string, Record<string, unknown> & { children: Array<Record<string, unknown>> }>();
   const roots: Array<Record<string, unknown>> = [];
@@ -54,10 +98,7 @@ export async function resolveBySubdomain(
 }> {
   await connectDatabase();
 
-  let store = await StoreModel.findOne({ subdomain: slug, status: "active" }).lean() as any;
-  if (!store) {
-    store = await StoreModel.findOne({ slug: slug, status: "active" }).lean() as any;
-  }
+  const store = (await findStoreByHostKey(slug)) as any;
   if (!store) {
     return { ok: false, message: "Store not found" };
   }

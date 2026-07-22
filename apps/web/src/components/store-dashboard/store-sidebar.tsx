@@ -42,7 +42,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
-import { resolveStoreStatus, storeStatusConfig, getTrialDaysRemaining } from "@/lib/store-status";
+import { resolveStoreStatus, storeStatusConfig, getTrialDaysRemaining, getStoreDisplayDomain } from "@/lib/store-status";
+import { getStoreUrl } from "@/lib/urls";
 import { useGetStoreFeatureAccessQuery, NAV_FEATURE_MAP, getFeatureByKey } from "@/redux/api/feature-api";
 import { ComingSoonBadge } from "@/components/ecommerce/coming-soon-badge";
 import { useGetMediaStatsQuery } from "@/redux/api/media-api";
@@ -255,7 +256,7 @@ export function StoreSidebar({ store }: { store: Store }) {
                   {store.shortName || store.name}
                 </p>
                 <p className="truncate text-[11px] text-apple-ink-muted-48">
-                  {store.subdomain}.bornoland.com
+                  {getStoreDisplayDomain(store.subdomain || store.slug)}
                 </p>
               </div>
             )}

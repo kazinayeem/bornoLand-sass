@@ -32,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   formatBDT,
   getStoreUrl,
+  getStoreDisplayDomain,
   resolveStoreStatus,
   storeStatusConfig,
   getTrialDaysRemaining,
@@ -206,7 +207,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
   const subsPlan = plans.find((p) => p.slug === store.plan) ?? selectedPlan;
   const isExpired = status === "expired";
   const isPending = status === "pending_payment" || status === "pending_approval";
-  const domain = store.subdomain ? `${store.subdomain}.bornoland.com` : `${store.slug}.bornoland.com`;
+  const domain = getStoreDisplayDomain(store.subdomain || store.slug);
   const limitBytes = store.storageLimitBytes ?? 0;
   const storage = formatBytes(store.storageUsedBytes ?? 0, limitBytes);
   const showStorage = limitBytes > 0;

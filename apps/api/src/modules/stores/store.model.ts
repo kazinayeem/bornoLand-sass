@@ -9,6 +9,12 @@ const storeSchema = new Schema(
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, lowercase: true, trim: true },
     subdomain: { type: String, unique: true, lowercase: true, trim: true },
+    /** Customer-mapped hostnames (e.g. www.shop.com) — DB is source of truth for custom domains */
+    customDomains: {
+      type: [{ type: String, lowercase: true, trim: true }],
+      default: [],
+      index: true,
+    },
     description: { type: String, default: "", trim: true },
     category: { type: String, default: "general", trim: true },
     storeType: {

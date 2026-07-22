@@ -1,7 +1,8 @@
 import type { Response } from "express";
 import type { SubdomainRequest } from "../../common/middleware/subdomain.middleware.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
-import { resolveBySubdomain } from "../stores/tenant-resolver.service.js";
+import { resolveStoreKeyForRequest } from "../../common/utils/host-resolution.js";
+import { findStoreByHostKey, resolveBySubdomain } from "../stores/tenant-resolver.service.js";
 import { getProductBySlug } from "../products/product.service.js";
 import { getPublicProducts } from "../products/product.service.js";
 import { getEnabledPaymentMethods } from "../payments/payment-method.service.js";
@@ -35,20 +36,49 @@ export async function resolveTenantBySlugController(
     : sendFailure(response, result.message ?? "Not found", 404);
 }
 
+/**
+ * Resolve storefront from any Host value (subdomain, custom domain, IP-wildcard).
+ * DB is the source of truth after host classification.
+ */
 export async function resolveTenantByHostController(
   request: SubdomainRequest,
   response: Response
 ) {
-  const slug =
+  const hostHeader =
+    typeof request.query.host === "string"
+      ? request.query.host
+      : typeof request.headers["x-forwarded-host"] === "string"
+        ? request.headers["x-forwarded-host"]
+        : (request.headers.host ?? "");
+
+  let key =
     typeof request.query.subdomain === "string"
       ? request.query.subdomain
-      : request.subdomain;
-  if (!slug) return sendFailure(response, "No subdomain found");
+      : request.subdomain ?? null;
 
+  if (!key && hostHeader) {
+    key = resolveStoreKeyForRequest(hostHeader).storeKey;
+  }
+
+  if (!key) {
+    return sendSuccess(response, {
+      kind: "platform",
+      store: null,
+      tenant: null,
+    });
+  }
+
+  const store = await findStoreByHostKey(key);
+  if (!store) {
+    return sendFailure(response, "Store not found", 404);
+  }
+
+  const canonical =
+    String((store as { subdomain?: string }).subdomain || (store as { slug?: string }).slug || key);
   const pageSlug = typeof request.query.page === "string" ? request.query.page : undefined;
-  const result = await resolveBySubdomain(slug, pageSlug);
+  const result = await resolveBySubdomain(canonical, pageSlug);
   return result.ok
-    ? sendSuccess(response, result.data)
+    ? sendSuccess(response, { kind: "tenant", ...result.data })
     : sendFailure(response, result.message ?? "Not found", 404);
 }
 

@@ -109,9 +109,8 @@ export function getLegacySessionCookieOptions(maxAgeSeconds: number) {
 }
 
 /**
- * Only scope cookies to a parent domain when the app is actually served from
- * that domain tree. Omitting domain on bare localhost / nip.io keeps cookies
- * host-scoped so they attach to the request Origin.
+ * Only scope cookies to the configured ROOT_DOMAIN tree.
+ * Never invent a parent domain from temporary wildcard DNS hosts.
  */
 function resolveCookieDomain(): string | undefined {
   const wildcard = process.env.WILDCARD_DOMAIN?.trim();
@@ -120,43 +119,35 @@ function resolveCookieDomain(): string | undefined {
   const normalized = wildcard.startsWith(".") ? wildcard : `.${wildcard}`;
   const bare = normalized.slice(1);
 
-  // Never scope cookies to nip.io / sslip.io — those are multi-tenant test hosts;
-  // a shared parent domain would leak sessions across unrelated storefronts.
-  if (bare.endsWith("nip.io") || bare.endsWith("sslip.io")) {
-    return undefined;
-  }
-
   const rootDomain = (
     process.env.ROOT_DOMAIN ??
     process.env.NEXT_PUBLIC_ROOT_DOMAIN ??
     ""
-  ).trim();
+  ).trim().toLowerCase();
+  const rootHostname = rootDomain.includes(":")
+    ? rootDomain.split(":")[0]
+    : rootDomain;
 
-  // Local dev on localhost:3000 must not use a .localhost.com parent domain.
-  if (
-    rootDomain === "localhost" ||
-    rootDomain.startsWith("localhost:") ||
-    (!rootDomain && bare.includes("localhost.com"))
-  ) {
+  // Local / unset root → host-only cookies
+  if (!rootHostname || rootHostname === "localhost" || rootHostname === "127.0.0.1") {
+    return undefined;
+  }
+
+  // WILDCARD_DOMAIN must match ROOT_DOMAIN (e.g. .example.com for example.com)
+  if (bare !== rootHostname) {
     return undefined;
   }
 
   if (process.env.NODE_ENV !== "production") {
-    // In development, only set domain when explicitly targeting a wildcard host.
-    if (!bare.includes("localhost.com")) {
-      return undefined;
-    }
+    return undefined;
   }
 
   return normalized;
 }
 
 /**
- * Decide Secure cookie flag without breaking HTTP EC2 / nip.io deployments.
- * - COOKIE_SECURE=true|false overrides
- * - else https APP_URL / WEB_URL → Secure
- * - else http APP_URL / WEB_URL → not Secure
- * - else fall back to NODE_ENV === "production"
+ * Secure cookies require HTTPS. Override with COOKIE_SECURE=true|false.
+ * Derive from APP/WEB URL protocol so HTTP deployments keep working.
  */
 function shouldUseSecureCookies(): boolean {
   const explicit = process.env.COOKIE_SECURE?.trim().toLowerCase();

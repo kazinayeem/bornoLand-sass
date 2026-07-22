@@ -78,7 +78,7 @@ export default async function middleware(request: NextRequest) {
   const debugRouting = process.env.NODE_ENV === "development" || process.env.DEBUG_TENANT_ROUTING === "1";
 
   // Subdomain / custom domain storefront rewrite.
-  // Marketing apex (bornosoft.site / www) has storeSlug=null → falls through to landing.
+  // Marketing / platform apex has storeSlug=null → SaaS landing page (no rewrite).
   if (tenant.storeSlug) {
     if (pathname.startsWith("/api")) {
       return NextResponse.next();

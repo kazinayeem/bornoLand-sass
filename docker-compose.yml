@@ -58,6 +58,8 @@ services:
         NEXT_PUBLIC_ENABLE_AI: ${NEXT_PUBLIC_ENABLE_AI:-true}
         NEXT_PUBLIC_ENABLE_ANALYTICS: ${NEXT_PUBLIC_ENABLE_ANALYTICS:-true}
         NEXT_PUBLIC_ENABLE_BUILDER: ${NEXT_PUBLIC_ENABLE_BUILDER:-true}
+        NEXT_PUBLIC_DEFAULT_TENANT: ${NEXT_PUBLIC_DEFAULT_TENANT:-}
+        NEXT_PUBLIC_PLATFORM_HOSTS: ${NEXT_PUBLIC_PLATFORM_HOSTS:-}
         # Next.js rewrite target inside the Compose network
         API_URL: ${API_URL:-http://backend:4000}
     image: bornoland-web:latest

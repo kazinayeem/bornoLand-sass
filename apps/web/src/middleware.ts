@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
-import { extractSubdomainFromHost, getApiUrl, getAppOrigin, isRootHost } from "@/lib/urls";
+import { getApiUrl, getAppOrigin } from "@/lib/urls";
+import { resolveTenantFromHost } from "@/lib/tenant-resolution";
 import { buildLoginUrl, isAuthenticationPath, validateInternalRedirect } from "@/lib/auth-redirect";
 
 const PUBLIC_FILE = /\.(.*)$/;
@@ -68,55 +69,49 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const subdomain = extractSubdomainFromHost(host);
-  const debugRouting = process.env.NODE_ENV === "development" || process.env.DEBUG_TENANT_ROUTING === "1";
-
-  if (subdomain) {
-    if (pathname.startsWith("/api")) {
-      return NextResponse.next();
-    }
-
-    if (isAppRoute(pathname)) {
-      const appOrigin = getAppOrigin();
-      const url = `${appOrigin}${pathname}${request.nextUrl.search}`;
-      if (debugRouting) {
-        console.log(`[mw] host="${host}" subdomain="${subdomain}" path="${pathname}" → redirect ${url}`);
-      }
-      return NextResponse.redirect(url);
-    }
-
-    const rewriteUrl = request.nextUrl.clone();
-    rewriteUrl.pathname = `/site/${subdomain}${pathname === "/" ? "" : pathname}`;
-    if (debugRouting) {
-      console.log(
-        `[mw] host="${host}" subdomain="${subdomain}" path="${pathname}" → rewrite ${rewriteUrl.pathname}`,
-      );
-    }
-    return NextResponse.rewrite(rewriteUrl);
+  // Already rewritten / path-based storefront — don't double-wrap.
+  if (pathname.startsWith("/site/")) {
+    return NextResponse.next();
   }
 
-  // Custom domain (not root, not *.rootDomain / *.localhost) → rewrite into /site/[host]
-  if (!isRootHost(host)) {
-    const hostname = host.split(":")[0]?.toLowerCase() ?? host;
+  const tenant = resolveTenantFromHost(host);
+  const debugRouting = process.env.NODE_ENV === "development" || process.env.DEBUG_TENANT_ROUTING === "1";
+
+  // Subdomain, custom domain, or platform host with NEXT_PUBLIC_DEFAULT_TENANT
+  if (tenant.storeSlug) {
     if (pathname.startsWith("/api")) {
       return NextResponse.next();
     }
+
     if (isAppRoute(pathname)) {
-      const appOrigin = getAppOrigin();
-      return NextResponse.redirect(`${appOrigin}${pathname}${request.nextUrl.search}`);
+      // On platform apex (IP / localhost + default tenant), keep /dashboard|/login on this host.
+      // Only bounce subdomain / custom-domain visitors to the SaaS origin.
+      if (tenant.source === "default-tenant" || tenant.isPlatformHost) {
+        // fall through to auth / app handlers below
+      } else {
+        const appOrigin = getAppOrigin();
+        const url = `${appOrigin}${pathname}${request.nextUrl.search}`;
+        if (debugRouting) {
+          console.log(
+            `[mw] host="${host}" source="${tenant.source}" slug="${tenant.storeSlug}" path="${pathname}" → redirect ${url}`,
+          );
+        }
+        return NextResponse.redirect(url);
+      }
+    } else {
+      const rewriteUrl = request.nextUrl.clone();
+      rewriteUrl.pathname = `/site/${tenant.storeSlug}${pathname === "/" ? "" : pathname}`;
+      if (debugRouting) {
+        console.log(
+          `[mw] host="${host}" source="${tenant.source}" slug="${tenant.storeSlug}" path="${pathname}" → rewrite ${rewriteUrl.pathname}`,
+        );
+      }
+      return NextResponse.rewrite(rewriteUrl);
     }
-    const rewriteUrl = request.nextUrl.clone();
-    rewriteUrl.pathname = `/site/${hostname}${pathname === "/" ? "" : pathname}`;
-    if (debugRouting) {
-      console.log(
-        `[mw] host="${host}" customDomain="${hostname}" path="${pathname}" → rewrite ${rewriteUrl.pathname}`,
-      );
-    }
-    return NextResponse.rewrite(rewriteUrl);
   }
 
   if (debugRouting && pathname === "/") {
-    console.log(`[mw] host="${host}" subdomain=null path="${pathname}" → root platform`);
+    console.log(`[mw] host="${host}" source="${tenant.source}" path="${pathname}" → root platform`);
   }
 
   const legacyBuilderMatch = pathname.match(/^\/dashboard\/builder\/([^/]+)(?:\/([^/]+))?$/);

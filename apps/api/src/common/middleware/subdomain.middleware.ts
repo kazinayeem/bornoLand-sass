@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { extractSubdomain } from "../utils/subdomain.js";
+import { extractSubdomain, normalizeStoreSlug } from "../utils/subdomain.js";
 import { StoreModel } from "../../models/store.model.js";
 import { TenantModel } from "../../models/tenant.model.js";
 
@@ -21,15 +21,27 @@ export type SubdomainRequest = Request & {
 };
 
 /**
- * Middleware that extracts the subdomain from the Host header
- * and attaches it to `req.subdomain`.
+ * Middleware that extracts the store slug from:
+ * 1. `x-store-slug` (explicit, preferred for platform IP / path-based storefronts)
+ * 2. `x-forwarded-host` / Host subdomain parsing
  *
- * Use this for routes that need to know which tenant/store
- * is being accessed via subdomain.
+ * Attaches the result to `req.subdomain`.
  */
 export function subdomainDetector(request: SubdomainRequest, _response: Response, next: NextFunction) {
+  const storeSlugHeader = request.headers["x-store-slug"];
+  const fromHeader = normalizeStoreSlug(
+    typeof storeSlugHeader === "string" ? storeSlugHeader : Array.isArray(storeSlugHeader) ? storeSlugHeader[0] : null,
+  );
+  if (fromHeader) {
+    request.subdomain = fromHeader;
+    return next();
+  }
+
   const forwardedHost = request.headers["x-forwarded-host"];
-  const host = typeof forwardedHost === "string" && forwardedHost.length > 0 ? forwardedHost : (request.headers["host"] ?? "");
+  const host =
+    typeof forwardedHost === "string" && forwardedHost.length > 0
+      ? forwardedHost
+      : (request.headers["host"] ?? "");
   request.subdomain = extractSubdomain(host);
   next();
 }
@@ -45,7 +57,10 @@ export async function resolveStoreFromSubdomain(request: SubdomainRequest, respo
   if (!slug) return next();
 
   try {
-    const store: any = await StoreModel.findOne({ subdomain: slug, status: "active" }).lean();
+    let store: any = await StoreModel.findOne({ subdomain: slug, status: "active" }).lean();
+    if (!store) {
+      store = await StoreModel.findOne({ slug, status: "active" }).lean();
+    }
     if (store) {
       request.store = {
         _id: store._id,

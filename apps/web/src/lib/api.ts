@@ -1,5 +1,6 @@
 import axios from "axios";
 import { isJwtExpired, authLog, maskToken } from "@/lib/auth-debug";
+import { getStorefrontTenantHeaders } from "@/lib/tenant-resolution";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_URL ??
@@ -18,7 +19,7 @@ api.interceptors.request.use((config) => {
   config.headers = config.headers ?? {};
   config.headers["x-app-source"] = "bornoland-web";
   if (typeof window !== "undefined") {
-    config.headers["x-forwarded-host"] = window.location.host;
+    Object.assign(config.headers, getStorefrontTenantHeaders());
   }
   const token = localStorage.getItem("customer_token");
   if (token) {

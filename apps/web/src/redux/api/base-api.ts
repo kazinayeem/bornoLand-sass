@@ -3,6 +3,7 @@ import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolk
 import { clearAuthState } from "@/redux/slices/auth-slice";
 import { clearCustomer } from "@/redux/slices/customer-slice";
 import { getApiUrl } from "@/lib/urls";
+import { getStorefrontTenantHeaders } from "@/lib/tenant-resolution";
 import { getAccessToken, setAccessToken } from "@/lib/access-token";
 import { broadcastAuthEvent } from "@/lib/auth-tab-sync";
 import { refreshAccessTokenCoordinated } from "@/lib/auth-refresh-coordinator";
@@ -22,7 +23,10 @@ const rawBaseQuery = fetchBaseQuery({
   timeout: 15000,
   prepareHeaders: (headers) => {
     if (typeof window !== "undefined") {
-      headers.set("x-forwarded-host", window.location.host);
+      const tenantHeaders = getStorefrontTenantHeaders();
+      for (const [key, value] of Object.entries(tenantHeaders)) {
+        headers.set(key, value);
+      }
 
       // Merchant access token only. Customer endpoints set Authorization explicitly.
       // Never fall back to customer_token here — that masquerades as a merchant session

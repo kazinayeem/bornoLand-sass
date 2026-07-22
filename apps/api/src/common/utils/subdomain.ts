@@ -16,14 +16,82 @@ function parseRootDomain(rootDomain: string) {
   return { rootDomain: trimmed, rootHostname: trimmed };
 }
 
+const IPV4_RE = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+
+function stripPort(host: string): string {
+  const trimmed = host.trim().toLowerCase();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("[")) {
+    const end = trimmed.indexOf("]");
+    if (end > 0) return trimmed.slice(1, end);
+  }
+  const colon = trimmed.lastIndexOf(":");
+  if (colon > 0 && /^\d+$/.test(trimmed.slice(colon + 1))) {
+    return trimmed.slice(0, colon);
+  }
+  return trimmed;
+}
+
+function isIpHostname(hostname: string): boolean {
+  if (!hostname) return false;
+  if (IPV4_RE.test(hostname)) {
+    return hostname.split(".").every((octet) => {
+      const n = Number(octet);
+      return Number.isInteger(n) && n >= 0 && n <= 255;
+    });
+  }
+  return hostname.includes(":") && /^[0-9a-f:]+$/i.test(hostname);
+}
+
+function getConfiguredPlatformHosts(): string[] {
+  const raw = process.env.PLATFORM_HOSTS ?? process.env.NEXT_PUBLIC_PLATFORM_HOSTS ?? "";
+  return raw
+    .split(",")
+    .map((part) => stripPort(part))
+    .filter(Boolean);
+}
+
+function isPlatformHost(host: string): boolean {
+  const hostname = stripPort(host);
+  if (!hostname) return false;
+  if (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "0.0.0.0" ||
+    hostname === "::1"
+  ) {
+    return true;
+  }
+  if (isIpHostname(hostname)) return true;
+  if (getConfiguredPlatformHosts().includes(hostname)) return true;
+
+  const rootDomain = getRootDomain();
+  const { rootHostname } = parseRootDomain(rootDomain);
+  const lowerHost = host.trim().toLowerCase();
+  if (rootDomain && (lowerHost === rootDomain || hostname === rootHostname)) {
+    return true;
+  }
+  return false;
+}
+
 export function getRootDomain(): string {
   return process.env.ROOT_DOMAIN ?? process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "";
+}
+
+export function normalizeStoreSlug(value: string | undefined | null): string | null {
+  if (!value || typeof value !== "string") return null;
+  const slug = value.trim().toLowerCase();
+  if (!slug) return null;
+  if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(slug)) return null;
+  return slug;
 }
 
 export function extractSubdomain(host: string): string | null {
   if (!host) return null;
 
   const lowerHost = host.trim().toLowerCase();
+  if (isPlatformHost(lowerHost)) return null;
+
   const rootDomain = getRootDomain();
   const { rootHostname } = parseRootDomain(rootDomain);
 
@@ -37,8 +105,8 @@ export function extractSubdomain(host: string): string | null {
     return null;
   }
 
-  const hostname = lowerHost.split(":")[0] ?? lowerHost;
-  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0") {
+  const hostname = stripPort(lowerHost);
+  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0" || isIpHostname(hostname)) {
     return null;
   }
 

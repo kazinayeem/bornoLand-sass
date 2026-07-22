@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getAccessToken } from "@/lib/access-token";
+import { getStorefrontTenantHeaders } from "@/lib/tenant-resolution";
 import { getApiUrl } from "@/lib/urls";
 
 export type BuilderSaveStatus = "idle" | "unsaved" | "saving" | "saved" | "error";
@@ -195,7 +196,7 @@ export function useBuilderAutoSave({
     const token = getAccessToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "x-forwarded-host": window.location.host,
+      ...getStorefrontTenantHeaders(),
     };
     if (token) headers.Authorization = `Bearer ${token}`;
     try {

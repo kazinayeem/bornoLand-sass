@@ -95,7 +95,14 @@ const corsOptions: CorsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-app-source", "x-forwarded-host", "x-session-id"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "x-app-source",
+    "x-forwarded-host",
+    "x-store-slug",
+    "x-session-id",
+  ],
   preflightContinue: false,
   optionsSuccessStatus: 204,
 };

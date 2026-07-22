@@ -18,3 +18,10 @@ export {
   joinUrl,
   readAppUrlConfig,
 } from "@/lib/urls";
+
+export {
+  getDefaultTenantSlug,
+  getStorefrontTenantHeaders,
+  isPlatformHost,
+  resolveTenantFromHost,
+} from "@/lib/tenant-resolution";

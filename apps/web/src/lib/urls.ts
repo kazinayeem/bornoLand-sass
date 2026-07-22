@@ -3,6 +3,11 @@
  * Driven by NEXT_PUBLIC_APP_ENV, NEXT_PUBLIC_ROOT_DOMAIN, NEXT_PUBLIC_PROTOCOL.
  */
 
+import {
+  extractStoreSlugFromHost,
+  isPlatformHost,
+} from "@/lib/tenant-resolution";
+
 export type AppUrlConfig = {
   appEnv: string;
   protocol: string;
@@ -128,54 +133,17 @@ export function getTenantCanonicalUrl(tenantSlug: string, path = "/"): string {
   return getStoreUrl(tenantSlug, path);
 }
 
-/** Extract store/tenant slug from a Host header value. */
+/** Extract store/tenant slug from a Host header value (subdomain only). */
 export function extractSubdomainFromHost(host: string): string | null {
-  const lowerHost = host.trim().toLowerCase();
-  if (!lowerHost) return null;
-
-  const { rootDomain, rootHostname } = readAppUrlConfig();
-
-  if (rootDomain && (lowerHost === rootDomain || lowerHost === rootHostname)) {
-    return null;
-  }
-
-  if (rootDomain && lowerHost.endsWith(`.${rootDomain}`)) {
-    const prefix = lowerHost.slice(0, -(rootDomain.length + 1));
-    if (prefix && !prefix.includes(".")) return prefix;
-    return null;
-  }
-
-  const hostname = lowerHost.split(":")[0] ?? lowerHost;
-  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0") {
-    return null;
-  }
-
-  if (hostname.endsWith(".localhost")) {
-    const prefix = hostname.slice(0, -".localhost".length);
-    if (prefix && !prefix.includes(".")) return prefix;
-  }
-
-  if (rootHostname && hostname.endsWith(`.${rootHostname}`)) {
-    const prefix = hostname.slice(0, -(rootHostname.length + 1));
-    if (prefix && !prefix.includes(".")) return prefix;
-  }
-
-  return null;
+  return extractStoreSlugFromHost(host);
 }
 
+/**
+ * Platform apex hosts (landing / dashboard), never a custom-domain tenant.
+ * Includes loopback, bare IPs, PLATFORM_HOSTS, and ROOT_DOMAIN.
+ */
 export function isRootHost(host: string): boolean {
-  const lowerHost = host.trim().toLowerCase();
-  const hostname = lowerHost.split(":")[0] ?? lowerHost;
-
-  // Always treat loopback as the platform root, even when ROOT_DOMAIN is a production host
-  // (common when running `next start` locally with production .env values).
-  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0") {
-    return true;
-  }
-
-  const { rootDomain, rootHostname } = readAppUrlConfig();
-  if (!rootDomain && !rootHostname) return false;
-  return lowerHost === rootDomain || hostname === rootHostname;
+  return isPlatformHost(host);
 }
 
 export function resolveStoreSlug(

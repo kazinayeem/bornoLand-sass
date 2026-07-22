@@ -5,33 +5,65 @@ import { motion, type Variants } from "framer-motion";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-/** Consistent landing layout — 1280px max, centered, responsive gutters */
-export const landingContainer = "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8";
-export const landingSection = "relative scroll-mt-28 py-16 sm:py-20 lg:py-24";
+/**
+ * Landing layout system
+ * Breakpoints (Tailwind defaults):
+ *  - Mobile: <640 (default)
+ *  - Large mobile / sm: 640+
+ *  - Tablet / md: 768+
+ *  - Laptop / lg: 1024+
+ *  - Desktop / xl: 1280+
+ */
+export const landingContainer =
+  "mx-auto w-full max-w-7xl px-4 min-[390px]:px-5 sm:px-6 md:px-8 lg:px-8 xl:px-10";
+
+export const landingSection =
+  "relative scroll-mt-28 py-12 min-[390px]:py-14 sm:py-16 md:py-20 lg:py-24";
+
 export const landingSectionAlt = `${landingSection} bg-apple-canvas-parchment`;
 
+/** Card grids: 1 → 2 (sm) → 3/4 (lg+) — never ultra-narrow cards */
+export const landingGridFeatures =
+  "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-5";
+
+export const landingGridStats =
+  "grid grid-cols-2 gap-5 sm:gap-6 md:grid-cols-4 md:gap-8";
+
+export const landingGridManagement =
+  "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-5";
+
+export const landingGridTestimonials =
+  "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3";
+
+export const landingGridPricing =
+  "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+
+export const landingGridFooter =
+  "grid grid-cols-1 gap-10 text-center sm:grid-cols-2 sm:gap-8 sm:text-left lg:grid-cols-6 lg:gap-8";
+
 export const landingCard =
-  "flex h-full flex-col rounded-lg border border-apple-hairline bg-apple-canvas p-5 sm:p-6";
+  "flex h-full min-w-0 flex-col rounded-lg border border-apple-hairline bg-apple-canvas p-5 sm:p-6";
+
 export const landingCardHover =
-  "transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:border-blue-200/80 hover:shadow-[0_16px_48px_-28px_rgba(0,0,0,0.22)]";
+  "transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:border-blue-200/80 hover:shadow-[0_16px_48px_-28px_rgba(0,0,0,0.22)] motion-reduce:hover:translate-y-0";
 
 export const landingIconWrap =
   "mb-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-apple-canvas-parchment transition-colors duration-300 group-hover:bg-blue-50";
 
 export const landingBtnPrimary =
-  "btn-press inline-flex h-12 min-w-[9rem] items-center justify-center gap-2 rounded-pill bg-primary px-6 text-body font-semibold text-primary-foreground transition-[filter,transform] duration-300 hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "btn-press inline-flex h-12 min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-pill bg-primary px-6 text-body font-semibold text-primary-foreground transition-[filter,transform] duration-300 hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto sm:min-w-[9rem]";
 
 export const landingBtnSecondary =
-  "btn-press inline-flex h-12 min-w-[9rem] items-center justify-center gap-2 rounded-pill border border-primary bg-transparent px-6 text-body font-semibold text-primary transition-colors duration-300 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "btn-press inline-flex h-12 min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-pill border border-primary bg-transparent px-6 text-body font-semibold text-primary transition-colors duration-300 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto sm:min-w-[9rem]";
 
 export const landingBtnGhost =
-  "btn-press inline-flex h-12 items-center justify-center gap-2 rounded-pill border border-border bg-background px-6 text-body font-semibold text-foreground transition-colors duration-300 hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "btn-press inline-flex h-12 min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-pill border border-border bg-background px-6 text-body font-semibold text-foreground transition-colors duration-300 hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto";
 
 export const landingProse =
-  "max-w-prose text-base leading-relaxed text-apple-ink-muted-80 sm:text-[17px] sm:leading-[1.6]";
+  "max-w-prose text-[15px] leading-relaxed text-apple-ink-muted-80 sm:text-base sm:leading-relaxed md:text-[17px] md:leading-[1.6]";
 
 export const landingPreviewShadow =
-  "shadow-[0_32px_96px_-40px_rgba(0,0,0,0.45)]";
+  "shadow-[0_24px_72px_-36px_rgba(0,0,0,0.4)] sm:shadow-[0_32px_96px_-40px_rgba(0,0,0,0.45)]";
 
 export const easeApple = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
@@ -95,7 +127,7 @@ export function LandingCtaGroup({
   secondaryHref?: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+    <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
       <Link href={primaryHref} className={landingBtnPrimary}>
         {primary}
       </Link>
@@ -138,7 +170,7 @@ export function useActiveSection(sectionIds: string[]) {
 
 export function navLinkClass(isActive: boolean, onDark = false) {
   return cn(
-    "rounded-sm px-1 py-0.5 text-nav-link transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
+    "rounded-sm px-2 py-1.5 text-nav-link transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:px-2.5",
     onDark
       ? isActive
         ? "text-apple-body-on-dark"

@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useLandingLocale } from "./landing-locale";
 import {
   landingContainer,
+  landingGridPricing,
   landingSectionAlt,
   LandingReveal,
 } from "./landing-ui";
@@ -66,7 +67,7 @@ export function Pricing() {
         <SectionHeading eyebrow={p.eyebrow} title={p.title} description={p.description} />
 
         {isLoading ? (
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className={`mt-10 sm:mt-12 ${landingGridPricing}`}>
             <PricingSkeleton />
             <PricingSkeleton />
             <PricingSkeleton />
@@ -90,7 +91,7 @@ export function Pricing() {
           </LandingReveal>
         ) : (
           <>
-            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className={`mt-10 sm:mt-12 ${landingGridPricing}`}>
               {plans.map((plan) => {
                 const action = cta(plan);
                 const planFeatures = enabled(plan);
@@ -101,9 +102,9 @@ export function Pricing() {
                   <article
                     key={plan._id}
                     className={cn(
-                      "relative flex h-full flex-col rounded-lg border bg-apple-canvas p-6 transition-shadow duration-300",
+                      "relative flex h-full min-w-0 flex-col rounded-lg border bg-apple-canvas p-5 sm:p-6 transition-shadow duration-300",
                       recommended
-                        ? "z-[1] scale-[1.02] border-apple-primary shadow-[0_20px_60px_-32px_rgba(0,102,204,0.45)] ring-2 ring-apple-primary/15"
+                        ? "z-[1] border-apple-primary shadow-[0_20px_60px_-32px_rgba(0,102,204,0.45)] ring-2 ring-apple-primary/15 xl:scale-[1.02]"
                         : "border-apple-hairline hover:shadow-[0_12px_40px_-28px_rgba(0,0,0,0.18)]",
                     )}
                   >
@@ -201,17 +202,20 @@ export function Pricing() {
             </div>
 
             {plans.length > 1 ? (
-              <LandingReveal className="mt-12">
+              <LandingReveal className="mt-10 sm:mt-12">
                 <div className="overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas">
-                  <div className="border-b border-apple-divider-soft px-6 py-5">
+                  <div className="border-b border-apple-divider-soft px-4 py-4 sm:px-6 sm:py-5">
                     <h3 className="font-semibold text-apple-ink">{p.compare}</h3>
                     <p className="mt-1 text-xs text-apple-ink-muted-48">{p.compareHint}</p>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[640px] text-left text-xs">
+                  <div className="-mx-px overflow-x-auto overscroll-x-contain touch-pan-x">
+                    <table className="w-full min-w-[36rem] text-left text-xs sm:min-w-[40rem]">
                       <thead className="bg-apple-canvas-parchment">
                         <tr>
-                          <th scope="col" className="px-6 py-3 font-semibold text-apple-ink-muted-48">
+                          <th
+                            scope="col"
+                            className="sticky left-0 z-[1] bg-apple-canvas-parchment px-4 py-3 font-semibold text-apple-ink-muted-48 sm:px-6"
+                          >
                             {p.featureOrLimit}
                           </th>
                           {plans.map((plan) => (
@@ -219,7 +223,7 @@ export function Pricing() {
                               key={plan._id}
                               scope="col"
                               className={cn(
-                                "px-4 py-3 font-semibold",
+                                "whitespace-nowrap px-4 py-3 font-semibold",
                                 plan.isRecommended ? "bg-blue-50 text-blue-700" : "text-apple-ink-muted-48",
                               )}
                             >
@@ -231,7 +235,10 @@ export function Pricing() {
                       <tbody>
                         {compareRows.map((feature) => (
                           <tr key={feature} className="border-t border-apple-divider-soft">
-                            <th scope="row" className="px-6 py-3 font-medium text-apple-ink">
+                            <th
+                              scope="row"
+                              className="sticky left-0 z-[1] bg-apple-canvas px-4 py-3 font-medium text-apple-ink sm:px-6"
+                            >
                               {feature}
                             </th>
                             {plans.map((plan) => {

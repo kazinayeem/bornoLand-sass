@@ -8,6 +8,7 @@ import {
   landingCard,
   landingCardHover,
   landingContainer,
+  landingGridManagement,
   landingIconWrap,
   landingSection,
   staggerContainer,
@@ -30,7 +31,7 @@ export function StoreManagement() {
           whileInView="visible"
           viewport={{ once: true, margin: "-80px" }}
           variants={staggerContainer}
-          className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+          className={`mt-10 sm:mt-12 ${landingGridManagement}`}
         >
           {m.items.map((item, i) => {
             const Icon = icons[i] ?? ShoppingBag;

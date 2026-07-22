@@ -17,6 +17,7 @@ import {
   landingCard,
   landingCardHover,
   landingContainer,
+  landingGridFeatures,
   landingIconWrap,
   landingSection,
   staggerContainer,
@@ -39,7 +40,7 @@ export function Features() {
           whileInView="visible"
           viewport={{ once: true, margin: "-80px" }}
           variants={staggerContainer}
-          className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          className={`mt-10 sm:mt-12 ${landingGridFeatures}`}
         >
           {f.items.map((item, i) => {
             const Icon = icons[i] ?? Store;

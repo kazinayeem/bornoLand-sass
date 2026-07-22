@@ -15,14 +15,14 @@ export function FAQ() {
   return (
     <section id="faq" className={landingSectionAlt}>
       <div className={landingContainer}>
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto w-full max-w-3xl">
           <SectionHeading
             eyebrow={section.eyebrow}
             title={section.title}
             description={section.description}
           />
 
-          <LandingReveal className="mt-10 space-y-2">
+          <LandingReveal className="mt-8 space-y-2.5 sm:mt-10 sm:space-y-2">
             {faqs.map((faq, i) => {
               const isOpen = open === i;
               return (
@@ -39,18 +39,20 @@ export function FAQ() {
                       onClick={() => setOpen(isOpen ? null : i)}
                       aria-expanded={isOpen}
                       aria-controls={`faq-answer-${i}`}
-                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-apple-canvas-parchment/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-primary"
+                      className="flex w-full min-h-12 items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-apple-canvas-parchment/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-primary sm:gap-4 sm:px-5 sm:py-4"
                     >
-                      <span className="text-sm font-semibold text-apple-ink">{faq.q}</span>
+                      <span className="text-[15px] font-semibold leading-snug text-apple-ink sm:text-sm">
+                        {faq.q}
+                      </span>
                       <span
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors duration-300 ${
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors duration-300 sm:h-8 sm:w-8 ${
                           isOpen
                             ? "bg-blue-100 text-apple-primary"
                             : "bg-apple-canvas-parchment text-apple-ink-muted-48"
                         }`}
                         aria-hidden
                       >
-                        {isOpen ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                        {isOpen ? <Minus className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> : <Plus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
                       </span>
                     </button>
                   </h3>
@@ -63,7 +65,7 @@ export function FAQ() {
                   >
                     <div className="overflow-hidden">
                       <p
-                        className={`px-5 pb-4 text-sm leading-relaxed text-apple-ink-muted-80 transition-opacity duration-300 ${
+                        className={`px-4 pb-4 text-[15px] leading-relaxed text-apple-ink-muted-80 transition-opacity duration-300 sm:px-5 sm:text-sm ${
                           isOpen ? "opacity-100" : "opacity-0"
                         }`}
                       >

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useLandingLocale } from "./landing-locale";
-import { landingContainer } from "./landing-ui";
+import { landingContainer, landingGridFooter } from "./landing-ui";
 
 const COPYRIGHT_YEAR = 2026;
 
@@ -46,20 +46,20 @@ export function Footer() {
   ];
 
   return (
-    <footer className="border-t border-apple-hairline bg-apple-canvas-parchment py-16 sm:py-20">
+    <footer className="border-t border-apple-hairline bg-apple-canvas-parchment py-12 sm:py-16 md:py-20">
       <div className={landingContainer}>
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-6">
-          <div className="sm:col-span-2 lg:col-span-2">
+        <div className={landingGridFooter}>
+          <div className="flex flex-col items-center sm:col-span-2 sm:items-start lg:col-span-2">
             <Link
               href="/"
-              className="mb-4 inline-flex items-center gap-2 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-primary"
+              className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-primary"
             >
               <Image
                 src="/logo.png"
                 alt="BornoLand"
                 width={28}
                 height={28}
-                className="h-7 w-7 rounded-sm object-contain"
+                className="h-7 w-7 max-w-full rounded-sm object-contain"
               />
               <span className="text-caption-strong text-apple-ink">BornoLand</span>
             </Link>
@@ -67,14 +67,18 @@ export function Footer() {
           </div>
 
           {footerLinks.map((group) => (
-            <nav key={group.title} aria-label={group.title}>
+            <nav
+              key={group.title}
+              aria-label={group.title}
+              className="flex flex-col items-center sm:items-start"
+            >
               <h4 className="mb-3 text-caption-strong text-apple-ink">{group.title}</h4>
-              <ul className="space-y-2">
+              <ul className="space-y-1 sm:space-y-2">
                 {group.links.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="inline-block text-sm leading-relaxed text-apple-ink-muted-80 transition-colors hover:text-apple-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-primary"
+                      className="inline-flex min-h-11 items-center text-sm leading-relaxed text-apple-ink-muted-80 transition-colors hover:text-apple-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-primary sm:min-h-0 sm:py-0.5"
                     >
                       {link.label}
                     </Link>
@@ -85,7 +89,7 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 border-t border-apple-hairline pt-6 text-center sm:text-left">
+        <div className="mt-10 border-t border-apple-hairline pt-6 text-center sm:mt-12 sm:text-left">
           <p className="text-fine-print text-apple-ink-muted-48">
             &copy; {COPYRIGHT_YEAR} BornoLand. {f.rights}
           </p>

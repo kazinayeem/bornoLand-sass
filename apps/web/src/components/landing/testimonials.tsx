@@ -7,6 +7,7 @@ import { useLandingLocale } from "./landing-locale";
 import {
   landingCard,
   landingContainer,
+  landingGridTestimonials,
   landingSection,
   staggerContainer,
   staggerItem,
@@ -31,7 +32,7 @@ export function Testimonials() {
           whileInView="visible"
           viewport={{ once: true, margin: "-80px" }}
           variants={staggerContainer}
-          className="mt-12 grid gap-5 md:grid-cols-3"
+          className={`mt-10 sm:mt-12 ${landingGridTestimonials}`}
         >
           {items.map((item) => (
             <motion.article

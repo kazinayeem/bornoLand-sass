@@ -42,14 +42,14 @@ export function Hero() {
           animate="visible"
           className="pb-16 sm:pb-20 lg:pb-24"
         >
-          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14 xl:gap-16">
-            <div className="mx-auto max-w-xl lg:mx-0">
+          <div className="grid items-center gap-8 sm:gap-10 md:gap-12 lg:grid-cols-2 lg:gap-14 xl:gap-16">
+            <div className="mx-auto w-full max-w-xl text-center md:text-left lg:mx-0">
               <motion.div
                 variants={staggerItem}
-                className="mb-5 inline-flex items-center gap-1.5 rounded-pill border border-apple-hairline bg-apple-canvas px-3.5 py-1.5 text-caption-strong text-apple-primary"
+                className="mb-4 inline-flex max-w-full items-center gap-1.5 rounded-pill border border-apple-hairline bg-apple-canvas px-3.5 py-1.5 text-caption-strong text-apple-primary sm:mb-5"
               >
                 <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                {h.badge}
+                <span className="truncate">{h.badge}</span>
               </motion.div>
 
               <motion.h1
@@ -62,11 +62,17 @@ export function Hero() {
                 <span className="text-apple-primary">{h.titleHighlight}</span>
               </motion.h1>
 
-              <motion.p variants={staggerItem} className={cn(landingProse, "mt-5")}>
+              <motion.p
+                variants={staggerItem}
+                className={cn(landingProse, "mx-auto mt-4 sm:mt-5 md:mx-0")}
+              >
                 {h.description}
               </motion.p>
 
-              <motion.div variants={staggerItem} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <motion.div
+                variants={staggerItem}
+                className="mx-auto mt-7 flex w-full max-w-md flex-col gap-3 sm:mt-8 sm:max-w-none sm:flex-row sm:flex-wrap md:mx-0"
+              >
                 <Link href="/register" className={`${landingBtnPrimary} group`}>
                   {h.primaryCta}
                   <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" aria-hidden />
@@ -77,7 +83,11 @@ export function Hero() {
                 </Link>
               </motion.div>
 
-              <motion.ul variants={staggerItem} className="mt-6 flex flex-wrap gap-x-5 gap-y-2" aria-label="Benefits">
+              <motion.ul
+                variants={staggerItem}
+                className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-2.5 sm:gap-x-5 md:justify-start"
+                aria-label="Benefits"
+              >
                 {h.benefits.map((b) => (
                   <li key={b} className="inline-flex items-center gap-1.5 text-xs font-medium text-apple-ink-muted-48">
                     <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-50" aria-hidden>
@@ -91,7 +101,7 @@ export function Hero() {
 
             <motion.div variants={staggerItem} className="relative mx-auto w-full max-w-xl lg:max-w-none">
               <div
-                className={`relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas ${landingPreviewShadow}`}
+                className={`relative aspect-[4/3] w-full max-w-full overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas ${landingPreviewShadow}`}
                 role="img"
                 aria-label={h.dashboard}
               >

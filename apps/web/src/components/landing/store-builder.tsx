@@ -31,12 +31,12 @@ export function StoreBuilder() {
       <div className={landingContainer}>
         <SectionHeading eyebrow={b.eyebrow} title={b.title} description={b.description} />
 
-        <LandingReveal className="mt-12 grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
+        <LandingReveal className="mt-10 grid gap-8 sm:mt-12 sm:gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
           <div className="flex flex-col gap-3">
             {b.why.map((line) => (
               <div
                 key={line}
-                className="flex min-h-[3.25rem] items-start gap-3 rounded-xl border border-apple-divider-soft bg-apple-canvas p-4"
+                className="flex min-h-12 items-start gap-3 rounded-xl border border-apple-divider-soft bg-apple-canvas p-4"
               >
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-50" aria-hidden>
                   <Check className="h-3 w-3 text-apple-primary" />
@@ -44,13 +44,13 @@ export function StoreBuilder() {
                 <span className="text-sm font-medium leading-relaxed text-apple-ink-muted-80">{line}</span>
               </div>
             ))}
-            <Link href="/register" className={`${landingBtnPrimary} mt-2 w-fit`}>
+            <Link href="/register" className={`${landingBtnPrimary} mt-2 sm:w-fit`}>
               {b.cta}
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex min-w-0 flex-col">
             <div
               className="mb-4 flex items-center justify-center gap-1 rounded-xl border border-apple-hairline bg-apple-canvas p-1"
               role="tablist"
@@ -63,14 +63,14 @@ export function StoreBuilder() {
                   role="tab"
                   aria-selected={device === d.id}
                   onClick={() => setDevice(d.id)}
-                  className={`inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-medium transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-apple-primary ${
+                  className={`inline-flex h-11 min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-medium transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-apple-primary sm:h-9 sm:min-h-9 ${
                     device === d.id
                       ? "bg-zinc-900 text-white"
                       : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
                   }`}
                 >
                   <d.icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span className="hidden sm:inline">{d.label}</span>
+                  <span className="hidden min-[400px]:inline">{d.label}</span>
                 </button>
               ))}
             </div>
@@ -80,11 +80,11 @@ export function StoreBuilder() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className={`mx-auto w-full overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas ${landingPreviewShadow} ${
+              className={`mx-auto w-full max-w-full overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas ${landingPreviewShadow} ${
                 device === "mobile"
                   ? "max-w-[280px]"
                   : device === "tablet"
-                    ? "max-w-[480px]"
+                    ? "max-w-[min(100%,480px)]"
                     : ""
               }`}
             >

@@ -3,6 +3,7 @@ import { setAccessToken } from "@/lib/access-token";
 import { rememberRedirectAfterLogin } from "@/lib/auth-redirect-client";
 import { broadcastAuthEvent } from "@/lib/auth-tab-sync";
 import { clearAuthState } from "@/redux/slices/auth-slice";
+import { authLog, maskToken } from "@/lib/auth-debug";
 
 export type SessionUser = {
   id: string;
@@ -89,6 +90,14 @@ export const authApi = baseApi.injectEndpoints({
         body
       }),
       transformResponse: (response: ApiEnvelope<LoginResponse>) => {
+        authLog("info", "login response", {
+          success: response.success,
+          hasAccessToken: Boolean(response.data?.accessToken),
+          accessToken: maskToken(response.data?.accessToken),
+          userId: response.data?.user?.id,
+          email: response.data?.user?.email,
+          note: "Set-Cookie is HttpOnly — verify in Application > Cookies (bornoland.session)",
+        });
         if (response.data?.accessToken) {
           setAccessToken(response.data.accessToken);
         }
@@ -120,6 +129,12 @@ export const authApi = baseApi.injectEndpoints({
     me: builder.query<ApiEnvelope<MeResponse>, void>({
       query: () => ({ url: "/auth/me" }),
       transformResponse: (response: ApiEnvelope<MeResponse>) => {
+        authLog("info", "current user fetch (/auth/me)", {
+          hasSession: Boolean(response.data?.session),
+          hasAccessToken: Boolean(response.data?.accessToken),
+          accessToken: maskToken(response.data?.accessToken),
+          userId: response.data?.session?.userId,
+        });
         if (response.data?.accessToken) {
           setAccessToken(response.data.accessToken);
         }
@@ -133,6 +148,10 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
       }),
       transformResponse: (response: ApiEnvelope<RefreshResponse>) => {
+        authLog("info", "refresh mutation response", {
+          hasAccessToken: Boolean(response.data?.accessToken),
+          accessToken: maskToken(response.data?.accessToken),
+        });
         if (response.data?.accessToken) {
           setAccessToken(response.data.accessToken);
         }
@@ -145,6 +164,7 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST"
       }),
       transformResponse: (response: ApiEnvelope<never>) => {
+        authLog("warn", "logout trigger: logout mutation");
         setAccessToken(null);
         broadcastAuthEvent("logout");
         return response;

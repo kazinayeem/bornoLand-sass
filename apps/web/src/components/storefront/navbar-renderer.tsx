@@ -77,11 +77,17 @@ export function NavbarRenderer({
       const token = localStorage.getItem("customer_token");
       if (!token && customer.isAuthenticated) dispatch(clearCustomer());
     };
+    const handleExpired = () => {
+      // Backend rejected the customer session — mirror that in the navbar immediately.
+      if (customer.isAuthenticated) dispatch(clearCustomer());
+    };
     window.addEventListener("storage", handleStorage);
     window.addEventListener("auth-change", handleStorage);
+    window.addEventListener("auth-change", handleExpired);
     return () => {
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener("auth-change", handleStorage);
+      window.removeEventListener("auth-change", handleExpired);
     };
   }, [dispatch, customer.isAuthenticated]);
 

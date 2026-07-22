@@ -1,39 +1,16 @@
 import { mediaApi, type MediaFile } from "@/redux/api/media-api";
 import { store } from "@/redux/store";
 import { getApiUrl } from "@/lib/urls";
-import { getAccessToken, setAccessToken } from "@/lib/access-token";
+import { getAccessToken } from "@/lib/access-token";
+import { refreshAccessTokenCoordinated } from "@/lib/auth-refresh-coordinator";
 
 const apiBaseUrl = getApiUrl();
 const MAX_CONCURRENT = 3;
 
-let refreshPromise: Promise<string | null> | null = null;
-
 async function ensureAccessToken(): Promise<string | null> {
   const existing = getAccessToken();
   if (existing) return existing;
-
-  if (refreshPromise) return refreshPromise;
-
-  refreshPromise = (async () => {
-    try {
-      const response = await fetch(`${apiBaseUrl}/auth/refresh`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) return null;
-      const json = await response.json();
-      const newToken: string | undefined = (json as { data?: { accessToken?: string } })?.data?.accessToken;
-      if (newToken) setAccessToken(newToken);
-      return newToken ?? null;
-    } catch {
-      return null;
-    } finally {
-      refreshPromise = null;
-    }
-  })();
-
-  return refreshPromise;
+  return refreshAccessTokenCoordinated();
 }
 
 function uid() {

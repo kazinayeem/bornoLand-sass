@@ -106,7 +106,13 @@ export async function loginCustomer(storeId: string, payload: { email: string; p
   const valid = await bcrypt.compare(payload.password, customer.passwordHash);
   if (!valid) return { ok: false as const, message: "Invalid email or password" };
 
-  await CustomerModel.updateOne({ _id: customer._id }, { lastLoginAt: new Date() });
+  // Backfill tokenVersion on legacy documents so JWT claim and DB always agree.
+  if (typeof customer.tokenVersion !== "number") {
+    customer.tokenVersion = 0;
+  }
+
+  customer.lastLoginAt = new Date();
+  await customer.save();
 
   const token = jwt.sign(
     {

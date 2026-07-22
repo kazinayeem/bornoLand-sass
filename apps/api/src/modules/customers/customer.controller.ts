@@ -70,12 +70,22 @@ const avatarUpload = multer({
 async function decodeCustomerFromAuth(request: SubdomainRequest) {
   const authHeader = request.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) return { ok: false as const, message: "Not authenticated" };
-  const decoded = jwt.verify(authHeader.split(" ")[1], getCustomerJwtSecret()) as { customerId: string; storeId?: string; tokenVersion?: number; iat?: number };
+  const decoded = jwt.verify(authHeader.split(" ")[1], getCustomerJwtSecret()) as {
+    customerId: string;
+    storeId?: string;
+    tokenVersion?: number;
+    iat?: number;
+  };
   if (!decoded.customerId) return { ok: false as const, message: "Not authenticated" };
-  const customer = (await CustomerModel.findById(decoded.customerId).select({ tokenVersion: 1, storeId: 1 }).lean()) as any;
+  const customer = (await CustomerModel.findById(decoded.customerId)
+    .select({ tokenVersion: 1, storeId: 1 })
+    .lean()) as { tokenVersion?: number; storeId?: unknown } | null;
   if (!customer) return { ok: false as const, message: "Not authenticated" };
-  // Backwards compat: accept tokens that don't include tokenVersion.
-  if (typeof decoded.tokenVersion === "number" && (customer.tokenVersion as number | undefined) !== decoded.tokenVersion) {
+
+  // Legacy customers may omit tokenVersion in Mongo; issuance uses `?? 0`.
+  const storedVersion = typeof customer.tokenVersion === "number" ? customer.tokenVersion : 0;
+  const tokenVersion = typeof decoded.tokenVersion === "number" ? decoded.tokenVersion : 0;
+  if (tokenVersion !== storedVersion) {
     return { ok: false as const, message: "Session expired. Please sign in again." };
   }
   return { ok: true as const, decoded };

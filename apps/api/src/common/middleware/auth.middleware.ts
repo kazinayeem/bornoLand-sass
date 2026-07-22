@@ -1,5 +1,4 @@
 import type { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import { getSessionCookieName, verifyAccessToken, verifySessionToken } from "../utils/jwt.js";
 import { UserModel } from "../../modules/users/user.model.js";
 
@@ -11,8 +10,17 @@ export type AuthRequest = Request & {
   };
 };
 
-async function acceptActiveSession(request: AuthRequest, response: Response, next: NextFunction, payload: NonNullable<AuthRequest["user"]> & { sessionVersion?: number }) {
-  const user = await UserModel.findById(payload.userId).select("sessionVersion status").lean() as
+async function acceptActiveSession(
+  request: AuthRequest,
+  response: Response,
+  next: NextFunction,
+  payload: NonNullable<AuthRequest["user"]> & { sessionVersion?: number },
+) {
+  if (!payload?.userId) {
+    return response.status(401).json({ message: "Invalid token" });
+  }
+
+  const user = (await UserModel.findById(payload.userId).select("sessionVersion status").lean()) as
     | { sessionVersion?: number; status?: string }
     | null;
   if (!user || user.status !== "active" || (user.sessionVersion ?? 0) !== (payload.sessionVersion ?? 0)) {
@@ -33,41 +41,31 @@ export async function requireAuth(request: AuthRequest, response: Response, next
   }
 
   try {
-    // 1. Try Bearer token as Access Token first (short-lived JWT)
+    // 1. Prefer short-lived merchant access token.
     if (header?.startsWith("Bearer ")) {
       const token = header.slice(7);
-
-      // Check if it's a short access token (verify with short expiry)
       try {
         const payload = verifyAccessToken(token);
         return await acceptActiveSession(request, response, next, payload);
       } catch {
-        // Not a valid access token — fall through to cookie check
-        // (might be a customer_token from localStorage)
-      }
-
-      // Try as a regular JWT session token (for customer_token backward compat)
-      try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET ?? "") as AuthRequest["user"];
-        return await acceptActiveSession(request, response, next, payload!);
-      } catch {
-        return response.status(401).json({ message: "Invalid token" });
+        // Expired/invalid access token — do NOT treat customer JWTs as merchant
+        // sessions. Fall through to cookie so the client can refresh.
       }
     }
 
-    // 2. Fall back to session cookie (opaque refresh token or legacy JWT)
+    // 2. Session cookie: opaque refresh token or legacy JWT.
     if (cookieToken) {
-      // If it's an opaque refresh token (64 hex chars), we can't decode it directly.
-      // The client should use the access token for API calls.
-      // But we still try to verify it as a legacy JWT for backward compat.
       if (/^[a-f0-9]{64}$/.test(cookieToken)) {
-        // This is a refresh token — cannot be used as an auth token directly.
-        // Return 401 so the client knows to refresh.
+        // Opaque refresh tokens cannot authorize API calls directly.
         return response.status(401).json({ message: "Refresh token cannot be used for API access" });
       }
 
-      const payload = verifySessionToken(cookieToken);
-      return await acceptActiveSession(request, response, next, payload);
+      try {
+        const payload = verifySessionToken(cookieToken);
+        return await acceptActiveSession(request, response, next, payload);
+      } catch {
+        return response.status(401).json({ message: "Invalid token" });
+      }
     }
 
     return response.status(401).json({ message: "Unauthorized" });

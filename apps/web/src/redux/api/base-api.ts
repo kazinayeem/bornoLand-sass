@@ -1,12 +1,20 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { clearAuthState } from "@/redux/slices/auth-slice";
+import { clearCustomer } from "@/redux/slices/customer-slice";
 import { getApiUrl } from "@/lib/urls";
 import { getAccessToken, setAccessToken } from "@/lib/access-token";
 import { broadcastAuthEvent } from "@/lib/auth-tab-sync";
 import { refreshAccessTokenCoordinated } from "@/lib/auth-refresh-coordinator";
+import {
+  authLog,
+  hasDocumentCookie,
+  isJwtExpired,
+  maskToken,
+} from "@/lib/auth-debug";
 
 const apiBaseUrl = getApiUrl();
+const SESSION_COOKIE_NAME = "bornoland.session";
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: apiBaseUrl,
@@ -16,17 +24,13 @@ const rawBaseQuery = fetchBaseQuery({
     if (typeof window !== "undefined") {
       headers.set("x-forwarded-host", window.location.host);
 
-      // Prefer an Authorization header already set by the endpoint (e.g. customer APIs).
-      // Otherwise attach platform access token, then storefront customer token.
+      // Merchant access token only. Customer endpoints set Authorization explicitly.
+      // Never fall back to customer_token here — that masquerades as a merchant session
+      // and blocks the refresh lifecycle.
       if (!headers.has("Authorization")) {
         const at = getAccessToken();
         if (at) {
           headers.set("Authorization", `Bearer ${at}`);
-        } else {
-          const customerToken = localStorage.getItem("customer_token");
-          if (customerToken) {
-            headers.set("Authorization", `Bearer ${customerToken}`);
-          }
         }
       }
     }
@@ -37,10 +41,6 @@ const rawBaseQuery = fetchBaseQuery({
 function emitApiError(detail: { status: number | string; message: string }) {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent("app:api-error", { detail }));
-}
-
-async function tryRefreshToken(): Promise<string | null> {
-  return refreshAccessTokenCoordinated();
 }
 
 function getAuthorizationHeader(args: string | FetchArgs): string | undefined {
@@ -63,33 +63,96 @@ function isCustomerAuthorization(authorization: string | undefined): boolean {
   return Boolean(customerToken && authorization === `Bearer ${customerToken}`);
 }
 
+function clearMerchantSession(api: { dispatch: (action: unknown) => void }, reason: string) {
+  authLog("warn", "logout trigger: clearing merchant session", { reason });
+  setAccessToken(null);
+  api.dispatch(clearAuthState());
+  broadcastAuthEvent("expired");
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("app:auth-expired"));
+  }
+}
+
+function clearCustomerSession(api: { dispatch: (action: unknown) => void }, reason: string) {
+  authLog("warn", "logout trigger: clearing customer session", { reason });
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("customer_token");
+    window.dispatchEvent(new Event("auth-change"));
+  }
+  api.dispatch(clearCustomer());
+}
+
+function logAuthContext(phase: string, authorization: string | undefined) {
+  const accessToken = getAccessToken();
+  const customerToken =
+    typeof window !== "undefined" ? localStorage.getItem("customer_token") : null;
+  authLog("debug", phase, {
+    accessTokenPresent: Boolean(accessToken),
+    accessToken: maskToken(accessToken),
+    accessTokenExpired: accessToken ? isJwtExpired(accessToken) : null,
+    refreshCookieReadable: hasDocumentCookie(SESSION_COOKIE_NAME), // httpOnly → almost always false
+    customerTokenPresent: Boolean(customerToken),
+    customerToken: maskToken(customerToken),
+    authorizationAttached: Boolean(authorization),
+    authorization: authorization ? maskToken(authorization.replace(/^Bearer\s+/i, "")) : "(none)",
+    note: "HttpOnly refresh cookie cannot be read from JS; refresh uses credentials:include",
+  });
+}
+
 const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
   api,
   extraOptions
 ) => {
-  // First attempt
+  const url = typeof args === "string" ? args : args.url;
+  const explicitAuth = getAuthorizationHeader(args);
+  const accessBefore = getAccessToken();
+  const effectiveAuth =
+    explicitAuth ?? (accessBefore ? `Bearer ${accessBefore}` : undefined);
+
+  logAuthContext(`request ${url}`, effectiveAuth);
+
   let result = await rawBaseQuery(args, api, extraOptions);
 
-  // On 401, try to refresh the access token and retry once (merchant/platform sessions only)
   if (result.error && result.error.status === 401) {
-    if (isCustomerAuthorization(getAuthorizationHeader(args))) {
-      // Leave customer_token alone here — protected pages decide via Redux restore.
+    const authorization = getAuthorizationHeader(args) ?? effectiveAuth;
+    const backendMessage =
+      result.error.data && typeof result.error.data === "object" && "message" in result.error.data
+        ? String((result.error.data as { message?: string }).message ?? "")
+        : "";
+
+    if (isCustomerAuthorization(authorization)) {
+      authLog("warn", "customer 401", { url, backendMessage });
+      clearCustomerSession(api, `customer 401 on ${url}: ${backendMessage || "unauthorized"}`);
       return result;
     }
 
-    const newToken = await tryRefreshToken();
+    // No merchant access token and no customer bearer — attempt refresh before logout.
+    authLog("info", "merchant 401 — attempting refresh", {
+      url,
+      backendMessage,
+      accessTokenPresent: Boolean(getAccessToken()),
+      authorizationAttached: Boolean(authorization),
+    });
+
+    const newToken = await refreshAccessTokenCoordinated();
 
     if (newToken) {
-      // Retry original request with new token
+      authLog("info", "refresh success — retrying request", {
+        url,
+        accessToken: maskToken(newToken),
+      });
       result = await rawBaseQuery(args, api, extraOptions);
+
+      if (!result.error) {
+        authLog("info", "retry success", { url });
+      } else if (result.error.status === 401) {
+        clearMerchantSession(api, `retry still 401 after refresh on ${url}`);
+        emitApiError({ status: 401, message: "Session expired. Please sign in again." });
+      }
     } else {
-      // Refresh failed — clear auth state
-      setAccessToken(null);
-      api.dispatch(clearAuthState());
+      clearMerchantSession(api, `refresh failed for ${url}`);
       emitApiError({ status: 401, message: "Session expired. Please sign in again." });
-      broadcastAuthEvent("expired");
-      if (typeof window !== "undefined") window.dispatchEvent(new Event("app:auth-expired"));
     }
   }
 
@@ -116,7 +179,6 @@ const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown,
       message = "Request timed out. Please retry.";
     }
 
-    // Only emit non-401 errors (401 is handled above)
     if (status !== 401) {
       emitApiError({ status, message });
     }

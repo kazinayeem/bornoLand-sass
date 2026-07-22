@@ -3,13 +3,13 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { clearCustomer, setCustomerFromToken } from "@/redux/slices/customer-slice";
+import { authLog, isJwtExpired, maskToken } from "@/lib/auth-debug";
 
-function isDecodableJwt(token: string): boolean {
+function canHydrateCustomerToken(token: string): boolean {
+  if (isJwtExpired(token, 0)) return false;
   try {
-    const parts = token.split(".");
-    if (parts.length < 2) return false;
-    JSON.parse(atob(parts[1]));
-    return true;
+    const payload = JSON.parse(atob(token.split(".")[1] ?? ""));
+    return Boolean(payload?.customerId || payload?.email);
   } catch {
     return false;
   }
@@ -22,7 +22,11 @@ function syncCustomerFromStorage(dispatch: ReturnType<typeof useDispatch>) {
     return;
   }
 
-  if (!isDecodableJwt(token)) {
+  if (!canHydrateCustomerToken(token)) {
+    authLog("warn", "customer token invalid or expired — clearing UI session", {
+      customerToken: maskToken(token),
+      expired: isJwtExpired(token, 0),
+    });
     localStorage.removeItem("customer_token");
     dispatch(clearCustomer());
     return;
@@ -33,6 +37,7 @@ function syncCustomerFromStorage(dispatch: ReturnType<typeof useDispatch>) {
 
 /**
  * Hydrate customer auth on mount and keep Redux in sync across tabs/pages.
+ * Never shows a logged-in navbar for an expired / invalid JWT.
  */
 export function AuthInit() {
   const dispatch = useDispatch();

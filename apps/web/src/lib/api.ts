@@ -1,4 +1,5 @@
 import axios from "axios";
+import { isJwtExpired, authLog, maskToken } from "@/lib/auth-debug";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_API_URL ??
@@ -21,7 +22,15 @@ api.interceptors.request.use((config) => {
   }
   const token = localStorage.getItem("customer_token");
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    if (isJwtExpired(token, 0)) {
+      authLog("warn", "axios: expired customer token removed before request", {
+        customerToken: maskToken(token),
+      });
+      localStorage.removeItem("customer_token");
+      window.dispatchEvent(new Event("auth-change"));
+    } else {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
@@ -34,11 +43,11 @@ api.interceptors.response.use(
     }
     if (error.response?.status === 401 && typeof window !== "undefined") {
       // Only clear storefront customer auth when this request used the customer JWT.
-      // Unrelated 401s (or merchant session failures) must not log the shopper out.
       const customerToken = localStorage.getItem("customer_token");
       const authHeader = error.config?.headers?.Authorization;
       const authValue = typeof authHeader === "string" ? authHeader : undefined;
       if (customerToken && authValue === `Bearer ${customerToken}`) {
+        authLog("warn", "axios: customer 401 — clearing storefront session");
         localStorage.removeItem("customer_token");
         window.dispatchEvent(new Event("auth-change"));
       }

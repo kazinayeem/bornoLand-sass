@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/api/base-api";
+import { authLog, maskToken } from "@/lib/auth-debug";
 
 export type CustomerData = {
   _id: string;
@@ -53,6 +54,25 @@ function customerAuthHeaders(token?: string) {
   return resolved ? { Authorization: `Bearer ${resolved}` } : {};
 }
 
+/** Persist JWT before RTK invalidates Customer tags / refetches /me. */
+function persistCustomerAuthResponse(response: ApiResponse<AuthResponse>, source: string) {
+  if (typeof window === "undefined") return response;
+  const token = response?.data?.token;
+  if (token) {
+    localStorage.setItem("customer_token", token);
+    authLog("info", `${source} persisted customer token`, {
+      customerToken: maskToken(token),
+      customerId: response.data?.customer?._id,
+      email: response.data?.customer?.email,
+    });
+  } else {
+    authLog("warn", `${source} response missing token`, {
+      success: response?.success,
+    });
+  }
+  return response;
+}
+
 export const customerApi = baseApi.injectEndpoints({
   overrideExisting: true,
   endpoints: (builder) => ({
@@ -62,6 +82,8 @@ export const customerApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
+      transformResponse: (response: ApiResponse<AuthResponse>) =>
+        persistCustomerAuthResponse(response, "customerRegister"),
       invalidatesTags: ["Customer"],
     }),
     customerLogin: builder.mutation<ApiResponse<AuthResponse>, { email: string; password: string }>({
@@ -70,6 +92,8 @@ export const customerApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
+      transformResponse: (response: ApiResponse<AuthResponse>) =>
+        persistCustomerAuthResponse(response, "customerLogin"),
       invalidatesTags: ["Customer"],
     }),
     customerForgotPassword: builder.mutation<ApiResponse<{ message: string }>, { email: string }>({

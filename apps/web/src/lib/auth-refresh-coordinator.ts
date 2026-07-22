@@ -2,6 +2,7 @@
 
 import { getApiUrl } from "@/lib/urls";
 import { setAccessToken } from "@/lib/access-token";
+import { authLog, isJwtExpired, maskToken } from "@/lib/auth-debug";
 
 const CHANNEL_NAME = "bornoland-auth";
 const REFRESH_LOCK_KEY = "bornoland.auth.refresh-lock";
@@ -23,6 +24,10 @@ function readRecentRefreshResult(): string | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as RefreshResult;
     if (!parsed?.token || Date.now() - parsed.at > RESULT_TTL_MS) return null;
+    if (isJwtExpired(parsed.token)) {
+      window.localStorage.removeItem(REFRESH_RESULT_KEY);
+      return null;
+    }
     return parsed.token;
   } catch {
     return null;
@@ -77,6 +82,7 @@ async function withRefreshLock<T>(fn: () => Promise<T>): Promise<T> {
 async function performRefresh(): Promise<string | null> {
   const cached = readRecentRefreshResult();
   if (cached) {
+    authLog("debug", "refresh reused cached access token", { accessToken: maskToken(cached) });
     setAccessToken(cached);
     return cached;
   }
@@ -84,24 +90,35 @@ async function performRefresh(): Promise<string | null> {
   return withRefreshLock(async () => {
     const cachedAfterLock = readRecentRefreshResult();
     if (cachedAfterLock) {
+      authLog("debug", "refresh reused cached access token after lock", {
+        accessToken: maskToken(cachedAfterLock),
+      });
       setAccessToken(cachedAfterLock);
       return cachedAfterLock;
     }
 
+    authLog("info", "POST /auth/refresh (credentials:include)");
     const res = await fetch(`${getApiUrl()}/auth/refresh`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      authLog("error", "refresh failed", { status: res.status });
+      return null;
+    }
 
     const json = (await res.json()) as { data?: { accessToken?: string } };
     const token = json?.data?.accessToken;
-    if (!token) return null;
+    if (!token) {
+      authLog("error", "refresh response missing accessToken");
+      return null;
+    }
 
     setAccessToken(token);
     writeRefreshResult(token);
+    authLog("info", "refresh success", { accessToken: maskToken(token) });
     return token;
   });
 }

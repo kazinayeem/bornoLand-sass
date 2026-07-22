@@ -31,6 +31,9 @@ const initialState: CustomerState = {
 function decodeToken(token: string): CustomerData | null {
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
+    if (typeof payload.exp === "number" && payload.exp * 1000 <= Date.now()) {
+      return null;
+    }
     return {
       _id: payload.customerId ?? "",
       name: payload.name ?? payload.email?.split("@")[0] ?? "Customer",
@@ -66,7 +69,7 @@ const customerSlice = createSlice({
         state.token = action.payload;
         state.isAuthenticated = true;
       } else {
-        // Fail closed — never leave a broken token that login would bounce on
+        // Fail closed — expired or broken tokens must not look logged in
         state.customer = null;
         state.token = null;
         state.isAuthenticated = false;

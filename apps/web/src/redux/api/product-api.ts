@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/api/base-api";
+import type { ListQueryParams, PaginationMeta } from "@/types/pagination";
 
 export type ProductOption = {
   _id?: string;
@@ -138,11 +139,29 @@ type CreateVariantRequest = {
 
 type UpdateVariantRequest = Partial<CreateVariantRequest>;
 
+type ProductsListResponse = {
+  products: Product[];
+  pagination?: PaginationMeta;
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+};
+
+export type ProductsListQuery = { storeId: string } & ListQueryParams;
+export type PublicProductsListQuery = ListQueryParams;
+
 export const productApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getProducts: builder.query<ApiEnvelope<{ products: Product[] }>, string>({
-      query: (storeId) => ({ url: `/products/${storeId}` }),
-      providesTags: (_result, _error, storeId) => [{ type: "Products", id: storeId }]
+    getProducts: builder.query<ApiEnvelope<ProductsListResponse>, ProductsListQuery | string>({
+      query: (arg) => {
+        if (typeof arg === "string") {
+          return { url: `/products/${arg}`, params: { page: 1, limit: 20 } };
+        }
+        const { storeId, ...params } = arg;
+        return { url: `/products/${storeId}`, params };
+      },
+      providesTags: (_result, _error, arg) => [{ type: "Products", id: typeof arg === "string" ? arg : arg.storeId }],
     }),
     getProduct: builder.query<ApiEnvelope<{ product: Product }>, string>({
       query: (id) => ({ url: `/products/item/${id}` }),
@@ -151,6 +170,10 @@ export const productApi = baseApi.injectEndpoints({
     getPublicProduct: builder.query<ApiEnvelope<PublicProductPageData>, string>({
       query: (slug) => ({ url: `/products/${slug}` }),
       providesTags: (_result, _error, slug) => [{ type: "Products", id: slug }]
+    }),
+    getPublicProducts: builder.query<ApiEnvelope<ProductsListResponse>, PublicProductsListQuery | void>({
+      query: (params) => ({ url: "/public/products", params: params ?? undefined }),
+      providesTags: () => [{ type: "Products", id: "public-list" }],
     }),
     createProduct: builder.mutation<ApiEnvelope<{ product: Product }>, { storeId: string; data: CreateProductRequest }>({
       query: ({ storeId, data }) => ({ url: `/products/${storeId}/create`, method: "POST", body: data }),
@@ -219,7 +242,7 @@ export const productApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGetProductsQuery, useGetProductQuery, useLazyGetProductQuery, useGetPublicProductQuery, useCreateProductMutation,
+  useGetProductsQuery, useGetProductQuery, useLazyGetProductQuery, useGetPublicProductQuery, useGetPublicProductsQuery, useCreateProductMutation,
   useUpdateProductMutation, useDeleteProductMutation, useDuplicateProductMutation,
   useCreateVariantMutation, useUpdateVariantMutation, useDeleteVariantMutation,
   useSyncVariantsMutation, useGenerateVariantsMutation, useBulkUpdateVariantsMutation,

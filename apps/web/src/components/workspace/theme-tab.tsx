@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { getContrastColor } from "@/lib/color-utils";
 import { useGetStoreQuery, useChangeStoreThemeMutation } from "@/redux/api/store-api";
 import { useGetTemplatesQuery } from "@/redux/api/template-api";
 import { Palette, Loader2, Check, Eye, EyeOff } from "lucide-react";
@@ -186,7 +187,7 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
               </div>
               <div className="h-3 w-full rounded" style={{ backgroundColor: secondaryColor }} />
               <div className="h-3 w-3/4 rounded bg-zinc-200" />
-              <button className="h-8 w-full text-xs font-semibold text-white" style={{ backgroundColor: primaryColor, borderRadius: buttonStyle === "rounded-full" ? "999px" : buttonStyle === "rounded-none" ? "0" : "8px" }}>
+              <button className="h-8 w-full text-xs font-semibold" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor), borderRadius: buttonStyle === "rounded-full" ? "999px" : buttonStyle === "rounded-none" ? "0" : "8px" }}>
                 Shop Now
               </button>
               <p className="text-[10px] text-apple-ink-muted-48" style={{ fontFamily: font }}>Preview with {font} font</p>

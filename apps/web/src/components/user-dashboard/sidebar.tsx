@@ -61,8 +61,8 @@ export function UserSidebar() {
     )}>
       {/* Logo */}
       <div className={cn("flex h-16 items-center border-b border-zinc-100 gap-2.5 px-5", collapsed && "justify-center px-0")}>
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600">
-          <Sparkles className="h-4 w-4 text-white" />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
+          <Sparkles className="h-4 w-4 text-primary-foreground" />
         </div>
         {!collapsed && <span className="text-lg font-bold tracking-tight text-apple-ink">BornoLand</span>}
         <button onClick={() => setCollapsed(!collapsed)} className={cn("ml-auto flex h-6 w-6 items-center justify-center rounded-md text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80", collapsed && "ml-0")}>
@@ -96,7 +96,7 @@ export function UserSidebar() {
                   }}
                   className={cn(
                     "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
-                    s._id === effectiveStoreId ? "bg-blue-50 text-blue-700" : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                    s._id === effectiveStoreId ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
                   )}
                 >
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-[10px] font-bold text-apple-ink-muted-48">

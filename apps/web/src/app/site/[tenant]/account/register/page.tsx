@@ -160,7 +160,7 @@ function RegisterForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button type="button" disabled
             className="flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment disabled:opacity-50 disabled:cursor-not-allowed">
             <svg className="h-4 w-4" viewBox="0 0 24 24">

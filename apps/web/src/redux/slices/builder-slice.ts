@@ -376,10 +376,23 @@ function takeSnapshot(state: BuilderState): GlobalSnapshot {
   };
 }
 
+function syncSelectionAfterSectionsChange(state: BuilderState): void {
+  if (!state.selectedSectionId) return;
+  const location = findSectionLocation(state, state.selectedSectionId);
+  if (!location) {
+    state.selectedSectionId = null;
+    state.hoveredSectionId = null;
+    state.activeRightTab = "content";
+    return;
+  }
+  state.editingZone = location.zone;
+}
+
 function applySnapshot(state: BuilderState, snapshot: GlobalSnapshot): void {
   state.sections = snapshot.sections;
   state.headerSections = snapshot.headerSections;
   state.footerSections = snapshot.footerSections;
+  syncSelectionAfterSectionsChange(state);
 }
 
 /** Rolling undo/redo window — keep only the latest N snapshots. */
@@ -510,8 +523,14 @@ const builderSlice = createSlice({
     },
 
     removeSection(state, action: PayloadAction<string>) {
-      const sections = getSections(state).filter((s) => s.id !== action.payload);
+      const id = action.payload;
+      const sections = getSections(state).filter((s) => s.id !== id);
       setSectionsForZone(state, sections);
+      if (state.selectedSectionId === id) {
+        state.selectedSectionId = null;
+        state.hoveredSectionId = null;
+        state.activeRightTab = "content";
+      }
       state.isDirty = true;
     },
 
@@ -597,15 +616,26 @@ const builderSlice = createSlice({
       const copy = [...sections];
       copy.splice(idx + 1, 0, dup);
       setSectionsForZone(state, copy);
+      state.selectedSectionId = dup.id;
+      state.activeRightTab = "content";
       state.isDirty = true;
     },
 
     // ─── Selection ──────────────────────────────────────────────────────────
     setSelectedSection(state, action: PayloadAction<string | null>) {
-      state.selectedSectionId = action.payload;
-      if (action.payload) {
-        const location = findSectionLocation(state, action.payload);
-        if (location) state.editingZone = location.zone;
+      const nextId = action.payload;
+      if (nextId !== state.selectedSectionId) {
+        state.activeRightTab = "content";
+        if (nextId) state.hoveredSectionId = null;
+      }
+      state.selectedSectionId = nextId;
+      if (nextId) {
+        const location = findSectionLocation(state, nextId);
+        if (location) {
+          state.editingZone = location.zone;
+        } else {
+          state.selectedSectionId = null;
+        }
       }
     },
 
@@ -698,8 +728,7 @@ const builderSlice = createSlice({
     restoreHistorySnapshot(state, action: PayloadAction<GlobalSnapshot>) {
       applySnapshot(state, action.payload);
       state.isDirty = true;
-      state.selectedSectionId = action.payload.sections[0]?.id ?? action.payload.headerSections[0]?.id ?? action.payload.footerSections[0]?.id ?? null;
-      state.editingZone = "body";
+      syncSelectionAfterSectionsChange(state);
     },
 
     // ─── Section Library Modal ─────────────────────────────────────────────

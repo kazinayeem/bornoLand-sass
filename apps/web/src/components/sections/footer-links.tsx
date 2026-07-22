@@ -2,26 +2,17 @@
 
 import { SectionWrapper, type SectionData } from "./section-renderer";
 import { BuilderLink } from "./builder-link";
+import { useFooterData } from "@/lib/storefront/use-footer-data";
 
 export function FooterLinks({ section }: { section: SectionData }) {
   const p = section.props;
+  const { data } = useFooterData({ sectionType: "footer-links" });
   const title = p.title || "Quick Links";
   const columns = parseInt(p.columns || "3");
-  const links = [
-    { text: p.link1Text || "Home", url: p.link1Url || "/" },
-    { text: p.link2Text || "Shop", url: p.link2Url || "/shop" },
-    { text: p.link3Text || "About", url: p.link3Url || "/about" },
-    { text: p.link4Text || "Contact", url: p.link4Url || "/contact" },
-    { text: p.link5Text || "FAQ", url: p.link5Url || "/faq" },
-    { text: p.link6Text || "Privacy", url: p.link6Url || "/privacy" },
-    { text: p.link7Text || "Terms", url: p.link7Url || "/terms" },
-    { text: p.link8Text || "Shipping", url: p.link8Url || "/shipping" },
-    { text: p.link9Text || "Returns", url: p.link9Url || "/returns" },
-  ].filter((l) => l.text);
-
+  const links = [...data.quickLinks, ...data.supportLinks, ...data.policyLinks];
   const linkColor = p.linkColor || "#71717a";
   const headingColor = p.headingColor || "#18181b";
-  const chunkSize = Math.ceil(links.length / columns);
+  const chunkSize = Math.max(1, Math.ceil(links.length / columns));
 
   return (
     <SectionWrapper section={section}>
@@ -31,17 +22,17 @@ export function FooterLinks({ section }: { section: SectionData }) {
             {title}
           </h3>
         )}
-        <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
+        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
           {Array.from({ length: columns }, (_, colIdx) => (
             <ul key={colIdx} className="space-y-2">
               {links.slice(colIdx * chunkSize, (colIdx + 1) * chunkSize).map((link) => (
-                <li key={link.text}>
+                <li key={link._id ?? link.title}>
                   <BuilderLink
-                    href={link.url}
+                    href={link.link || "#"}
                     className="text-sm transition-colors hover:text-apple-ink"
                     style={{ color: linkColor }}
                   >
-                    {link.text}
+                    {link.title}
                   </BuilderLink>
                 </li>
               ))}

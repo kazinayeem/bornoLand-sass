@@ -10,11 +10,10 @@ async function verifyStoreOwner(storeId: string, userId?: string) {
 
 export async function listReviewsController(request: AuthRequest, response: Response) {
   const storeId = String(request.params.storeId);
-  const { productId, status } = request.query as Record<string, string>;
   if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
     return sendFailure(response, "Store not found", 404);
   }
-  const result = await listReviews(storeId, { productId, status });
+  const result = await listReviews(storeId, request.query as Record<string, unknown>);
   return sendSuccess(response, result.data);
 }
 

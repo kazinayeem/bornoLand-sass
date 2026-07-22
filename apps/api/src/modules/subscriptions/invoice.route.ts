@@ -174,7 +174,7 @@ invoiceRouter.post("/:id/email", requireRole("super_admin"), async (request: Aut
     if (!toEmail) return sendFailure(response, "No email address found", 400);
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "http://localhost:3000";
-    const verificationUrl = `${baseUrl}/invoices/verify/${inv.verificationCode}`;
+    const verificationUrl = `${baseUrl}/invoice/verify/${inv.verificationCode}`;
     const planName = typeof inv.planId === "object" ? (inv.planId as Record<string, unknown>)?.name : "Plan";
 
     await sendEmail({

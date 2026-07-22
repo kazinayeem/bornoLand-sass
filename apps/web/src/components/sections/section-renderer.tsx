@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import type { SectionStyle } from "@/components/storefront/storefront-types";
 import { useDevice } from "@/lib/device-context";
 import { computeSectionStyle, applyResponsiveVisibility } from "@/lib/responsive-styles";
+import { sectionColumnGridClass } from "@/lib/storefront/responsive-grid";
 import { normalizeCssLength } from "@/lib/section-style";
 import {
   isValidBackgroundImage,
@@ -34,6 +35,10 @@ type WrapperProps = {
   section: SectionData;
   children: React.ReactNode;
   className?: string;
+  /** Allow sticky/fixed headers without clipping (default: false). */
+  allowSticky?: boolean;
+  /** Skip section padding/margin/maxWidth so child controls layout (e.g. header-bar). */
+  bare?: boolean;
 };
 
 function animationStyle(animation: string, duration = "600", delay = "0", _trigger = "on-scroll") {
@@ -57,7 +62,7 @@ function animationStyle(animation: string, duration = "600", delay = "0", _trigg
   }
 }
 
-export function SectionWrapper({ section, children, className = "" }: WrapperProps) {
+export function SectionWrapper({ section, children, className = "", allowSticky = false, bare = false }: WrapperProps) {
   const device = useDevice();
   const p = section.props;
   const s = section.style;
@@ -66,14 +71,20 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
   const computedVisibility = applyResponsiveVisibility({}, s, device);
   const isHidden = computedVisibility.display === "none";
 
-  const visibility = s?.hideOnDesktop ? "desktop-only"
-    : s?.hideOnTablet ? "tablet-only"
-    : s?.hideOnMobile ? "mobile-only"
-    : p.visibility || "all";
+  const propVisibility = p.visibility || "all";
+  const hiddenClass = isHidden
+    ? "hidden"
+    : propVisibility === "desktop-only"
+      ? "hidden lg:block"
+      : propVisibility === "tablet-only"
+        ? "hidden md:block lg:hidden"
+        : propVisibility === "mobile-only"
+          ? "block md:hidden"
+          : "";
 
   const bgColor = resolveBackgroundColor(section);
   const bgGradient = resolveBackgroundGradient(section);
-  const bgImage = resolveBackgroundImage(section);
+  const bgImage = resolveBackgroundImage(section, device);
   const bgSize = s?.backgroundSize || p.backgroundSize || "cover";
   const bgPos = s?.backgroundPosition || p.backgroundPosition || "center";
   const bgRepeat = s?.backgroundRepeat || p.backgroundRepeat || "no-repeat";
@@ -83,17 +94,17 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
   const blurAmt = s?.blur || p.blur || "";
   const backdropBlur = s?.backdropBlur || "";
 
-  const paddingTop = normalizeCssLength(responsiveStyle.paddingTop ?? s?.paddingTop ?? p.paddingTop ?? "0");
-  const paddingBottom = normalizeCssLength(responsiveStyle.paddingBottom ?? s?.paddingBottom ?? p.paddingBottom ?? "0");
-  const paddingLeft = normalizeCssLength(responsiveStyle.paddingLeft ?? s?.paddingLeft ?? p.paddingLeft ?? "0");
-  const paddingRight = normalizeCssLength(responsiveStyle.paddingRight ?? s?.paddingRight ?? p.paddingRight ?? "0");
-  const marginTop = normalizeCssLength(responsiveStyle.marginTop ?? s?.marginTop ?? p.marginTop ?? "0");
-  const marginBottom = normalizeCssLength(responsiveStyle.marginBottom ?? s?.marginBottom ?? p.marginBottom ?? "0");
-  const marginLeft = normalizeCssLength(responsiveStyle.marginLeft ?? s?.marginLeft ?? "auto");
-  const marginRight = normalizeCssLength(responsiveStyle.marginRight ?? s?.marginRight ?? "auto");
-  const maxWidth = responsiveStyle.maxWidth || normalizeCssLength(s?.maxWidth || p.maxWidth || "1200px");
-  const borderRadius = normalizeCssLength(responsiveStyle.borderRadius ?? s?.borderRadius ?? p.borderRadius ?? "0");
-  const shadow = s?.shadow || p.shadow || "none";
+  const paddingTop = bare ? "0" : normalizeCssLength(responsiveStyle.paddingTop ?? s?.paddingTop ?? p.paddingTop ?? "0");
+  const paddingBottom = bare ? "0" : normalizeCssLength(responsiveStyle.paddingBottom ?? s?.paddingBottom ?? p.paddingBottom ?? "0");
+  const paddingLeft = bare ? "0" : normalizeCssLength(responsiveStyle.paddingLeft ?? s?.paddingLeft ?? p.paddingLeft ?? "0");
+  const paddingRight = bare ? "0" : normalizeCssLength(responsiveStyle.paddingRight ?? s?.paddingRight ?? p.paddingRight ?? "0");
+  const marginTop = bare ? "0" : normalizeCssLength(responsiveStyle.marginTop ?? s?.marginTop ?? p.marginTop ?? "0");
+  const marginBottom = bare ? "0" : normalizeCssLength(responsiveStyle.marginBottom ?? s?.marginBottom ?? p.marginBottom ?? "0");
+  const marginLeft = bare ? "0" : normalizeCssLength(responsiveStyle.marginLeft ?? s?.marginLeft ?? "auto");
+  const marginRight = bare ? "0" : normalizeCssLength(responsiveStyle.marginRight ?? s?.marginRight ?? "auto");
+  const maxWidth = bare ? "100%" : (responsiveStyle.maxWidth || normalizeCssLength(s?.maxWidth || p.maxWidth || "1200px"));
+  const borderRadius = bare ? "0" : normalizeCssLength(responsiveStyle.borderRadius ?? s?.borderRadius ?? p.borderRadius ?? "0");
+  const shadow = bare ? "none" : (s?.shadow || p.shadow || "none");
   const borderWidth = normalizeCssLength(s?.borderWidth ?? p.borderWidth ?? "0");
   const borderColor = responsiveStyle.borderColor || s?.borderColor || p.borderColor || "";
   const borderStyle = s?.borderStyle || (borderWidth && borderWidth !== "0" ? "solid" : undefined);
@@ -112,7 +123,6 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
 
   const shadowClass = shadow === "sm" ? "shadow-sm" : shadow === "md" ? "shadow-md" : shadow === "lg" ? "shadow-lg" : "";
   const customBoxShadow = shadow && !["none", "sm", "md", "lg"].includes(shadow) ? shadow : responsiveStyle.boxShadow;
-  const hiddenClass = isHidden ? "hidden" : visibility === "desktop-only" ? "hidden lg:block" : visibility === "tablet-only" ? "hidden md:block lg:hidden" : visibility === "mobile-only" ? "block md:hidden" : "";
 
   const animProps = animationStyle(animation, animDuration, animDelay, animTrigger);
 
@@ -141,8 +151,8 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
     marginLeft,
     marginRight,
     maxWidth: maxWidth === "100%" ? "100%" : maxWidth,
-    backgroundColor: !hasBgImage && !isGradient ? (bgColor || undefined) : undefined,
-    background: isGradient ? bgGradient : undefined,
+    backgroundColor: bare ? undefined : (!hasBgImage && !isGradient ? (bgColor || undefined) : undefined),
+    background: bare ? undefined : (isGradient ? bgGradient : undefined),
     borderRadius,
     borderWidth: borderWidth && borderWidth !== "0" ? borderWidth : undefined,
     borderStyle,
@@ -172,7 +182,7 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
     textAlign: responsiveStyle.textAlign,
     lineHeight: responsiveStyle.lineHeight,
     backdropFilter: responsiveStyle.backdropFilter,
-    overflow: "hidden",
+    overflow: allowSticky ? "visible" : "hidden",
   };
 
   const cssVars = resolveSectionCssVars(section);
@@ -227,7 +237,10 @@ export function SectionWrapper({ section, children, className = "" }: WrapperPro
       )}
 
       {/* Content */}
-      <div className="relative" style={{ zIndex: 2, ...contentTypography }}>
+      <div
+        className="relative"
+        style={bare ? { zIndex: 2 } : { zIndex: 2, ...contentTypography }}
+      >
         {children}
       </div>
     </motion.section>
@@ -286,15 +299,9 @@ export function ColumnGrid({ children, columns = "4", gap = "4", className = "" 
   gap?: string;
   className?: string;
 }) {
-  const colMap: Record<string, string> = {
-    "2": "grid-cols-2", "3": "grid-cols-3", "4": "grid-cols-4",
-    "5": "grid-cols-5", "6": "grid-cols-6",
-  };
-  const gapMap: Record<string, string> = {
-    "4": "gap-1", "8": "gap-2", "16": "gap-4", "24": "gap-6", "32": "gap-8",
-  };
+  const { grid, gap: gapClass } = sectionColumnGridClass(columns, gap);
   return (
-    <div className={`grid ${colMap[columns] || "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"} ${gapMap[gap] || "gap-4"} ${className}`}>
+    <div className={`grid ${grid} ${gapClass} ${className}`}>
       {children}
     </div>
   );

@@ -58,7 +58,18 @@ export function ProtectedSessionBoundary({
       router.replace(getLoginUrlForCurrentPage(loginPath));
       return;
     }
-    if (requiredRole && session.role !== requiredRole) router.replace("/unauthorized");
+    if (requiredRole && session.role !== requiredRole) {
+      router.replace("/unauthorized");
+      return;
+    }
+    const pathname = window.location.pathname;
+    if (
+      !requiredRole &&
+      session.role === "super_admin" &&
+      (pathname.startsWith("/dashboard") || pathname.startsWith("/store"))
+    ) {
+      router.replace("/admin/dashboard");
+    }
   }, [checking, loginPath, requiredRole, router, session]);
 
   if (checking || authExpired || !allowed) return <SessionRestoreScreen />;

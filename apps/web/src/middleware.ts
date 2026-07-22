@@ -69,32 +69,54 @@ export default async function middleware(request: NextRequest) {
   }
 
   const subdomain = extractSubdomainFromHost(host);
-  if (process.env.NODE_ENV === "development") {
-    console.log(`[mw] host="${host}" subdomain=${subdomain} path="${pathname}"`);
-  }
+  const debugRouting = process.env.NODE_ENV === "development" || process.env.DEBUG_TENANT_ROUTING === "1";
 
   if (subdomain) {
     if (pathname.startsWith("/api")) {
       return NextResponse.next();
     }
 
-    if (pathname.startsWith("/products")) {
-      return NextResponse.next();
-    }
-
     if (isAppRoute(pathname)) {
       const appOrigin = getAppOrigin();
       const url = `${appOrigin}${pathname}${request.nextUrl.search}`;
+      if (debugRouting) {
+        console.log(`[mw] host="${host}" subdomain="${subdomain}" path="${pathname}" → redirect ${url}`);
+      }
       return NextResponse.redirect(url);
     }
 
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = `/site/${subdomain}${pathname === "/" ? "" : pathname}`;
+    if (debugRouting) {
+      console.log(
+        `[mw] host="${host}" subdomain="${subdomain}" path="${pathname}" → rewrite ${rewriteUrl.pathname}`,
+      );
+    }
     return NextResponse.rewrite(rewriteUrl);
   }
 
-  if (!isRootHost(host) && !subdomain) {
-    return NextResponse.next();
+  // Custom domain (not root, not *.rootDomain / *.localhost) → rewrite into /site/[host]
+  if (!isRootHost(host)) {
+    const hostname = host.split(":")[0]?.toLowerCase() ?? host;
+    if (pathname.startsWith("/api")) {
+      return NextResponse.next();
+    }
+    if (isAppRoute(pathname)) {
+      const appOrigin = getAppOrigin();
+      return NextResponse.redirect(`${appOrigin}${pathname}${request.nextUrl.search}`);
+    }
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = `/site/${hostname}${pathname === "/" ? "" : pathname}`;
+    if (debugRouting) {
+      console.log(
+        `[mw] host="${host}" customDomain="${hostname}" path="${pathname}" → rewrite ${rewriteUrl.pathname}`,
+      );
+    }
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
+  if (debugRouting && pathname === "/") {
+    console.log(`[mw] host="${host}" subdomain=null path="${pathname}" → root platform`);
   }
 
   const legacyBuilderMatch = pathname.match(/^\/dashboard\/builder\/([^/]+)(?:\/([^/]+))?$/);
@@ -138,7 +160,10 @@ export default async function middleware(request: NextRequest) {
 
   // Redirect authenticated users away from login/register
   if (isAuthPage && (session || hasRefreshToken)) {
-    const defaultDestination = pathname.startsWith("/admin/login") ? "/admin/dashboard" : "/dashboard";
+    const defaultDestination =
+      pathname.startsWith("/admin/login") || session?.role === "super_admin"
+        ? "/admin/dashboard"
+        : "/dashboard";
     const redirectTo = validateInternalRedirect(request.nextUrl.searchParams.get("redirect")) ?? defaultDestination;
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
@@ -150,6 +175,9 @@ export default async function middleware(request: NextRequest) {
     if (session) {
       if (isAdminRoute && session.role !== "super_admin") {
         return NextResponse.redirect(new URL("/unauthorized", request.url));
+      }
+      if (!isAdminRoute && isProtectedRoute && session.role === "super_admin") {
+        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
       }
       return NextResponse.next();
     }

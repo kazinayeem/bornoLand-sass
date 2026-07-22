@@ -8,6 +8,8 @@ import { StoreModel } from "../../models/store.model.js";
 import { checkLimit } from "../features/feature-access.service.js";
 import { incrementCouponUsage } from "../coupons/coupon.service.js";
 import { createBillingNotification } from "../notifications/billing-notification.service.js";
+import { autoSaveCustomerAddressFromOrder } from "../customers/customer-address.service.js";
+import { createCustomerNotification } from "../customers/customer-notification.service.js";
 
 function generateOrderNumber(prefix = "ORD"): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -53,11 +55,17 @@ export async function createOrder(
     shippingAddress: {
       fullName: string;
       phone: string;
+      email?: string;
+      label?: string;
+      area?: string;
       street: string;
+      apartment?: string;
       city: string;
       state?: string;
       zip?: string;
       country?: string;
+      landmark?: string;
+      orderNotes?: string;
     };
     paymentMethod?: string;
     deliveryZoneId?: string;
@@ -135,6 +143,22 @@ export async function createOrder(
   const { tax, taxRate } = calculateTax(taxableAmount, storeSettings ?? {});
   const total = Math.max(0, taxableAmount + deliveryCharge + tax);
 
+  const normalizedShippingAddress = {
+    fullName: payload.shippingAddress.fullName,
+    phone: payload.shippingAddress.phone,
+    email: payload.shippingAddress.email ?? "",
+    label: payload.shippingAddress.label ?? "Home",
+    area: payload.shippingAddress.area ?? "",
+    street: payload.shippingAddress.street,
+    apartment: payload.shippingAddress.apartment ?? "",
+    city: payload.shippingAddress.city,
+    state: payload.shippingAddress.state ?? "",
+    zip: payload.shippingAddress.zip ?? "",
+    country: payload.shippingAddress.country ?? "Bangladesh",
+    landmark: payload.shippingAddress.landmark ?? "",
+    orderNotes: payload.shippingAddress.orderNotes ?? payload.notes ?? "",
+  };
+
   const orderNumber = generateOrderNumber(storeSettings?.orderPrefix ?? "ORD");
   const invoiceNumber = generateOrderNumber(storeSettings?.invoicePrefix ?? "INV");
 
@@ -170,7 +194,7 @@ export async function createOrder(
     total,
     orderNumber,
     invoiceNumber,
-    shippingAddress: payload.shippingAddress,
+    shippingAddress: normalizedShippingAddress,
     paymentMethod: payload.paymentMethod ?? "cod",
     notes: payload.notes ?? "",
     currencyCode,
@@ -208,6 +232,12 @@ export async function createOrder(
     console.error("[orders] Failed to sync customer stats", err);
   }
 
+  try {
+    await autoSaveCustomerAddressFromOrder(storeId, customerId, normalizedShippingAddress);
+  } catch (err) {
+    console.error("[orders] Failed to auto-save customer address", err);
+  }
+
   if (store?.userId) {
     try {
       await createBillingNotification({
@@ -222,6 +252,29 @@ export async function createOrder(
     } catch (error) {
       console.error("[notifications] Failed to create order notification", error);
     }
+  }
+
+  try {
+    await createCustomerNotification({
+      customerId,
+      storeId,
+      type: "order",
+      icon: "package",
+      priority: "medium",
+      title: `Order placed: ${orderNumber}`,
+      message: `Your order has been placed successfully. Total ${currencyCode} ${total.toFixed(2)}.`,
+      link: `/orders/${String(order._id)}`,
+      metadata: {
+        orderId: String(order._id),
+        orderNumber,
+        status: "pending",
+        paymentStatus: order.paymentStatus,
+        total,
+        currencyCode,
+      },
+    });
+  } catch (error) {
+    console.error("[customer-notifications] Failed to create order placed notification", error);
   }
 
   return { ok: true as const, data: { order: order.toObject() } };

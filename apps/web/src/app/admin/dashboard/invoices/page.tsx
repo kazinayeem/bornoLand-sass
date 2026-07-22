@@ -122,7 +122,7 @@ export default function AdminInvoicesPage() {
 
   const handlePrint = useCallback((invoice: Invoice) => {
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-    const verificationUrl = `${baseUrl}/invoices/verify/${invoice.verificationCode}`;
+    const verificationUrl = `${baseUrl}/invoice/verify/${invoice.verificationCode}`;
     window.open(verificationUrl, "_blank");
   }, []);
 
@@ -223,7 +223,7 @@ export default function AdminInvoicesPage() {
                 const status = STATUS_CONFIG[inv.status] || STATUS_CONFIG.pending;
                 const StatusIcon = status.icon;
                 const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-                const verificationUrl = `${baseUrl}/invoices/verify/${inv.verificationCode}`;
+                const verificationUrl = `${baseUrl}/invoice/verify/${inv.verificationCode}`;
 
                 return (
                   <motion.tr
@@ -357,7 +357,7 @@ function InvoiceDetailModal({
   const customerEmail = typeof invoice.userId === "object" ? invoice.userId?.email : "—";
   const status = STATUS_CONFIG[invoice.status] || STATUS_CONFIG.pending;
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const verificationUrl = `${baseUrl}/invoices/verify/${invoice.verificationCode}`;
+  const verificationUrl = `${baseUrl}/invoice/verify/${invoice.verificationCode}`;
 
   return (
     <motion.div

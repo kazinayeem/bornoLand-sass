@@ -3,8 +3,9 @@
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setFooterSettings } from "@/redux/slices/builder-slice";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Info } from "lucide-react";
 import { useState } from "react";
+import { FOOTER_TEMPLATES } from "@/lib/storefront/footer-types";
 
 function Section({ label, children, defaultOpen = true }: { label: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -104,12 +105,29 @@ export function FooterBuilderSettings() {
       <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
         <div>
           <h3 className="text-xs font-semibold text-apple-ink">Footer Settings</h3>
-          <p className="text-[10px] text-apple-ink-muted-48">Configure global footer appearance</p>
+          <p className="text-[10px] text-apple-ink-muted-48">Layout & appearance only — content loads from Branding, Contact CMS, and Navigation.</p>
+        </div>
+      </div>
+
+      <div className="mx-4 mt-3 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2.5">
+        <div className="flex items-start gap-2">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
+          <p className="text-[10px] leading-relaxed text-blue-900/80">
+            Store name, logo, email, phone, address, social links, and menu items are managed in Branding, Contact CMS, and Navigation — not here.
+          </p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
-        {/* Layout */}
+        <Section label="Template">
+          <SelectInput
+            label="Footer Template"
+            value={String(footerSettings.template ?? "commerce")}
+            onChange={(v) => update("template", v)}
+            options={FOOTER_TEMPLATES.map((t) => ({ value: t.value, label: t.label }))}
+          />
+        </Section>
+
         <Section label="Layout">
           <SelectInput
             label="Columns"
@@ -120,6 +138,7 @@ export function FooterBuilderSettings() {
               { value: "2", label: "2 Columns" },
               { value: "3", label: "3 Columns" },
               { value: "4", label: "4 Columns" },
+              { value: "5", label: "5 Columns" },
             ]}
           />
           <TextInput
@@ -128,9 +147,18 @@ export function FooterBuilderSettings() {
             onChange={(v) => update("padding", v)}
             placeholder="48px 24px"
           />
+          <SelectInput
+            label="Alignment"
+            value={String(footerSettings.alignment ?? "left")}
+            onChange={(v) => update("alignment", v)}
+            options={[
+              { value: "left", label: "Left" },
+              { value: "center", label: "Center" },
+              { value: "right", label: "Right" },
+            ]}
+          />
         </Section>
 
-        {/* Appearance */}
         <Section label="Appearance">
           <ColorInput
             label="Background"
@@ -142,46 +170,76 @@ export function FooterBuilderSettings() {
             value={footerSettings.textColor ?? ""}
             onChange={(v) => update("textColor", v)}
           />
+          <ColorInput
+            label="Border Color"
+            value={footerSettings.borderColor ?? ""}
+            onChange={(v) => update("borderColor", v)}
+          />
+          <Toggle label="Show Divider" value={footerSettings.divider !== false} onChange={(v) => update("divider", v)} />
         </Section>
 
-        {/* Elements */}
-        <Section label="Elements">
-          <Toggle
-            label="Newsletter Signup"
-            value={footerSettings.showNewsletter ?? false}
-            onChange={(v) => update("showNewsletter", v)}
+        <Section label="Elements" defaultOpen={false}>
+          <Toggle label="Newsletter Signup" value={footerSettings.showNewsletter ?? false} onChange={(v) => update("showNewsletter", v)} />
+          <Toggle label="Social Media Icons" value={footerSettings.showSocial ?? true} onChange={(v) => update("showSocial", v)} />
+          <Toggle label="Contact Block" value={footerSettings.showContact ?? true} onChange={(v) => update("showContact", v)} />
+          <Toggle label="Business Hours" value={footerSettings.showBusinessHours ?? false} onChange={(v) => update("showBusinessHours", v)} />
+          <Toggle label="Map" value={footerSettings.showMap ?? false} onChange={(v) => update("showMap", v)} />
+          <Toggle label="Payment Icons" value={footerSettings.showPaymentIcons ?? false} onChange={(v) => update("showPaymentIcons", v)} />
+          <Toggle label="Copyright Bar" value={footerSettings.showCopyright ?? true} onChange={(v) => update("showCopyright", v)} />
+        </Section>
+
+        <Section label="Positions" defaultOpen={false}>
+          <SelectInput
+            label="Copyright Position"
+            value={String(footerSettings.copyrightPosition ?? "left")}
+            onChange={(v) => update("copyrightPosition", v)}
+            options={[
+              { value: "left", label: "Left" },
+              { value: "center", label: "Center" },
+              { value: "right", label: "Right" },
+            ]}
           />
-          <Toggle
-            label="Social Media Icons"
-            value={footerSettings.showSocial ?? true}
-            onChange={(v) => update("showSocial", v)}
+          <SelectInput
+            label="Newsletter Position"
+            value={String(footerSettings.newsletterPosition ?? "bottom")}
+            onChange={(v) => update("newsletterPosition", v)}
+            options={[
+              { value: "top", label: "Top" },
+              { value: "inline", label: "Inline" },
+              { value: "bottom", label: "Bottom" },
+            ]}
           />
-          <Toggle
-            label="Payment Icons"
-            value={footerSettings.showPaymentIcons ?? true}
-            onChange={(v) => update("showPaymentIcons", v)}
+          <SelectInput
+            label="Map Position"
+            value={String(footerSettings.mapPosition ?? "hidden")}
+            onChange={(v) => update("mapPosition", v)}
+            options={[
+              { value: "hidden", label: "Hidden" },
+              { value: "inline", label: "Inline" },
+              { value: "bottom", label: "Bottom" },
+            ]}
           />
-          <Toggle
-            label="Copyright"
-            value={footerSettings.showCopyright ?? true}
-            onChange={(v) => update("showCopyright", v)}
+          <SelectInput
+            label="Social Icon Style"
+            value={String(footerSettings.socialIconStyle ?? "filled")}
+            onChange={(v) => update("socialIconStyle", v)}
+            options={[
+              { value: "filled", label: "Filled" },
+              { value: "outline", label: "Outline" },
+              { value: "minimal", label: "Minimal" },
+            ]}
           />
         </Section>
 
-        {/* Copyright */}
-        <Section label="Copyright">
-          <TextInput
-            label="Copyright Text"
-            value={footerSettings.copyright ?? ""}
-            onChange={(v) => update("copyright", v)}
-            placeholder="© 2026 Your Store. All rights reserved."
-          />
+        <Section label="Visibility" defaultOpen={false}>
+          <Toggle label="Desktop" value={footerSettings.visibleOnDesktop !== false} onChange={(v) => update("visibleOnDesktop", v)} />
+          <Toggle label="Tablet" value={footerSettings.visibleOnTablet !== false} onChange={(v) => update("visibleOnTablet", v)} />
+          <Toggle label="Mobile" value={footerSettings.visibleOnMobile !== false} onChange={(v) => update("visibleOnMobile", v)} />
         </Section>
       </div>
 
-      {/* Preview */}
       <div className="border-t border-zinc-100 bg-apple-canvas-parchment p-4">
-        <p className="mb-2 text-[10px] font-medium text-apple-ink-muted-48 uppercase tracking-wider">Preview</p>
+        <p className="mb-2 text-[10px] font-medium text-apple-ink-muted-48 uppercase tracking-wider">Layout Preview</p>
         <div
           className="rounded-lg border border-zinc-200 p-4 text-[10px]"
           style={{
@@ -189,21 +247,21 @@ export function FooterBuilderSettings() {
             color: footerSettings.textColor || "#ffffff",
           }}
         >
+          <p className="mb-2 text-[11px] font-semibold capitalize">{String(footerSettings.template ?? "commerce")} template</p>
           <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${footerSettings.columns || 4}, 1fr)` }}>
             {Array.from({ length: footerSettings.columns || 4 }).map((_, i) => (
               <div key={i} className="space-y-2">
                 <p className="font-semibold text-[11px]">Column {i + 1}</p>
                 <div className="space-y-1 opacity-60">
-                  <p>Link item 1</p>
-                  <p>Link item 2</p>
-                  <p>Link item 3</p>
+                  <p>From Navigation CMS</p>
+                  <p>From Contact CMS</p>
                 </div>
               </div>
             ))}
           </div>
-          {footerSettings.showCopyright && (
+          {footerSettings.showCopyright !== false && (
             <div className="mt-4 border-t border-white/10 pt-3 text-center opacity-60">
-              {footerSettings.copyright || "© 2026 Your Store. All rights reserved."}
+              Auto-generated copyright from store branding
             </div>
           )}
         </div>

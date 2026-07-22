@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, Palette, Package, ShoppingBag, LayoutDashboard, X } from "lucide-react";
+import { getContrastColor } from "@/lib/color-utils";
 import { getStoreUrl } from "@/lib/urls";
 import { getAccessToken } from "@/lib/access-token";
 
@@ -74,8 +75,8 @@ export function FloatingAdminBar({ storeSlug, primaryColor }: FloatingAdminBarPr
         )}
       </AnimatePresence>
       <button onClick={() => setExpanded(!expanded)}
-        className="flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
-        style={{ backgroundColor: primaryColor }}>
+        className="flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95"
+        style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}>
         {expanded ? <X className="h-5 w-5" /> : <LayoutDashboard className="h-5 w-5" />}
       </button>
     </div>

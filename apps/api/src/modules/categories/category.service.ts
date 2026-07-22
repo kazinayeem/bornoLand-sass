@@ -2,6 +2,7 @@ import { connectDatabase } from "../../common/database/connection.js";
 import { CategoryModel } from "../../models/category.model.js";
 import { ProductModel } from "../../models/product.model.js";
 import { StoreModel } from "../../models/store.model.js";
+import { parseListQuery, paginatedResponse, buildTextSearchFilter } from "../../common/utils/pagination.js";
 import { checkLimit } from "../features/feature-access.service.js";
 import {
   removeEntityMediaReferences,
@@ -53,10 +54,34 @@ async function syncCategoryMediaReferences(
   ]);
 }
 
-export async function getCategories(storeId: string) {
+export async function getCategories(storeId: string, query: Record<string, unknown> = {}) {
   await connectDatabase();
-  const categories = await CategoryModel.find({ storeId }).sort({ sortOrder: 1, name: 1 }).lean();
-  return { ok: true as const, data: { categories } };
+  const params = parseListQuery(query);
+  const clauses: Record<string, unknown>[] = [{ storeId }];
+  const textFilter = buildTextSearchFilter(params.search, ["name", "slug", "description"]);
+  if (textFilter?.$or) clauses.push({ $or: textFilter.$or });
+  if (params.status === "active") clauses.push({ active: true });
+  if (params.status === "inactive") clauses.push({ active: false });
+  const filter = clauses.length === 1 ? clauses[0] : { $and: clauses };
+
+  const sort = params.sort ?? { sortOrder: 1, name: 1 };
+  const [categories, total] = await Promise.all([
+    CategoryModel.find(filter).sort(sort).skip(params.skip).limit(params.limit).lean(),
+    CategoryModel.countDocuments(filter),
+  ]);
+
+  const paginated = paginatedResponse(categories, total, params);
+  return {
+    ok: true as const,
+    data: {
+      categories: paginated.data,
+      pagination: paginated.pagination,
+      total,
+      page: params.page,
+      limit: params.limit,
+      totalPages: paginated.pagination.totalPages,
+    },
+  };
 }
 
 export async function getCategory(categoryId: string, storeId: string) {

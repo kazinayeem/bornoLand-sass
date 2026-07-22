@@ -68,7 +68,7 @@ export default function TemplatesPage() {
           <p className="mt-1 text-sm text-apple-ink-muted-48">Manage landing page templates available to tenants.</p>
         </div>
         <button onClick={() => { setShowForm(true); setEditing(null); resetForm(); }}
-          className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700">
+          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover">
           <Plus className="h-4 w-4" /> New Template
         </button>
       </motion.div>
@@ -179,7 +179,7 @@ export default function TemplatesPage() {
               </div>
               <div className="mt-6 flex items-center justify-end gap-3">
                 <button onClick={closeForm} className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment">Cancel</button>
-                <button onClick={handleSubmit} className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                <button onClick={handleSubmit} className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
                   <Check className="h-4 w-4" /> {editing ? "Update" : "Create"}
                 </button>
               </div>

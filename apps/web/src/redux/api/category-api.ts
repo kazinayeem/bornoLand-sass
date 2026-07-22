@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/api/base-api";
+import type { ListQueryParams, PaginationMeta } from "@/types/pagination";
 
 export type Category = {
   _id: string;
@@ -24,7 +25,14 @@ export type Category = {
 
 type ApiEnvelope<T> = { success: boolean; data?: T; message?: string };
 
-type CategoriesResponse = { categories: Category[] };
+type CategoriesResponse = {
+  categories: Category[];
+  pagination?: PaginationMeta;
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+};
 type CategoryResponse = { category: Category };
 
 type CreateCategoryPayload = {
@@ -64,9 +72,15 @@ type UpdateCategoryPayload = {
 
 export const categoryApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getCategories: builder.query<ApiEnvelope<CategoriesResponse>, string>({
-      query: (storeId) => ({ url: `/categories/${storeId}` }),
-      providesTags: (_result, _error, storeId) => [{ type: "Categories", id: storeId }],
+    getCategories: builder.query<ApiEnvelope<CategoriesResponse>, string | ({ storeId: string } & ListQueryParams)>({
+      query: (arg) => {
+        if (typeof arg === "string") {
+          return { url: `/categories/${arg}`, params: { page: 1, limit: 100 } };
+        }
+        const { storeId, ...params } = arg;
+        return { url: `/categories/${storeId}`, params };
+      },
+      providesTags: (_result, _error, arg) => [{ type: "Categories", id: typeof arg === "string" ? arg : arg.storeId }],
     }),
     getCategory: builder.query<ApiEnvelope<CategoryResponse>, { storeId: string; id: string }>({
       query: ({ storeId, id }) => ({ url: `/categories/${storeId}/${id}` }),

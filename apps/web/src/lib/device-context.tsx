@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Breakpoint } from "./builder-types";
-import { BREAKPOINT_WIDTHS, BREAKPOINT_ORDER } from "./builder-types";
+import { BREAKPOINT_WIDTHS } from "./builder-types";
 
 type DeviceContextValue = {
   device: Breakpoint;
@@ -50,18 +50,18 @@ export function StorefrontDeviceProvider({
 }) {
   const [device, setDevice] = useState<Breakpoint>("desktop");
 
+  function detectBreakpoint(width: number): Breakpoint {
+    if (width <= BREAKPOINT_WIDTHS.mobile) return "mobile";
+    if (width <= BREAKPOINT_WIDTHS.tablet) return "tablet";
+    if (width <= BREAKPOINT_WIDTHS.laptop) return "laptop";
+    return "desktop";
+  }
+
   useEffect(() => {
     let frame = 0;
     function detectDevice() {
       frame = 0;
-      const w = window.innerWidth;
-      let detected: Breakpoint = "desktop";
-      for (let i = BREAKPOINT_ORDER.length - 1; i >= 0; i--) {
-        const bp = BREAKPOINT_ORDER[i];
-        if (w <= BREAKPOINT_WIDTHS[bp]) {
-          detected = bp;
-        }
-      }
+      const detected = detectBreakpoint(window.innerWidth);
       setDevice((current) => current === detected ? current : detected);
     }
 

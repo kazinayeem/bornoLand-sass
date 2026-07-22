@@ -8,6 +8,7 @@ import {
   ZoomIn, ZoomOut, Loader2, ExternalLink,
 } from "lucide-react";
 import { useDispatch } from "react-redux";
+import { getContrastColor } from "@/lib/color-utils";
 import { StoreLink } from "./store-link";
 import { addToCart, openCart } from "@/redux/slices/cart-slice";
 import { toggleWishlist } from "@/redux/slices/wishlist-slice";
@@ -501,8 +502,8 @@ export function QuickViewModal({ product: initialProduct, onClose }: Props) {
                   type="button"
                   onClick={() => void handleAddToCart(false)}
                   disabled={!canPurchase || adding}
-                  className="btn-press inline-flex flex-1 items-center justify-center gap-2 rounded-apple-pill py-3 text-body font-semibold text-apple-on-primary transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                  style={{ borderRadius: buttonStyle, backgroundColor: primaryColor }}
+                  className="btn-press inline-flex flex-1 items-center justify-center gap-2 rounded-apple-pill py-3 text-body font-semibold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ borderRadius: buttonStyle, backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
                 >
                   {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
                   {adding ? "Adding…" : "Add to Cart"}

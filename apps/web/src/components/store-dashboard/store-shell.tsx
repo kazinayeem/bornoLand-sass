@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Loader2, Menu, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useStoreFromSlug } from "@/hooks/use-store-from-slug";
@@ -9,7 +9,7 @@ import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 import { StoreBrandingSync } from "@/components/store-dashboard/store-branding-sync";
 import { StoreSidebar } from "@/components/store-dashboard/store-sidebar";
 import { TrialBanner } from "@/components/store-dashboard/trial-banner";
-import { cn } from "@/lib/utils";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 
 export function StoreShell({ children }: { children: ReactNode }) {
   const { store, isLoading, isError } = useStoreFromSlug();
@@ -76,21 +76,7 @@ export function StoreShell({ children }: { children: ReactNode }) {
       </div>
 
       <div className="flex min-w-0 flex-col overflow-hidden">
-        <div className="frosted-bar flex items-center gap-3 border-b border-apple-hairline px-4 py-3 lg:hidden">
-          <button
-            type="button"
-            onClick={() => setMobileNavOpen(true)}
-            className="btn-press flex h-11 w-11 items-center justify-center rounded-full bg-apple-surface-chip/64"
-            aria-label="Open store menu"
-          >
-            <Menu className="h-4 w-4 text-apple-ink" />
-          </button>
-          <StoreBrandMark store={store} size={32} roundedClassName="rounded-sm" />
-          <p className="truncate text-caption-strong text-apple-ink">
-            {store.shortName || store.name}
-          </p>
-        </div>
-
+        <DashboardHeader mode="store" store={store} onMenuClick={() => setMobileNavOpen(true)} />
         <main className="content-scroll flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-[1440px] space-y-6 p-4 sm:p-6 lg:p-8">
             <TrialBanner store={store} />
@@ -99,7 +85,7 @@ export function StoreShell({ children }: { children: ReactNode }) {
         </main>
       </div>
 
-      {mobileNavOpen && (
+      {mobileNavOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
             className="absolute inset-0 bg-apple-surface-black/60 backdrop-blur-sm transition-opacity duration-300"
@@ -110,6 +96,7 @@ export function StoreShell({ children }: { children: ReactNode }) {
             <div className="flex items-center justify-between border-b border-apple-hairline px-4 py-3">
               <p className="text-caption-strong text-apple-ink">{store.shortName || store.name}</p>
               <button
+                type="button"
                 onClick={closeMobileNav}
                 className="btn-press flex h-11 w-11 items-center justify-center rounded-full bg-apple-surface-chip/64 text-apple-ink-muted-48"
                 aria-label="Close menu"
@@ -122,7 +109,7 @@ export function StoreShell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

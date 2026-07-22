@@ -8,8 +8,16 @@ const customerSchema = new Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
+    emailVerifiedAt: { type: Date, default: null },
     phone: { type: String, default: "", trim: true },
     avatar: { type: String, default: "" },
+    birthday: { type: Date, default: null },
+    gender: { type: String, enum: ["male", "female", "non_binary", "prefer_not_to_say", ""], default: "" },
+    /**
+     * Increments when we need to invalidate all existing customer JWTs
+     * (e.g. "logout all devices", password change).
+     */
+    tokenVersion: { type: Number, default: 0, index: true },
     status: { type: String, enum: ["active", "suspended", "inactive"], default: "active" },
     lastLoginAt: { type: Date },
     totalOrders: { type: Number, default: 0 },

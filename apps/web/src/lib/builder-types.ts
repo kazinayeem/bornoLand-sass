@@ -3,10 +3,10 @@
 export type Breakpoint = "desktop" | "laptop" | "tablet" | "mobile";
 
 export const BREAKPOINT_WIDTHS: Record<Breakpoint, number> = {
-  desktop: 1280,
-  laptop: 1024,
-  tablet: 820,
-  mobile: 390,
+  desktop: 1440,
+  laptop: 1280,
+  tablet: 768,
+  mobile: 375,
 };
 
 export const BREAKPOINT_ORDER: Breakpoint[] = ["desktop", "laptop", "tablet", "mobile"];

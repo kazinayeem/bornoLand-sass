@@ -37,7 +37,7 @@ export default function HomePage() {
         }}
       />
       <Header />
-      <main>
+      <main className="overflow-x-hidden">
         <Hero />
         <TrustBar />
         <Features />

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
 import { SectionHeading } from "./section-heading";
 import { useLandingLocale } from "./landing-locale";
+import { landingContainer, landingSectionAlt, LandingReveal } from "./landing-ui";
 
 export function FAQ() {
   const { t } = useLandingLocale();
@@ -13,63 +13,69 @@ export function FAQ() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="relative bg-apple-canvas-parchment px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-      <div className="mx-auto max-w-3xl">
-        <SectionHeading
-          eyebrow={section.eyebrow}
-          title={section.title}
-          description={section.description}
-        />
+    <section id="faq" className={landingSectionAlt}>
+      <div className={landingContainer}>
+        <div className="mx-auto max-w-3xl">
+          <SectionHeading
+            eyebrow={section.eyebrow}
+            title={section.title}
+            description={section.description}
+          />
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-10 space-y-2"
-        >
-          {faqs.map((faq, i) => (
-            <div
-              key={faq.q}
-              className={`rounded-lg border transition-colors duration-200 ${
-                open === i ? "border-blue-200 bg-apple-canvas" : "border-apple-hairline bg-apple-canvas"
-              }`}
-            >
-              <button
-                type="button"
-                onClick={() => setOpen(open === i ? null : i)}
-                aria-expanded={open === i}
-                aria-controls={`faq-answer-${i}`}
-                className="flex w-full items-center justify-between px-5 py-4 text-left"
-              >
-                <span className="pr-4 text-sm font-semibold text-apple-ink">{faq.q}</span>
-                <span
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors ${
-                    open === i
-                      ? "bg-blue-100 text-apple-primary"
-                      : "bg-apple-canvas-parchment text-apple-ink-muted-48"
+          <LandingReveal className="mt-10 space-y-2">
+            {faqs.map((faq, i) => {
+              const isOpen = open === i;
+              return (
+                <div
+                  key={faq.q}
+                  className={`rounded-lg border transition-colors duration-300 ${
+                    isOpen ? "border-blue-200 bg-apple-canvas" : "border-apple-hairline bg-apple-canvas"
                   }`}
                 >
-                  {open === i ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-                </span>
-              </button>
-              <AnimatePresence>
-                {open === i ? (
-                  <motion.div
+                  <h3>
+                    <button
+                      type="button"
+                      id={`faq-trigger-${i}`}
+                      onClick={() => setOpen(isOpen ? null : i)}
+                      aria-expanded={isOpen}
+                      aria-controls={`faq-answer-${i}`}
+                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-apple-canvas-parchment/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-primary"
+                    >
+                      <span className="text-sm font-semibold text-apple-ink">{faq.q}</span>
+                      <span
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors duration-300 ${
+                          isOpen
+                            ? "bg-blue-100 text-apple-primary"
+                            : "bg-apple-canvas-parchment text-apple-ink-muted-48"
+                        }`}
+                        aria-hidden
+                      >
+                        {isOpen ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                      </span>
+                    </button>
+                  </h3>
+                  <div
                     id={`faq-answer-${i}`}
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2, ease: "easeInOut" }}
-                    className="overflow-hidden"
+                    role="region"
+                    aria-labelledby={`faq-trigger-${i}`}
+                    className="grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                    style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
                   >
-                    <p className="px-5 pb-4 text-sm leading-relaxed text-apple-ink-muted-80">{faq.a}</p>
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
-            </div>
-          ))}
-        </motion.div>
+                    <div className="overflow-hidden">
+                      <p
+                        className={`px-5 pb-4 text-sm leading-relaxed text-apple-ink-muted-80 transition-opacity duration-300 ${
+                          isOpen ? "opacity-100" : "opacity-0"
+                        }`}
+                      >
+                        {faq.a}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </LandingReveal>
+        </div>
       </div>
     </section>
   );

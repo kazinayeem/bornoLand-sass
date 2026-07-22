@@ -39,6 +39,8 @@ export type StoreOrder = {
   courier?: string;
   trackingNumber?: string;
   estimatedDelivery?: string;
+  invoiceNumber?: string;
+  verificationToken?: string;
   timeline?: Array<{
     status: string;
     note?: string;

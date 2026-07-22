@@ -10,8 +10,12 @@ import { getProductImageUrl } from "@/lib/product-media";
 type Props = { storeId?: string };
 
 export function ProductsPanel({ storeId }: Props) {
-  const { data, isLoading } = useGetProductsQuery(storeId ?? "", { skip: !storeId });
+  const { data, isLoading } = useGetProductsQuery(
+    storeId ? { storeId, page: 1, limit: 50 } : { storeId: "", page: 1, limit: 50 },
+    { skip: !storeId },
+  );
   const products = data?.data?.products ?? [];
+  const total = data?.data?.pagination?.total ?? data?.data?.total ?? products.length;
   const theme = useSelector((s: RootState) => s.theme);
   const storeSettings = useSelector((s: RootState) => s.storeSettings);
   const fmt = (amount: number) => formatCurrency(amount, storeSettings);
@@ -36,7 +40,7 @@ export function ProductsPanel({ storeId }: Props) {
     <div className="p-3">
       <div className="mb-3 flex items-center justify-between">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">
-          Products ({products.length})
+          Products ({total})
         </p>
       </div>
 

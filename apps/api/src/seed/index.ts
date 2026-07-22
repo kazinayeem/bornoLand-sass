@@ -7,6 +7,7 @@ import { SubscriptionModel } from "../models/subscription.model.js";
 import { TenantModel } from "../models/tenant.model.js";
 import { UserModel } from "../models/user.model.js";
 import { seedTemplates } from "./templates.js";
+import { seedNayeemProducts } from "./nayeem-products.seed.js";
 import { runSafeMigration } from "../bootstrap/safe-migrate.js";
 
 export async function seedDatabase() {
@@ -83,5 +84,7 @@ export async function seedDatabase() {
 
   await seedTemplates();
 
-  console.log("Seed complete: safe migration, demo tenant (if missing), templates");
+  await seedNayeemProducts();
+
+  console.log("Seed complete: safe migration, demo tenant (if missing), templates, nayeem store products");
 }

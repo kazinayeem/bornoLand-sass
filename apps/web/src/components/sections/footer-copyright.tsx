@@ -1,10 +1,11 @@
 "use client";
 
 import { SectionWrapper, type SectionData } from "./section-renderer";
+import { useFooterData } from "@/lib/storefront/use-footer-data";
 
 export function FooterCopyright({ section }: { section: SectionData }) {
   const p = section.props;
-  const text = p.text || `© ${new Date().getFullYear()} All rights reserved.`;
+  const { data } = useFooterData({ sectionType: "footer-copyright" });
   const textColor = p.textColor || "#a1a1aa";
   const fontSize = p.fontSize || "12";
   const alignment = p.alignment || "center";
@@ -12,14 +13,14 @@ export function FooterCopyright({ section }: { section: SectionData }) {
   return (
     <SectionWrapper section={section}>
       <div
-        className={`text-${alignment}`}
+        className={alignment === "left" ? "text-left" : alignment === "right" ? "text-right" : "text-center"}
         style={{
           fontFamily: p.font || "Inter",
           color: textColor,
           fontSize: `${fontSize}px`,
         }}
       >
-        {text}
+        {data.copyright}
       </div>
     </SectionWrapper>
   );

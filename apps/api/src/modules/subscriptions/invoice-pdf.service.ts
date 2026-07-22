@@ -102,6 +102,24 @@ const STATUS_STYLE: Record<string, { label: string; color: string; bg: string }>
   refunded: { label: "CANCELLED", color: C.neutral, bg: C.neutralLight },
 };
 
+/* ── Watermark ────────────────────────────────────────────────────────────── */
+
+function drawWatermark(doc: PDFKit.PDFDocument, status: string, fonts: Record<string, string>) {
+  const labels: Record<string, string> = {
+    paid: "PAID",
+    pending: "PENDING",
+    rejected: "FAILED",
+    refunded: "CANCELLED",
+  };
+  const text = labels[status] || "PENDING";
+  doc.save();
+  doc.font(fonts.bold).fontSize(72).fillColor("#e5e7eb");
+  doc.translate(doc.page.width / 2, doc.page.height / 2);
+  doc.rotate(-45);
+  doc.text(text, -doc.widthOfString(text) / 2, -20, { align: "center" });
+  doc.restore();
+}
+
 /* ── Drawing Helpers ──────────────────────────────────────────────────────── */
 
 function drawRoundedCard(
@@ -178,7 +196,7 @@ export async function generateInvoicePdf(
         size: "A4",
         margins: { top: 40, bottom: 80, left: 48, right: 48 },
         autoFirstPage: true,
-        bufferPages: false,
+        bufferPages: true,
         info: {
           Title: `Invoice ${invoice.invoiceNumber}`,
           Author: "BornoLand",
@@ -211,6 +229,13 @@ export async function generateInvoicePdf(
       const PW = RM - LM;
       let y = 40;
 
+      const bottomLimit = doc.page.height - 80; // bottom margin boundary
+      const ensureSpace = (needed: number) => {
+        if (y + needed <= bottomLimit) return;
+        doc.addPage();
+        y = 40;
+      };
+
       const logoBuffer = loadLogoBuffer();
       const status = STATUS_STYLE[invoice.status] || STATUS_STYLE.pending;
       const planName = typeof invoice.planId === "object" ? invoice.planId?.name ?? "—" : "—";
@@ -227,7 +252,7 @@ export async function generateInvoicePdf(
       const approvedByName = typeof invoice.approvedBy === "object" ? invoice.approvedBy?.name ?? "—" : "—";
       const discount = invoice.discount || 0;
       const baseUrl = resolveBaseUrl();
-      const verificationUrl = `${baseUrl}/invoices/verify/${invoice.verificationCode}`;
+      const verificationUrl = `${baseUrl}/invoice/verify/${invoice.verificationCode}`;
 
       // ══════════════════════════════════════════════════════════════════════
       // SECTION 1: HEADER
@@ -281,6 +306,7 @@ export async function generateInvoicePdf(
       // SECTION 2: FROM / BILL TO (Two Cards)
       // ══════════════════════════════════════════════════════════════════════
 
+      ensureSpace(96);
       const cardW = PW * 0.47;
       const cardGap = PW * 0.06;
       const cardH = 72;
@@ -321,6 +347,7 @@ export async function generateInvoicePdf(
       // SECTION 3: SUBSCRIPTION + PAYMENT (Two Cards)
       // ══════════════════════════════════════════════════════════════════════
 
+      ensureSpace(88);
       const detailCardH = 64;
       const detailY = y;
 
@@ -360,6 +387,7 @@ export async function generateInvoicePdf(
       // SECTION 4: INVOICE TABLE
       // ══════════════════════════════════════════════════════════════════════
 
+      ensureSpace(50);
       // Table header
       drawRoundedCard(doc, LM, y, PW, 22, 4, C.primary);
 
@@ -408,6 +436,7 @@ export async function generateInvoicePdf(
       summaryRows += 3; // divider + Total + Paid + Remaining
       const sumCardH = summaryRows * 13 + 20;
 
+      ensureSpace(sumCardH + 20);
       drawRoundedCard(doc, sumCardX, y, sumCardW, sumCardH, 6, C.bgTable, C.border);
 
       let sy = y + 10;
@@ -479,6 +508,7 @@ export async function generateInvoicePdf(
       // SECTION 6: QR CODE + VERIFICATION
       // ══════════════════════════════════════════════════════════════════════
 
+      ensureSpace(80);
       const qrSectionH = 60;
       drawRoundedCard(doc, LM, y, PW, qrSectionH, 6, C.bgTable, C.border);
 
@@ -504,29 +534,36 @@ export async function generateInvoicePdf(
       doc.text(`Token: ${invoice.verificationCode?.slice(0, 16) || "—"}`, LM + 62, y + 50);
 
       // ══════════════════════════════════════════════════════════════════════
-      // SECTION 7: FOOTER (absolute position, always at bottom)
-      // CRITICAL: Position above bottom margin to prevent blank pages.
+      // SECTION 7: FOOTER — drawn on every page, never creates its own page
       // ══════════════════════════════════════════════════════════════════════
 
-      const footerY = doc.page.height - 72;
+      const pageCount = doc.bufferedPageRange().count;
+      for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
+        doc.switchToPage(pageIndex);
 
-      doc.save();
-      doc.moveTo(LM, footerY).lineTo(RM, footerY).lineWidth(0.5).strokeColor(C.border).stroke();
-      doc.restore();
+        // Watermark on every page
+        drawWatermark(doc, invoice.status, F);
 
-      doc.font(F.regular).fontSize(6).fillColor(C.muted);
+        const footerY = doc.page.height - 72;
 
-      // Left: Powered by
-      doc.text("Powered by BornoLand", LM, footerY + 8);
-      doc.text("bornoland.com", LM, footerY + 18, { link: "https://bornoland.com" });
+        doc.save();
+        doc.moveTo(LM, footerY).lineTo(RM, footerY).lineWidth(0.5).strokeColor(C.border).stroke();
+        doc.restore();
 
-      // Center: Generated date + disclaimer
-      doc.text(`Generated: ${formatDate(new Date())}`, LM + PW * 0.3, footerY + 8, { width: PW * 0.4, align: "center" });
-      doc.text("This invoice was generated electronically and does not require a signature.", LM + PW * 0.2, footerY + 18, { width: PW * 0.6, align: "center" });
+        doc.font(F.regular).fontSize(6).fillColor(C.muted);
 
-      // Right: Support + Invoice #
-      doc.text("support@bornoland.com", RM - 130, footerY + 8, { width: 130, align: "right", link: "mailto:support@bornoland.com" });
-      doc.text(invoice.invoiceNumber, RM - 130, footerY + 18, { width: 130, align: "right" });
+        // Left: Powered by
+        doc.text("Powered by BornoLand", LM, footerY + 8);
+        doc.text("bornoland.com", LM, footerY + 18, { link: "https://bornoland.com" });
+
+        // Center: Generated date + disclaimer
+        doc.text(`Generated: ${formatDate(new Date())}`, LM + PW * 0.3, footerY + 8, { width: PW * 0.4, align: "center" });
+        doc.text("This invoice was generated electronically and does not require a signature.", LM + PW * 0.2, footerY + 18, { width: PW * 0.6, align: "center" });
+
+        // Right: Support + Invoice #
+        doc.text("support@bornoland.com", RM - 130, footerY + 8, { width: 130, align: "right", link: "mailto:support@bornoland.com" });
+        doc.text(invoice.invoiceNumber, RM - 130, footerY + 18, { width: 130, align: "right" });
+      }
 
       doc.end();
     } catch (err) {

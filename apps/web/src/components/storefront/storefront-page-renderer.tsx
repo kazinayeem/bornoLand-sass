@@ -3,7 +3,8 @@ import { fetchTenantSite } from "@/lib/server/tenant-site";
 import { StorefrontShell } from "@/components/storefront/storefront-shell";
 import { StorefrontCanvas } from "@/components/storefront/storefront-canvas";
 import { normalizeSectionType } from "@/lib/section-registry";
-import type { ThemeData, StoreData, StoreSettingsData, ProductData, CategoryData, HomepageSliderData } from "@/providers/tenant-provider";
+import type { ThemeData, StoreData, StoreSettingsData, ProductData, CategoryData, HomepageSliderData, NavigationData } from "@/providers/tenant-provider";
+import type { StoreContact } from "@/redux/api/store-contact-api";
 
 type Props = {
   storeSlug: string;
@@ -21,6 +22,8 @@ export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
 
   const { store, products, settings, sliders, page } = data as any;
   const categories: CategoryData[] = (data.categories ?? []) as CategoryData[];
+  const navigations: NavigationData[] = (data.navigations ?? []) as NavigationData[];
+  const contact: StoreContact | null = (data.contact as StoreContact | null) ?? null;
   const pageSections = (page?.sections as any[]) ?? [];
   const headerSections = (page?.headerSections as any[]) ?? [];
   const footerSections = (page?.footerSections as any[]) ?? [];
@@ -54,14 +57,23 @@ export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
     return !HEADER_TYPES.has(normalized) && !FOOTER_TYPES.has(normalized);
   });
 
+  const storeWithBranding: StoreData = {
+    ...store,
+    shortName: store.shortName,
+    tagline: store.tagline,
+    faviconUrl: store.faviconUrl,
+  };
+
   return (
     <StorefrontShell
-      store={store}
+      store={storeWithBranding}
       theme={theme}
       products={products}
       categories={categories}
       settings={currencySettings}
       sliders={sliders ?? []}
+      navigations={navigations}
+      contact={contact}
       pageSections={bodySections}
       headerSections={headerSections}
       footerSections={footerSections}

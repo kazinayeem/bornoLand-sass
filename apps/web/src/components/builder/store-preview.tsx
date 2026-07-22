@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import type { StoreSettingsData, HomepageSliderData, ThemeData, StoreData, ProductData, CategoryData } from "@/providers/tenant-provider";
@@ -13,8 +13,10 @@ import {
   duplicateSection,
   openSectionLibrary,
   removeSection,
+  setActiveRightTab,
   setActiveTab,
   setHoveredSection,
+  setRightPanelOpen,
   setSelectedSection,
   toggleSection,
   toggleSectionLock,
@@ -61,11 +63,14 @@ export function StorePreview({ store, theme, products = [], categories = [], set
   const footerSettings = useSelector((s: RootState) => s.builder.footerSettings);
 
   const selectedSection = useSelector((s: RootState) => {
-    const zone = s.builder.editingZone;
-    const list = zone === "header" ? s.builder.headerSections : zone === "footer" ? s.builder.footerSections : s.builder.sections;
-    return list.find((section) => section.id === selectedSectionId);
+    if (!selectedSectionId) return undefined;
+    return (
+      s.builder.sections.find((section) => section.id === selectedSectionId)
+      ?? s.builder.headerSections.find((section) => section.id === selectedSectionId)
+      ?? s.builder.footerSections.find((section) => section.id === selectedSectionId)
+    );
   });
-  const previewWidth = device === "mobile" ? 390 : device === "tablet" ? 820 : device === "laptop" ? 1024 : 1280;
+  const previewWidth = device === "mobile" ? 375 : device === "tablet" ? 768 : device === "laptop" ? 1280 : 1440;
   const [quickEditMode, setQuickEditMode] = useState<QuickEditMode | null>(null);
   const [quickEditAnchor, setQuickEditAnchor] = useState<QuickEditAnchor | null>(null);
   const canvasScrollerRef = useRef<HTMLDivElement>(null);
@@ -77,6 +82,22 @@ export function StorePreview({ store, theme, products = [], categories = [], set
       el.removeAttribute("data-quick-edit-anchor");
     });
   }, []);
+
+  const selectCanvasSection = useCallback((sectionId: string) => {
+    dispatch(setSelectedSection(sectionId));
+    dispatch(setActiveRightTab("content"));
+    dispatch(setRightPanelOpen(true));
+  }, [dispatch]);
+
+  const prevSelectedSectionIdRef = useRef<string | null>(selectedSectionId);
+  useEffect(() => {
+    if (prevSelectedSectionIdRef.current !== selectedSectionId) {
+      if (prevSelectedSectionIdRef.current !== null) {
+        closeQuickEdit();
+      }
+      prevSelectedSectionIdRef.current = selectedSectionId;
+    }
+  }, [selectedSectionId, closeQuickEdit]);
 
   const openQuickEdit = useCallback((payload: {
     sectionId: string;
@@ -249,7 +270,7 @@ export function StorePreview({ store, theme, products = [], categories = [], set
               sections={zoneSections}
               selectedSectionId={selectedSectionId}
               hoveredSectionId={hoveredSectionId}
-              onSelectSection={(sectionId) => dispatch(setSelectedSection(sectionId))}
+              onSelectSection={selectCanvasSection}
               onHoverSection={(sectionId) => dispatch(setHoveredSection(sectionId))}
               onQuickEditRequest={openQuickEdit}
               onQuickEditDismiss={closeQuickEdit}
@@ -283,7 +304,7 @@ export function StorePreview({ store, theme, products = [], categories = [], set
             sections={activeNavSections}
             selectedSectionId={selectedSectionId}
             hoveredSectionId={hoveredSectionId}
-            onSelectSection={(sectionId) => dispatch(setSelectedSection(sectionId))}
+            onSelectSection={selectCanvasSection}
             onHoverSection={(sectionId) => dispatch(setHoveredSection(sectionId))}
             onQuickEditRequest={openQuickEdit}
             onQuickEditDismiss={closeQuickEdit}

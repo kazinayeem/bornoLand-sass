@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { connectDatabase } from "../../common/database/connection.js";
 import { OrderModel } from "../../models/order.model.js";
 import { StoreModel } from "../../models/store.model.js";
@@ -95,8 +96,11 @@ export async function generateOrderInvoice(params: {
 
     if (!order.invoiceNumber) {
       order.invoiceNumber = generateInvoiceNumber(storeSettings?.invoicePrefix ?? "INV");
-      await order.save();
     }
+    if (!order.verificationToken) {
+      order.verificationToken = crypto.randomBytes(16).toString("hex");
+    }
+    await order.save();
 
     if (!brandingLogo.buffer) {
       console.warn("[orders] Store branding logo unresolved; invoice will use initials", {
@@ -116,6 +120,9 @@ export async function generateOrderInvoice(params: {
       };
     }
 
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
+    const verificationUrl = `${appUrl}/invoice/verify/${order.verificationToken}`;
+
     const buffer = await generateOrderInvoicePdf({
       order: orderObject as never,
       store: {
@@ -132,7 +139,7 @@ export async function generateOrderInvoice(params: {
       storeContact: storeContact as never,
       storeSettings: storeSettings as never,
       storeLogoBuffer: brandingLogo.buffer,
-      verificationUrl: params.verificationUrl,
+      verificationUrl,
     });
 
     return {
@@ -140,6 +147,7 @@ export async function generateOrderInvoice(params: {
       buffer,
       filename: `invoice-${order.invoiceNumber}.pdf`,
       order: order.toObject(),
+      verificationToken: order.verificationToken,
     };
   } catch (error) {
     console.error("[orders] Failed to generate order invoice", error);

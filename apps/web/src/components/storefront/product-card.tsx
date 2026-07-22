@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/format-currency";
 import { getProductImageUrl } from "@/lib/product-media";
 import { SmartImage } from "@/components/ui/smart-image";
+import { getContrastColor } from "@/lib/color-utils";
 import { useStorefrontSurface } from "./storefront-ui";
 import { cn } from "@/lib/utils";
 
@@ -181,7 +182,7 @@ export function ProductCard({ product, badge }: ProductCardProps) {
             {badge && <div className="absolute right-2 top-2">{badge}</div>}
           </div>
 
-          <h3 className={cn("truncate text-body-strong", classes.heading)}>{product.name}</h3>
+          <h3 className={cn("line-clamp-2 min-h-[2.75rem] text-body-strong leading-snug", classes.heading)}>{product.name}</h3>
 
           <div className="mt-1.5 flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((s) => (
@@ -239,8 +240,8 @@ export function ProductCard({ product, badge }: ProductCardProps) {
             type="button"
             onClick={handleAddToCart}
             disabled={adding}
-            className="btn-press relative z-[3] mt-3 flex w-full items-center justify-center gap-1.5 rounded-apple-pill py-2.5 text-caption font-semibold text-apple-on-primary transition-opacity hover:opacity-90 disabled:opacity-60"
-            style={{ backgroundColor: primaryColor }}
+            className="btn-press relative z-[3] mt-3 flex w-full items-center justify-center gap-1.5 rounded-apple-pill py-2.5 text-caption font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+            style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
           >
             <ShoppingCart className="h-3.5 w-3.5" />
             {adding ? "Adding…" : "Add to Cart"}

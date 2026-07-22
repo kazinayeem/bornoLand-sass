@@ -2,7 +2,8 @@
 
 import { createContext, useContext } from "react";
 import { StoreLink } from "@/components/storefront/store-link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { isInternalHref, resolveStoreHref } from "@/lib/store-href";
 
 type BuilderContextValue = {
   isBuilder: boolean;
@@ -30,17 +31,15 @@ type BuilderLinkProps = {
   onMouseEnter?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   onMouseLeave?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+  target?: string;
+  rel?: string;
   [key: string]: unknown;
 };
 
 /**
- * Mode-aware link component for builder sections.
- *
- * Builder mode: renders as <span> (selectable for editing).
- *   - Ctrl/Cmd + Click navigates via router.push()
- *   - Normal click does nothing (section selection handled by canvas)
- *
- * Preview/Live mode: renders as StoreLink (normal navigation).
+ * Mode-aware link for builder sections.
+ * Live/preview without BuilderProvider: normal StoreLink navigation.
+ * Builder edit mode: navigates via router while keeping section editable.
  */
 export function BuilderLink({
   href,
@@ -50,10 +49,13 @@ export function BuilderLink({
   onMouseEnter,
   onMouseLeave,
   onClick,
+  target,
+  rel,
   ...rest
 }: BuilderLinkProps) {
   const isBuilder = useIsBuilderContext();
   const router = useRouter();
+  const pathname = usePathname() || "";
 
   if (!isBuilder) {
     return (
@@ -64,6 +66,8 @@ export function BuilderLink({
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onClick={onClick}
+        target={target}
+        rel={rel}
         {...rest}
       >
         {children}
@@ -71,26 +75,46 @@ export function BuilderLink({
     );
   }
 
-  // Builder mode: render as span, allow Ctrl/Cmd+Click to navigate
-  const handleClick = (e: React.MouseEvent<HTMLSpanElement>) => {
-    if (e.metaKey || e.ctrlKey) {
-      e.preventDefault();
-      router.push(href);
+  const resolvedHref = href && href !== "#" && isInternalHref(href)
+    ? resolveStoreHref(href, pathname)
+    : href;
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement | HTMLSpanElement>) => {
+    e.stopPropagation();
+    if (!href || href === "#") return;
+
+    if (target === "_blank" || e.metaKey || e.ctrlKey) {
+      if (!isInternalHref(href)) {
+        window.open(href, "_blank", "noopener,noreferrer");
+      } else {
+        window.open(resolvedHref, "_blank", "noopener,noreferrer");
+      }
+      onClick?.(e as React.MouseEvent<HTMLAnchorElement>);
+      return;
     }
-    onClick?.(e as unknown as React.MouseEvent<HTMLAnchorElement>);
+
+    if (isInternalHref(href)) {
+      router.push(resolvedHref);
+    } else {
+      window.location.href = href;
+    }
+    onClick?.(e as React.MouseEvent<HTMLAnchorElement>);
   };
 
   return (
-    <span
+    <a
+      href={resolvedHref || href || "#"}
       className={className}
-      style={{ ...style, cursor: "default" }}
+      style={style}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onClick={handleClick}
-      {...rest as Record<string, unknown>}
+      target={target}
+      rel={rel}
+      {...(rest as Record<string, unknown>)}
     >
       {children}
-    </span>
+    </a>
   );
 }
 
@@ -105,9 +129,6 @@ type BuilderIconButtonProps = {
 
 /**
  * Mode-aware icon button for builder sections (search, wishlist, cart, account).
- *
- * Builder mode: renders as <span> (selectable for editing).
- * Preview/Live mode: renders as clickable link or button.
  */
 export function BuilderIconButton({
   href,
@@ -119,6 +140,7 @@ export function BuilderIconButton({
 }: BuilderIconButtonProps) {
   const isBuilder = useIsBuilderContext();
   const router = useRouter();
+  const pathname = usePathname() || "";
 
   if (!isBuilder) {
     if (href) {
@@ -146,23 +168,43 @@ export function BuilderIconButton({
     );
   }
 
-  // Builder mode: render as span
-  const handleClick = (e: React.MouseEvent<HTMLSpanElement>) => {
-    if ((e.metaKey || e.ctrlKey) && href) {
-      e.preventDefault();
-      router.push(href);
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
+    e.stopPropagation();
+    if (onClick) {
+      onClick();
+      return;
+    }
+    if (href && href !== "#") {
+      const resolved = isInternalHref(href) ? resolveStoreHref(href, pathname) : href;
+      if (isInternalHref(href)) router.push(resolved);
+      else window.location.href = href;
     }
   };
 
+  if (href) {
+    const resolved = isInternalHref(href) ? resolveStoreHref(href, pathname) : href;
+    return (
+      <a
+        href={resolved}
+        className={className}
+        style={style}
+        onClick={handleClick}
+        aria-label={ariaLabel}
+      >
+        {children}
+      </a>
+    );
+  }
+
   return (
-    <span
+    <button
       className={className}
-      style={{ ...style, cursor: "default" }}
+      style={style}
       onClick={handleClick}
-      role="button"
       aria-label={ariaLabel}
+      type="button"
     >
       {children}
-    </span>
+    </button>
   );
 }

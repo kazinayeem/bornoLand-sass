@@ -47,6 +47,7 @@ import { builderTemplateRouter } from "./modules/builder/builder-template.route.
 import { getUploadRoot } from "./modules/media/providers/local-storage.provider.js";
 import { subdomainDetector } from "./common/middleware/subdomain.middleware.js";
 import { globalRateLimit, authRateLimit, analyticsTrackRateLimit, newsletterRateLimit } from "./common/middleware/rate-limit.middleware.js";
+import { storeEmailRouter } from "./modules/email/store-email.route.js";
 import { errorHandler, notFoundHandler } from "./common/middleware/error.middleware.js";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -187,6 +188,7 @@ app.use("/audit", auditRouter);
 app.use("/analytics", analyticsRouter);
 app.use("/admin/analytics", adminAnalyticsRouter);
 app.use("/reports", reportRouter);
+app.use("/stores", storeEmailRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

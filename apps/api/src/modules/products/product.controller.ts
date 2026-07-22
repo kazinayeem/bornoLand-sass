@@ -14,7 +14,7 @@ import { computeChanges } from "../audit/audit.utils.js";
 
 export async function listProductsController(request: AuthRequest, response: Response) {
   const storeId = request.params.storeId as string;
-  const result = await getProducts(storeId);
+  const result = await getProducts(storeId, request.query as Record<string, unknown>);
   return sendSuccess(response, result.data);
 }
 

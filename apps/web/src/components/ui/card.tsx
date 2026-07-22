@@ -6,7 +6,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        "rounded-lg border border-apple-hairline bg-apple-canvas text-apple-ink transition-colors duration-200 dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2 dark:text-apple-body-on-dark",
+        "rounded-lg border border-border bg-card text-card-foreground transition-colors duration-200",
         className
       )}
       {...props}
@@ -27,7 +27,7 @@ const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTML
     <h3
       ref={ref}
       className={cn(
-        "text-body-strong text-apple-ink dark:text-apple-body-on-dark",
+        "text-body-strong text-card-foreground",
         className
       )}
       {...props}
@@ -42,7 +42,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-caption text-apple-ink-muted-48 dark:text-apple-body-muted", className)}
+    className={cn("text-caption text-card-foreground/60", className)}
     {...props}
   />
 ));

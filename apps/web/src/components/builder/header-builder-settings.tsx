@@ -114,6 +114,19 @@ export function HeaderBuilderSettings() {
         {/* Layout */}
         <Section label="Layout">
           <SelectInput
+            label="Header Position"
+            value={headerSettings.position ?? (headerSettings.sticky === false ? "static" : "sticky")}
+            onChange={(v) => {
+              update("position", v);
+              update("sticky", v === "sticky" || v === "fixed");
+            }}
+            options={[
+              { value: "static", label: "Static" },
+              { value: "sticky", label: "Sticky (Default)" },
+              { value: "fixed", label: "Fixed" },
+            ]}
+          />
+          <SelectInput
             label="Desktop Layout"
             value={headerSettings.desktopLayout ?? "logo_left"}
             onChange={(v) => update("desktopLayout", v)}
@@ -134,16 +147,134 @@ export function HeaderBuilderSettings() {
             ]}
           />
           <TextInput
-            label="Height"
+            label="Desktop Height"
             value={headerSettings.height ?? ""}
             onChange={(v) => update("height", v)}
-            placeholder="64px"
+            placeholder="80"
           />
           <TextInput
-            label="Padding"
+            label="Tablet Height"
+            value={headerSettings.tabletHeight ?? ""}
+            onChange={(v) => update("tabletHeight", v)}
+            placeholder="72"
+          />
+          <TextInput
+            label="Mobile Height"
+            value={headerSettings.mobileHeight ?? ""}
+            onChange={(v) => update("mobileHeight", v)}
+            placeholder="64"
+          />
+          <TextInput
+            label="Desktop Padding"
             value={headerSettings.padding ?? ""}
             onChange={(v) => update("padding", v)}
+            placeholder="0 32px"
+          />
+          <TextInput
+            label="Tablet Padding"
+            value={headerSettings.tabletPadding ?? ""}
+            onChange={(v) => update("tabletPadding", v)}
             placeholder="0 24px"
+          />
+          <TextInput
+            label="Mobile Padding"
+            value={headerSettings.mobilePadding ?? ""}
+            onChange={(v) => update("mobilePadding", v)}
+            placeholder="0 16px"
+          />
+          <TextInput
+            label="Desktop Container Width"
+            value={headerSettings.containerWidth ?? ""}
+            onChange={(v) => update("containerWidth", v)}
+            placeholder="1440px"
+          />
+          <TextInput
+            label="Tablet Container Width"
+            value={headerSettings.tabletContainerWidth ?? ""}
+            onChange={(v) => update("tabletContainerWidth", v)}
+            placeholder="100%"
+          />
+          <TextInput
+            label="Mobile Container Width"
+            value={headerSettings.mobileContainerWidth ?? ""}
+            onChange={(v) => update("mobileContainerWidth", v)}
+            placeholder="100%"
+          />
+        </Section>
+
+        {/* Logo */}
+        <Section label="Logo & Store Name">
+          <TextInput
+            label="Desktop Logo Width"
+            value={String(headerSettings.logoWidth ?? "")}
+            onChange={(v) => update("logoWidth", v)}
+            placeholder="40"
+          />
+          <TextInput
+            label="Tablet Logo Width"
+            value={headerSettings.tabletLogoWidth ?? ""}
+            onChange={(v) => update("tabletLogoWidth", v)}
+            placeholder="36"
+          />
+          <TextInput
+            label="Mobile Logo Width"
+            value={headerSettings.mobileLogoWidth ?? ""}
+            onChange={(v) => update("mobileLogoWidth", v)}
+            placeholder="32"
+          />
+          <TextInput
+            label="Desktop Logo Height"
+            value={String(headerSettings.logoHeight ?? "")}
+            onChange={(v) => update("logoHeight", v)}
+            placeholder="40"
+          />
+          <TextInput
+            label="Tablet Logo Height"
+            value={headerSettings.tabletLogoHeight ?? ""}
+            onChange={(v) => update("tabletLogoHeight", v)}
+            placeholder="36"
+          />
+          <TextInput
+            label="Mobile Logo Height"
+            value={headerSettings.mobileLogoHeight ?? ""}
+            onChange={(v) => update("mobileLogoHeight", v)}
+            placeholder="32"
+          />
+          <TextInput
+            label="Desktop Store Name Size"
+            value={headerSettings.storeNameFontSize ?? ""}
+            onChange={(v) => update("storeNameFontSize", v)}
+            placeholder="18"
+          />
+          <TextInput
+            label="Tablet Store Name Size"
+            value={headerSettings.tabletStoreNameFontSize ?? ""}
+            onChange={(v) => update("tabletStoreNameFontSize", v)}
+            placeholder="17"
+          />
+          <TextInput
+            label="Mobile Store Name Size"
+            value={headerSettings.mobileStoreNameFontSize ?? ""}
+            onChange={(v) => update("mobileStoreNameFontSize", v)}
+            placeholder="16"
+          />
+          <TextInput
+            label="Desktop Logo / Name Gap"
+            value={headerSettings.logoTextGap ?? ""}
+            onChange={(v) => update("logoTextGap", v)}
+            placeholder="10"
+          />
+          <TextInput
+            label="Tablet Logo / Name Gap"
+            value={headerSettings.tabletLogoTextGap ?? ""}
+            onChange={(v) => update("tabletLogoTextGap", v)}
+            placeholder="8"
+          />
+          <TextInput
+            label="Mobile Logo / Name Gap"
+            value={headerSettings.mobileLogoTextGap ?? ""}
+            onChange={(v) => update("mobileLogoTextGap", v)}
+            placeholder="8"
           />
         </Section>
 
@@ -158,6 +289,16 @@ export function HeaderBuilderSettings() {
             label="Border Color"
             value={headerSettings.borderColor ?? ""}
             onChange={(v) => update("borderColor", v)}
+          />
+          <ColorInput
+            label="Text Color"
+            value={headerSettings.textColor ?? ""}
+            onChange={(v) => update("textColor", v)}
+          />
+          <ColorInput
+            label="Hover Color"
+            value={headerSettings.hoverColor ?? ""}
+            onChange={(v) => update("hoverColor", v)}
           />
           <SelectInput
             label="Shadow"
@@ -175,14 +316,29 @@ export function HeaderBuilderSettings() {
         {/* Behavior */}
         <Section label="Behavior" defaultOpen={true}>
           <Toggle
-            label="Sticky Header"
-            value={headerSettings.sticky ?? false}
-            onChange={(v) => update("sticky", v)}
-          />
-          <Toggle
             label="Transparent"
             value={headerSettings.transparent ?? false}
             onChange={(v) => update("transparent", v)}
+          />
+          <Toggle
+            label="Blur Background"
+            value={headerSettings.blurBackground ?? false}
+            onChange={(v) => update("blurBackground", v)}
+          />
+          <Toggle
+            label="Shadow on Scroll"
+            value={headerSettings.shadowOnScroll !== false}
+            onChange={(v) => update("shadowOnScroll", v)}
+          />
+          <Toggle
+            label="Border Bottom"
+            value={headerSettings.borderBottom ?? false}
+            onChange={(v) => update("borderBottom", v)}
+          />
+          <Toggle
+            label="Auto Hide on Scroll Down"
+            value={headerSettings.autoHideOnScroll ?? false}
+            onChange={(v) => update("autoHideOnScroll", v)}
           />
         </Section>
 
@@ -217,6 +373,66 @@ export function HeaderBuilderSettings() {
             label="Currency Switcher"
             value={headerSettings.showCurrencySwitcher ?? false}
             onChange={(v) => update("showCurrencySwitcher", v)}
+          />
+          <TextInput
+            label="Desktop Menu Gap"
+            value={headerSettings.menuGap ?? ""}
+            onChange={(v) => update("menuGap", v)}
+            placeholder="32"
+          />
+          <TextInput
+            label="Tablet Menu Gap"
+            value={headerSettings.tabletMenuGap ?? ""}
+            onChange={(v) => update("tabletMenuGap", v)}
+            placeholder="24"
+          />
+          <TextInput
+            label="Mobile Menu Gap"
+            value={headerSettings.mobileMenuGap ?? ""}
+            onChange={(v) => update("mobileMenuGap", v)}
+            placeholder="16"
+          />
+          <TextInput
+            label="Desktop Nav Font Size"
+            value={headerSettings.navFontSize ?? ""}
+            onChange={(v) => update("navFontSize", v)}
+            placeholder="16"
+          />
+          <TextInput
+            label="Tablet Nav Font Size"
+            value={headerSettings.tabletNavFontSize ?? ""}
+            onChange={(v) => update("tabletNavFontSize", v)}
+            placeholder="15"
+          />
+          <TextInput
+            label="Mobile Nav Font Size"
+            value={headerSettings.mobileNavFontSize ?? ""}
+            onChange={(v) => update("mobileNavFontSize", v)}
+            placeholder="15"
+          />
+          <TextInput
+            label="Desktop Icon Size"
+            value={headerSettings.iconSize ?? ""}
+            onChange={(v) => update("iconSize", v)}
+            placeholder="24"
+          />
+          <TextInput
+            label="Tablet Icon Size"
+            value={headerSettings.tabletIconSize ?? ""}
+            onChange={(v) => update("tabletIconSize", v)}
+            placeholder="22"
+          />
+          <TextInput
+            label="Mobile Icon Size"
+            value={headerSettings.mobileIconSize ?? ""}
+            onChange={(v) => update("mobileIconSize", v)}
+            placeholder="20"
+          />
+          <TextInput
+            label="Button Radius"
+            value={headerSettings.buttonRadius ?? ""}
+            onChange={(v) => update("buttonRadius", v)}
+            placeholder="999px"
           />
         </Section>
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Send, Check, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { getContrastColor } from "@/lib/color-utils";
 import { useTenant } from "@/providers/tenant-provider";
 import type { StorefrontSectionLike } from "./storefront-types";
 
@@ -90,8 +91,8 @@ export function NewsletterSection({ section }: { section?: StorefrontSectionLike
                   onFocus={(e) => e.target.style.borderColor = primaryColor}
                   onBlur={(e) => e.target.style.borderColor = `${primaryColor}30`} />
                 <button type="submit" disabled={loading}
-                  className="flex h-12 items-center gap-2 px-6 text-sm font-medium text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-                  style={{ borderRadius: buttonStyle, backgroundColor: primaryColor }}>
+                  className="flex h-12 items-center gap-2 px-6 text-sm font-medium transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+                  style={{ borderRadius: buttonStyle, backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}>
                   <Send className="h-4 w-4" /> {loading ? "..." : buttonText}
                 </button>
               </form>

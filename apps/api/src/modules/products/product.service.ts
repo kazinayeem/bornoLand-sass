@@ -1,4 +1,10 @@
 import mongoose from "mongoose";
+import {
+  parseListQuery,
+  paginatedResponse,
+  buildTextSearchFilter,
+  type ListQueryParams,
+} from "../../common/utils/pagination.js";
 import { connectDatabase } from "../../common/database/connection.js";
 import { ProductModel } from "../../models/product.model.js";
 import { StoreModel } from "../../models/store.model.js";
@@ -93,11 +99,106 @@ async function syncProductMediaReferences(
   await syncEntityMediaReferences(storeId, "product", productId, refs);
 }
 
-export async function getProducts(storeId: string) {
+function buildProductListFilter(storeId: string, query: ListQueryParams) {
+  const clauses: Record<string, unknown>[] = [{ storeId }];
+
+  const textFilter = buildTextSearchFilter(query.search, ["name", "slug", "sku", "brand", "category", "description"]);
+  if (textFilter?.$or) clauses.push({ $or: textFilter.$or });
+
+  if (query.status) clauses.push({ status: query.status });
+  if (query.category) {
+    clauses.push({
+      $or: [
+        { category: query.category },
+        ...(mongoose.Types.ObjectId.isValid(query.category)
+          ? [{ categoryIds: new mongoose.Types.ObjectId(query.category) }]
+          : []),
+      ],
+    });
+  }
+  if (query.brand) clauses.push({ brand: query.brand });
+  if (query.featured === "true") clauses.push({ featured: true });
+  if (query.featured === "false") clauses.push({ featured: false });
+  if (query.stockStatus === "in") clauses.push({ stock: { $gt: 0 } });
+  if (query.stockStatus === "out") clauses.push({ stock: { $lte: 0 } });
+  if (query.priceMin !== undefined || query.priceMax !== undefined) {
+    clauses.push({
+      price: {
+        ...(query.priceMin !== undefined ? { $gte: query.priceMin } : {}),
+        ...(query.priceMax !== undefined ? { $lte: query.priceMax } : {}),
+      },
+    });
+  }
+
+  return clauses.length === 1 ? clauses[0] : { $and: clauses };
+}
+
+export async function getProducts(storeId: string, query: Record<string, unknown> = {}) {
   await connectDatabase();
-  const products = await ProductModel.find({ storeId }).sort({ createdAt: -1 }).lean();
+  const params = parseListQuery(query);
+  const filter = buildProductListFilter(storeId, params);
+
+  const [products, total] = await Promise.all([
+    ProductModel.find(filter)
+      .sort(params.sort ?? { createdAt: -1 })
+      .skip(params.skip)
+      .limit(params.limit)
+      .lean(),
+    ProductModel.countDocuments(filter),
+  ]);
+
   const enriched = await Promise.all(products.map((p) => attachProductVariantSummary(p as Record<string, unknown>)));
-  return { ok: true as const, data: { products: enriched } };
+  const paginated = paginatedResponse(enriched, total, params);
+
+  return {
+    ok: true as const,
+    data: {
+      products: paginated.data,
+      pagination: paginated.pagination,
+      total,
+      page: params.page,
+      limit: params.limit,
+      totalPages: paginated.pagination.totalPages,
+    },
+  };
+}
+
+export async function getPublicProducts(storeId: string, query: Record<string, unknown> = {}) {
+  await connectDatabase();
+  const params = parseListQuery({
+    status: "active",
+    sortBy: "createdAt",
+    sortOrder: "desc",
+    ...query,
+  });
+  const filter = buildProductListFilter(storeId, {
+    ...params,
+    status: "active",
+  });
+
+  const [products, total] = await Promise.all([
+    ProductModel.find(filter)
+      .sort(params.sort ?? { createdAt: -1 })
+      .skip(params.skip)
+      .limit(params.limit)
+      .lean(),
+    ProductModel.countDocuments(filter),
+  ]);
+
+  const enriched = await Promise.all(products.map((p) => attachProductVariantSummary(p as Record<string, unknown>)));
+  const paginated = paginatedResponse(enriched, total, params);
+
+  return {
+    ok: true as const,
+    data: {
+      products: paginated.data,
+      pagination: paginated.pagination,
+      total,
+      page: params.page,
+      limit: params.limit,
+      totalPages: paginated.pagination.totalPages,
+    },
+  };
 }
 
 export async function getProduct(productId: string) {

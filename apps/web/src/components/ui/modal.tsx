@@ -82,7 +82,7 @@ export function Modal({
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
             className={cn(
-              "relative flex max-h-[90vh] w-full flex-col rounded-lg border border-apple-hairline bg-apple-canvas dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2",
+              "relative flex max-h-[90vh] w-full flex-col rounded-lg border border-border bg-card",
               sizeClasses[size],
               className
             )}
@@ -95,17 +95,17 @@ export function Modal({
                 className={cn(
                   "flex items-start justify-between gap-4 p-apple-lg pb-4",
                   stickyHeader &&
-                    "sticky top-0 z-10 rounded-t-lg border-b border-apple-divider-soft bg-apple-canvas dark:bg-apple-surface-tile-2"
+                    "sticky top-0 z-10 rounded-t-lg border-b border-border bg-card"
                 )}
               >
                 <div className="min-w-0 flex-1">
                   {title && (
-                    <h2 className="text-body-strong text-apple-ink dark:text-apple-body-on-dark">
+                    <h2 className="text-body-strong text-card-foreground">
                       {title}
                     </h2>
                   )}
                   {description && (
-                    <p className="mt-1 text-caption text-apple-ink-muted-48 dark:text-apple-body-muted">
+                    <p className="mt-1 text-caption text-muted-foreground">
                       {description}
                     </p>
                   )}
@@ -114,7 +114,7 @@ export function Modal({
                   <button
                     onClick={onClose}
                     disabled={loading}
-                    className="btn-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-apple-surface-chip/64 text-apple-ink transition-colors hover:bg-apple-surface-chip disabled:opacity-40 dark:text-apple-body-on-dark"
+                    className="btn-press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-border disabled:opacity-40"
                     aria-label="Close modal"
                   >
                     <X className="h-4 w-4" />
@@ -130,7 +130,7 @@ export function Modal({
                 className={cn(
                   "px-apple-lg py-4",
                   stickyFooter &&
-                    "sticky bottom-0 rounded-b-lg border-t border-apple-divider-soft bg-apple-canvas dark:bg-apple-surface-tile-2"
+                    "sticky bottom-0 rounded-b-lg border-t border-border bg-card"
                 )}
               >
                 {footer}

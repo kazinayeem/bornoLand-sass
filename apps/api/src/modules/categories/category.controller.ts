@@ -7,7 +7,7 @@ import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 
 export async function listCategoriesController(request: AuthRequest, response: Response) {
   const storeId = request.params.storeId as string;
-  const result = await getCategories(storeId);
+  const result = await getCategories(storeId, request.query as Record<string, unknown>);
   return sendSuccess(response, result.data);
 }
 

@@ -85,11 +85,17 @@ const orderSchema = new Schema(
     shippingAddress: {
       fullName: { type: String, required: true },
       phone: { type: String, required: true },
+      email: { type: String, default: "" },
+      label: { type: String, default: "Home" },
+      area: { type: String, default: "" },
       street: { type: String, required: true },
+      apartment: { type: String, default: "" },
       city: { type: String, required: true },
       state: { type: String, default: "" },
       zip: { type: String, default: "" },
       country: { type: String, default: "US" },
+      landmark: { type: String, default: "" },
+      orderNotes: { type: String, default: "" },
     },
     paymentMethod: { type: String, default: "cod" },
     paymentStatus: {
@@ -107,6 +113,7 @@ const orderSchema = new Schema(
     orderNumber: { type: String, unique: true },
     currencyCode: { type: String, enum: ["USD", "BDT", "EUR", "INR", "GBP"], default: "USD" },
     invoiceNumber: { type: String, default: "" },
+    verificationToken: { type: String, unique: true, sparse: true },
   },
   { timestamps: true }
 );

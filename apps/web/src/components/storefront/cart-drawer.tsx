@@ -105,7 +105,7 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                         <div className="flex flex-1 flex-col justify-between">
                           <div className="flex justify-between">
                             <div>
-                              <p className="max-w-[180px] truncate text-caption font-medium text-apple-ink">{item.name}</p>
+                              <p className="line-clamp-2 text-caption font-medium text-apple-ink">{item.name}</p>
                               {item.variantTitle && (
                                 <p className="text-fine-print text-apple-ink-muted-48">{item.variantTitle}</p>
                               )}
@@ -114,9 +114,9 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                               type="button"
                               onClick={() => handleRemove(item.productId, item.variantId)}
                               aria-label={`Remove ${item.name}`}
-                              className="text-apple-ink-muted-48 transition-colors hover:text-red-500"
+                              className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center text-apple-ink-muted-48 transition-colors hover:text-red-500"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
                           <p className="text-caption font-semibold text-apple-primary" style={{ color: primaryColor }}>
@@ -128,7 +128,7 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                               onClick={() => handleQuantity(item.productId, item.variantId, item.quantity - 1)}
                               aria-label="Decrease quantity"
                               className={cn(
-                                "flex h-6 w-6 items-center justify-center rounded-apple-xs border text-apple-ink-muted-48",
+                                "flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-apple-xs border text-apple-ink-muted-48",
                                 classes.divider
                               )}
                             >
@@ -142,7 +142,7 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                               onClick={() => handleQuantity(item.productId, item.variantId, item.quantity + 1)}
                               aria-label="Increase quantity"
                               className={cn(
-                                "flex h-6 w-6 items-center justify-center rounded-apple-xs border text-apple-ink-muted-48",
+                                "flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-apple-xs border text-apple-ink-muted-48",
                                 classes.divider
                               )}
                             >

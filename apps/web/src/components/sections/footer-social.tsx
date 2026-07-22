@@ -1,13 +1,12 @@
 "use client";
 
 import { SectionWrapper, type SectionData } from "./section-renderer";
-import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
+import { FooterSocialLinks } from "@/components/storefront/footer-social-links";
+import { useFooterData } from "@/lib/storefront/use-footer-data";
 
 export function FooterSocial({ section }: { section: SectionData }) {
   const p = section.props;
-  const iconColor = p.iconColor || "#71717a";
-  const iconSize = parseInt(p.iconSize || "18");
-  const hoverColor = p.hoverColor || "#2563eb";
+  const { data } = useFooterData({ sectionType: "footer-social" });
   const label = p.label || "Follow Us";
 
   return (
@@ -18,40 +17,11 @@ export function FooterSocial({ section }: { section: SectionData }) {
             {label}
           </p>
         )}
-        <div className="flex items-center gap-3">
-          {p.showFacebook !== "false" && (
-            <Facebook
-              style={{ color: iconColor, width: iconSize, height: iconSize }}
-              className="cursor-pointer transition-colors"
-              onMouseEnter={(e) => { e.currentTarget.style.color = hoverColor; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = iconColor; }}
-            />
-          )}
-          {p.showTwitter !== "false" && (
-            <Twitter
-              style={{ color: iconColor, width: iconSize, height: iconSize }}
-              className="cursor-pointer transition-colors"
-              onMouseEnter={(e) => { e.currentTarget.style.color = hoverColor; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = iconColor; }}
-            />
-          )}
-          {p.showInstagram !== "false" && (
-            <Instagram
-              style={{ color: iconColor, width: iconSize, height: iconSize }}
-              className="cursor-pointer transition-colors"
-              onMouseEnter={(e) => { e.currentTarget.style.color = hoverColor; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = iconColor; }}
-            />
-          )}
-          {p.showYoutube !== "false" && (
-            <Youtube
-              style={{ color: iconColor, width: iconSize, height: iconSize }}
-              className="cursor-pointer transition-colors"
-              onMouseEnter={(e) => { e.currentTarget.style.color = hoverColor; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = iconColor; }}
-            />
-          )}
-        </div>
+        <FooterSocialLinks
+          links={data.socialLinks}
+          style="minimal"
+          iconClassName="!h-auto !w-auto"
+        />
       </div>
     </SectionWrapper>
   );

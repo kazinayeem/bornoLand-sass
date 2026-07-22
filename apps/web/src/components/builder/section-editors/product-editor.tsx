@@ -55,11 +55,31 @@ export function ProductSectionEditor({
         <Field label="Max products">
           <TextField value={p.productCount ?? "8"} onChange={(v) => onPropChange("productCount", v)} placeholder="8" />
         </Field>
+        {section.type === "product-grid" && (
+          <>
+            <Field label="Pagination mode">
+              <SelectField
+                value={p.paginationMode ?? "pages"}
+                onChange={(v) => onPropChange("paginationMode", v)}
+                options={[
+                  { value: "pages", label: "Page numbers" },
+                  { value: "load-more", label: "Load more" },
+                  { value: "infinite", label: "Infinite scroll" },
+                ]}
+              />
+            </Field>
+            <ToggleField label="Show pagination" value={p.showPagination ?? "true"} onChange={(v) => onPropChange("showPagination", v)} />
+            <ToggleField label="Rows per page" value={p.allowRowsPerPage ?? "false"} onChange={(v) => onPropChange("allowRowsPerPage", v)} />
+          </>
+        )}
         {p.gridColumns !== undefined && (
           <Field label="Columns">
             <SelectField
-              value={p.gridColumns || "4"}
-              onChange={(v) => onPropChange("gridColumns", v)}
+              value={p.desktopColumns || p.gridColumns || "4"}
+              onChange={(v) => {
+                onPropChange("gridColumns", v);
+                onPropChange("desktopColumns", v);
+              }}
               options={[
                 { value: "2", label: "2" },
                 { value: "3", label: "3" },
@@ -68,6 +88,31 @@ export function ProductSectionEditor({
               ]}
             />
           </Field>
+        )}
+        {section.type === "product-grid" && (
+          <>
+            <Field label="Tablet columns">
+              <SelectField
+                value={p.tabletColumns || "2"}
+                onChange={(v) => onPropChange("tabletColumns", v)}
+                options={[
+                  { value: "1", label: "1" },
+                  { value: "2", label: "2" },
+                  { value: "3", label: "3" },
+                ]}
+              />
+            </Field>
+            <Field label="Mobile columns">
+              <SelectField
+                value={p.mobileColumns || "1"}
+                onChange={(v) => onPropChange("mobileColumns", v)}
+                options={[
+                  { value: "1", label: "1" },
+                  { value: "2", label: "2" },
+                ]}
+              />
+            </Field>
+          </>
         )}
         <ToggleField label="Show badges" value={p.showBadges ?? "true"} onChange={(v) => onPropChange("showBadges", v)} />
         <ToggleField label="Show ratings" value={p.showRatings ?? "true"} onChange={(v) => onPropChange("showRatings", v)} />

@@ -3,6 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useLandingLocale } from "./landing-locale";
+import { landingContainer } from "./landing-ui";
+
+const COPYRIGHT_YEAR = 2026;
 
 export function Footer() {
   const { t } = useLandingLocale();
@@ -43,45 +46,48 @@ export function Footer() {
   ];
 
   return (
-    <footer className="border-t border-apple-hairline bg-apple-canvas-parchment px-4 py-apple-section sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[980px]">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="lg:col-span-1">
-            <Link href="/" className="mb-3 flex items-center gap-2">
+    <footer className="border-t border-apple-hairline bg-apple-canvas-parchment py-16 sm:py-20">
+      <div className={landingContainer}>
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="sm:col-span-2 lg:col-span-2">
+            <Link
+              href="/"
+              className="mb-4 inline-flex items-center gap-2 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-primary"
+            >
               <Image
                 src="/logo.png"
                 alt="BornoLand"
-                width={32}
-                height={32}
+                width={28}
+                height={28}
                 className="h-7 w-7 rounded-sm object-contain"
               />
               <span className="text-caption-strong text-apple-ink">BornoLand</span>
             </Link>
-            <p className="max-w-xs text-fine-print leading-relaxed text-apple-ink-muted-80">{f.tagline}</p>
+            <p className="max-w-xs text-sm leading-relaxed text-apple-ink-muted-80">{f.tagline}</p>
           </div>
 
           {footerLinks.map((group) => (
-            <div key={group.title}>
-              <h4 className="mb-3 text-caption-strong text-apple-ink-muted-80">{group.title}</h4>
-              <ul className="space-y-1">
+            <nav key={group.title} aria-label={group.title}>
+              <h4 className="mb-3 text-caption-strong text-apple-ink">{group.title}</h4>
+              <ul className="space-y-2">
                 {group.links.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-body leading-[2.41] text-apple-ink-muted-80 transition-colors hover:text-apple-primary"
+                      className="inline-block text-sm leading-relaxed text-apple-ink-muted-80 transition-colors hover:text-apple-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-primary"
                     >
                       {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
+            </nav>
           ))}
         </div>
 
-        <div className="mt-10 border-t border-apple-hairline pt-5 text-center">
+        <div className="mt-12 border-t border-apple-hairline pt-6 text-center sm:text-left">
           <p className="text-fine-print text-apple-ink-muted-48">
-            &copy; {new Date().getFullYear()} BornoLand. {f.rights}
+            &copy; {COPYRIGHT_YEAR} BornoLand. {f.rights}
           </p>
         </div>
       </div>

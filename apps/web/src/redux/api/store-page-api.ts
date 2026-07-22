@@ -72,14 +72,49 @@ export type StorePageTheme = {
 
 export type HeaderSettings = {
   logo?: string;
-  logoWidth?: number;
+  logoWidth?: number | string;
+  logoHeight?: number | string;
+  tabletLogoWidth?: string;
+  tabletLogoHeight?: string;
+  mobileLogoWidth?: string;
+  mobileLogoHeight?: string;
+  storeNameFontSize?: string;
+  tabletStoreNameFontSize?: string;
+  mobileStoreNameFontSize?: string;
+  logoTextGap?: string;
+  tabletLogoTextGap?: string;
+  mobileLogoTextGap?: string;
+  position?: "static" | "sticky" | "fixed";
   sticky?: boolean;
   transparent?: boolean;
+  blurBackground?: boolean;
+  shadowOnScroll?: boolean;
+  borderBottom?: boolean;
+  autoHideOnScroll?: boolean;
   height?: string;
+  tabletHeight?: string;
+  mobileHeight?: string;
   background?: string;
+  textColor?: string;
+  hoverColor?: string;
   borderColor?: string;
   shadow?: string;
   padding?: string;
+  tabletPadding?: string;
+  mobilePadding?: string;
+  containerWidth?: string;
+  tabletContainerWidth?: string;
+  mobileContainerWidth?: string;
+  menuGap?: string;
+  tabletMenuGap?: string;
+  mobileMenuGap?: string;
+  navFontSize?: string;
+  tabletNavFontSize?: string;
+  mobileNavFontSize?: string;
+  iconSize?: string;
+  tabletIconSize?: string;
+  mobileIconSize?: string;
+  buttonRadius?: string;
   showSearch?: boolean;
   showWishlist?: boolean;
   showCart?: boolean;
@@ -93,17 +128,28 @@ export type HeaderSettings = {
 };
 
 export type FooterSettings = {
-  logo?: string;
-  description?: string;
+  template?: string;
   showNewsletter?: boolean;
   showSocial?: boolean;
   showPaymentIcons?: boolean;
   showCopyright?: boolean;
-  copyright?: string;
+  showContact?: boolean;
+  showMap?: boolean;
+  showBusinessHours?: boolean;
   columns?: number;
   background?: string;
   textColor?: string;
+  borderColor?: string;
   padding?: string;
+  alignment?: "left" | "center" | "right";
+  divider?: boolean;
+  socialIconStyle?: "filled" | "outline" | "minimal";
+  newsletterPosition?: "top" | "inline" | "bottom";
+  copyrightPosition?: "left" | "center" | "right";
+  mapPosition?: "inline" | "bottom" | "hidden";
+  visibleOnDesktop?: boolean;
+  visibleOnTablet?: boolean;
+  visibleOnMobile?: boolean;
 };
 
 export type StorePage = {

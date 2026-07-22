@@ -344,7 +344,7 @@ export function ProgressModal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="btn-press rounded-pill bg-apple-primary px-[22px] py-[11px] text-body text-apple-on-primary"
+                    className="btn-press rounded-pill bg-primary px-[22px] py-[11px] text-body text-primary-foreground"
                   >
                     {status === "success" ? "Done" : "Close"}
                   </button>

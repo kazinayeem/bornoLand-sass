@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ShoppingBag, Truck, Shield, HeadphonesIcon, RefreshCw, Star } from "lucide-react";
+import { getContrastColor } from "@/lib/color-utils";
 import { useTenant } from "@/providers/tenant-provider";
 import type { CmsPageData } from "@/lib/cms-page-types";
 import { getApiUrl } from "@/lib/urls";
@@ -135,8 +136,8 @@ export function AboutPageClient({ initialPage }: { initialPage?: CmsPageData | n
             {["Alex Johnson", "Sarah Chen", "Mike Rivera", "Emily Kim"].map((name, i) => (
               <motion.div key={name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full text-3xl font-bold text-white"
-                  style={{ backgroundColor: primaryColor }}>
+                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full text-3xl font-bold"
+                  style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}>
                   {name[0]}
                 </div>
                 <h3 className="mt-4 font-semibold" style={{ color: isDark ? "#fafafa" : "#18181b" }}>{name}</h3>

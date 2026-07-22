@@ -1,6 +1,7 @@
 "use client";
 
 import { Star } from "lucide-react";
+import { getContrastColor } from "@/lib/color-utils";
 import { useTenant } from "@/providers/tenant-provider";
 import type { StorefrontSectionLike } from "./storefront-types";
 
@@ -54,8 +55,8 @@ export function TestimonialsSection({ section }: { section?: StorefrontSectionLi
                 &ldquo;{t.text}&rdquo;
               </p>
               <div className="mt-4 flex items-center gap-3">
-                <div className={`flex h-10 w-10 items-center justify-center text-sm font-bold text-white ${avatarClass}`}
-                  style={{ backgroundColor: primaryColor }}>
+                <div className={`flex h-10 w-10 items-center justify-center text-sm font-bold ${avatarClass}`}
+                  style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}>
                   {t.name[0]}
                 </div>
                 <div>

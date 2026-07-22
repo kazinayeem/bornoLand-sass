@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { useDispatch } from "react-redux";
 import { setStoreSettings } from "@/redux/slices/store-settings-slice";
+import type { StoreContact } from "@/redux/api/store-contact-api";
 
 export type ThemeData = {
   primaryColor: string; secondaryColor: string; font: string;
@@ -12,6 +13,7 @@ export type ThemeData = {
 export type StoreData = {
   _id: string; name: string; slug: string; subdomain: string;
   description: string; theme: ThemeData; logoUrl?: string;
+  shortName?: string; tagline?: string; faviconUrl?: string;
 };
 
 export type ProductData = {
@@ -60,6 +62,34 @@ export type HomepageSliderData = {
   textAlignment: "left" | "center" | "right";
 };
 
+export type NavigationItemData = {
+  _id: string;
+  title: string;
+  link?: string;
+  icon?: string;
+  badge?: string;
+  linkType?: "custom" | "page" | "collection" | "category" | "product" | "blog" | "external";
+  referenceId?: string;
+  target?: "_self" | "_blank";
+  isExternal?: boolean;
+  openInNewTab?: boolean;
+  authRequired?: boolean;
+  isVisible?: boolean;
+  hideOnDesktop?: boolean;
+  hideOnMobile?: boolean;
+  children?: NavigationItemData[];
+};
+
+export type NavigationData = {
+  _id: string;
+  key: "primary" | "footer" | "mobile" | "top_bar" | "account" | "sidebar";
+  label: string;
+  description?: string;
+  isActive: boolean;
+  sortOrder: number;
+  items?: NavigationItemData[];
+};
+
 export type TenantContextType = {
   store: StoreData;
   theme: ThemeData;
@@ -67,6 +97,8 @@ export type TenantContextType = {
   categories: CategoryData[];
   settings: StoreSettingsData;
   sliders: HomepageSliderData[];
+  navigations: NavigationData[];
+  contact: StoreContact | null;
 };
 
 const TenantContext = createContext<TenantContextType | null>(null);
@@ -80,7 +112,9 @@ export function useTenant(): TenantContextType {
       products: [],
       categories: [],
       settings: { currencyCode: "USD", currencySymbol: "$", currencyPosition: "before", locale: "en-US", decimalPlaces: 2, taxRate: 0, taxEnabled: false, taxIncluded: false },
-      sliders: []
+      sliders: [],
+      navigations: [],
+      contact: null,
     } satisfies TenantContextType;
   }
   return ctx;

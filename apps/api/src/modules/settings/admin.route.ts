@@ -63,6 +63,7 @@ import {
   getAdminStoreMediaController,
 } from "../stores/admin-store.controller.js";
 import { StoreOverrideModel } from "../stores/store-override.model.js";
+import { parseListQuery, paginatedResponse, buildTextSearchFilter } from "../../common/utils/pagination.js";
 
 export const adminRouter: Router = Router();
 
@@ -163,17 +164,30 @@ adminRouter.get("/analytics", async (_request, response) => {
 });
 
 // ── Store Management ─────────────────────────────────────────────
-adminRouter.get("/stores", async (_request, response) => {
+adminRouter.get("/stores", async (request, response) => {
   try {
-    const stores = await StoreModel.find()
-      .populate("userId", "name email")
-      .sort({ createdAt: -1 }).lean();
+    const params = parseListQuery(request.query as Record<string, unknown>);
+    const clauses: Record<string, unknown>[] = [];
+    const textFilter = buildTextSearchFilter(params.search, ["name", "slug", "subdomain", "category"]);
+    if (textFilter?.$or) clauses.push({ $or: textFilter.$or });
+    if (params.status) clauses.push({ status: params.status });
+    const filter = clauses.length ? (clauses.length === 1 ? clauses[0] : { $and: clauses }) : {};
+
+    const [stores, total] = await Promise.all([
+      StoreModel.find(filter)
+        .populate("userId", "name email")
+        .sort(params.sort ?? { createdAt: -1 })
+        .skip(params.skip)
+        .limit(params.limit)
+        .lean(),
+      StoreModel.countDocuments(filter),
+    ]);
 
     const storeIds = stores.map((s) => s._id);
     const [productCounts, orderCounts, revenueByStore] = await Promise.all([
       ProductModel.aggregate([{ $match: { storeId: { $in: storeIds } } }, { $group: { _id: "$storeId", count: { $sum: 1 } } }]),
       OrderModel.aggregate([{ $match: { storeId: { $in: storeIds } } }, { $group: { _id: "$storeId", count: { $sum: 1 }, revenue: { $sum: "$total" } } }]),
-      OrderModel.aggregate([{ $match: { storeId: { $in: storeIds }, paymentStatus: "paid" } }, { $group: { _id: "$storeId", revenue: { $sum: "$total" } } }])
+      OrderModel.aggregate([{ $match: { storeId: { $in: storeIds }, paymentStatus: "paid" } }, { $group: { _id: "$storeId", revenue: { $sum: "$total" } } }]),
     ]);
 
     const productCountMap: Record<string, number> = {};
@@ -187,10 +201,11 @@ adminRouter.get("/stores", async (_request, response) => {
       ...store,
       productCount: productCountMap[String(store._id)] ?? 0,
       orderCount: orderCountMap[String(store._id)] ?? 0,
-      revenueBDT: revenueMap[String(store._id)] ?? 0
+      revenueBDT: revenueMap[String(store._id)] ?? 0,
     }));
 
-    response.json({ data: { stores: enriched } });
+    const paginated = paginatedResponse(enriched, total, params);
+    response.json({ data: { stores: paginated.data, pagination: paginated.pagination, total, page: params.page, limit: params.limit, totalPages: paginated.pagination.totalPages } });
   } catch (error) {
     console.error("Admin stores error:", error);
     response.status(500).json({ message: "Failed to fetch stores" });
@@ -355,23 +370,36 @@ adminRouter.put("/stores/:id/plan-legacy", async (request: AuthRequest, response
 });
 
 // ── User Management ──────────────────────────────────────────────
-adminRouter.get("/users", async (_request, response) => {
+adminRouter.get("/users", async (request, response) => {
   try {
-    const users = await UserModel.find().sort({ createdAt: -1 }).lean();
+    const params = parseListQuery(request.query as Record<string, unknown>);
+    const clauses: Record<string, unknown>[] = [];
+    const textFilter = buildTextSearchFilter(params.search, ["name", "email"]);
+    if (textFilter?.$or) clauses.push({ $or: textFilter.$or });
+    if (params.status) clauses.push({ status: params.status });
+    if (params.role) clauses.push({ role: params.role });
+    const filter = clauses.length ? (clauses.length === 1 ? clauses[0] : { $and: clauses }) : {};
+
+    const [users, total] = await Promise.all([
+      UserModel.find(filter).sort(params.sort ?? { createdAt: -1 }).skip(params.skip).limit(params.limit).lean(),
+      UserModel.countDocuments(filter),
+    ]);
+
     const userIds = users.map((u) => u._id);
     const storeCounts = await StoreModel.aggregate([
       { $match: { userId: { $in: userIds } } },
-      { $group: { _id: "$userId", count: { $sum: 1 } } }
+      { $group: { _id: "$userId", count: { $sum: 1 } } },
     ]);
     const storeCountMap: Record<string, number> = {};
     storeCounts.forEach((s) => { storeCountMap[String(s._id)] = s.count; });
 
     const enriched = users.map((user) => ({
       ...user,
-      storeCount: storeCountMap[String(user._id)] ?? 0
+      storeCount: storeCountMap[String(user._id)] ?? 0,
     }));
 
-    response.json({ data: { users: enriched } });
+    const paginated = paginatedResponse(enriched, total, params);
+    response.json({ data: { users: paginated.data, pagination: paginated.pagination, total, page: params.page, limit: params.limit, totalPages: paginated.pagination.totalPages } });
   } catch (error) {
     console.error("Admin users error:", error);
     response.status(500).json({ message: "Failed to fetch users" });
@@ -423,17 +451,33 @@ adminRouter.delete("/users/:id", async (request, response) => {
 });
 
 // ── Product Management ───────────────────────────────────────────
-adminRouter.get("/products", async (_request, response) => {
+adminRouter.get("/products", async (request, response) => {
   try {
-    const products = await ProductModel.find()
-      .populate("storeId", "name slug subdomain")
-      .sort({ createdAt: -1 }).lean();
+    const params = parseListQuery(request.query as Record<string, unknown>);
+    const clauses: Record<string, unknown>[] = [];
+    const textFilter = buildTextSearchFilter(params.search, ["name", "slug", "sku", "category", "description"]);
+    if (textFilter?.$or) clauses.push({ $or: textFilter.$or });
+    if (params.status) clauses.push({ status: params.status });
+    if (params.storeId) clauses.push({ storeId: params.storeId });
+    if (params.category) clauses.push({ category: params.category });
+    if (params.brand) clauses.push({ brand: params.brand });
+    const filter = clauses.length ? (clauses.length === 1 ? clauses[0] : { $and: clauses }) : {};
 
-    const storeIds = products.map((p) => p.storeId?._id ?? p.storeId).filter(Boolean);
+    const [products, total] = await Promise.all([
+      ProductModel.find(filter)
+        .populate("storeId", "name slug subdomain")
+        .sort(params.sort ?? { createdAt: -1 })
+        .skip(params.skip)
+        .limit(params.limit)
+        .lean(),
+      ProductModel.countDocuments(filter),
+    ]);
+
+    const productIds = products.map((p) => p._id);
     const salesCounts = await OrderModel.aggregate([
       { $unwind: "$items" },
-      { $match: { "items.productId": { $in: storeIds.map(String) } } },
-      { $group: { _id: "$items.productId", count: { $sum: "$items.quantity" } } }
+      { $match: { "items.productId": { $in: productIds.map(String) } } },
+      { $group: { _id: "$items.productId", count: { $sum: "$items.quantity" } } },
     ]);
 
     const salesMap: Record<string, number> = {};
@@ -442,10 +486,11 @@ adminRouter.get("/products", async (_request, response) => {
     const enriched = products.map((product) => ({
       ...product,
       storeName: (product.storeId as { name?: string })?.name ?? "Unknown Store",
-      salesCount: salesMap[String(product._id)] ?? 0
+      salesCount: salesMap[String(product._id)] ?? 0,
     }));
 
-    response.json({ data: { products: enriched } });
+    const paginated = paginatedResponse(enriched, total, params);
+    response.json({ data: { products: paginated.data, pagination: paginated.pagination, total, page: params.page, limit: params.limit, totalPages: paginated.pagination.totalPages } });
   } catch (error) {
     console.error("Admin products error:", error);
     response.status(500).json({ message: "Failed to fetch products" });

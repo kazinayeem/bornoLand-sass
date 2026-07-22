@@ -7,6 +7,12 @@ import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
 import { AUDIT_MODULES } from "../audit/audit.constants.js";
 import { generateOrderInvoice } from "../orders/order-invoice.service.js";
 import { sendEmail } from "../../common/integrations/email.js";
+import { createCustomerNotification } from "../customers/customer-notification.service.js";
+
+function getPopulatedCustomerId(customerRef: { _id?: unknown } | string | undefined) {
+  if (customerRef && typeof customerRef === "object" && customerRef._id) return String(customerRef._id);
+  return customerRef ? String(customerRef) : "";
+}
 
 export async function listStoreOrdersController(request: AuthRequest, response: Response) {
   try {
@@ -173,15 +179,31 @@ export async function updateOrderStatusController(request: AuthRequest, response
 
     try {
       const customerRef = (order as { customerId?: { _id?: unknown } | string }).customerId;
-      const customerId =
-        customerRef && typeof customerRef === "object" && customerRef._id
-          ? String(customerRef._id)
-          : customerRef
-            ? String(customerRef)
-            : "";
+      const customerId = getPopulatedCustomerId(customerRef);
       if (customerId) {
         const { syncCustomerOrderStats } = await import("../customers/customer.service.js");
         await syncCustomerOrderStats(String(storeId), customerId);
+        await createCustomerNotification({
+          customerId,
+          storeId: String(storeId),
+          type: status === "cancelled" ? "order" : status === "delivered" ? "order" : "shipping",
+          icon:
+            status === "cancelled"
+              ? "x-circle"
+              : status === "delivered"
+                ? "check-circle"
+                : status === "shipped" || status === "out_for_delivery"
+                  ? "truck"
+                  : "package",
+          priority: status === "cancelled" ? "high" : "medium",
+          title: `Order update: ${before?.orderNumber ?? "Order"}`,
+          message:
+            before?.status && before.status !== status
+              ? `Status changed: ${before.status} -> ${status}`
+              : `Order status changed to ${status}`,
+          link: `/orders/${String(id)}`,
+          metadata: { orderId: String(id), orderNumber: before?.orderNumber ?? "", previousStatus: before?.status ?? "", status },
+        });
       }
     } catch (err) {
       console.error("[orders] Failed to sync customer stats after status change", err);
@@ -245,6 +267,28 @@ export async function updatePaymentStatusController(request: AuthRequest, respon
       oldValue: { paymentStatus: before?.paymentStatus },
       newValue: { paymentStatus },
     });
+
+    try {
+      const customerId = getPopulatedCustomerId((order as { customerId?: { _id?: unknown } | string }).customerId);
+      if (customerId) {
+        await createCustomerNotification({
+          customerId,
+          storeId: String(storeId),
+          type: "payment",
+          icon: paymentStatus === "paid" ? "credit-card" : "wallet",
+          priority: paymentStatus === "failed" ? "high" : "medium",
+          title: `Payment update: ${before?.orderNumber ?? "Order"}`,
+          message:
+            before?.paymentStatus && before.paymentStatus !== paymentStatus
+              ? `Payment status changed: ${before.paymentStatus} -> ${paymentStatus}`
+              : `Payment status changed to ${paymentStatus}`,
+          link: `/orders/${String(id)}`,
+          metadata: { orderId: String(id), orderNumber: before?.orderNumber ?? "", previousPaymentStatus: before?.paymentStatus ?? "", paymentStatus },
+        });
+      }
+    } catch (err) {
+      console.error("[orders] Failed to create customer payment notification", err);
+    }
 
     response.json({ data: { order } });
   } catch (error) {
@@ -326,6 +370,25 @@ export async function processRefundController(request: AuthRequest, response: Re
       newValue: { refundAmount, status },
     });
 
+    try {
+      const customerId = getPopulatedCustomerId((order as { customerId?: { _id?: unknown } | string } | null)?.customerId);
+      if (customerId) {
+        await createCustomerNotification({
+          customerId,
+          storeId: String(storeId),
+          type: "payment",
+          icon: "rotate-ccw",
+          priority: "high",
+          title: `Refund update: ${(order as { orderNumber?: string } | null)?.orderNumber ?? "Order"}`,
+          message: status === "partial_refund" ? `A partial refund of ${refundAmount} was processed.` : `A refund of ${refundAmount} was processed.`,
+          link: `/orders/${String(id)}`,
+          metadata: { orderId: String(id), refundAmount, status },
+        });
+      }
+    } catch (err) {
+      console.error("[orders] Failed to create customer refund notification", err);
+    }
+
     response.json({ data: { order } });
   } catch (error) {
     console.error("Process refund error:", error);
@@ -344,8 +407,8 @@ export async function downloadStoreOrderInvoiceController(request: AuthRequest, 
     }
 
     const result = await generateOrderInvoice({
-      storeId,
-      orderId: id,
+      storeId: String(storeId),
+      orderId: String(id),
     });
 
     if (!result.ok) {
@@ -375,8 +438,8 @@ export async function emailStoreOrderInvoiceController(request: AuthRequest, res
     }
 
     const result = await generateOrderInvoice({
-      storeId,
-      orderId: id,
+      storeId: String(storeId),
+      orderId: String(id),
     });
 
     if (!result.ok) {

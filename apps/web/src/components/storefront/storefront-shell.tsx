@@ -22,18 +22,26 @@ import type {
   StoreSettingsData,
   TenantContextType,
   ThemeData,
+  NavigationData,
 } from "@/providers/tenant-provider";
+import type { StoreContact } from "@/redux/api/store-contact-api";
 import { TenantProvider } from "@/providers/tenant-provider";
 import { StorefrontDeviceProvider } from "@/lib/device-context";
 import type { StorefrontSectionLike } from "@/components/storefront/storefront-types";
+import {
+  StorefrontHeaderOffsetProvider,
+  StorefrontHeaderSettingsProvider,
+} from "@/components/storefront/storefront-header-offset";
 
-type StorefrontShellProps = {
+export type StorefrontShellProps = {
   store: StoreData;
   theme: ThemeData;
   products: ProductData[];
   categories: CategoryData[];
   settings: StoreSettingsData;
   sliders: HomepageSliderData[];
+  navigations?: NavigationData[];
+  contact?: StoreContact | null;
   pageSections: StorefrontSectionLike[];
   headerSections?: StorefrontSectionLike[];
   footerSections?: StorefrontSectionLike[];
@@ -63,83 +71,93 @@ export function StorefrontShell({
   categories,
   settings,
   sliders,
+  navigations = [],
+  contact = null,
   pageSections,
   headerSections,
   footerSections,
   footerSection,
   headerSettings,
-  footerSettings: _footerSettings,
+  footerSettings: footerSettings,
   navLinksOverride,
   showAdminBar = false,
   builderMode = false,
   children,
 }: StorefrontShellProps) {
   const tenantValue = useMemo<TenantContextType>(
-    () => ({ store, theme, products, categories, settings, sliders }),
-    [store._id, store.slug, theme, products, categories, settings, sliders],
+    () => ({ store, theme, products, categories, settings, sliders, navigations, contact }),
+    [store._id, store.slug, theme, products, categories, settings, sliders, navigations, contact],
   );
 
-  const hasBuilderHeader = headerSections && headerSections.length > 0;
-  const hasBuilderFooter = footerSections && footerSections.length > 0;
+  const hasBuilderHeader = Boolean(headerSections && headerSections.length > 0);
+  const hasBuilderFooter = Boolean(footerSections && footerSections.length > 0);
 
   const visibleHeaderSections = hasBuilderHeader
-    ? headerSections.filter((s) => s.visible !== false)
+    ? (headerSections ?? []).filter((s) => s.visible !== false)
     : [];
   const visibleFooterSections = hasBuilderFooter
-    ? footerSections.filter((s) => s.visible !== false)
+    ? (footerSections ?? []).filter((s) => s.visible !== false)
     : [];
 
   const shellContent = (
-    <div
-      data-surface={builderMode ? undefined : "storefront"}
-      className={builderMode ? undefined : theme.darkMode ? "dark" : undefined}
-      style={{ fontFamily: theme.font, backgroundColor: theme.darkMode ? "var(--color-apple-surface-black)" : "var(--color-apple-canvas)" }}
-    >
-      <TenantProvider value={tenantValue}>
-        <AuthInit />
-        {hasBuilderHeader ? (
-          <header>
-            {builderMode ? (
-              <BuilderProvider>
-                {visibleHeaderSections.map((s) => (
-                  <SectionRenderer key={s.id} section={toSectionData(s)} />
-                ))}
-              </BuilderProvider>
+    <StorefrontHeaderOffsetProvider>
+      <StorefrontHeaderSettingsProvider settings={headerSettings}>
+        <div
+          data-surface={builderMode ? undefined : "storefront"}
+          className={builderMode ? undefined : theme.darkMode ? "dark" : undefined}
+          style={{ fontFamily: theme.font, backgroundColor: theme.darkMode ? "var(--color-apple-surface-black)" : "var(--color-apple-canvas)" }}
+        >
+          <TenantProvider value={tenantValue}>
+            <AuthInit />
+            {hasBuilderHeader ? (
+              <header>
+                {builderMode ? (
+                  <BuilderProvider>
+                    {visibleHeaderSections.map((s) => (
+                      <SectionRenderer key={s.id} section={toSectionData(s)} />
+                    ))}
+                  </BuilderProvider>
+                ) : (
+                  visibleHeaderSections.map((s) => (
+                    <SectionRenderer key={s.id} section={toSectionData(s)} />
+                  ))
+                )}
+              </header>
             ) : (
-              visibleHeaderSections.map((s) => (
-                <SectionRenderer key={s.id} section={toSectionData(s)} />
-              ))
+              <StoreNavbar navLinksOverride={navLinksOverride} headerSettings={headerSettings} />
             )}
-          </header>
-        ) : (
-          <StoreNavbar navLinksOverride={navLinksOverride} />
-        )}
-        <CartProvider>
-          <CartDrawer primaryColor={theme.primaryColor} />
-          {children}
-        </CartProvider>
-        {hasBuilderFooter ? (
-          <footer>
-            {builderMode ? (
-              <BuilderProvider>
-                {visibleFooterSections.map((s) => (
-                  <SectionRenderer key={s.id} section={toSectionData(s)} />
-                ))}
-              </BuilderProvider>
+            <CartProvider>
+              <CartDrawer primaryColor={theme.primaryColor} />
+              {children}
+            </CartProvider>
+            {hasBuilderFooter ? (
+              <footer>
+                {builderMode ? (
+                  <BuilderProvider>
+                    {visibleFooterSections.map((s) => (
+                      <SectionRenderer key={s.id} section={toSectionData(s)} />
+                    ))}
+                  </BuilderProvider>
+                ) : (
+                  visibleFooterSections.map((s) => (
+                    <SectionRenderer key={s.id} section={toSectionData(s)} />
+                  ))
+                )}
+              </footer>
             ) : (
-              visibleFooterSections.map((s) => (
-                <SectionRenderer key={s.id} section={toSectionData(s)} />
-              ))
+              <StoreFooter
+                section={footerSection ?? undefined}
+                footerSections={footerSections}
+                footerSettings={footerSettings}
+              />
             )}
-          </footer>
-        ) : (
-          <StoreFooter section={footerSection ?? undefined} footerSections={footerSections} />
-        )}
-        {showAdminBar ? (
-          <FloatingAdminBar storeSlug={store.slug} primaryColor={theme.primaryColor} />
-        ) : null}
-      </TenantProvider>
-    </div>
+            {showAdminBar ? (
+              <FloatingAdminBar storeSlug={store.slug} primaryColor={theme.primaryColor} />
+            ) : null}
+          </TenantProvider>
+        </div>
+      </StorefrontHeaderSettingsProvider>
+    </StorefrontHeaderOffsetProvider>
   );
 
   // In builder mode, skip StorefrontDeviceProvider so the outer

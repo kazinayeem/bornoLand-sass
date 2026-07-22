@@ -9,6 +9,7 @@ import { addToCart, openCart } from "@/redux/slices/cart-slice";
 import { toggleWishlist } from "@/redux/slices/wishlist-slice";
 import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { ProductCard } from "@/components/storefront/product-card";
+import { getContrastColor } from "@/lib/color-utils";
 import { useTenant } from "@/providers/tenant-provider";
 import { useTrackProductView } from "@/hooks/use-analytics-tracker";
 import { formatCurrency } from "@/lib/format-currency";
@@ -342,8 +343,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <button onClick={() => handleAddToCart()} disabled={!enableAddToCart}
-                  className="flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold text-white transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: primaryColor }}>
+                  className="flex items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}>
                   <ShoppingCart className="h-4 w-4" /> {added ? "Added to Cart" : "Add to Cart"}
                 </button>
                 <button onClick={() => handleBuyNow()} disabled={!enableAddToCart}
@@ -489,7 +490,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
               <p className="truncate text-sm font-semibold text-apple-ink">{formatCurrency(totalPrice, settings)}</p>
             </div>
             <button onClick={() => handleAddToCart()} disabled={!enableAddToCart}
-              className="rounded-2xl px-4 py-3 text-sm font-semibold text-white disabled:opacity-50" style={{ backgroundColor: primaryColor }}>
+              className="rounded-2xl px-4 py-3 text-sm font-semibold disabled:opacity-50" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}>
               Add to Cart
             </button>
           </div>

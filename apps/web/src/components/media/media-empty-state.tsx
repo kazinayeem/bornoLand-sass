@@ -122,7 +122,7 @@ export function MediaEmptyState({
       }`}
     >
       <div className="relative mb-6">
-        <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-apple-primary text-white">
+        <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <CloudUpload className="h-9 w-9" />
         </div>
         <div className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-apple-canvas ring-1 ring-apple-divider-soft">

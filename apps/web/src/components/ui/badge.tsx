@@ -1,13 +1,13 @@
 import { cn } from "@/lib/utils";
 
 const badgeVariants = {
-  default: "bg-apple-canvas-parchment text-apple-ink-muted-80 ring-1 ring-apple-hairline",
-  primary: "bg-apple-primary/10 text-apple-primary ring-1 ring-apple-primary/20",
-  success: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-400",
+  default: "bg-muted text-muted-foreground ring-1 ring-border",
+  primary: "bg-primary/10 text-primary ring-1 ring-primary/20",
+  success: "bg-success/10 text-success ring-1 ring-success/20 dark:bg-success/20",
   warning: "bg-amber-50 text-amber-700 ring-1 ring-amber-200/70 dark:bg-amber-950/30 dark:text-amber-400",
-  danger: "bg-red-50 text-red-700 ring-1 ring-red-200/70 dark:bg-red-950/30 dark:text-red-400",
-  violet: "bg-apple-canvas-parchment text-apple-ink-muted-80 ring-1 ring-apple-hairline",
-  slate: "bg-apple-surface-pearl text-apple-ink-muted-80 ring-1 ring-apple-hairline",
+  danger: "bg-destructive/10 text-destructive ring-1 ring-destructive/20 dark:bg-destructive/20",
+  violet: "bg-muted text-muted-foreground ring-1 ring-border",
+  slate: "bg-secondary text-secondary-foreground ring-1 ring-border",
 };
 
 type BadgeProps = {

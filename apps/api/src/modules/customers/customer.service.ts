@@ -28,7 +28,15 @@ export async function registerCustomer(storeId: string, payload: { name: string;
       await existing.save();
 
       const token = jwt.sign(
-        { customerId: existing._id, storeId, email: existing.email },
+        {
+          customerId: existing._id,
+          storeId,
+          email: existing.email,
+          name: existing.name,
+          phone: existing.phone,
+          avatar: existing.avatar,
+          tokenVersion: existing.tokenVersion ?? 0,
+        },
         getCustomerJwtSecret(),
         { expiresIn: "7d" }
       );
@@ -36,7 +44,14 @@ export async function registerCustomer(storeId: string, payload: { name: string;
       return {
         ok: true as const,
         data: {
-          customer: { _id: existing._id, name: existing.name, email: existing.email, storeId: existing.storeId },
+          customer: {
+            _id: existing._id,
+            name: existing.name,
+            email: existing.email,
+            storeId: existing.storeId,
+            phone: existing.phone,
+            avatar: existing.avatar,
+          },
           token
         }
       };
@@ -53,7 +68,15 @@ export async function registerCustomer(storeId: string, payload: { name: string;
   });
 
   const token = jwt.sign(
-    { customerId: customer._id, storeId, email: customer.email },
+    {
+      customerId: customer._id,
+      storeId,
+      email: customer.email,
+      name: customer.name,
+      phone: customer.phone,
+      avatar: customer.avatar,
+      tokenVersion: customer.tokenVersion ?? 0,
+    },
     getCustomerJwtSecret(),
     { expiresIn: "7d" }
   );
@@ -61,7 +84,14 @@ export async function registerCustomer(storeId: string, payload: { name: string;
   return {
     ok: true as const,
     data: {
-      customer: { _id: customer._id, name: customer.name, email: customer.email, storeId: customer.storeId },
+      customer: {
+        _id: customer._id,
+        name: customer.name,
+        email: customer.email,
+        storeId: customer.storeId,
+        phone: customer.phone,
+        avatar: customer.avatar,
+      },
       token
     }
   };
@@ -79,7 +109,15 @@ export async function loginCustomer(storeId: string, payload: { email: string; p
   await CustomerModel.updateOne({ _id: customer._id }, { lastLoginAt: new Date() });
 
   const token = jwt.sign(
-    { customerId: customer._id, storeId, email: customer.email },
+    {
+      customerId: customer._id,
+      storeId,
+      email: customer.email,
+      name: customer.name,
+      phone: customer.phone,
+      avatar: customer.avatar,
+      tokenVersion: customer.tokenVersion ?? 0,
+    },
     getCustomerJwtSecret(),
     { expiresIn: "7d" }
   );
@@ -87,7 +125,14 @@ export async function loginCustomer(storeId: string, payload: { email: string; p
   return {
     ok: true as const,
     data: {
-      customer: { _id: customer._id, name: customer.name, email: customer.email, storeId: customer.storeId },
+      customer: {
+        _id: customer._id,
+        name: customer.name,
+        email: customer.email,
+        storeId: customer.storeId,
+        phone: customer.phone,
+        avatar: customer.avatar,
+      },
       token
     }
   };

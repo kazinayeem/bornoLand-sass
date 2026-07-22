@@ -17,5 +17,6 @@ export const metadata: Metadata = buildPageMetadata({
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const [session, hasPendingAuth] = await Promise.all([getServerSession(), hasAuthCookie()]);
   if (!session && !hasPendingAuth) redirect("/login");
+  if (session?.role === "super_admin") redirect("/admin/dashboard");
   return <ProtectedSessionBoundary><WorkspaceShell>{children}</WorkspaceShell></ProtectedSessionBoundary>;
 }

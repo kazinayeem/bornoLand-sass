@@ -134,7 +134,6 @@ export default function UsersPage() {
                     {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Never"}
                   </td>
                   <td className="px-6 py-3.5">
-                    {/* Portal-based DropdownMenu — escapes overflow-x-auto table stacking context */}
                     <DropdownMenu
                       placement="bottom-end"
                       minWidth={160}

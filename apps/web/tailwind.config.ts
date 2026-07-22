@@ -54,6 +54,19 @@ const config: Config = {
         primary: {
           DEFAULT: "var(--color-primary)",
           foreground: "var(--color-primary-foreground)",
+          hover: "var(--color-primary-hover)",
+        },
+        secondary: {
+          DEFAULT: "var(--color-secondary)",
+          foreground: "var(--color-secondary-foreground)",
+        },
+        accent: {
+          DEFAULT: "var(--color-accent)",
+          foreground: "var(--color-accent-foreground)",
+        },
+        popover: {
+          DEFAULT: "var(--color-popover)",
+          foreground: "var(--color-popover-foreground)",
         },
         muted: {
           DEFAULT: "var(--color-muted)",
@@ -62,6 +75,12 @@ const config: Config = {
         destructive: {
           DEFAULT: "var(--color-destructive)",
           foreground: "var(--color-destructive-foreground)",
+          hover: "var(--color-destructive-hover)",
+        },
+        success: {
+          DEFAULT: "var(--color-success)",
+          foreground: "var(--color-success-foreground)",
+          hover: "var(--color-success-hover)",
         },
         card: {
           DEFAULT: "var(--color-card)",

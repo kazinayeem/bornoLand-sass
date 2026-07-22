@@ -5,6 +5,13 @@ export type CustomerData = {
   name: string;
   email: string;
   storeId: string;
+  phone?: string;
+  avatar?: string;
+  birthday?: string | null;
+  gender?: string;
+  createdAt?: string | null;
+  totalOrders?: number;
+  tokenVersion?: number;
 };
 
 type CustomerState = {
@@ -29,6 +36,13 @@ function decodeToken(token: string): CustomerData | null {
       name: payload.name ?? payload.email?.split("@")[0] ?? "Customer",
       email: payload.email ?? "",
       storeId: payload.storeId ?? "",
+      phone: payload.phone ?? "",
+      avatar: payload.avatar ?? "",
+      birthday: payload.birthday ?? null,
+      gender: payload.gender ?? "",
+      createdAt: payload.createdAt ?? null,
+      totalOrders: typeof payload.totalOrders === "number" ? payload.totalOrders : 0,
+      tokenVersion: typeof payload.tokenVersion === "number" ? payload.tokenVersion : undefined,
     };
   } catch {
     return null;

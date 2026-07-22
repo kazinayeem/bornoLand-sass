@@ -165,8 +165,17 @@ export function extractSubdomainFromHost(host: string): string | null {
 
 export function isRootHost(host: string): boolean {
   const lowerHost = host.trim().toLowerCase();
+  const hostname = lowerHost.split(":")[0] ?? lowerHost;
+
+  // Always treat loopback as the platform root, even when ROOT_DOMAIN is a production host
+  // (common when running `next start` locally with production .env values).
+  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0") {
+    return true;
+  }
+
   const { rootDomain, rootHostname } = readAppUrlConfig();
-  return lowerHost === rootDomain || lowerHost.split(":")[0] === rootHostname;
+  if (!rootDomain && !rootHostname) return false;
+  return lowerHost === rootDomain || hostname === rootHostname;
 }
 
 export function resolveStoreSlug(

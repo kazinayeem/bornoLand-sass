@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -23,6 +23,9 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge, statusBadge } from "@/components/ui/badge";
 import { FilterPanel, type FilterConfig } from "@/components/ui/filter-panel";
 import { useQueryParams } from "@/hooks/use-query-params";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useStaleWhileFetching } from "@/hooks/use-stale-while-fetching";
+import type { ProductsListQuery } from "@/redux/api/product-api";
 import { genSlug } from "@/components/products/product-form";
 
 type ViewMode = "table" | "grid";
@@ -80,8 +83,6 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
   const router = useRouter();
   const editorBase = storeSlug ? `/store/${storeSlug}/products` : null;
 
-  const { data, isLoading } = useGetProductsQuery(storeId);
-  const { data: catsData } = useGetCategoriesQuery(storeId);
   const [createProduct] = useCreateProductMutation();
   const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
@@ -90,9 +91,6 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
   const { data: settingsData } = useGetStoreSettingsQuery(storeId);
   const storeSettings = settingsData?.data?.settings;
   const fmt = (amount: number) => formatCurrency(amount, storeSettings);
-
-  const products = data?.data?.products ?? [];
-  const categories = catsData?.data?.categories ?? [];
 
   const { search, setSearch, sort: sortKey, order, status, setStatus, page: rawPage, setPage, pageSize: rawPageSize, setPageSize, setParams, resetFilters } = useQueryParams({ sort: "createdAt", order: "desc" });
 
@@ -103,10 +101,43 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [searchInput, setSearchInput] = useState(search || "");
+  const debouncedSearch = useDebouncedValue(searchInput, 300);
+
+  useEffect(() => {
+    if (debouncedSearch !== (search || "")) setSearch(debouncedSearch);
+  }, [debouncedSearch, search, setSearch]);
 
   const page = rawPage ?? 1;
   const pageSize = rawPageSize ?? 20;
   const sortCfg = sortKey && order ? { key: sortKey, order: order as "asc" | "desc" } : undefined;
+
+  const listQuery = useMemo<ProductsListQuery>(() => ({
+    storeId,
+    page,
+    limit: pageSize,
+    search: debouncedSearch || undefined,
+    sortBy: sortKey || "createdAt",
+    sortOrder: (order as "asc" | "desc") || "desc",
+    status: status || undefined,
+    category: categoryFilter || undefined,
+    stockStatus: stockFilter || undefined,
+    featured: featuredFilter || undefined,
+    priceMin: priceMin || undefined,
+    priceMax: priceMax || undefined,
+  }), [storeId, page, pageSize, debouncedSearch, sortKey, order, status, categoryFilter, stockFilter, featuredFilter, priceMin, priceMax]);
+
+  const { data, isLoading, isFetching, isError, refetch } = useGetProductsQuery(listQuery);
+  const stableData = useStaleWhileFetching(data, isFetching);
+  const { data: catsData } = useGetCategoriesQuery(storeId);
+
+  const products = stableData?.data?.products ?? [];
+  const categories = catsData?.data?.categories ?? [];
+  const pagination = stableData?.data?.pagination;
+  const totalPages = pagination?.totalPages ?? stableData?.data?.totalPages ?? 1;
+  const total = pagination?.total ?? stableData?.data?.total ?? products.length;
+  const paginated = products;
+
   const handleSort = useCallback((s: { key: string; order: "asc" | "desc" }) => {
     setParams({ sort: s.key, order: s.order, page: undefined });
   }, [setParams]);
@@ -116,43 +147,6 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasActiveFilters = !!(status || categoryFilter || stockFilter || featuredFilter || priceMin || priceMax);
-
-  const filtered = useMemo(() => {
-    let result = products;
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (p) => p.name.toLowerCase().includes(q) ||
-          p.slug.toLowerCase().includes(q) ||
-          p.category?.toLowerCase().includes(q) ||
-          p.sku?.toLowerCase().includes(q)
-      );
-    }
-    if (status) result = result.filter((p) => p.status === status);
-    if (categoryFilter) result = result.filter((p) => p.category === categoryFilter || p.categoryIds?.includes(categoryFilter));
-    if (stockFilter === "in") result = result.filter((p) => p.stock > 0);
-    if (stockFilter === "out") result = result.filter((p) => p.stock <= 0);
-    if (featuredFilter === "true") result = result.filter((p) => p.featured);
-    if (featuredFilter === "false") result = result.filter((p) => !p.featured);
-    if (priceMin) result = result.filter((p) => p.price >= Number(priceMin));
-    if (priceMax) result = result.filter((p) => p.price <= Number(priceMax));
-    if (sortCfg?.key) {
-      result = [...result].sort((a, b) => {
-        const dir = sortCfg.order === "asc" ? 1 : -1;
-        switch (sortCfg.key) {
-          case "name": return dir * a.name.localeCompare(b.name);
-          case "price": return dir * (a.price - b.price);
-          case "stock": return dir * (a.stock - b.stock);
-          case "status": return dir * a.status.localeCompare(b.status);
-          default: return dir * (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        }
-      });
-    }
-    return result;
-  }, [products, search, status, categoryFilter, stockFilter, featuredFilter, priceMin, priceMax, sortCfg]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const openCreate = () => {
     if (editorBase) router.push(`${editorBase}/new`);
@@ -192,7 +186,7 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
   const handleExportCSV = useCallback(async () => {
     const headers = ["name", "slug", "productType", "sku", "price", "comparePrice", "stock", "category", "status", "description", "imageUrl", "featured", "options", "variants"];
     const productsForExport = await Promise.all(
-      filtered.map(async (product) => {
+      products.map(async (product) => {
         if (product.productType !== "variable" && !product.variantCount) return product;
         try {
           const response = await fetchProduct(product._id).unwrap();
@@ -219,7 +213,7 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
     a.click();
     URL.revokeObjectURL(url);
     toast.success(`Exported ${productsForExport.length} products`);
-  }, [fetchProduct, filtered, storeId]);
+  }, [fetchProduct, products, storeId]);
 
   const handleImportCSV = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -546,19 +540,21 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
           data={paginated}
           columns={columns}
           keyExtractor={(p) => p._id}
-          isLoading={isLoading}
-          searchValue={search}
-          onSearchChange={setSearch}
+          isLoading={isLoading && !stableData}
+          isFetching={isFetching}
+          searchValue={searchInput}
+          onSearchChange={setSearchInput}
           searchPlaceholder="Search products..."
           emptyIcon={Package}
-          emptyTitle="No products yet"
-          emptyDescription="Add your first product to get started."
+          emptyTitle={isError ? "Could not load products" : "No products yet"}
+          emptyDescription={isError ? "Check your connection and try again." : "Add your first product to get started."}
+          emptyAction={isError ? <button type="button" onClick={() => refetch()} className="text-sm font-medium text-apple-primary">Retry</button> : undefined}
           sort={sortCfg}
           onSort={handleSort}
           bulkActions={bulkActions}
           page={page}
           totalPages={totalPages}
-          total={filtered.length}
+          total={total}
           pageSize={pageSize}
           onPageChange={setPage}
           onPageSizeChange={setPageSize}

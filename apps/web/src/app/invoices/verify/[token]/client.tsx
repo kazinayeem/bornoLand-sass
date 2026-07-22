@@ -159,7 +159,7 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
   const approvedByName = typeof invoice.approvedBy === "object" ? invoice.approvedBy?.name : "—";
 
   const baseUrl = getApiUrl();
-  const verificationUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/invoices/verify/${token}`;
+  const verificationUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/invoice/verify/${token}`;
 
   return (
     <div className="min-h-screen bg-apple-canvas-parchment">

@@ -96,7 +96,8 @@ export default function CartPage() {
                     <button
                       type="button"
                       onClick={() => handleRemove(item.productId)}
-                      className="text-apple-ink-muted-48 transition-colors hover:text-red-500"
+                      aria-label="Remove item"
+                      className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center text-apple-ink-muted-48 transition-colors hover:text-red-500"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -106,7 +107,7 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => handleQuantity(item.productId, item.quantity - 1)}
-                        className={cn("flex h-7 w-7 items-center justify-center rounded-apple-xs", classes.muted)}
+                        className={cn("flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-apple-xs", classes.muted)}
                       >
                         <Minus className="h-3 w-3" />
                       </button>
@@ -116,7 +117,7 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => handleQuantity(item.productId, item.quantity + 1)}
-                        className={cn("flex h-7 w-7 items-center justify-center rounded-apple-xs", classes.muted)}
+                        className={cn("flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-apple-xs", classes.muted)}
                       >
                         <Plus className="h-3 w-3" />
                       </button>

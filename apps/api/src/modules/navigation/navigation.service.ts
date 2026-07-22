@@ -374,15 +374,28 @@ export async function updateHeaderSettings(storeId: string, payload: HeaderSetti
 }
 
 type FooterSettingsPayload = {
+  template?: string;
   columns?: number;
   showNewsletter?: boolean;
   showSocial?: boolean;
   showPaymentIcons?: boolean;
   showCopyright?: boolean;
-  copyright?: string;
+  showContact?: boolean;
+  showMap?: boolean;
+  showBusinessHours?: boolean;
   background?: string;
   textColor?: string;
+  borderColor?: string;
   padding?: string;
+  alignment?: string;
+  divider?: boolean;
+  socialIconStyle?: string;
+  newsletterPosition?: string;
+  copyrightPosition?: string;
+  mapPosition?: string;
+  visibleOnDesktop?: boolean;
+  visibleOnTablet?: boolean;
+  visibleOnMobile?: boolean;
 };
 
 export async function getFooterSettings(storeId: string) {

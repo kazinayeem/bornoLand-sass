@@ -6,7 +6,7 @@ import {
 } from "@/redux/api/store-order-api";
 import type { StoreOrder } from "@/redux/api/store-order-api";
 import {
-  ShoppingCart, Clock, Search, Download, Printer, Mail, RefreshCw, Eye,
+  ShoppingCart, Clock, Search, Download, Printer, Mail, RefreshCw, Eye, Copy, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -40,6 +40,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<StoreOrder | null>(null);
   const [invoiceBusy, setInvoiceBusy] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
 
   const { data: settingsData } = useGetStoreSettingsQuery(storeId);
   const settings = settingsData?.data?.settings;
@@ -323,6 +324,22 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
               >
                 <RefreshCw className="h-3.5 w-3.5" /> Generate Again
               </button>
+              {selectedOrder.verificationToken && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `${window.location.origin}/invoice/verify/${selectedOrder.verificationToken}`;
+                    navigator.clipboard.writeText(url);
+                    setCopied("verification");
+                    toast.success("Verification link copied");
+                    setTimeout(() => setCopied(null), 2000);
+                  }}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-3 text-xs font-medium text-apple-ink"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  {copied === "verification" ? "Copied!" : "Copy Verification Link"}
+                </button>
+              )}
             </div>
           </div>
         )}

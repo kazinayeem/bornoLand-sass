@@ -5,6 +5,7 @@ import { StoreLink as Link } from "./store-link";
 import { ChevronLeft, ChevronRight, Play, ShoppingBag, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTenant } from "@/providers/tenant-provider";
+import { getContrastColor } from "@/lib/color-utils";
 import type { StorefrontSectionLike } from "./storefront-types";
 
 const heroHeightMap: Record<string, string> = {
@@ -108,8 +109,8 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
                             (slide.textAlignment as string) === "right" ? "justify-end" : "justify-start"
                           }`}>
                             <Link href={slide.buttonLink}
-                              className="btn-press inline-flex items-center gap-2 rounded-pill px-[22px] py-[11px] text-body text-white transition-all hover:opacity-90"
-                              style={{ backgroundColor: primaryColor }}>
+                              className="btn-press inline-flex items-center gap-2 rounded-pill px-[22px] py-[11px] text-body transition-all hover:opacity-90"
+                              style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}>
                               <ShoppingBag className="h-4 w-4" /> {slide.buttonText}
                             </Link>
                             {(heroProps.secondaryButtonText as string) && (

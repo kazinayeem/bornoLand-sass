@@ -1,14 +1,16 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { StorefrontShell } from "@/components/storefront/storefront-shell";
-import {
-  type ThemeData,
-  type ProductData,
-  type CategoryData,
-  type StoreData,
-  type StoreSettingsData,
-  type HomepageSliderData,
+import { StoreLayout } from "@/components/storefront/store-layout";
+import type {
+  ThemeData,
+  ProductData,
+  CategoryData,
+  StoreData,
+  StoreSettingsData,
+  HomepageSliderData,
+  NavigationData,
 } from "@/providers/tenant-provider";
+import type { StoreContact } from "@/redux/api/store-contact-api";
 import { fetchTenantSite } from "@/lib/server/tenant-site";
 import { generateTenantMetadata } from "@/lib/server/page-metadata";
 
@@ -40,11 +42,29 @@ export default async function TenantLayout({ params, children }: { params: Promi
     categories?: CategoryData[];
     settings?: StoreSettingsData | null;
     sliders?: HomepageSliderData[];
+    navigations?: NavigationData[];
+    contact?: StoreContact | null;
   } | null;
-  if (!data?.store) notFound();
+
+  // Only 404 when the store itself does not exist. Transient API failures throw
+  // from fetchTenantSite and must not be cached as a sticky ISR 404.
+  if (!data?.store) {
+    if (process.env.NODE_ENV === "development" || process.env.DEBUG_TENANT_ROUTING === "1") {
+      console.log(`[site-layout] notFound — store missing for tenant="${slug}"`);
+    }
+    notFound();
+  }
 
   const { store, products, settings, sliders } = data;
   const categories = data.categories ?? [];
+  const navigations = data.navigations ?? [];
+  const contact = data.contact ?? null;
+  const storeWithBranding: StoreData = {
+    ...store,
+    shortName: (store as StoreData & { shortName?: string }).shortName,
+    tagline: (store as StoreData & { tagline?: string }).tagline,
+    faviconUrl: (store as StoreData & { faviconUrl?: string }).faviconUrl,
+  };
   const pageSections = (data.page?.sections as { id: string; type: string; visible?: boolean; props?: Record<string, string> }[] | undefined) ?? [];
   const theme: ThemeData = store.theme ?? {
     primaryColor: "#2563eb", secondaryColor: "#0f172a", font: "Inter",
@@ -68,13 +88,15 @@ export default async function TenantLayout({ params, children }: { params: Promi
   const footerSettings = (data.page?.footerSettings as Record<string, unknown>) ?? {};
 
   return (
-    <StorefrontShell
-      store={store}
+    <StoreLayout
+      store={storeWithBranding}
       theme={theme}
       products={products}
       categories={categories}
       settings={currencySettings}
       sliders={sliders ?? []}
+      navigations={navigations}
+      contact={contact}
       pageSections={pageSections}
       headerSections={headerSections}
       footerSections={footerSections}
@@ -84,6 +106,6 @@ export default async function TenantLayout({ params, children }: { params: Promi
       showAdminBar={false}
     >
       {children}
-    </StorefrontShell>
+    </StoreLayout>
   );
 }

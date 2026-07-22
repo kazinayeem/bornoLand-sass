@@ -9,7 +9,7 @@ import type { StoreSettings } from "@/redux/api/store-settings-api";
 import { setStoreSettings } from "@/redux/slices/store-settings-slice";
 import { toast } from "sonner";
 import {
-  Store, Globe, DollarSign, Calendar, Clock, Languages,
+  Store, Globe, DollarSign, Calendar, Clock, Languages, Mail,
   Save, Loader2, RefreshCw, CheckCircle, ChevronDown, ToggleLeft, ToggleRight
 } from "lucide-react";
 import { getStoreDisplayDomain } from "@/lib/urls";
@@ -169,7 +169,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-apple-ink">Store Settings</h2>
-            <p className="mt-1 text-sm text-apple-ink-muted-48">Configure your store preferences, currency, and localization.</p>
+<p className="mt-1 text-sm text-apple-ink-muted-48">Configure your store preferences, currency, localization, and <a href="/dashboard/settings/email" className="text-blue-600 hover:underline">email settings</a>.</p>
           </div>
         </div>
         {stores.length === 0 ? (
@@ -211,6 +211,9 @@ export default function SettingsPage() {
           <p className="mt-1 text-sm text-apple-ink-muted-48">Configure your store preferences, currency, and localization.</p>
         </div>
         <div className="flex items-center gap-3">
+          <a href="/dashboard/settings/email" className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50">
+            <Mail className="h-4 w-4" /> Email Settings
+          </a>
           <button onClick={() => refetch()} className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment">
             <RefreshCw className="h-4 w-4" /> Refresh
           </button>

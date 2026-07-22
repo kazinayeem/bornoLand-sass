@@ -8,7 +8,7 @@ import {
   setSelectedSection, updateSectionMeta, setActiveRightTab,
   toggleRightPanel, setRightPanelPinned,
 } from "@/redux/slices/builder-slice";
-import type { RightTab, SectionStyle } from "@/redux/slices/builder-slice";
+import type { RightTab, SectionStyle, BuilderSection } from "@/redux/slices/builder-slice";
 import {
   X, Type, Layers, AlignLeft, PaintBucket, Ruler, ChevronDown,
   Lightbulb, Sparkles, MonitorSmartphone, Box, Globe, Eye, Pin,
@@ -23,6 +23,10 @@ import { MediaPicker } from "@/components/media/media-picker";
 import { RepeaterEditor, type RepeaterField } from "@/components/builder/repeater-editor";
 import { HeaderBuilderSettings } from "@/components/builder/header-builder-settings";
 import { FooterBuilderSettings } from "@/components/builder/footer-builder-settings";
+import {
+  inspectorKeyFromTarget,
+  resolveInspectorTarget,
+} from "@/components/builder/inspector-registry";
 import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
 import { normalizeCssLength } from "@/lib/section-style";
@@ -240,9 +244,20 @@ function StyleBackgroundInput({
   );
 }
 
-// ─── Main Panel ──────────────────────────────────────────────────
+// ─── Section inspector (remounts via key when selection changes) ─────────
 
-export function PropertiesPanel() {
+function SectionPropertiesInspector({ sectionId }: { sectionId: string }) {
+  const section = useSelector((s: RootState) => (
+    s.builder.sections.find((sec) => sec.id === sectionId)
+    ?? s.builder.headerSections.find((sec) => sec.id === sectionId)
+    ?? s.builder.footerSections.find((sec) => sec.id === sectionId)
+  ));
+
+  if (!section) return null;
+  return <SectionPropertiesInspectorBody section={section} />;
+}
+
+function SectionPropertiesInspectorBody({ section }: { section: BuilderSection }) {
   const dispatch = useDispatch();
   const { storeId, storeSlug, store } = useRequiredStore();
   const brandColors = useMemo(() => {
@@ -250,16 +265,6 @@ export function PropertiesPanel() {
     return [theme?.primaryColor, theme?.secondaryColor, store?.brandColor, store?.accentColor]
       .filter((c): c is string => Boolean(c && typeof c === "string"));
   }, [store]);
-  const selectedId = useSelector((s: RootState) => s.builder.selectedSectionId);
-  const editingZone = useSelector((s: RootState) => s.builder.editingZone);
-  const section = useSelector((s: RootState) => {
-    if (!selectedId) return undefined;
-    return (
-      s.builder.sections.find((sec) => sec.id === selectedId)
-      ?? s.builder.headerSections.find((sec) => sec.id === selectedId)
-      ?? s.builder.footerSections.find((sec) => sec.id === selectedId)
-    );
-  });
   const activeRightTab = useSelector((s: RootState) => s.builder.activeRightTab);
   const rightPanelPinned = useSelector((s: RootState) => s.builder.rightPanelPinned);
   const device = useSelector((s: RootState) => s.preview.device);
@@ -360,22 +365,6 @@ export function PropertiesPanel() {
     if (!activeRepeater) return;
     dispatch(updateSectionStyle({ id: section.id, style: { [activeRepeater.field]: items } as Partial<SectionStyle> }));
   }, [dispatch, section]);
-
-  if (!section) {
-    if (editingZone === "header") return <HeaderBuilderSettings />;
-    if (editingZone === "footer") return <FooterBuilderSettings />;
-    return (
-      <div className="flex h-full items-center justify-center p-4">
-        <div className="text-center">
-          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100">
-            <Layers className="h-5 w-5 text-apple-ink-muted-48" />
-          </div>
-          <p className="text-sm font-medium text-apple-ink-muted-80">Select a section</p>
-          <p className="mt-1 text-xs text-apple-ink-muted-48">Click on any section in the canvas to edit its properties</p>
-        </div>
-      </div>
-    );
-  }
 
   const handlePropChange = (key: string, value: string) => {
     dispatch(updateSectionProps({ id: section.id, props: { ...section.props, [key]: value } }));
@@ -1096,4 +1085,46 @@ export function PropertiesPanel() {
       </div>
     </div>
   );
+}
+
+function EmptyInspectorPanel() {
+  return (
+    <div className="flex h-full items-center justify-center p-4">
+      <div className="text-center">
+        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100">
+          <Layers className="h-5 w-5 text-apple-ink-muted-48" />
+        </div>
+        <p className="text-sm font-medium text-apple-ink-muted-80">Select a section</p>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">Click on any section in the canvas to edit its properties</p>
+      </div>
+    </div>
+  );
+}
+
+/** Routes to exactly one inspector; remounts on every selection change. */
+export function PropertiesPanel() {
+  const selectedId = useSelector((s: RootState) => s.builder.selectedSectionId);
+  const editingZone = useSelector((s: RootState) => s.builder.editingZone);
+  const section = useSelector((s: RootState) => {
+    if (!selectedId) return undefined;
+    return (
+      s.builder.sections.find((sec) => sec.id === selectedId)
+      ?? s.builder.headerSections.find((sec) => sec.id === selectedId)
+      ?? s.builder.footerSections.find((sec) => sec.id === selectedId)
+    );
+  });
+
+  const target = resolveInspectorTarget(selectedId, section, editingZone);
+  const inspectorKey = inspectorKeyFromTarget(target);
+
+  switch (target.kind) {
+    case "header-settings":
+      return <HeaderBuilderSettings key={inspectorKey} />;
+    case "footer-settings":
+      return <FooterBuilderSettings key={inspectorKey} />;
+    case "empty":
+      return <EmptyInspectorPanel key={inspectorKey} />;
+    case "section":
+      return <SectionPropertiesInspector key={inspectorKey} sectionId={target.sectionId} />;
+  }
 }

@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { SectionData } from "@/components/sections/section-renderer";
 import type { SectionStyle } from "@/redux/slices/builder-slice";
+import type { Breakpoint } from "@/lib/builder-types";
 import { normalizeCssLength } from "@/lib/section-style";
 
 /** Maps Look-tab style keys to section prop keys used by section components. */
@@ -74,8 +75,10 @@ export function resolveBackgroundColor(section: SectionData): string {
   return section.style?.backgroundColor || section.props.bgColor || "";
 }
 
-export function resolveBackgroundImage(section: SectionData): string {
-  return (section.style?.backgroundImage || section.props.bgImage || "").trim();
+export function resolveBackgroundImage(section: SectionData, device?: Breakpoint): string {
+  const mobileUrl = section.props.mobileImageUrl?.trim();
+  if (device === "mobile" && mobileUrl) return mobileUrl;
+  return (section.style?.backgroundImage || section.props.bgImage || section.props.imageUrl || "").trim();
 }
 
 export function resolveBackgroundGradient(section: SectionData): string {

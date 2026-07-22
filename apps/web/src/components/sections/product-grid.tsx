@@ -1,25 +1,28 @@
 "use client";
 
-import { SectionWrapper, ColumnGrid, SectionTitle, type SectionData } from "./section-renderer";
-import { useTenant } from "@/providers/tenant-provider";
-import { useBuilderProducts } from "@/lib/use-builder-demo";
-import { ProductCard } from "@/components/storefront/product-card";
+import { SectionWrapper, type SectionData } from "./section-renderer";
+import { StorefrontProductGrid } from "@/components/storefront/storefront-product-grid";
 
 export function ProductGrid({ section }: { section: SectionData }) {
-  const { products: realProducts } = useTenant();
-  const products = useBuilderProducts(realProducts);
   const p = section.props;
-  const count = Number(p.productCount) || 12;
-  const cols = p.gridColumns || "4";
-  const display = products.slice(0, count);
 
   return (
     <SectionWrapper section={section}>
       <div className="px-4 sm:px-6 lg:px-8">
-        <SectionTitle title={p.title || "Products"} subtitle={p.subtitle || ""} textColor={p.textColor} textAlignment={p.textAlignment} />
-        {display.length ? <ColumnGrid columns={cols}>
-          {display.map((pr) => <ProductCard key={pr._id} product={pr} />)}
-        </ColumnGrid> : <div className="rounded-2xl border border-dashed border-zinc-200 px-5 py-10 text-center text-sm text-apple-ink-muted-48">No products yet. Add products to see them in your storefront preview.</div>}
+        <StorefrontProductGrid
+          title={p.title || "Products"}
+          subtitle={p.subtitle || ""}
+          productCount={Number(p.productCount) || 12}
+          gridColumns={p.desktopColumns || p.gridColumns || "4"}
+          tabletColumns={p.tabletColumns || "2"}
+          mobileColumns={p.mobileColumns || "1"}
+          showFilters={p.showFilters === "true"}
+          showSort={p.showSort === "true"}
+          showPagination={p.showPagination !== "false"}
+          showLoadMore={p.showLoadMore === "true"}
+          paginationMode={(p.paginationMode as "pages" | "load-more" | "infinite" | undefined) ?? "pages"}
+          allowRowsPerPage={p.allowRowsPerPage === "true"}
+        />
       </div>
     </SectionWrapper>
   );

@@ -75,7 +75,6 @@ const mainLinks = [
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/reviews", label: "Reviews", icon: Star, featureKey: "reviews", comingSoon: true },
   { href: "/coupons", label: "Coupons", icon: Ticket, featureKey: "coupons" },
-  { href: "/cms", label: "CMS", icon: FileText, featureKey: "cms" },
   { href: "/customer-messages", label: "Messages", icon: Mail, featureKey: "cms" },
   { href: "/media", label: "Media", icon: Image, featureKey: "media" },
   { href: "/builder", label: "Builder", icon: Sparkles, featureKey: "builder" },
@@ -100,18 +99,12 @@ const analyticsSubLinks = [
   { href: "/analytics/reports", label: "Reports", icon: FileSpreadsheet },
 ];
 
-const appearanceLinks = [
-  { href: "/appearance/branding", label: "Branding", icon: Sparkles },
-  { href: "/appearance/domain", label: "Domain", icon: Globe, comingSoon: true },
-  { href: "/appearance/seo", label: "SEO", icon: Search, comingSoon: true },
-];
-
 const reportsLinks = [
   { href: "/reports", label: "Reports", icon: BarChart3, featureKey: "reports" },
 ];
 
 const bottomLinks = [
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings?section=general", label: "Settings", icon: Settings },
   { href: "/activity", label: "Activity", icon: ScrollText },
   { href: "/billing", label: "Billing", icon: CreditCard },
 ];
@@ -383,27 +376,6 @@ export function StoreSidebar({ store }: { store: Store }) {
             <ul className="space-y-0.5">
               {reportsLinks.map((link) => {
                 const meta = resolveLink(link);
-                return (
-                  <li key={link.href}>
-                    <NavItem
-                      {...link}
-                      basePath={basePath}
-                      locked={meta.locked}
-                      requiredPlan={meta.requiredPlan}
-                      comingSoon={meta.comingSoon}
-                    />
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-
-          {/* Appearance */}
-          <div className="mt-4">
-            <SectionLabel>Appearance</SectionLabel>
-            <ul className="space-y-0.5">
-              {appearanceLinks.map((link) => {
-                const meta = resolveLink({ label: link.label, comingSoon: link.comingSoon });
                 return (
                   <li key={link.href}>
                     <NavItem

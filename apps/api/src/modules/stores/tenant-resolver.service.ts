@@ -6,6 +6,9 @@ import { ProductModel } from "../../models/product.model.js";
 import { CategoryModel } from "../../models/category.model.js";
 import { StoreSettingsModel } from "../../models/store-settings.model.js";
 import { HomepageSliderModel } from "../../models/homepage-slider.model.js";
+import { NavigationModel } from "../navigation/navigation.model.js";
+import { MenuItemModel } from "../navigation/menu-item.model.js";
+import { getPublicStoreContact } from "../stores/store-contact.service.js";
 
 export type TenantStoreResponse = {
   store: Record<string, unknown> | null;
@@ -15,7 +18,31 @@ export type TenantStoreResponse = {
   categories: Record<string, unknown>[];
   settings: Record<string, unknown> | null;
   sliders: Record<string, unknown>[];
+  navigations?: Record<string, unknown>[];
+  contact?: Record<string, unknown> | null;
 };
+
+function buildMenuItemTree(items: Array<Record<string, unknown>>) {
+  const map = new Map<string, Record<string, unknown> & { children: Array<Record<string, unknown>> }>();
+  const roots: Array<Record<string, unknown>> = [];
+
+  for (const item of items) {
+    map.set(String(item._id), { ...item, children: [] });
+  }
+
+  for (const item of items) {
+    const node = map.get(String(item._id));
+    if (!node) continue;
+    const parentId = item.parentId ? String(item.parentId) : null;
+    if (parentId && map.has(parentId)) {
+      map.get(parentId)!.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+
+  return roots;
+}
 
 export async function resolveBySubdomain(
   slug: string,
@@ -50,14 +77,26 @@ export async function resolveBySubdomain(
     deletedAt: null,
   }).lean() as any;
 
-  if (!page) {
-    return { ok: false, message: `Page '${pageSlug}' not found or not published` };
-  }
+  // Store exists even when a specific CMS page is missing/unpublished.
+  // Callers render an empty canvas rather than treating the whole store as 404.
 
   const products = await ProductModel.find({ storeId: store._id, status: "active" }).sort({ createdAt: -1 }).limit(20).lean() as any[];
   const categories = await CategoryModel.find({ storeId: store._id, active: true }).sort({ sortOrder: 1, name: 1 }).lean() as any[];
   const settings = await StoreSettingsModel.findOne({ storeId: store._id }).lean() as any;
   const sliders = await HomepageSliderModel.find({ storeId: store._id, isActive: true }).sort({ sortOrder: 1, createdAt: 1 }).lean() as any[];
+  const navigations = await NavigationModel.find({ storeId: store._id, isActive: true }).sort({ sortOrder: 1 }).lean() as any[];
+  const navigationTrees = await Promise.all(
+    navigations.map(async (navigation) => {
+      const items = await MenuItemModel.find({
+        navigationId: navigation._id,
+        isVisible: { $ne: false },
+      })
+        .sort({ sortOrder: 1 })
+        .lean() as any[];
+      return { ...navigation, items: buildMenuItemTree(items) };
+    }),
+  );
+  const contactResult = await getPublicStoreContact(String(store._id));
 
   return {
     ok: true,
@@ -69,6 +108,8 @@ export async function resolveBySubdomain(
       categories: categories ?? [],
       settings: settings ?? null,
       sliders: sliders ?? [],
+      navigations: navigationTrees ?? [],
+      contact: contactResult.data?.contact ?? null,
     },
   };
 }

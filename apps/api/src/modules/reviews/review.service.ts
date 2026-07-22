@@ -1,6 +1,7 @@
 import { connectDatabase } from "../../common/database/connection.js";
 import { ReviewModel } from "./review.model.js";
 import { z } from "zod";
+import { parseListQuery, paginatedResponse, buildTextSearchFilter } from "../../common/utils/pagination.js";
 
 const createReviewSchema = z.object({
   productId: z.string(),
@@ -10,13 +11,33 @@ const createReviewSchema = z.object({
   customerName: z.string().max(200).optional().default(""),
 });
 
-export async function listReviews(storeId: string, filters?: { productId?: string; status?: string }) {
+export async function listReviews(storeId: string, query: Record<string, unknown> = {}) {
   await connectDatabase();
-  const query: Record<string, unknown> = { storeId };
-  if (filters?.productId) query.productId = filters.productId;
-  if (filters?.status) query.status = filters.status;
-  const reviews = await ReviewModel.find(query).sort({ createdAt: -1 }).lean();
-  return { ok: true as const, data: { reviews } };
+  const params = parseListQuery(query);
+  const clauses: Record<string, unknown>[] = [{ storeId }];
+  if (query.productId) clauses.push({ productId: String(query.productId) });
+  if (params.status) clauses.push({ status: params.status });
+  const textFilter = buildTextSearchFilter(params.search, ["title", "body", "customerName"]);
+  if (textFilter?.$or) clauses.push({ $or: textFilter.$or });
+  const filter = clauses.length === 1 ? clauses[0] : { $and: clauses };
+
+  const [reviews, total] = await Promise.all([
+    ReviewModel.find(filter).sort(params.sort ?? { createdAt: -1 }).skip(params.skip).limit(params.limit).lean(),
+    ReviewModel.countDocuments(filter),
+  ]);
+
+  const paginated = paginatedResponse(reviews, total, params);
+  return {
+    ok: true as const,
+    data: {
+      reviews: paginated.data,
+      pagination: paginated.pagination,
+      total,
+      page: params.page,
+      limit: params.limit,
+      totalPages: paginated.pagination.totalPages,
+    },
+  };
 }
 
 export async function createReview(storeId: string, payload: unknown, customerId?: string) {

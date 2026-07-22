@@ -1,13 +1,40 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-function ProductCardSkeleton() {
+export function ProductCardSkeleton() {
   return (
-    <div className="space-y-3">
-      <Skeleton className="aspect-[4/5] w-full rounded-2xl" />
-      <Skeleton className="h-4 w-3/4" />
-      <Skeleton className="h-3 w-1/3" />
+    <div className="storefront-utility-card relative flex flex-col overflow-hidden p-apple-lg">
+      <div className="relative flex flex-col">
+        <div className="relative mb-3 aspect-square overflow-hidden rounded-apple-sm bg-apple-canvas-parchment">
+          <div className="h-full w-full skeleton-shimmer" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-[1.125rem] w-4/5 rounded-apple-xs bg-apple-canvas-parchment skeleton-shimmer" />
+          <div className="h-[1.125rem] w-3/5 rounded-apple-xs bg-apple-canvas-parchment skeleton-shimmer" />
+        </div>
+        <div className="mt-2 flex items-center gap-1">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <div key={s} className="h-3 w-3 rounded-apple-xs bg-apple-canvas-parchment skeleton-shimmer" />
+          ))}
+          <div className="ml-1 h-3 w-8 rounded-apple-xs bg-apple-canvas-parchment skeleton-shimmer" />
+        </div>
+        <div className="mt-3 flex items-center gap-2">
+          <div className="h-5 w-20 rounded-apple-xs bg-apple-canvas-parchment skeleton-shimmer" />
+          <div className="h-4 w-16 rounded-apple-xs bg-apple-canvas-parchment skeleton-shimmer" />
+        </div>
+        <div className="mt-3 h-10 w-full rounded-apple-pill bg-apple-canvas-parchment skeleton-shimmer" />
+      </div>
     </div>
+  );
+}
+
+export function ProductGridSkeleton({ count = 12 }: { count?: number }) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
+        <ProductCardSkeleton key={i} />
+      ))}
+    </>
   );
 }
 
@@ -52,20 +79,18 @@ export function HomeStorefrontSkeleton({ className }: { className?: string }) {
 }
 
 /** Shop / category / search — product grid */
-export function ShopStorefrontSkeleton({ className }: { className?: string }) {
+export function ShopStorefrontSkeleton({ className, count = 12 }: { className?: string; count?: number }) {
   return (
     <div className={cn("mx-auto w-full max-w-6xl animate-fade-in px-4 py-8 sm:px-6", className)} aria-busy aria-label="Loading products">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-2">
-          <Skeleton className="h-8 w-40" />
-          <Skeleton className="h-4 w-56" />
+          <Skeleton className="h-8 w-40 skeleton-shimmer" />
+          <Skeleton className="h-4 w-56 skeleton-shimmer" />
         </div>
-        <Skeleton className="h-10 w-full max-w-xs rounded-full sm:w-48" />
+        <Skeleton className="h-10 w-full max-w-xs rounded-full sm:w-48 skeleton-shimmer" />
       </div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <ProductCardSkeleton key={i} />
-        ))}
+        <ProductGridSkeleton count={count} />
       </div>
     </div>
   );

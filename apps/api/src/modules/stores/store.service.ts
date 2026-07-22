@@ -7,6 +7,7 @@ import { TeamMemberModel } from "../../models/team-member.model.js";
 import { PageModel } from "../../models/page.model.js";
 import { ensureDefaultStoreSettings } from "./store-settings.service.js";
 import { ensureDefaultStoreContact } from "./store-contact.service.js";
+import { ensureDefaultEmailConfig, ensureDefaultEmailTemplates, ensureDefaultEmailBranding } from "../email/index.js";
 import { HomepageSliderModel } from "../../models/homepage-slider.model.js";
 import { createStoreSchema, updateStoreSchema, updateStoreBrandingSchema, type CreateStoreInput, type UpdateStoreInput, type UpdateStoreBrandingInput } from "./store.validator.js";
 import { canonicalizeBrandingMediaUrls } from "./store-branding-logo.js";
@@ -28,6 +29,10 @@ import { CollectionModel } from "../../models/collection.model.js";
 import { PaymentMethodModel } from "../../models/payment-method.model.js";
 import { DeliveryZoneModel } from "../../models/delivery-zone.model.js";
 import { StoreSettingsModel } from "../../models/store-settings.model.js";
+import { StoreEmailConfigModel } from "../../models/store-email-config.model.js";
+import { StoreEmailTemplateModel } from "../../models/store-email-template.model.js";
+import { StoreEmailBrandingModel } from "../../models/store-email-branding.model.js";
+import { StoreEmailLogModel } from "../../models/store-email-log.model.js";
 import { StoreSubscriptionModel } from "../../models/store-subscription.model.js";
 import { InvoiceModel } from "../../models/invoice.model.js";
 import { CampaignModel } from "../../models/campaign.model.js";
@@ -273,6 +278,9 @@ export async function createStore(userId: string, payload: unknown) {
 
     await ensureDefaultStoreSettings(store._id.toString(), session);
     await ensureDefaultStoreContact(store._id.toString());
+    await ensureDefaultEmailConfig(store._id.toString());
+    await ensureDefaultEmailTemplates(store._id.toString());
+    await ensureDefaultEmailBranding(store._id.toString());
     await HomepageSliderModel.deleteMany({ storeId: store._id }).session(session);
     await HomepageSliderModel.create([{
       storeId: store._id,
@@ -571,6 +579,10 @@ export async function deleteStore(
     await step("Theme", async () => {
       // Theme Settings / general Settings
       await StoreSettingsModel.deleteMany({ storeId: storeObj }).session(session);
+      await StoreEmailConfigModel.deleteMany({ storeId: storeObj }).session(session);
+      await StoreEmailTemplateModel.deleteMany({ storeId: storeObj }).session(session);
+      await StoreEmailBrandingModel.deleteMany({ storeId: storeObj }).session(session);
+      await StoreEmailLogModel.deleteMany({ storeId: storeObj }).session(session);
       await PaymentMethodModel.deleteMany({ storeId: storeObj }).session(session);
       await DeliveryZoneModel.deleteMany({ storeId: storeObj }).session(session);
       await ShippingZoneModel.deleteMany({ storeId: storeObj }).session(session);

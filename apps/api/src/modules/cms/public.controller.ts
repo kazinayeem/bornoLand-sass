@@ -3,6 +3,7 @@ import type { SubdomainRequest } from "../../common/middleware/subdomain.middlew
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 import { resolveBySubdomain } from "../stores/tenant-resolver.service.js";
 import { getProductBySlug } from "../products/product.service.js";
+import { getPublicProducts } from "../products/product.service.js";
 import { getEnabledPaymentMethods } from "../payments/payment-method.service.js";
 import { getEnabledDeliveryZones } from "../delivery/delivery-zone.service.js";
 
@@ -100,6 +101,17 @@ export async function resolveProductBySlugController(
   return result.ok
     ? sendSuccess(response, result.data)
     : sendFailure(response, result.message, 404);
+}
+
+export async function getPublicProductsController(
+  request: SubdomainRequest,
+  response: Response
+) {
+  const storeId = request.store?._id?.toString();
+  if (!storeId) return sendFailure(response, "Store not found", 404);
+
+  const result = await getPublicProducts(storeId, request.query as Record<string, unknown>);
+  return sendSuccess(response, result.data);
 }
 
 export async function paymentMethodsController(

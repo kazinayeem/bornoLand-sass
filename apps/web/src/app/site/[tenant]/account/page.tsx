@@ -1,105 +1,57 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "@/redux/store";
-import { clearCustomer } from "@/redux/slices/customer-slice";
 import { motion } from "framer-motion";
-import { User, Package, Heart, LogOut, Mail, ChevronRight, PackageSearch } from "lucide-react";
-import {
-  StorefrontPage,
-  StorefrontButton,
-  useStorefrontSurface,
-} from "@/components/storefront/storefront-ui";
+import { User, MapPin, Package, Heart, Bell, Shield, LockKeyhole } from "lucide-react";
 import { StoreLink as Link } from "@/components/storefront/store-link";
-import { useRequireCustomerAuth } from "@/hooks/use-require-customer-auth";
-import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
-import { resolveStoreHref } from "@/lib/store-href";
-import { cn } from "@/lib/utils";
+import { CustomerAccountShell } from "@/components/storefront/customer-account-shell";
 
-export default function AccountPage() {
-  const router = useRouter();
-  const pathname = usePathname() || "";
-  const dispatch = useDispatch();
-  const { customer } = useSelector((s: RootState) => s.customer);
-  const { classes, primaryColor } = useStorefrontSurface();
-  const { showLoader } = useRequireCustomerAuth("/account");
+const cards = [
+  { href: "/account/profile", title: "Profile", desc: "Edit name, phone and avatar", icon: User },
+  { href: "/account/addresses", title: "Saved Addresses", desc: "Manage up to 2 addresses", icon: MapPin },
+  { href: "/account/orders", title: "My Orders", desc: "Track, download invoices and buy again", icon: Package },
+  { href: "/account/wishlist", title: "Wishlist", desc: "Move saved items to cart", icon: Heart },
+  { href: "/account/notifications", title: "Notifications", desc: "Order updates and security alerts", icon: Bell },
+  { href: "/account/security", title: "Security", desc: "Sessions, login history and device access", icon: Shield },
+  { href: "/account/password", title: "Password", desc: "Change your password", icon: LockKeyhole },
+];
 
-  const handleLogout = () => {
-    localStorage.removeItem("customer_token");
-    dispatch(clearCustomer());
-    window.dispatchEvent(new Event("auth-change"));
-    router.replace(resolveStoreHref("/", pathname));
-  };
-
-  if (showLoader || !customer) {
-    return <CustomerAuthLoader />;
-  }
-
-  const links = [
-    { icon: Package, label: "My Orders", desc: "View order history", href: "/orders" },
-    { icon: PackageSearch, label: "Track order", desc: "Find a shipment by order number", href: "/order-tracking" },
-    { icon: Heart, label: "Wishlist", desc: "View saved items", href: "/wishlist" },
-  ];
-
+export default function AccountOverviewPage() {
   return (
-    <StorefrontPage maxWidth="md">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className={cn("flex items-center gap-4 p-6", classes.card)}>
-          <div
-            className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-semibold text-apple-on-primary"
-            style={{ backgroundColor: primaryColor }}
-          >
-            {customer.name[0].toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h1 className={cn("text-tagline", classes.heading)}>{customer.name}</h1>
-            <p className={cn("mt-1 flex items-center gap-1 text-caption", classes.muted)}>
-              <Mail className="h-3.5 w-3.5" /> {customer.email}
-            </p>
-          </div>
-          <StorefrontButton variant="pearl" onClick={handleLogout} className="hidden sm:inline-flex">
-            <LogOut className="h-4 w-4" /> Sign out
-          </StorefrontButton>
+    <CustomerAccountShell>
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-bold">Account</h1>
+          <p className="mt-1 text-sm" style={{ color: "#6B7280" }}>
+            Choose what you want to manage.
+          </p>
         </div>
 
-        <div className="mt-8 space-y-3">
-          {links.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className={cn(
-                "flex items-center gap-4 p-4 transition-transform duration-200 ease-apple hover:-translate-y-0.5",
-                classes.card,
-              )}
-            >
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-apple-md"
-                style={{ backgroundColor: `${primaryColor}12` }}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {cards.map((c) => {
+            const Icon = c.icon;
+            return (
+              <Link
+                key={c.href}
+                href={c.href}
+                className="group rounded-apple-lg border p-4 transition-colors hover:border-apple-primary"
+                style={{ borderColor: "#E5E7EB" }}
               >
-                <link.icon className="h-5 w-5" style={{ color: primaryColor }} />
-              </div>
-              <div className="flex-1">
-                <p className={cn("font-medium", classes.heading)}>{link.label}</p>
-                <p className={cn("text-caption", classes.muted)}>{link.desc}</p>
-              </div>
-              <ChevronRight className={cn("h-5 w-5", classes.muted)} />
-            </Link>
-          ))}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="flex items-center gap-2 text-sm font-semibold">
+                      <Icon className="h-4 w-4 text-apple-ink-muted-48" /> {c.title}
+                    </p>
+                    <p className="mt-2 text-sm" style={{ color: "#6B7280" }}>
+                      {c.desc}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 text-xs font-medium text-apple-primary group-hover:opacity-90">Open</div>
+              </Link>
+            );
+          })}
         </div>
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          className={cn("mt-6 flex w-full items-center justify-center gap-2 py-3 text-caption font-medium text-red-500 sm:hidden")}
-        >
-          <LogOut className="h-4 w-4" /> Sign out
-        </button>
-
-        <p className={cn("mt-8 flex items-center gap-2 text-caption", classes.muted)}>
-          <User className="h-3.5 w-3.5" /> Profile editing coming soon
-        </p>
-      </motion.div>
-    </StorefrontPage>
+      </div>
+    </CustomerAccountShell>
   );
 }

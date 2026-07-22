@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/api/base-api";
+import type { ListQueryParams, PaginationMeta } from "@/types/pagination";
 
 export type AdminStoreSettings = {
   store: Record<string, unknown>;
@@ -98,9 +99,12 @@ export const adminApi = baseApi.injectEndpoints({
       query: () => ({ url: "/admin/analytics" }),
       providesTags: ["Dashboard"]
     }),
-    getAdminStores: builder.query<ApiEnvelope<{ stores: AdminStore[] }>, void>({
-      query: () => ({ url: "/admin/stores" }),
-      providesTags: ["Stores"]
+    getAdminStores: builder.query<
+      ApiEnvelope<{ stores: AdminStore[]; pagination?: PaginationMeta; total?: number; page?: number; limit?: number; totalPages?: number }>,
+      ListQueryParams | void
+    >({
+      query: (params) => ({ url: "/admin/stores", params: params ?? { page: 1, limit: 20 } }),
+      providesTags: ["Stores"],
     }),
     suspendStore: builder.mutation<ApiEnvelope<never>, string>({
       query: (id) => ({ url: `/admin/stores/${id}/suspend`, method: "PUT" }),
@@ -130,9 +134,12 @@ export const adminApi = baseApi.injectEndpoints({
       query: ({ id, data }) => ({ url: `/admin/stores/${id}/plan`, method: "PUT", body: data }),
       invalidatesTags: ["Stores", "Dashboard"]
     }),
-    getAdminUsers: builder.query<ApiEnvelope<{ users: AdminUser[] }>, void>({
-      query: () => ({ url: "/admin/users" }),
-      providesTags: ["User"]
+    getAdminUsers: builder.query<
+      ApiEnvelope<{ users: AdminUser[]; pagination?: PaginationMeta; total?: number; page?: number; limit?: number; totalPages?: number }>,
+      ListQueryParams | void
+    >({
+      query: (params) => ({ url: "/admin/users", params: params ?? { page: 1, limit: 20 } }),
+      providesTags: ["User"],
     }),
     suspendUser: builder.mutation<ApiEnvelope<never>, string>({
       query: (id) => ({ url: `/admin/users/${id}/suspend`, method: "PUT" }),
@@ -146,9 +153,12 @@ export const adminApi = baseApi.injectEndpoints({
       query: (id) => ({ url: `/admin/users/${id}`, method: "DELETE" }),
       invalidatesTags: ["User", "Dashboard"]
     }),
-    getAdminProducts: builder.query<ApiEnvelope<{ products: AdminProduct[] }>, void>({
-      query: () => ({ url: "/admin/products" }),
-      providesTags: ["Products"]
+    getAdminProducts: builder.query<
+      ApiEnvelope<{ products: AdminProduct[]; pagination?: PaginationMeta; total?: number; page?: number; limit?: number; totalPages?: number }>,
+      ListQueryParams | void
+    >({
+      query: (params) => ({ url: "/admin/products", params: params ?? { page: 1, limit: 20 } }),
+      providesTags: ["Products"],
     }),
     getAdminOrders: builder.query<ApiEnvelope<{ orders: AdminOrder[]; total: number; page: number; totalPages: number }>, {
       storeId?: string; status?: string; paymentStatus?: string; from?: string; to?: string; page?: string; limit?: string;

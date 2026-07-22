@@ -13,6 +13,15 @@ import {
 } from "lucide-react";
 import { SectionHeading } from "./section-heading";
 import { useLandingLocale } from "./landing-locale";
+import {
+  landingCard,
+  landingCardHover,
+  landingContainer,
+  landingIconWrap,
+  landingSection,
+  staggerContainer,
+  staggerItem,
+} from "./landing-ui";
 
 const icons = [Store, ShoppingBag, Package, ShoppingCart, CreditCard, Users, FileText, Palette];
 
@@ -21,41 +30,33 @@ export function Features() {
   const f = t.features;
 
   return (
-    <section id="features" className="relative px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-      <div className="mx-auto max-w-7xl">
+    <section id="features" className={landingSection}>
+      <div className={landingContainer}>
         <SectionHeading eyebrow={f.eyebrow} title={f.title} description={f.description} />
 
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-60px" }}
-          variants={{
-            hidden: { opacity: 0 },
-            visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
-          }}
+          viewport={{ once: true, margin: "-80px" }}
+          variants={staggerContainer}
           className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
           {f.items.map((item, i) => {
             const Icon = icons[i] ?? Store;
             return (
-              <motion.div
+              <motion.article
                 key={item.title}
-                variants={{
-                  hidden: { opacity: 0, y: 16 },
-                  visible: {
-                    opacity: 1,
-                    y: 0,
-                    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
-                  },
-                }}
-                className="group rounded-lg border border-apple-hairline bg-apple-canvas p-5 transition-colors duration-300 hover:border-blue-200/80"
+                variants={staggerItem}
+                className={`group ${landingCard} ${landingCardHover}`}
               >
-                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-apple-canvas-parchment transition-colors group-hover:bg-blue-50">
-                  <Icon className="h-4 w-4 text-apple-primary" />
+                <div className={landingIconWrap}>
+                  <Icon className="h-5 w-5 text-apple-primary" aria-hidden />
                 </div>
                 <h3 className="text-sm font-semibold text-apple-ink">{item.title}</h3>
-                <p className="mt-1.5 text-xs leading-relaxed text-apple-ink-muted-48">{item.description}</p>
-              </motion.div>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-apple-ink-muted-48">
+                  {item.description}
+                </p>
+              </motion.article>
             );
           })}
         </motion.div>

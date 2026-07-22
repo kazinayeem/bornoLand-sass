@@ -2,6 +2,7 @@ import { connectDatabase } from "../../common/database/connection.js";
 import { CouponModel } from "./coupon.model.js";
 import { OrderModel } from "../orders/order.model.js";
 import { createCouponSchema, updateCouponSchema } from "./coupon.validator.js";
+import { parseListQuery, paginatedResponse, buildTextSearchFilter } from "../../common/utils/pagination.js";
 
 type CouponLean = {
   _id: unknown;
@@ -119,10 +120,32 @@ export async function validateCouponForCart(
   };
 }
 
-export async function listCoupons(storeId: string) {
+export async function listCoupons(storeId: string, query: Record<string, unknown> = {}) {
   await connectDatabase();
-  const coupons = await CouponModel.find({ storeId }).sort({ createdAt: -1 }).lean();
-  return { ok: true as const, data: { coupons } };
+  const params = parseListQuery(query);
+  const clauses: Record<string, unknown>[] = [{ storeId }];
+  const textFilter = buildTextSearchFilter(params.search, ["code", "name", "description"]);
+  if (textFilter?.$or) clauses.push({ $or: textFilter.$or });
+  if (params.status) clauses.push({ status: params.status });
+  const filter = clauses.length === 1 ? clauses[0] : { $and: clauses };
+
+  const [coupons, total] = await Promise.all([
+    CouponModel.find(filter).sort(params.sort ?? { createdAt: -1 }).skip(params.skip).limit(params.limit).lean(),
+    CouponModel.countDocuments(filter),
+  ]);
+
+  const paginated = paginatedResponse(coupons, total, params);
+  return {
+    ok: true as const,
+    data: {
+      coupons: paginated.data,
+      pagination: paginated.pagination,
+      total,
+      page: params.page,
+      limit: params.limit,
+      totalPages: paginated.pagination.totalPages,
+    },
+  };
 }
 
 export async function getCoupon(storeId: string, couponId: string) {

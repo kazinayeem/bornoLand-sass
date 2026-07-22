@@ -10,14 +10,20 @@ type OrderItemData = {
   image: string;
 };
 
-type ShippingAddress = {
+export type ShippingAddress = {
   fullName: string;
   phone: string;
-  street: string;
-  city: string;
-  state?: string;
-  zip?: string;
+  email?: string;
+  label?: "Home" | "Office" | "Other";
   country?: string;
+  state?: string;
+  city: string;
+  area?: string;
+  street: string;
+  apartment?: string;
+  zip?: string;
+  landmark?: string;
+  orderNotes?: string;
 };
 
 type OrderData = {
@@ -69,30 +75,33 @@ function getAuthHeaders(): Record<string, string> {
 
 export const orderApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createOrder: builder.mutation<ApiResponse<{ order: OrderData }>, { shippingAddress: ShippingAddress; paymentMethod?: string; deliveryZoneId?: string; notes?: string }>({
+    createOrder: builder.mutation<
+      ApiResponse<{ order: OrderData }>,
+      { shippingAddress: ShippingAddress; paymentMethod?: string; deliveryZoneId?: string; notes?: string }
+    >({
       query: (body) => ({
         url: "/orders/create",
         method: "POST",
         body,
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
       }),
-      invalidatesTags: ["Cart", "Orders"]
+      invalidatesTags: ["Cart", "Orders", "Customer"],
     }),
     getOrders: builder.query<ApiResponse<{ orders: OrderData[] }>, void>({
       query: () => ({
         url: "/orders",
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
       }),
-      providesTags: ["Orders"]
+      providesTags: ["Orders"],
     }),
     getOrder: builder.query<ApiResponse<{ order: OrderData }>, string>({
       query: (id) => ({
         url: `/orders/${id}`,
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
       }),
-      providesTags: ["Orders"]
-    })
-  })
+      providesTags: ["Orders"],
+    }),
+  }),
 });
 
 export const { useCreateOrderMutation, useGetOrdersQuery, useGetOrderQuery } = orderApi;

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { X, Download, Printer, FileText, CheckCircle2, CreditCard, Loader2 } from "lucide-react";
+import { X, Download, Printer, FileText, CheckCircle2, CreditCard, Loader2, ExternalLink } from "lucide-react";
 import type { Invoice } from "@/redux/api/billing-api";
 import { formatBDT } from "@/lib/store-status";
 import { Badge } from "@/components/ui/badge";
@@ -67,7 +67,16 @@ async function printInvoicePdf(invoiceId: string) {
 export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props) {
   const [downloading, setDownloading] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [copied, setCopied] = useState(false);
   const planName = typeof invoice.planId === "object" ? invoice.planId.name : "—";
+
+  const handleCopyLink = useCallback(() => {
+    const url = `${window.location.origin}/invoice/verify/${invoice.verificationCode}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    toast.success("Verification link copied");
+    setTimeout(() => setCopied(false), 2000);
+  }, [invoice.verificationCode]);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -204,7 +213,7 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
         </div>
 
         {/* Actions */}
-        <div className="border-t border-apple-divider-soft px-6 py-4 flex gap-3">
+        <div className="border-t border-apple-divider-soft px-6 py-4 flex flex-wrap gap-3">
           <button
             onClick={handleDownload}
             disabled={downloading}
@@ -229,6 +238,15 @@ export function InvoiceDetail({ invoice, onClose, storeName, ownerName }: Props)
             )}
             {printing ? "Opening..." : "Print"}
           </button>
+          {invoice.verificationCode && (
+            <button
+              onClick={handleCopyLink}
+              className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-all duration-200"
+            >
+              <ExternalLink className="h-4 w-4" />
+              {copied ? "Copied!" : "Copy Verification Link"}
+            </button>
+          )}
         </div>
       </motion.div>
     </motion.div>

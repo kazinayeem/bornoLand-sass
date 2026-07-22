@@ -26,12 +26,12 @@ const pageMeta: Record<string, { label: string; icon: typeof HelpCircle; descrip
   "about-us": { label: "About Us", icon: Info, description: "Your store story, mission, and values." },
 };
 
-export function CmsPageEditor() {
+export function CmsPageEditor({ cmsSlug: cmsSlugProp }: { cmsSlug?: string }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
   const params = useParams();
-  const slug = params.slug as string;
+  const slug = cmsSlugProp ?? (params.slug as string);
   const meta = pageMeta[slug] ?? { label: slug, icon: FileText, description: "Edit page content." };
   const Icon = meta.icon;
 

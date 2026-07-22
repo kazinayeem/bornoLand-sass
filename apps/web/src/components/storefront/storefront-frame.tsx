@@ -9,6 +9,7 @@ import type {
   StoreData,
   StoreSettingsData,
   ThemeData,
+  NavigationData,
 } from "@/providers/tenant-provider";
 import type { StorefrontSectionLike } from "@/components/storefront/storefront-types";
 
@@ -19,6 +20,7 @@ type StorefrontFrameProps = {
   categories: CategoryData[];
   settings: StoreSettingsData;
   sliders: HomepageSliderData[];
+  navigations?: NavigationData[];
   pageSections: StorefrontSectionLike[];
   headerSections?: StorefrontSectionLike[];
   footerSections?: StorefrontSectionLike[];
@@ -39,6 +41,7 @@ export function StorefrontFrame({
   categories,
   settings,
   sliders,
+  navigations,
   pageSections,
   headerSections,
   footerSections,
@@ -63,6 +66,7 @@ export function StorefrontFrame({
       categories={stableCategories}
       settings={settings}
       sliders={stableSliders}
+      navigations={navigations}
       pageSections={stableSections}
       headerSections={headerSections}
       footerSections={footerSections}

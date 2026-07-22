@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { getContrastColor } from "@/lib/color-utils";
 import { useTenant } from "@/providers/tenant-provider";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 import Link from "next/link";
@@ -108,15 +109,15 @@ export function StorefrontButton({
   const base = "btn-press inline-flex items-center justify-center gap-2 font-body transition-opacity disabled:cursor-not-allowed disabled:opacity-50";
 
   if (variant === "primary") {
+    const textColor = getContrastColor(primaryColor);
     return (
       <button
         className={cn(
           base,
           size === "large" ? "rounded-apple-pill px-7 py-3.5 text-[18px] font-light" : "rounded-apple-pill px-[22px] py-[11px] text-body",
-          "text-apple-on-primary",
           className
         )}
-        style={{ backgroundColor: primaryColor, ...style }}
+        style={{ backgroundColor: primaryColor, color: textColor, ...style }}
         {...props}
       >
         {children}
@@ -188,11 +189,12 @@ export function StorefrontButtonLink({
   const base = "btn-press inline-flex items-center justify-center gap-2 font-body transition-opacity";
 
   if (variant === "primary") {
+    const textColor = getContrastColor(primaryColor);
     return (
       <Link
         href={href}
-        className={cn(base, "rounded-apple-pill px-[22px] py-[11px] text-body text-apple-on-primary", className)}
-        style={{ backgroundColor: primaryColor }}
+        className={cn(base, "rounded-apple-pill px-[22px] py-[11px] text-body", className)}
+        style={{ backgroundColor: primaryColor, color: textColor }}
       >
         {children}
       </Link>

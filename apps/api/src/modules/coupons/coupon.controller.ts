@@ -20,7 +20,7 @@ export async function listCouponsController(request: AuthRequest, response: Resp
   if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
     return sendFailure(response, "Store not found", 404);
   }
-  const result = await listCoupons(storeId);
+  const result = await listCoupons(storeId, request.query as Record<string, unknown>);
   return sendSuccess(response, result.data);
 }
 

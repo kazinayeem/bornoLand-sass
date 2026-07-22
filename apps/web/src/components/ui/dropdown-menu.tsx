@@ -199,7 +199,7 @@ export function DropdownMenu({
               })}
               style={{ ...floatingStyles, minWidth, zIndex: 10000 }}
               className={cn(
-                "rounded-lg border border-apple-hairline bg-apple-canvas py-1.5 shadow-lg outline-none dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2",
+                "rounded-lg border border-border bg-popover py-1.5 shadow-lg outline-none text-popover-foreground",
                 className
               )}
               role="menu"
@@ -233,7 +233,7 @@ export function DropdownMenu({
                       itemDisabled && "cursor-not-allowed opacity-40",
                       !itemDisabled && danger && "text-red-600 hover:bg-red-50 focus-visible:bg-red-50 dark:hover:bg-red-950/20",
                       !itemDisabled && warning && "text-amber-700 hover:bg-amber-50 focus-visible:bg-amber-50 dark:hover:bg-amber-950/20",
-                      !itemDisabled && !danger && !warning && "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment dark:text-apple-body-muted dark:hover:bg-apple-surface-tile-3"
+                      !itemDisabled && !danger && !warning && "text-popover-foreground hover:bg-muted"
                     )}
                   >
                     {Icon && (

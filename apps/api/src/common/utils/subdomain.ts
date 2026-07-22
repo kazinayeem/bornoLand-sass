@@ -51,6 +51,47 @@ function getConfiguredPlatformHosts(): string[] {
     .filter(Boolean);
 }
 
+function isIpv4Octets(parts: string[]): boolean {
+  return (
+    parts.length === 4 &&
+    parts.every((octet) => {
+      if (!/^\d{1,3}$/.test(octet)) return false;
+      const n = Number(octet);
+      return Number.isInteger(n) && n >= 0 && n <= 255;
+    })
+  );
+}
+
+function firstLabel(prefix: string): string | null {
+  if (!prefix) return null;
+  return normalizeStoreSlug(prefix.split(".")[0] ?? "");
+}
+
+/** Parse nip.io / sslip.io — apex has no tenant; otherwise first label is the slug. */
+function parseDevWildcardDns(hostname: string): { storeSlug: string | null; isApex: boolean } | null {
+  let base: string | null = null;
+  if (hostname.endsWith(".nip.io")) base = hostname.slice(0, -".nip.io".length);
+  else if (hostname.endsWith(".sslip.io")) base = hostname.slice(0, -".sslip.io".length);
+  else return null;
+  if (!base) return { storeSlug: null, isApex: true };
+
+  const dashed = base.match(/^(?:(.+)\.)?(\d{1,3}-\d{1,3}-\d{1,3}-\d{1,3})$/);
+  if (dashed) {
+    if (!isIpv4Octets((dashed[2] ?? "").split("-"))) return null;
+    const prefix = dashed[1] ?? "";
+    if (!prefix) return { storeSlug: null, isApex: true };
+    return { storeSlug: firstLabel(prefix), isApex: false };
+  }
+
+  const parts = base.split(".").filter(Boolean);
+  if (parts.length < 4) return null;
+  const ipParts = parts.slice(-4);
+  if (!isIpv4Octets(ipParts)) return null;
+  const prefixParts = parts.slice(0, -4);
+  if (prefixParts.length === 0) return { storeSlug: null, isApex: true };
+  return { storeSlug: firstLabel(prefixParts.join(".")), isApex: false };
+}
+
 function isPlatformHost(host: string): boolean {
   const hostname = stripPort(host);
   if (!hostname) return false;
@@ -63,6 +104,8 @@ function isPlatformHost(host: string): boolean {
     return true;
   }
   if (isIpHostname(hostname)) return true;
+  const wildcard = parseDevWildcardDns(hostname);
+  if (wildcard?.isApex) return true;
   if (getConfiguredPlatformHosts().includes(hostname)) return true;
 
   const rootDomain = getRootDomain();
@@ -90,34 +133,40 @@ export function extractSubdomain(host: string): string | null {
   if (!host) return null;
 
   const lowerHost = host.trim().toLowerCase();
+  const hostname = stripPort(lowerHost);
+
+  if (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "0.0.0.0" ||
+    hostname === "::1" ||
+    isIpHostname(hostname)
+  ) {
+    return null;
+  }
+
+  const wildcard = parseDevWildcardDns(hostname);
+  if (wildcard) return wildcard.isApex ? null : wildcard.storeSlug;
+
   if (isPlatformHost(lowerHost)) return null;
 
   const rootDomain = getRootDomain();
   const { rootHostname } = parseRootDomain(rootDomain);
 
-  if (rootDomain && (lowerHost === rootDomain || lowerHost.split(":")[0] === rootHostname)) {
+  if (rootDomain && (lowerHost === rootDomain || hostname === rootHostname)) {
     return null;
   }
 
   if (rootDomain && lowerHost.endsWith(`.${rootDomain}`)) {
-    const prefix = lowerHost.slice(0, -(rootDomain.length + 1));
-    if (prefix && !prefix.includes(".")) return prefix;
-    return null;
-  }
-
-  const hostname = stripPort(lowerHost);
-  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0" || isIpHostname(hostname)) {
-    return null;
+    return firstLabel(lowerHost.slice(0, -(rootDomain.length + 1)));
   }
 
   if (hostname.endsWith(".localhost")) {
-    const prefix = hostname.slice(0, -".localhost".length);
-    if (prefix && !prefix.includes(".")) return prefix;
+    return firstLabel(hostname.slice(0, -".localhost".length));
   }
 
-  if (rootHostname && hostname.endsWith(`.${rootHostname}`)) {
-    const prefix = hostname.slice(0, -(rootHostname.length + 1));
-    if (prefix && !prefix.includes(".")) return prefix;
+  if (rootHostname && hostname !== rootHostname && hostname.endsWith(`.${rootHostname}`)) {
+    return firstLabel(hostname.slice(0, -(rootHostname.length + 1)));
   }
 
   return null;

@@ -1,16 +1,14 @@
-import { AuthCard } from "@/components/auth/auth-card";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginForm } from "@/components/auth/login-form";
 
 export default function LoginPage() {
   return (
     <AuthShell variant="login">
-      <AuthCard
-        title="Welcome back"
-        description="Sign in to your workspace dashboard and continue building your stores."
-      >
-        <LoginForm />
-      </AuthCard>
+      <div className="flex w-full items-center justify-center">
+        <div className="w-full max-w-sm">
+          <LoginForm />
+        </div>
+      </div>
     </AuthShell>
   );
 }

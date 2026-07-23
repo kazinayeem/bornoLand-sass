@@ -1,98 +1,94 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  UserPlus, Store, Package, CreditCard, Globe, DollarSign,
-} from "lucide-react";
+import { UserPlus, Store, ShoppingBag } from "lucide-react";
 import { SectionHeading } from "./section-heading";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { landingContainer, landingSection } from "./landing-ui";
 
 const steps = [
-  { icon: UserPlus, title: "Create Account", description: "Sign up free in under 30 seconds. No credit card required." },
-  { icon: Store, title: "Create Store", description: "Set up your store with a custom subdomain and branding." },
-  { icon: Package, title: "Add Products", description: "Import or add products with images, pricing, and variants." },
-  { icon: CreditCard, title: "Connect Payments", description: "Link bKash, Nagad, Stripe, or SSLCommerz to start accepting payments." },
-  { icon: Globe, title: "Publish Website", description: "Go live with a click. Your store is ready for customers." },
-  { icon: DollarSign, title: "Start Selling", description: "Receive orders, process payments, and grow your business." },
+  {
+    step: "01",
+    icon: UserPlus,
+    title: "Create an Account",
+    description:
+      "Welcome to BornoLand! Sign up to launch your online store and access powerful tools to grow your business.",
+  },
+  {
+    step: "02",
+    icon: Store,
+    title: "Set Up Your Store",
+    description:
+      "Add your store name, choose custom domain settings, and select category preferences to launch in minutes.",
+  },
+  {
+    step: "03",
+    icon: ShoppingBag,
+    title: "Start Your Sales",
+    description:
+      "Start selling by adding your first product. Enter price, photos, and variants to showcase your items to customers.",
+  },
 ];
 
 export function HowItWorks() {
   return (
-    <section className="relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
-      <div className="mx-auto max-w-7xl">
+    <section id="how-it-works" className={landingSection}>
+      <div className={landingContainer}>
         <SectionHeading
-          eyebrow="How It Works"
-          title="From Zero To Selling In Minutes"
-          description="Get your online store up and running in six simple steps."
+          eyebrow="Simple Steps"
+          title="Simple Steps to Make Your Website Live"
+          description="No need to learn design or development. We have simplified everything so you can build your store confidently."
         />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-12"
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.5 }}
+          className="relative mt-12 sm:mt-14"
         >
-          <div className="hidden lg:block">
-            <div className="relative mx-auto max-w-4xl">
-              <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-apple-hairline" />
-              <div className="space-y-12">
-                {steps.map((step, i) => (
-                  <motion.div
-                    key={step.title}
-                    initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true, margin: "-80px" }}
-                    transition={{ duration: 0.4, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                    className={`relative flex items-center ${i % 2 === 0 ? "flex-row" : "flex-row-reverse"}`}
-                  >
-                    <div className={`w-[calc(50%-2rem)] ${i % 2 === 0 ? "text-right" : "text-left"}`}>
-                      <div className={`inline-block rounded-lg border border-apple-hairline bg-apple-canvas p-5 ${
-                        i % 2 === 0 ? "text-right" : "text-left"
-                      }`}>
-                        <div className={`flex items-center gap-3 mb-1 ${i % 2 === 0 ? "flex-row-reverse" : ""}`}>
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-apple-canvas-parchment">
-                            <step.icon className="h-4 w-4 text-blue-600" />
-                          </div>
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Step {i + 1}</span>
-                        </div>
-                        <h3 className="text-sm font-bold text-apple-ink">{step.title}</h3>
-                        <p className="mt-1 text-xs text-apple-ink-muted-48">{step.description}</p>
-                      </div>
-                    </div>
-                    <div className="absolute left-1/2 z-10 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full border-2 border-apple-canvas bg-apple-primary text-xs font-bold text-white">
-                      {i + 1}
-                    </div>
-                    <div className="w-[calc(50%-2rem)]" />
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
+          {/* Dashed curved connector — desktop */}
+          <svg
+            className="pointer-events-none absolute left-[16%] right-[16%] top-12 hidden h-16 w-[68%] text-primary md:block"
+            viewBox="0 0 600 64"
+            fill="none"
+            aria-hidden
+          >
+            <path
+              d="M0 40 C100 0, 200 0, 300 40 S500 80, 600 40"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeDasharray="6 8"
+              strokeOpacity="0.45"
+            />
+          </svg>
 
-          <div className="space-y-4 lg:hidden">
-            {steps.map((step, i) => (
-              <motion.div
-                key={step.title}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.4, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                className="flex gap-4"
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-8">
+            {steps.map((stepItem) => (
+              <Card
+                key={stepItem.step}
+                className="relative border-0 bg-transparent p-0 text-center shadow-none"
               >
-                <div className="flex flex-col items-center">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-apple-primary text-xs font-bold text-white">
-                    {i + 1}
+                <CardContent className="flex flex-col items-center p-0">
+                  <div className="relative mb-5">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary shadow-sm">
+                      <stepItem.icon className="h-8 w-8" aria-hidden />
+                    </div>
+                    <Badge
+                      variant="primary"
+                      className="absolute -right-1 -top-1 h-7 min-w-7 justify-center rounded-full bg-primary px-0 text-[11px] font-bold text-primary-foreground ring-0"
+                    >
+                      {stepItem.step}
+                    </Badge>
                   </div>
-                  {i < steps.length - 1 && <div className="mt-1 w-px flex-1 bg-apple-hairline" />}
-                </div>
-                <div className="mb-4 flex-1 rounded-xl border border-apple-divider-soft bg-apple-canvas p-3.5">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <step.icon className="h-3.5 w-3.5 text-blue-600" />
-                    <h3 className="text-sm font-semibold text-apple-ink">{step.title}</h3>
-                  </div>
-                  <p className="text-xs text-apple-ink-muted-48">{step.description}</p>
-                </div>
-              </motion.div>
+
+                  <h3 className="text-lg font-bold text-foreground">{stepItem.title}</h3>
+                  <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
+                    {stepItem.description}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </motion.div>

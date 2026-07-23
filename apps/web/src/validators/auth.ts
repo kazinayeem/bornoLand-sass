@@ -1,12 +1,25 @@
 import { z } from "zod";
 
-export const registerSchema = z.object({
-  name: z.string().min(2).max(80),
-  email: z.string().email(),
-  password: z.string().min(8).max(128),
-  tenantName: z.string().min(2).max(80).optional(),
-  rememberMe: z.boolean().optional().default(false)
-});
+export const registerSchema = z
+  .object({
+    name: z.string().min(2).max(80),
+    email: z.string().email(),
+    password: z.string().min(8).max(128),
+    confirmPassword: z.string().min(8).max(128),
+    tenantName: z
+      .string()
+      .max(80)
+      .optional()
+      .transform((value) => {
+        const trimmed = value?.trim() ?? "";
+        return trimmed.length >= 2 ? trimmed : undefined;
+      }),
+    rememberMe: z.boolean().optional().default(false),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 

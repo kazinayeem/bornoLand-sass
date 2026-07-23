@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useRequiredStore } from "@/providers/store-context";
 import { revalidateStorefrontAction } from "@/lib/actions/revalidate-storefront";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { Button } from "@/components/ui/button";
 import {
   builderSaveStatusLabel,
   type BuilderSaveStatus,
@@ -107,26 +108,26 @@ export function BuilderToolbar({
           : null;
 
   return (
-    <header className="frosted-bar sticky top-0 z-40 flex min-h-14 items-center justify-between gap-4 border-b border-apple-hairline px-4 py-2 sm:px-6">
+    <header className="sticky top-0 z-40 flex min-h-14 items-center justify-between gap-4 border-b border-border bg-card/90 px-4 py-2 backdrop-blur-xl sm:px-6">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           onClick={() => void handleBack()}
           aria-label="Back to dashboard"
-          className="btn-press flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-apple-surface-chip/64 text-apple-ink-muted-80 transition-colors hover:text-apple-ink"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-muted/60 text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="min-w-0">
-          <p className="truncate text-body-strong text-apple-ink">{store.shortName || store.name}</p>
+          <p className="truncate text-sm font-semibold text-foreground">{store.shortName || store.name}</p>
           <p
             className={cn(
-              "truncate text-caption transition-opacity duration-300",
+              "truncate text-xs font-medium transition-opacity duration-300",
               autoSaveStatus === "unsaved" && "text-amber-600",
-              autoSaveStatus === "saving" && "text-apple-primary",
+              autoSaveStatus === "saving" && "text-primary",
               autoSaveStatus === "saved" && "text-emerald-600",
-              autoSaveStatus === "error" && "text-red-600",
-              (autoSaveStatus === "idle" || !statusLabel) && "text-apple-ink-muted-48",
+              autoSaveStatus === "error" && "text-destructive",
+              (autoSaveStatus === "idle" || !statusLabel) && "text-muted-foreground",
             )}
             aria-live="polite"
           >
@@ -136,14 +137,16 @@ export function BuilderToolbar({
       </div>
 
       <div className="flex items-center gap-2">
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={() => void handlePreview()}
-          className="btn-press hidden items-center gap-2 rounded-apple-pill border border-apple-hairline bg-apple-canvas px-4 py-2 text-caption font-medium text-apple-ink transition-colors hover:bg-apple-canvas-parchment sm:inline-flex"
+          className="hidden items-center gap-2 rounded-full text-xs font-semibold sm:inline-flex"
         >
           <ExternalLink className="h-3.5 w-3.5" />
           Preview
-        </button>
+        </Button>
         <LoadingButton
           type="button"
           variant="outline"
@@ -153,7 +156,7 @@ export function BuilderToolbar({
           onClick={() => void handleSave()}
           disabled={!isDirty && !saving}
           icon={<Save className="h-3.5 w-3.5" />}
-          className="rounded-apple-pill"
+          className="rounded-full text-xs font-semibold"
         >
           Save
         </LoadingButton>
@@ -165,7 +168,7 @@ export function BuilderToolbar({
           loadingKey="publish"
           onClick={() => void handlePublish()}
           icon={<Send className="h-3.5 w-3.5" />}
-          className={cn("rounded-apple-pill bg-apple-primary hover:bg-apple-primary-focus")}
+          className="rounded-full bg-primary hover:bg-primary-hover text-xs font-semibold shadow-sm"
         >
           Publish
         </LoadingButton>

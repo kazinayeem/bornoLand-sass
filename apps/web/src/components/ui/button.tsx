@@ -46,7 +46,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   loading?: boolean;
   loadingText?: string;
   loadingKey?: LoadingLabelKey;
@@ -77,10 +77,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const resolvedStyle: React.CSSProperties | undefined = themeColor
       ? {
-          ...style,
-          backgroundColor: themeColor,
-          color: style?.color ?? getContrastColor(themeColor),
-        }
+        ...style,
+        backgroundColor: themeColor,
+        color: style?.color ?? getContrastColor(themeColor),
+      }
       : style;
 
     return (

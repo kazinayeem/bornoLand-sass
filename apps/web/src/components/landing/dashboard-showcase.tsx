@@ -1,119 +1,198 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
-import {
-  LayoutDashboard, ShoppingBag, ShoppingCart, BarChart3, Users,
-  Blocks, Palette
-} from "lucide-react";
-import { SectionHeading } from "./section-heading";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useLandingLocale } from "./landing-locale";
+import { TrendingUp, ShoppingBag, Store, Users, ArrowUpRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const tabs = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "products", label: "Products", icon: ShoppingBag },
-  { id: "orders", label: "Orders", icon: ShoppingCart },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "customers", label: "Customers", icon: Users },
-  { id: "builder", label: "Builder", icon: Blocks },
-  { id: "theme", label: "Theme Editor", icon: Palette },
-];
-
-const previewContent: Record<string, { title: string; description: string }> = {
-  dashboard: {
-    title: "Dashboard Overview",
-    description: "At-a-glance view of revenue, orders, products, and customer activity for your entire store.",
-  },
-  products: {
-    title: "Product Management",
-    description: "Add, edit, organize products with variants, categories, SEO metadata, and bulk operations.",
-  },
-  orders: {
-    title: "Order Management",
-    description: "Track every order from placement to delivery with status updates, invoices, and notifications.",
-  },
-  analytics: {
-    title: "Analytics Dashboard",
-    description: "Deep insights into revenue trends, conversion rates, top-performing products, and customer behavior.",
-  },
-  customers: {
-    title: "Customer Profiles",
-    description: "View purchase history, order preferences, and engagement data for every customer.",
-  },
-  builder: {
-    title: "Drag & Drop Builder",
-    description: "Visually build your store pages with sections, blocks, and live preview — no code needed.",
-  },
-  theme: {
-    title: "Theme Customization",
-    description: "Full control over colors, typography, layout width, button styles, and dark mode.",
-  },
-};
+const BAR_HEIGHTS = [
+  "h-[45%]",
+  "h-[60%]",
+  "h-[40%]",
+  "h-[75%]",
+  "h-[55%]",
+  "h-[90%]",
+  "h-[80%]",
+  "h-[95%]",
+  "h-[70%]",
+  "h-[85%]",
+  "h-[92%]",
+  "h-full",
+] as const;
 
 export function DashboardShowcase() {
-  const [activeTab, setActiveTab] = useState(tabs[0].id);
-  const content = previewContent[activeTab];
+  const { t } = useLandingLocale();
+  const h = t.hero;
+  const trust = t.trust;
+
+  const stats = [
+    { label: trust.stores, value: "500+", icon: Store },
+    { label: trust.products, value: "10K+", icon: ShoppingBag },
+    { label: trust.orders, value: "50K+", icon: Users },
+    { label: trust.rating, value: "4.9★", icon: ArrowUpRight },
+  ];
 
   return (
-    <section id="platform" className="relative px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <SectionHeading
-          eyebrow="Platform Overview"
-          title="Full Control From One Dashboard"
-          description="Every tool you need to run your ecommerce business is just a click away."
-        />
+    <div id="platform" className="relative w-full">
+      {/* 3 floating cards — center elevated */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-60px" }}
+        transition={{ duration: 0.5 }}
+        className="grid grid-cols-1 items-end gap-4 sm:gap-5 md:grid-cols-3 md:gap-6"
+      >
+        {/* Left — bar chart */}
+        <Card className="flex flex-col justify-between rounded-apple-xl border border-border bg-card p-5 shadow-md sm:p-6">
+          <CardHeader className="mb-4 flex flex-row items-start justify-between space-y-0 p-0">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {h.orders}
+              </p>
+              <CardTitle className="mt-1 text-3xl font-bold tracking-tight text-foreground">
+                1,248
+              </CardTitle>
+            </div>
+            <Badge variant="primary" className="text-[10px]">
+              {h.live}
+            </Badge>
+          </CardHeader>
+          <CardContent className="space-y-3 p-0">
+            <p className="text-xs font-medium text-muted-foreground">
+              {h.revenueMonth}
+            </p>
+            <div className="flex h-32 items-end gap-1.5 pt-2 sm:h-36">
+              {BAR_HEIGHTS.map((heightClass, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "flex-1 rounded-t-md bg-primary/25 transition-colors hover:bg-primary",
+                    heightClass,
+                  )}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-10"
-        >
-          <div className="mb-6 flex flex-wrap gap-1.5 rounded-lg border border-apple-hairline bg-apple-canvas-parchment/50 p-1.5">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-medium transition-all ${
-                  activeTab === tab.id
-                    ? "bg-apple-canvas text-apple-ink"
-                    : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
-                }`}
-              >
-                <tab.icon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{tab.label}</span>
-              </button>
-            ))}
+        {/* Center — elevated gauge */}
+        <Card className="relative z-[1] flex flex-col justify-between rounded-apple-xl border border-primary/25 bg-card p-5 shadow-xl sm:p-6 md:-translate-y-3 md:scale-[1.04]">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+            <Badge
+              variant="primary"
+              className="bg-primary px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm ring-0"
+            >
+              {h.conversion}
+            </Badge>
           </div>
-
-          <div className="overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas">
-            <div className="flex h-48 items-end bg-apple-primary p-6 sm:h-64 sm:p-8 lg:h-80">
-              <div className="max-w-xl rounded-lg bg-white/20 p-5 backdrop-blur-md">
-                <h3 className="text-xl font-bold text-white sm:text-2xl">{content.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-white/80">{content.description}</p>
+          <CardHeader className="mb-4 mt-2 space-y-0 p-0 text-center">
+            <CardTitle className="text-4xl font-extrabold text-foreground">78%</CardTitle>
+            <p className="mt-1 text-xs font-medium text-muted-foreground">
+              {h.revenueMonth}
+            </p>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center p-0">
+            <div className="relative flex h-36 w-36 items-center justify-center">
+              <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100" aria-hidden>
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  className="text-muted"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="8"
+                  strokeDasharray="251.2"
+                  strokeDashoffset="55"
+                  strokeLinecap="round"
+                  className="text-primary"
+                />
+              </svg>
+              <div className="absolute text-center">
+                <TrendingUp className="mx-auto h-6 w-6 text-primary" aria-hidden />
+                <span className="text-[11px] font-bold text-foreground">+18%</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 p-5 sm:grid-cols-4 sm:p-6">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="rounded-xl border border-apple-divider-soft bg-apple-canvas-parchment/50 p-3">
-                  <div className="mb-2 h-2 w-16 rounded-full bg-zinc-200" />
-                  <div className="h-4 w-20 rounded-md bg-apple-canvas-parchment" />
-                  <div className="mt-2 flex gap-1">
-                    {[60, 75, 50, 85].map((h, j) => (
-                      <div
-                        key={j}
-                        className="h-6 flex-1 rounded-sm bg-blue-500/40"
-                        style={{ height: `${h}%` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+            <div className="mt-4 w-full space-y-2 border-t border-border pt-3 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
+                  {h.orders}
+                </span>
+                <span className="font-bold text-foreground">842</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="h-2 w-2 rounded-full bg-success" aria-hidden />
+                  {h.customers}
+                </span>
+                <span className="font-bold text-foreground">316</span>
+              </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Right — stacked breakdown */}
+        <Card className="flex flex-col justify-between rounded-apple-xl border border-border bg-card p-5 shadow-md sm:p-6">
+          <CardHeader className="mb-4 space-y-0 p-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {h.products}
+            </p>
+            <CardTitle className="mt-1 text-3xl font-bold tracking-tight text-foreground">
+              2,540
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 p-0">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-apple-lg border border-border bg-muted/40 p-3">
+                <Store className="mb-1 h-4 w-4 text-primary" aria-hidden />
+                <p className="text-[11px] font-semibold text-muted-foreground">{h.dashboard}</p>
+                <p className="text-lg font-bold text-foreground">Live</p>
+              </div>
+              <div className="rounded-apple-lg border border-border bg-muted/40 p-3">
+                <Users className="mb-1 h-4 w-4 text-success" aria-hidden />
+                <p className="text-[11px] font-semibold text-muted-foreground">{h.customers}</p>
+                <p className="text-lg font-bold text-foreground">1.2K</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 rounded-apple-lg border border-border bg-card p-3.5">
+              <div className="flex justify-between text-xs font-semibold text-foreground">
+                <span>{h.conversion}</span>
+                <span className="font-bold text-success">92%</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-pill bg-muted">
+                <div className="h-full w-[92%] rounded-pill bg-success" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Stats row under cards */}
+      <div className="mt-8 grid grid-cols-2 gap-4 sm:mt-10 sm:grid-cols-4 sm:gap-6">
+        {stats.map((item) => (
+          <div key={item.label} className="text-center">
+            <p className="text-2xl font-extrabold tracking-tight text-primary sm:text-3xl">
+              {item.value}
+            </p>
+            <p className="mt-1 text-xs font-medium text-muted-foreground sm:text-sm">
+              {item.label}
+            </p>
           </div>
-        </motion.div>
+        ))}
       </div>
-    </section>
+    </div>
   );
 }

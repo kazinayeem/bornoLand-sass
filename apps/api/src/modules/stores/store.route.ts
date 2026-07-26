@@ -17,6 +17,12 @@ import { getStoreSettingsController, updateStoreSettingsController } from "./sto
 import { getStoreContactController, updateStoreContactController } from "./store-contact.controller.js";
 import { createHomepageSliderController, deleteHomepageSliderController, listHomepageSlidersController, updateHomepageSliderController } from "./homepage-slider.controller.js";
 import { listStoreOrdersController, getStoreOrderController, updateOrderStatusController, updatePaymentStatusController, addOrderNoteController, processRefundController, downloadStoreOrderInvoiceController, emailStoreOrderInvoiceController } from "./store-order.controller.js";
+import {
+  cancelShipmentController,
+  createShipmentController,
+  getShipmentOptionsController,
+  trackShipmentController,
+} from "../couriers/shipment.controller.js";
 import { listStoreCustomersController, getStoreCustomerController, updateStoreCustomerController } from "./store-customer.controller.js";
 import { couponRouter } from "../coupons/coupon.route.js";
 import { reviewRouter } from "../reviews/review.route.js";
@@ -24,6 +30,7 @@ import { collectionRouter } from "../collections/collection.route.js";
 import { inventoryRouter } from "../inventory/inventory.route.js";
 import { reportsRouter } from "../reports/reports.route.js";
 import { shippingRouter } from "../shipping/shipping.route.js";
+import { courierRouter } from "../couriers/courier.route.js";
 import { taxRouter } from "../tax/tax.route.js";
 import { marketingRouter } from "../marketing/marketing.route.js";
 import { mediaRouter } from "../media/media.route.js";
@@ -58,6 +65,10 @@ storeRouter.get("/:storeId/orders", listStoreOrdersController);
 storeRouter.get("/:storeId/orders/:id", getStoreOrderController);
 storeRouter.get("/:storeId/orders/:id/invoice.pdf", downloadStoreOrderInvoiceController);
 storeRouter.post("/:storeId/orders/:id/invoice/email", emailStoreOrderInvoiceController);
+storeRouter.get("/:storeId/orders/:id/shipment/options", getShipmentOptionsController);
+storeRouter.post("/:storeId/orders/:id/shipment", createShipmentController);
+storeRouter.post("/:storeId/orders/:id/shipment/cancel", cancelShipmentController);
+storeRouter.post("/:storeId/orders/:id/shipment/track", trackShipmentController);
 storeRouter.put("/:storeId/orders/:id/status", updateOrderStatusController);
 storeRouter.put("/:storeId/orders/:id/payment-status", updatePaymentStatusController);
 storeRouter.post("/:storeId/orders/:id/notes", addOrderNoteController);
@@ -73,6 +84,7 @@ storeRouter.use("/:storeId/collections", collectionRouter);
 storeRouter.use("/:storeId/inventory", inventoryRouter);
 storeRouter.use("/:storeId/reports", reportsRouter);
 storeRouter.use("/:storeId/shipping", shippingRouter);
+storeRouter.use("/:storeId/couriers", courierRouter);
 storeRouter.use("/:storeId/tax", taxRouter);
 storeRouter.use("/:storeId/marketing", marketingRouter);
 storeRouter.use("/:storeId/media", mediaRouter);

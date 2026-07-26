@@ -28,6 +28,7 @@ import { OverviewTab } from "./overview-tab";
 import { PlanTab } from "./plan-tab";
 import { LimitsTab } from "./limits-tab";
 import { FeaturesTab } from "./features-tab";
+import { CourierTab } from "./courier-tab";
 import { StorageTab } from "./storage-tab";
 import { TrialTab } from "./trial-tab";
 import { SubscriptionTab } from "./subscription-tab";
@@ -37,7 +38,7 @@ import { MediaTab } from "./media-tab";
 import { DangerTab } from "./danger-tab";
 
 type TabId =
-  | "overview" | "plan" | "limits" | "features" | "storage"
+  | "overview" | "plan" | "limits" | "features" | "courier" | "storage"
   | "trial" | "subscription" | "users" | "analytics" | "media" | "danger";
 
 const TABS: { id: TabId; label: string }[] = [
@@ -45,6 +46,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "plan", label: "Plan" },
   { id: "limits", label: "Limits" },
   { id: "features", label: "Features" },
+  { id: "courier", label: "Courier" },
   { id: "storage", label: "Storage" },
   { id: "trial", label: "Trial" },
   { id: "subscription", label: "Subscription" },
@@ -309,6 +311,7 @@ export function StoreDetailDrawer({
               {activeTab === "plan" && <PlanTab helpers={helpers} />}
               {activeTab === "limits" && <LimitsTab helpers={helpers} />}
               {activeTab === "features" && <FeaturesTab helpers={helpers} />}
+              {activeTab === "courier" && <CourierTab helpers={helpers} />}
               {activeTab === "storage" && <StorageTab helpers={helpers} />}
               {activeTab === "trial" && <TrialTab helpers={helpers} />}
               {activeTab === "subscription" && <SubscriptionTab helpers={helpers} />}

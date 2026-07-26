@@ -2,6 +2,7 @@ import type { Response } from "express";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
 import { OrderModel } from "../../models/order.model.js";
 import { StoreModel } from "../../models/store.model.js";
+import { CustomerModel } from "../../models/customer.model.js";
 import { recordAuditFromRequest } from "../audit/audit.service.js";
 import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
 import { AUDIT_MODULES } from "../audit/audit.constants.js";
@@ -12,6 +13,33 @@ import { createCustomerNotification } from "../customers/customer-notification.s
 function getPopulatedCustomerId(customerRef: { _id?: unknown } | string | undefined) {
   if (customerRef && typeof customerRef === "object" && customerRef._id) return String(customerRef._id);
   return customerRef ? String(customerRef) : "";
+}
+
+function startOfDay(value: string): Date {
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    // Interpret as local calendar day (not UTC midnight)
+    return new Date(`${trimmed}T00:00:00.000`);
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return date;
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function endOfDay(value: string): Date {
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return new Date(`${trimmed}T23:59:59.999`);
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return date;
+  date.setHours(23, 59, 59, 999);
+  return date;
+}
+
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export async function listStoreOrdersController(request: AuthRequest, response: Response) {
@@ -25,63 +53,90 @@ export async function listStoreOrdersController(request: AuthRequest, response: 
       return response.status(404).json({ message: "Store not found" });
     }
 
-    const filter: Record<string, unknown> = { storeId };
+    const filter: Record<string, unknown> = { storeId: store._id };
 
     if (status) filter.status = status;
     if (paymentStatus) filter.paymentStatus = paymentStatus;
     if (from || to) {
       const dateFilter: Record<string, Date> = {};
-      if (from) dateFilter.$gte = new Date(from);
-      if (to) dateFilter.$lte = new Date(to);
+      if (from) dateFilter.$gte = startOfDay(from);
+      if (to) dateFilter.$lte = endOfDay(to);
       filter.createdAt = dateFilter;
     }
-    if (search) {
+
+    const searchTerm = search?.trim();
+    if (searchTerm) {
+      const safe = escapeRegex(searchTerm);
+      const matchedCustomers = await CustomerModel.find({
+        storeId,
+        $or: [
+          { name: { $regex: safe, $options: "i" } },
+          { email: { $regex: safe, $options: "i" } },
+          { phone: { $regex: safe, $options: "i" } },
+        ],
+      })
+        .select("_id")
+        .limit(100)
+        .lean();
+
+      const customerIds = matchedCustomers.map((c) => c._id);
       filter.$or = [
-        { orderNumber: { $regex: search, $options: "i" } },
-        { "shippingAddress.fullName": { $regex: search, $options: "i" } },
-        { "shippingAddress.phone": { $regex: search, $options: "i" } }
+        { orderNumber: { $regex: safe, $options: "i" } },
+        { invoiceNumber: { $regex: safe, $options: "i" } },
+        { "shippingAddress.fullName": { $regex: safe, $options: "i" } },
+        { "shippingAddress.phone": { $regex: safe, $options: "i" } },
+        ...(customerIds.length ? [{ customerId: { $in: customerIds } }] : []),
       ];
     }
 
-    const pageNum = Math.max(1, parseInt(page));
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(500, Math.max(1, parseInt(limit, 10) || 20));
     const skip = (pageNum - 1) * limitNum;
 
-    const [orders, total] = await Promise.all([
+    const [orders, total, analytics] = await Promise.all([
       OrderModel.find(filter)
         .populate("customerId", "name email phone")
-        .sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
-      OrderModel.countDocuments(filter)
-    ]);
-
-    const analytics = await OrderModel.aggregate([
-      { $match: { storeId: store._id } },
-      {
-        $group: {
-          _id: null,
-          totalOrders: { $sum: 1 },
-          totalRevenue: { $sum: "$total" },
-          pendingOrders: { $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] } },
-          processingOrders: { $sum: { $cond: [{ $eq: ["$status", "processing"] }, 1, 0] } },
-          deliveredOrders: { $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] } },
-          cancelledOrders: { $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] } },
-          paidRevenue: { $sum: { $cond: [{ $eq: ["$paymentStatus", "paid"] }, "$total", 0] } }
-        }
-      }
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      OrderModel.countDocuments(filter),
+      OrderModel.aggregate([
+        { $match: filter },
+        {
+          $group: {
+            _id: null,
+            totalOrders: { $sum: 1 },
+            totalRevenue: { $sum: "$total" },
+            pendingOrders: { $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] } },
+            processingOrders: { $sum: { $cond: [{ $eq: ["$status", "processing"] }, 1, 0] } },
+            deliveredOrders: { $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] } },
+            cancelledOrders: { $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] } },
+            paidRevenue: {
+              $sum: { $cond: [{ $eq: ["$paymentStatus", "paid"] }, "$total", 0] },
+            },
+          },
+        },
+      ]),
     ]);
 
     response.json({
       data: {
         orders,
         analytics: analytics[0] ?? {
-          totalOrders: 0, totalRevenue: 0, pendingOrders: 0,
-          processingOrders: 0, deliveredOrders: 0, cancelledOrders: 0, paidRevenue: 0
+          totalOrders: 0,
+          totalRevenue: 0,
+          pendingOrders: 0,
+          processingOrders: 0,
+          deliveredOrders: 0,
+          cancelledOrders: 0,
+          paidRevenue: 0,
         },
         total,
         page: pageNum,
         limit: limitNum,
-        totalPages: Math.ceil(total / limitNum)
-      }
+        totalPages: Math.ceil(total / limitNum),
+      },
     });
   } catch (error) {
     console.error("Store orders error:", error);
@@ -207,6 +262,15 @@ export async function updateOrderStatusController(request: AuthRequest, response
       }
     } catch (err) {
       console.error("[orders] Failed to sync customer stats after status change", err);
+    }
+
+    // Auto-create courier shipment when order becomes confirmed
+    if (status === "confirmed" && before?.status !== "confirmed") {
+      void import("../couriers/shipment.service.js")
+        .then(({ maybeAutoCreateShipmentOnConfirm }) =>
+          maybeAutoCreateShipmentOnConfirm(String(storeId), String(id)),
+        )
+        .catch((err) => console.error("[orders] Auto shipment failed", err));
     }
 
     response.json({ data: { order } });

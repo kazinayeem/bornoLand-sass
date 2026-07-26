@@ -5,6 +5,58 @@ import { getPlanPriceForDuration } from "./plan-pricing.util.js";
 import { ensureDefaultPlansSafe } from "../../bootstrap/safe-migrate.js";
 import type { SubscriptionDuration } from "../subscriptions/subscription.constants.js";
 
+/** Plan Builder camelCase toggles → Feature catalog snake_case keys */
+const TOGGLE_TO_FEATURE_KEY: Record<string, string> = {
+  inventory: "inventory",
+  inventoryHistory: "inventory_history",
+  priceHistory: "price_history",
+  costHistory: "cost_history",
+  suppliers: "suppliers",
+  purchaseOrders: "purchase_orders",
+  batchFifo: "batch_fifo",
+  warehousesEnabled: "warehouses",
+  barcode: "barcode",
+  inventoryReports: "inventory_reports",
+  lowStockAlerts: "low_stock_alerts",
+  stockTransfer: "stock_transfer",
+  inventoryAuditLog: "inventory_audit_log",
+  courier: "courier",
+};
+
+async function syncFeatureTogglesToPlanFeatures(
+  planId: string,
+  toggles: Record<string, unknown> | undefined | null
+) {
+  if (!toggles) return;
+  try {
+    const { PlanFeatureModel } = await import("../features/plan-feature.model.js");
+    const ops = Object.entries(TOGGLE_TO_FEATURE_KEY)
+      .filter(([toggleKey]) => toggles[toggleKey] !== undefined)
+      .map(([toggleKey, featureKey]) => {
+        const enabled = Boolean(toggles[toggleKey]);
+        return {
+          updateOne: {
+            filter: { planId, featureKey },
+            update: {
+              $set: {
+                planId,
+                featureKey,
+                enabled,
+                limit: 0,
+                tierKey: enabled ? "enabled" : "disabled",
+                value: enabled ? "enabled" : "disabled",
+              },
+            },
+            upsert: true,
+          },
+        };
+      });
+    if (ops.length > 0) await PlanFeatureModel.bulkWrite(ops, { ordered: false });
+  } catch {
+    // Non-fatal — API still uses PlanFeature rows from matrix / prior sync
+  }
+}
+
 async function ensureDefaultPlans() {
   await ensureDefaultPlansSafe();
 }
@@ -21,7 +73,7 @@ export async function listPlans(includeHidden = false) {
 export async function listPublicPlans() {
   await connectDatabase();
   const plans = await PlanModel.find({ isActive: true, visible: { $ne: false } })
-    .select("name slug description priceBDT priceYearly isCustomPrice trialDays features limits featureToggles pricing customDomain prioritySupport sortOrder isRecommended isPopular")
+    .select("name slug description priceBDT priceYearly isCustomPrice trialDays features limits featureToggles courierAccess pricing customDomain prioritySupport sortOrder isRecommended isPopular")
     .sort({ sortOrder: 1, priceBDT: 1 })
     .lean();
   return { ok: true as const, data: { plans } };
@@ -45,6 +97,10 @@ export async function createPlan(payload: unknown) {
       lifetime: parsed.data.pricing?.lifetime || 0,
     },
   });
+  await syncFeatureTogglesToPlanFeatures(
+    String(plan._id),
+    (plan.toObject() as { featureToggles?: Record<string, unknown> }).featureToggles
+  );
   return { ok: true as const, data: { plan: plan.toObject() } };
 }
 
@@ -53,8 +109,36 @@ export async function updatePlan(planId: string, payload: unknown) {
   if (!parsed.success) return { ok: false as const, message: "Invalid plan data" };
 
   await connectDatabase();
-  const plan = await PlanModel.findByIdAndUpdate(planId, { $set: parsed.data }, { new: true }).lean();
+
+  // Keep courierAccess ↔ featureToggles.courier in sync when either is provided
+  const data = { ...parsed.data } as Record<string, unknown>;
+  if (parsed.data.courierAccess) {
+    const ca = parsed.data.courierAccess;
+    const enabled = Boolean(ca.enabled || ca.allProviders || (ca.providers?.length ?? 0) > 0);
+    data.courierAccess = { ...ca, enabled };
+    data.featureToggles = {
+      ...(parsed.data.featureToggles ?? {}),
+      courier: enabled,
+    };
+  } else if (parsed.data.featureToggles?.courier !== undefined) {
+    const enabled = Boolean(parsed.data.featureToggles.courier);
+    data.courierAccess = {
+      enabled,
+      allProviders: enabled,
+      providers: enabled ? ["pathao", "redx", "steadfast", "paperfly", "sundarban"] : [],
+    };
+  }
+
+  const plan = await PlanModel.findByIdAndUpdate(planId, { $set: data }, { new: true }).lean();
   if (!plan) return { ok: false as const, message: "Plan not found" };
+
+  const toggles = (plan as { featureToggles?: Record<string, unknown> }).featureToggles ?? {};
+  // Ensure courier Access is reflected in toggles for PlanFeature sync
+  const courierEnabled = Boolean(
+    (plan as { courierAccess?: { enabled?: boolean } }).courierAccess?.enabled ?? toggles.courier
+  );
+  await syncFeatureTogglesToPlanFeatures(planId, { ...toggles, courier: courierEnabled });
+
   return { ok: true as const, data: { plan } };
 }
 

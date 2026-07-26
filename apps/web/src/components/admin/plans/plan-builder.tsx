@@ -1,13 +1,42 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Loader2, Save, Zap, Shield, HardDrive, DollarSign, Eye, Clock } from "lucide-react";
 import { toast } from "sonner";
-import type { Plan, PlanLimits, PlanFeatureToggles } from "@/redux/api/store-api";
+import type { Plan, PlanLimits, PlanFeatureToggles, PlanCourierAccess } from "@/redux/api/store-api";
 import { useUpdatePlanMutation } from "@/redux/api/store-api";
+import { useGetPlanFeatureAssignmentsQuery } from "@/redux/api/feature-api";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { PlanPreviewCard } from "@/components/admin/plans/plan-preview-card";
+
+const FEATURE_KEY_TO_TOGGLE: Partial<Record<string, keyof PlanFeatureToggles>> = {
+  inventory: "inventory",
+  inventory_history: "inventoryHistory",
+  price_history: "priceHistory",
+  cost_history: "costHistory",
+  suppliers: "suppliers",
+  purchase_orders: "purchaseOrders",
+  batch_fifo: "batchFifo",
+  warehouses: "warehousesEnabled",
+  barcode: "barcode",
+  inventory_reports: "inventoryReports",
+  low_stock_alerts: "lowStockAlerts",
+  stock_transfer: "stockTransfer",
+  inventory_audit_log: "inventoryAuditLog",
+  courier: "courier",
+};
+
+const COURIER_PROVIDER_OPTIONS: Array<{
+  slug: PlanCourierAccess["providers"][number];
+  label: string;
+}> = [
+  { slug: "pathao", label: "Pathao" },
+  { slug: "redx", label: "RedX" },
+  { slug: "steadfast", label: "Steadfast" },
+  { slug: "paperfly", label: "Paperfly" },
+  { slug: "sundarban", label: "Sundarban" },
+];
 
 /* ── Tabs ─────────────────────────────────────────────────────────────────── */
 
@@ -86,9 +115,26 @@ const FEATURE_GROUPS: FeatureGroup[] = [
     key: "products", label: "Products & Inventory",
     toggles: [
       { key: "productVariants", label: "Product Variants", description: "Multiple variants per product (size, color, etc.)" },
-      { key: "inventory", label: "Inventory Tracking", description: "Track stock levels per product", alwaysEnabled: true },
       { key: "physicalProducts", label: "Physical Products", description: "Sell physical goods with shipping" },
       { key: "digitalProducts", label: "Digital Products", description: "Sell downloads, software, licenses" },
+    ],
+  },
+  {
+    key: "inventory_mgmt", label: "Inventory Management",
+    toggles: [
+      { key: "inventory", label: "Inventory", description: "Current stock tracking and adjustments" },
+      { key: "inventoryHistory", label: "Inventory History", description: "Stock movement history and ledger" },
+      { key: "priceHistory", label: "Price History", description: "Track selling and compare price changes" },
+      { key: "costHistory", label: "Cost History", description: "Track purchase and average cost changes" },
+      { key: "suppliers", label: "Suppliers", description: "Supplier profiles and purchase history" },
+      { key: "purchaseOrders", label: "Purchase Orders", description: "Create and receive purchase orders" },
+      { key: "batchFifo", label: "Batch / FIFO Inventory", description: "Batch lots with FIFO allocation" },
+      { key: "warehousesEnabled", label: "Warehouses", description: "Multi-warehouse stock and transfers" },
+      { key: "barcode", label: "Barcode", description: "Generate, print, and search barcodes" },
+      { key: "inventoryReports", label: "Inventory Reports", description: "Valuation, aging, and movement reports" },
+      { key: "lowStockAlerts", label: "Low Stock Alerts", description: "Minimum stock alerts and notifications" },
+      { key: "stockTransfer", label: "Stock Transfer", description: "Transfer stock between warehouses" },
+      { key: "inventoryAuditLog", label: "Audit Log", description: "Permanent audit trail for inventory actions" },
     ],
   },
   {
@@ -135,6 +181,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
     key: "operations", label: "Operations",
     toggles: [
       { key: "shipping", label: "Shipping", description: "Shipping rate management" },
+      { key: "courier", label: "Courier Management", description: "Third-party courier integrations" },
       { key: "taxEngine", label: "Tax Engine", description: "Automated tax calculation" },
       { key: "maintenanceMode", label: "Maintenance Mode", description: "Put store in maintenance" },
       { key: "developerMode", label: "Developer Mode", description: "Custom code and debug tools" },
@@ -152,6 +199,7 @@ type Props = {
 export function PlanBuilder({ plan, initialTab }: Props) {
   const router = useRouter();
   const [updatePlan, { isLoading: isSaving }] = useUpdatePlanMutation();
+  const { data: planFeaturesData } = useGetPlanFeatureAssignmentsQuery(plan._id);
 
   const [activeTab, setActiveTab] = useState(initialTab || "general");
   const [name, setName] = useState(plan.name);
@@ -240,6 +288,18 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     productVariants: plan.featureToggles?.productVariants ?? false,
     inventory: plan.featureToggles?.inventory ?? false,
     advancedInventory: plan.featureToggles?.advancedInventory ?? false,
+    inventoryHistory: plan.featureToggles?.inventoryHistory ?? false,
+    priceHistory: plan.featureToggles?.priceHistory ?? false,
+    costHistory: plan.featureToggles?.costHistory ?? false,
+    suppliers: plan.featureToggles?.suppliers ?? false,
+    purchaseOrders: plan.featureToggles?.purchaseOrders ?? false,
+    batchFifo: plan.featureToggles?.batchFifo ?? false,
+    warehousesEnabled: plan.featureToggles?.warehousesEnabled ?? false,
+    barcode: plan.featureToggles?.barcode ?? false,
+    inventoryReports: plan.featureToggles?.inventoryReports ?? false,
+    lowStockAlerts: plan.featureToggles?.lowStockAlerts ?? false,
+    stockTransfer: plan.featureToggles?.stockTransfer ?? false,
+    inventoryAuditLog: plan.featureToggles?.inventoryAuditLog ?? false,
     digitalProducts: plan.featureToggles?.digitalProducts ?? false,
     physicalProducts: plan.featureToggles?.physicalProducts ?? false,
     subscriptions: plan.featureToggles?.subscriptions ?? false,
@@ -301,9 +361,35 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     realtimeVisitors: plan.featureToggles?.realtimeVisitors ?? false,
     analyticsExport: plan.featureToggles?.analyticsExport ?? false,
     reports: plan.featureToggles?.reports ?? false,
+    courier: plan.featureToggles?.courier ?? plan.courierAccess?.enabled ?? false,
+  }));
+
+  const [courierAccess, setCourierAccess] = useState<PlanCourierAccess>(() => ({
+    enabled: plan.courierAccess?.enabled ?? plan.featureToggles?.courier ?? false,
+    allProviders: plan.courierAccess?.allProviders ?? false,
+    providers: plan.courierAccess?.providers ?? [],
   }));
 
   const [featureText, setFeatureText] = useState(plan.features?.join("\n") ?? "");
+
+  // Prefer Feature catalog assignments (source of truth for FeatureGate) for Inventory Management toggles
+  useEffect(() => {
+    const assignments = planFeaturesData?.data?.features;
+    if (!assignments?.length) return;
+    setToggles((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const row of assignments) {
+        const toggleKey = FEATURE_KEY_TO_TOGGLE[row.featureKey];
+        if (!toggleKey) continue;
+        if (next[toggleKey] !== row.enabled) {
+          next[toggleKey] = row.enabled;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [planFeaturesData]);
 
   const updateLimit = useCallback((key: keyof PlanLimits, value: number) => {
     setLimits((prev) => ({ ...prev, [key]: value }));
@@ -311,6 +397,43 @@ export function PlanBuilder({ plan, initialTab }: Props) {
 
   const updateToggle = useCallback((key: keyof PlanFeatureToggles, value: boolean) => {
     setToggles((prev) => ({ ...prev, [key]: value }));
+    if (key === "courier") {
+      setCourierAccess((prev) => ({
+        ...prev,
+        enabled: value,
+        allProviders: value ? prev.allProviders || prev.providers.length === 0 : false,
+        providers:
+          value && prev.providers.length === 0 && !prev.allProviders
+            ? COURIER_PROVIDER_OPTIONS.map((p) => p.slug)
+            : value
+              ? prev.providers
+              : [],
+      }));
+    }
+  }, []);
+
+  const toggleCourierProvider = useCallback((slug: PlanCourierAccess["providers"][number]) => {
+    setCourierAccess((prev) => {
+      const nextProviders = prev.providers.includes(slug)
+        ? prev.providers.filter((p) => p !== slug)
+        : [...prev.providers, slug];
+      const enabled = prev.allProviders || nextProviders.length > 0;
+      setToggles((t) => ({ ...t, courier: enabled }));
+      return {
+        enabled,
+        allProviders: false,
+        providers: nextProviders,
+      };
+    });
+  }, []);
+
+  const toggleAllCouriers = useCallback((checked: boolean) => {
+    setCourierAccess({
+      enabled: checked,
+      allProviders: checked,
+      providers: checked ? COURIER_PROVIDER_OPTIONS.map((p) => p.slug) : [],
+    });
+    setToggles((t) => ({ ...t, courier: checked }));
   }, []);
 
   const handleSave = async () => {
@@ -338,7 +461,17 @@ export function PlanBuilder({ plan, initialTab }: Props) {
         lifetime: pricing.lifetime || 0,
       },
       limits,
-      featureToggles: toggles,
+      featureToggles: {
+        ...toggles,
+        courier: courierAccess.enabled || courierAccess.allProviders || courierAccess.providers.length > 0,
+      },
+      courierAccess: {
+        enabled: courierAccess.enabled || courierAccess.allProviders || courierAccess.providers.length > 0,
+        allProviders: courierAccess.allProviders,
+        providers: courierAccess.allProviders
+          ? COURIER_PROVIDER_OPTIONS.map((p) => p.slug)
+          : courierAccess.providers,
+      },
     };
 
     try {
@@ -519,6 +652,51 @@ export function PlanBuilder({ plan, initialTab }: Props) {
               </div>
             </div>
           ))}
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+            <h3 className="text-sm font-semibold text-apple-ink">Courier Access</h3>
+            <p className="mt-1 text-xs text-apple-ink-muted-48">
+              Choose which courier providers stores on this plan can configure. Selecting &quot;All Couriers&quot;
+              grants every provider.
+            </p>
+
+            <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-200 p-3 hover:bg-apple-canvas-parchment">
+              <input
+                type="checkbox"
+                checked={courierAccess.allProviders}
+                onChange={(e) => toggleAllCouriers(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+              />
+              <div>
+                <p className="text-sm font-medium text-apple-ink">All Couriers</p>
+                <p className="text-xs text-apple-ink-muted-48">Pathao, RedX, Steadfast, Paperfly, Sundarban</p>
+              </div>
+            </label>
+
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {COURIER_PROVIDER_OPTIONS.map((provider) => {
+                const checked =
+                  courierAccess.allProviders || courierAccess.providers.includes(provider.slug);
+                return (
+                  <label
+                    key={provider.slug}
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-apple-canvas-parchment ${
+                      checked ? "border-blue-200 bg-blue-50/50" : "border-zinc-200"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={courierAccess.allProviders}
+                      onChange={() => toggleCourierProvider(provider.slug)}
+                      className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-apple-ink">{provider.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 

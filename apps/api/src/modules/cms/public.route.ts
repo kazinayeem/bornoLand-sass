@@ -43,11 +43,18 @@ publicRouter.get("/invoice/verify/:token", async (request, response: Response) =
     }
 
     // Check order invoices
-    const order = await OrderModel.findOne({ verificationToken: token }).lean();
+    const orderDoc = await OrderModel.findOne({ verificationToken: token })
+      .populate("customerId", "name email phone")
+      .lean();
+    const order = orderDoc as Record<string, unknown> | null;
     if (order) {
-      const store = order.storeId
-        ? await StoreModel.findById(order.storeId).select("name slug subdomain").lean()
-        : null;
+      const storeId = order.storeId as string | undefined;
+      const store = (
+        storeId
+          ? await StoreModel.findById(storeId).select("name slug subdomain").lean()
+          : null
+      ) as { name?: string; slug?: string; subdomain?: string } | null;
+      const shipment = order.shipment as Record<string, unknown> | undefined;
       return sendSuccess(response, {
         type: "order",
         invoice: {
@@ -63,15 +70,32 @@ publicRouter.get("/invoice/verify/:token", async (request, response: Response) =
           shipping: order.shipping,
           deliveryCharge: order.deliveryCharge,
           tax: order.tax,
+          taxRate: order.taxRate,
           total: order.total,
           refundAmount: order.refundAmount,
+          notes: order.notes,
+          courier: order.courier,
+          trackingNumber: order.trackingNumber,
+          estimatedDelivery: order.estimatedDelivery,
+          shipment: shipment
+            ? {
+                provider: shipment.provider,
+                providerName: shipment.providerName,
+                consignmentId: shipment.consignmentId,
+                trackingNumber: shipment.trackingNumber,
+                status: shipment.status,
+                environment: shipment.environment,
+                estimatedDelivery: shipment.estimatedDelivery,
+                createdAt: shipment.createdAt,
+              }
+            : null,
           storeId: store ? { name: store.name, slug: store.slug, subdomain: store.subdomain } : null,
           customerId: order.customerId,
           shippingAddress: order.shippingAddress,
           items: order.items,
+          paymentVerification: order.paymentVerification,
           createdAt: order.createdAt,
           updatedAt: order.updatedAt,
-          paidAt: order.paidAt,
           verificationToken: order.verificationToken,
         },
       });

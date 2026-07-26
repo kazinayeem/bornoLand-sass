@@ -16,6 +16,10 @@ const storeSettingsSchema = new Schema(
     orderPrefix: { type: String, default: "ORD" },
     invoicePrefix: { type: String, default: "INV" },
     lowStockAlertEnabled: { type: Boolean, default: true },
+    /** Global min quantity override for low-stock alerts (null = use product thresholds) */
+    lowStockMinQuantity: { type: Number, default: null, min: 0 },
+    lowStockAlertEmail: { type: String, default: "", trim: true },
+    lowStockNotifyOwner: { type: Boolean, default: true },
     dateFormat: { type: String, default: "MM/DD/YYYY" },
     timezone: { type: String, default: "UTC" },
     language: { type: String, default: "en" },

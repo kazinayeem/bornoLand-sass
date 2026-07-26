@@ -14,8 +14,70 @@ import mongoose from "mongoose";
 type DateRange = {
   start?: string;
   end?: string;
-  preset?: "today" | "yesterday" | "last7" | "last30" | "thisMonth" | "lastMonth" | "thisYear" | "all";
+  preset?:
+    | "today"
+    | "yesterday"
+    | "last7"
+    | "last30"
+    | "thisMonth"
+    | "lastMonth"
+    | "last3Months"
+    | "last6Months"
+    | "thisYear"
+    | "lastYear"
+    | "all";
 };
+
+type ReportFilters = DateRange & {
+  orderStatus?: string;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  courier?: string;
+  search?: string;
+  minAmount?: string | number;
+  maxAmount?: string | number;
+};
+
+function buildOrderExtraMatch(filters: ReportFilters = {}) {
+  const extra: Record<string, unknown> = {};
+  if (filters.orderStatus) extra.status = filters.orderStatus;
+  if (filters.paymentStatus) extra.paymentStatus = filters.paymentStatus;
+  if (filters.paymentMethod) {
+    extra.paymentMethod = { $regex: `^${String(filters.paymentMethod).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" };
+  }
+  if (filters.courier) {
+    const safe = String(filters.courier).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    extra.$or = [
+      { courier: { $regex: safe, $options: "i" } },
+      { "shipment.provider": { $regex: safe, $options: "i" } },
+      { "shipment.providerName": { $regex: safe, $options: "i" } },
+    ];
+  }
+  if (filters.search) {
+    const safe = String(filters.search).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const searchOr = [
+      { orderNumber: { $regex: safe, $options: "i" } },
+      { invoiceNumber: { $regex: safe, $options: "i" } },
+      { "shippingAddress.fullName": { $regex: safe, $options: "i" } },
+      { "shippingAddress.phone": { $regex: safe, $options: "i" } },
+    ];
+    if (extra.$or) {
+      extra.$and = [{ $or: extra.$or as unknown[] }, { $or: searchOr }];
+      delete extra.$or;
+    } else {
+      extra.$or = searchOr;
+    }
+  }
+  const min = filters.minAmount != null && filters.minAmount !== "" ? Number(filters.minAmount) : null;
+  const max = filters.maxAmount != null && filters.maxAmount !== "" ? Number(filters.maxAmount) : null;
+  if (min != null && Number.isFinite(min)) {
+    extra.total = { ...(extra.total as object || {}), $gte: min };
+  }
+  if (max != null && Number.isFinite(max)) {
+    extra.total = { ...(extra.total as object || {}), $lte: max };
+  }
+  return extra;
+}
 
 function toOid(id: string) {
   return new mongoose.Types.ObjectId(id);
@@ -96,8 +158,18 @@ function getDateFilter(range: DateRange): { $gte?: Date; $lte?: Date } {
         start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
         break;
+      case "last3Months":
+        start = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+        break;
+      case "last6Months":
+        start = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+        break;
       case "thisYear":
         start = new Date(now.getFullYear(), 0, 1);
+        break;
+      case "lastYear":
+        start = new Date(now.getFullYear() - 1, 0, 1);
+        end = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999);
         break;
       case "all":
         break;
@@ -110,6 +182,94 @@ function getDateFilter(range: DateRange): { $gte?: Date; $lte?: Date } {
   return filter;
 }
 
+/** Previous period of equal length for % change comparisons. */
+function getPreviousPeriodFilter(range: DateRange): { $gte?: Date; $lte?: Date } {
+  const current = getDateFilter(range);
+  if (!current.$gte) return {};
+  const end = current.$lte ?? new Date();
+  const start = current.$gte;
+  const duration = Math.max(end.getTime() - start.getTime(), 24 * 60 * 60 * 1000);
+  const prevEnd = new Date(start.getTime() - 1);
+  const prevStart = new Date(prevEnd.getTime() - duration);
+  return { $gte: prevStart, $lte: prevEnd };
+}
+
+async function sumPeriodStats(storeId: string, dateFilter: { $gte?: Date; $lte?: Date }) {
+  const oid = toOid(storeId);
+  const match: Record<string, unknown> = { storeId: oid };
+  if (dateFilter.$gte || dateFilter.$lte) match.createdAt = dateFilter;
+  const rows = await OrderModel.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: null,
+        totalRevenue: {
+          $sum: {
+            $cond: [
+              { $in: ["$status", ["cancelled", "refunded"]] },
+              0,
+              { $subtract: ["$total", { $ifNull: ["$refundAmount", 0] }] },
+            ],
+          },
+        },
+        totalOrders: { $sum: 1 },
+        refundAmount: {
+          $sum: {
+            $cond: [
+              { $gt: [{ $ifNull: ["$refundAmount", 0] }, 0] },
+              "$refundAmount",
+              { $cond: [{ $eq: ["$status", "refunded"] }, "$total", 0] },
+            ],
+          },
+        },
+        shippingCost: { $sum: { $ifNull: ["$deliveryCharge", { $ifNull: ["$shipping", 0] }] } },
+        taxCollected: { $sum: { $ifNull: ["$tax", 0] } },
+        discountTotal: { $sum: { $ifNull: ["$discount", 0] } },
+        codCollection: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $in: [{ $toLower: { $ifNull: ["$paymentMethod", ""] } }, ["cod", "cash_on_delivery"]] },
+                  { $eq: ["$paymentStatus", "paid"] },
+                ],
+              },
+              "$total",
+              0,
+            ],
+          },
+        },
+        onlineCollection: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $not: { $in: [{ $toLower: { $ifNull: ["$paymentMethod", ""] } }, ["cod", "cash_on_delivery", ""]] } },
+                  { $eq: ["$paymentStatus", "paid"] },
+                ],
+              },
+              "$total",
+              0,
+            ],
+          },
+        },
+      },
+    },
+  ]);
+  return (
+    rows[0] ?? {
+      totalRevenue: 0,
+      totalOrders: 0,
+      refundAmount: 0,
+      shippingCost: 0,
+      taxCollected: 0,
+      discountTotal: 0,
+      codCollection: 0,
+      onlineCollection: 0,
+    }
+  );
+}
+
 function buildDateMatch(dateField: string, range: DateRange) {
   const dateFilter = getDateFilter(range);
   if (!dateFilter.$gte && !dateFilter.$lte) return {};
@@ -118,14 +278,16 @@ function buildDateMatch(dateField: string, range: DateRange) {
 
 // ── KPI Dashboard ───────────────────────────────────────────────────────────
 
-export async function getDashboardKPIs(storeId: string, range: DateRange) {
+export async function getDashboardKPIs(storeId: string, range: ReportFilters) {
   await connectDatabase();
   if (!mongoose.Types.ObjectId.isValid(storeId)) {
     throw new Error("Invalid store ID");
   }
 
   const dateMatch = buildDateMatch("createdAt", range);
+  const extraMatch = buildOrderExtraMatch(range);
   const oid = toOid(storeId);
+  const orderMatch = { storeId: oid, ...dateMatch, ...extraMatch };
   const now = new Date();
   const todayStart = startOfDay(now);
   const weekStart = startOfWeek(now);
@@ -157,7 +319,7 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
     byCategory,
   ] = await Promise.all([
     OrderModel.aggregate([
-      { $match: { storeId: oid, ...dateMatch } },
+      { $match: orderMatch },
       {
         $group: {
           _id: null,
@@ -210,7 +372,7 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
     CustomerModel.countDocuments({ storeId: oid }),
     CustomerModel.countDocuments({ storeId: oid, ...dateMatch }),
     OrderModel.aggregate([
-      { $match: { storeId: oid, ...dateMatch } },
+      { $match: orderMatch },
       { $group: { _id: "$customerId", orders: { $sum: 1 } } },
       { $match: { orders: { $gt: 1 } } },
       { $count: "count" },
@@ -234,15 +396,14 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
       },
     ]),
     OrderModel.aggregate([
-      { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
+      { $match: { ...orderMatch, ...REVENUE_STATUS_MATCH } },
       { $unwind: "$items" },
       { $group: { _id: null, units: { $sum: "$items.quantity" } } },
     ]),
     OrderModel.aggregate([
       {
         $match: {
-          storeId: oid,
-          ...dateMatch,
+          ...orderMatch,
           couponCode: { $exists: true, $nin: [null, ""] },
         },
       },
@@ -254,7 +415,7 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
     ]),
     StorageUsageModel.findOne({ storeId: oid }).lean() as Promise<Record<string, unknown> | null>,
     StorePageModel.countDocuments({ storeId: oid, deletedAt: null }),
-    OrderModel.find({ storeId: oid })
+    OrderModel.find(orderMatch)
       .populate("customerId", "name email")
       .sort({ createdAt: -1 })
       .limit(10)
@@ -266,7 +427,7 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
       .limit(10)
       .lean(),
     OrderModel.aggregate([
-      { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
+      { $match: { ...orderMatch, ...REVENUE_STATUS_MATCH } },
       { $unwind: "$items" },
       {
         $group: {
@@ -280,7 +441,7 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
       { $limit: 8 },
     ]),
     OrderModel.aggregate([
-      { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
+      { $match: { ...orderMatch, ...REVENUE_STATUS_MATCH } },
       {
         $group: {
           _id: "$customerId",
@@ -311,7 +472,7 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
       },
     ]),
     OrderModel.aggregate([
-      { $match: { storeId: oid, ...dateMatch } },
+      { $match: orderMatch },
       {
         $group: {
           _id: { $ifNull: ["$paymentMethod", "unknown"] },
@@ -322,7 +483,7 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
       { $sort: { count: -1 } },
     ]),
     OrderModel.aggregate([
-      { $match: { storeId: oid, ...dateMatch } },
+      { $match: orderMatch },
       {
         $group: {
           _id: { $ifNull: ["$deliveryZone", "Unspecified"] },
@@ -333,7 +494,7 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
       { $sort: { count: -1 } },
     ]),
     OrderModel.aggregate([
-      { $match: { storeId: oid, ...dateMatch, ...REVENUE_STATUS_MATCH } },
+      { $match: { ...orderMatch, ...REVENUE_STATUS_MATCH } },
       { $unwind: "$items" },
       {
         $lookup: {
@@ -385,6 +546,45 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
   const conversionRate =
     totalCustomers > 0 ? Math.round((uniqueInRange / totalCustomers) * 10000) / 100 : 0;
 
+  const prevFilter = getPreviousPeriodFilter(range);
+  const [prevStats, financeStats, courierBreakdown, deliveredCount] = await Promise.all([
+    Object.keys(prevFilter).length ? sumPeriodStats(storeId, prevFilter) : Promise.resolve(null),
+    sumPeriodStats(storeId, getDateFilter(range)),
+    OrderModel.aggregate([
+      { $match: orderMatch },
+      {
+        $group: {
+          _id: {
+            $ifNull: [
+              "$shipment.providerName",
+              { $ifNull: ["$shipment.provider", { $ifNull: ["$courier", "Unassigned"] }] },
+            ],
+          },
+          count: { $sum: 1 },
+          total: { $sum: "$total" },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 12 },
+    ]),
+    OrderModel.countDocuments({ ...orderMatch, status: "delivered" }),
+  ]);
+
+  const pctChange = (current: number, previous: number) => {
+    if (!previous) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 1000) / 10;
+  };
+
+  const shippingCost = financeStats.shippingCost || 0;
+  const taxCollected = financeStats.taxCollected || 0;
+  const discountTotal = financeStats.discountTotal || 0;
+  const totalExpense = shippingCost + (stats.refundAmount || 0);
+  const netIncome = (stats.totalRevenue || 0) - totalExpense;
+  const returnRate =
+    (stats.totalOrders || 0) > 0
+      ? Math.round(((stats.cancelledOrders || 0) / stats.totalOrders) * 1000) / 10
+      : 0;
+
   return {
     totalRevenue: stats.totalRevenue || 0,
     totalOrders: stats.totalOrders || 0,
@@ -392,9 +592,18 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
     pendingOrders: stats.pendingOrders || 0,
     cancelledOrders: stats.cancelledOrders || 0,
     completedOrders: stats.completedOrders || 0,
+    deliveredOrders: deliveredCount,
     refundAmount: stats.refundAmount || 0,
     grossSales: stats.totalRevenue || 0,
     netProfit: (stats.totalRevenue || 0) - (stats.refundAmount || 0),
+    netIncome,
+    totalExpense,
+    shippingCost,
+    taxCollected,
+    discountTotal,
+    codCollection: financeStats.codCollection || 0,
+    onlineCollection: financeStats.onlineCollection || 0,
+    returnRate,
     revenueToday: revenueToday.revenue,
     revenueThisWeek: revenueWeek.revenue,
     revenueThisMonth: revenueMonth.revenue,
@@ -426,6 +635,17 @@ export async function getDashboardKPIs(storeId: string, range: DateRange) {
     topCategories: byCategory,
     paymentMethods: byPayment,
     shippingMethods: byZone,
+    courierBreakdown,
+    comparison: prevStats
+      ? {
+          revenueChange: pctChange(stats.totalRevenue || 0, prevStats.totalRevenue || 0),
+          ordersChange: pctChange(stats.totalOrders || 0, prevStats.totalOrders || 0),
+          refundChange: pctChange(stats.refundAmount || 0, prevStats.refundAmount || 0),
+          shippingChange: pctChange(shippingCost, prevStats.shippingCost || 0),
+          previousRevenue: prevStats.totalRevenue || 0,
+          previousOrders: prevStats.totalOrders || 0,
+        }
+      : null,
   };
 }
 

@@ -98,6 +98,16 @@ export type DataGridColumnMeta = {
   hideOnTablet?: boolean;
   exportable?: boolean;
   permission?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  exportValue?: (row: any) => unknown;
+};
+
+export type DataGridExportMeta = {
+  title?: string;
+  subtitle?: string;
+  footerNote?: string;
+  summary?: Array<{ label: string; value: string }>;
+  filename?: string;
 };
 
 export type DataGridProps<TData> = {
@@ -144,6 +154,9 @@ export type DataGridProps<TData> = {
   getSubRows?: (row: TData) => TData[] | undefined;
   hideSearch?: boolean;
   searchPlaceholder?: string;
+  exportMeta?: DataGridExportMeta;
+  onExportCsv?: () => void;
+  onExportPdf?: () => void;
 };
 
 export type LegacyColumn<T> = {
@@ -155,6 +168,7 @@ export type LegacyColumn<T> = {
   hideOnMobile?: boolean;
   hideOnTablet?: boolean;
   exportable?: boolean;
+  exportValue?: (item: T) => string | number | null | undefined;
   permission?: string;
 };
 

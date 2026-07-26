@@ -17,7 +17,7 @@ import { DataGridLoading } from "./DataGridLoading";
 import { DataGridFooter } from "./DataGridFooter";
 import { DataGridInfiniteLoader } from "./DataGridInfiniteLoader";
 import { DataGridRowActions } from "./DataGridRowActions";
-import { exportRowsToCsv, printDataGrid } from "./utils/export-data";
+import { exportRowsToCsv, printDataGridReport, buildExportTable } from "./utils/export-data";
 import { filterColumnsByPermission, filterRowActions } from "./utils/permissions";
 import type { DataGridColumnMeta, DataGridProps } from "./types";
 
@@ -60,6 +60,9 @@ function DataGridInner<TData>({
   estimatedRowHeight,
   hideSearch,
   searchPlaceholder,
+  exportMeta,
+  onExportCsv,
+  onExportPdf,
 }: DataGridProps<TData>) {
   const filteredColumns = useMemo(
     () => filterColumnsByPermission(columns, permissions),
@@ -114,12 +117,28 @@ function DataGridInner<TData>({
   }, [onStateChange]);
 
   const handleExportCsv = useCallback(() => {
-    exportRowsToCsv(data, tableColumns, "export.csv");
-  }, [data, tableColumns]);
+    if (onExportCsv) {
+      onExportCsv();
+      return;
+    }
+    exportRowsToCsv(data, tableColumns, exportMeta?.filename || "export.csv");
+  }, [data, tableColumns, exportMeta?.filename, onExportCsv]);
 
-  const handlePrint = useCallback(() => {
-    printDataGrid("Export");
-  }, []);
+  const handleExportPdf = useCallback(() => {
+    if (onExportPdf) {
+      onExportPdf();
+      return;
+    }
+    const { headers, rows } = buildExportTable(data, tableColumns);
+    printDataGridReport({
+      title: exportMeta?.title || "Export Report",
+      subtitle: exportMeta?.subtitle,
+      summary: exportMeta?.summary,
+      footerNote: exportMeta?.footerNote,
+      headers,
+      rows,
+    });
+  }, [data, tableColumns, exportMeta, onExportPdf]);
 
   if (isLoading && data.length === 0) {
     return <DataGridSkeleton cols={tableColumns.length} className={className} />;
@@ -147,7 +166,7 @@ function DataGridInner<TData>({
           isFetching={isFetching}
           extra={toolbarExtra}
           onExportCsv={handleExportCsv}
-          onExportPrint={handlePrint}
+          onExportPdf={handleExportPdf}
         />
         <DataGridEmpty
           search={state.search}
@@ -182,7 +201,7 @@ function DataGridInner<TData>({
         searchPlaceholder={searchPlaceholder}
         extra={toolbarExtra}
         onExportCsv={handleExportCsv}
-        onExportPrint={handlePrint}
+        onExportPdf={handleExportPdf}
       />
 
       {state.viewMode === "card" ? (

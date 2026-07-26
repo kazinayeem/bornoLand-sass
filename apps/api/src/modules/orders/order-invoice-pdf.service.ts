@@ -27,6 +27,17 @@ type PopulatedCustomer = {
   phone?: string;
 };
 
+type OrderShipment = {
+  provider?: string;
+  providerName?: string;
+  consignmentId?: string;
+  trackingNumber?: string;
+  status?: string;
+  environment?: string;
+  estimatedDelivery?: string;
+  createdAt?: Date | string;
+};
+
 export type OrderInvoicePayload = {
   order: {
     _id?: string;
@@ -47,6 +58,10 @@ export type OrderInvoicePayload = {
     refundAmount?: number;
     notes?: string;
     couponCode?: string;
+    courier?: string;
+    trackingNumber?: string;
+    estimatedDelivery?: string;
+    shipment?: OrderShipment | null;
     paymentVerification?: {
       transactionId?: string;
       status?: string;
@@ -59,6 +74,7 @@ export type OrderInvoicePayload = {
       fullName?: string;
       phone?: string;
       street?: string;
+      area?: string;
       city?: string;
       state?: string;
       zip?: string;
@@ -111,13 +127,99 @@ const C = {
   border: "#E5E7EB",
   hairline: "#F3F4F6",
   white: "#FFFFFF",
+  watermark: "#F0F0F0",
 };
+
+const MARGIN = 36;
+const ROW_H = 14;
+const FOOTER_H = 40;
 
 /* ── Fonts ──────────────────────────────────────────────────────────── */
 
 function loadFont(name: string): string | null {
   const fontPath = path.resolve(__dirname, "../../assets/fonts", name);
   return fs.existsSync(fontPath) ? fontPath : null;
+}
+
+/* ── Amount in words ────────────────────────────────────────────────── */
+
+const ONES = [
+  "",
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nine",
+  "Ten",
+  "Eleven",
+  "Twelve",
+  "Thirteen",
+  "Fourteen",
+  "Fifteen",
+  "Sixteen",
+  "Seventeen",
+  "Eighteen",
+  "Nineteen",
+];
+const TENS = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+const CURRENCY_WORDS: Record<string, string> = {
+  BDT: "Taka",
+  USD: "Dollars",
+  EUR: "Euros",
+  GBP: "Pounds",
+  INR: "Rupees",
+  AED: "Dirhams",
+  SAR: "Riyals",
+  CAD: "Dollars",
+  AUD: "Dollars",
+};
+
+function twoDigits(n: number): string {
+  if (n < 20) return ONES[n] || "";
+  const t = Math.floor(n / 10);
+  const o = n % 10;
+  return `${TENS[t]}${o ? ` ${ONES[o]}` : ""}`.trim();
+}
+
+function threeDigits(n: number): string {
+  const h = Math.floor(n / 100);
+  const rest = n % 100;
+  const parts: string[] = [];
+  if (h) parts.push(`${ONES[h]} Hundred`);
+  if (rest) parts.push(twoDigits(rest));
+  return parts.join(" ");
+}
+
+/** Convert a whole-number amount into English words, e.g. "Six Thousand … Taka Only". */
+export function amountInWords(n: number, currencyCode?: string): string {
+  const whole = Math.floor(Math.abs(Number.isFinite(n) ? n : 0));
+  const currency =
+    CURRENCY_WORDS[(currencyCode || "").toUpperCase()] ||
+    (currencyCode?.trim() ? currencyCode.trim().toUpperCase() : "Only");
+
+  if (whole === 0) {
+    return currencyCode ? `Zero ${currency} Only` : "Zero Only";
+  }
+
+  const crore = Math.floor(whole / 1_00_00_000);
+  const lakh = Math.floor((whole % 1_00_00_000) / 1_00_000);
+  const thousand = Math.floor((whole % 1_00_000) / 1000);
+  const hundred = whole % 1000;
+
+  const parts: string[] = [];
+  if (crore) parts.push(`${threeDigits(crore)} Crore`);
+  if (lakh) parts.push(`${threeDigits(lakh)} Lakh`);
+  if (thousand) parts.push(`${threeDigits(thousand)} Thousand`);
+  if (hundred) parts.push(threeDigits(hundred));
+
+  const words = parts.join(" ").replace(/\s+/g, " ").trim();
+  if (currencyCode) return `${words} ${currency} Only`;
+  return `${words} Only`;
 }
 
 /* ── Formatting ─────────────────────────────────────────────────────── */
@@ -146,6 +248,28 @@ function formatDateTime(value: Date | string | undefined | null, timezone = "UTC
   }
 }
 
+function formatDateOnly(value: Date | string | undefined | null, timezone = "UTC"): string {
+  if (!value) return "";
+  // Plain date strings like "2026-07-26" or free-text ETAs — show as-is if not a parseable date
+  if (typeof value === "string" && !/^\d{4}-\d{2}-\d{2}T/.test(value) && Number.isNaN(Date.parse(value))) {
+    return value.trim();
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return typeof value === "string" ? value.trim() : "";
+  }
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: timezone,
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  } catch {
+    return typeof value === "string" ? value.trim() : "";
+  }
+}
+
 function formatMoney(
   amount: number,
   settings?: {
@@ -158,7 +282,7 @@ function formatMoney(
 ): string {
   const decimals = Number.isFinite(settings?.decimalPlaces) ? Number(settings?.decimalPlaces) : 2;
   const value = Number.isFinite(amount) ? amount : 0;
-  const locale = settings?.locale?.startsWith("bn") ? "en-BD" : (settings?.locale || "en-US");
+  const locale = settings?.locale?.startsWith("bn") ? "en-BD" : settings?.locale || "en-US";
   const formatted = value.toLocaleString(locale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -179,22 +303,6 @@ function titleCase(value?: string | null): string {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
     .join(" ");
-}
-
-function statusLabel(status?: string): string {
-  return titleCase(status || "Pending").toUpperCase();
-}
-
-function completedAt(order: OrderInvoicePayload["order"]): Date | string | undefined {
-  if ((order.status || "").toLowerCase() === "delivered") {
-    const delivered = order.timeline?.find((e) => e.status === "delivered")?.createdAt;
-    return delivered || order.updatedAt || order.createdAt;
-  }
-  if ((order.status || "").toLowerCase() === "cancelled") {
-    const cancelled = order.timeline?.find((e) => e.status === "cancelled")?.createdAt;
-    return cancelled || order.updatedAt;
-  }
-  return undefined;
 }
 
 function paidAt(order: OrderInvoicePayload["order"]): Date | string | undefined {
@@ -221,10 +329,11 @@ function drawWatermark(doc: PDFKit.PDFDocument, status: string, fonts: Record<st
   };
   const text = labels[status.toLowerCase()] || "INVOICE";
   doc.save();
-  doc.font(fonts.bold).fontSize(72).fillColor("#e5e7eb");
+  doc.opacity(0.35);
+  doc.font(fonts.bold).fontSize(64).fillColor(C.watermark);
   doc.translate(doc.page.width / 2, doc.page.height / 2);
   doc.rotate(-45);
-  doc.text(text, -doc.widthOfString(text) / 2, -20, { align: "center" });
+  doc.text(text, -doc.widthOfString(text) / 2, -18, { align: "center", lineBreak: false });
   doc.restore();
 }
 
@@ -234,6 +343,39 @@ function drawDivider(doc: PDFKit.PDFDocument, x1: number, x2: number, y: number)
   doc.save();
   doc.moveTo(x1, y).lineTo(x2, y).lineWidth(0.5).strokeColor(C.border).stroke();
   doc.restore();
+}
+
+function drawInfoLineRight(
+  doc: PDFKit.PDFDocument,
+  label: string,
+  value: string,
+  x: number,
+  y: number,
+  w: number,
+  F: Record<string, string>,
+) {
+  const labelW = w * 0.42;
+  const valueW = w * 0.56;
+  doc.font(F.regular).fontSize(7.5).fillColor(C.muted);
+  doc.text(label, x, y, { width: labelW, align: "right", lineBreak: false });
+  doc.font(F.medium).fontSize(7.5).fillColor(C.text);
+  doc.text(value, x + labelW + 4, y, { width: valueW - 4, align: "right", lineBreak: false });
+}
+
+function drawLabelValue(
+  doc: PDFKit.PDFDocument,
+  label: string,
+  value: string,
+  x: number,
+  y: number,
+  w: number,
+  F: Record<string, string>,
+  labelW = 48,
+) {
+  doc.font(F.regular).fontSize(7.5).fillColor(C.muted);
+  doc.text(`${label}: `, x, y, { width: labelW, lineBreak: false });
+  doc.font(F.medium).fontSize(7.5).fillColor(C.text);
+  doc.text(value, x + labelW, y, { width: Math.max(20, w - labelW), lineBreak: false });
 }
 
 /* ── Main generator ──────────────────────────────────────────────────── */
@@ -246,14 +388,15 @@ export async function generateOrderInvoicePdf(payload: OrderInvoicePayload): Pro
 
   const doc = new PDFDocument({
     size: "A4",
-    margins: { top: 42, bottom: 56, left: 42, right: 42 },
+    // Tiny bottom margin so PDFKit does not auto-insert a blank page near the footer.
+    margins: { top: MARGIN, bottom: 18, left: MARGIN, right: MARGIN },
     autoFirstPage: true,
     bufferPages: true,
     info: {
       Title: `Invoice ${payload.order.invoiceNumber ?? payload.order.orderNumber ?? ""}`,
       Author: payload.store.name || "Store",
       Subject: `Order ${payload.order.orderNumber ?? ""}`,
-      Creator: "BornoLand",
+      Creator: "Bornoland",
       Keywords: "invoice, order",
     },
   });
@@ -290,6 +433,7 @@ export async function generateOrderInvoicePdf(payload: OrderInvoicePayload): Pro
           decimalPlaces: settings?.decimalPlaces,
           locale: settings?.locale,
         };
+        const currencyCode = moneySettings.currencyCode;
 
         const storeName =
           contact?.businessName?.trim() ||
@@ -309,7 +453,6 @@ export async function generateOrderInvoicePdf(payload: OrderInvoicePayload): Pro
         const customerName = customer?.name?.trim() || order.shippingAddress?.fullName?.trim() || "";
         const customerEmail = customer?.email?.trim() || "";
         const customerPhone = customer?.phone?.trim() || order.shippingAddress?.phone?.trim() || "";
-        const customerId = customer?._id ? String(customer._id) : "";
 
         const ship = order.shippingAddress;
         const shippingMethod = order.deliveryZone?.trim() || "";
@@ -326,181 +469,232 @@ export async function generateOrderInvoicePdf(payload: OrderInvoicePayload): Pro
 
         const invoiceNo = order.invoiceNumber?.trim() || "";
         const orderNo = order.orderNumber?.trim() || "";
-        const invoiceDate = formatDateTime(order.createdAt, timezone) || "—";
-        const dueDate = invoiceDate;
-        const completedDate = formatDateTime(completedAt(order), timezone);
+        const orderDate = formatDateOnly(order.createdAt, timezone) || "—";
+        const invoiceDate = formatDateTime(order.createdAt, timezone) || orderDate;
         const paidDate = formatDateTime(paidAt(order), timezone);
-        const orderStatusLabel = statusLabel(order.status);
-        const paymentStatusLabel = statusLabel(order.paymentStatus);
+        const paymentMethodLabel = titleCase(order.paymentMethod || order.paymentGateway || "") || "—";
 
         const txnId = order.paymentVerification?.transactionId?.trim() || "";
-        const gateway = (order.paymentGateway || order.paymentMethod || "").trim();
+        const gateway = (order.paymentGateway || "").trim();
         const reference =
-          order.referenceNumber?.trim() ||
-          order.paymentVerification?.note?.trim() ||
-          "";
+          order.referenceNumber?.trim() || order.paymentVerification?.note?.trim() || "";
         const couponCode = order.couponCode?.trim() || "";
+
+        const shipment = order.shipment ?? null;
+        const courierName =
+          shipment?.providerName?.trim() ||
+          shipment?.provider?.trim() ||
+          order.courier?.trim() ||
+          "";
+        const trackingNo =
+          shipment?.trackingNumber?.trim() || order.trackingNumber?.trim() || "";
+        const consignmentId = shipment?.consignmentId?.trim() || "";
+        const shipmentStatus = shipment?.status?.trim() || "";
+        const shipmentEnv = shipment?.environment?.trim() || "";
+        const estimatedDelivery =
+          shipment?.estimatedDelivery?.trim() || order.estimatedDelivery?.trim() || "";
+        const shipmentCreated = formatDateTime(shipment?.createdAt, timezone);
+        const hasShipmentInfo = Boolean(
+          courierName || trackingNo || consignmentId || shipmentStatus || estimatedDelivery,
+        );
 
         const logoBuffer = payload.storeLogoBuffer ?? null;
 
         /* ── Layout constants ─────────────────────────────────────────────── */
-        const LM = 42;
-        const RM = doc.page.width - 42;
+        const LM = MARGIN;
+        const RM = doc.page.width - MARGIN;
         const PW = RM - LM;
-        let y = 42;
-        const bottomLimit = doc.page.height - 70;
+        let y = MARGIN;
+        const contentBottom = () => doc.page.height - FOOTER_H - 8;
 
-        const ensureSpace = (needed: number) => {
-          if (y + needed <= bottomLimit) return;
+        /** Paginate only for the items table when a row truly overflows. */
+        const ensureTableSpace = (needed: number, redrawHeader: () => void) => {
+          if (y + needed <= contentBottom()) return;
           doc.addPage();
-          y = 42;
+          y = MARGIN;
+          redrawHeader();
         };
 
-        /* ── Header: Store Info (left) + Invoice Meta (right) ───────────── */
-        const leftColW = PW * 0.55;
-        const rightColW = PW * 0.42;
+        /* ── Header: Store (left) + INVOICE meta (right) ─────────────────── */
+        const leftColW = PW * 0.52;
+        const rightColW = PW * 0.44;
         const rightColX = LM + PW - rightColW;
 
-        // Store logo + name
         if (logoBuffer) {
-          doc.image(logoBuffer, LM, y, { width: 36, height: 36 });
-          doc.font(F.bold).fontSize(15).fillColor(C.text);
-          doc.text(storeName, LM + 44, y + 2, { width: leftColW - 44, lineBreak: false });
+          try {
+            doc.image(logoBuffer, LM, y, { width: 32, height: 32, fit: [32, 32] });
+            doc.font(F.bold).fontSize(13).fillColor(C.text);
+            doc.text(storeName, LM + 40, y + 1, { width: leftColW - 40, lineBreak: false });
+          } catch {
+            doc.font(F.bold).fontSize(13).fillColor(C.text);
+            doc.text(storeName, LM, y, { width: leftColW, lineBreak: false });
+          }
         } else {
-          doc.font(F.bold).fontSize(15).fillColor(C.text);
+          doc.font(F.bold).fontSize(13).fillColor(C.text);
           doc.text(storeName, LM, y, { width: leftColW, lineBreak: false });
         }
 
-        // Store contact info
-        let infoY = y + (logoBuffer ? 24 : 22);
-        const infoSize = 9;
-        doc.font(F.regular).fontSize(infoSize).fillColor(C.muted);
+        let infoY = y + (logoBuffer ? 20 : 18);
+        doc.font(F.regular).fontSize(7.5).fillColor(C.muted);
         if (storeAddress) {
           doc.text(storeAddress, LM, infoY, { width: leftColW, lineBreak: false });
-          infoY += 13;
+          infoY += 11;
         }
-        const contactLine = [storePhone, storeEmail, storeWebsite].filter(Boolean);
-        if (contactLine.length) {
-          doc.text(contactLine.join("  ·  "), LM, infoY, { width: leftColW, lineBreak: false });
+        if (storePhone) {
+          doc.text(storePhone, LM, infoY, { width: leftColW, lineBreak: false });
+          infoY += 11;
+        }
+        const contactBits = [storeEmail, storeWebsite].filter(Boolean);
+        if (contactBits.length) {
+          doc.text(contactBits.join("  ·  "), LM, infoY, { width: leftColW, lineBreak: false });
+          infoY += 11;
         }
 
-        // Right side: INVOICE title
-        const invoiceTitleY = y + (logoBuffer ? 0 : 0);
-        doc.font(F.bold).fontSize(28).fillColor(C.text);
-        doc.text("INVOICE", rightColX, invoiceTitleY, { width: rightColW, align: "right", lineBreak: false });
+        doc.font(F.bold).fontSize(22).fillColor(C.text);
+        doc.text("INVOICE", rightColX, y, { width: rightColW, align: "right", lineBreak: false });
 
-        // Invoice meta
         const metaLines: Array<[string, string]> = [];
-        if (invoiceNo) metaLines.push(["Invoice No.", invoiceNo]);
-        if (orderNo) metaLines.push(["Order No.", orderNo]);
+        if (invoiceNo) metaLines.push(["Invoice No", invoiceNo]);
+        if (orderNo) metaLines.push(["Order No", orderNo]);
+        metaLines.push(["Order Date", orderDate]);
         metaLines.push(["Invoice Date", invoiceDate]);
-        metaLines.push(["Due Date", dueDate]);
-        metaLines.push(["Order Status", orderStatusLabel]);
-        metaLines.push(["Payment Status", paymentStatusLabel]);
+        metaLines.push(["Payment Method", paymentMethodLabel]);
+        metaLines.push(["Currency", currencyCode]);
 
-        let metaY = invoiceTitleY + 34;
-        doc.font(F.regular).fontSize(8).fillColor(C.muted);
+        let metaY = y + 26;
         metaLines.forEach(([label, value]) => {
           drawInfoLineRight(doc, label, value, rightColX, metaY, rightColW, F);
-          metaY += 12;
+          metaY += 11;
         });
 
-        y = Math.max(infoY + 24, metaY + 8);
-
-        /* ── Divider ────────────────────────────────────────────────────────── */
+        y = Math.max(infoY, metaY) + 8;
         drawDivider(doc, LM, RM, y);
-        y += 20;
+        y += 10;
 
-        /* ── Customer / Shipping ──────────────────────────────────────────── */
-        ensureSpace(100);
-        const halfW = (PW - 16) / 2;
+        /* ── Customer | Shipping Address ─────────────────────────────────── */
+        const halfW = (PW - 12) / 2;
+        const shipX = LM + halfW + 12;
 
-        // Customer
-        doc.font(F.semiBold).fontSize(10).fillColor(C.text);
+        doc.font(F.semiBold).fontSize(8).fillColor(C.text);
         doc.text("Customer", LM, y, { lineBreak: false });
-        let cy = y + 16;
-        const customerInfo: Array<[string, string]> = [];
-        if (customerName) customerInfo.push(["Name", customerName]);
-        if (customerEmail) customerInfo.push(["Email", customerEmail]);
-        if (customerPhone) customerInfo.push(["Phone", customerPhone]);
-        if (customerId) customerInfo.push(["Customer ID", customerId]);
-        doc.font(F.regular).fontSize(9).fillColor(C.muted);
-        customerInfo.forEach(([label, value]) => {
-          doc.text(`${label}: `, LM, cy, { width: 52, lineBreak: false });
-          doc.font(F.medium).fontSize(9).fillColor(C.text);
-          doc.text(value, LM + 52, cy, { width: halfW - 52, lineBreak: false });
-          doc.font(F.regular).fontSize(9).fillColor(C.muted);
-          cy += 14;
-        });
+        doc.text("Shipping Address", shipX, y, { lineBreak: false });
+        y += 12;
 
-        // Shipping
-        const shipX = LM + halfW + 16;
-        doc.font(F.semiBold).fontSize(10).fillColor(C.text);
-        doc.text("Shipping", shipX, y, { lineBreak: false });
-        let sy = y + 16;
-        const shipInfo: Array<[string, string]> = [];
-        if (ship?.fullName) shipInfo.push(["Recipient", ship.fullName]);
-        if (ship?.phone) shipInfo.push(["Phone", ship.phone]);
-        const addressLine = [ship?.street, ship?.city, ship?.state, ship?.zip, ship?.country]
-          .map((v) => v?.trim())
-          .filter(Boolean)
-          .join(", ");
-        if (addressLine) shipInfo.push(["Address", addressLine]);
-        if (shippingMethod) shipInfo.push(["Method", shippingMethod]);
-        if (shippingCharge > 0 || order.shipping != null || order.deliveryCharge != null) {
-          shipInfo.push(["Charge", formatMoney(shippingCharge, moneySettings)]);
+        const customerLines: Array<[string, string]> = [];
+        if (customerName) customerLines.push(["Name", customerName]);
+        if (customerEmail) customerLines.push(["Email", customerEmail]);
+        if (customerPhone) customerLines.push(["Phone", customerPhone]);
+
+        const shipLines: Array<[string, string]> = [];
+        if (ship?.fullName) shipLines.push(["Name", ship.fullName]);
+        if (ship?.phone) shipLines.push(["Phone", ship.phone]);
+        const streetLine = [ship?.street, ship?.area].map((v) => v?.trim()).filter(Boolean).join(", ");
+        if (streetLine) shipLines.push(["Address", streetLine]);
+        if (ship?.city) shipLines.push(["City", ship.city]);
+        if (ship?.zip) shipLines.push(["Post Code", ship.zip]);
+        if (ship?.country && ship.country.toLowerCase() !== "bangladesh") {
+          shipLines.push(["Country", ship.country]);
         }
-        doc.font(F.regular).fontSize(9).fillColor(C.muted);
-        shipInfo.forEach(([label, value]) => {
-          doc.text(`${label}: `, shipX, sy, { width: 52, lineBreak: false });
-          doc.font(F.medium).fontSize(9).fillColor(C.text);
-          doc.text(value, shipX + 52, sy, { width: halfW - 52, lineBreak: false });
-          doc.font(F.regular).fontSize(9).fillColor(C.muted);
-          sy += 14;
+        if (shippingMethod) shipLines.push(["Method", shippingMethod]);
+
+        const blockStart = y;
+        let cy = y;
+        customerLines.forEach(([label, value]) => {
+          drawLabelValue(doc, label, value, LM, cy, halfW, F);
+          cy += 11;
         });
+        if (!customerLines.length) {
+          doc.font(F.regular).fontSize(7.5).fillColor(C.muted);
+          doc.text("—", LM, cy, { lineBreak: false });
+          cy += 11;
+        }
 
-        y = Math.max(y + 20 + Math.max(customerInfo.length, shipInfo.length) * 14, cy, sy) + 8;
+        let sy = blockStart;
+        shipLines.forEach(([label, value]) => {
+          drawLabelValue(doc, label, value, shipX, sy, halfW, F);
+          sy += 11;
+        });
+        if (!shipLines.length) {
+          doc.font(F.regular).fontSize(7.5).fillColor(C.muted);
+          doc.text("—", shipX, sy, { lineBreak: false });
+          sy += 11;
+        }
 
-        /* ── Divider ────────────────────────────────────────────────────────── */
+        y = Math.max(cy, sy) + 6;
+
+        /* ── Courier / Shipment (when available) ─────────────────────────── */
+        if (hasShipmentInfo) {
+          drawDivider(doc, LM, RM, y);
+          y += 8;
+          doc.font(F.semiBold).fontSize(8).fillColor(C.text);
+          doc.text("Shipment", LM, y, { lineBreak: false });
+          y += 11;
+
+          const shipMeta: Array<[string, string]> = [];
+          if (courierName) shipMeta.push(["Courier", courierName]);
+          if (consignmentId) shipMeta.push(["Consignment", consignmentId]);
+          if (trackingNo) shipMeta.push(["Tracking", trackingNo]);
+          if (shipmentStatus) shipMeta.push(["Status", titleCase(shipmentStatus)]);
+          if (estimatedDelivery) {
+            shipMeta.push(["Est. Delivery", formatDateOnly(estimatedDelivery, timezone) || estimatedDelivery]);
+          }
+          if (shipmentEnv && shipmentEnv !== "production") {
+            shipMeta.push(["Environment", titleCase(shipmentEnv)]);
+          }
+          if (shipmentCreated) shipMeta.push(["Created", shipmentCreated]);
+
+          const colW = (PW - 8) / 2;
+          let leftY = y;
+          let rightY = y;
+          shipMeta.forEach(([label, value], idx) => {
+            if (idx % 2 === 0) {
+              drawLabelValue(doc, label, value, LM, leftY, colW, F, 62);
+              leftY += 11;
+            } else {
+              drawLabelValue(doc, label, value, LM + colW + 8, rightY, colW, F, 62);
+              rightY += 11;
+            }
+          });
+          y = Math.max(leftY, rightY) + 4;
+        }
+
         drawDivider(doc, LM, RM, y);
-        y += 16;
+        y += 8;
 
-        /* ── Items Table ──────────────────────────────────────────────────── */
-        ensureSpace(40);
-
+        /* ── Items Table ─────────────────────────────────────────────────── */
         const cols = [
-          { key: "product", label: "Product", width: 120, align: "left" as const },
-          { key: "variant", label: "Variant", width: 80, align: "left" as const },
-          { key: "sku", label: "SKU", width: 60, align: "left" as const },
-          { key: "qty", label: "Qty", width: 30, align: "center" as const },
-          { key: "unit", label: "Unit Price", width: 80, align: "right" as const },
-          { key: "disc", label: "Discount", width: 72, align: "right" as const },
-          { key: "tax", label: "Tax", width: 50, align: "right" as const },
-          { key: "total", label: "Total", width: 80, align: "right" as const },
+          { key: "#", label: "#", width: 18, align: "center" as const },
+          { key: "product", label: "Product", width: 118, align: "left" as const },
+          { key: "variant", label: "Variant", width: 70, align: "left" as const },
+          { key: "sku", label: "SKU", width: 54, align: "left" as const },
+          { key: "qty", label: "Qty", width: 28, align: "center" as const },
+          { key: "unit", label: "Unit Price", width: 62, align: "right" as const },
+          { key: "disc", label: "Discount", width: 54, align: "right" as const },
+          { key: "total", label: "Total", width: 62, align: "right" as const },
         ];
         const colSum = cols.reduce((sum, c) => sum + c.width, 0);
         const scale = PW / colSum;
         const scaledCols = cols.map((c) => ({ ...c, width: c.width * scale }));
 
         const drawTableHeader = () => {
-          doc.font(F.semiBold).fontSize(8).fillColor(C.muted);
+          doc.font(F.semiBold).fontSize(7).fillColor(C.muted);
           let hx = LM;
           scaledCols.forEach((col) => {
             doc.text(col.label, hx, y, { width: col.width, align: col.align, lineBreak: false });
             hx += col.width;
           });
-          y += 14;
+          y += 11;
           drawDivider(doc, LM, RM, y);
-          y += 4;
+          y += 3;
         };
 
         drawTableHeader();
 
         const items = order.items ?? [];
         if (items.length === 0) {
-          doc.font(F.regular).fontSize(9).fillColor(C.muted);
+          doc.font(F.regular).fontSize(7.5).fillColor(C.muted);
           doc.text("No items on this order.", LM, y, { lineBreak: false });
-          y += 18;
+          y += 14;
         } else {
           for (let i = 0; i < items.length; i += 1) {
             const item = items[i];
@@ -510,200 +704,222 @@ export async function generateOrderInvoicePdf(payload: OrderInvoicePayload): Pro
             const itemTax = Number(item.tax ?? 0);
             const lineSubtotal = qty * unit;
             const lineTotal = Math.max(0, lineSubtotal - itemDiscount + itemTax);
-            const rowH = 16;
 
-            ensureSpace(rowH + 10);
-            if (y + rowH > bottomLimit - 10) {
-              doc.addPage();
-              y = 42;
-              drawTableHeader();
-            }
+            ensureTableSpace(ROW_H + 2, drawTableHeader);
 
-            // Alternating row background (very subtle)
             if (i % 2 === 1) {
               doc.save();
-              doc.rect(LM, y, PW, rowH).fill(C.hairline);
+              doc.rect(LM, y, PW, ROW_H).fill(C.hairline);
               doc.restore();
             }
 
-            let rx = LM;
             const cellContents = [
-              item.name?.trim() || "",
-              item.variantTitle?.trim() || "",
-              item.sku?.trim() || "",
+              String(i + 1),
+              item.name?.trim() || "—",
+              item.variantTitle?.trim() || "—",
+              item.sku?.trim() || "—",
               String(qty || 0),
               formatMoney(unit, moneySettings),
               itemDiscount ? formatMoney(itemDiscount, moneySettings) : "—",
-              itemTax ? formatMoney(itemTax, moneySettings) : "—",
               formatMoney(lineTotal, moneySettings),
             ];
 
+            let rx = LM;
             scaledCols.forEach((col, ci) => {
-              doc.font(F.regular).fontSize(8).fillColor(C.text);
-              doc.text(cellContents[ci] || "—", rx, y + 3, {
-                width: col.width - 4,
+              doc.font(F.regular).fontSize(7).fillColor(C.text);
+              doc.text(cellContents[ci] || "—", rx + 1, y + 3, {
+                width: col.width - 3,
                 align: col.align,
                 lineBreak: false,
+                ellipsis: true,
               });
               rx += col.width;
             });
-            y += rowH;
+            y += ROW_H;
           }
         }
 
-        /* ── Bottom divider after table ─────────────────────────────────────── */
-        drawDivider(doc, LM, RM, y + 2);
-        y += 10;
+        drawDivider(doc, LM, RM, y + 1);
+        y += 8;
 
-        /* ── Notes (left) + Totals (right) ────────────────────────────────── */
-        ensureSpace(120);
+        /* ── Bottom: Amount/Payment/QR (left) + Totals (right) ───────────── */
+        // Prefer compact layout over a new nearly-empty page.
+        const leftW = PW * 0.52;
+        const rightW = PW * 0.42;
+        const totalsX = LM + PW - rightW;
+        const bottomStart = y;
+        const remaining = contentBottom() - y;
+        const compact = remaining < 130;
+        const qrSize = compact ? 28 : 30;
+        const lineGap = compact ? 9 : 10;
+        const sectionGap = compact ? 6 : 8;
 
-        // Notes
-        const notesW = PW * 0.48;
-        const hasNotes = order.notes?.trim();
-        const hasPaymentInfo = txnId || gateway || paidDate || reference;
-
-        if (hasNotes) {
-          doc.font(F.semiBold).fontSize(9).fillColor(C.text);
-          doc.text("Notes", LM, y, { lineBreak: false });
-          doc.font(F.regular).fontSize(8).fillColor(C.muted);
-          doc.text(order.notes!.trim(), LM, y + 14, { width: notesW, lineBreak: true });
-        }
-
-        // Payment info block (below notes)
-        if (hasPaymentInfo) {
-          const payInfoY = hasNotes ? y + 14 + doc.heightOfString(order.notes!.trim(), { width: notesW }) + 8 : y;
-          doc.font(F.semiBold).fontSize(9).fillColor(C.text);
-          doc.text("Payment", LM, payInfoY, { lineBreak: false });
-          let piy = payInfoY + 14;
-          doc.font(F.regular).fontSize(8).fillColor(C.muted);
-          if (order.paymentMethod) {
-            doc.text("Method: ", LM, piy, { width: 52, lineBreak: false });
-            doc.font(F.medium).fontSize(8).fillColor(C.text);
-            doc.text(titleCase(order.paymentMethod), LM + 52, piy, { width: notesW - 52, lineBreak: false });
-            piy += 12;
-            doc.font(F.regular).fontSize(8).fillColor(C.muted);
-          }
-          if (txnId) {
-            doc.text("TX ID: ", LM, piy, { width: 52, lineBreak: false });
-            doc.font(F.medium).fontSize(8).fillColor(C.text);
-            doc.text(txnId, LM + 52, piy, { width: notesW - 52, lineBreak: false });
-            piy += 12;
-            doc.font(F.regular).fontSize(8).fillColor(C.muted);
-          }
-          if (gateway) {
-            doc.text("Gateway: ", LM, piy, { width: 52, lineBreak: false });
-            doc.font(F.medium).fontSize(8).fillColor(C.text);
-            doc.text(titleCase(gateway), LM + 52, piy, { width: notesW - 52, lineBreak: false });
-            piy += 12;
-            doc.font(F.regular).fontSize(8).fillColor(C.muted);
-          }
-          if (paidDate) {
-            doc.text("Paid: ", LM, piy, { width: 52, lineBreak: false });
-            doc.font(F.medium).fontSize(8).fillColor(C.text);
-            doc.text(paidDate, LM + 52, piy, { width: notesW - 52, lineBreak: false });
-            piy += 12;
-            doc.font(F.regular).fontSize(8).fillColor(C.muted);
-          }
-          if (reference) {
-            doc.text("Ref: ", LM, piy, { width: 52, lineBreak: false });
-            doc.font(F.medium).fontSize(8).fillColor(C.text);
-            doc.text(reference, LM + 52, piy, { width: notesW - 52, lineBreak: false });
-          }
-        }
-
-        // Totals (right column)
-        const totalsX = LM + PW - notesW;
-        const summaryRows: Array<{ label: string; value: string; strong?: boolean; muted?: boolean }> = [
+        // Right: totals first (fixed height) so we know space for left column
+        const summaryRows: Array<{ label: string; value: string; strong?: boolean }> = [
           { label: "Subtotal", value: formatMoney(subtotal, moneySettings) },
         ];
-        if (discount > 0) {
-          summaryRows.push({ label: "Discount", value: `−${formatMoney(discount, moneySettings)}`, muted: true });
-        }
-        if (couponCode) {
-          summaryRows.push({ label: "Coupon", value: couponCode, muted: true });
+        if (discount > 0 || couponCode) {
+          summaryRows.push({
+            label: couponCode ? `Discount (${couponCode})` : "Discount",
+            value: discount > 0 ? `−${formatMoney(discount, moneySettings)}` : "—",
+          });
         }
         summaryRows.push({ label: "Shipping", value: formatMoney(shippingCharge, moneySettings) });
         if (tax > 0) {
           summaryRows.push({ label: "Tax", value: formatMoney(tax, moneySettings) });
         }
         summaryRows.push({ label: "Grand Total", value: formatMoney(total, moneySettings), strong: true });
-        if (paymentReceived > 0) {
-          summaryRows.push({ label: "Paid", value: formatMoney(paymentReceived, moneySettings), muted: true });
-        }
-        if (remainingDue > 0) {
-          summaryRows.push({ label: "Due", value: formatMoney(remainingDue, moneySettings), strong: true });
-        }
-
-        let totalsY = y;
-        const totLabelW = notesW * 0.45;
-        summaryRows.forEach((row) => {
-          if (row.label === "Grand Total" || (row.label === "Due" && remainingDue > 0)) {
-            drawDivider(doc, totalsX, RM, totalsY - 1);
-            totalsY += 4;
-          }
-          doc.font(row.strong ? F.semiBold : row.muted ? F.regular : F.regular);
-          doc.fontSize(row.strong ? 9 : 8).fillColor(row.strong ? C.text : C.muted);
-          doc.text(row.label, totalsX, totalsY, { width: totLabelW, lineBreak: false });
-
-          doc.font(row.strong ? F.semiBold : F.medium);
-          doc.fontSize(row.strong ? 9 : 8).fillColor(row.strong ? C.text : C.text);
-          doc.text(row.value, totalsX + totLabelW, totalsY, { width: notesW - totLabelW, align: "right", lineBreak: false });
-          totalsY += row.strong ? 14 : 12;
+        summaryRows.push({
+          label: "Paid",
+          value: formatMoney(paymentReceived, moneySettings),
+        });
+        summaryRows.push({
+          label: "Due",
+          value: formatMoney(remainingDue, moneySettings),
+          strong: remainingDue > 0,
         });
 
-        // Advance y past whichever column is taller
-        const notesBottom = (hasNotes ? y + 14 + doc.heightOfString(order.notes!.trim(), { width: notesW }) : y) +
-          (hasPaymentInfo ? 14 + (() => {
-            let count = 0;
-            if (order.paymentMethod) count++;
-            if (txnId) count++;
-            if (gateway) count++;
-            if (paidDate) count++;
-            if (reference) count++;
-            return count * 12;
-          })() : 0);
-        y = Math.max(totalsY + 4, notesBottom + 4);
-
-        /* ── Divider before footer ─────────────────────────────────────────-- */
-        ensureSpace(40);
-
-        /* ── QR (optional) ─────────────────────────────────────────────────── */
-        if (payload.verificationUrl?.trim()) {
-          ensureSpace(60);
-          drawDivider(doc, LM, RM, y);
-          y += 10;
-          const qrBuffer = await QRCode.toBuffer(payload.verificationUrl, {
-            width: 80,
-            margin: 1,
-            color: { dark: C.text, light: C.white },
-            errorCorrectionLevel: "M",
-          });
-          doc.image(qrBuffer, LM, y, { width: 36, height: 36 });
-          doc.font(F.semiBold).fontSize(9).fillColor(C.text);
-          doc.text("Verify this invoice", LM + 44, y + 2, { lineBreak: false });
-          doc.font(F.regular).fontSize(7).fillColor(C.muted);
-          doc.text(payload.verificationUrl, LM + 44, y + 16, {
-            width: PW - 56,
+        let totalsY = bottomStart;
+        const totLabelW = rightW * 0.48;
+        summaryRows.forEach((row) => {
+          if (row.label === "Grand Total") {
+            drawDivider(doc, totalsX, RM, totalsY);
+            totalsY += 3;
+          }
+          doc.font(row.strong ? F.semiBold : F.regular);
+          doc.fontSize(row.strong ? 8 : 7.5).fillColor(row.strong ? C.text : C.muted);
+          doc.text(row.label, totalsX, totalsY, { width: totLabelW, lineBreak: false });
+          doc.font(row.strong ? F.semiBold : F.medium);
+          doc.fontSize(row.strong ? 8 : 7.5).fillColor(C.text);
+          doc.text(row.value, totalsX + totLabelW, totalsY, {
+            width: rightW - totLabelW,
+            align: "right",
             lineBreak: false,
           });
-          y += 50;
+          totalsY += row.strong ? 12 : lineGap;
+        });
+
+        // Left: amount in words (single line — never overflow onto a new page)
+        let leftY = bottomStart;
+        const words = amountInWords(total, currencyCode);
+        doc.font(F.semiBold).fontSize(7.5).fillColor(C.text);
+        doc.text("Amount in Words", LM, leftY, { lineBreak: false });
+        leftY += 10;
+        doc.font(F.regular).fontSize(7).fillColor(C.muted);
+        doc.text(words, LM, leftY, {
+          width: leftW,
+          height: compact ? 12 : 16,
+          lineBreak: false,
+          ellipsis: true,
+        });
+        leftY += (compact ? 12 : 16) + sectionGap;
+
+        // Payment details
+        doc.font(F.semiBold).fontSize(7.5).fillColor(C.text);
+        doc.text("Payment Details", LM, leftY, { lineBreak: false });
+        leftY += 10;
+        const payLines: Array<[string, string]> = [];
+        if (paymentMethodLabel && paymentMethodLabel !== "—") {
+          payLines.push(["Method", paymentMethodLabel]);
+        }
+        if (gateway && titleCase(gateway) !== paymentMethodLabel) {
+          payLines.push(["Gateway", titleCase(gateway)]);
+        }
+        if (txnId) payLines.push(["TX ID", txnId]);
+        if (paidDate) payLines.push(["Paid At", paidDate]);
+        if (reference) payLines.push(["Reference", reference]);
+        if (!payLines.length) {
+          payLines.push(["Status", titleCase(order.paymentStatus || "pending") || "Pending"]);
+        }
+        payLines.forEach(([label, value]) => {
+          drawLabelValue(doc, label, value, LM, leftY, leftW, F, 52);
+          leftY += lineGap;
+        });
+        leftY += sectionGap - 2;
+
+        // QR verify (inline, small)
+        if (payload.verificationUrl?.trim()) {
+          try {
+            const qrBuffer = await QRCode.toBuffer(payload.verificationUrl, {
+              width: 96,
+              margin: 0,
+              color: { dark: C.text, light: C.white },
+              errorCorrectionLevel: "M",
+            });
+            const qrFit = leftY + qrSize <= contentBottom();
+            if (qrFit) {
+              doc.image(qrBuffer, LM, leftY, { width: qrSize, height: qrSize });
+              doc.font(F.semiBold).fontSize(7).fillColor(C.text);
+              doc.text("Scan to verify", LM + qrSize + 6, leftY + 2, {
+                width: leftW - qrSize - 8,
+                lineBreak: false,
+              });
+              doc.font(F.regular).fontSize(6).fillColor(C.muted);
+              doc.text(payload.verificationUrl, LM + qrSize + 6, leftY + 12, {
+                width: leftW - qrSize - 8,
+                lineBreak: false,
+                ellipsis: true,
+              });
+              leftY += qrSize + 4;
+            }
+          } catch {
+            // QR generation failure should not break invoice
+          }
         }
 
-        /* ── Footer on every page ──────────────────────────────────────────── */
-        const pageCount = doc.bufferedPageRange().count;
-        for (let pageIndex = 0; pageIndex < pageCount; pageIndex += 1) {
-          doc.switchToPage(pageIndex);
+        y = Math.max(leftY, totalsY) + 6;
 
-          // Watermark on every page
+        /* ── Notes | Terms ───────────────────────────────────────────────── */
+        const notesText =
+          order.notes?.trim() ||
+          "Thank you for your order. Please retain this invoice for your records.";
+        const termsText =
+          "Goods once sold are subject to the store's return policy. Payment disputes must be raised within 7 days.";
+
+        // Shrink notes/terms into remaining space rather than adding a blank page
+        const notesHalf = (PW - 10) / 2;
+        if (y + 22 <= contentBottom()) {
+          doc.font(F.semiBold).fontSize(7.5).fillColor(C.text);
+          doc.text("Notes", LM, y, { lineBreak: false });
+          doc.text("Terms & Conditions", LM + notesHalf + 10, y, { lineBreak: false });
+          y += 10;
+          doc.font(F.regular).fontSize(6.5).fillColor(C.muted);
+          doc.text(notesText, LM, y, {
+            width: notesHalf,
+            height: 14,
+            lineBreak: false,
+            ellipsis: true,
+          });
+          doc.text(termsText, LM + notesHalf + 10, y, {
+            width: notesHalf,
+            height: 14,
+            lineBreak: false,
+            ellipsis: true,
+          });
+        }
+
+        /* ── Footer on every page ────────────────────────────────────────── */
+        const range = doc.bufferedPageRange();
+        const pageCount = range.count;
+        for (let i = 0; i < pageCount; i += 1) {
+          doc.switchToPage(range.start + i);
           drawWatermark(doc, order.paymentStatus || order.status || "pending", F);
 
-          const footerY = doc.page.height - 48;
-          drawDivider(doc, LM, RM, footerY - 6);
-          doc.font(F.regular).fontSize(8).fillColor(C.muted);
-          const footerText =
-            [storeWebsite, storeEmail].filter(Boolean).join("  ·  ") || "Thank you for your business.";
-          doc.text(footerText, LM, footerY + 2, { width: PW, align: "center", lineBreak: false });
+          const footerY = doc.page.height - 28;
+          drawDivider(doc, LM, RM, footerY - 8);
+          doc.font(F.regular).fontSize(7).fillColor(C.muted);
+          const pageLabel = `Page ${i + 1} of ${pageCount}`;
+          doc.text(pageLabel, LM, footerY, { width: PW * 0.28, align: "left", lineBreak: false });
+          doc.text("Thank you for your purchase", LM + PW * 0.28, footerY, {
+            width: PW * 0.44,
+            align: "center",
+            lineBreak: false,
+          });
+          doc.text("Powered by Bornoland", LM + PW * 0.72, footerY, {
+            width: PW * 0.28,
+            align: "right",
+            lineBreak: false,
+          });
         }
 
         doc.end();
@@ -712,21 +928,4 @@ export async function generateOrderInvoicePdf(payload: OrderInvoicePayload): Pro
       }
     })();
   });
-}
-
-/* ── Small helpers ──────────────────────────────────────────────────── */
-
-function drawInfoLineRight(
-  doc: PDFKit.PDFDocument,
-  label: string,
-  value: string,
-  x: number,
-  y: number,
-  w: number,
-  F: Record<string, string>,
-) {
-  doc.font(F.regular).fontSize(8).fillColor(C.muted);
-  doc.text(label, x, y, { width: w * 0.32, align: "right", lineBreak: false });
-  doc.font(F.medium).fontSize(8).fillColor(C.text);
-  doc.text(value, x + w * 0.34, y, { width: w * 0.66, align: "right", lineBreak: false });
 }

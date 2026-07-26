@@ -492,6 +492,8 @@ export async function adjustStock(
       variantId: payload.variantId,
       previousStock: prevStock,
       newStock: inv.quantity,
+      beforeQuantity: prevStock,
+      afterQuantity: inv.quantity,
       quantityChange: change,
       reason: (payload.reason as any) || "manual_adjust",
       note: payload.note || "",
@@ -499,6 +501,30 @@ export async function adjustStock(
       updatedById: payload.updatedById ? new mongoose.Types.ObjectId(payload.updatedById) : null,
       source: "manual",
     });
+
+    try {
+      const { appendProductTimeline, recordInventoryAudit } = await import("./inventory-erp.service.js");
+      await appendProductTimeline(storeId, {
+        productId,
+        variantId: payload.variantId,
+        eventType: change >= 0 ? "stock_added" : "stock_removed",
+        title: change >= 0 ? "Stock added" : "Stock removed",
+        detail: `${prevStock} → ${inv.quantity}`,
+        actorName: payload.updatedBy || "system",
+        metadata: { change, reason: payload.reason },
+      });
+      await recordInventoryAudit(storeId, {
+        action: "stock_adjust",
+        entityType: "variant",
+        entityId: payload.variantId,
+        actorId: payload.updatedById,
+        actorName: payload.updatedBy || "system",
+        oldValue: { stock: prevStock },
+        newValue: { stock: inv.quantity },
+      });
+    } catch {
+      /* non-fatal */
+    }
 
     return { ok: true, data: { stock: inv.quantity, previousStock: prevStock, change } };
   }
@@ -514,6 +540,8 @@ export async function adjustStock(
     productId,
     previousStock: prevStock,
     newStock,
+    beforeQuantity: prevStock,
+    afterQuantity: newStock,
     quantityChange: change,
     reason: (payload.reason as any) || "manual_adjust",
     note: payload.note || "",
@@ -521,6 +549,29 @@ export async function adjustStock(
     updatedById: payload.updatedById ? new mongoose.Types.ObjectId(payload.updatedById) : null,
     source: "manual",
   });
+
+  try {
+    const { appendProductTimeline, recordInventoryAudit } = await import("./inventory-erp.service.js");
+    await appendProductTimeline(storeId, {
+      productId,
+      eventType: change >= 0 ? "stock_added" : "stock_removed",
+      title: change >= 0 ? "Stock added" : "Stock removed",
+      detail: `${prevStock} → ${newStock}`,
+      actorName: payload.updatedBy || "system",
+      metadata: { change, reason: payload.reason },
+    });
+    await recordInventoryAudit(storeId, {
+      action: "stock_adjust",
+      entityType: "product",
+      entityId: productId,
+      actorId: payload.updatedById,
+      actorName: payload.updatedBy || "system",
+      oldValue: { stock: prevStock },
+      newValue: { stock: newStock },
+    });
+  } catch {
+    /* non-fatal */
+  }
 
   return { ok: true, data: { stock: newStock, previousStock: prevStock, change } };
 }

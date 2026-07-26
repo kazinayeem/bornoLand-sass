@@ -177,6 +177,9 @@ export async function createStore(userId: string, payload: unknown) {
       faviconMediaId: parsed.data.faviconMediaId ?? null,
       brandColor: parsed.data.brandColor ?? "#2563eb",
       accentColor: parsed.data.accentColor ?? "#0f172a",
+      ...(parsed.data.courierAccess
+        ? { courierAccess: { providers: parsed.data.courierAccess.providers ?? [] } }
+        : {}),
     }], { session });
 
     const storeId = store._id;
@@ -384,10 +387,13 @@ export async function updateStore(storeId: string, userId: string, payload: unkn
   const parsed = updateStoreSchema.safeParse(payload);
   if (!parsed.success) return { ok: false as const, message: "Invalid update data" };
 
+  // Courier provider assignment is admin-only via /stores/:id/couriers/access
+  const { courierAccess: _courierAccess, ...safeData } = parsed.data;
+
   await connectDatabase();
   const store = await StoreModel.findOneAndUpdate(
     { _id: id, userId },
-    { $set: parsed.data },
+    { $set: safeData },
     { new: true }
   ).lean();
   if (!store) return { ok: false as const, message: "Store not found" };

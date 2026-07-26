@@ -13,6 +13,7 @@ export function legacyColumnsToColumnDefs<T>(columns: LegacyColumn<T>[]): Column
       hideOnTablet: column.hideOnTablet,
       exportable: column.exportable ?? true,
       permission: column.permission,
+      exportValue: column.exportValue,
     },
     cell: ({ row }) => column.render(row.original),
     size: undefined,

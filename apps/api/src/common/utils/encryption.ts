@@ -5,10 +5,21 @@ const IV_LENGTH = 16;
 const TAG_LENGTH = 16;
 
 function getEncryptionKey(): Buffer {
-  const key = process.env.ENCRYPTION_KEY;
-  if (!key) throw new Error("ENCRYPTION_KEY is required");
-  const hash = crypto.createHash("sha256").update(key).digest();
-  return hash;
+  const key =
+    process.env.ENCRYPTION_KEY?.trim() ||
+    process.env.JWT_SECRET?.trim() ||
+    process.env.SESSION_SECRET?.trim();
+  if (!key) {
+    throw new Error(
+      "ENCRYPTION_KEY is required (or set JWT_SECRET as a development fallback)",
+    );
+  }
+  if (!process.env.ENCRYPTION_KEY?.trim() && process.env.NODE_ENV !== "production") {
+    console.warn(
+      "[encryption] ENCRYPTION_KEY missing — falling back to JWT_SECRET/SESSION_SECRET",
+    );
+  }
+  return crypto.createHash("sha256").update(key).digest();
 }
 
 export function encrypt(text: string): string {

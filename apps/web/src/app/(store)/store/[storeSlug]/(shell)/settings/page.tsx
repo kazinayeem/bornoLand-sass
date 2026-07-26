@@ -6,7 +6,7 @@ import {
   Settings2, Sparkles, MapPin, Globe, DollarSign, Truck, Percent,
   CreditCard, ShoppingCart, Mail, FileText, Menu, Share2, Search,
   Globe2, BookOpen, ShieldCheck, FileText as FileTextIcon, HelpCircle,
-  Lock, Cpu, ChevronDown, ChevronRight, Loader2,
+  Lock, Cpu, ChevronDown, ChevronRight, Loader2, Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SettingsTab } from "@/components/workspace/settings-tab";
@@ -15,17 +15,20 @@ import { StoreContactTab } from "@/components/cms/store-contact-tab";
 import { CheckoutTab } from "@/components/workspace/checkout-tab";
 import { PaymentsTab } from "@/components/workspace/payments-tab";
 import { ShippingSettingsTab } from "@/components/workspace/shipping-settings-tab";
+import { CourierSettingsTab } from "@/components/workspace/courier-settings-tab";
 import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-page";
 import StoreEmailSettingsPage from "@/app/(store)/store/[storeSlug]/(shell)/settings/notifications/page";
 import { CmsTab } from "@/components/workspace/cms-tab";
 import { CmsFaqsEditor } from "@/components/cms/cms-faqs-editor";
+import { useGetStoreFeatureAccessQuery, getFeatureByKey } from "@/redux/api/feature-api";
+import { FeatureLocked } from "@/components/features/feature-gate";
 
 /* ── Section definitions ──────────────────────────────────────────── */
 
 type SectionId =
   | "general" | "branding" | "contact"
   | "localization" | "currency"
-  | "shipping" | "taxes" | "payments" | "checkout" | "email" | "invoice"
+  | "shipping" | "courier" | "taxes" | "payments" | "checkout" | "email" | "invoice"
   | "navigation" | "social-links"
   | "seo" | "domain" | "cms-pages"
   | "policies" | "faq"
@@ -50,6 +53,7 @@ const SECTIONS: Section[] = [
 
   // Commerce
   { id: "shipping", label: "Shipping", icon: Truck, group: "Commerce" },
+  { id: "courier", label: "Courier", icon: Package, group: "Commerce" },
   { id: "taxes", label: "Taxes", icon: Percent, group: "Commerce" },
   { id: "payments", label: "Payments", icon: CreditCard, group: "Commerce" },
   { id: "checkout", label: "Checkout", icon: ShoppingCart, group: "Commerce" },
@@ -108,9 +112,18 @@ export default function StoreSettingsHubPage() {
   const router = useRouter();
   const { storeId, store, isLoading } = useStorePage();
   const storeSlug = (params.storeSlug as string) || store?.slug || "";
+  const { data: accessData } = useGetStoreFeatureAccessQuery(storeId ?? "", { skip: !storeId });
+  const courierFeature = getFeatureByKey(accessData?.data?.features ?? [], "courier");
+  const courierLocked = courierFeature?.locked ?? false;
+  const billingHref = storeSlug ? `/store/${storeSlug}/billing` : "#";
 
   const activeSection = (searchParams.get("section") || "general") as SectionId;
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const visibleSections = useMemo(
+    () => SECTIONS.filter((s) => !(s.id === "courier" && courierLocked)),
+    [courierLocked],
+  );
 
   const setSection = useCallback(
     (id: SectionId) => {
@@ -156,6 +169,17 @@ export default function StoreSettingsHubPage() {
         );
       case "shipping":
         return <ShippingSettingsTab storeId={storeId} />;
+      case "courier":
+        if (courierLocked && courierFeature) {
+          return (
+            <FeatureLocked
+              feature={courierFeature}
+              billingHref={billingHref}
+              currentPlan={accessData?.data?.currentPlan?.name}
+            />
+          );
+        }
+        return <CourierSettingsTab storeId={storeId} />;
       case "taxes":
         return (
           <StorePageCard>
@@ -223,7 +247,7 @@ export default function StoreSettingsHubPage() {
           <PlaceholderTab title="Coming Soon" description="This section is under development." />
         );
     }
-  }, [activeSection, isLoading, storeId, storeSlug]);
+  }, [activeSection, isLoading, storeId, storeSlug, courierLocked, courierFeature, billingHref, accessData?.data?.currentPlan?.name]);
 
   /* ── Render ─────────────────────────────────────────────────────── */
 
@@ -242,7 +266,8 @@ export default function StoreSettingsHubPage() {
 
         <nav className="space-y-5" aria-label="Settings sections">
           {GROUP_ORDER.map((group) => {
-            const groupSections = SECTIONS.filter((s) => s.group === group);
+            const groupSections = visibleSections.filter((s) => s.group === group);
+            if (groupSections.length === 0) return null;
             return (
               <div key={group}>
                 {sidebarOpen && (

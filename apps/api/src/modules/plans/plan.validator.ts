@@ -62,6 +62,18 @@ const planFeatureSchema = z.object({
   productVariants: z.boolean().optional().default(false),
   inventory: z.boolean().optional().default(false),
   advancedInventory: z.boolean().optional().default(false),
+  inventoryHistory: z.boolean().optional().default(false),
+  priceHistory: z.boolean().optional().default(false),
+  costHistory: z.boolean().optional().default(false),
+  suppliers: z.boolean().optional().default(false),
+  purchaseOrders: z.boolean().optional().default(false),
+  batchFifo: z.boolean().optional().default(false),
+  warehousesEnabled: z.boolean().optional().default(false),
+  barcode: z.boolean().optional().default(false),
+  inventoryReports: z.boolean().optional().default(false),
+  lowStockAlerts: z.boolean().optional().default(false),
+  stockTransfer: z.boolean().optional().default(false),
+  inventoryAuditLog: z.boolean().optional().default(false),
   digitalProducts: z.boolean().optional().default(false),
   physicalProducts: z.boolean().optional().default(false),
   subscriptions: z.boolean().optional().default(false),
@@ -123,6 +135,16 @@ const planFeatureSchema = z.object({
   realtimeVisitors: z.boolean().optional().default(false),
   analyticsExport: z.boolean().optional().default(false),
   reports: z.boolean().optional().default(false),
+  courier: z.boolean().optional().default(false),
+});
+
+const planCourierAccessSchema = z.object({
+  enabled: z.boolean().optional().default(false),
+  allProviders: z.boolean().optional().default(false),
+  providers: z
+    .array(z.enum(["pathao", "redx", "steadfast", "paperfly", "sundarban"]))
+    .optional()
+    .default([]),
 });
 
 const planPricingSchema = z.object({
@@ -144,6 +166,7 @@ export const planSchema = z.object({
   features: z.array(z.string().min(1)).optional().default([]),
   limits: planLimitsSchema.optional().default({ storage: 512, products: 10, categories: 5, collections: 5, brands: 3, productVariants: 0, productImages: 5, orders: 50, customers: 50, staff: 1, warehouses: 0, blogs: 0, pages: 5, mediaUploads: 100, apiKeys: 0, customDomains: 0, coupons: 0, shippingZones: 1, pickupLocations: 0, paymentMethods: 1, activeThemes: 1, builderPages: 3, menus: 1, navItems: 10, reviews: 0, testimonials: 0, announcements: 0, newsletterSubscribers: 0, campaigns: 0, emailTemplates: 0, automationRules: 0, integrations: 0, webhooks: 0, languages: 1, currencies: 1, taxRules: 0, inventoryLocations: 1, posDevices: 0, giftCards: 0, returnRequests: 0, wishlistItems: 0, analyticsReports: 0, exportRequests: 0, staffRoles: 1, cmsBlocks: 0, dynamicSections: 0, builderTemplates: 0, forms: 0, popups: 0, qrCodes: 0, redirectRules: 0, customCss: 0, customJs: 0, customFonts: 0 }),
   featureToggles: planFeatureSchema.optional(),
+  courierAccess: planCourierAccessSchema.optional(),
   pricing: planPricingSchema.optional().default({
     monthly: 0, quarterly: 0, halfYearly: 0, yearly: 0, lifetime: 0,
   }),

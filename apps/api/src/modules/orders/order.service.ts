@@ -28,23 +28,100 @@ import { decrementVariantStock } from "../products/variants/variant.service.js";
 
 async function decrementProductStock(
   storeId: string,
-  item: { productId: unknown; variantId?: unknown; quantity: number }
+  item: { productId: unknown; variantId?: unknown; quantity: number },
+  orderMeta?: { orderId?: string; orderNumber?: string }
 ) {
   const product = await ProductModel.findById(item.productId);
   if (!product || product.trackInventory === false) return;
 
+  let previousStock = 0;
+  let newStock = 0;
+  let usedVariant = false;
+
   if (item.variantId) {
-    const decremented = await decrementVariantStock(
+    const { VariantInventoryModel } = await import("../products/variants/variant-inventory.model.js");
+    const inv = await VariantInventoryModel.findOne({
+      variantId: item.variantId,
       storeId,
-      String(item.productId),
-      String(item.variantId),
-      item.quantity
-    );
-    if (decremented) return;
+      productId: item.productId,
+    });
+    if (inv) {
+      previousStock = inv.quantity;
+      const decremented = await decrementVariantStock(
+        storeId,
+        String(item.productId),
+        String(item.variantId),
+        item.quantity
+      );
+      if (decremented) {
+        newStock = Math.max(0, previousStock - item.quantity);
+        usedVariant = true;
+      }
+    }
   }
 
-  product.stock = Math.max(0, (product.stock ?? 0) - item.quantity);
-  await product.save();
+  if (!usedVariant) {
+    previousStock = product.stock ?? 0;
+    product.stock = Math.max(0, previousStock - item.quantity);
+    newStock = product.stock;
+    await product.save();
+  }
+
+  try {
+    const { checkFeature } = await import("../features/feature-access.service.js");
+    const fifo = await checkFeature(storeId, "batch_fifo");
+    if (fifo.allowed) {
+      const { fifoAllocate } = await import("../inventory/inventory-erp.service.js");
+      await fifoAllocate(
+        storeId,
+        String(item.productId),
+        item.quantity,
+        item.variantId ? String(item.variantId) : null
+      );
+    }
+  } catch (err) {
+    console.error("[orders] FIFO allocate failed", err);
+  }
+
+  try {
+    const { StockLogModel } = await import("../inventory/stock-log.model.js");
+    const mongoose = (await import("mongoose")).default;
+    await StockLogModel.create({
+      storeId: new mongoose.Types.ObjectId(storeId),
+      productId: product._id,
+      variantId: item.variantId ? new mongoose.Types.ObjectId(String(item.variantId)) : null,
+      previousStock,
+      newStock,
+      beforeQuantity: previousStock,
+      afterQuantity: newStock,
+      quantityChange: -item.quantity,
+      reason: "order_placed",
+      note: orderMeta?.orderNumber ? `Order ${orderMeta.orderNumber}` : "Order placed",
+      updatedBy: "system",
+      source: "order",
+      reference: orderMeta?.orderNumber ?? "",
+      referenceId: orderMeta?.orderId ? new mongoose.Types.ObjectId(orderMeta.orderId) : null,
+    });
+  } catch (err) {
+    console.error("[orders] Failed to write stock log", err);
+  }
+
+  try {
+    const { appendProductTimeline } = await import("../inventory/inventory-erp.service.js");
+    await appendProductTimeline(storeId, {
+      productId: String(item.productId),
+      variantId: item.variantId ? String(item.variantId) : undefined,
+      eventType: "order_sold",
+      title: `Sold ${item.quantity}`,
+      detail: orderMeta?.orderNumber ? `Order ${orderMeta.orderNumber}` : "Order placed",
+      reference: orderMeta?.orderNumber ?? "order",
+      referenceId: orderMeta?.orderId,
+      actorName: "system",
+      metadata: { quantity: item.quantity },
+    });
+  } catch (err) {
+    console.error("[orders] Failed to append product timeline", err);
+  }
 }
 
 export async function createOrder(
@@ -312,7 +389,10 @@ export async function createOrder(
   });
 
   for (const item of cart.items) {
-    await decrementProductStock(storeId, item);
+    await decrementProductStock(storeId, item, {
+      orderId: String(order._id),
+      orderNumber: order.orderNumber,
+    });
   }
 
   if ((cart as { couponId?: unknown }).couponId) {

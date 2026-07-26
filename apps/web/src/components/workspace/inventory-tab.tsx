@@ -14,39 +14,62 @@ import type { InventoryItem as InventoryItemType, StockLog } from "@/redux/api/i
 
 type SubTab = "all" | "history" | "analytics";
 
-export function InventoryTab({ storeId }: { storeId: string }) {
-  const [subTab, setSubTab] = useState<SubTab>("all");
+export function InventoryTab({
+  storeId,
+  enableHistory = true,
+  enableAnalytics = true,
+  stockOnly = false,
+  forceHistoryTab = false,
+}: {
+  storeId: string;
+  enableHistory?: boolean;
+  enableAnalytics?: boolean;
+  stockOnly?: boolean;
+  forceHistoryTab?: boolean;
+}) {
+  const availableTabs = ([
+    { id: "all" as SubTab, label: "All Inventory", icon: Package, show: !forceHistoryTab },
+    { id: "history" as SubTab, label: "Stock History", icon: History, show: enableHistory },
+    { id: "analytics" as SubTab, label: "Analytics", icon: BarChart3, show: enableAnalytics && !forceHistoryTab },
+  ] as const).filter((t) => t.show);
+
+  const [subTab, setSubTab] = useState<SubTab>(forceHistoryTab ? "history" : "all");
+  const active = availableTabs.some((t) => t.id === subTab) ? subTab : (availableTabs[0]?.id ?? "all");
+
+  if (stockOnly || availableTabs.length <= 1) {
+    if (forceHistoryTab && enableHistory) return <StockHistoryTab storeId={storeId} />;
+    return <AllInventoryTab storeId={storeId} enableHistory={enableHistory} />;
+  }
 
   return (
     <div className="space-y-5">
-      {/* Sub-tab bar */}
-      <div className="flex items-center gap-1 rounded-apple-lg border border-apple-hairline bg-white p-1 w-fit">
-        {[
-          { id: "all" as SubTab, label: "All Inventory", icon: Package },
-          { id: "history" as SubTab, label: "Stock History", icon: History },
-          { id: "analytics" as SubTab, label: "Analytics", icon: BarChart3 },
-        ].map((t) => (
-          <button key={t.id} onClick={() => setSubTab(t.id)}
+      <div className="flex w-fit items-center gap-1 rounded-apple-lg border border-apple-hairline bg-white p-1 dark:border-zinc-800 dark:bg-zinc-950">
+        {availableTabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setSubTab(t.id)}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all",
-              subTab === t.id ? "bg-apple-ink text-white " : "text-apple-ink-muted-48 hover:text-apple-ink"
-            )}>
+              active === t.id ? "bg-apple-ink text-white dark:bg-zinc-100 dark:text-zinc-900" : "text-apple-ink-muted-48 hover:text-apple-ink"
+            )}
+          >
             <t.icon className="h-3.5 w-3.5" />
             {t.label}
           </button>
         ))}
       </div>
 
-      {subTab === "all" && <AllInventoryTab storeId={storeId} />}
-      {subTab === "history" && <StockHistoryTab storeId={storeId} />}
-      {subTab === "analytics" && <AnalyticsTab storeId={storeId} />}
+      {active === "all" && <AllInventoryTab storeId={storeId} enableHistory={enableHistory} />}
+      {active === "history" && enableHistory && <StockHistoryTab storeId={storeId} />}
+      {active === "analytics" && enableAnalytics && <AnalyticsTab storeId={storeId} />}
     </div>
   );
 }
 
 /* ─────────────── ALL INVENTORY ─────────────── */
 
-function AllInventoryTab({ storeId }: { storeId: string }) {
+function AllInventoryTab({ storeId, enableHistory = true }: { storeId: string; enableHistory?: boolean }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [stockStatus, setStockStatus] = useState("");
@@ -86,7 +109,7 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
   const { data: statsData } = useGetInventoryStatsQuery(storeId);
   const { data: historyData } = useGetStockHistoryQuery(
     { storeId, params: { productId: historyTarget?.productId ?? "", limit: 50, page: 1 } },
-    { skip: !historyTarget }
+    { skip: !historyTarget || !enableHistory }
   );
 
   const [adjustStock] = useAdjustStockMutation();
@@ -228,10 +251,12 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
             className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="Adjust Stock">
             <DollarSign className="h-3.5 w-3.5" />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); setHistoryTarget({ productId: item.productId, name: item.name }); }}
-            className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors" title="View History">
-            <Eye className="h-3.5 w-3.5" />
-          </button>
+          {enableHistory && (
+            <button onClick={(e) => { e.stopPropagation(); setHistoryTarget({ productId: item.productId, name: item.name }); }}
+              className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors" title="View History">
+              <Eye className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       ),
     },
@@ -438,6 +463,7 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
       </AnimatePresence>
 
       {/* Stock History Drawer (per product) */}
+      {enableHistory && (
       <AnimatePresence>
         {historyTarget && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -489,6 +515,7 @@ function AllInventoryTab({ storeId }: { storeId: string }) {
           </motion.div>
         )}
       </AnimatePresence>
+      )}
 
       {/* Bulk Confirm */}
       <ConfirmDialog

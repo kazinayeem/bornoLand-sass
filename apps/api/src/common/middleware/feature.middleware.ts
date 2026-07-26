@@ -119,3 +119,36 @@ export function requireFeatureAccess(
     return next();
   };
 }
+
+/** Allow access if ANY of the given feature keys is enabled (subscription + store status still required). */
+export function requireAnyFeature(
+  featureKeys: string[],
+  options?: { getStoreId?: (req: AuthRequest) => string | null }
+) {
+  return async (request: AuthRequest, response: Response, next: NextFunction) => {
+    const storeId = options?.getStoreId?.(request) ?? resolveStoreIdFromRequest(request);
+    if (!storeId) return response.status(400).json({ message: "Store ID required" });
+
+    const sub = await checkSubscription(storeId);
+    if (!sub.allowed) return sendAccessDenied(response, sub);
+
+    const store = await checkStoreStatus(storeId);
+    if (!store.allowed) return sendAccessDenied(response, store);
+
+    let lastResult: FeatureAccessResult | null = null;
+    for (const key of featureKeys) {
+      const result = await checkFeature(storeId, key);
+      if (result.allowed) return next();
+      lastResult = result;
+    }
+
+    return sendAccessDenied(
+      response,
+      lastResult ?? {
+        allowed: false,
+        message: "Feature not available",
+        reason: "feature_disabled",
+      }
+    );
+  };
+}

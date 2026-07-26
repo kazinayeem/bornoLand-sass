@@ -179,8 +179,17 @@ a {
   text-decoration: none;
 }
 
+/* Button-styled links must keep readable foreground (not global link blue) */
+a.bg-primary {
+  color: var(--color-primary-foreground);
+}
+
 .dark a {
   color: var(--color-apple-primary-on-dark);
+}
+
+.dark a.bg-primary {
+  color: var(--color-primary-foreground);
 }
 
 /* ── Layout stability ───────────────────────────────────────────── */

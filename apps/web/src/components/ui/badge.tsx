@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 const badgeVariants = {
   default: "bg-muted text-muted-foreground ring-1 ring-border",
   primary: "bg-primary/10 text-primary ring-1 ring-primary/20",
+  outline: "border border-border bg-transparent text-foreground",
   success: "bg-success/10 text-success ring-1 ring-success/20 dark:bg-success/20",
   warning: "bg-amber-50 text-amber-700 ring-1 ring-amber-200/70 dark:bg-amber-950/30 dark:text-amber-400",
   danger: "bg-destructive/10 text-destructive ring-1 ring-destructive/20 dark:bg-destructive/20",
@@ -21,7 +22,7 @@ export function Badge({ variant = "default", children, className, dot }: BadgePr
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-pill px-2.5 py-0.5 text-fine-print font-normal",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
         badgeVariants[variant],
         className
       )}

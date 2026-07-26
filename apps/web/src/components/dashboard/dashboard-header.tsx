@@ -26,6 +26,8 @@ import { useGetProductQuery } from "@/redux/api/product-api";
 import { NotificationDropdown } from "@/components/user/notification-dropdown";
 import { ProfileDropdown } from "@/components/user/profile-dropdown";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type QuickAction = {
   label: string;
@@ -134,18 +136,18 @@ function WorkspaceDashboardHeader() {
       useWorkspaceMobileSidebar
       breadcrumb={
         <>
-          <li className="text-apple-ink-muted-48">{contextTitle}</li>
+          <li className="text-muted-foreground">{contextTitle}</li>
           {breadcrumbs.map((item, index) => (
             <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1">
-              <span aria-hidden className="text-apple-ink-muted-48">
+              <span aria-hidden className="text-muted-foreground">
                 /
               </span>
               {item.href ? (
-                <Link href={item.href} className="transition-colors hover:text-apple-ink-muted-80">
+                <Link href={item.href} className="transition-colors hover:text-foreground">
                   {item.label}
                 </Link>
               ) : (
-                <span className="text-apple-ink-muted-80">{item.label}</span>
+                <span className="text-foreground">{item.label}</span>
               )}
             </li>
           ))}
@@ -253,13 +255,13 @@ function StoreDashboardHeader({
       showWorkspaceSwitcher
       breadcrumb={breadcrumbs.map((item, index) => (
         <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1">
-          {index > 0 ? <ChevronRight className="h-3 w-3 text-apple-ink-muted-48" aria-hidden /> : null}
+          {index > 0 ? <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden /> : null}
           {item.href ? (
-            <Link href={item.href} className="transition-colors hover:text-apple-ink-muted-80">
+            <Link href={item.href} className="transition-colors hover:text-foreground">
               {item.label}
             </Link>
           ) : (
-            <span className="text-apple-ink-muted-80">{item.label}</span>
+            <span className="text-foreground">{item.label}</span>
           )}
         </li>
       ))}
@@ -335,21 +337,21 @@ function DashboardHeaderChrome({
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-apple-hairline bg-apple-canvas/90 px-4 backdrop-blur-xl sm:px-6">
+      <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/90 px-4 backdrop-blur-xl sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
             onClick={openMobileSidebar}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-apple-hairline text-apple-ink-muted-80 lg:hidden"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground lg:hidden hover:bg-muted"
             aria-label="Open menu"
           >
             <Menu className="h-4 w-4" />
           </button>
 
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold tracking-tight text-apple-ink">{pageTitle}</h1>
+            <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{pageTitle}</h1>
             <nav aria-label="Breadcrumb" className="mt-0.5 hidden sm:block">
-              <ol className="flex flex-wrap items-center gap-1 text-xs text-apple-ink-muted-48">{breadcrumb}</ol>
+              <ol className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">{breadcrumb}</ol>
             </nav>
           </div>
         </div>
@@ -358,11 +360,11 @@ function DashboardHeaderChrome({
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="hidden h-9 w-52 items-center gap-2 rounded-sm border border-apple-hairline bg-apple-canvas-parchment/80 px-3.5 text-sm text-apple-ink-muted-48 transition-colors hover:border-apple-hairline hover:bg-apple-canvas sm:inline-flex lg:w-64"
+            className="hidden h-9 w-52 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3.5 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card sm:inline-flex lg:w-64"
           >
             <Search className="h-4 w-4 shrink-0" aria-hidden />
             <span className="flex-1 text-left">Search...</span>
-            <kbd className="flex h-5 items-center gap-0.5 rounded-sm border border-apple-hairline bg-apple-canvas px-1.5 text-[10px] font-medium text-apple-ink-muted-48">
+            <kbd className="flex h-5 items-center gap-0.5 rounded border border-border bg-card px-1.5 text-[10px] font-semibold text-muted-foreground">
               <Command className="h-2.5 w-2.5" aria-hidden />K
             </kbd>
           </button>
@@ -370,23 +372,23 @@ function DashboardHeaderChrome({
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-sm border border-apple-hairline text-apple-ink-muted-48 sm:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground sm:hidden hover:bg-muted"
             aria-label="Search"
           >
             <Search className="h-4 w-4" />
           </button>
 
           <div className="relative">
-            <button
+            <Button
               type="button"
               onClick={() => setQuickOpen((open) => !open)}
               aria-expanded={quickOpen}
               aria-haspopup="menu"
-              className="inline-flex h-9 items-center gap-1.5 rounded-pill bg-apple-primary px-3 text-sm font-medium text-apple-on-primary transition-colors hover:bg-apple-primary-focus focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-primary"
+              className="h-9 rounded-full px-3.5 text-xs font-semibold shadow-sm"
             >
               <Plus className="h-4 w-4" aria-hidden />
               <span className="hidden sm:inline">Quick Create</span>
-            </button>
+            </Button>
             {quickOpen ? (
               <>
                 <button
@@ -397,7 +399,7 @@ function DashboardHeaderChrome({
                 />
                 <div
                   role="menu"
-                  className="absolute right-0 top-[calc(100%+8px)] z-50 w-52 overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas py-1 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.25)]"
+                  className="absolute right-0 top-[calc(100%+8px)] z-50 w-52 overflow-hidden rounded-xl border border-border bg-popover py-1.5 shadow-xl text-popover-foreground"
                 >
                   {quickActions.map((action) =>
                     action.disabled ? (
@@ -405,7 +407,7 @@ function DashboardHeaderChrome({
                         key={action.label}
                         role="menuitem"
                         aria-disabled="true"
-                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-apple-ink-muted-48"
+                        className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-muted-foreground/50"
                       >
                         <action.icon className="h-4 w-4" aria-hidden />
                         {action.label}
@@ -416,9 +418,9 @@ function DashboardHeaderChrome({
                         href={action.href}
                         role="menuitem"
                         onClick={() => setQuickOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
+                        className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
                       >
-                        <action.icon className="h-4 w-4" aria-hidden />
+                        <action.icon className="h-4 w-4 text-primary" aria-hidden />
                         {action.label}
                       </Link>
                     ),
@@ -445,49 +447,49 @@ function DashboardHeaderChrome({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setSearchOpen(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: -10 }}
-              transition={{ duration: 0.25 }}
-              className="relative w-full max-w-lg overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas shadow-[0_24px_80px_-32px_rgba(0,0,0,0.35)]"
+              transition={{ duration: 0.2 }}
+              className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
               role="dialog"
               aria-modal="true"
               aria-label="Search"
             >
-              <div className="flex items-center gap-3 border-b border-apple-divider-soft px-4 py-3">
-                <Search className="h-5 w-5 shrink-0 text-apple-ink-muted-48" aria-hidden />
+              <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                 <input
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={searchPlaceholder}
-                  className="flex-1 text-sm text-apple-ink outline-none placeholder:text-apple-ink-muted-48"
+                  className="flex-1 text-sm bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
                   autoFocus
                 />
-                <kbd className="hidden h-6 items-center rounded-sm border border-apple-hairline bg-apple-canvas-parchment px-1.5 text-[10px] font-medium text-apple-ink-muted-48 sm:flex">
+                <kbd className="hidden h-5 items-center rounded border border-border bg-muted px-1.5 text-[10px] font-semibold text-muted-foreground sm:flex">
                   ESC
                 </kbd>
               </div>
               <div className="max-h-72 overflow-y-auto p-2">
                 {filteredResults.length === 0 ? (
-                  <p className="px-3 py-8 text-center text-sm text-apple-ink-muted-48">No results found</p>
+                  <p className="px-3 py-8 text-center text-xs text-muted-foreground">No results found</p>
                 ) : (
                   filteredResults.map((item) => (
                     <button
                       key={`${item.href}-${item.label}`}
                       type="button"
                       onClick={() => handleSelect(item.href)}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-apple-canvas-parchment focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-apple-primary"
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-apple-ink">{item.label}</p>
-                        <p className="text-xs text-apple-ink-muted-48">{item.sub}</p>
+                        <p className="text-sm font-medium text-foreground">{item.label}</p>
+                        <p className="text-xs text-muted-foreground">{item.sub}</p>
                       </div>
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-apple-ink-muted-48">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                         {item.type}
                       </span>
                     </button>

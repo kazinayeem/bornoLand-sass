@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Check, CircleX, Sparkles } from "lucide-react";
+import { Check, CircleX, Sparkles, ArrowRight } from "lucide-react";
 import { useGetPublicPlansQuery } from "@/redux/api/public-plan-api";
 import type { Plan } from "@/redux/api/store-api";
 import { SectionHeading } from "./section-heading";
@@ -13,13 +14,30 @@ import {
   landingSectionAlt,
   LandingReveal,
 } from "./landing-ui";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-function formatPrice(plan: Plan, yearly = false, freeLabel: string, customLabel: string) {
-  const amount = yearly
-    ? (plan.pricing?.yearly ?? plan.priceYearly ?? 0)
-    : (plan.pricing?.monthly ?? plan.priceBDT);
-  if (plan.isCustomPrice) return customLabel;
-  if (!amount) return freeLabel;
+type BillingCycle = "monthly" | "sixMonths" | "yearly";
+
+function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-BD", {
     style: "currency",
     currency: "BDT",
@@ -27,9 +45,48 @@ function formatPrice(plan: Plan, yearly = false, freeLabel: string, customLabel:
   }).format(amount);
 }
 
+function formatPrice(plan: Plan, yearly = false, freeLabel: string, customLabel: string) {
+  const amount = yearly
+    ? (plan.pricing?.yearly ?? plan.priceYearly ?? 0)
+    : (plan.pricing?.monthly ?? plan.priceBDT);
+  if (plan.isCustomPrice) return customLabel;
+  if (!amount) return freeLabel;
+  return formatCurrency(amount);
+}
+
+/**
+ * UI-only display helper.
+ * Monthly = API monthly. 6 Months = 10% off effective monthly. Yearly = API yearly/12 or 25% off.
+ */
+function displayPrice(
+  plan: Plan,
+  cycle: BillingCycle,
+  freeLabel: string,
+  customLabel: string,
+) {
+  if (plan.isCustomPrice) return customLabel;
+  const monthly = plan.pricing?.monthly ?? plan.priceBDT ?? 0;
+  if (!monthly && cycle !== "yearly") return freeLabel;
+
+  if (cycle === "sixMonths") {
+    if (!monthly) return freeLabel;
+    return formatCurrency(Math.round(monthly * 0.9));
+  }
+
+  if (cycle === "yearly") {
+    const yearly = plan.pricing?.yearly ?? plan.priceYearly ?? 0;
+    if (yearly > 0) return formatCurrency(Math.round(yearly / 12));
+    if (!monthly) return freeLabel;
+    return formatCurrency(Math.round(monthly * 0.75));
+  }
+
+  return formatPrice(plan, false, freeLabel, customLabel);
+}
+
 export function Pricing() {
   const { t } = useLandingLocale();
   const p = t.pricing;
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const { data, isLoading, isError } = useGetPublicPlansQuery(undefined, {
     pollingInterval: 60_000,
     refetchOnFocus: true,
@@ -44,27 +101,90 @@ export function Pricing() {
     return [...new Set([...(plan.features ?? []).filter(Boolean), ...toggles])].slice(0, 8);
   };
 
-  const limits = (plan: Plan) =>
-    Object.entries(plan.limits ?? {})
-      .filter(([key, value]) => p.limitLabels[key] && typeof value === "number" && value > 0)
-      .slice(0, 5)
-      .map(([key, value]) => `${value}${p.limitLabels[key].suffix ?? ""} ${p.limitLabels[key].label}`);
-
   const cta = (plan: Plan) => {
     if (plan.isCustomPrice) return { label: p.contactSales, href: "/contact" };
     if (plan.trialDays > 0) return { label: p.startTrial, href: "/register" };
     return { label: p.getStarted, href: "/register" };
   };
 
-  const compareRows = [...new Set(plans.flatMap((plan) => [...enabled(plan), ...limits(plan)]))].slice(
-    0,
-    10,
-  );
+  const featureRows = [...new Set(plans.flatMap((plan) => enabled(plan)))].slice(0, 8);
+  const highlightId =
+    plans.find((item) => item.isPopular)?._id ??
+    plans.find((item) => item.isRecommended)?._id;
+  const periodLabel = p.perMonth;
 
   return (
-    <section id="pricing" className={landingSectionAlt}>
+    <section
+      id="pricing"
+      className={cn(
+        landingSectionAlt,
+        "bg-gradient-to-b from-primary/5 via-background to-muted/30",
+      )}
+    >
       <div className={landingContainer}>
-        <SectionHeading eyebrow={p.eyebrow} title={p.title} description={p.description} />
+        <SectionHeading
+          title={p.title}
+          description={p.description}
+        />
+
+        {/* Billing cycle toggle — Monthly / 6 Months / Yearly */}
+        <div className="mt-8 flex flex-col items-center gap-3 sm:mt-10">
+          <Tabs
+            value={cycle}
+            onValueChange={(value) => setCycle(value as BillingCycle)}
+          >
+            <TabsList
+              className="h-auto min-h-12 flex-wrap justify-center gap-1 rounded-pill border border-border bg-card p-1.5 shadow-md"
+              aria-label="Billing period"
+            >
+              <TabsTrigger
+                value="monthly"
+                className="rounded-pill px-4 py-2.5 text-sm font-semibold text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm sm:px-5"
+              >
+                Monthly
+              </TabsTrigger>
+              <TabsTrigger
+                value="sixMonths"
+                className="gap-2 rounded-pill px-4 py-2.5 text-sm font-semibold text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm sm:px-5"
+              >
+                <span>6 Months</span>
+                <Badge
+                  className={cn(
+                    "rounded-pill px-2 py-0 text-[10px] font-bold uppercase tracking-wide ring-0",
+                    cycle === "sixMonths"
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : "bg-primary/10 text-primary",
+                  )}
+                >
+                  Save 10%
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger
+                value="yearly"
+                className="gap-2 rounded-pill px-4 py-2.5 text-sm font-semibold text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm sm:px-5"
+              >
+                <span>{p.yearly}</span>
+                <Badge
+                  className={cn(
+                    "rounded-pill px-2 py-0 text-[10px] font-bold uppercase tracking-wide ring-0",
+                    cycle === "yearly"
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : "bg-primary/10 text-primary",
+                  )}
+                >
+                  Save 25%
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <p className="text-xs text-muted-foreground">
+            {cycle === "yearly"
+              ? "Prices shown as effective monthly · billed yearly"
+              : cycle === "sixMonths"
+                ? "Prices shown as effective monthly · billed every 6 months"
+                : "Billed monthly · cancel anytime"}
+          </p>
+        </div>
 
         {isLoading ? (
           <div className={`mt-10 sm:mt-12 ${landingGridPricing}`}>
@@ -75,194 +195,237 @@ export function Pricing() {
           </div>
         ) : isError ? (
           <LandingReveal className="mx-auto mt-12 max-w-lg">
-            <div className="rounded-lg border border-red-100 bg-red-50 p-8 text-center">
-              <CircleX className="mx-auto h-8 w-8 text-red-500" aria-hidden />
-              <h3 className="mt-3 font-semibold text-apple-ink">{p.unavailableTitle}</h3>
-              <p className="mt-1 text-sm text-apple-ink-muted-48">{p.unavailableBody}</p>
-            </div>
+            <Card className="rounded-apple-xl border-destructive/30 bg-destructive/5 p-8 text-center">
+              <CircleX className="mx-auto h-8 w-8 text-destructive" aria-hidden />
+              <h3 className="mt-3 font-semibold text-foreground">{p.unavailableTitle}</h3>
+              <p className="mt-1 text-xs text-muted-foreground">{p.unavailableBody}</p>
+            </Card>
           </LandingReveal>
         ) : plans.length === 0 ? (
           <LandingReveal className="mx-auto mt-12 max-w-lg">
-            <div className="rounded-lg border border-apple-hairline bg-apple-canvas p-9 text-center">
-              <Sparkles className="mx-auto h-8 w-8 text-apple-primary" aria-hidden />
-              <h3 className="mt-3 text-lg font-semibold text-apple-ink">{p.comingSoonTitle}</h3>
-              <p className="mt-1 text-sm text-apple-ink-muted-48">{p.comingSoonBody}</p>
-            </div>
+            <Card className="rounded-apple-xl border-border bg-card p-9 text-center">
+              <Sparkles className="mx-auto h-8 w-8 text-primary" aria-hidden />
+              <h3 className="mt-3 text-lg font-semibold text-foreground">{p.comingSoonTitle}</h3>
+              <p className="mt-1 text-xs text-muted-foreground">{p.comingSoonBody}</p>
+            </Card>
           </LandingReveal>
         ) : (
           <>
-            <div className={`mt-10 sm:mt-12 ${landingGridPricing}`}>
+            <div className={`mt-12 items-stretch pt-2 sm:mt-14 ${landingGridPricing}`}>
               {plans.map((plan) => {
                 const action = cta(plan);
-                const planFeatures = enabled(plan);
-                const planLimits = limits(plan);
-                const price = formatPrice(plan, false, p.free, p.custom);
-                const recommended = plan.isRecommended;
+                const planFeatures = enabled(plan).slice(0, 6);
+                const price = displayPrice(plan, cycle, p.free, p.custom);
+                const highlighted = plan._id === highlightId;
+
                 return (
-                  <article
+                  <Card
                     key={plan._id}
                     className={cn(
-                      "relative flex h-full min-w-0 flex-col rounded-lg border bg-apple-canvas p-5 sm:p-6 transition-shadow duration-300",
-                      recommended
-                        ? "z-[1] border-apple-primary shadow-[0_20px_60px_-32px_rgba(0,102,204,0.45)] ring-2 ring-apple-primary/15 xl:scale-[1.02]"
-                        : "border-apple-hairline hover:shadow-[0_12px_40px_-28px_rgba(0,0,0,0.18)]",
+                      "group relative flex h-full min-w-0 flex-col rounded-3xl border p-6 transition-all duration-300 sm:p-8",
+                      highlighted
+                        ? "z-[1] border-primary bg-primary text-primary-foreground shadow-2xl shadow-primary/30 ring-1 ring-primary md:-translate-y-2"
+                        : "border-border/70 bg-card shadow-[0_8px_30px_-12px_rgba(15,23,42,0.12)] hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-[0_20px_40px_-16px_rgba(15,23,42,0.18)]",
                     )}
                   >
-                    <div className="absolute -top-3 left-5 flex gap-2">
-                      {recommended ? (
-                        <span className="rounded-full bg-apple-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
-                          {p.recommended}
-                        </span>
-                      ) : null}
-                      {plan.isPopular ? (
-                        <span className="rounded-full bg-violet-600 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
-                          {p.mostPopular}
-                        </span>
-                      ) : null}
-                    </div>
+                    {highlighted ? (
+                      <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
+                        <Badge className="whitespace-nowrap rounded-pill bg-card px-3.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-md ring-0">
+                          {plan.isPopular ? p.mostPopular : p.recommended}
+                        </Badge>
+                      </div>
+                    ) : null}
 
-                    <div className="min-h-[7.5rem]">
-                      <h3 className="text-lg font-bold text-apple-ink">{plan.name}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-apple-ink-muted-48">
-                        {plan.description || p.description}
-                      </p>
-                    </div>
+                    <CardHeader className="space-y-2 p-0 pt-1">
+                      <CardTitle
+                        className={cn(
+                          "text-xl font-bold tracking-tight sm:text-2xl",
+                          highlighted ? "text-primary-foreground" : "text-foreground",
+                        )}
+                      >
+                        {plan.name}
+                      </CardTitle>
+                      <CardDescription
+                        className={cn(
+                          "line-clamp-2 min-h-[2.5rem] text-sm leading-relaxed",
+                          highlighted
+                            ? "text-primary-foreground/80"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {plan.description?.trim() ||
+                          (plan.isCustomPrice
+                            ? "For teams that need custom scale and support."
+                            : "Everything you need to launch and grow.")}
+                      </CardDescription>
+                    </CardHeader>
 
-                    <div className="mt-4 flex items-baseline gap-1">
-                      <span className="text-3xl font-bold tabular-nums tracking-tight text-apple-ink">
+                    <div className="mt-6 flex items-end gap-1.5">
+                      <span
+                        className={cn(
+                          "text-4xl font-extrabold tabular-nums tracking-tight sm:text-[2.75rem]",
+                          highlighted ? "text-primary-foreground" : "text-foreground",
+                        )}
+                      >
                         {price}
                       </span>
-                      {!plan.isCustomPrice && price !== p.free ? (
-                        <span className="text-xs text-apple-ink-muted-48">{p.perMonth}</span>
+                      {!plan.isCustomPrice ? (
+                        <span
+                          className={cn(
+                            "mb-1.5 text-sm font-medium",
+                            highlighted
+                              ? "text-primary-foreground/70"
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {periodLabel}
+                        </span>
                       ) : null}
                     </div>
 
-                    {plan.pricing?.yearly || plan.priceYearly ? (
-                      <p className="mt-1 text-xs text-apple-ink-muted-48">
-                        {p.yearly}: {formatPrice(plan, true, p.free, p.custom)}
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-xs text-transparent" aria-hidden>
-                        &nbsp;
-                      </p>
-                    )}
-
                     {plan.trialDays > 0 ? (
-                      <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+                      <p
+                        className={cn(
+                          "mt-2 text-xs font-medium",
+                          highlighted
+                            ? "text-primary-foreground/75"
+                            : "text-muted-foreground",
+                        )}
+                      >
                         {plan.trialDays}
                         {p.trialDays}
                       </p>
                     ) : (
-                      <div className="mt-3 h-[2.125rem]" aria-hidden />
+                      <div className="mt-2 h-4" aria-hidden />
                     )}
 
-                    <Link
-                      href={action.href}
-                      className={cn(
-                        "btn-press mt-5 flex h-12 w-full items-center justify-center rounded-xl text-center text-sm font-semibold transition duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-primary",
-                        recommended
-                          ? "bg-apple-primary text-apple-on-primary hover:brightness-110"
-                          : "border border-apple-hairline bg-apple-canvas text-apple-ink hover:bg-apple-canvas-parchment",
-                      )}
-                    >
-                      {action.label}
-                    </Link>
+                    <CardFooter className="mt-6 p-0">
+                      <Link
+                        href={action.href}
+                        className={cn(
+                          buttonVariants({
+                            variant: highlighted ? "secondary" : "default",
+                            size: "lg",
+                          }),
+                          "w-full rounded-pill text-center font-semibold shadow-md",
+                          highlighted
+                            ? "border-0 bg-card !text-primary hover:bg-card/95 hover:!text-primary"
+                            : "!text-primary-foreground hover:!text-primary-foreground",
+                        )}
+                      >
+                        {action.label}
+                        <ArrowRight className="h-4 w-4" aria-hidden />
+                      </Link>
+                    </CardFooter>
 
-                    <div className="mt-6 flex-1 border-t border-apple-divider-soft pt-5">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-apple-ink-muted-48">
-                        {p.included}
-                      </p>
-                      <ul className="mt-3 space-y-2">
+                    <CardContent className="mt-7 flex flex-1 flex-col p-0">
+                      <ul className="space-y-3.5">
                         {planFeatures.map((feature) => (
-                          <li key={feature} className="flex gap-2 text-xs leading-relaxed text-apple-ink-muted-80">
-                            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-apple-primary" aria-hidden />
-                            <span>{feature}</span>
+                          <li
+                            key={feature}
+                            className={cn(
+                              "flex items-start gap-3 text-sm leading-snug",
+                              highlighted
+                                ? "text-primary-foreground/95"
+                                : "text-foreground/90",
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
+                                highlighted
+                                  ? "bg-primary-foreground/20 text-primary-foreground"
+                                  : "bg-primary/10 text-primary",
+                              )}
+                              aria-hidden
+                            >
+                              <Check className="h-3 w-3" strokeWidth={3} />
+                            </span>
+                            <span className="font-medium">{feature}</span>
                           </li>
                         ))}
                       </ul>
-                    </div>
-
-                    {planLimits.length > 0 ? (
-                      <div className="mt-5 border-t border-apple-divider-soft pt-5">
-                        <p className="text-[11px] font-bold uppercase tracking-wider text-apple-ink-muted-48">
-                          {p.limits}
-                        </p>
-                        <ul className="mt-3 space-y-2">
-                          {planLimits.map((limit) => (
-                            <li key={limit} className="text-xs leading-relaxed text-apple-ink-muted-80">
-                              {limit}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
-                  </article>
+                    </CardContent>
+                  </Card>
                 );
               })}
             </div>
 
             {plans.length > 1 ? (
               <LandingReveal className="mt-10 sm:mt-12">
-                <div className="overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas">
-                  <div className="border-b border-apple-divider-soft px-4 py-4 sm:px-6 sm:py-5">
-                    <h3 className="font-semibold text-apple-ink">{p.compare}</h3>
-                    <p className="mt-1 text-xs text-apple-ink-muted-48">{p.compareHint}</p>
-                  </div>
-                  <div className="-mx-px overflow-x-auto overscroll-x-contain touch-pan-x">
-                    <table className="w-full min-w-[36rem] text-left text-xs sm:min-w-[40rem]">
-                      <thead className="bg-apple-canvas-parchment">
-                        <tr>
-                          <th
-                            scope="col"
-                            className="sticky left-0 z-[1] bg-apple-canvas-parchment px-4 py-3 font-semibold text-apple-ink-muted-48 sm:px-6"
-                          >
+                <Card className="overflow-hidden rounded-apple-xl border-border bg-card">
+                  <CardHeader className="border-b border-border px-6 py-5">
+                    <CardTitle className="text-base font-bold text-foreground">
+                      {p.compare}
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground">
+                      {p.compareHint}
+                    </CardDescription>
+                  </CardHeader>
+                  <div className="overflow-x-auto">
+                    <Table className="w-full min-w-[640px]">
+                      <TableHeader className="sticky top-0 z-[1] bg-muted/80 backdrop-blur-sm">
+                        <TableRow>
+                          <TableHead className="sticky left-0 z-[2] bg-muted/80 px-6 font-semibold">
                             {p.featureOrLimit}
-                          </th>
-                          {plans.map((plan) => (
-                            <th
-                              key={plan._id}
-                              scope="col"
-                              className={cn(
-                                "whitespace-nowrap px-4 py-3 font-semibold",
-                                plan.isRecommended ? "bg-blue-50 text-blue-700" : "text-apple-ink-muted-48",
-                              )}
-                            >
-                              {plan.name}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {compareRows.map((feature) => (
-                          <tr key={feature} className="border-t border-apple-divider-soft">
-                            <th
-                              scope="row"
-                              className="sticky left-0 z-[1] bg-apple-canvas px-4 py-3 font-medium text-apple-ink sm:px-6"
-                            >
+                          </TableHead>
+                          {plans.map((plan) => {
+                            const highlighted = plan._id === highlightId;
+                            return (
+                              <TableHead
+                                key={plan._id}
+                                className={cn(
+                                  "whitespace-nowrap px-4 py-3 font-semibold",
+                                  highlighted
+                                    ? "bg-primary/10 text-primary"
+                                    : "text-muted-foreground",
+                                )}
+                              >
+                                <div className="flex flex-col gap-0.5">
+                                  <span>{plan.name}</span>
+                                  <span className="text-[11px] font-medium tabular-nums opacity-80">
+                                    {displayPrice(plan, cycle, p.free, p.custom)}
+                                  </span>
+                                </div>
+                              </TableHead>
+                            );
+                          })}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {featureRows.map((feature) => (
+                          <TableRow key={feature}>
+                            <TableCell className="sticky left-0 z-[1] bg-card px-6 font-medium text-foreground">
                               {feature}
-                            </th>
+                            </TableCell>
                             {plans.map((plan) => {
-                              const available =
-                                enabled(plan).includes(feature) || limits(plan).includes(feature);
+                              const available = enabled(plan).includes(feature);
+                              const highlighted = plan._id === highlightId;
                               return (
-                                <td
+                                <TableCell
                                   key={plan._id}
-                                  className={cn("px-4 py-3", plan.isRecommended && "bg-blue-50/40")}
+                                  className={cn("px-4 py-3", highlighted && "bg-primary/5")}
                                 >
                                   {available ? (
-                                    <Check className="h-4 w-4 text-emerald-600" aria-label="Included" />
+                                    <Check
+                                      className="h-4 w-4 text-success"
+                                      aria-label="Included"
+                                    />
                                   ) : (
-                                    <CircleX className="h-4 w-4 text-zinc-300" aria-label="Not included" />
+                                    <CircleX
+                                      className="h-4 w-4 text-muted-foreground/30"
+                                      aria-label="Not included"
+                                    />
                                   )}
-                                </td>
+                                </TableCell>
                               );
                             })}
-                          </tr>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
-                </div>
+                </Card>
               </LandingReveal>
             ) : null}
           </>
@@ -274,17 +437,14 @@ export function Pricing() {
 
 function PricingSkeleton() {
   return (
-    <div
-      className="flex h-full min-h-[28rem] animate-pulse flex-col rounded-lg border border-apple-hairline bg-apple-canvas p-6"
-      aria-hidden
-    >
-      <div className="h-5 w-24 rounded bg-zinc-200" />
-      <div className="mt-4 h-10 w-36 rounded bg-zinc-200" />
-      <div className="mt-8 flex-1 space-y-3">
+    <Card className="flex h-full min-h-[28rem] flex-col space-y-4 rounded-apple-xl border-border bg-card p-6">
+      <Skeleton className="h-5 w-24 rounded-full" />
+      <Skeleton className="h-10 w-36 rounded-lg" />
+      <div className="space-y-3 pt-4">
         {[1, 2, 3, 4, 5].map((item) => (
-          <div key={item} className="h-3 rounded bg-zinc-200" />
+          <Skeleton key={item} className="h-4 w-full rounded-md" />
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

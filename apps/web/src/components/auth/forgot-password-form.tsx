@@ -41,21 +41,21 @@ export function ForgotPasswordForm() {
       }}
     >
       <div className="space-y-2">
-        <Label htmlFor="forgot-email">Email</Label>
+        <Label htmlFor="forgot-email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email</Label>
         <Input
           id="forgot-email"
           type="email"
           name="email"
           placeholder="you@example.com"
-          className="h-11 rounded-sm border-apple-hairline bg-apple-canvas-parchment/50 px-4 dark:border-apple-hairline dark:bg-apple-surface-tile-1/50"
+          className="h-11 rounded-lg border-border bg-card px-4 text-foreground transition-colors focus:border-primary"
         />
       </div>
-      <Button type="submit" loading={loading} loadingKey="send" className="h-11 w-full">
+      <Button type="submit" loading={loading} loadingKey="send" className="h-11 w-full rounded-full font-semibold shadow-md transition-all hover:shadow-lg">
         Send reset link
       </Button>
-      <p className="text-center text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
+      <p className="text-center text-xs text-muted-foreground">
         Remember your password?{" "}
-        <a href="/login" className="font-semibold text-apple-primary hover:text-apple-primary-focus">
+        <a href="/login" className="font-semibold text-primary hover:underline">
           Back to sign in
         </a>
       </p>

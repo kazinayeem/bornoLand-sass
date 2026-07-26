@@ -1,25 +1,26 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
 import { SectionHeading } from "./section-heading";
 import { useLandingLocale } from "./landing-locale";
-import {
-  landingCard,
-  landingContainer,
-  landingGridTestimonials,
-  landingSection,
-  staggerContainer,
-  staggerItem,
-} from "./landing-ui";
+import { landingContainer, landingSection, LandingReveal } from "./landing-ui";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+
+const AVATAR_TONES = [
+  "bg-primary text-primary-foreground",
+  "bg-success text-success-foreground",
+  "bg-secondary text-secondary-foreground",
+] as const;
 
 export function Testimonials() {
   const { t } = useLandingLocale();
   const section = t.testimonials;
-  const items = section.items.slice(0, 3);
+  const items = section.items;
 
   return (
-    <section id="testimonials" className={landingSection}>
+    <section id="testimonials" className={cn(landingSection, "bg-muted/30")}>
       <div className={landingContainer}>
         <SectionHeading
           eyebrow={section.eyebrow}
@@ -27,45 +28,56 @@ export function Testimonials() {
           description={section.description}
         />
 
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
-          variants={staggerContainer}
-          className={`mt-10 sm:mt-12 ${landingGridTestimonials}`}
-        >
-          {items.map((item) => (
-            <motion.article
-              key={item.name}
-              variants={staggerItem}
-              className={`${landingCard} relative transition-shadow duration-300 hover:shadow-[0_12px_40px_-28px_rgba(0,0,0,0.18)]`}
-            >
-              <Quote className="absolute right-5 top-5 h-8 w-8 text-blue-100" aria-hidden />
-              <div className="mb-4 flex items-center gap-3">
-                <div
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${item.color} text-sm font-bold text-white`}
-                  aria-hidden
-                >
-                  {item.avatar}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-apple-ink">{item.name}</p>
-                  <p className="truncate text-xs text-apple-ink-muted-48">
-                    {item.role} · {item.business}
-                  </p>
-                </div>
-              </div>
-              <div className="mb-3 flex gap-0.5" aria-label="5 out of 5 stars">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden />
-                ))}
-              </div>
-              <blockquote className="flex-1 text-sm leading-relaxed text-apple-ink-muted-80">
-                &ldquo;{item.text}&rdquo;
-              </blockquote>
-            </motion.article>
-          ))}
-        </motion.div>
+        <LandingReveal className="mt-10 sm:mt-12">
+          <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 scrollbar-thin sm:-mx-6 sm:gap-5 sm:px-6 md:mx-0 md:px-0">
+            {items.map((item, index) => (
+              <Card
+                key={item.name}
+                className="w-[min(100%,20rem)] shrink-0 snap-start rounded-apple-xl border border-border bg-card p-5 shadow-sm sm:w-80 sm:p-6"
+              >
+                <CardContent className="relative flex h-full flex-col p-0">
+                  <Quote
+                    className="absolute right-0 top-0 h-8 w-8 text-primary/15"
+                    aria-hidden
+                  />
+
+                  <div className="mb-3 flex gap-0.5" aria-label="5 out of 5 stars">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className="h-3.5 w-3.5 fill-primary text-primary"
+                        aria-hidden
+                      />
+                    ))}
+                  </div>
+
+                  <blockquote className="mb-5 flex-1 text-sm leading-relaxed text-muted-foreground">
+                    &ldquo;{item.text}&rdquo;
+                  </blockquote>
+
+                  <div className="flex items-center gap-3 border-t border-border pt-4">
+                    <Avatar className="h-11 w-11">
+                      <AvatarFallback
+                        className={cn(
+                          "text-sm font-bold",
+                          AVATAR_TONES[index % AVATAR_TONES.length],
+                        )}
+                      >
+                        {item.avatar}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-foreground">{item.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {item.role} · {item.business}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </LandingReveal>
       </div>
     </section>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/validators/auth";
@@ -8,10 +9,25 @@ import { GoogleButton } from "@/components/auth/google-button";
 import { QuickLoginButton } from "@/components/auth/quick-login-button";
 import { PasswordInput } from "@/components/auth/password-input";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { FormLoadingShell } from "@/components/loading";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+} from "@/components/ui/field";
 import { useLoginMutation } from "@/redux/api/auth-api";
 import { useAppDispatch } from "@/hooks/redux";
 import { setAuthState } from "@/redux/slices/auth-slice";
@@ -19,18 +35,26 @@ import { setUserProfile } from "@/redux/slices/user-slice";
 import { setTenantContext } from "@/redux/slices/tenant-slice";
 import { consumeRedirectAfterLogin } from "@/lib/auth-redirect-client";
 
-export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin" }) {
+export function LoginForm({
+  className,
+  loginType = "user",
+  ...props
+}: React.ComponentProps<"div"> & { loginType?: "user" | "admin" }) {
   const [loading, setLoading] = useState(false);
   const [login] = useLoginMutation();
   const dispatch = useAppDispatch();
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema) as any,
     defaultValues: { email: "", password: "", rememberMe: false, loginType },
   });
+
+  const rememberMe = watch("rememberMe");
 
   const onSubmit = handleSubmit(async (values) => {
     if (loading) return;
@@ -67,93 +91,128 @@ export function LoginForm({ loginType = "user" }: { loginType?: "user" | "admin"
     dispatch(setTenantContext({ tenantId: payload.user.tenantId }));
 
     const queryRedirect =
-      typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect") : null;
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("redirect")
+        : null;
     const destination = consumeRedirectAfterLogin(
       queryRedirect,
-      loginType === "admin" ? "/admin/dashboard" : "/dashboard"
+      loginType === "admin" ? "/admin/dashboard" : "/dashboard",
     );
     window.location.replace(destination);
   });
 
   return (
-    <FormLoadingShell loading={loading} loadingLabel="Signing in" onSubmit={onSubmit} className="space-y-5">
-      <div className="space-y-2">
-        <Label htmlFor="login-email">Email</Label>
-        <Input
-          id="login-email"
-          type="email"
-          placeholder="you@example.com"
-          className="h-11 rounded-sm border-apple-hairline bg-apple-canvas-parchment/50 px-4 dark:border-apple-hairline dark:bg-apple-surface-tile-1/50"
-          {...register("email")}
-        />
-        {errors.email ? <p className="text-xs text-red-500">{errors.email.message}</p> : null}
-      </div>
+    <div className={cn("flex w-full flex-col gap-6", className)} {...props}>
+      <Card className="rounded-apple-xl border-border bg-card shadow-xl">
+        <CardHeader className="space-y-1.5">
+          <CardTitle className="text-2xl font-bold tracking-tight">
+            {loginType === "admin" ? "Admin login" : "Login to your account"}
+          </CardTitle>
+          <CardDescription>
+            Enter your email below to login to your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmit} noValidate>
+            <FieldGroup>
+              <Field data-invalid={Boolean(errors.email) || undefined}>
+                <FieldLabel htmlFor="login-email">Email</FieldLabel>
+                <Input
+                  id="login-email"
+                  type="email"
+                  placeholder="m@example.com"
+                  autoComplete="email"
+                  required
+                  aria-invalid={Boolean(errors.email)}
+                  {...register("email")}
+                />
+                <FieldError>{errors.email?.message}</FieldError>
+              </Field>
 
-      <div className="space-y-2">
-        <Label htmlFor="login-password">Password</Label>
-        <PasswordInput id="login-password" placeholder="••••••••" {...register("password")} />
-        {errors.password ? <p className="text-xs text-red-500">{errors.password.message}</p> : null}
-      </div>
+              <Field data-invalid={Boolean(errors.password) || undefined}>
+                <div className="flex items-center gap-2">
+                  <FieldLabel htmlFor="login-password">Password</FieldLabel>
+                  <Link
+                    href="/forgot-password"
+                    className="ml-auto inline-block text-sm font-medium !text-primary underline-offset-4 hover:underline"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
+                <PasswordInput
+                  id="login-password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  required
+                  aria-invalid={Boolean(errors.password)}
+                  {...register("password")}
+                />
+                <FieldError>{errors.password?.message}</FieldError>
+              </Field>
 
-      <div className="flex items-center justify-between gap-4">
-        <label className="flex items-center gap-2 text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
-          <input
-            type="checkbox"
-            {...register("rememberMe")}
-            className="h-4 w-4 rounded border-zinc-300 text-apple-primary focus:ring-apple-primary"
-          />
-          Remember me
-        </label>
-        <a href="/forgot-password" className="text-sm font-medium text-apple-primary hover:text-apple-primary-focus">
-          Forgot password?
-        </a>
-      </div>
+              <Field orientation="horizontal">
+                <Checkbox
+                  id="login-remember"
+                  checked={Boolean(rememberMe)}
+                  onCheckedChange={(checked) =>
+                    setValue("rememberMe", checked === true, {
+                      shouldDirty: true,
+                    })
+                  }
+                />
+                <FieldLabel
+                  htmlFor="login-remember"
+                  className="font-normal text-muted-foreground"
+                >
+                  Remember me
+                </FieldLabel>
+              </Field>
 
-      <Button type="submit" loading={loading} loadingKey="login" className="h-11 w-full">
-        {loginType === "admin" ? "Admin Sign In" : "Sign in"}
-      </Button>
+              <Field>
+                <Button
+                  type="submit"
+                  loading={loading}
+                  loadingKey="login"
+                  className="w-full rounded-pill font-semibold"
+                >
+                  {loginType === "admin" ? "Admin Sign In" : "Login"}
+                </Button>
+                <GoogleButton label="Login with Google" />
+                <FieldDescription className="text-center">
+                  Don&apos;t have an account?{" "}
+                  <Link
+                    href="/register"
+                    className="font-semibold !text-primary underline-offset-4 hover:underline"
+                  >
+                    Sign up
+                  </Link>
+                </FieldDescription>
+              </Field>
 
-      <div className="relative py-1">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-apple-hairline dark:border-apple-hairline" />
-        </div>
-        <div className="relative flex justify-center">
-          <span className="bg-apple-canvas px-3 text-[11px] font-medium uppercase tracking-[0.28em] text-apple-ink-muted-48 dark:bg-apple-surface-black">
-            or continue with
-          </span>
-        </div>
-      </div>
+              <FieldSeparator>Or quick demo</FieldSeparator>
 
-      <GoogleButton label="Continue with Google" />
-
-      <div className="rounded-lg border border-dashed border-apple-hairline bg-apple-canvas-parchment/80 p-4 dark:border-apple-hairline dark:bg-apple-surface-tile-1/40">
-        <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">
-          Quick demo access
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <QuickLoginButton
-            label="Quick user login"
-            email="demo@bornoland.com"
-            password="Demo@123"
-            loginType="user"
-            callbackUrl="/dashboard"
-          />
-          <QuickLoginButton
-            label="Quick admin login"
-            email="admin@bornoland.com"
-            password="Admin@123"
-            loginType="admin"
-            callbackUrl="/admin/dashboard"
-          />
-        </div>
-      </div>
-
-      <p className="text-center text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
-        New here?{" "}
-        <a href="/register" className="font-semibold text-apple-primary hover:text-apple-primary-focus">
-          Create an account
-        </a>
-      </p>
-    </FormLoadingShell>
+              <Field>
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  <QuickLoginButton
+                    label="Quick user login"
+                    email="demo@bornoland.com"
+                    password="Demo@123"
+                    loginType="user"
+                    callbackUrl="/dashboard"
+                  />
+                  <QuickLoginButton
+                    label="Quick admin login"
+                    email="admin@bornoland.com"
+                    password="Admin@123"
+                    loginType="admin"
+                    callbackUrl="/admin/dashboard"
+                  />
+                </div>
+              </Field>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

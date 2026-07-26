@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 interface StatCardProps {
   title: string;
@@ -15,54 +16,44 @@ interface StatCardProps {
   delay?: number;
 }
 
-const variants = {
-  default: "bg-apple-canvas border-apple-hairline",
-  blue: "bg-blue-50/50 border-blue-200",
-  green: "bg-emerald-50/50 border-emerald-200",
-  amber: "bg-amber-50/50 border-amber-200",
-  purple: "bg-purple-50/50 border-purple-200"
-};
-
 const iconVariants = {
-  default: "bg-blue-600 text-white",
-  blue: "bg-blue-600 text-white",
+  default: "bg-primary text-primary-foreground",
+  blue: "bg-primary text-primary-foreground",
   green: "bg-emerald-600 text-white",
   amber: "bg-amber-600 text-white",
-  purple: "bg-purple-600 text-white"
+  purple: "bg-violet-600 text-white"
 };
 
 export function StatCard({ title, value, change, icon: Icon, variant = "default", prefix, suffix, delay = 0 }: StatCardProps) {
   const isPositive = change !== undefined && change >= 0;
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay }}
-      className={cn(
-        "group relative overflow-hidden rounded-lg border p-5 transition-colors duration-300",
-        variants[variant]
-      )}
+      transition={{ duration: 0.35, delay }}
     >
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-sm font-medium tracking-wide text-apple-ink-muted-48">{title}</p>
-          <div className="flex items-baseline gap-1.5">
-            {prefix && <span className="text-sm text-apple-ink-muted-48">{prefix}</span>}
-            <span className="text-3xl font-semibold tracking-tight text-apple-ink">{value}</span>
-            {suffix && <span className="text-sm text-apple-ink-muted-48">{suffix}</span>}
-          </div>
-          {change !== undefined && (
-            <div className={cn("flex items-center gap-1 text-sm font-medium", isPositive ? "text-emerald-600" : "text-red-600")}>
-              <span>{isPositive ? "↑" : "↓"}</span>
-              <span>{Math.abs(change)}%</span>
-              <span className="font-normal text-apple-ink-muted-48">vs last month</span>
+      <Card className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
+            <div className="flex items-baseline gap-1">
+              {prefix && <span className="text-sm font-medium text-muted-foreground">{prefix}</span>}
+              <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{value}</span>
+              {suffix && <span className="text-sm font-medium text-muted-foreground">{suffix}</span>}
             </div>
-          )}
+            {change !== undefined && (
+              <div className={cn("flex items-center gap-1 text-xs font-semibold", isPositive ? "text-emerald-600" : "text-destructive")}>
+                <span>{isPositive ? "↑" : "↓"}</span>
+                <span>{Math.abs(change)}%</span>
+                <span className="font-normal text-muted-foreground">vs last month</span>
+              </div>
+            )}
+          </div>
+          <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl shadow-sm", iconVariants[variant])}>
+            <Icon className="h-5 w-5" />
+          </div>
         </div>
-        <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl", iconVariants[variant])}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </div>
+      </Card>
     </motion.div>
   );
 }

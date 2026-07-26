@@ -1,89 +1,111 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Smartphone, ShoppingBag, BarChart3, MessageSquare, Package, Bell } from "lucide-react";
-import { SectionHeading } from "./section-heading";
+import { Smartphone, ShoppingBag, BarChart3, Package, Bell } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useLandingLocale } from "./landing-locale";
+import { landingContainer, LandingReveal } from "./landing-ui";
+import { cn } from "@/lib/utils";
 
-const features = [
+const screenItems = [
   { icon: ShoppingBag, title: "Manage Orders" },
   { icon: Package, title: "Manage Products" },
   { icon: BarChart3, title: "View Analytics" },
-  { icon: MessageSquare, title: "Customer Messages" },
   { icon: Bell, title: "Inventory Updates" },
 ];
 
-export function MobileApp() {
+function TiltedPhone({
+  tilt,
+  className,
+}: {
+  tilt: "left" | "right";
+  className?: string;
+}) {
   return (
-    <section className="relative bg-apple-canvas-parchment px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="grid items-center gap-12 lg:grid-cols-[1fr_1.2fr]">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <SectionHeading
-              align="left"
-              eyebrow="Mobile App"
-              title="Manage Your Store On The Go"
-              description="iOS and Android apps with full store management capabilities."
-            />
+    <div
+      className={cn(
+        "w-[160px] shrink-0 sm:w-[180px]",
+        tilt === "left" ? "-rotate-6" : "rotate-6",
+        className,
+      )}
+    >
+      <Card className="overflow-hidden rounded-[1.5rem] border-2 border-primary-foreground/20 bg-card p-1.5 shadow-xl">
+        <div className="overflow-hidden rounded-[1.15rem] bg-muted">
+          <div className="flex justify-center px-3 pb-1.5 pt-2.5">
+            <div className="h-4 w-16 rounded-pill bg-foreground/85" aria-hidden />
+          </div>
+          <CardContent className="space-y-2 px-2.5 pb-3 pt-1">
+            <Badge variant="primary" className="text-[9px]">
+              BornoLand
+            </Badge>
+            {screenItems.map((item) => (
+              <div
+                key={item.title}
+                className="flex items-center gap-2 rounded-apple-md border border-border bg-card px-2 py-1.5"
+              >
+                <item.icon className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                <span className="truncate text-[10px] font-medium text-foreground">
+                  {item.title}
+                </span>
+              </div>
+            ))}
+          </CardContent>
+        </div>
+      </Card>
+    </div>
+  );
+}
 
-            <div className="mt-6 space-y-3">
-              {features.map((f) => (
-                <div key={f.title} className="flex items-center gap-3 rounded-xl border border-apple-divider-soft bg-apple-canvas p-3.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-apple-canvas-parchment">
-                    <f.icon className="h-4 w-4 text-blue-600" />
+export function MobileApp() {
+  const { t } = useLandingLocale();
+  const cta = t.finalCta;
+
+  return (
+    <section id="mobile-app" className="relative py-12 sm:py-16">
+      <div className={landingContainer}>
+        <LandingReveal>
+          <Card className="relative overflow-visible rounded-apple-xl border-0 bg-primary text-primary-foreground shadow-xl">
+            <CardContent className="relative px-6 pb-0 pt-10 sm:px-10 sm:pt-12 md:px-14 md:pt-14">
+              <div className="grid items-end gap-8 lg:grid-cols-[1.1fr_1fr]">
+                <div className="pb-10 sm:pb-12 md:pb-14">
+                  <Badge className="mb-4 bg-primary-foreground/15 text-primary-foreground ring-0">
+                    Mobile App
+                  </Badge>
+                  <h2 className="text-balance text-3xl font-extrabold tracking-tight sm:text-4xl">
+                    {cta.title}
+                  </h2>
+                  <p className="mt-3 max-w-md text-sm leading-relaxed text-primary-foreground/80 sm:text-base">
+                    Manage orders, products, and analytics on the go — iOS and Android apps with full store management.
+                  </p>
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="rounded-pill border-0 bg-card text-foreground hover:bg-card/90"
+                    >
+                      <Smartphone className="h-4 w-4" aria-hidden />
+                      Google Play
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-pill border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
+                    >
+                      <Smartphone className="h-4 w-4" aria-hidden />
+                      App Store
+                    </Button>
                   </div>
-                  <span className="text-sm font-medium text-apple-ink-muted-80">{f.title}</span>
                 </div>
-              ))}
-            </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <span className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-xs font-semibold text-white">
-                <Smartphone className="h-4 w-4" /> Google Play
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline bg-apple-canvas px-4 py-2.5 text-xs font-semibold text-apple-ink-muted-80">
-                <Smartphone className="h-4 w-4" /> App Store
-              </span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="relative"
-          >
-            <div className="mx-auto max-w-[280px]">
-              <div className="overflow-hidden rounded-[2.5rem] border-[3px] border-apple-hairline bg-apple-canvas">
-                <div className="bg-apple-primary p-4 text-white">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold opacity-80">9:41</span>
-                    <Bell className="h-4 w-4 opacity-80" />
-                  </div>
-                  <p className="text-lg font-bold">৳48,200</p>
-                  <p className="text-xs text-white/70">Total Revenue This Month</p>
-                </div>
-                <div className="p-4 space-y-3">
-                  {[
-                    { label: "New Orders", value: "12", color: "bg-blue-500" },
-                    { label: "Low Stock", value: "4", color: "bg-amber-500" },
-                    { label: "Messages", value: "8", color: "bg-violet-500" },
-                  ].map((item) => (
-                    <div key={item.label} className="flex items-center justify-between rounded-xl bg-apple-canvas-parchment px-3.5 py-3">
-                      <span className="text-xs font-medium text-apple-ink-muted-80">{item.label}</span>
-                      <span className={`${item.color} px-2 py-0.5 rounded-full text-[10px] font-bold text-white`}>{item.value}</span>
-                    </div>
-                  ))}
+                <div className="relative flex justify-center gap-3 pb-0 pt-4 sm:gap-4 lg:justify-end">
+                  <TiltedPhone tilt="left" className="relative z-[1] translate-y-4 sm:translate-y-6" />
+                  <TiltedPhone tilt="right" className="relative z-[2] -translate-y-2 sm:-translate-y-4" />
                 </div>
               </div>
-            </div>
-          </motion.div>
-        </div>
+            </CardContent>
+          </Card>
+        </LandingReveal>
       </div>
     </section>
   );

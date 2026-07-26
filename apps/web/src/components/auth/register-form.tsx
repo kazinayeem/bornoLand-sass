@@ -1,35 +1,66 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterInput } from "@/validators/auth";
 import { PasswordInput } from "@/components/auth/password-input";
+import { GoogleButton } from "@/components/auth/google-button";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { FormLoadingShell } from "@/components/loading";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { useRegisterMutation } from "@/redux/api/auth-api";
 import { useLoading } from "@/hooks/use-loading";
 
-export function RegisterForm() {
+export function RegisterForm({
+  className,
+  ...props
+}: React.ComponentProps<typeof Card>) {
   const [loading, setLoading] = useState(false);
   const [registerRequest] = useRegisterMutation();
   const { startNavigation } = useLoading();
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema) as any,
-    defaultValues: { name: "", email: "", password: "", tenantName: "", rememberMe: true },
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      tenantName: "",
+      rememberMe: true,
+    },
   });
+
+  const rememberMe = watch("rememberMe");
 
   const onSubmit = handleSubmit(async (values) => {
     if (loading) return;
     setLoading(true);
-    const response = await registerRequest(values as any);
+    const { confirmPassword: _confirmPassword, ...payload } = values;
+    const response = await registerRequest(payload as any);
     setLoading(false);
 
     if ("error" in response) {
@@ -51,60 +82,138 @@ export function RegisterForm() {
   });
 
   return (
-    <FormLoadingShell loading={loading} loadingLabel="Creating account" onSubmit={onSubmit} className="space-y-5">
-      <div className="space-y-2">
-        <Label htmlFor="register-name">Full name</Label>
-        <Input
-          id="register-name"
-          placeholder="Mohammad Ali"
-          className="h-11 rounded-sm border-apple-hairline bg-apple-canvas-parchment/50 px-4 dark:border-apple-hairline dark:bg-apple-surface-tile-1/50"
-          {...register("name")}
-        />
-        {errors.name ? <p className="text-xs text-red-500">{errors.name.message}</p> : null}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="register-tenant-name">Workspace name</Label>
-        <Input
-          id="register-tenant-name"
-          placeholder="My Store Workspace"
-          className="h-11 rounded-sm border-apple-hairline bg-apple-canvas-parchment/50 px-4 dark:border-apple-hairline dark:bg-apple-surface-tile-1/50"
-          {...register("tenantName")}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="register-email">Email</Label>
-        <Input
-          id="register-email"
-          type="email"
-          placeholder="you@example.com"
-          className="h-11 rounded-sm border-apple-hairline bg-apple-canvas-parchment/50 px-4 dark:border-apple-hairline dark:bg-apple-surface-tile-1/50"
-          {...register("email")}
-        />
-        {errors.email ? <p className="text-xs text-red-500">{errors.email.message}</p> : null}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="register-password">Password</Label>
-        <PasswordInput id="register-password" {...register("password")} />
-        {errors.password ? <p className="text-xs text-red-500">{errors.password.message}</p> : null}
-      </div>
-      <label className="flex items-center gap-2 text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
-        <input
-          type="checkbox"
-          {...register("rememberMe")}
-          className="h-4 w-4 rounded border-zinc-300 text-apple-primary focus:ring-apple-primary"
-        />
-        Keep me signed in
-      </label>
-      <Button type="submit" loading={loading} loadingKey="register" className="h-11 w-full">
-        Create account
-      </Button>
+    <Card
+      className={cn("rounded-apple-xl border-border bg-card shadow-xl", className)}
+      {...props}
+    >
+      <CardHeader className="space-y-1.5">
+        <CardTitle className="text-2xl font-bold tracking-tight">
+          Create an account
+        </CardTitle>
+        <CardDescription>
+          Enter your information below to create your account
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={onSubmit} noValidate>
+          <FieldGroup>
+            <Field data-invalid={Boolean(errors.name) || undefined}>
+              <FieldLabel htmlFor="register-name">Full Name</FieldLabel>
+              <Input
+                id="register-name"
+                type="text"
+                placeholder="John Doe"
+                autoComplete="name"
+                required
+                aria-invalid={Boolean(errors.name)}
+                {...register("name")}
+              />
+              <FieldError>{errors.name?.message}</FieldError>
+            </Field>
 
-      <p className="text-center text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
-        Already have an account?{" "}
-        <a href="/login" className="font-semibold text-apple-primary hover:text-apple-primary-focus">
-          Sign in
-        </a>
-      </p>
-    </FormLoadingShell>
+            <Field>
+              <FieldLabel htmlFor="register-tenant-name">Workspace name</FieldLabel>
+              <Input
+                id="register-tenant-name"
+                type="text"
+                placeholder="My Store Workspace"
+                autoComplete="organization"
+                {...register("tenantName")}
+              />
+              <FieldDescription>
+                Optional — you can rename your workspace later.
+              </FieldDescription>
+            </Field>
+
+            <Field data-invalid={Boolean(errors.email) || undefined}>
+              <FieldLabel htmlFor="register-email">Email</FieldLabel>
+              <Input
+                id="register-email"
+                type="email"
+                placeholder="m@example.com"
+                autoComplete="email"
+                required
+                aria-invalid={Boolean(errors.email)}
+                {...register("email")}
+              />
+              <FieldDescription>
+                We&apos;ll use this to contact you. We will not share your email
+                with anyone else.
+              </FieldDescription>
+              <FieldError>{errors.email?.message}</FieldError>
+            </Field>
+
+            <Field data-invalid={Boolean(errors.password) || undefined}>
+              <FieldLabel htmlFor="register-password">Password</FieldLabel>
+              <PasswordInput
+                id="register-password"
+                autoComplete="new-password"
+                required
+                aria-invalid={Boolean(errors.password)}
+                {...register("password")}
+              />
+              <FieldDescription>
+                Must be at least 8 characters long.
+              </FieldDescription>
+              <FieldError>{errors.password?.message}</FieldError>
+            </Field>
+
+            <Field data-invalid={Boolean(errors.confirmPassword) || undefined}>
+              <FieldLabel htmlFor="register-confirm-password">
+                Confirm Password
+              </FieldLabel>
+              <PasswordInput
+                id="register-confirm-password"
+                autoComplete="new-password"
+                required
+                aria-invalid={Boolean(errors.confirmPassword)}
+                {...register("confirmPassword")}
+              />
+              <FieldDescription>Please confirm your password.</FieldDescription>
+              <FieldError>{errors.confirmPassword?.message}</FieldError>
+            </Field>
+
+            <Field orientation="horizontal">
+              <Checkbox
+                id="register-remember"
+                checked={Boolean(rememberMe)}
+                onCheckedChange={(checked) =>
+                  setValue("rememberMe", checked === true, { shouldDirty: true })
+                }
+              />
+              <FieldLabel
+                htmlFor="register-remember"
+                className="font-normal text-muted-foreground"
+              >
+                Keep me signed in
+              </FieldLabel>
+            </Field>
+
+            <FieldGroup>
+              <Field>
+                <Button
+                  type="submit"
+                  loading={loading}
+                  loadingKey="register"
+                  className="w-full rounded-pill font-semibold"
+                >
+                  Create Account
+                </Button>
+                <GoogleButton label="Sign up with Google" />
+                <FieldDescription className="text-center">
+                  Already have an account?{" "}
+                  <Link
+                    href="/login"
+                    className="font-semibold !text-primary underline-offset-4 hover:underline"
+                  >
+                    Sign in
+                  </Link>
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
+          </FieldGroup>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

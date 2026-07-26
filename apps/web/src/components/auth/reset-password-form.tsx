@@ -43,19 +43,19 @@ export function ResetPasswordForm({ token }: { token: string }) {
       }}
     >
       <div className="space-y-2">
-        <Label htmlFor="reset-password">New password</Label>
+        <Label htmlFor="reset-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">New password</Label>
         <PasswordInput id="reset-password" name="password" placeholder="Enter a new password" />
       </div>
       <Button
         type="submit"
         loading={loading}
         loadingKey="save"
-        className="h-11 w-full rounded-xl bg-zinc-900 text-sm font-semibold hover:bg-zinc-800 dark:bg-apple-canvas-parchment dark:text-apple-ink dark:hover:bg-white"
+        className="h-11 w-full rounded-full font-semibold shadow-md transition-all hover:shadow-lg"
       >
         Reset password
       </Button>
-      <p className="text-center text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
-        <a href="/login" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">
+      <p className="text-center text-xs text-muted-foreground">
+        <a href="/login" className="font-semibold text-primary hover:underline">
           Back to sign in
         </a>
       </p>

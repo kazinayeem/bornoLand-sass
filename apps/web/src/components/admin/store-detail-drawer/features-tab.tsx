@@ -4,8 +4,27 @@ import type { TabHelpers } from "./types";
 
 const FEATURE_GROUPS: { label: string; keys: string[] }[] = [
   {
-    label: "Products & Inventory",
-    keys: ["productVariants", "inventory", "advancedInventory", "digitalProducts", "physicalProducts"],
+    label: "Products",
+    keys: ["productVariants", "digitalProducts", "physicalProducts"],
+  },
+  {
+    label: "Inventory Management",
+    keys: [
+      "inventory",
+      "inventoryHistory",
+      "priceHistory",
+      "costHistory",
+      "suppliers",
+      "purchaseOrders",
+      "batchFifo",
+      "warehousesEnabled",
+      "barcode",
+      "inventoryReports",
+      "lowStockAlerts",
+      "stockTransfer",
+      "inventoryAuditLog",
+      "advancedInventory",
+    ],
   },
   {
     label: "Sales & Marketing",
@@ -47,8 +66,20 @@ const FEATURE_GROUPS: { label: string; keys: string[] }[] = [
 
 const FEATURE_LABELS: Record<string, string> = {
   productVariants: "Product Variants",
-  inventory: "Inventory Management",
+  inventory: "Inventory",
   advancedInventory: "Advanced Inventory",
+  inventoryHistory: "Inventory History",
+  priceHistory: "Price History",
+  costHistory: "Cost History",
+  suppliers: "Suppliers",
+  purchaseOrders: "Purchase Orders",
+  batchFifo: "Batch / FIFO Inventory",
+  warehousesEnabled: "Warehouses",
+  barcode: "Barcode",
+  inventoryReports: "Inventory Reports",
+  lowStockAlerts: "Low Stock Alerts",
+  stockTransfer: "Stock Transfer",
+  inventoryAuditLog: "Inventory Audit Log",
   digitalProducts: "Digital Products",
   physicalProducts: "Physical Products",
   subscriptions: "Subscriptions",

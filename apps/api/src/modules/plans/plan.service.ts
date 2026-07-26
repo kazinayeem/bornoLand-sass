@@ -5,6 +5,58 @@ import { getPlanPriceForDuration } from "./plan-pricing.util.js";
 import { ensureDefaultPlansSafe } from "../../bootstrap/safe-migrate.js";
 import type { SubscriptionDuration } from "../subscriptions/subscription.constants.js";
 
+/** Plan Builder camelCase toggles → Feature catalog snake_case keys */
+const TOGGLE_TO_FEATURE_KEY: Record<string, string> = {
+  inventory: "inventory",
+  inventoryHistory: "inventory_history",
+  priceHistory: "price_history",
+  costHistory: "cost_history",
+  suppliers: "suppliers",
+  purchaseOrders: "purchase_orders",
+  batchFifo: "batch_fifo",
+  warehousesEnabled: "warehouses",
+  barcode: "barcode",
+  inventoryReports: "inventory_reports",
+  lowStockAlerts: "low_stock_alerts",
+  stockTransfer: "stock_transfer",
+  inventoryAuditLog: "inventory_audit_log",
+  courier: "courier",
+};
+
+async function syncFeatureTogglesToPlanFeatures(
+  planId: string,
+  toggles: Record<string, unknown> | undefined | null
+) {
+  if (!toggles) return;
+  try {
+    const { PlanFeatureModel } = await import("../features/plan-feature.model.js");
+    const ops = Object.entries(TOGGLE_TO_FEATURE_KEY)
+      .filter(([toggleKey]) => toggles[toggleKey] !== undefined)
+      .map(([toggleKey, featureKey]) => {
+        const enabled = Boolean(toggles[toggleKey]);
+        return {
+          updateOne: {
+            filter: { planId, featureKey },
+            update: {
+              $set: {
+                planId,
+                featureKey,
+                enabled,
+                limit: 0,
+                tierKey: enabled ? "enabled" : "disabled",
+                value: enabled ? "enabled" : "disabled",
+              },
+            },
+            upsert: true,
+          },
+        };
+      });
+    if (ops.length > 0) await PlanFeatureModel.bulkWrite(ops, { ordered: false });
+  } catch {
+    // Non-fatal — API still uses PlanFeature rows from matrix / prior sync
+  }
+}
+
 async function ensureDefaultPlans() {
   await ensureDefaultPlansSafe();
 }
@@ -45,6 +97,10 @@ export async function createPlan(payload: unknown) {
       lifetime: parsed.data.pricing?.lifetime || 0,
     },
   });
+  await syncFeatureTogglesToPlanFeatures(
+    String(plan._id),
+    (plan.toObject() as { featureToggles?: Record<string, unknown> }).featureToggles
+  );
   return { ok: true as const, data: { plan: plan.toObject() } };
 }
 
@@ -76,31 +132,12 @@ export async function updatePlan(planId: string, payload: unknown) {
   const plan = await PlanModel.findByIdAndUpdate(planId, { $set: data }, { new: true }).lean();
   if (!plan) return { ok: false as const, message: "Plan not found" };
 
-  // Sync Feature catalog assignment so frontend FeatureGate stays consistent
+  const toggles = (plan as { featureToggles?: Record<string, unknown> }).featureToggles ?? {};
+  // Ensure courier Access is reflected in toggles for PlanFeature sync
   const courierEnabled = Boolean(
-    (plan as { courierAccess?: { enabled?: boolean }; featureToggles?: { courier?: boolean } })
-      .courierAccess?.enabled ??
-      (plan as { featureToggles?: { courier?: boolean } }).featureToggles?.courier,
+    (plan as { courierAccess?: { enabled?: boolean } }).courierAccess?.enabled ?? toggles.courier
   );
-  try {
-    const { PlanFeatureModel } = await import("../features/plan-feature.model.js");
-    await PlanFeatureModel.findOneAndUpdate(
-      { planId, featureKey: "courier" },
-      {
-        $set: {
-          planId,
-          featureKey: "courier",
-          enabled: courierEnabled,
-          limit: 0,
-          tierKey: "disabled",
-          value: null,
-        },
-      },
-      { upsert: true },
-    );
-  } catch {
-    // Non-fatal — courier API still uses plan.courierAccess / featureToggles
-  }
+  await syncFeatureTogglesToPlanFeatures(planId, { ...toggles, courier: courierEnabled });
 
   return { ok: true as const, data: { plan } };
 }

@@ -49,7 +49,7 @@ export const inventoryRouter: Router = Router({ mergeParams: true });
 
 const storeId = (req: { params: { storeId?: string } }) => String(req.params.storeId);
 const featureGuard = requireFeatureAccess("inventory", { getStoreId: storeId });
-const historyGuard = requireAnyFeature(["inventory_history", "inventory"], { getStoreId: storeId });
+const historyGuard = requireFeatureAccess("inventory_history", { getStoreId: storeId });
 const suppliersGuard = requireFeatureAccess("suppliers", { getStoreId: storeId });
 const warehousesGuard = requireFeatureAccess("warehouses", { getStoreId: storeId });
 const purchaseOrdersGuard = requireFeatureAccess("purchase_orders", { getStoreId: storeId });
@@ -57,7 +57,9 @@ const stockTransferGuard = requireFeatureAccess("stock_transfer", { getStoreId: 
 const batchFifoGuard = requireFeatureAccess("batch_fifo", { getStoreId: storeId });
 const priceHistoryGuard = requireFeatureAccess("price_history", { getStoreId: storeId });
 const costHistoryGuard = requireFeatureAccess("cost_history", { getStoreId: storeId });
-const timelineGuard = requireAnyFeature(["inventory_history", "inventory"], { getStoreId: storeId });
+const timelineGuard = requireAnyFeature(["inventory_history", "price_history", "cost_history"], {
+  getStoreId: storeId,
+});
 const auditGuard = requireFeatureAccess("inventory_audit_log", { getStoreId: storeId });
 const reportsGuard = requireFeatureAccess("inventory_reports", { getStoreId: storeId });
 const barcodeGuard = requireFeatureAccess("barcode", { getStoreId: storeId });
@@ -68,7 +70,7 @@ inventoryRouter.use(requireAuth);
 // Existing inventory routes (inventory feature)
 inventoryRouter.get("/", featureGuard, getInventoryController);
 inventoryRouter.get("/stats", featureGuard, getInventoryStatsController);
-inventoryRouter.get("/analytics", featureGuard, getInventoryAnalyticsController);
+inventoryRouter.get("/analytics", reportsGuard, getInventoryAnalyticsController);
 inventoryRouter.get("/history", historyGuard, getStockHistoryController);
 
 // Enterprise ERP routes — register before /:productId/adjust

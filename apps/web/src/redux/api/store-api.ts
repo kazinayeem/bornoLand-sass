@@ -71,6 +71,18 @@ export type PlanFeatureToggles = {
   productVariants: boolean;
   inventory: boolean;
   advancedInventory: boolean;
+  inventoryHistory: boolean;
+  priceHistory: boolean;
+  costHistory: boolean;
+  suppliers: boolean;
+  purchaseOrders: boolean;
+  batchFifo: boolean;
+  warehousesEnabled: boolean;
+  barcode: boolean;
+  inventoryReports: boolean;
+  lowStockAlerts: boolean;
+  stockTransfer: boolean;
+  inventoryAuditLog: boolean;
   digitalProducts: boolean;
   physicalProducts: boolean;
   subscriptions: boolean;

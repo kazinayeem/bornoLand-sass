@@ -68,6 +68,22 @@ async function decrementProductStock(
   }
 
   try {
+    const { checkFeature } = await import("../features/feature-access.service.js");
+    const fifo = await checkFeature(storeId, "batch_fifo");
+    if (fifo.allowed) {
+      const { fifoAllocate } = await import("../inventory/inventory-erp.service.js");
+      await fifoAllocate(
+        storeId,
+        String(item.productId),
+        item.quantity,
+        item.variantId ? String(item.variantId) : null
+      );
+    }
+  } catch (err) {
+    console.error("[orders] FIFO allocate failed", err);
+  }
+
+  try {
     const { StockLogModel } = await import("../inventory/stock-log.model.js");
     const mongoose = (await import("mongoose")).default;
     await StockLogModel.create({

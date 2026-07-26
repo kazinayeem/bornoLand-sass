@@ -281,8 +281,8 @@ export async function updateProduct(productId: string, storeId: string, payload:
 
   const previous = updatePayloadWouldTouchPriceOrCost(rest as Record<string, unknown>)
     ? ((await ProductModel.findOne({ _id: productId, storeId })
-        .select("price comparePrice")
-        .lean()) as { price?: number; comparePrice?: number } | null)
+        .select("price comparePrice costPrice")
+        .lean()) as { price?: number; comparePrice?: number; costPrice?: number } | null)
     : null;
 
   const updatePayload = Object.keys(rest).length

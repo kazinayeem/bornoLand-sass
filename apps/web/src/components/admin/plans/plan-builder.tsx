@@ -1,13 +1,31 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Loader2, Save, Zap, Shield, HardDrive, DollarSign, Eye, Clock } from "lucide-react";
 import { toast } from "sonner";
 import type { Plan, PlanLimits, PlanFeatureToggles, PlanCourierAccess } from "@/redux/api/store-api";
 import { useUpdatePlanMutation } from "@/redux/api/store-api";
+import { useGetPlanFeatureAssignmentsQuery } from "@/redux/api/feature-api";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { PlanPreviewCard } from "@/components/admin/plans/plan-preview-card";
+
+const FEATURE_KEY_TO_TOGGLE: Partial<Record<string, keyof PlanFeatureToggles>> = {
+  inventory: "inventory",
+  inventory_history: "inventoryHistory",
+  price_history: "priceHistory",
+  cost_history: "costHistory",
+  suppliers: "suppliers",
+  purchase_orders: "purchaseOrders",
+  batch_fifo: "batchFifo",
+  warehouses: "warehousesEnabled",
+  barcode: "barcode",
+  inventory_reports: "inventoryReports",
+  low_stock_alerts: "lowStockAlerts",
+  stock_transfer: "stockTransfer",
+  inventory_audit_log: "inventoryAuditLog",
+  courier: "courier",
+};
 
 const COURIER_PROVIDER_OPTIONS: Array<{
   slug: PlanCourierAccess["providers"][number];
@@ -181,6 +199,7 @@ type Props = {
 export function PlanBuilder({ plan, initialTab }: Props) {
   const router = useRouter();
   const [updatePlan, { isLoading: isSaving }] = useUpdatePlanMutation();
+  const { data: planFeaturesData } = useGetPlanFeatureAssignmentsQuery(plan._id);
 
   const [activeTab, setActiveTab] = useState(initialTab || "general");
   const [name, setName] = useState(plan.name);
@@ -352,6 +371,25 @@ export function PlanBuilder({ plan, initialTab }: Props) {
   }));
 
   const [featureText, setFeatureText] = useState(plan.features?.join("\n") ?? "");
+
+  // Prefer Feature catalog assignments (source of truth for FeatureGate) for Inventory Management toggles
+  useEffect(() => {
+    const assignments = planFeaturesData?.data?.features;
+    if (!assignments?.length) return;
+    setToggles((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const row of assignments) {
+        const toggleKey = FEATURE_KEY_TO_TOGGLE[row.featureKey];
+        if (!toggleKey) continue;
+        if (next[toggleKey] !== row.enabled) {
+          next[toggleKey] = row.enabled;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [planFeaturesData]);
 
   const updateLimit = useCallback((key: keyof PlanLimits, value: number) => {
     setLimits((prev) => ({ ...prev, [key]: value }));

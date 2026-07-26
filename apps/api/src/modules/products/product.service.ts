@@ -279,6 +279,12 @@ export async function updateProduct(productId: string, storeId: string, payload:
     if (!syncResult.ok) return syncResult;
   }
 
+  const previous = updatePayloadWouldTouchPriceOrCost(rest as Record<string, unknown>)
+    ? ((await ProductModel.findOne({ _id: productId, storeId })
+        .select("price comparePrice")
+        .lean()) as { price?: number; comparePrice?: number } | null)
+    : null;
+
   const updatePayload = Object.keys(rest).length
     ? { ...rest, ...(await resolveProductMediaPayload(storeId, rest)) }
     : null;
@@ -297,8 +303,88 @@ export async function updateProduct(productId: string, storeId: string, payload:
   if (updatePayload) {
     await syncProductMediaReferences(storeId, productId, updatePayload);
   }
+
+  if (previous && updatePayload) {
+    try {
+      const {
+        recordPriceChange,
+        recordCostChange,
+        appendProductTimeline,
+      } = await import("../inventory/inventory-erp.service.js");
+
+      const next = product as { price?: number; comparePrice?: number; costPrice?: number };
+      const prevPrice = previous.price ?? 0;
+      const nextPrice = next.price ?? prevPrice;
+      if (rest.price !== undefined && prevPrice !== nextPrice) {
+        await recordPriceChange(storeId, {
+          productId,
+          field: "sellingPrice",
+          previousPrice: prevPrice,
+          newPrice: nextPrice,
+          reason: "product_update",
+        });
+        await appendProductTimeline(storeId, {
+          productId,
+          eventType: "price_changed",
+          title: "Selling price updated",
+          detail: `${prevPrice} → ${nextPrice}`,
+          actorName: "system",
+          metadata: { field: "sellingPrice", previousPrice: prevPrice, newPrice: nextPrice },
+        });
+      }
+
+      const prevCompare = previous.comparePrice ?? 0;
+      const nextCompare = next.comparePrice ?? prevCompare;
+      if (rest.comparePrice !== undefined && prevCompare !== nextCompare) {
+        await recordPriceChange(storeId, {
+          productId,
+          field: "comparePrice",
+          previousPrice: prevCompare,
+          newPrice: nextCompare,
+          reason: "product_update",
+        });
+        await appendProductTimeline(storeId, {
+          productId,
+          eventType: "price_changed",
+          title: "Compare price updated",
+          detail: `${prevCompare} → ${nextCompare}`,
+          actorName: "system",
+          metadata: { field: "comparePrice", previousPrice: prevCompare, newPrice: nextCompare },
+        });
+      }
+
+      const costPayload = (rest as { costPrice?: number }).costPrice;
+      if (costPayload !== undefined) {
+        const prevCost = (previous as { costPrice?: number }).costPrice ?? 0;
+        if (prevCost !== costPayload) {
+          await recordCostChange(storeId, {
+            productId,
+            previousCost: prevCost,
+            newCost: costPayload,
+            averageCost: costPayload,
+            reason: "product_update",
+          });
+          await appendProductTimeline(storeId, {
+            productId,
+            eventType: "cost_changed",
+            title: "Cost updated",
+            detail: `${prevCost} → ${costPayload}`,
+            actorName: "system",
+            metadata: { previousCost: prevCost, newCost: costPayload },
+          });
+        }
+      }
+    } catch (err) {
+      console.error("[products] Failed to record price/cost history", err);
+    }
+  }
+
   const hydrated = await hydrateProduct(product as Record<string, unknown>);
   return { ok: true as const, data: { product: hydrated } };
+}
+
+function updatePayloadWouldTouchPriceOrCost(rest: Record<string, unknown>) {
+  return rest.price !== undefined || rest.comparePrice !== undefined || rest.costPrice !== undefined;
 }
 
 export async function deleteProduct(productId: string, storeId: string) {

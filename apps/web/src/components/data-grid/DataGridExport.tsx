@@ -15,7 +15,7 @@ function DataGridExportInner({ onExportCsv, onExportExcel, onExportPdf, onPrint 
   const items = [
     onExportCsv ? { key: "csv", label: "Export CSV", icon: Download, onClick: onExportCsv } : null,
     onExportExcel ? { key: "excel", label: "Export Excel", icon: FileSpreadsheet, onClick: onExportExcel } : null,
-    onExportPdf ? { key: "pdf", label: "Export PDF", icon: Download, onClick: onExportPdf } : null,
+    onExportPdf ? { key: "pdf", label: "Export PDF Report", icon: Download, onClick: onExportPdf } : null,
     onPrint ? { key: "print", label: "Print", icon: Printer, onClick: onPrint } : null,
   ].filter(Boolean) as Array<{ key: string; label: string; icon: typeof Download; onClick: () => void }>;
 

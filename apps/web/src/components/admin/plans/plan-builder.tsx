@@ -4,10 +4,21 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Loader2, Save, Zap, Shield, HardDrive, DollarSign, Eye, Clock } from "lucide-react";
 import { toast } from "sonner";
-import type { Plan, PlanLimits, PlanFeatureToggles } from "@/redux/api/store-api";
+import type { Plan, PlanLimits, PlanFeatureToggles, PlanCourierAccess } from "@/redux/api/store-api";
 import { useUpdatePlanMutation } from "@/redux/api/store-api";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { PlanPreviewCard } from "@/components/admin/plans/plan-preview-card";
+
+const COURIER_PROVIDER_OPTIONS: Array<{
+  slug: PlanCourierAccess["providers"][number];
+  label: string;
+}> = [
+  { slug: "pathao", label: "Pathao" },
+  { slug: "redx", label: "RedX" },
+  { slug: "steadfast", label: "Steadfast" },
+  { slug: "paperfly", label: "Paperfly" },
+  { slug: "sundarban", label: "Sundarban" },
+];
 
 /* ── Tabs ─────────────────────────────────────────────────────────────────── */
 
@@ -135,6 +146,7 @@ const FEATURE_GROUPS: FeatureGroup[] = [
     key: "operations", label: "Operations",
     toggles: [
       { key: "shipping", label: "Shipping", description: "Shipping rate management" },
+      { key: "courier", label: "Courier Management", description: "Third-party courier integrations" },
       { key: "taxEngine", label: "Tax Engine", description: "Automated tax calculation" },
       { key: "maintenanceMode", label: "Maintenance Mode", description: "Put store in maintenance" },
       { key: "developerMode", label: "Developer Mode", description: "Custom code and debug tools" },
@@ -301,6 +313,13 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     realtimeVisitors: plan.featureToggles?.realtimeVisitors ?? false,
     analyticsExport: plan.featureToggles?.analyticsExport ?? false,
     reports: plan.featureToggles?.reports ?? false,
+    courier: plan.featureToggles?.courier ?? plan.courierAccess?.enabled ?? false,
+  }));
+
+  const [courierAccess, setCourierAccess] = useState<PlanCourierAccess>(() => ({
+    enabled: plan.courierAccess?.enabled ?? plan.featureToggles?.courier ?? false,
+    allProviders: plan.courierAccess?.allProviders ?? false,
+    providers: plan.courierAccess?.providers ?? [],
   }));
 
   const [featureText, setFeatureText] = useState(plan.features?.join("\n") ?? "");
@@ -311,6 +330,43 @@ export function PlanBuilder({ plan, initialTab }: Props) {
 
   const updateToggle = useCallback((key: keyof PlanFeatureToggles, value: boolean) => {
     setToggles((prev) => ({ ...prev, [key]: value }));
+    if (key === "courier") {
+      setCourierAccess((prev) => ({
+        ...prev,
+        enabled: value,
+        allProviders: value ? prev.allProviders || prev.providers.length === 0 : false,
+        providers:
+          value && prev.providers.length === 0 && !prev.allProviders
+            ? COURIER_PROVIDER_OPTIONS.map((p) => p.slug)
+            : value
+              ? prev.providers
+              : [],
+      }));
+    }
+  }, []);
+
+  const toggleCourierProvider = useCallback((slug: PlanCourierAccess["providers"][number]) => {
+    setCourierAccess((prev) => {
+      const nextProviders = prev.providers.includes(slug)
+        ? prev.providers.filter((p) => p !== slug)
+        : [...prev.providers, slug];
+      const enabled = prev.allProviders || nextProviders.length > 0;
+      setToggles((t) => ({ ...t, courier: enabled }));
+      return {
+        enabled,
+        allProviders: false,
+        providers: nextProviders,
+      };
+    });
+  }, []);
+
+  const toggleAllCouriers = useCallback((checked: boolean) => {
+    setCourierAccess({
+      enabled: checked,
+      allProviders: checked,
+      providers: checked ? COURIER_PROVIDER_OPTIONS.map((p) => p.slug) : [],
+    });
+    setToggles((t) => ({ ...t, courier: checked }));
   }, []);
 
   const handleSave = async () => {
@@ -338,7 +394,17 @@ export function PlanBuilder({ plan, initialTab }: Props) {
         lifetime: pricing.lifetime || 0,
       },
       limits,
-      featureToggles: toggles,
+      featureToggles: {
+        ...toggles,
+        courier: courierAccess.enabled || courierAccess.allProviders || courierAccess.providers.length > 0,
+      },
+      courierAccess: {
+        enabled: courierAccess.enabled || courierAccess.allProviders || courierAccess.providers.length > 0,
+        allProviders: courierAccess.allProviders,
+        providers: courierAccess.allProviders
+          ? COURIER_PROVIDER_OPTIONS.map((p) => p.slug)
+          : courierAccess.providers,
+      },
     };
 
     try {
@@ -519,6 +585,51 @@ export function PlanBuilder({ plan, initialTab }: Props) {
               </div>
             </div>
           ))}
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+            <h3 className="text-sm font-semibold text-apple-ink">Courier Access</h3>
+            <p className="mt-1 text-xs text-apple-ink-muted-48">
+              Choose which courier providers stores on this plan can configure. Selecting &quot;All Couriers&quot;
+              grants every provider.
+            </p>
+
+            <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-200 p-3 hover:bg-apple-canvas-parchment">
+              <input
+                type="checkbox"
+                checked={courierAccess.allProviders}
+                onChange={(e) => toggleAllCouriers(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+              />
+              <div>
+                <p className="text-sm font-medium text-apple-ink">All Couriers</p>
+                <p className="text-xs text-apple-ink-muted-48">Pathao, RedX, Steadfast, Paperfly, Sundarban</p>
+              </div>
+            </label>
+
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {COURIER_PROVIDER_OPTIONS.map((provider) => {
+                const checked =
+                  courierAccess.allProviders || courierAccess.providers.includes(provider.slug);
+                return (
+                  <label
+                    key={provider.slug}
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-apple-canvas-parchment ${
+                      checked ? "border-blue-200 bg-blue-50/50" : "border-zinc-200"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={courierAccess.allProviders}
+                      onChange={() => toggleCourierProvider(provider.slug)}
+                      className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-apple-ink">{provider.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 

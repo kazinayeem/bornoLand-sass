@@ -10,6 +10,28 @@ export type StoreOrderItem = {
   image: string;
 };
 
+export type OrderShipment = {
+  provider?: string;
+  providerName?: string;
+  consignmentId?: string;
+  trackingNumber?: string;
+  status?: string;
+  environment?: "sandbox" | "production" | "";
+  weightKg?: number;
+  codAmount?: number;
+  packageType?: string;
+  specialInstruction?: string;
+  estimatedCharge?: number | null;
+  estimatedDelivery?: string;
+  createdAt?: string;
+  cancelledAt?: string;
+  lastSyncedAt?: string;
+  rawResponse?: unknown;
+  lastError?: string;
+  autoCreated?: boolean;
+  attempts?: number;
+};
+
 export type StoreOrder = {
   _id: string;
   storeId: string;
@@ -29,6 +51,7 @@ export type StoreOrder = {
     fullName: string;
     phone: string;
     street: string;
+    area?: string;
     city: string;
     state: string;
     zip: string;
@@ -39,6 +62,7 @@ export type StoreOrder = {
   courier?: string;
   trackingNumber?: string;
   estimatedDelivery?: string;
+  shipment?: OrderShipment | null;
   invoiceNumber?: string;
   verificationToken?: string;
   timeline?: Array<{
@@ -127,13 +151,127 @@ export const storeOrderApi = baseApi.injectEndpoints({
         { type: "Orders", id: storeId },
         { type: "Orders", id: `${storeId}_${orderId}` }
       ]
-    })
+    }),
+    getShipmentOptions: builder.query<
+      {
+        data: {
+          order: {
+            _id: string;
+            orderNumber: string;
+            total: number;
+            paymentMethod: string;
+            paymentStatus: string;
+            itemCount: number;
+            shippingAddress: {
+              fullName: string;
+              phone: string;
+              street: string;
+              area: string;
+              city: string;
+              state: string;
+              zip: string;
+              country: string;
+              district: string;
+              zone: string;
+            };
+            codAmount: number;
+            isCod: boolean;
+          };
+          available: Array<{
+            provider: string;
+            name: string;
+            environment: "sandbox" | "production";
+            connectionStatus: string;
+            enabled: boolean;
+            recommended: boolean;
+            estimatedCharge: number | null;
+            estimatedDelivery: string | null;
+            defaultWeightKg: number;
+            codEnabled: boolean;
+            coverage: {
+              supported: boolean;
+              reason?: string;
+              matchedCity?: string;
+              matchedZone?: string;
+              matchedArea?: string;
+            };
+          }>;
+          unavailable: Array<{
+            provider: string;
+            name: string;
+            reason: string;
+            environment?: string;
+          }>;
+          canCreate: boolean;
+        };
+      },
+      { storeId: string; orderId: string }
+    >({
+      query: ({ storeId, orderId }) => `/stores/${storeId}/orders/${orderId}/shipment/options`,
+    }),
+    createOrderShipment: builder.mutation<
+      SingleOrderResponse & { data: { order: StoreOrder; shipment?: OrderShipment } },
+      {
+        storeId: string;
+        orderId: string;
+        provider: string;
+        weightKg?: number;
+        specialInstruction?: string;
+        packageType?: string;
+        codAmount?: number;
+      }
+    >({
+      query: ({ storeId, orderId, ...body }) => ({
+        url: `/stores/${storeId}/orders/${orderId}/shipment`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { storeId, orderId }) => [
+        { type: "Orders", id: storeId },
+        { type: "Orders", id: `${storeId}_${orderId}` },
+      ],
+    }),
+    cancelOrderShipment: builder.mutation<SingleOrderResponse, { storeId: string; orderId: string }>({
+      query: ({ storeId, orderId }) => ({
+        url: `/stores/${storeId}/orders/${orderId}/shipment/cancel`,
+        method: "POST",
+      }),
+      invalidatesTags: (_result, _error, { storeId, orderId }) => [
+        { type: "Orders", id: storeId },
+        { type: "Orders", id: `${storeId}_${orderId}` },
+      ],
+    }),
+    trackOrderShipment: builder.mutation<
+      {
+        data: {
+          order: StoreOrder;
+          tracking: { ok: boolean; status?: string; events?: Array<{ at: string; status: string; note?: string }> };
+          shipmentStatus: string;
+        };
+      },
+      { storeId: string; orderId: string }
+    >({
+      query: ({ storeId, orderId }) => ({
+        url: `/stores/${storeId}/orders/${orderId}/shipment/track`,
+        method: "POST",
+      }),
+      invalidatesTags: (_result, _error, { storeId, orderId }) => [
+        { type: "Orders", id: storeId },
+        { type: "Orders", id: `${storeId}_${orderId}` },
+      ],
+    }),
   })
 });
 
 export const {
   useGetStoreOrdersQuery,
+  useLazyGetStoreOrdersQuery,
   useGetStoreOrderQuery,
   useUpdateOrderStatusMutation,
-  useUpdatePaymentStatusMutation
+  useUpdatePaymentStatusMutation,
+  useGetShipmentOptionsQuery,
+  useLazyGetShipmentOptionsQuery,
+  useCreateOrderShipmentMutation,
+  useCancelOrderShipmentMutation,
+  useTrackOrderShipmentMutation,
 } = storeOrderApi;

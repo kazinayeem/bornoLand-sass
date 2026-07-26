@@ -40,8 +40,19 @@ reportRouter.use(requireAuth);
 
 // Dashboard KPIs
 reportRouter.get("/stores/:storeId/dashboard", requireReportsAccess, async (request: AuthRequest, response: Response) => {
-  const { preset, start, end } = request.query as Record<string, string>;
-  const range = { preset: preset as any, start, end };
+  const q = request.query as Record<string, string>;
+  const range = {
+    preset: q.preset as any,
+    start: q.start,
+    end: q.end,
+    orderStatus: q.orderStatus,
+    paymentStatus: q.paymentStatus,
+    paymentMethod: q.paymentMethod,
+    courier: q.courier,
+    search: q.search,
+    minAmount: q.minAmount,
+    maxAmount: q.maxAmount,
+  };
   const data = await getDashboardKPIs(String(request.params.storeId), range);
   return sendSuccess(response, data);
 });

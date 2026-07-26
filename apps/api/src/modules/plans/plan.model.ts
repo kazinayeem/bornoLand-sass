@@ -124,8 +124,17 @@ const planFeatureSchema = new Schema({
   realtimeVisitors: { type: Boolean, default: true },
   analyticsExport: { type: Boolean, default: true },
   reports: { type: Boolean, default: false },
+  courier: { type: Boolean, default: false },
 }, { _id: false });
 
+const planCourierAccessSchema = new Schema(
+  {
+    enabled: { type: Boolean, default: false },
+    allProviders: { type: Boolean, default: false },
+    providers: { type: [String], default: [] },
+  },
+  { _id: false },
+);
 const planPricingSchema = new Schema({
   monthly: { type: Number, default: 0 },
   quarterly: { type: Number, default: 0 },
@@ -145,6 +154,7 @@ const planSchema = new Schema({
   features: { type: [String], default: [] },
   limits: { type: planLimitSchema, default: () => ({}) },
   featureToggles: { type: planFeatureSchema, default: () => ({}) },
+  courierAccess: { type: planCourierAccessSchema, default: () => ({}) },
   pricing: { type: planPricingSchema, default: () => ({}) },
   customDomain: { type: Boolean, default: false },
   prioritySupport: { type: Boolean, default: false },

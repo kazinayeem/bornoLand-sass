@@ -41,7 +41,7 @@ const FEATURE_GROUPS: { label: string; keys: string[] }[] = [
   },
   {
     label: "Advanced",
-    keys: ["taxEngine", "invoiceGenerator", "backupRestore", "auditLogs", "developerMode", "maintenanceMode", "darkMode", "whiteLabel", "customDomain", "subdomain", "aiContent", "bulkImport", "bulkExport", "csvImport", "csvExport", "advancedCheckout", "expressCheckout", "savedCards", "buyNowPayLater", "shipping", "localPickup", "storeVerification"],
+    keys: ["taxEngine", "invoiceGenerator", "backupRestore", "auditLogs", "developerMode", "maintenanceMode", "darkMode", "whiteLabel", "customDomain", "subdomain", "aiContent", "bulkImport", "bulkExport", "csvImport", "csvExport", "advancedCheckout", "expressCheckout", "savedCards", "buyNowPayLater", "shipping", "courier", "localPickup", "storeVerification"],
   },
 ];
 
@@ -75,6 +75,7 @@ const FEATURE_LABELS: Record<string, string> = {
   wholesale: "Wholesale",
   dropshipping: "Dropshipping",
   shipping: "Shipping",
+  courier: "Courier Management",
   localPickup: "Local Pickup",
   abandonedCart: "Abandoned Cart",
   emailMarketing: "Email Marketing",

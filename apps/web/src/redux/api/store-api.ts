@@ -132,6 +132,13 @@ export type PlanFeatureToggles = {
   realtimeVisitors: boolean;
   analyticsExport: boolean;
   reports: boolean;
+  courier: boolean;
+};
+
+export type PlanCourierAccess = {
+  enabled: boolean;
+  allProviders: boolean;
+  providers: Array<"pathao" | "redx" | "steadfast" | "paperfly" | "sundarban">;
 };
 
 export type Plan = {
@@ -146,6 +153,7 @@ export type Plan = {
   features: string[];
   limits: PlanLimits;
   featureToggles: PlanFeatureToggles;
+  courierAccess?: PlanCourierAccess;
   pricing?: {
     monthly?: number;
     quarterly?: number;
@@ -200,6 +208,9 @@ export type Store = {
   storageUsedBytes?: number;
   storageLimitBytes?: number;
   storageFileCount?: number;
+  courierAccess?: {
+    providers: Array<"pathao" | "redx" | "steadfast" | "paperfly" | "sundarban">;
+  };
   createdAt: string;
   updatedAt: string;
 };

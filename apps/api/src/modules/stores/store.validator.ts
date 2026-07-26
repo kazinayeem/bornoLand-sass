@@ -42,6 +42,14 @@ export const createStoreSchema = z.object({
   faviconMediaId: z.string().optional(),
   brandColor: z.string().optional(),
   accentColor: z.string().optional(),
+  courierAccess: z
+    .object({
+      providers: z
+        .array(z.enum(["pathao", "redx", "steadfast", "paperfly", "sundarban"]))
+        .optional()
+        .default([]),
+    })
+    .optional(),
 });
 
 export const updateStoreSchema = z.object({
@@ -63,7 +71,12 @@ export const updateStoreSchema = z.object({
   brandColor: z.string().optional(),
   accentColor: z.string().optional(),
   slug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens").optional(),
-  theme: themeSchema.optional()
+  theme: themeSchema.optional(),
+  courierAccess: z
+    .object({
+      providers: z.array(z.enum(["pathao", "redx", "steadfast", "paperfly", "sundarban"])),
+    })
+    .optional(),
 });
 
 export const updateStoreBrandingSchema = z.object({

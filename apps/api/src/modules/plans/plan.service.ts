@@ -21,7 +21,7 @@ export async function listPlans(includeHidden = false) {
 export async function listPublicPlans() {
   await connectDatabase();
   const plans = await PlanModel.find({ isActive: true, visible: { $ne: false } })
-    .select("name slug description priceBDT priceYearly isCustomPrice trialDays features limits featureToggles pricing customDomain prioritySupport sortOrder isRecommended isPopular")
+    .select("name slug description priceBDT priceYearly isCustomPrice trialDays features limits featureToggles courierAccess pricing customDomain prioritySupport sortOrder isRecommended isPopular")
     .sort({ sortOrder: 1, priceBDT: 1 })
     .lean();
   return { ok: true as const, data: { plans } };
@@ -53,8 +53,55 @@ export async function updatePlan(planId: string, payload: unknown) {
   if (!parsed.success) return { ok: false as const, message: "Invalid plan data" };
 
   await connectDatabase();
-  const plan = await PlanModel.findByIdAndUpdate(planId, { $set: parsed.data }, { new: true }).lean();
+
+  // Keep courierAccess ↔ featureToggles.courier in sync when either is provided
+  const data = { ...parsed.data } as Record<string, unknown>;
+  if (parsed.data.courierAccess) {
+    const ca = parsed.data.courierAccess;
+    const enabled = Boolean(ca.enabled || ca.allProviders || (ca.providers?.length ?? 0) > 0);
+    data.courierAccess = { ...ca, enabled };
+    data.featureToggles = {
+      ...(parsed.data.featureToggles ?? {}),
+      courier: enabled,
+    };
+  } else if (parsed.data.featureToggles?.courier !== undefined) {
+    const enabled = Boolean(parsed.data.featureToggles.courier);
+    data.courierAccess = {
+      enabled,
+      allProviders: enabled,
+      providers: enabled ? ["pathao", "redx", "steadfast", "paperfly", "sundarban"] : [],
+    };
+  }
+
+  const plan = await PlanModel.findByIdAndUpdate(planId, { $set: data }, { new: true }).lean();
   if (!plan) return { ok: false as const, message: "Plan not found" };
+
+  // Sync Feature catalog assignment so frontend FeatureGate stays consistent
+  const courierEnabled = Boolean(
+    (plan as { courierAccess?: { enabled?: boolean }; featureToggles?: { courier?: boolean } })
+      .courierAccess?.enabled ??
+      (plan as { featureToggles?: { courier?: boolean } }).featureToggles?.courier,
+  );
+  try {
+    const { PlanFeatureModel } = await import("../features/plan-feature.model.js");
+    await PlanFeatureModel.findOneAndUpdate(
+      { planId, featureKey: "courier" },
+      {
+        $set: {
+          planId,
+          featureKey: "courier",
+          enabled: courierEnabled,
+          limit: 0,
+          tierKey: "disabled",
+          value: null,
+        },
+      },
+      { upsert: true },
+    );
+  } catch {
+    // Non-fatal — courier API still uses plan.courierAccess / featureToggles
+  }
+
   return { ok: true as const, data: { plan } };
 }
 

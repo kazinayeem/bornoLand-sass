@@ -75,7 +75,10 @@ const storeSchema = new Schema(
     },
     storageUsedBytes: { type: Number, default: 0, min: 0 },
     storageLimitBytes: { type: Number, default: 0, min: 0 },
-    storageUpdatedAt: { type: Date }
+    storageUpdatedAt: { type: Date },
+    courierAccess: {
+      providers: { type: [{ type: String, lowercase: true, trim: true }], default: [] },
+    },
   },
   { timestamps: true }
 );

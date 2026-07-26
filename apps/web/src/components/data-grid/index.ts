@@ -27,9 +27,9 @@ export { useDebouncedGridSearch } from "./hooks/use-debounced-grid-search";
 export { useSavedViews } from "./hooks/use-saved-views";
 
 export { buildDataGridQueryParams } from "./utils/build-query-params";
-export { exportRowsToCsv, printDataGrid } from "./utils/export-data";
+export { exportRowsToCsv, printDataGrid, printDataGridReport, buildExportTable, openReportWindow } from "./utils/export-data";
+export type { PrintReportOptions, ReportSummaryItem } from "./utils/export-data";
 export { legacyColumnsToColumnDefs } from "./utils/column-helpers";
-
 export type {
   LegacyColumn,
   LegacyBulkAction,
@@ -43,6 +43,7 @@ export type {
   DataGridRowAction,
   DataGridBulkAction,
   DataGridExportScope,
+  DataGridExportMeta,
   DataGridSavedView,
   DataGridPermissions,
   DataGridState,

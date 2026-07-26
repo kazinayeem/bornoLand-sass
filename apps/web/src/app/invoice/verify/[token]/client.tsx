@@ -262,7 +262,21 @@ function OrderDetails({ inv }: { inv: Record<string, unknown> }) {
   const customerId = inv.customerId as Record<string, unknown> | string | undefined;
   const customerName = typeof customerId === "object" ? (customerId?.name as string) : "";
   const customerEmail = typeof customerId === "object" ? (customerId?.email as string) : ship?.email as string || "";
+  const customerPhone = typeof customerId === "object" ? (customerId?.phone as string) : "";
   const currencyCode = (inv.currencyCode as string) || "BDT";
+  const shipment = inv.shipment as Record<string, unknown> | null | undefined;
+  const courierName =
+    (shipment?.providerName as string) ||
+    (inv.courier as string) ||
+    (shipment?.provider as string) ||
+    "";
+  const trackingNo =
+    (shipment?.trackingNumber as string) || (inv.trackingNumber as string) || "";
+  const consignmentId = (shipment?.consignmentId as string) || "";
+  const shipmentStatus = (shipment?.status as string) || "";
+  const estimatedDelivery =
+    (shipment?.estimatedDelivery as string) || (inv.estimatedDelivery as string) || "";
+  const paymentVerification = inv.paymentVerification as Record<string, unknown> | undefined;
 
   return (
     <div className="divide-y divide-zinc-100">
@@ -273,24 +287,29 @@ function OrderDetails({ inv }: { inv: Record<string, unknown> }) {
               <User className="h-3.5 w-3.5" />
               Customer
             </h3>
-            <p className="text-sm font-semibold text-apple-ink">{customerName || ship?.fullName as string || "—"}</p>
-            <p className="text-xs text-apple-ink-muted-48">{customerEmail || ship?.phone as string || ""}</p>
+            <p className="text-sm font-semibold text-apple-ink">{customerName || (ship?.fullName as string) || "—"}</p>
+            {customerEmail ? <p className="text-xs text-apple-ink-muted-48">{customerEmail}</p> : null}
+            {(customerPhone || ship?.phone) ? (
+              <p className="text-xs text-apple-ink-muted-48">{customerPhone || String(ship?.phone || "")}</p>
+            ) : null}
           </div>
           <div>
             <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
               <Truck className="h-3.5 w-3.5" />
-              Shipping
+              Shipping Address
             </h3>
-            {ship && (
+            {ship ? (
               <>
                 <p className="text-sm font-semibold text-apple-ink">{ship.fullName as string}</p>
                 <p className="text-xs text-apple-ink-muted-48">
-                  {[ship.street, ship.city, ship.state, ship.zip, ship.country]
+                  {[ship.street, ship.area, ship.city, ship.state, ship.zip, ship.country]
                     .map((v) => v?.toString().trim())
                     .filter(Boolean)
                     .join(", ")}
                 </p>
               </>
+            ) : (
+              <p className="text-xs text-apple-ink-muted-48">—</p>
             )}
           </div>
         </div>
@@ -298,19 +317,21 @@ function OrderDetails({ inv }: { inv: Record<string, unknown> }) {
           <div>
             <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
               <Calendar className="h-3.5 w-3.5" />
-              Dates
+              Invoice Info
             </h3>
             <div className="space-y-1">
               <div className="flex justify-between text-xs">
                 <span className="text-apple-ink-muted-48">Created</span>
                 <span className="font-medium text-apple-ink">{formatDate(inv.createdAt as string)}</span>
               </div>
-              {typeof inv.paidAt === "string" && inv.paidAt ? (
-                <div className="flex justify-between text-xs">
-                  <span className="text-apple-ink-muted-48">Paid</span>
-                  <span className="font-medium text-apple-ink">{formatDate(inv.paidAt)}</span>
-                </div>
-              ) : null}
+              <div className="flex justify-between text-xs">
+                <span className="text-apple-ink-muted-48">Order Status</span>
+                <span className="font-medium capitalize text-apple-ink">{(inv.status as string) || "—"}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-apple-ink-muted-48">Currency</span>
+                <span className="font-medium text-apple-ink">{currencyCode}</span>
+              </div>
             </div>
           </div>
           <div>
@@ -318,29 +339,80 @@ function OrderDetails({ inv }: { inv: Record<string, unknown> }) {
               <CreditCard className="h-3.5 w-3.5" />
               Payment
             </h3>
-            <p className="text-sm font-semibold text-apple-ink capitalize">{(inv.paymentMethod as string) || "—"}</p>
+            <p className="text-sm font-semibold capitalize text-apple-ink">{(inv.paymentMethod as string) || "—"}</p>
+            <p className="text-xs capitalize text-apple-ink-muted-48">{(inv.paymentStatus as string) || ""}</p>
+            {paymentVerification?.transactionId ? (
+              <p className="mt-1 font-mono text-[11px] text-apple-ink-muted-48">
+                TX: {String(paymentVerification.transactionId)}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
 
+      {(courierName || trackingNo) && (
+        <div className="px-6 py-4 print:px-4">
+          <h3 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
+            <Truck className="h-3.5 w-3.5" />
+            Courier / Shipment
+          </h3>
+          <div className="grid gap-2 rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 sm:grid-cols-2">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-apple-ink-muted-48">Provider</p>
+              <p className="text-sm font-semibold text-apple-ink">{courierName || "—"}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-apple-ink-muted-48">Status</p>
+              <p className="text-sm font-semibold capitalize text-apple-ink">
+                {shipmentStatus ? shipmentStatus.replace(/_/g, " ") : "—"}
+              </p>
+            </div>
+            {trackingNo ? (
+              <div className="sm:col-span-2">
+                <p className="text-[10px] uppercase tracking-wide text-apple-ink-muted-48">Tracking Number</p>
+                <p className="font-mono text-sm font-semibold text-apple-ink">{trackingNo}</p>
+              </div>
+            ) : null}
+            {consignmentId ? (
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-apple-ink-muted-48">Consignment ID</p>
+                <p className="font-mono text-xs font-medium text-apple-ink">{consignmentId}</p>
+              </div>
+            ) : null}
+            {estimatedDelivery ? (
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-apple-ink-muted-48">Est. Delivery</p>
+                <p className="text-xs font-medium text-apple-ink">{estimatedDelivery}</p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+
       {items.length > 0 && (
         <div className="px-6 py-4 print:px-4">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Items</h3>
-          <div className="space-y-2">
+          <div className="overflow-hidden rounded-xl border border-zinc-100">
+            <div className="grid grid-cols-[1fr_auto_auto] gap-2 bg-zinc-50 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-apple-ink-muted-48">
+              <span>Product</span>
+              <span>Qty</span>
+              <span className="text-right">Total</span>
+            </div>
             {items.map((item, i) => (
-              <div key={i} className="flex items-center justify-between border-b border-zinc-50 pb-2 last:border-0">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-apple-ink">{item.name as string}</p>
-                  {(item.variantTitle as string) && (
+              <div
+                key={i}
+                className="grid grid-cols-[1fr_auto_auto] gap-2 border-t border-zinc-50 px-3 py-2.5"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-apple-ink">{item.name as string}</p>
+                  {(item.variantTitle as string) ? (
                     <p className="text-xs text-apple-ink-muted-48">{item.variantTitle as string}</p>
-                  )}
+                  ) : null}
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-apple-ink">
-                    {formatCurrency(Number(item.price ?? 0) * Number(item.quantity ?? 0), currencyCode)}
-                  </p>
-                  <p className="text-xs text-apple-ink-muted-48">x{String(item.quantity ?? 0)}</p>
-                </div>
+                <p className="text-xs text-apple-ink-muted-80">×{String(item.quantity ?? 0)}</p>
+                <p className="text-right text-sm font-semibold text-apple-ink">
+                  {formatCurrency(Number(item.price ?? 0) * Number(item.quantity ?? 0), currencyCode)}
+                </p>
               </div>
             ))}
           </div>
@@ -372,7 +444,7 @@ function OrderDetails({ inv }: { inv: Record<string, unknown> }) {
             </div>
           )}
           <div className="flex justify-between border-t border-zinc-200 pt-2 text-base font-bold">
-            <span className="text-apple-ink">Total</span>
+            <span className="text-apple-ink">Grand Total</span>
             <span className="text-apple-ink">{formatCurrency(total, currencyCode)}</span>
           </div>
           {refund > 0 && (
@@ -383,6 +455,13 @@ function OrderDetails({ inv }: { inv: Record<string, unknown> }) {
           )}
         </div>
       </div>
+
+      {typeof inv.notes === "string" && inv.notes.trim() ? (
+        <div className="px-6 py-4 print:px-4">
+          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Notes</h3>
+          <p className="text-sm text-apple-ink-muted-80">{inv.notes}</p>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataGrid } from "./DataGrid";
 import { useDataGridState } from "./hooks/use-data-grid-state";
 import { legacyColumnsToColumnDefs } from "./utils/column-helpers";
-import type { LegacyBulkAction, LegacyColumn, LegacySortConfig } from "./types";
+import type { LegacyBulkAction, LegacyColumn, LegacySortConfig, DataGridExportMeta } from "./types";
 
 type LegacyDataTableProps<T> = {
   data: T[];
@@ -35,6 +35,13 @@ type LegacyDataTableProps<T> = {
   rowClassName?: string;
   hideSearch?: boolean;
   hidePagination?: boolean;
+  exportMeta?: DataGridExportMeta;
+  toolbarExtra?: React.ReactNode;
+  onExportOverride?: {
+    csv?: () => void;
+    pdf?: () => void;
+  };
+  permissions?: React.ComponentProps<typeof DataGrid<T>>["permissions"];
 };
 
 export function LegacyDataTable<T>({
@@ -64,6 +71,10 @@ export function LegacyDataTable<T>({
   className,
   hideSearch,
   hidePagination,
+  exportMeta,
+  toolbarExtra,
+  onExportOverride,
+  permissions,
 }: LegacyDataTableProps<T>) {
   const columnDefs = useMemo(() => legacyColumnsToColumnDefs(columns), [columns]);
 
@@ -139,6 +150,11 @@ export function LegacyDataTable<T>({
       enableVirtualization={data.length >= 50}
       hideSearch={hideSearch}
       searchPlaceholder={searchPlaceholder}
+      exportMeta={exportMeta}
+      toolbarExtra={toolbarExtra}
+      onExportCsv={onExportOverride?.csv}
+      onExportPdf={onExportOverride?.pdf}
+      permissions={permissions}
     />
   );
 }

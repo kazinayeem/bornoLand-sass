@@ -32,7 +32,7 @@ type DataGridToolbarProps<TData> = {
   searchPlaceholder?: string;
   extra?: React.ReactNode;
   onExportCsv?: () => void;
-  onExportPrint?: () => void;
+  onExportPdf?: () => void;
 };
 
 function DataGridToolbarInner<TData>({
@@ -52,7 +52,7 @@ function DataGridToolbarInner<TData>({
   searchPlaceholder,
   extra,
   onExportCsv,
-  onExportPrint,
+  onExportPdf,
 }: DataGridToolbarProps<TData>) {
   const visibleBulkActions = filterBulkActions(bulkActions, permissions);
   const hasSelection = selectedRows.length > 0;
@@ -95,8 +95,8 @@ function DataGridToolbarInner<TData>({
             onChange={(density) => onStateChange({ density })}
           />
           <DataGridColumnVisibility table={table} />
-          {(permissions?.canExport ?? true) && (onExportCsv || onExportPrint) ? (
-            <DataGridExport onExportCsv={onExportCsv} onPrint={onExportPrint} />
+          {(permissions?.canExport ?? true) && (onExportCsv || onExportPdf) ? (
+            <DataGridExport onExportCsv={onExportCsv} onExportPdf={onExportPdf} />
           ) : null}
           {(permissions?.canImport ?? false) && onImport ? (
             <Button variant="outline" size="sm" onClick={onImport}>

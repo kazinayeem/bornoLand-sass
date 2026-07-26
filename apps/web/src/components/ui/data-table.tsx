@@ -9,4 +9,7 @@ export {
   type LegacyColumn as Column,
   type LegacyBulkAction as BulkAction,
   type LegacySortConfig as SortConfig,
+  printDataGridReport,
+  openReportWindow,
+  type DataGridExportMeta,
 } from "@/components/data-grid";

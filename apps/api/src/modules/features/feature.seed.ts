@@ -28,8 +28,9 @@ type SeedFeature = {
 
 export const SEED_GROUPS: SeedGroup[] = [
   { key: "commerce", name: "Commerce", sortOrder: 1 },
-  { key: "content", name: "Content", sortOrder: 2 },
-  { key: "platform", name: "Platform", sortOrder: 3 },
+  { key: "inventory_mgmt", name: "Inventory Management", sortOrder: 2 },
+  { key: "content", name: "Content", sortOrder: 3 },
+  { key: "platform", name: "Platform", sortOrder: 4 },
 ];
 
 // ── Features (only implemented modules) ─────────────────────────────────────
@@ -38,7 +39,19 @@ export const SEED_FEATURES: SeedFeature[] = [
   // Commerce
   { key: "products", name: "Products", description: "Product catalog management", type: "limit", groupKey: "commerce", sortOrder: 1, usageCounterKey: "products", unit: "items", defaultLimit: 50 },
   { key: "categories", name: "Categories", description: "Product categories", type: "limit", groupKey: "commerce", sortOrder: 2, usageCounterKey: "categories", defaultLimit: 20 },
-  { key: "inventory", name: "Inventory", description: "Stock tracking and management", type: "boolean", groupKey: "commerce", sortOrder: 3, defaultEnabled: true },
+  { key: "inventory", name: "Inventory", description: "Current stock tracking and adjustments", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 1, defaultEnabled: true },
+  { key: "inventory_history", name: "Inventory History", description: "Stock movement history and ledger", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 2, defaultEnabled: false },
+  { key: "price_history", name: "Price History", description: "Track selling and compare price changes", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 3, defaultEnabled: false },
+  { key: "cost_history", name: "Cost History", description: "Track purchase and average cost changes", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 4, defaultEnabled: false },
+  { key: "suppliers", name: "Suppliers", description: "Supplier profiles and purchase history", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 5, defaultEnabled: false },
+  { key: "purchase_orders", name: "Purchase Orders", description: "Create and receive purchase orders", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 6, defaultEnabled: false },
+  { key: "batch_fifo", name: "Batch / FIFO Inventory", description: "Batch lots with FIFO allocation", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 7, defaultEnabled: false },
+  { key: "warehouses", name: "Warehouses", description: "Multi-warehouse stock and transfers", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 8, defaultEnabled: false },
+  { key: "barcode", name: "Barcode", description: "Generate, print, and search barcodes", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 9, defaultEnabled: false },
+  { key: "inventory_reports", name: "Inventory Reports", description: "Valuation, aging, and movement reports", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 10, defaultEnabled: false },
+  { key: "low_stock_alerts", name: "Low Stock Alerts", description: "Minimum stock alerts and notifications", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 11, defaultEnabled: false },
+  { key: "stock_transfer", name: "Stock Transfer", description: "Transfer stock between warehouses", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 12, defaultEnabled: false },
+  { key: "inventory_audit_log", name: "Inventory Audit Log", description: "Permanent audit trail for inventory actions", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 13, defaultEnabled: false },
   { key: "orders", name: "Orders", description: "Order management", type: "limit", groupKey: "commerce", sortOrder: 4, usageCounterKey: "orders", unit: "orders", defaultLimit: 0 },
   { key: "customers", name: "Customers", description: "Customer records", type: "limit", groupKey: "commerce", sortOrder: 5, usageCounterKey: "customers", defaultLimit: 0 },
   { key: "product_variants", name: "Product Variants", description: "Variant combinations per product", type: "limit", groupKey: "commerce", sortOrder: 6, unit: "variants", defaultLimit: 0 },
@@ -57,6 +70,7 @@ export const SEED_FEATURES: SeedFeature[] = [
   { key: "storage", name: "Storage", description: "File storage space", type: "limit", groupKey: "platform", sortOrder: 22, usageCounterKey: "storageMB", unit: "GB", defaultLimit: 1 },
   { key: "billing", name: "Billing", description: "Billing and subscription management", type: "boolean", groupKey: "platform", sortOrder: 23, defaultEnabled: true },
   { key: "branding", name: "Branding", description: "Store branding and customization", type: "boolean", groupKey: "platform", sortOrder: 24, defaultEnabled: true },
+  { key: "courier", name: "Courier Management", description: "Third-party courier integrations (Pathao, RedX, Steadfast, Paperfly, Sundarban)", type: "boolean", groupKey: "commerce", sortOrder: 7, defaultEnabled: false },
 ];
 
 // ── Tiers (only for tier-type features) ─────────────────────────────────────

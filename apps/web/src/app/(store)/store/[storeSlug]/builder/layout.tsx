@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { BuilderModeProvider } from "@/lib/builder-mode";
 import { BuilderShell } from "@/components/builder/builder-shell";
+import { BuilderErrorBoundary } from "@/components/builder/builder-error-boundary";
 import { generateStorePageMetadata } from "@/lib/server/page-metadata";
 
 /**
@@ -18,10 +19,19 @@ export async function generateMetadata({ params }: { params: Promise<{ storeSlug
   });
 }
 
-export default function BuilderLayout({ children }: { children: ReactNode }) {
+export default async function BuilderLayout({
+  children,
+  params,
+}: {
+  children: ReactNode;
+  params: Promise<{ storeSlug: string }>;
+}) {
+  const { storeSlug } = await params;
   return (
     <BuilderModeProvider>
-      <BuilderShell>{children}</BuilderShell>
+      <BuilderErrorBoundary storeSlug={storeSlug}>
+        <BuilderShell>{children}</BuilderShell>
+      </BuilderErrorBoundary>
     </BuilderModeProvider>
   );
 }

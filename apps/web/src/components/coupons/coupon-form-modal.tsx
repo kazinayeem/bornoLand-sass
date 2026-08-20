@@ -547,7 +547,8 @@ export function CouponFormModal({
                   <div className="max-h-36 overflow-y-auto divide-y divide-zinc-100 rounded-lg border border-zinc-200 bg-white">
                     {customersList.map((cust) => {
                       const selected = selectedCustomerIds.includes(cust._id);
-                      const displayName = `${cust.firstName || ""} ${cust.lastName || ""}`.trim() || cust.email || "Customer";
+                      const displayName = cust.name || cust.email || "Customer";
+
                       return (
                         <div
                           key={cust._id}

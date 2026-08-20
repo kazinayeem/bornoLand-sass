@@ -1,132 +1,96 @@
 import { connectDatabase } from "../../common/database/connection.js";
 import { OrderModel } from "../../models/order.model.js";
-import { CartModel } from "../../models/cart.model.js";
-import { ProductModel } from "../../models/product.model.js";
-import { DeliveryZoneModel } from "../../models/delivery-zone.model.js";
+import { CustomerModel } from "../customers/customer.model.js";
+import { ProductModel } from "../products/product.model.js";
+import { StoreModel } from "../stores/store.model.js";
 import { StoreSettingsModel } from "../../models/store-settings.model.js";
-import { StoreModel } from "../../models/store.model.js";
-import { checkLimit } from "../features/feature-access.service.js";
+import { DeliveryZoneModel } from "../delivery/delivery-zone.model.js";
+import { CartModel } from "../cart/cart.model.js";
 import { incrementCouponUsage } from "../coupons/coupon.service.js";
-import { createBillingNotification } from "../notifications/billing-notification.service.js";
-import { autoSaveCustomerAddressFromOrder } from "../customers/customer-address.service.js";
-import { createCustomerNotification } from "../customers/customer-notification.service.js";
+import { calculateTax } from "../../common/utils/tax.js";
+import { checkLimit } from "../../common/middleware/plan-enforcement.middleware.js";
+import { createBillingNotification } from "../billing/billing.service.js";
+import { createCustomerNotification } from "../notifications/notification.service.js";
 
 function generateOrderNumber(prefix = "ORD"): string {
-  const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `${prefix}-${ts}-${rand}`;
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const random = Math.floor(1000 + Math.random() * 9000);
+  return `${prefix}-${date}-${random}`;
 }
 
-function calculateTax(subtotal: number, settings: { taxEnabled?: boolean; taxRate?: number; taxIncluded?: boolean }) {
-  if (!settings.taxEnabled || !settings.taxRate) return { tax: 0, taxRate: 0 };
-  if (settings.taxIncluded) return { tax: 0, taxRate: settings.taxRate };
-  const tax = Math.round(((subtotal * settings.taxRate) / 100) * 100) / 100;
-  return { tax, taxRate: settings.taxRate };
-}
-
-import { decrementVariantStock } from "../products/variants/variant.service.js";
+type StockTarget = {
+  productId: unknown;
+  variantId?: unknown;
+  quantity: number;
+};
 
 async function decrementProductStock(
   storeId: string,
-  item: { productId: unknown; variantId?: unknown; quantity: number },
-  orderMeta?: { orderId?: string; orderNumber?: string }
+  item: StockTarget,
+  meta?: { orderId?: string; orderNumber?: string },
 ) {
-  const product = await ProductModel.findById(item.productId);
-  if (!product || product.trackInventory === false) return;
+  try {
+    const { recordInventoryMovement } = await import("../inventory/inventory-movement.service.js");
+    const pid = String(item.productId);
+    const product = await ProductModel.findOne({ _id: pid, storeId });
+    if (!product) return;
 
-  let previousStock = 0;
-  let newStock = 0;
-  let usedVariant = false;
+    let previousStock = product.stock;
+    let nextStock = product.stock;
 
-  if (item.variantId) {
-    const { VariantInventoryModel } = await import("../products/variants/variant-inventory.model.js");
-    const inv = await VariantInventoryModel.findOne({
-      variantId: item.variantId,
-      storeId,
-      productId: item.productId,
-    });
-    if (inv) {
-      previousStock = inv.quantity;
-      const decremented = await decrementVariantStock(
-        storeId,
-        String(item.productId),
-        String(item.variantId),
-        item.quantity
-      );
-      if (decremented) {
-        newStock = Math.max(0, previousStock - item.quantity);
-        usedVariant = true;
+    if (item.variantId && product.variants?.length) {
+      const vid = String(item.variantId);
+      const vIndex = product.variants.findIndex((v: { _id?: unknown }) => String(v._id) === vid);
+      if (vIndex > -1) {
+        const variant = product.variants[vIndex];
+        previousStock = variant.stock;
+        variant.stock = Math.max(0, variant.stock - item.quantity);
+        nextStock = variant.stock;
+        product.stock = product.variants.reduce((sum: number, v: { stock: number }) => sum + (v.stock || 0), 0);
+        product.markModified("variants");
+        await product.save();
+
+        await recordInventoryMovement({
+          storeId,
+          productId: pid,
+          variantId: vid,
+          type: "sale",
+          quantity: -item.quantity,
+          previousStock,
+          newStock: nextStock,
+          referenceType: "order",
+          referenceId: meta?.orderId,
+          referenceNumber: meta?.orderNumber,
+          notes: `Automatic inventory deduction for order ${meta?.orderNumber || ""}`.trim(),
+        });
+        return;
       }
     }
-  }
 
-  if (!usedVariant) {
-    previousStock = product.stock ?? 0;
-    product.stock = Math.max(0, previousStock - item.quantity);
-    newStock = product.stock;
+    product.stock = Math.max(0, product.stock - item.quantity);
+    nextStock = product.stock;
     await product.save();
-  }
 
-  try {
-    const { checkFeature } = await import("../features/feature-access.service.js");
-    const fifo = await checkFeature(storeId, "batch_fifo");
-    if (fifo.allowed) {
-      const { fifoAllocate } = await import("../inventory/inventory-erp.service.js");
-      await fifoAllocate(
-        storeId,
-        String(item.productId),
-        item.quantity,
-        item.variantId ? String(item.variantId) : null
-      );
-    }
-  } catch (err) {
-    console.error("[orders] FIFO allocate failed", err);
-  }
-
-  try {
-    const { StockLogModel } = await import("../inventory/stock-log.model.js");
-    const mongoose = (await import("mongoose")).default;
-    await StockLogModel.create({
-      storeId: new mongoose.Types.ObjectId(storeId),
-      productId: product._id,
-      variantId: item.variantId ? new mongoose.Types.ObjectId(String(item.variantId)) : null,
+    await recordInventoryMovement({
+      storeId,
+      productId: pid,
+      type: "sale",
+      quantity: -item.quantity,
       previousStock,
-      newStock,
-      beforeQuantity: previousStock,
-      afterQuantity: newStock,
-      quantityChange: -item.quantity,
-      reason: "order_placed",
-      note: orderMeta?.orderNumber ? `Order ${orderMeta.orderNumber}` : "Order placed",
-      updatedBy: "system",
-      source: "order",
-      reference: orderMeta?.orderNumber ?? "",
-      referenceId: orderMeta?.orderId ? new mongoose.Types.ObjectId(orderMeta.orderId) : null,
+      newStock: nextStock,
+      referenceType: "order",
+      referenceId: meta?.orderId,
+      referenceNumber: meta?.orderNumber,
+      notes: `Automatic inventory deduction for order ${meta?.orderNumber || ""}`.trim(),
     });
   } catch (err) {
-    console.error("[orders] Failed to write stock log", err);
-  }
-
-  try {
-    const { appendProductTimeline } = await import("../inventory/inventory-erp.service.js");
-    await appendProductTimeline(storeId, {
-      productId: String(item.productId),
-      variantId: item.variantId ? String(item.variantId) : undefined,
-      eventType: "order_sold",
-      title: `Sold ${item.quantity}`,
-      detail: orderMeta?.orderNumber ? `Order ${orderMeta.orderNumber}` : "Order placed",
-      reference: orderMeta?.orderNumber ?? "order",
-      referenceId: orderMeta?.orderId,
-      actorName: "system",
-      metadata: { quantity: item.quantity },
-    });
-  } catch (err) {
-    console.error("[orders] Failed to append product timeline", err);
+    console.error("[orders] Stock decrement error:", err);
   }
 }
 
 export async function createOrder(
   storeId: string,
-  customerId: string,
+  customerIdInput: string | null | undefined,
   sessionId: string,
   payload: {
     shippingAddress: {
@@ -148,6 +112,14 @@ export async function createOrder(
     deliveryZoneId?: string;
     notes?: string;
     cartId?: string;
+    verificationToken?: string;
+    senderNumber?: string;
+    transactionId?: string;
+    paymentDetails?: {
+      senderNumber?: string;
+      receiverNumber?: string;
+      transactionId?: string;
+    };
     items?: Array<{
       productId: string;
       variantId?: string;
@@ -155,11 +127,17 @@ export async function createOrder(
       price?: number;
       name?: string;
     }>;
-  }
+  },
 ) {
   await connectDatabase();
 
-  const store = (await StoreModel.findById(storeId).lean()) as { planId?: string; allowNewOrders?: boolean; userId?: unknown; slug?: string } | null;
+  const store = (await StoreModel.findById(storeId).lean()) as {
+    planId?: string;
+    allowNewOrders?: boolean;
+    userId?: unknown;
+    slug?: string;
+  } | null;
+
   if (store && store.allowNewOrders === false) {
     return { ok: false as const, message: "This store is not accepting new orders. Please upgrade your subscription." };
   }
@@ -169,24 +147,66 @@ export async function createOrder(
     return { ok: false as const, message: limitCheck.message ?? "Order limit reached" };
   }
 
-  // Prefer customer cart; if empty/missing, claim guest session cart.
+  const storeSettings = (await StoreSettingsModel.findOne({ storeId }).lean()) as {
+    currencyCode?: string;
+    taxEnabled?: boolean;
+    taxRate?: number;
+    taxIncluded?: boolean;
+    orderPrefix?: string;
+    invoicePrefix?: string;
+    freeShippingEnabled?: boolean;
+    freeShippingMin?: number;
+    shippingEnabled?: boolean;
+    guestCheckoutEnabled?: boolean;
+    requireLoginEnabled?: boolean;
+    minimumOrderAmount?: number;
+    paymentSettings?: {
+      codEnabled?: boolean;
+      bkash?: { enabled?: boolean; number?: string; type?: string; instructions?: string };
+      nagad?: { enabled?: boolean; number?: string; type?: string; instructions?: string };
+    };
+    deliveryZones?: Array<{ id: string; name: string; charge: number; estimatedDays?: string; enabled?: boolean }>;
+  } | null;
+
+  let customerId = customerIdInput;
+
+  // Guest vs Login Rules Check
+  if (storeSettings?.requireLoginEnabled && !customerId) {
+    return { ok: false as const, message: "Login is required to place an order in this store." };
+  }
+
+  if (!customerId && storeSettings?.guestCheckoutEnabled === false) {
+    return { ok: false as const, message: "Guest checkout is disabled. Please login to place your order." };
+  }
+
+  // Provision Guest Customer entity if guest order
+  if (!customerId) {
+    const email = (payload.shippingAddress.email || "").toLowerCase().trim();
+    const phone = payload.shippingAddress.phone.trim();
+    let guestDoc = await CustomerModel.findOne({
+      storeId,
+      $or: [...(email ? [{ email }] : []), ...(phone ? [{ phone }] : [])],
+    });
+
+    if (!guestDoc) {
+      guestDoc = await CustomerModel.create({
+        storeId,
+        name: payload.shippingAddress.fullName,
+        email: email || `guest_${Date.now()}@store.com`,
+        phone,
+        isGuest: true,
+        status: "active",
+      });
+    }
+    customerId = String(guestDoc._id);
+  }
+
+  // Prefer customer cart; fallback to session cart or payload items
   let cart = await CartModel.findOne({ storeId, customerId });
   const sessionCart =
     sessionId && (!cart || cart.items.length === 0)
       ? await CartModel.findOne({ storeId, sessionId })
       : null;
-
-  console.info("[orders] createOrder cart query", {
-    storeId,
-    customerId,
-    sessionId: sessionId || null,
-    payloadCartId: payload.cartId ?? null,
-    customerCartId: cart?._id ? String(cart._id) : null,
-    customerItemCount: cart?.items?.length ?? 0,
-    sessionCartId: sessionCart?._id ? String(sessionCart._id) : null,
-    sessionItemCount: sessionCart?.items?.length ?? 0,
-    frontendItemCount: payload.items?.length ?? 0,
-  });
 
   if ((!cart || cart.items.length === 0) && sessionCart && sessionCart.items.length > 0) {
     if (!cart) {
@@ -204,7 +224,6 @@ export async function createOrder(
     }
   }
 
-  // Frontend still has items but Mongo cart is empty — sync from payload lines.
   if ((!cart || cart.items.length === 0) && payload.items && payload.items.length > 0) {
     const { syncCartItems } = await import("../cart/cart.service.js");
     const synced = await syncCartItems(
@@ -221,16 +240,9 @@ export async function createOrder(
       return { ok: false as const, message: synced.message ?? "Cart is empty" };
     }
     cart = await CartModel.findOne({ storeId, customerId });
-    if (!cart) cart = await CartModel.findOne({ storeId, sessionId });
   }
 
   if (!cart || cart.items.length === 0) {
-    console.warn("[orders] createOrder rejected — empty cart", {
-      storeId,
-      customerId,
-      sessionId,
-      frontendItemCount: payload.items?.length ?? 0,
-    });
     return { ok: false as const, message: "Cart is empty" };
   }
 
@@ -239,74 +251,51 @@ export async function createOrder(
     await cart.save();
   }
 
-  // Optional integrity check: frontend lines should match backend cart.
-  if (payload.items && payload.items.length > 0) {
-    const backendKeys = new Set(
-      cart.items.map(
-        (item: { productId: unknown; variantId?: unknown }) =>
-          `${String(item.productId)}::${String(item.variantId ?? "")}`,
-      ),
-    );
-    const frontendKeys = new Set(
-      payload.items.map((item) => `${item.productId}::${item.variantId ?? ""}`),
-    );
-    const missingOnBackend = [...frontendKeys].filter((key) => !backendKeys.has(key));
-    if (missingOnBackend.length > 0) {
-      const { syncCartItems } = await import("../cart/cart.service.js");
-      await syncCartItems(
-        storeId,
-        payload.items.map((item) => ({
-          productId: item.productId,
-          variantId: item.variantId,
-          quantity: item.quantity,
-        })),
-        customerId,
-        sessionId,
-      );
-      cart = await CartModel.findOne({ storeId, customerId });
-      if (!cart || cart.items.length === 0) {
-        return { ok: false as const, message: "Cart is empty" };
-      }
-    }
-  }
-
   const subtotal = cart.items.reduce((sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity, 0);
   const discount = cart.discount ?? 0;
+
+  // Minimum Order Check
+  if (storeSettings?.minimumOrderAmount && storeSettings.minimumOrderAmount > 0) {
+    if (subtotal < storeSettings.minimumOrderAmount) {
+      return {
+        ok: false as const,
+        message: `Minimum order amount for this store is ${storeSettings.minimumOrderAmount} BDT`,
+      };
+    }
+  }
 
   let deliveryCharge = 0;
   let deliveryZoneName = "";
   let deliveryZoneEta = "";
+
   if (payload.deliveryZoneId) {
+    // Check DB delivery zones
     const zone = (await DeliveryZoneModel.findOne({
       _id: payload.deliveryZoneId,
       storeId,
       enabled: true,
     }).lean()) as { charge: number; name: string; estimatedDays?: string } | null;
+
     if (zone) {
       deliveryCharge = zone.charge;
       deliveryZoneName = zone.name;
       deliveryZoneEta = zone.estimatedDays ?? "";
+    } else if (storeSettings?.deliveryZones) {
+      const configuredZone = storeSettings.deliveryZones.find((z) => z.id === payload.deliveryZoneId && z.enabled !== false);
+      if (configuredZone) {
+        deliveryCharge = configuredZone.charge;
+        deliveryZoneName = configuredZone.name;
+        deliveryZoneEta = configuredZone.estimatedDays ?? "";
+      }
     }
   }
-
-  const storeSettings = (await StoreSettingsModel.findOne({ storeId }).lean()) as {
-    currencyCode?: string;
-    taxEnabled?: boolean;
-    taxRate?: number;
-    taxIncluded?: boolean;
-    orderPrefix?: string;
-    invoicePrefix?: string;
-    freeShippingEnabled?: boolean;
-    freeShippingMin?: number;
-    shippingEnabled?: boolean;
-  } | null;
 
   if (storeSettings?.shippingEnabled === false) {
     deliveryCharge = 0;
   } else if (
-    storeSettings?.freeShippingEnabled
-    && (storeSettings.freeShippingMin ?? 0) > 0
-    && subtotal - discount >= (storeSettings.freeShippingMin ?? 0)
+    storeSettings?.freeShippingEnabled &&
+    (storeSettings.freeShippingMin ?? 0) > 0 &&
+    subtotal - discount >= (storeSettings.freeShippingMin ?? 0)
   ) {
     deliveryCharge = 0;
   }
@@ -331,6 +320,40 @@ export async function createOrder(
     landmark: payload.shippingAddress.landmark ?? "",
     orderNotes: payload.shippingAddress.orderNotes ?? payload.notes ?? "",
   };
+
+  const paymentMethod = (payload.paymentMethod ?? "cod").toLowerCase();
+  let paymentStatus = "pending";
+  let paymentVerification = {};
+  let paymentDetails = {};
+
+  if (paymentMethod === "bkash" || paymentMethod === "nagad") {
+    paymentStatus = "pending_verification";
+    const senderNumber = payload.paymentDetails?.senderNumber || payload.senderNumber || "";
+    const transactionId = payload.paymentDetails?.transactionId || payload.transactionId || "";
+    const receiverNumber =
+      payload.paymentDetails?.receiverNumber ||
+      storeSettings?.paymentSettings?.[paymentMethod as "bkash" | "nagad"]?.number ||
+      "";
+
+    if (!transactionId.trim()) {
+      return { ok: false as const, message: `Transaction ID (TrxID) is required for ${paymentMethod.toUpperCase()} payments.` };
+    }
+    if (!senderNumber.trim()) {
+      return { ok: false as const, message: `Sender phone number is required for ${paymentMethod.toUpperCase()} payments.` };
+    }
+
+    paymentVerification = {
+      transactionId: transactionId.trim(),
+      senderNumber: senderNumber.trim(),
+      receiverNumber,
+      status: "pending",
+    };
+    paymentDetails = {
+      transactionId: transactionId.trim(),
+      senderNumber: senderNumber.trim(),
+      receiverNumber,
+    };
+  }
 
   const orderNumber = generateOrderNumber(storeSettings?.orderPrefix ?? "ORD");
   const invoiceNumber = generateOrderNumber(storeSettings?.invoicePrefix ?? "INV");
@@ -368,14 +391,20 @@ export async function createOrder(
     orderNumber,
     invoiceNumber,
     shippingAddress: normalizedShippingAddress,
-    paymentMethod: payload.paymentMethod ?? "cod",
+    paymentMethod,
+    paymentStatus,
+    paymentVerification,
+    paymentDetails,
     notes: payload.notes ?? "",
     currencyCode,
     timeline: [
       { status: "pending", note: "Order placed", createdBy: "system", updatedBy: "system" },
       {
-        status: (payload.paymentMethod ?? "cod") === "cod" ? "payment_pending" : "payment_pending",
-        note: (payload.paymentMethod ?? "cod") === "cod" ? "Cash on delivery — pay when received" : "Awaiting payment confirmation",
+        status: paymentStatus === "pending_verification" ? "pending_verification" : "payment_pending",
+        note:
+          paymentMethod === "cod"
+            ? "Cash on delivery — pay when received"
+            : `${paymentMethod.toUpperCase()} payment verification pending (TrxID: ${(paymentDetails as any).transactionId || ""})`,
         createdBy: "system",
         updatedBy: "system",
       },
@@ -450,58 +479,121 @@ export async function createOrder(
       },
     });
   } catch (error) {
-    console.error("[customer-notifications] Failed to create order placed notification", error);
+    console.error("[notifications] Failed to create customer order notification", error);
   }
 
   return { ok: true as const, data: { order: order.toObject() } };
 }
 
-export async function getCustomerOrders(storeId: string, customerId: string) {
-  await connectDatabase();
-  const orders = await OrderModel.find({ storeId, customerId }).sort({ createdAt: -1 }).lean();
-  return { ok: true as const, data: { orders } };
+async function autoSaveCustomerAddressFromOrder(
+  storeId: string,
+  customerId: string,
+  address: {
+    fullName: string;
+    phone: string;
+    email?: string;
+    label?: string;
+    area?: string;
+    street: string;
+    apartment?: string;
+    city: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+    landmark?: string;
+  },
+) {
+  const cust = await CustomerModel.findOne({ _id: customerId, storeId });
+  if (!cust) return;
+
+  const existingAddresses = cust.addresses ?? [];
+  const exists = existingAddresses.some(
+    (a) =>
+      a.city.toLowerCase() === address.city.toLowerCase() &&
+      a.street.toLowerCase() === address.street.toLowerCase() &&
+      a.phone === address.phone,
+  );
+
+  if (!exists) {
+    cust.addresses.push({
+      label: address.label || "Home",
+      fullName: address.fullName,
+      phone: address.phone,
+      email: address.email || "",
+      street: address.street,
+      apartment: address.apartment || "",
+      city: address.city,
+      state: address.state || "",
+      zip: address.zip || "",
+      country: address.country || "Bangladesh",
+      area: address.area || "",
+      landmark: address.landmark || "",
+      isDefault: existingAddresses.length === 0,
+    });
+    await cust.save();
+  }
 }
 
-export async function getOrderById(orderId: string, customerId: string) {
+export async function listStoreOrders(storeId: string, query: Record<string, unknown> = {}) {
   await connectDatabase();
-  const order = await OrderModel.findOne({ _id: orderId, customerId }).lean();
+  const filter: Record<string, unknown> = { storeId };
+  if (query.status && query.status !== "all") filter.status = query.status;
+  if (query.paymentStatus && query.paymentStatus !== "all") filter.paymentStatus = query.paymentStatus;
+
+  const page = Math.max(1, Number(query.page) || 1);
+  const limit = Math.max(1, Number(query.limit) || 20);
+  const skip = (page - 1) * limit;
+
+  const [orders, total] = await Promise.all([
+    OrderModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    OrderModel.countDocuments(filter),
+  ]);
+
+  return {
+    ok: true as const,
+    data: {
+      orders,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+export async function getStoreOrder(storeId: string, orderId: string) {
+  await connectDatabase();
+  const order = await OrderModel.findOne({ _id: orderId, storeId }).lean();
   if (!order) return { ok: false as const, message: "Order not found" };
   return { ok: true as const, data: { order } };
 }
 
-export async function trackOrderByNumber(
-  storeId: string,
-  orderNumber: string,
-  email: string,
-) {
+export async function updateOrderStatus(storeId: string, orderId: string, status: string) {
   await connectDatabase();
-  const { CustomerModel } = await import("../../models/customer.model.js");
-  const customer = await CustomerModel.findOne({
-    storeId,
-    email: email.toLowerCase().trim(),
-  }).lean() as { _id: unknown } | null;
-  if (!customer) return { ok: false as const, message: "Order not found" };
+  const order = await OrderModel.findOneAndUpdate(
+    { _id: orderId, storeId },
+    {
+      $set: { status },
+      $push: { timeline: { status, note: `Status updated to ${status}`, createdBy: "merchant", updatedBy: "merchant" } },
+    },
+    { new: true },
+  ).lean();
 
-  const order = await OrderModel.findOne({
-    storeId,
-    customerId: customer._id,
-    orderNumber: orderNumber.trim().toUpperCase(),
-  })
-    .select("orderNumber status paymentStatus total currencyCode items shippingAddress deliveryCharge deliveryZone discount tax subtotal paymentMethod notes courier trackingNumber estimatedDelivery timeline createdAt updatedAt")
-    .lean();
+  if (!order) return { ok: false as const, message: "Order not found" };
+  return { ok: true as const, data: { order } };
+}
 
-  if (!order) {
-    // Try case-insensitive match
-    const orderLoose = await OrderModel.findOne({
-      storeId,
-      customerId: customer._id,
-      orderNumber: new RegExp(`^${orderNumber.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
-    })
-      .select("orderNumber status paymentStatus total currencyCode items shippingAddress deliveryCharge deliveryZone discount tax subtotal paymentMethod notes courier trackingNumber estimatedDelivery timeline createdAt updatedAt")
-      .lean();
-    if (!orderLoose) return { ok: false as const, message: "Order not found" };
-    return { ok: true as const, data: { order: orderLoose } };
-  }
+export async function updatePaymentStatus(storeId: string, orderId: string, paymentStatus: string) {
+  await connectDatabase();
+  const order = await OrderModel.findOneAndUpdate(
+    { _id: orderId, storeId },
+    {
+      $set: { paymentStatus },
+      $push: { timeline: { status: `payment_${paymentStatus}`, note: `Payment status updated to ${paymentStatus}`, createdBy: "merchant", updatedBy: "merchant" } },
+    },
+    { new: true },
+  ).lean();
 
+  if (!order) return { ok: false as const, message: "Order not found" };
   return { ok: true as const, data: { order } };
 }

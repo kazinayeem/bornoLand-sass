@@ -47,7 +47,23 @@ export type StoreSettingsData = {
   shippingEnabled?: boolean;
   freeShippingEnabled?: boolean;
   freeShippingMin?: number;
+  guestCheckoutEnabled?: boolean;
+  requireLoginEnabled?: boolean;
+  minimumOrderAmount?: number;
+  paymentSettings?: {
+    codEnabled?: boolean;
+    bkash?: { enabled?: boolean; number?: string; type?: string; instructions?: string };
+    nagad?: { enabled?: boolean; number?: string; type?: string; instructions?: string };
+  };
+  deliveryZones?: Array<{
+    id: string;
+    name: string;
+    charge: number;
+    estimatedDays?: string;
+    enabled?: boolean;
+  }>;
 };
+
 
 export type HomepageSliderData = {
   _id: string;

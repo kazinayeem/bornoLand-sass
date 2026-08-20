@@ -22,7 +22,10 @@ import {
   Calendar,
   SlidersHorizontal,
   X,
+  Plus,
 } from "lucide-react";
+import { PosOrderModal } from "@/components/pos/pos-order-modal";
+
 import { toast } from "sonner";
 import { DataTable, type Column, printDataGridReport, openReportWindow } from "@/components/ui/data-table";
 import { Pagination } from "@/components/ui/pagination";
@@ -223,6 +226,8 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
   const [invoiceBusy, setInvoiceBusy] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [exportBusy, setExportBusy] = useState(false);
+  const [posOpen, setPosOpen] = useState(false);
+
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -685,7 +690,17 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
             <RefreshCw className="h-3 w-3" />
             Reset
           </button>
+
+          <button
+            type="button"
+            onClick={() => setPosOpen(true)}
+            className="inline-flex h-7 items-center gap-1 rounded-md bg-apple-primary px-3 text-[11px] font-bold text-white shadow-xs transition-opacity hover:opacity-90 ml-auto"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New POS Order
+          </button>
         </div>
+
 
         <div className="mt-2 flex flex-wrap items-center gap-1">
           <span className="mr-1 inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-apple-ink-muted-48">
@@ -1032,6 +1047,13 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
           />
         </Suspense>
       ) : null}
+
+      <PosOrderModal
+        open={posOpen}
+        storeId={storeId}
+        onClose={() => setPosOpen(false)}
+      />
     </div>
   );
 }
+

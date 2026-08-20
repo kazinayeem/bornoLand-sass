@@ -73,14 +73,23 @@ export type CreateOrderPayload = {
   cartId?: string;
   storeId?: string;
   customerId?: string;
+  senderNumber?: string;
+  transactionId?: string;
+  paymentDetails?: {
+    senderNumber?: string;
+    receiverNumber?: string;
+    transactionId?: string;
+  };
   items: Array<{
     productId: string;
     variantId?: string;
     quantity: number;
     price: number;
     name?: string;
+    sku?: string;
   }>;
 };
+
 
 export const orderApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({

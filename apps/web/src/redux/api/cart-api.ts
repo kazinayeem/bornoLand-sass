@@ -19,8 +19,11 @@ type CartData = {
   sessionId?: string;
   items: CartItemData[];
   subtotal: number;
+  discount?: number;
+  couponCode?: string;
   itemCount: number;
 };
+
 
 type CartResponse = {
   cart: CartData;

@@ -37,6 +37,8 @@ const orderNoteSchema = new Schema(
 const paymentVerificationSchema = new Schema(
   {
     transactionId: { type: String, default: "" },
+    senderNumber: { type: String, default: "" },
+    receiverNumber: { type: String, default: "" },
     screenshotUrl: { type: String, default: "" },
     status: {
       type: String,
@@ -93,17 +95,22 @@ const orderSchema = new Schema(
       city: { type: String, required: true },
       state: { type: String, default: "" },
       zip: { type: String, default: "" },
-      country: { type: String, default: "US" },
+      country: { type: String, default: "Bangladesh" },
       landmark: { type: String, default: "" },
       orderNotes: { type: String, default: "" },
     },
     paymentMethod: { type: String, default: "cod" },
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "partial", "failed", "refunded"],
+      enum: ["pending", "pending_verification", "paid", "partial", "failed", "refunded"],
       default: "pending",
     },
     paymentVerification: { type: paymentVerificationSchema, default: () => ({}) },
+    paymentDetails: {
+      senderNumber: { type: String, default: "" },
+      receiverNumber: { type: String, default: "" },
+      transactionId: { type: String, default: "" },
+    },
     courier: { type: String, default: "" },
     trackingNumber: { type: String, default: "" },
     estimatedDelivery: { type: String, default: "" },

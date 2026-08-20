@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -17,6 +17,9 @@ import {
   Landmark,
   Loader2,
   AlertCircle,
+  Lock,
+  Tag,
+  Check,
 } from "lucide-react";
 import type { RootState } from "@/store/store";
 import { clearCart, setCartItems } from "@/redux/slices/cart-slice";
@@ -26,15 +29,11 @@ import { useGetPublicPaymentMethodsQuery } from "@/redux/api/payment-api";
 import { useGetPublicDeliveryZonesQuery } from "@/redux/api/delivery-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
-import { useRequireCustomerAuth } from "@/hooks/use-require-customer-auth";
 import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
 import { CustomerAddressBook } from "@/components/storefront/customer-address-book";
 import type { CustomerAddress } from "@/redux/api/customer-api";
-import {
-  cartIdentityDebug,
-  logCartDebug,
-  summarizeCartItems,
-} from "@/lib/cart-session";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const PAYMENT_ICONS: Record<string, typeof Banknote> = {
   cod: Banknote,
@@ -42,14 +41,6 @@ const PAYMENT_ICONS: Record<string, typeof Banknote> = {
   nagad: Smartphone,
   rocket: Smartphone,
   bank: Landmark,
-};
-
-const PAYMENT_LABELS: Record<string, string> = {
-  cod: "Cash on Delivery",
-  bkash: "bKash",
-  nagad: "Nagad",
-  rocket: "Rocket",
-  bank: "Bank Transfer",
 };
 
 type CheckoutFormState = {
@@ -86,42 +77,64 @@ const EMPTY_FORM: CheckoutFormState = {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const pathname = usePathname() || "";
   const dispatch = useDispatch();
   const localCart = useSelector((state: RootState) => state.cart);
   const customer = useSelector((state: RootState) => state.customer.customer);
   const [createOrder, { isLoading }] = useCreateOrderMutation();
   const [syncCart, { isLoading: isSyncing }] = useSyncCartMutation();
   const { store, settings } = useTenant();
+
   const [mounted, setMounted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; orderId: string } | null>(null);
+  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; orderId: string; paymentMethod: string } | null>(null);
   const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string | null>(null);
 
-  const { showLoader, ready } = useRequireCustomerAuth("/checkout");
+  // Mobile Banking specific fields
+  const [senderNumber, setSenderNumber] = useState("");
+  const [transactionId, setTransactionId] = useState("");
+
   const {
     data: cartData,
     isLoading: cartLoading,
     isFetching: cartFetching,
     refetch: refetchCart,
-  } = useGetCartQuery(undefined, { skip: !ready });
+  } = useGetCartQuery(undefined, { skip: !mounted });
 
   const { data: pmData } = useGetPublicPaymentMethodsQuery();
   const { data: dzData } = useGetPublicDeliveryZonesQuery();
 
   const paymentMethods = pmData?.data?.paymentMethods ?? [];
-  const deliveryZones = dzData?.data?.deliveryZones ?? [];
+  const dbDeliveryZones = dzData?.data?.deliveryZones ?? [];
+  const settingsDeliveryZones = (settings.deliveryZones ?? []).map((z: { id?: string; _id?: string; name: string; charge: number; estimatedDays?: string }) => ({
+    _id: z.id || z._id || "",
+    name: z.name,
+    charge: z.charge,
+    estimatedDays: z.estimatedDays || "2-3 Days",
+  }));
+
+  const deliveryZones = dbDeliveryZones.length > 0 ? dbDeliveryZones : settingsDeliveryZones;
 
   const [form, setForm] = useState<CheckoutFormState>(EMPTY_FORM);
   const [selectedZoneId, setSelectedZoneId] = useState("");
-  const [selectedPayment, setSelectedPayment] = useState("");
-  const checkoutSyncAttempted = useRef(false);
+  const [selectedPayment, setSelectedPayment] = useState("cod");
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Authenticated checkout: backend cart is the single source of truth.
+  // Pre-fill form from logged-in customer profile
+  useEffect(() => {
+    if (customer) {
+      setForm((prev) => ({
+        ...prev,
+        fullName: prev.fullName || (customer as any).name || (customer as any).email || "",
+        email: prev.email || customer.email || "",
+        phone: prev.phone || customer.phone || "",
+      }));
+    }
+  }, [customer]);
+
+
   const backendCart = cartData?.data?.cart;
   const backendItems = (backendCart?.items ?? []).map((item) => ({
     productId: typeof item.productId === "object" ? String((item.productId as { _id?: string })._id ?? item.productId) : String(item.productId),
@@ -133,68 +146,7 @@ export default function CheckoutPage() {
     image: item.image,
   }));
 
-  const items = backendItems.length > 0 ? backendItems : ready ? [] : localCart.items;
-  const cartReady = mounted && localCart.hydrated && ready && !cartLoading;
-  const awaitingBackendSync =
-    ready &&
-    !cartLoading &&
-    backendItems.length === 0 &&
-    localCart.items.length > 0 &&
-    (cartFetching || isSyncing);
-
-  useEffect(() => {
-    if (!ready || cartLoading || !backendCart) return;
-    logCartDebug("checkout cart state", {
-      cartId: backendCart._id ?? null,
-      storeId: store._id || backendCart.storeId || null,
-      customerId: customer?._id ?? backendCart.customerId ?? null,
-      backend: summarizeCartItems(backendItems),
-      frontendLocal: summarizeCartItems(localCart.items),
-      ...cartIdentityDebug(),
-    });
-  }, [ready, cartLoading, backendCart, backendItems, localCart.items, store._id, customer?._id]);
-
-  // If backend is empty but local still has lines, sync before allowing checkout UI.
-  useEffect(() => {
-    if (!ready || cartLoading || cartFetching) return;
-    if (backendItems.length > 0 || localCart.items.length === 0) return;
-    if (checkoutSyncAttempted.current) return;
-    checkoutSyncAttempted.current = true;
-    void (async () => {
-      try {
-        logCartDebug("checkout auto-sync local → backend", summarizeCartItems(localCart.items));
-        const result = await syncCart({
-          items: localCart.items.map((item) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            quantity: item.quantity,
-          })),
-        }).unwrap();
-        const synced = (result.data?.cart?.items ?? []).map((item) => ({
-          productId: String(item.productId),
-          variantId: item.variantId,
-          variantTitle: item.variantTitle,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          image: item.image,
-        }));
-        dispatch(setCartItems(synced));
-        await refetchCart();
-      } catch (error) {
-        logCartDebug("checkout auto-sync failed", { error: String(error) });
-      }
-    })();
-  }, [
-    ready,
-    cartLoading,
-    cartFetching,
-    backendItems.length,
-    localCart.items,
-    syncCart,
-    dispatch,
-    refetchCart,
-  ]);
+  const items = backendItems.length > 0 ? backendItems : localCart.items;
 
   useEffect(() => {
     if (deliveryZones.length > 0 && !selectedZoneId) {
@@ -208,27 +160,6 @@ export default function CheckoutPage() {
       setSelectedPayment(cod?._id ?? paymentMethods[0]._id);
     }
   }, [paymentMethods, selectedPayment]);
-
-  useEffect(() => {
-    if (!deliveryZones.length) return;
-    const city = form.city.trim().toLowerCase();
-    const state = form.state.trim().toLowerCase();
-    const zip = form.zip.trim().toLowerCase();
-    if (!city && !state && !zip) return;
-
-    const matched = deliveryZones.find((zone) => {
-      const districts = (zone.districts ?? []).map((d) => d.toLowerCase());
-      const divisions = (zone.divisions ?? []).map((d) => d.toLowerCase());
-      const codes = (zone.postalCodes ?? []).map((d) => d.toLowerCase());
-      if (city && districts.some((d) => d === city || city.includes(d) || d.includes(city))) return true;
-      if (state && divisions.some((d) => d === state || state.includes(d) || d.includes(state))) return true;
-      if (zip && codes.some((c) => c === zip)) return true;
-      return false;
-    });
-    if (matched && matched._id !== selectedZoneId) {
-      setSelectedZoneId(matched._id);
-    }
-  }, [form.city, form.state, form.zip, deliveryZones, selectedZoneId]);
 
   const applySavedAddress = (address: CustomerAddress) => {
     setSelectedSavedAddressId(address._id);
@@ -249,16 +180,15 @@ export default function CheckoutPage() {
     });
   };
 
-  if (showLoader) {
-    return <CustomerAuthLoader message="Preparing checkout…" />;
-  }
-
   const selectedZone = deliveryZones.find((z) => z._id === selectedZoneId);
-  const selectedPm = paymentMethods.find((pm) => pm._id === selectedPayment);
+  const selectedPm = paymentMethods.find((pm) => pm._id === selectedPayment || pm.type === selectedPayment) ?? {
+    _id: selectedPayment,
+    type: selectedPayment,
+    label: selectedPayment.toUpperCase(),
+  };
 
-  const hasItems = items.length > 0;
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const discount = 0;
+  const discount = backendCart?.discount ?? 0;
   const shippingEnabled = settings.shippingEnabled !== false;
   const freeShipping =
     shippingEnabled &&
@@ -271,6 +201,8 @@ export default function CheckoutPage() {
   const taxAmount = taxRate > 0 && !settings.taxIncluded ? (subtotal - discount) * (taxRate / 100) : 0;
   const total = Math.max(0, subtotal - discount + taxAmount + deliveryCharge);
 
+  const requireLogin = settings.requireLoginEnabled && !customer;
+
   const handleChange =
     (field: keyof CheckoutFormState) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -282,74 +214,28 @@ export default function CheckoutPage() {
     e.preventDefault();
     setErrorMsg("");
 
-    if (!ready) return;
-
-    // Final sync + refetch so Place Order never uses a stale empty backend cart.
-    let orderItems = items;
-    let cartId = backendCart?._id;
-
-    try {
-      if (orderItems.length === 0 && localCart.items.length > 0) {
-        const synced = await syncCart({
-          items: localCart.items.map((item) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            quantity: item.quantity,
-          })),
-        }).unwrap();
-        orderItems = (synced.data?.cart?.items ?? []).map((item) => ({
-          productId: String(item.productId),
-          variantId: item.variantId,
-          variantTitle: item.variantTitle,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          image: item.image,
-        }));
-        cartId = synced.data?.cart?._id;
-        dispatch(setCartItems(orderItems));
-      } else if (orderItems.length > 0) {
-        const latest = await refetchCart().unwrap();
-        const latestItems = latest.data?.cart?.items ?? [];
-        if (latestItems.length === 0) {
-          const synced = await syncCart({
-            items: orderItems.map((item) => ({
-              productId: item.productId,
-              variantId: item.variantId,
-              quantity: item.quantity,
-            })),
-          }).unwrap();
-          orderItems = (synced.data?.cart?.items ?? []).map((item) => ({
-            productId: String(item.productId),
-            variantId: item.variantId,
-            variantTitle: item.variantTitle,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            image: item.image,
-          }));
-          cartId = synced.data?.cart?._id;
-        } else {
-          orderItems = latestItems.map((item) => ({
-            productId: String(item.productId),
-            variantId: item.variantId,
-            variantTitle: item.variantTitle,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            image: item.image,
-          }));
-          cartId = latest.data?.cart?._id;
-        }
-      }
-    } catch (error: any) {
-      setErrorMsg(error?.data?.message ?? "Could not synchronize your cart. Please try again.");
+    if (requireLogin) {
+      toast.error("Please login to complete your order.");
+      router.push(`/login?redirect=${encodeURIComponent("/checkout")}`);
       return;
     }
 
-    if (orderItems.length === 0) {
+    if (items.length === 0) {
       setErrorMsg("Your cart is empty. Please add items before checking out.");
       return;
+    }
+
+    const payType = (selectedPm?.type || selectedPayment || "cod").toLowerCase();
+
+    if (payType === "bkash" || payType === "nagad") {
+      if (!senderNumber.trim()) {
+        setErrorMsg(`Please enter your ${payType.toUpperCase()} sender phone number.`);
+        return;
+      }
+      if (!transactionId.trim()) {
+        setErrorMsg(`Please enter your ${payType.toUpperCase()} Transaction ID (TrxID).`);
+        return;
+      }
     }
 
     try {
@@ -369,13 +255,20 @@ export default function CheckoutPage() {
           landmark: form.landmark || undefined,
           orderNotes: form.notes || undefined,
         },
-        paymentMethod: selectedPm?.type ?? "cod",
+        paymentMethod: payType,
         deliveryZoneId: selectedZoneId || undefined,
         notes: form.notes || undefined,
-        cartId,
+        cartId: backendCart?._id,
         storeId: store._id || undefined,
         customerId: customer?._id || undefined,
-        items: orderItems.map((item) => ({
+        senderNumber: senderNumber.trim() || undefined,
+        transactionId: transactionId.trim() || undefined,
+        paymentDetails: {
+          senderNumber: senderNumber.trim() || undefined,
+          transactionId: transactionId.trim() || undefined,
+          receiverNumber: (settings.paymentSettings as any)?.[payType]?.number || "",
+        },
+        items: items.map((item) => ({
           productId: item.productId,
           variantId: item.variantId,
           quantity: item.quantity,
@@ -384,14 +277,6 @@ export default function CheckoutPage() {
         })),
       };
 
-      logCartDebug("placing order", {
-        cartId: payload.cartId ?? null,
-        storeId: payload.storeId ?? null,
-        customerId: payload.customerId ?? null,
-        ...summarizeCartItems(payload.items),
-        ...cartIdentityDebug(),
-      });
-
       const result = await createOrder(payload).unwrap();
 
       if (result.success && result.data) {
@@ -399,6 +284,7 @@ export default function CheckoutPage() {
         setOrderSuccess({
           orderNumber: result.data.order.orderNumber,
           orderId: result.data.order._id,
+          paymentMethod: payType,
         });
       } else {
         setErrorMsg(result.message ?? "Checkout failed. Please try again.");
@@ -408,34 +294,31 @@ export default function CheckoutPage() {
     }
   };
 
-  const isLoadingState = !cartReady || awaitingBackendSync;
-  const showEmpty = cartReady && !awaitingBackendSync && !hasItems;
-
   if (orderSuccess) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100"
+          className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100"
         >
-          <CheckCircle className="h-10 w-10 text-green-600" />
+          <CheckCircle className="h-10 w-10 text-emerald-600" />
         </motion.div>
-        <h1 className="text-3xl font-bold text-apple-ink">Order Placed!</h1>
-        <p className="mt-2 text-apple-ink-muted-48">
-          {selectedPm?.type === "cod"
-            ? "Pay when you receive your order."
-            : `Complete payment using ${PAYMENT_LABELS[selectedPm?.type ?? ""] ?? selectedPm?.label}.`}
+        <h1 className="text-3xl font-bold text-apple-ink">Order Placed Successfully!</h1>
+        <p className="mt-2 text-apple-ink-muted-48 text-sm">
+          {orderSuccess.paymentMethod === "cod"
+            ? "Pay when you receive your package."
+            : "Your payment verification is pending. Our shop manager will review your Transaction ID."}
         </p>
-        <div className="mt-6 rounded-xl border border-zinc-100 bg-apple-canvas-parchment p-4">
-          <p className="text-sm text-apple-ink-muted-48">Order Number</p>
-          <p className="text-lg font-bold text-apple-ink">{orderSuccess.orderNumber}</p>
+        <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-5 space-y-1">
+          <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Order Reference Number</p>
+          <p className="text-xl font-mono font-extrabold text-apple-primary">{orderSuccess.orderNumber}</p>
         </div>
         <div className="mt-8 flex justify-center gap-3">
-          <Link href={`/orders/${orderSuccess.orderId}`} className="rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white transition-all hover:opacity-90">
-            View Order
+          <Link href={`/orders/${orderSuccess.orderId}`} className="rounded-xl bg-apple-primary px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90">
+            View Order Details
           </Link>
-          <Link href="/" className="rounded-xl border border-zinc-200 px-6 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment">
+          <Link href="/" className="rounded-xl border border-zinc-200 bg-white px-6 py-2.5 text-sm font-semibold text-apple-ink hover:bg-zinc-50">
             Continue Shopping
           </Link>
         </div>
@@ -443,24 +326,13 @@ export default function CheckoutPage() {
     );
   }
 
-  if (isLoadingState) {
+  if (items.length === 0) {
     return (
-      <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center gap-4 px-4">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-300" />
-        <p className="text-sm text-apple-ink-muted-48">
-          {awaitingBackendSync ? "Syncing your cart…" : "Loading your cart..."}
-        </p>
-      </div>
-    );
-  }
-
-  if (showEmpty) {
-    return (
-      <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center gap-4 px-4">
-        <ShoppingBag className="h-16 w-16 text-zinc-200" />
-        <h2 className="text-xl font-semibold text-apple-ink">Your cart is empty</h2>
-        <p className="text-sm text-apple-ink-muted-48">Add some items before checking out.</p>
-        <Link href="/" className="flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90">
+      <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center gap-4 px-4 text-center">
+        <ShoppingBag className="h-16 w-16 text-zinc-300" />
+        <h2 className="text-xl font-bold text-apple-ink">Your cart is empty</h2>
+        <p className="text-xs text-zinc-500 max-w-sm">Please add products to your cart before proceeding to checkout.</p>
+        <Link href="/" className="flex items-center gap-2 rounded-xl bg-apple-primary px-5 py-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-90">
           <ArrowLeft className="h-4 w-4" /> Continue Shopping
         </Link>
       </div>
@@ -469,73 +341,154 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-6 flex items-center gap-3">
-        <Link href="/cart" className="flex h-8 w-8 items-center justify-center rounded-lg text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-apple-ink">Checkout</h1>
-          <p className="text-sm text-apple-ink-muted-48">{items.length} item{items.length !== 1 ? "s" : ""}</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href="/cart" className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-extrabold text-apple-ink">Checkout</h1>
+            <p className="text-xs text-zinc-500">{items.length} item(s) in your order</p>
+          </div>
         </div>
+
+        {customer ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
+            <Check className="h-3.5 w-3.5" /> Logged in as {customer.email}
+          </span>
+        ) : settings.requireLoginEnabled ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-800">
+            <Lock className="h-3.5 w-3.5" /> Login Required
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 border border-zinc-200 px-3 py-1 text-xs font-semibold text-zinc-700">
+            Guest Checkout Enabled
+          </span>
+        )}
       </div>
+
+      {/* Require Login Warning Card */}
+      {requireLogin && (
+        <div className="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
+          <div className="flex items-center gap-3">
+            <Lock className="h-6 w-6 text-amber-600 shrink-0" />
+            <div>
+              <h4 className="text-sm font-bold">Login Required for Checkout</h4>
+              <p className="text-xs text-amber-800">This store requires customer login before completing purchases.</p>
+            </div>
+          </div>
+          <Link
+            href={`/login?redirect=${encodeURIComponent("/checkout")}`}
+            className="rounded-xl bg-amber-900 px-4 py-2 text-xs font-bold text-white hover:bg-amber-800 whitespace-nowrap"
+          >
+            Login to Continue
+          </Link>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="grid gap-8 lg:grid-cols-5">
+          {/* Main Form (3 cols) */}
           <div className="space-y-6 lg:col-span-3">
-            <CustomerAddressBook
-              mode="checkout"
-              selectedAddressId={selectedSavedAddressId}
-              onSelectAddress={applySavedAddress}
-            />
+            {/* Customer Saved Address Book */}
+            {customer && (
+              <CustomerAddressBook
+                mode="checkout"
+                selectedAddressId={selectedSavedAddressId}
+                onSelectAddress={applySavedAddress}
+              />
+            )}
 
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-zinc-100 p-5">
-              <div className="mb-4 flex items-center gap-2">
-                <Truck className="h-5 w-5 text-apple-ink-muted-80" />
-                <h2 className="font-semibold text-apple-ink">Shipping Address</h2>
+            {/* Step 1: Customer & Shipping Address */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-zinc-100 pb-3">
+                <Truck className="h-5 w-5 text-apple-primary" />
+                <h2 className="font-bold text-apple-ink text-sm">1. Customer & Delivery Address</h2>
               </div>
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Field label="Full Name *"><input type="text" value={form.fullName} onChange={handleChange("fullName")} required className={inputClass} /></Field>
-                  <Field label="Phone *"><input type="tel" value={form.phone} onChange={handleChange("phone")} required className={inputClass} /></Field>
-                </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Field label="Email"><input type="email" value={form.email} onChange={handleChange("email")} className={inputClass} /></Field>
-                  <Field label="Label"><select value={form.label} onChange={handleChange("label")} className={inputClass}><option value="Home">Home</option><option value="Office">Office</option><option value="Other">Other</option></select></Field>
-                </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Field label="Country *"><input type="text" value={form.country} onChange={handleChange("country")} required className={inputClass} /></Field>
-                  <Field label="Division / State *"><input type="text" value={form.state} onChange={handleChange("state")} required className={inputClass} /></Field>
-                </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Field label="District / City *"><input type="text" value={form.city} onChange={handleChange("city")} required className={inputClass} /></Field>
-                  <Field label="Area"><input type="text" value={form.area} onChange={handleChange("area")} className={inputClass} /></Field>
-                </div>
-                <Field label="Street Address *"><input type="text" value={form.street} onChange={handleChange("street")} required className={inputClass} /></Field>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Field label="Apartment / Flat"><input type="text" value={form.apartment} onChange={handleChange("apartment")} className={inputClass} /></Field>
-                  <Field label="Postal Code"><input type="text" value={form.zip} onChange={handleChange("zip")} className={inputClass} /></Field>
-                </div>
-                <Field label="Landmark"><input type="text" value={form.landmark} onChange={handleChange("landmark")} className={inputClass} /></Field>
-                <Field label="Order Notes"><textarea value={form.notes} onChange={handleChange("notes")} rows={2} placeholder="Optional" className={textareaClass} /></Field>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="Full Name *">
+                  <input type="text" value={form.fullName} onChange={handleChange("fullName")} required className={inputClass} placeholder="Your full name" />
+                </Field>
+                <Field label="Phone Number *">
+                  <input type="tel" value={form.phone} onChange={handleChange("phone")} required className={inputClass} placeholder="017XXXXXXXX" />
+                </Field>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="Email Address">
+                  <input type="email" value={form.email} onChange={handleChange("email")} className={inputClass} placeholder="email@example.com (optional)" />
+                </Field>
+                <Field label="Address Label">
+                  <select value={form.label} onChange={handleChange("label")} className={inputClass}>
+                    <option value="Home">Home</option>
+                    <option value="Office">Office</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="Country *">
+                  <input type="text" value={form.country} onChange={handleChange("country")} required className={inputClass} />
+                </Field>
+                <Field label="Division / State *">
+                  <input type="text" value={form.state} onChange={handleChange("state")} required className={inputClass} placeholder="e.g. Dhaka Division" />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="District / City *">
+                  <input type="text" value={form.city} onChange={handleChange("city")} required className={inputClass} placeholder="e.g. Dhaka" />
+                </Field>
+                <Field label="Thana / Area">
+                  <input type="text" value={form.area} onChange={handleChange("area")} className={inputClass} placeholder="e.g. Mirpur" />
+                </Field>
+              </div>
+
+              <Field label="Street Address *">
+                <input type="text" value={form.street} onChange={handleChange("street")} required className={inputClass} placeholder="House, Road, Block number" />
+              </Field>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="Apartment / Suite">
+                  <input type="text" value={form.apartment} onChange={handleChange("apartment")} className={inputClass} placeholder="Flat 4B" />
+                </Field>
+                <Field label="Postal Code">
+                  <input type="text" value={form.zip} onChange={handleChange("zip")} className={inputClass} placeholder="1216" />
+                </Field>
+              </div>
+
+              <Field label="Special Delivery Instructions / Notes">
+                <textarea value={form.notes} onChange={handleChange("notes")} rows={2} placeholder="Optional instructions for courier delivery" className={textareaClass} />
+              </Field>
             </motion.div>
 
+            {/* Step 2: Delivery Area & Zones */}
             {deliveryZones.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border border-zinc-100 p-5">
-                <div className="mb-4 flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-apple-ink-muted-80" />
-                  <h2 className="font-semibold text-apple-ink">Delivery Area</h2>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
+                <div className="flex items-center gap-2 border-b border-zinc-100 pb-3">
+                  <Truck className="h-5 w-5 text-apple-primary" />
+                  <h2 className="font-bold text-apple-ink text-sm">2. Delivery Method & Zone</h2>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2">
+
+                <div className="grid gap-2.5 sm:grid-cols-2">
                   {deliveryZones.map((zone) => (
-                    <label key={zone._id} onClick={() => setSelectedZoneId(zone._id)} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all ${selectedZoneId === zone._id ? "border-zinc-900 bg-apple-canvas-parchment" : "border-zinc-100 hover:border-zinc-200"}`}>
+                    <label
+                      key={zone._id}
+                      onClick={() => setSelectedZoneId(zone._id)}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all",
+                        selectedZoneId === zone._id ? "border-apple-primary bg-apple-primary/5 shadow-xs" : "border-zinc-200 hover:border-zinc-300"
+                      )}
+                    >
                       <input type="radio" name="zone" checked={selectedZoneId === zone._id} onChange={() => setSelectedZoneId(zone._id)} className="sr-only" />
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${selectedZoneId === zone._id ? "bg-zinc-900 text-white" : "bg-apple-canvas-parchment text-apple-ink-muted-48"}`}>
+                      <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold", selectedZoneId === zone._id ? "bg-apple-primary text-white" : "bg-zinc-100 text-zinc-500")}>
                         <Truck className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-apple-ink">{zone.name}</p>
-                        <p className="text-xs text-apple-ink-muted-48">{formatCurrency(zone.charge, settings)} · {zone.estimatedDays}</p>
+                        <p className="text-xs font-bold text-apple-ink">{zone.name}</p>
+                        <p className="text-[11px] text-zinc-500">{formatCurrency(zone.charge, settings)} • {zone.estimatedDays}</p>
                       </div>
                     </label>
                   ))}
@@ -543,69 +496,162 @@ export default function CheckoutPage() {
               </motion.div>
             )}
 
-            {paymentMethods.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-zinc-100 p-5">
-                <div className="mb-4 flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-apple-ink-muted-80" />
-                  <h2 className="font-semibold text-apple-ink">Payment Method</h2>
-                </div>
-                <div className="grid gap-2">
-                  {paymentMethods.map((pm) => {
-                    const Icon = PAYMENT_ICONS[pm.type] ?? CreditCard;
-                    return (
-                      <label key={pm._id} onClick={() => setSelectedPayment(pm._id)} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all ${selectedPayment === pm._id ? "border-zinc-900 bg-apple-canvas-parchment" : "border-zinc-100 hover:border-zinc-200"}`}>
-                        <input type="radio" name="payment" checked={selectedPayment === pm._id} onChange={() => setSelectedPayment(pm._id)} className="sr-only" />
-                        <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${selectedPayment === pm._id ? "bg-zinc-900 text-white" : "bg-apple-canvas-parchment text-apple-ink-muted-48"}`}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-apple-ink">{pm.label}</p>
-                          {pm.accountNumber ? <p className="text-xs text-apple-ink-muted-48">{pm.accountNumber}</p> : null}
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-                {selectedPm && selectedPm.instructions ? (
-                  <div className="mt-3 rounded-lg bg-blue-50 px-3 py-2.5">
-                    <p className="text-xs font-medium text-blue-700">Payment Instructions</p>
-                    <p className="mt-0.5 text-xs text-blue-600">{selectedPm.instructions}</p>
+            {/* Step 3: Payment Method & Mobile Banking Fields */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-zinc-100 pb-3">
+                <CreditCard className="h-5 w-5 text-apple-primary" />
+                <h2 className="font-bold text-apple-ink text-sm">3. Payment Method</h2>
+              </div>
+
+              <div className="grid gap-2.5">
+                {[
+                  { id: "cod", label: "Cash on Delivery (COD)", type: "cod", icon: Banknote },
+                  { id: "bkash", label: "bKash Mobile Banking", type: "bkash", icon: Smartphone },
+                  { id: "nagad", label: "Nagad Mobile Banking", type: "nagad", icon: Smartphone },
+                ].map((pm) => {
+                  const Icon = pm.icon;
+                  const active = selectedPayment === pm.id;
+                  return (
+                    <label
+                      key={pm.id}
+                      onClick={() => setSelectedPayment(pm.id)}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all",
+                        active ? "border-apple-primary bg-apple-primary/5 shadow-xs" : "border-zinc-200 hover:border-zinc-300"
+                      )}
+                    >
+                      <input type="radio" name="payment" checked={active} onChange={() => setSelectedPayment(pm.id)} className="sr-only" />
+                      <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold", active ? "bg-apple-primary text-white" : "bg-zinc-100 text-zinc-500")}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs font-bold text-apple-ink">{pm.label}</p>
+                        {pm.id === "cod" && <p className="text-[11px] text-zinc-500">Pay cash upon product delivery</p>}
+                        {(pm.id === "bkash" || pm.id === "nagad") && (
+                          <p className="text-[11px] text-zinc-500">Send money & provide Transaction ID</p>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+
+              {/* bKash / Nagad Payment Instructions & Verification Form */}
+              {(selectedPayment === "bkash" || selectedPayment === "nagad") && (
+                <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/60 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-blue-900 font-bold text-xs">
+                    <Smartphone className="h-4 w-4 text-blue-600" />
+                    <span>{selectedPayment.toUpperCase()} Payment Instructions</span>
                   </div>
-                ) : null}
-                <div className="mt-3 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2">
-                  <Shield className="h-4 w-4 text-green-500" />
-                  <p className="text-xs text-green-600">Your information is secure</p>
+
+                  <p className="text-xs text-blue-800">
+                    Send <strong>{formatCurrency(total, settings)}</strong> to the shop's {selectedPayment.toUpperCase()} number below:
+                  </p>
+
+                  <div className="flex items-center justify-between rounded-lg bg-white p-3 border border-blue-200">
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-zinc-400">Shop {selectedPayment.toUpperCase()} Number</p>
+                      <p className="text-sm font-mono font-extrabold text-blue-900">
+                        {(settings.paymentSettings as any)?.[selectedPayment]?.number || "01711000000"}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-bold text-blue-800 uppercase">
+                      {(settings.paymentSettings as any)?.[selectedPayment]?.type || "Personal"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <Field label="Your Sender Mobile Number *">
+                      <input
+                        type="tel"
+                        required
+                        value={senderNumber}
+                        onChange={(e) => setSenderNumber(e.target.value)}
+                        placeholder="e.g. 017XXXXXXXX"
+                        className={inputClass}
+                      />
+                    </Field>
+                    <Field label="Transaction ID (TrxID) *">
+                      <input
+                        type="text"
+                        required
+                        value={transactionId}
+                        onChange={(e) => setTransactionId(e.target.value.toUpperCase())}
+                        placeholder="e.g. ABC123XYZ"
+                        className={cn(inputClass, "font-mono uppercase font-bold")}
+                      />
+                    </Field>
+                  </div>
                 </div>
-              </motion.div>
-            )}
+              )}
+            </motion.div>
           </div>
 
+          {/* Right Summary Panel (2 cols) */}
           <div className="lg:col-span-2">
-            <div className="rounded-xl border border-zinc-100 p-5">
-              <h2 className="mb-4 font-semibold text-apple-ink">Order Summary</h2>
-              <div className="space-y-3">
-                {items.map((item) => (
-                  <div key={item.productId} className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-apple-canvas-parchment">
-                      {item.image ? <img src={item.image} alt={item.name} className="h-full w-full rounded-lg object-cover" /> : <ShoppingBag className="h-4 w-4 text-zinc-300" />}
+            <div className="sticky top-20 rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
+              <h2 className="font-bold text-apple-ink text-sm border-b border-zinc-100 pb-3">Order Summary</h2>
+
+              <div className="space-y-3 max-h-60 overflow-y-auto divide-y divide-zinc-100">
+                {items.map((item, idx) => (
+                  <div key={`${item.productId}-${idx}`} className="flex items-center gap-3 pt-2 first:pt-0">
+                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50">
+                      {item.image ? <img src={item.image} alt={item.name} className="h-full w-full object-cover" /> : <ShoppingBag className="h-4 w-4 text-zinc-300" />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-apple-ink">{item.name}</p>
-                      <p className="text-xs text-apple-ink-muted-48">Qty: {item.quantity}</p>
+                      <p className="truncate text-xs font-bold text-apple-ink">{item.name}</p>
+                      {item.variantTitle && <p className="text-[10px] text-zinc-400">{item.variantTitle}</p>}
+                      <p className="text-[11px] text-zinc-500">Qty: {item.quantity}</p>
                     </div>
-                    <span className="shrink-0 text-xs font-semibold text-apple-ink">{formatCurrency(item.price * item.quantity, settings)}</span>
+                    <span className="shrink-0 text-xs font-bold text-apple-ink">{formatCurrency(item.price * item.quantity, settings)}</span>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 space-y-1.5 border-t border-zinc-100 pt-4 text-sm">
-                <div className="flex justify-between text-apple-ink-muted-48"><span>Subtotal</span><span>{formatCurrency(subtotal, settings)}</span></div>
-                <div className="flex justify-between text-apple-ink-muted-48"><span>Shipping {selectedZone ? `(${selectedZone.name})` : ""}</span><span>{deliveryCharge === 0 ? "Free" : formatCurrency(deliveryCharge, settings)}</span></div>
-                {taxAmount > 0 ? <div className="flex justify-between text-apple-ink-muted-48"><span>Tax ({taxRate}%)</span><span>{formatCurrency(taxAmount, settings)}</span></div> : null}
-                <div className="flex justify-between border-t border-zinc-100 pt-2 font-semibold text-apple-ink"><span>Grand total</span><span>{formatCurrency(total, settings)}</span></div>
+
+              <div className="space-y-2 border-t border-zinc-100 pt-3 text-xs">
+                <div className="flex justify-between text-zinc-500">
+                  <span>Subtotal</span>
+                  <span>{formatCurrency(subtotal, settings)}</span>
+                </div>
+
+                {discount > 0 && (
+                  <div className="flex justify-between font-bold text-emerald-600">
+                    <span>Discount</span>
+                    <span>-{formatCurrency(discount, settings)}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between text-zinc-500">
+                  <span>Shipping {selectedZone ? `(${selectedZone.name})` : ""}</span>
+                  <span>{deliveryCharge === 0 ? "Free" : formatCurrency(deliveryCharge, settings)}</span>
+                </div>
+
+                {taxAmount > 0 && (
+                  <div className="flex justify-between text-zinc-500">
+                    <span>Tax ({taxRate}%)</span>
+                    <span>{formatCurrency(taxAmount, settings)}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between border-t border-zinc-200 pt-2 text-sm font-extrabold text-apple-ink">
+                  <span>Grand Total</span>
+                  <span className="text-apple-primary">{formatCurrency(total, settings)}</span>
+                </div>
               </div>
-              {errorMsg ? <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2.5"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" /><p className="text-sm text-red-600">{errorMsg}</p></div> : null}
-              <button type="submit" disabled={isLoading || isSyncing || cartFetching} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3 text-sm font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
-                {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Placing Order...</> : `Place Order — ${formatCurrency(total, settings)}`}
+
+              {errorMsg && (
+                <div className="flex items-start gap-2 rounded-xl bg-red-50 p-3 text-xs text-red-700 border border-red-200">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoading || isSyncing || cartFetching || requireLogin}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-apple-primary py-3 text-xs font-bold text-white shadow-md transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing Order…</> : `Place Order • ${formatCurrency(total, settings)}`}
               </button>
             </div>
           </div>
@@ -617,14 +663,14 @@ export default function CheckoutPage() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">{label}</label>
+    <div className="space-y-1">
+      <label className="block text-xs font-semibold text-zinc-700">{label}</label>
       {children}
     </div>
   );
 }
 
 const inputClass =
-  "h-11 min-h-[44px] w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-3 text-base text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:text-sm";
+  "h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/20";
 const textareaClass =
-  "min-h-[88px] w-full rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-3 py-3 text-base text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:text-sm";
+  "min-h-[70px] w-full rounded-xl border border-zinc-200 bg-white p-3 text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/20";

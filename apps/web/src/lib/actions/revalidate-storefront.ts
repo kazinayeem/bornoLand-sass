@@ -3,12 +3,13 @@
 import { revalidateStorefront, type RevalidateScope } from "@/lib/server/revalidate";
 
 export async function revalidateStorefrontAction(args: {
-  tenantSlug: string;
-  storeId: string;
+  tenantSlug?: string;
+  storeId?: string;
   scope?: RevalidateScope;
   productSlug?: string;
   categorySlug?: string;
   cmsSlugs?: string[];
 }) {
+
   await revalidateStorefront(args);
 }

@@ -187,6 +187,22 @@ export default function CheckoutPage() {
     label: selectedPayment.toUpperCase(),
   };
 
+  const codAllowed = (settings as any).cashOnDelivery !== false && (settings.paymentSettings as any)?.codEnabled !== false;
+  const bkashAllowed = (settings.paymentSettings as any)?.bkash?.enabled ?? true;
+  const nagadAllowed = (settings.paymentSettings as any)?.nagad?.enabled ?? true;
+
+  const availablePaymentMethods = [
+    ...(codAllowed ? [{ id: "cod", label: "Cash on Delivery (COD)", type: "cod", icon: Banknote }] : []),
+    ...(bkashAllowed ? [{ id: "bkash", label: "bKash Mobile Banking", type: "bkash", icon: Smartphone }] : []),
+    ...(nagadAllowed ? [{ id: "nagad", label: "Nagad Mobile Banking", type: "nagad", icon: Smartphone }] : []),
+  ];
+
+  useEffect(() => {
+    if (availablePaymentMethods.length > 0 && (!selectedPayment || !availablePaymentMethods.some((pm) => pm.id === selectedPayment))) {
+      setSelectedPayment(availablePaymentMethods[0].id);
+    }
+  }, [availablePaymentMethods.length, selectedPayment]);
+
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discount = backendCart?.discount ?? 0;
   const shippingEnabled = settings.shippingEnabled !== false;
@@ -197,11 +213,11 @@ export default function CheckoutPage() {
     subtotal >= (settings.freeShippingMin ?? 0);
   const baseDelivery = shippingEnabled ? (selectedZone?.charge ?? 0) : 0;
   const deliveryCharge = freeShipping ? 0 : baseDelivery;
-  const taxRate = settings.taxEnabled ? (settings.taxRate ?? 0) : 0;
+  const taxRate = settings.taxEnabled || (settings.taxRate && settings.taxRate > 0) ? (settings.taxRate ?? 0) : 0;
   const taxAmount = taxRate > 0 && !settings.taxIncluded ? (subtotal - discount) * (taxRate / 100) : 0;
   const total = Math.max(0, subtotal - discount + taxAmount + deliveryCharge);
 
-  const requireLogin = settings.requireLoginEnabled && !customer;
+  const requireLogin = Boolean(settings.requireLoginEnabled || (settings as any).requireLogin) && !customer;
 
   const handleChange =
     (field: keyof CheckoutFormState) =>
@@ -225,7 +241,14 @@ export default function CheckoutPage() {
       return;
     }
 
+    const minOrder = Number((settings as any).minimumOrderAmount ?? (settings as any).minOrderAmount ?? 0);
+    if (minOrder > 0 && subtotal < minOrder) {
+      setErrorMsg(`Minimum order amount for this store is ${formatCurrency(minOrder, settings)}.`);
+      return;
+    }
+
     const payType = (selectedPm?.type || selectedPayment || "cod").toLowerCase();
+
 
     if (payType === "bkash" || payType === "nagad") {
       if (!senderNumber.trim()) {
@@ -504,13 +527,10 @@ export default function CheckoutPage() {
               </div>
 
               <div className="grid gap-2.5">
-                {[
-                  { id: "cod", label: "Cash on Delivery (COD)", type: "cod", icon: Banknote },
-                  { id: "bkash", label: "bKash Mobile Banking", type: "bkash", icon: Smartphone },
-                  { id: "nagad", label: "Nagad Mobile Banking", type: "nagad", icon: Smartphone },
-                ].map((pm) => {
+                {availablePaymentMethods.map((pm) => {
                   const Icon = pm.icon;
                   const active = selectedPayment === pm.id;
+
                   return (
                     <label
                       key={pm.id}

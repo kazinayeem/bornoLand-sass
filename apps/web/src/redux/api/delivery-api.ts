@@ -19,15 +19,8 @@ type ApiResponse<T> = {
   message?: string;
 };
 
-function authHeaders() {
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("customer_token")
-      : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 export const deliveryApi = baseApi.injectEndpoints({
+
   endpoints: (builder) => ({
     /* ── Dashboard (store owner) endpoints ── */
     getDeliveryZones: builder.query<
@@ -36,7 +29,6 @@ export const deliveryApi = baseApi.injectEndpoints({
     >({
       query: (storeId) => ({
         url: `/delivery-zones/store/${storeId}`,
-        headers: authHeaders(),
       }),
       providesTags: ["DeliveryZones"],
     }),
@@ -48,7 +40,6 @@ export const deliveryApi = baseApi.injectEndpoints({
         url: `/delivery-zones/store/${storeId}`,
         method: "POST",
         body: data,
-        headers: authHeaders(),
       }),
       invalidatesTags: ["DeliveryZones"],
     }),
@@ -60,7 +51,6 @@ export const deliveryApi = baseApi.injectEndpoints({
         url: `/delivery-zones/store/${storeId}/${id}`,
         method: "PUT",
         body: data,
-        headers: authHeaders(),
       }),
       invalidatesTags: ["DeliveryZones"],
     }),
@@ -71,10 +61,10 @@ export const deliveryApi = baseApi.injectEndpoints({
       query: ({ storeId, id }) => ({
         url: `/delivery-zones/store/${storeId}/${id}`,
         method: "DELETE",
-        headers: authHeaders(),
       }),
       invalidatesTags: ["DeliveryZones"],
     }),
+
 
     /* ── Public (checkout) endpoints ── */
     getPublicDeliveryZones: builder.query<

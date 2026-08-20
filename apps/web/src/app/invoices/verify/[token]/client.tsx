@@ -9,19 +9,13 @@ import {
   Printer,
   Copy,
   ArrowLeft,
-  FileText,
-  Calendar,
-  CreditCard,
-  User,
-  Store,
+  ShieldCheck,
   ExternalLink,
-  Clock,
-  AlertTriangle,
-  RefreshCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getAccessToken } from "@/lib/access-token";
 import { getApiUrl } from "@/lib/urls";
+import { amountInWords } from "@/lib/amount-in-words";
 
 type Invoice = {
   _id: string;
@@ -66,21 +60,21 @@ function formatBDT(amount: number) {
 
 function formatDate(d: string | null | undefined) {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", {
-    month: "long",
+  return new Date(d).toLocaleDateString("en-GB", {
+    month: "short",
     day: "numeric",
     year: "numeric",
   });
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: typeof CheckCircle2 }> = {
-  paid: { label: "Paid", color: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", icon: CheckCircle2 },
-  pending: { label: "Pending", color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", icon: Clock },
-  rejected: { label: "Failed", color: "text-red-700", bg: "bg-red-50", border: "border-red-200", icon: XCircle },
-  refunded: { label: "Cancelled", color: "text-apple-ink-muted-80", bg: "bg-apple-canvas-parchment", border: "border-zinc-200", icon: AlertTriangle },
-};
+export function InvoiceVerifyClient({
+  invoice,
+  token,
+}: {
+  invoice: Invoice | null;
+  token: string;
+}) {
 
-export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | null; token: string }) {
   const [copied, setCopied] = useState<string | null>(null);
 
   const copyToClipboard = useCallback(async (text: string, label: string) => {
@@ -122,22 +116,20 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
     window.print();
   }, []);
 
-  // ── Invalid / Not Found ───────────────────────────────────────────────────
-
   if (!invoice) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-apple-canvas-parchment p-4">
-        <div className="w-full max-w-md text-center">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-100">
-            <XCircle className="h-10 w-10 text-red-500" />
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-4">
+        <div className="w-full max-w-md text-center bg-white p-8 rounded-2xl border border-zinc-200 shadow-sm">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 border border-red-100">
+            <XCircle className="h-8 w-8 text-red-500" />
           </div>
-          <h1 className="text-2xl font-bold text-apple-ink">Invalid Invoice</h1>
-          <p className="mt-2 text-sm text-apple-ink-muted-48">
+          <h1 className="text-xl font-bold text-zinc-900">Invalid Invoice</h1>
+          <p className="mt-2 text-sm text-zinc-500">
             This invoice verification link is invalid or the invoice does not exist.
           </p>
           <Link
             href="/"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-zinc-800"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-zinc-800"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Home
@@ -147,230 +139,217 @@ export function InvoiceVerifyClient({ invoice, token }: { invoice: Invoice | nul
     );
   }
 
-  // ── Valid Invoice ──────────────────────────────────────────────────────────
-
-  const status = STATUS_CONFIG[invoice.status] || STATUS_CONFIG.pending;
-  const StatusIcon = status.icon;
-  const planName = typeof invoice.planId === "object" ? invoice.planId?.name : "—";
-  const storeName = typeof invoice.storeId === "object" ? invoice.storeId?.name : "—";
-  const storeSlug = typeof invoice.storeId === "object" ? invoice.storeId?.slug : "";
-  const customerName = typeof invoice.userId === "object" ? invoice.userId?.name : "—";
-  const customerEmail = typeof invoice.userId === "object" ? invoice.userId?.email : "—";
-  const approvedByName = typeof invoice.approvedBy === "object" ? invoice.approvedBy?.name : "—";
-
-  const baseUrl = getApiUrl();
+  const planName = typeof invoice.planId === "object" ? invoice.planId?.name : "Subscription Plan";
+  const storeName = typeof invoice.storeId === "object" ? invoice.storeId?.name : "Store Workspace";
+  const customerName = typeof invoice.userId === "object" ? invoice.userId?.name : "Customer";
+  const customerEmail = typeof invoice.userId === "object" ? invoice.userId?.email : "";
+  const customerPhone = typeof invoice.userId === "object" ? invoice.userId?.phone : "";
+  const isPaid = invoice.status === "paid";
+  const currency = invoice.currency || "BDT";
   const verificationUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/invoice/verify/${token}`;
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
+    verificationUrl,
+  )}`;
 
   return (
-    <div className="min-h-screen bg-apple-canvas-parchment">
-      {/* Print-only header */}
-      <div className="hidden print:block print:min-h-0 print:bg-white print:p-4">
-        <div className="flex items-center justify-between border-b border-zinc-200 pb-2">
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-apple-ink-muted-80" />
-            <span className="text-sm font-semibold text-apple-ink">BornoLand</span>
-          </div>
-          <span className="text-xs text-apple-ink-muted-48">Invoice Verification</span>
+    <div className="min-h-screen bg-zinc-100/70 py-8 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0 print:min-h-0">
+      {/* Top Action Bar */}
+      <div className="max-w-4xl mx-auto mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Home
+        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleDownload}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-zinc-800 transition-all"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Download PDF
+          </button>
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-xs font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50 transition-all"
+          >
+            <Printer className="h-3.5 w-3.5" />
+            Print
+          </button>
+          <button
+            onClick={() => copyToClipboard(invoice.invoiceNumber, "Invoice ID")}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-xs font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50 transition-all"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            {copied === "Invoice ID" ? "Copied!" : "Copy ID"}
+          </button>
+          <button
+            onClick={() => copyToClipboard(verificationUrl, "Verification Link")}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-xs font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50 transition-all"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            {copied === "Verification Link" ? "Copied!" : "Copy Link"}
+          </button>
         </div>
       </div>
 
-      <div className="mx-auto max-w-2xl px-4 py-12 print:max-w-none print:px-0 print:py-0">
-        {/* Status Banner */}
-        <div className={`mb-8 rounded-2xl border ${status.border} ${status.bg} p-6 text-center print:mb-4 print:p-3`}>
-          <div className={`mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full ${status.bg} print:h-10 print:w-10`}>
-            <StatusIcon className={`h-8 w-8 ${status.color} print:h-6 print:w-6`} />
-          </div>
-          <h1 className={`text-2xl font-bold ${status.color} print:text-lg`}>
-            Invoice {status.label}
-          </h1>
-          <p className="mt-1 text-sm text-apple-ink-muted-48 print:text-xs">
-            {invoice.invoiceNumber}
-          </p>
-        </div>
-
-        {/* Invoice Card */}
-        <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm print:shadow-none print:border-zinc-200">
+      {/* Main A4 Document */}
+      <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-zinc-200/80 shadow-xl overflow-hidden print:border-0 print:shadow-none print:rounded-none print:m-0 print:p-0 print:max-w-none">
+        <div className="p-8 sm:p-12 print:p-6 text-zinc-800 space-y-8 font-sans">
           {/* Header */}
-          <div className="border-b border-zinc-100 px-6 py-5 print:px-4 print:py-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-apple-ink-muted-48" />
-                  <h2 className="text-lg font-bold text-apple-ink">{invoice.invoiceNumber}</h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b border-zinc-200/80 pb-8">
+            <div className="space-y-2 max-w-sm">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 flex items-center justify-center rounded-lg bg-zinc-900 text-white font-bold text-base">
+                  B
                 </div>
-                <p className="mt-1 text-sm text-apple-ink-muted-48">{invoice.companyName || "BornoLand"}</p>
+                <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Bornoland SaaS</h1>
               </div>
-              <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${status.border} ${status.bg} ${status.color}`}>
-                <StatusIcon className="h-3.5 w-3.5" />
-                {status.label}
-              </div>
+              <p className="text-xs text-zinc-500">Dhaka, Bangladesh · support@bornoland.com</p>
             </div>
-          </div>
-
-          {/* Details Grid */}
-          <div className="grid grid-cols-1 gap-0 border-b border-zinc-100 sm:grid-cols-2 print:grid-cols-2">
-            {/* Left Column */}
-            <div className="space-y-4 border-b border-zinc-100 p-6 sm:border-b-0 sm:border-r print:p-4">
-              <div>
-                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
-                  <Store className="h-3.5 w-3.5" />
-                  Store
-                </h3>
-                <p className="text-sm font-semibold text-apple-ink">{storeName}</p>
-                {storeSlug && (
-                  <p className="text-xs text-apple-ink-muted-48">{storeSlug}.bornoland.com</p>
-                )}
-              </div>
-              <div>
-                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
-                  <User className="h-3.5 w-3.5" />
-                  Customer
-                </h3>
-                <p className="text-sm font-semibold text-apple-ink">{customerName}</p>
-                <p className="text-xs text-apple-ink-muted-48">{customerEmail}</p>
-              </div>
-              <div>
-                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
-                  <CreditCard className="h-3.5 w-3.5" />
-                  Payment
-                </h3>
-                <p className="text-sm font-semibold text-apple-ink">
-                  {invoice.gateway ? invoice.gateway.charAt(0).toUpperCase() + invoice.gateway.slice(1) : "—"}
-                </p>
-                {invoice.transactionId && (
-                  <p className="font-mono text-xs text-apple-ink-muted-48">{invoice.transactionId}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Right Column */}
-            <div className="space-y-4 p-6 print:p-4">
-              <div>
-                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
-                  <FileText className="h-3.5 w-3.5" />
-                  Plan
-                </h3>
-                <p className="text-sm font-semibold text-apple-ink">{planName}</p>
-                <p className="text-xs text-apple-ink-muted-48 capitalize">{invoice.duration?.replace("_", " ")}</p>
-              </div>
-              <div>
-                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
-                  <Calendar className="h-3.5 w-3.5" />
-                  Dates
-                </h3>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-apple-ink-muted-48">Issued</span>
-                    <span className="font-medium text-apple-ink">{formatDate(invoice.issuedAt)}</span>
-                  </div>
-                  {invoice.paidAt && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-apple-ink-muted-48">Paid</span>
-                      <span className="font-medium text-apple-ink">{formatDate(invoice.paidAt)}</span>
-                    </div>
-                  )}
-                  {invoice.billingPeriodEnd && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-apple-ink-muted-48">Renewal</span>
-                      <span className="font-medium text-apple-ink">{formatDate(invoice.billingPeriodEnd)}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
-                  Approved By
-                </h3>
-                <p className="text-sm font-medium text-apple-ink">{approvedByName}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Amount */}
-          <div className="px-6 py-5 print:px-4 print:py-3">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-apple-ink-muted-48">Subtotal</span>
-                <span className="text-apple-ink">{formatBDT(invoice.subtotal)}</span>
-              </div>
-              {invoice.discount > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-emerald-600">Discount</span>
-                  <span className="text-emerald-600">-{formatBDT(invoice.discount)}</span>
-                </div>
-              )}
-              {invoice.vatAmount > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-apple-ink-muted-48">VAT</span>
-                  <span className="text-apple-ink">{formatBDT(invoice.vatAmount)}</span>
-                </div>
-              )}
-              {invoice.taxAmount > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-apple-ink-muted-48">Tax</span>
-                  <span className="text-apple-ink">{formatBDT(invoice.taxAmount)}</span>
-                </div>
-              )}
-              <div className="flex justify-between border-t border-zinc-200 pt-2 text-base font-bold">
-                <span className="text-apple-ink">Total</span>
-                <span className="text-apple-ink">{formatBDT(invoice.total)}</span>
-              </div>
+            <div className="text-left sm:text-right space-y-1">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 tracking-tight uppercase">
+                INVOICE
+              </h2>
+              <p className="text-xs font-semibold text-zinc-900">
+                <span className="text-zinc-400 font-normal">Invoice No: </span>
+                {invoice.invoiceNumber}
+              </p>
+              <p className="text-xs text-zinc-600">
+                <span className="text-zinc-400">Issued: </span>
+                {formatDate(invoice.issuedAt)}
+              </p>
               {invoice.paidAt && (
-                <>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-apple-ink-muted-48">Paid</span>
-                    <span className="font-medium text-emerald-600">{formatBDT(invoice.total)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-apple-ink-muted-48">Remaining</span>
-                    <span className="font-bold text-emerald-600">{formatBDT(0)}</span>
-                  </div>
-                </>
+                <p className="text-xs text-zinc-600">
+                  <span className="text-zinc-400">Paid: </span>
+                  {formatDate(invoice.paidAt)}
+                </p>
               )}
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="border-t border-zinc-100 px-6 py-4 print:hidden">
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={handleDownload}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment"
-              >
-                <Download className="h-4 w-4" />
-                Download PDF
-              </button>
-              <button
-                onClick={handlePrint}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment"
-              >
-                <Printer className="h-4 w-4" />
-                Print
-              </button>
-              <button
-                onClick={() => copyToClipboard(invoice.invoiceNumber, "Invoice ID")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment"
-              >
-                <Copy className="h-4 w-4" />
-                {copied === "Invoice ID" ? "Copied!" : "Copy Invoice ID"}
-              </button>
-              <button
-                onClick={() => copyToClipboard(verificationUrl, "Verification Link")}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment"
-              >
-                <ExternalLink className="h-4 w-4" />
-                {copied === "Verification Link" ? "Copied!" : "Copy Link"}
-              </button>
+          {/* Customer & Workspace */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/50 p-5 space-y-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                BILLED TO
+              </span>
+              <p className="text-sm font-bold text-zinc-900">{customerName}</p>
+              {customerEmail && <p className="text-xs text-zinc-600">{customerEmail}</p>}
+              {customerPhone && <p className="text-xs text-zinc-600">{customerPhone}</p>}
+            </div>
+            <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/50 p-5 space-y-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                WORKSPACE / STORE
+              </span>
+              <p className="text-sm font-bold text-zinc-900">{storeName}</p>
+              <p className="text-xs text-zinc-600">{planName} Subscription</p>
             </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-xs text-apple-ink-muted-48 print:mt-4">
-          <p>Powered by BornoLand · bornoland.com · support@bornoland.com</p>
-          <p className="mt-1">
-            Generated on {formatDate(new Date().toISOString())}
-          </p>
+          {/* Items Table */}
+          <div className="overflow-x-auto rounded-xl border border-zinc-200/80">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-zinc-200/80 bg-zinc-50/80 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                  <th className="py-3 px-3 text-center w-10">#</th>
+                  <th className="py-3 px-4">DESCRIPTION</th>
+                  <th className="py-3 px-3 text-center">DURATION</th>
+                  <th className="py-3 px-4 text-right">AMOUNT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="hover:bg-zinc-50/40 transition-colors">
+                  <td className="py-4 px-3 text-center text-zinc-400">1</td>
+                  <td className="py-4 px-4">
+                    <p className="font-semibold text-zinc-900">{planName} Subscription</p>
+                    <p className="text-[11px] text-zinc-500">
+                      {formatDate(invoice.billingPeriodStart)} – {formatDate(invoice.billingPeriodEnd)}
+                    </p>
+                  </td>
+                  <td className="py-4 px-3 text-center font-medium text-zinc-700 capitalize">
+                    {invoice.duration?.replace("_", " ") || "Monthly"}
+                  </td>
+                  <td className="py-4 px-4 text-right font-bold text-zinc-900">
+                    {formatBDT(invoice.subtotal)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals & QR */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-2">
+            <div className="md:col-span-7 space-y-4">
+              <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-4 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+                  AMOUNT IN WORDS
+                </span>
+                <p className="text-xs font-semibold text-zinc-800 leading-relaxed">
+                  {amountInWords(invoice.total, currency)}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-4 flex items-center gap-4">
+                <img
+                  src={qrImageUrl}
+                  alt="Verification QR"
+                  className="h-16 w-16 rounded-lg border border-zinc-200 bg-white p-1"
+                />
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-900">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                    VERIFY INVOICE
+                  </div>
+                  <p className="text-[11px] text-zinc-500 leading-snug">
+                    Scan this QR code to verify this official invoice online.
+                  </p>
+                  <p className="text-[10px] text-zinc-400 truncate max-w-xs">{verificationUrl}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-5 space-y-2">
+              <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/30 p-5 space-y-3 text-xs">
+                <div className="flex justify-between text-zinc-600">
+                  <span>Subtotal</span>
+                  <span className="font-medium text-zinc-900">{formatBDT(invoice.subtotal)}</span>
+                </div>
+                {invoice.discount > 0 && (
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Discount</span>
+                    <span className="font-medium">-{formatBDT(invoice.discount)}</span>
+                  </div>
+                )}
+                {invoice.vatAmount > 0 && (
+                  <div className="flex justify-between text-zinc-600">
+                    <span>VAT</span>
+                    <span className="font-medium text-zinc-900">{formatBDT(invoice.vatAmount)}</span>
+                  </div>
+                )}
+                {invoice.taxAmount > 0 && (
+                  <div className="flex justify-between text-zinc-600">
+                    <span>Tax</span>
+                    <span className="font-medium text-zinc-900">{formatBDT(invoice.taxAmount)}</span>
+                  </div>
+                )}
+                <div className="border-t border-zinc-200/80 pt-3 flex justify-between items-center">
+                  <span className="text-sm font-bold text-zinc-900">Total</span>
+                  <span className="text-base font-extrabold text-zinc-900">
+                    {formatBDT(invoice.total)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-zinc-200/80 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-zinc-400">
+            <span>Page 1 of 1</span>
+            <span className="font-medium text-zinc-600">Thank you for your business.</span>
+            <span>Powered by Bornoland</span>
+          </div>
         </div>
       </div>
     </div>

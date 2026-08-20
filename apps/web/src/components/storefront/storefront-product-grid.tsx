@@ -124,7 +124,8 @@ export function StorefrontProductGrid({
   const data = isBuilder ? builderQuery.data : liveQuery.data;
   const isLoading = isBuilder ? builderQuery.isLoading || builderQuery.isFetching : liveQuery.isLoading || liveQuery.isFetching;
 
-  const items = data?.data?.products ?? [];
+  const rawProducts = data?.data?.products;
+  const items = useMemo(() => rawProducts ?? [], [rawProducts]);
   const pagination = data?.data?.pagination;
   const total = pagination?.total ?? data?.data?.total ?? items.length;
   const totalPages = Math.max(1, pagination?.totalPages ?? data?.data?.totalPages ?? 1);
@@ -132,20 +133,24 @@ export function StorefrontProductGrid({
   const effectiveMode: PaginationMode = showLoadMore ? "load-more" : paginationMode;
 
   useEffect(() => {
+    if (!rawProducts) return;
     if (effectiveMode === "pages" || page === 1) {
-      setMergedItems(items);
+      setMergedItems(rawProducts);
       return;
     }
 
     setMergedItems((current) => {
       const seen = new Set(current.map((item) => item._id));
       const next = [...current];
-      for (const item of items) {
+      for (const item of rawProducts) {
         if (!seen.has(item._id)) next.push(item);
       }
       return next;
     });
-  }, [items, effectiveMode, page]);
+  }, [rawProducts, effectiveMode, page]);
+
+  const displayProducts = effectiveMode === "pages" ? items : (mergedItems.length > 0 ? mergedItems : items);
+
 
   useEffect(() => {
     if (effectiveMode !== "infinite") return;
@@ -299,7 +304,7 @@ export function StorefrontProductGrid({
         </motion.div>
       ) : null}
 
-      {(effectiveMode === "pages" ? items : mergedItems).length === 0 && !isLoading ? (
+      {displayProducts.length === 0 && !isLoading ? (
         <StorefrontEmptyState
           icon={<Search className="h-12 w-12" />}
           title="No products found"
@@ -309,7 +314,7 @@ export function StorefrontProductGrid({
         <>
           <div className="relative">
             {/* Loading overlay for filter/search transitions */}
-            {isLoading && (effectiveMode === "pages" ? items : mergedItems).length > 0 && (
+            {isLoading && displayProducts.length > 0 && (
               <div className="absolute inset-0 z-10 flex items-start justify-center rounded-apple-lg bg-apple-canvas/60 pt-8 backdrop-blur-[1px]">
                 <div className="flex items-center gap-2 rounded-apple-pill bg-apple-canvas px-4 py-2 shadow-sm">
                   <Loader2 className="h-4 w-4 animate-spin text-apple-primary" />
@@ -319,7 +324,7 @@ export function StorefrontProductGrid({
             )}
 
             <AnimatePresence mode="wait">
-              {isLoading && (effectiveMode === "pages" ? items : mergedItems).length === 0 ? (
+              {isLoading && displayProducts.length === 0 ? (
                 <motion.div
                   key="skeleton"
                   initial={{ opacity: 0 }}
@@ -352,7 +357,7 @@ export function StorefrontProductGrid({
                     ),
                   )}
                 >
-                  {(effectiveMode === "pages" ? items : mergedItems).map((product, index) => (
+                  {displayProducts.map((product, index) => (
                     <motion.div
                       key={product._id}
                       initial={{ opacity: 0, y: 16 }}
@@ -363,6 +368,7 @@ export function StorefrontProductGrid({
                     </motion.div>
                   ))}
                 </motion.div>
+
               )}
             </AnimatePresence>
           </div>

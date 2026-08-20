@@ -6,7 +6,7 @@ import { cacheTags } from "@/lib/server/cache-tags";
 export type RevalidateScope = "all" | "home" | "products" | "cms" | "theme" | "categories" | "navigation";
 
 export async function revalidateStorefront(args: {
-  tenantSlug: string;
+  tenantSlug?: string;
   storeId?: string;
   scope?: RevalidateScope;
   productSlug?: string;
@@ -15,7 +15,11 @@ export async function revalidateStorefront(args: {
 }) {
   const { tenantSlug, storeId, scope = "all", productSlug, categorySlug, cmsSlugs } = args;
 
-  revalidateTag(cacheTags.tenant(tenantSlug));
+  if (tenantSlug) {
+    revalidateTag(cacheTags.tenant(tenantSlug));
+    revalidateTag(cacheTags.storeMetadata(tenantSlug));
+    revalidateTag(cacheTags.storeBySlug(tenantSlug));
+  }
 
   if (storeId) {
     revalidateTag(cacheTags.store(storeId));
@@ -24,11 +28,8 @@ export async function revalidateStorefront(args: {
     revalidateTag(cacheTags.storeTheme(storeId));
   }
 
-  revalidateTag(cacheTags.storeMetadata(tenantSlug));
-  revalidateTag(cacheTags.storeBySlug(tenantSlug));
-
   if (scope === "all" || scope === "theme") {
-    revalidateTag(cacheTags.tenantTheme(tenantSlug));
+    if (tenantSlug) revalidateTag(cacheTags.tenantTheme(tenantSlug));
     if (storeId) revalidateTag(cacheTags.storeTheme(storeId));
   }
 
@@ -50,32 +51,33 @@ export async function revalidateStorefront(args: {
 
   if ((scope === "all" || scope === "categories") && categorySlug && storeId) {
     revalidateTag(cacheTags.category(categorySlug));
-    revalidateTag(cacheTags.storeCategory(storeId, categorySlug));
+    if (storeId) revalidateTag(cacheTags.storeCategory(storeId, categorySlug));
   }
 
-
-  if (scope === "all" || scope === "categories") {
-    revalidatePath(`/site/${tenantSlug}/categories`);
-    if (categorySlug) {
-      revalidatePath(`/site/${tenantSlug}/category/${categorySlug}`);
+  if (tenantSlug) {
+    if (scope === "all" || scope === "categories") {
+      revalidatePath(`/site/${tenantSlug}/categories`);
+      if (categorySlug) {
+        revalidatePath(`/site/${tenantSlug}/category/${categorySlug}`);
+      }
     }
-  }
 
-  if (scope === "all" || scope === "navigation") {
+    if (scope === "all" || scope === "navigation") {
+      revalidatePath(`/site/${tenantSlug}`);
+    }
+
     revalidatePath(`/site/${tenantSlug}`);
-  }
-
-  revalidatePath(`/site/${tenantSlug}`);
-  if (scope === "all" || scope === "home") {
-    revalidatePath(`/site/${tenantSlug}`, "page");
-  }
-  if (scope === "all" || scope === "products") {
-    revalidatePath(`/site/${tenantSlug}/shop`);
-    if (productSlug) revalidatePath(`/products/${productSlug}`);
-  }
-  if (scope === "all" || scope === "cms") {
-    for (const segment of ["about", "contact", "faq", "terms", "privacy", "shipping", "returns", "size-guide"]) {
-      revalidatePath(`/site/${tenantSlug}/${segment}`);
+    if (scope === "all" || scope === "home") {
+      revalidatePath(`/site/${tenantSlug}`, "page");
+    }
+    if (scope === "all" || scope === "products") {
+      revalidatePath(`/site/${tenantSlug}/shop`);
+      if (productSlug) revalidatePath(`/products/${productSlug}`);
+    }
+    if (scope === "all" || scope === "cms") {
+      for (const segment of ["about", "contact", "faq", "terms", "privacy", "shipping", "returns", "size-guide", "checkout", "cart"]) {
+        revalidatePath(`/site/${tenantSlug}/${segment}`);
+      }
     }
   }
 }

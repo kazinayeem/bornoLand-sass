@@ -551,7 +551,9 @@ export async function emailStoreOrderInvoiceController(request: AuthRequest, res
 
 export async function createStoreOrderController(request: AuthRequest, response: Response) {
   try {
-    const { storeId } = request.params;
+    const storeId = Array.isArray(request.params.storeId)
+      ? request.params.storeId[0]
+      : (request.params.storeId as string);
     const userId = request.user?.userId;
 
     const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
@@ -597,11 +599,13 @@ export async function createStoreOrderController(request: AuthRequest, response:
     }
 
     await recordAuditFromRequest(request, {
-      action: AUDIT_ACTIONS.ORDER_UPDATE,
+      action: AUDIT_ACTIONS.ORDER_CREATED,
       module: AUDIT_MODULES.ORDERS,
-      targetId: String(result.data.order._id),
-      targetName: `Order #${result.data.order.orderNumber}`,
-      details: { orderNumber: result.data.order.orderNumber, total: result.data.order.total },
+      entityType: "order",
+      entityId: String(result.data.order._id),
+      entityName: `Order #${result.data.order.orderNumber}`,
+      storeId,
+      metadata: { orderNumber: result.data.order.orderNumber, total: result.data.order.total },
     });
 
     return response.status(201).json({
@@ -609,9 +613,8 @@ export async function createStoreOrderController(request: AuthRequest, response:
       data: result.data,
       message: "Order created successfully",
     });
-  } catch (error: any) {
-    console.error("createStoreOrder error:", error);
-    return response.status(500).json({ success: false, message: error?.message || "Failed to create order" });
+  } catch (error) {
+    console.error("Create store order error:", error);
+    return response.status(500).json({ success: false, message: "Failed to create order" });
   }
 }
-

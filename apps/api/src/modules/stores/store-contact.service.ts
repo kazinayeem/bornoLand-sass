@@ -59,7 +59,7 @@ function serializeStoreContact(doc: Record<string, unknown> | null | undefined, 
 
 export async function ensureDefaultStoreContact(storeId: string) {
   await connectDatabase();
-  const existing = await StoreContactModel.findOne({ storeId }).lean();
+  const existing: any = await StoreContactModel.findOne({ storeId }).lean();
   if (existing) return serializeStoreContact(existing, storeId);
   const created = await StoreContactModel.create({ storeId, ...defaultContact });
   return serializeStoreContact(created.toObject() as Record<string, unknown>, storeId);
@@ -71,7 +71,7 @@ export async function getStoreContact(storeId: string, userId?: string) {
     const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
     if (!store) return { ok: false as const, message: "Store not found" };
   }
-  const contact = await StoreContactModel.findOne({ storeId }).lean();
+  const contact: any = await StoreContactModel.findOne({ storeId }).lean();
   return {
     ok: true as const,
     data: { contact: serializeStoreContact(contact, storeId) },
@@ -94,7 +94,7 @@ export async function updateStoreContact(storeId: string, userId: string, payloa
     delete update.socialLinks;
   }
 
-  const contact = await StoreContactModel.findOneAndUpdate(
+  const contact: any = await StoreContactModel.findOneAndUpdate(
     { storeId },
     { $set: update, $setOnInsert: { storeId } },
     { upsert: true, new: true, runValidators: true },
@@ -108,9 +108,10 @@ export async function updateStoreContact(storeId: string, userId: string, payloa
 
 export async function getPublicStoreContact(storeId: string) {
   await connectDatabase();
-  const contact = await StoreContactModel.findOne({ storeId }).lean();
+  const contact: any = await StoreContactModel.findOne({ storeId }).lean();
   return {
     ok: true as const,
     data: { contact: serializeStoreContact(contact, storeId) },
   };
 }
+

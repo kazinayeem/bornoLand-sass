@@ -56,7 +56,7 @@ export async function resolveStoreBrandingLogoBuffer(
 async function loadMediaRefs(mediaId?: unknown): Promise<{ urls: string[] }> {
   if (!mediaId) return { urls: [] };
   try {
-    const media = await MediaFileModel.findById(mediaId).lean();
+    const media: any = await MediaFileModel.findById(mediaId).lean();
     if (!media || media.isDeleted) return { urls: [] };
     // storagePath first — absolute disk path, most reliable for PDF generation
     const urls = [media.storagePath, media.publicUrl, media.thumbnailUrl]
@@ -67,6 +67,7 @@ async function loadMediaRefs(mediaId?: unknown): Promise<{ urls: string[] }> {
     return { urls: [] };
   }
 }
+
 
 function uploadRoots(): string[] {
   const roots = new Set<string>();
@@ -188,7 +189,7 @@ export async function canonicalizeBrandingMediaUrls(input: {
   const next = { ...input };
 
   if (input.logoMediaId) {
-    const media = await MediaFileModel.findById(input.logoMediaId).lean();
+    const media: any = await MediaFileModel.findById(input.logoMediaId).lean();
     if (media && !media.isDeleted) {
       next.logoUrl = media.publicUrl || media.thumbnailUrl || input.logoUrl || "";
       next.logoMediaId = String(media._id);
@@ -196,7 +197,7 @@ export async function canonicalizeBrandingMediaUrls(input: {
   }
 
   if (input.faviconMediaId) {
-    const media = await MediaFileModel.findById(input.faviconMediaId).lean();
+    const media: any = await MediaFileModel.findById(input.faviconMediaId).lean();
     if (media && !media.isDeleted) {
       next.faviconUrl = media.publicUrl || media.thumbnailUrl || input.faviconUrl || "";
       next.faviconMediaId = String(media._id);
@@ -205,3 +206,4 @@ export async function canonicalizeBrandingMediaUrls(input: {
 
   return next;
 }
+

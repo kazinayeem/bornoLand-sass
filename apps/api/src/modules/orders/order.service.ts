@@ -583,17 +583,29 @@ export async function updateOrderStatus(storeId: string, orderId: string, status
   return { ok: true as const, data: { order } };
 }
 
-export async function updatePaymentStatus(storeId: string, orderId: string, paymentStatus: string) {
+export async function getCustomerOrders(storeId: string, customerId: string) {
   await connectDatabase();
-  const order = await OrderModel.findOneAndUpdate(
-    { _id: orderId, storeId },
-    {
-      $set: { paymentStatus },
-      $push: { timeline: { status: `payment_${paymentStatus}`, note: `Payment status updated to ${paymentStatus}`, createdBy: "merchant", updatedBy: "merchant" } },
-    },
-    { new: true },
-  ).lean();
+  const orders = await OrderModel.find({ storeId, customerId }).sort({ createdAt: -1 }).lean();
+  return { ok: true as const, data: { orders } };
+}
 
+export async function getOrderById(orderId: string, customerId?: string) {
+  await connectDatabase();
+  const filter: Record<string, unknown> = { _id: orderId };
+  if (customerId) filter.customerId = customerId;
+  const order = await OrderModel.findOne(filter).lean();
   if (!order) return { ok: false as const, message: "Order not found" };
   return { ok: true as const, data: { order } };
 }
+
+export async function trackOrderByNumber(storeId: string, orderNumber: string, email?: string) {
+  await connectDatabase();
+  const filter: Record<string, unknown> = { storeId, orderNumber };
+  const order: any = await OrderModel.findOne(filter).lean();
+  if (!order) return { ok: false as const, message: "Order not found" };
+  if (email && order?.shippingAddress?.email && order.shippingAddress.email.toLowerCase() !== email.toLowerCase()) {
+    return { ok: false as const, message: "Order not found for given email" };
+  }
+  return { ok: true as const, data: { order } };
+}
+

@@ -119,7 +119,7 @@ export function BuilderSidebar() {
               </button>
             </div>
           )}
-          {showPanelHeading && activeTab !== "navigator" ? (
+          {showPanelHeading ? (
             <div className="border-b border-apple-hairline px-3 py-3">
               <h2 className="text-[13px] font-semibold text-apple-ink">{panelMeta.label}</h2>
             </div>

@@ -59,7 +59,6 @@ export function FloatingSectionToolbar() {
 
   const selectedSectionId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const rightPanelOpen = useSelector((s: RootState) => s.builder.rightPanelOpen);
-  const editingZone = useSelector((s: RootState) => s.builder.editingZone);
 
   // Search all three zones so header/footer selections also show the toolbar
   const selectedSection = useSelector((s: RootState) => {

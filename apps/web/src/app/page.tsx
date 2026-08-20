@@ -3,21 +3,30 @@ import { LandingLocaleProvider } from "@/components/landing/landing-locale";
 import { Header } from "@/components/landing/header";
 import { Hero } from "@/components/landing/hero";
 import { TrustBar } from "@/components/landing/trust-bar";
-import { Features } from "@/components/landing/features";
-import { FaqPreviewBanner } from "@/components/landing/faq-preview-banner";
-import { HowItWorks } from "@/components/landing/how-it-works";
-import { Testimonials } from "@/components/landing/testimonials";
+import { WhyBornoland } from "@/components/landing/why-bornoland";
+import { ProductShowcase } from "@/components/landing/product-showcase";
+import { StoreBuilder } from "@/components/landing/store-builder";
+import { MultiStoreSection } from "@/components/landing/multi-store-section";
+import { CommerceEngine } from "@/components/landing/commerce-engine";
+import { BangladeshCommerce } from "@/components/landing/bangladesh-commerce";
+import { InventorySection } from "@/components/landing/inventory-section";
+import { OrderManagement } from "@/components/landing/order-management";
+import { CustomDomain } from "@/components/landing/custom-domain";
+import { AnalyticsSection } from "@/components/landing/analytics-section";
+import { AutomationSection } from "@/components/landing/automation-section";
+import { DeveloperSection } from "@/components/landing/developer-section";
+import { SecuritySection } from "@/components/landing/security-section";
 import { Pricing } from "@/components/landing/pricing";
-import { MobileApp } from "@/components/landing/mobile-app";
+import { Testimonials } from "@/components/landing/testimonials";
+import { HowItWorks } from "@/components/landing/how-it-works";
 import { FAQ } from "@/components/landing/faq";
-import { TeamGlobal } from "@/components/landing/team-global";
-import { Integrations } from "@/components/landing/integrations";
+import { FinalCTA } from "@/components/landing/final-cta";
 import { Footer } from "@/components/landing/footer";
 
 export const metadata: Metadata = {
-  title: "BornoLand — Build, manage, and grow your online store",
+  title: "BornoLand — The Modern Multi-Store E-Commerce Platform",
   description:
-    "Create your online store, manage products, track inventory, receive orders, accept payments, and customize your homepage — all from one dashboard.",
+    "Launch your online store in minutes. Visual drag & drop builder, bKash & COD payments, courier integrations, automated PDF invoices, and multi-store management.",
   alternates: { canonical: "/" },
 };
 
@@ -34,46 +43,77 @@ export default function HomePage() {
             applicationCategory: "BusinessApplication",
             operatingSystem: "Web",
             description:
-              "An all-in-one ecommerce platform for building, managing, and growing online stores.",
+              "The modern multi-store e-commerce SaaS platform for building, managing, and scaling online businesses.",
           }),
         }}
       />
+
+      {/* 1. Translucent Sticky Navigation */}
       <Header />
+
       <main className="overflow-x-hidden scroll-smooth [scroll-padding-top:4.5rem] sm:[scroll-padding-top:5rem]">
-        {/* 1–3: Navbar + Hero + Dashboard showcase */}
+        {/* 2. Hero + Floating Live Dashboard */}
         <Hero />
 
-        {/* 4: Trust logos */}
+        {/* 3. Trust & Social Proof Strip */}
         <TrustBar />
 
-        {/* 5: Toolkit / tilted phones */}
-        <Features />
+        {/* 4. Why Bornoland: 4 Core Pillars */}
+        <WhyBornoland />
 
-        {/* 6: Mini FAQ + Demo banner */}
-        <FaqPreviewBanner />
+        {/* 5. Tabbed Product Showcase */}
+        <ProductShowcase />
 
-        {/* 7: Simple steps */}
-        <HowItWorks />
+        {/* 6. Visual Store Builder */}
+        <StoreBuilder />
 
-        {/* 8: Testimonials */}
-        <Testimonials />
+        {/* 7. Multi-Store Architecture */}
+        <MultiStoreSection />
 
-        {/* 9–10: Pricing + comparison table */}
+        {/* 8. Commerce Pipeline & Integrations Engine */}
+        <CommerceEngine />
+
+        {/* 9. Bangladesh-First Local Commerce */}
+        <BangladeshCommerce />
+
+        {/* 10. Inventory & Variants */}
+        <InventorySection />
+
+        {/* 11. Order Lifecycle & Status Engine */}
+        <OrderManagement />
+
+        {/* 12. Branded Custom Domains */}
+        <CustomDomain />
+
+        {/* 13. Business Analytics & Funnels */}
+        <AnalyticsSection />
+
+        {/* 14. Automated Operations */}
+        <AutomationSection />
+
+        {/* 15. Developer REST API & Webhooks */}
+        <DeveloperSection />
+
+        {/* 16. Enterprise Security & Reliability */}
+        <SecuritySection />
+
+        {/* 17. Transparent Pricing & Feature Comparison */}
         <Pricing />
 
-        {/* 11: App download banner */}
-        <MobileApp />
+        {/* 18. Merchant Testimonials */}
+        <Testimonials />
 
-        {/* 12: Full FAQ */}
+        {/* 19. 3-Step Onboarding */}
+        <HowItWorks />
+
+        {/* 20. Essential FAQs */}
         <FAQ />
 
-        {/* 13–14: Team + world map */}
-        <TeamGlobal />
-
-        {/* 15: Partner / payment logos */}
-        <Integrations />
+        {/* 21. Final High-Conversion CTA */}
+        <FinalCTA />
       </main>
-      {/* 16: Footer */}
+
+      {/* 22. 5-Column SaaS Footer */}
       <Footer />
     </LandingLocaleProvider>
   );

@@ -2,449 +2,242 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, CircleX, Sparkles, ArrowRight } from "lucide-react";
-import { useGetPublicPlansQuery } from "@/redux/api/public-plan-api";
-import type { Plan } from "@/redux/api/store-api";
-import { SectionHeading } from "./section-heading";
-import { cn } from "@/lib/utils";
-import { useLandingLocale } from "./landing-locale";
-import {
-  landingContainer,
-  landingGridPricing,
-  landingSectionAlt,
-  LandingReveal,
-} from "./landing-ui";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-type BillingCycle = "monthly" | "sixMonths" | "yearly";
-
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-BD", {
-    style: "currency",
-    currency: "BDT",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function formatPrice(plan: Plan, yearly = false, freeLabel: string, customLabel: string) {
-  const amount = yearly
-    ? (plan.pricing?.yearly ?? plan.priceYearly ?? 0)
-    : (plan.pricing?.monthly ?? plan.priceBDT);
-  if (plan.isCustomPrice) return customLabel;
-  if (!amount) return freeLabel;
-  return formatCurrency(amount);
-}
-
-/**
- * UI-only display helper.
- * Monthly = API monthly. 6 Months = 10% off effective monthly. Yearly = API yearly/12 or 25% off.
- */
-function displayPrice(
-  plan: Plan,
-  cycle: BillingCycle,
-  freeLabel: string,
-  customLabel: string,
-) {
-  if (plan.isCustomPrice) return customLabel;
-  const monthly = plan.pricing?.monthly ?? plan.priceBDT ?? 0;
-  if (!monthly && cycle !== "yearly") return freeLabel;
-
-  if (cycle === "sixMonths") {
-    if (!monthly) return freeLabel;
-    return formatCurrency(Math.round(monthly * 0.9));
-  }
-
-  if (cycle === "yearly") {
-    const yearly = plan.pricing?.yearly ?? plan.priceYearly ?? 0;
-    if (yearly > 0) return formatCurrency(Math.round(yearly / 12));
-    if (!monthly) return freeLabel;
-    return formatCurrency(Math.round(monthly * 0.75));
-  }
-
-  return formatPrice(plan, false, freeLabel, customLabel);
-}
+import { landingContainer } from "./landing-ui";
+import { Check, ArrowRight, Sparkles, HelpCircle } from "lucide-react";
 
 export function Pricing() {
-  const { t } = useLandingLocale();
-  const p = t.pricing;
-  const [cycle, setCycle] = useState<BillingCycle>("monthly");
-  const { data, isLoading, isError } = useGetPublicPlansQuery(undefined, {
-    pollingInterval: 60_000,
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-  });
-  const plans = (data?.data?.plans ?? []).slice(0, 4);
+  const [isYearly, setIsYearly] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
 
-  const enabled = (plan: Plan) => {
-    const toggles = Object.entries(plan.featureToggles ?? {})
-      .filter(([, value]) => value)
-      .map(([key]) => p.labels[key] ?? key);
-    return [...new Set([...(plan.features ?? []).filter(Boolean), ...toggles])].slice(0, 8);
-  };
+  const PLANS = [
+    {
+      name: "Free",
+      priceMonthly: "৳ 0",
+      priceYearly: "৳ 0",
+      desc: "For new entrepreneurs exploring online selling.",
+      badge: null,
+      cta: "Get Started Free",
+      popular: false,
+      features: [
+        "1 Online Store",
+        "Up to 25 Products",
+        "Standard Storefront Theme",
+        "Cash on Delivery",
+        "Standard Email Invoices",
+        "Community Support",
+      ],
+    },
+    {
+      name: "Starter",
+      priceMonthly: "৳ 999",
+      priceYearly: "৳ 799",
+      desc: "Essential features for growing boutique brands.",
+      badge: null,
+      cta: "Start 7-Day Trial",
+      popular: false,
+      features: [
+        "1 Online Store",
+        "Up to 500 Products",
+        "Connect Custom Apex Domain",
+        "bKash, Nagad & COD",
+        "Local Delivery Zones",
+        "Automated A4 PDF Invoices",
+        "Standard Support",
+      ],
+    },
+    {
+      name: "Pro",
+      priceMonthly: "৳ 2,499",
+      priceYearly: "৳ 1,999",
+      desc: "Full power for scaling retail brands and agencies.",
+      badge: "MOST POPULAR",
+      cta: "Start 7-Day Trial",
+      popular: true,
+      features: [
+        "Up to 3 Online Stores",
+        "Unlimited Products & Variants",
+        "Visual Drag & Drop Builder",
+        "Steadfast & Pathao Courier Sync",
+        "Real-Time Analytics & Funnels",
+        "Staff Accounts & Roles",
+        "Priority 24/7 Support",
+      ],
+    },
+    {
+      name: "Enterprise",
+      priceMonthly: "Custom",
+      priceYearly: "Custom",
+      desc: "Custom solutions for large multi-brand operations.",
+      badge: null,
+      cta: "Contact Sales",
+      popular: false,
+      features: [
+        "Unlimited Online Stores",
+        "Dedicated Server Resources",
+        "REST API & Webhooks Access",
+        "Custom ERP Integrations",
+        "Dedicated Account Manager",
+        "99.9% Uptime SLA",
+      ],
+    },
+  ];
 
-  const cta = (plan: Plan) => {
-    if (plan.isCustomPrice) return { label: p.contactSales, href: "/contact" };
-    if (plan.trialDays > 0) return { label: p.startTrial, href: "/register" };
-    return { label: p.getStarted, href: "/register" };
-  };
-
-  const featureRows = [...new Set(plans.flatMap((plan) => enabled(plan)))].slice(0, 8);
-  const highlightId =
-    plans.find((item) => item.isPopular)?._id ??
-    plans.find((item) => item.isRecommended)?._id;
-  const periodLabel = p.perMonth;
+  const COMPARISON_ROWS = [
+    { name: "Online Stores", free: "1", starter: "1", pro: "3", ent: "Unlimited" },
+    { name: "Products Catalog", free: "25", starter: "500", pro: "Unlimited", ent: "Unlimited" },
+    { name: "Custom Domain", free: "—", starter: "✓", pro: "✓", ent: "✓" },
+    { name: "Visual Drag & Drop Builder", free: "Basic", starter: "Standard", pro: "Advanced", ent: "Custom" },
+    { name: "bKash & Nagad Payments", free: "—", starter: "✓", pro: "✓", ent: "✓" },
+    { name: "Cash on Delivery Rules", free: "✓", starter: "✓", pro: "✓", ent: "✓" },
+    { name: "Automated PDF Invoices", free: "Standard", starter: "✓", pro: "✓", ent: "✓" },
+    { name: "Steadfast & Pathao Courier", free: "—", starter: "—", pro: "✓", ent: "✓" },
+    { name: "Store Analytics", free: "Basic", starter: "Standard", pro: "Advanced", ent: "Full BI" },
+    { name: "Staff Roles & Permissions", free: "1 Admin", starter: "2 Staff", pro: "5 Staff", ent: "Unlimited" },
+    { name: "Developer API Access", free: "—", starter: "—", pro: "✓", ent: "Dedicated" },
+    { name: "Support Level", free: "Community", starter: "Standard", pro: "Priority 24/7", ent: "Dedicated Mgr" },
+  ];
 
   return (
-    <section
-      id="pricing"
-      className={cn(
-        landingSectionAlt,
-        "bg-gradient-to-b from-primary/5 via-background to-muted/30",
-      )}
-    >
+    <section id="pricing" className="py-20 sm:py-28 bg-zinc-50/50 border-b border-zinc-200/80">
       <div className={landingContainer}>
-        <SectionHeading
-          title={p.title}
-          description={p.description}
-        />
-
-        {/* Billing cycle toggle — Monthly / 6 Months / Yearly */}
-        <div className="mt-8 flex flex-col items-center gap-3 sm:mt-10">
-          <Tabs
-            value={cycle}
-            onValueChange={(value) => setCycle(value as BillingCycle)}
-          >
-            <TabsList
-              className="h-auto min-h-12 flex-wrap justify-center gap-1 rounded-pill border border-border bg-card p-1.5 shadow-md"
-              aria-label="Billing period"
-            >
-              <TabsTrigger
-                value="monthly"
-                className="rounded-pill px-4 py-2.5 text-sm font-semibold text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm sm:px-5"
-              >
-                Monthly
-              </TabsTrigger>
-              <TabsTrigger
-                value="sixMonths"
-                className="gap-2 rounded-pill px-4 py-2.5 text-sm font-semibold text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm sm:px-5"
-              >
-                <span>6 Months</span>
-                <Badge
-                  className={cn(
-                    "rounded-pill px-2 py-0 text-[10px] font-bold uppercase tracking-wide ring-0",
-                    cycle === "sixMonths"
-                      ? "bg-primary-foreground/20 text-primary-foreground"
-                      : "bg-primary/10 text-primary",
-                  )}
-                >
-                  Save 10%
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger
-                value="yearly"
-                className="gap-2 rounded-pill px-4 py-2.5 text-sm font-semibold text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm sm:px-5"
-              >
-                <span>{p.yearly}</span>
-                <Badge
-                  className={cn(
-                    "rounded-pill px-2 py-0 text-[10px] font-bold uppercase tracking-wide ring-0",
-                    cycle === "yearly"
-                      ? "bg-primary-foreground/20 text-primary-foreground"
-                      : "bg-primary/10 text-primary",
-                  )}
-                >
-                  Save 25%
-                </Badge>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <p className="text-xs text-muted-foreground">
-            {cycle === "yearly"
-              ? "Prices shown as effective monthly · billed yearly"
-              : cycle === "sixMonths"
-                ? "Prices shown as effective monthly · billed every 6 months"
-                : "Billed monthly · cancel anytime"}
+        {/* Section Header */}
+        <div className="max-w-3xl mx-auto text-center space-y-3 mb-12">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+            TRANSPARENT PRICING
+          </span>
+          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-950">
+            Simple plans. Serious commerce.
+          </h2>
+          <p className="text-base sm:text-lg text-zinc-600 leading-relaxed font-normal">
+            Start with our 7-day free trial. Scale as your business grows. No hidden transaction fees.
           </p>
+
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center gap-3 pt-4">
+            <span className={`text-xs font-semibold ${!isYearly ? "text-zinc-950" : "text-zinc-400"}`}>
+              Monthly
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsYearly(!isYearly)}
+              className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${
+                isYearly ? "bg-zinc-900" : "bg-zinc-300"
+              }`}
+              aria-label="Toggle annual billing"
+            >
+              <div
+                className={`h-5 w-5 rounded-full bg-white transition-transform ${
+                  isYearly ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+            <span className={`text-xs font-semibold ${isYearly ? "text-zinc-950" : "text-zinc-400"}`}>
+              Yearly
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-800">
+              Save 20%
+            </span>
+          </div>
         </div>
 
-        {isLoading ? (
-          <div className={`mt-10 sm:mt-12 ${landingGridPricing}`}>
-            <PricingSkeleton />
-            <PricingSkeleton />
-            <PricingSkeleton />
-            <PricingSkeleton />
-          </div>
-        ) : isError ? (
-          <LandingReveal className="mx-auto mt-12 max-w-lg">
-            <Card className="rounded-apple-xl border-destructive/30 bg-destructive/5 p-8 text-center">
-              <CircleX className="mx-auto h-8 w-8 text-destructive" aria-hidden />
-              <h3 className="mt-3 font-semibold text-foreground">{p.unavailableTitle}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{p.unavailableBody}</p>
-            </Card>
-          </LandingReveal>
-        ) : plans.length === 0 ? (
-          <LandingReveal className="mx-auto mt-12 max-w-lg">
-            <Card className="rounded-apple-xl border-border bg-card p-9 text-center">
-              <Sparkles className="mx-auto h-8 w-8 text-primary" aria-hidden />
-              <h3 className="mt-3 text-lg font-semibold text-foreground">{p.comingSoonTitle}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{p.comingSoonBody}</p>
-            </Card>
-          </LandingReveal>
-        ) : (
-          <>
-            <div className={`mt-12 items-stretch pt-2 sm:mt-14 ${landingGridPricing}`}>
-              {plans.map((plan) => {
-                const action = cta(plan);
-                const planFeatures = enabled(plan).slice(0, 6);
-                const price = displayPrice(plan, cycle, p.free, p.custom);
-                const highlighted = plan._id === highlightId;
+        {/* Pricing Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          {PLANS.map((plan, idx) => (
+            <div
+              key={idx}
+              className={`relative rounded-2xl p-6 sm:p-7 flex flex-col justify-between transition-all ${
+                plan.popular
+                  ? "bg-white border-2 border-zinc-950 shadow-xl"
+                  : "bg-white border border-zinc-200/90 shadow-sm hover:shadow-md"
+              }`}
+            >
+              {plan.badge && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-zinc-950 text-[10px] font-bold uppercase tracking-wider text-white">
+                  {plan.badge}
+                </span>
+              )}
 
-                return (
-                  <Card
-                    key={plan._id}
-                    className={cn(
-                      "group relative flex h-full min-w-0 flex-col rounded-3xl border p-6 transition-all duration-300 sm:p-8",
-                      highlighted
-                        ? "z-[1] border-primary bg-primary text-primary-foreground shadow-2xl shadow-primary/30 ring-1 ring-primary md:-translate-y-2"
-                        : "border-border/70 bg-card shadow-[0_8px_30px_-12px_rgba(15,23,42,0.12)] hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-[0_20px_40px_-16px_rgba(15,23,42,0.18)]",
-                    )}
-                  >
-                    {highlighted ? (
-                      <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
-                        <Badge className="whitespace-nowrap rounded-pill bg-card px-3.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-md ring-0">
-                          {plan.isPopular ? p.mostPopular : p.recommended}
-                        </Badge>
-                      </div>
-                    ) : null}
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-bold text-zinc-950">{plan.name}</h3>
+                  <p className="text-xs text-zinc-500 mt-1 min-h-[32px]">{plan.desc}</p>
+                </div>
 
-                    <CardHeader className="space-y-2 p-0 pt-1">
-                      <CardTitle
-                        className={cn(
-                          "text-xl font-bold tracking-tight sm:text-2xl",
-                          highlighted ? "text-primary-foreground" : "text-foreground",
-                        )}
-                      >
-                        {plan.name}
-                      </CardTitle>
-                      <CardDescription
-                        className={cn(
-                          "line-clamp-2 min-h-[2.5rem] text-sm leading-relaxed",
-                          highlighted
-                            ? "text-primary-foreground/80"
-                            : "text-muted-foreground",
-                        )}
-                      >
-                        {plan.description?.trim() ||
-                          (plan.isCustomPrice
-                            ? "For teams that need custom scale and support."
-                            : "Everything you need to launch and grow.")}
-                      </CardDescription>
-                    </CardHeader>
+                <div className="pt-2">
+                  <span className="text-3xl font-extrabold text-zinc-950">
+                    {isYearly ? plan.priceYearly : plan.priceMonthly}
+                  </span>
+                  {plan.priceMonthly !== "Custom" && (
+                    <span className="text-xs text-zinc-500 font-medium ml-1">/ month</span>
+                  )}
+                </div>
 
-                    <div className="mt-6 flex items-end gap-1.5">
-                      <span
-                        className={cn(
-                          "text-4xl font-extrabold tabular-nums tracking-tight sm:text-[2.75rem]",
-                          highlighted ? "text-primary-foreground" : "text-foreground",
-                        )}
-                      >
-                        {price}
-                      </span>
-                      {!plan.isCustomPrice ? (
-                        <span
-                          className={cn(
-                            "mb-1.5 text-sm font-medium",
-                            highlighted
-                              ? "text-primary-foreground/70"
-                              : "text-muted-foreground",
-                          )}
-                        >
-                          {periodLabel}
-                        </span>
-                      ) : null}
+                <div className="pt-4 border-t border-zinc-100 space-y-2.5 text-xs text-zinc-600">
+                  {plan.features.map((feat, fIdx) => (
+                    <div key={fIdx} className="flex items-start gap-2">
+                      <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>{feat}</span>
                     </div>
+                  ))}
+                </div>
+              </div>
 
-                    {plan.trialDays > 0 ? (
-                      <p
-                        className={cn(
-                          "mt-2 text-xs font-medium",
-                          highlighted
-                            ? "text-primary-foreground/75"
-                            : "text-muted-foreground",
-                        )}
-                      >
-                        {plan.trialDays}
-                        {p.trialDays}
-                      </p>
-                    ) : (
-                      <div className="mt-2 h-4" aria-hidden />
-                    )}
-
-                    <CardFooter className="mt-6 p-0">
-                      <Link
-                        href={action.href}
-                        className={cn(
-                          buttonVariants({
-                            variant: highlighted ? "secondary" : "default",
-                            size: "lg",
-                          }),
-                          "w-full rounded-pill text-center font-semibold shadow-md",
-                          highlighted
-                            ? "border-0 bg-card !text-primary hover:bg-card/95 hover:!text-primary"
-                            : "!text-primary-foreground hover:!text-primary-foreground",
-                        )}
-                      >
-                        {action.label}
-                        <ArrowRight className="h-4 w-4" aria-hidden />
-                      </Link>
-                    </CardFooter>
-
-                    <CardContent className="mt-7 flex flex-1 flex-col p-0">
-                      <ul className="space-y-3.5">
-                        {planFeatures.map((feature) => (
-                          <li
-                            key={feature}
-                            className={cn(
-                              "flex items-start gap-3 text-sm leading-snug",
-                              highlighted
-                                ? "text-primary-foreground/95"
-                                : "text-foreground/90",
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
-                                highlighted
-                                  ? "bg-primary-foreground/20 text-primary-foreground"
-                                  : "bg-primary/10 text-primary",
-                              )}
-                              aria-hidden
-                            >
-                              <Check className="h-3 w-3" strokeWidth={3} />
-                            </span>
-                            <span className="font-medium">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              <div className="pt-6 mt-6 border-t border-zinc-100">
+                <Link
+                  href="/register"
+                  className={`w-full inline-flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold transition-all ${
+                    plan.popular
+                      ? "bg-zinc-950 text-white shadow-xs hover:bg-zinc-800"
+                      : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
+                  }`}
+                >
+                  {plan.cta}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
             </div>
+          ))}
+        </div>
 
-            {plans.length > 1 ? (
-              <LandingReveal className="mt-10 sm:mt-12">
-                <Card className="overflow-hidden rounded-apple-xl border-border bg-card">
-                  <CardHeader className="border-b border-border px-6 py-5">
-                    <CardTitle className="text-base font-bold text-foreground">
-                      {p.compare}
-                    </CardTitle>
-                    <CardDescription className="text-xs text-muted-foreground">
-                      {p.compareHint}
-                    </CardDescription>
-                  </CardHeader>
-                  <div className="overflow-x-auto">
-                    <Table className="w-full min-w-[640px]">
-                      <TableHeader className="sticky top-0 z-[1] bg-muted/80 backdrop-blur-sm">
-                        <TableRow>
-                          <TableHead className="sticky left-0 z-[2] bg-muted/80 px-6 font-semibold">
-                            {p.featureOrLimit}
-                          </TableHead>
-                          {plans.map((plan) => {
-                            const highlighted = plan._id === highlightId;
-                            return (
-                              <TableHead
-                                key={plan._id}
-                                className={cn(
-                                  "whitespace-nowrap px-4 py-3 font-semibold",
-                                  highlighted
-                                    ? "bg-primary/10 text-primary"
-                                    : "text-muted-foreground",
-                                )}
-                              >
-                                <div className="flex flex-col gap-0.5">
-                                  <span>{plan.name}</span>
-                                  <span className="text-[11px] font-medium tabular-nums opacity-80">
-                                    {displayPrice(plan, cycle, p.free, p.custom)}
-                                  </span>
-                                </div>
-                              </TableHead>
-                            );
-                          })}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {featureRows.map((feature) => (
-                          <TableRow key={feature}>
-                            <TableCell className="sticky left-0 z-[1] bg-card px-6 font-medium text-foreground">
-                              {feature}
-                            </TableCell>
-                            {plans.map((plan) => {
-                              const available = enabled(plan).includes(feature);
-                              const highlighted = plan._id === highlightId;
-                              return (
-                                <TableCell
-                                  key={plan._id}
-                                  className={cn("px-4 py-3", highlighted && "bg-primary/5")}
-                                >
-                                  {available ? (
-                                    <Check
-                                      className="h-4 w-4 text-success"
-                                      aria-label="Included"
-                                    />
-                                  ) : (
-                                    <CircleX
-                                      className="h-4 w-4 text-muted-foreground/30"
-                                      aria-label="Not included"
-                                    />
-                                  )}
-                                </TableCell>
-                              );
-                            })}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </Card>
-              </LandingReveal>
-            ) : null}
-          </>
-        )}
+        {/* Feature Comparison Matrix Toggle */}
+        <div className="mt-14 max-w-5xl mx-auto text-center space-y-6">
+          <button
+            type="button"
+            onClick={() => setShowComparison(!showComparison)}
+            className="inline-flex items-center gap-2 text-xs font-bold text-zinc-800 hover:text-zinc-950 transition-colors"
+          >
+            <span>{showComparison ? "Hide full plan comparison" : "Compare all plan features"}</span>
+            <ArrowRight className={`h-3.5 w-3.5 transition-transform ${showComparison ? "-rotate-90" : "rotate-90"}`} />
+          </button>
+
+          {showComparison && (
+            <div className="rounded-2xl border border-zinc-200/90 bg-white p-6 shadow-xl overflow-x-auto text-left text-xs animate-fadeIn">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-zinc-200 bg-zinc-50/80 text-[10px] font-bold uppercase text-zinc-500">
+                    <th className="py-3 px-4">Feature</th>
+                    <th className="py-3 px-3 text-center">Free</th>
+                    <th className="py-3 px-3 text-center">Starter</th>
+                    <th className="py-3 px-3 text-center font-bold text-zinc-950">Pro</th>
+                    <th className="py-3 px-3 text-center">Enterprise</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {COMPARISON_ROWS.map((row, rIdx) => (
+                    <tr key={rIdx} className="hover:bg-zinc-50/50">
+                      <td className="py-3 px-4 font-semibold text-zinc-800">{row.name}</td>
+                      <td className="py-3 px-3 text-center text-zinc-600">{row.free}</td>
+                      <td className="py-3 px-3 text-center text-zinc-600">{row.starter}</td>
+                      <td className="py-3 px-3 text-center font-bold text-zinc-950">{row.pro}</td>
+                      <td className="py-3 px-3 text-center text-zinc-600">{row.ent}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </section>
-  );
-}
-
-function PricingSkeleton() {
-  return (
-    <Card className="flex h-full min-h-[28rem] flex-col space-y-4 rounded-apple-xl border-border bg-card p-6">
-      <Skeleton className="h-5 w-24 rounded-full" />
-      <Skeleton className="h-10 w-36 rounded-lg" />
-      <div className="space-y-3 pt-4">
-        {[1, 2, 3, 4, 5].map((item) => (
-          <Skeleton key={item} className="h-4 w-full rounded-md" />
-        ))}
-      </div>
-    </Card>
   );
 }

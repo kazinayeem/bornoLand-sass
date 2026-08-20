@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { landingContainer } from "./landing-ui";
-import { ArrowRight, ExternalLink, Sparkles, CheckCircle2, ShieldCheck } from "lucide-react";
+import { ArrowRight, ExternalLink, CheckCircle2, ShieldCheck } from "lucide-react";
 
-export function FinalCTA() {
+export function StoryCTA() {
   return (
     <section className="py-20 sm:py-24 bg-white">
       <div className={landingContainer}>
@@ -12,7 +12,7 @@ export function FinalCTA() {
           {/* Subtle Radial Glow */}
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(37,99,235,0.25),rgba(255,255,255,0))]" />
 
-          {/* Floating UI Snippets */}
+          {/* Floating UI Badges */}
           <div className="hidden lg:flex absolute top-8 left-8 items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-xs font-semibold text-zinc-300 backdrop-blur-md">
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
             <span>0% Transaction Fee</span>
@@ -25,11 +25,11 @@ export function FinalCTA() {
 
           <div className="relative max-w-3xl mx-auto space-y-6">
             <h2 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
-              Ready to build your store?
+              Your store is closer than you think.
             </h2>
 
             <p className="text-base sm:text-lg text-zinc-400 max-w-xl mx-auto font-normal">
-              Everything you need to launch, sell, and grow your e-commerce operations.
+              Build it. Launch it. Grow it. Start selling online with Bornoland today.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
@@ -44,13 +44,13 @@ export function FinalCTA() {
                 href="/explore"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/80 px-6 py-3.5 text-sm font-semibold text-zinc-200 shadow-2xs hover:bg-zinc-800 transition-all"
               >
-                Book a Demo
+                Explore Demo
                 <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
               </Link>
             </div>
 
             <p className="text-xs text-zinc-500 font-medium">
-              No credit card required · 7-day free trial · Cancel anytime
+              No credit card required · 7-day free trial · Instant setup
             </p>
           </div>
         </div>

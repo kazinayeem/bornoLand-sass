@@ -1,32 +1,27 @@
 import type { Metadata } from "next";
 import { LandingLocaleProvider } from "@/components/landing/landing-locale";
 import { Header } from "@/components/landing/header";
-import { HeroRedesign } from "@/components/landing/hero-redesign";
-import { TrustBar } from "@/components/landing/trust-bar";
-import { ProductToolkit } from "@/components/landing/product-toolkit";
-import { AnalyticsPreview } from "@/components/landing/analytics-preview";
-import { ActivityTimeline } from "@/components/landing/activity-timeline";
-import { WorkflowPreview } from "@/components/landing/workflow-preview";
-import { StoreBuilder } from "@/components/landing/store-builder";
-import { MultiStoreSection } from "@/components/landing/multi-store-section";
-import { CommerceEngine } from "@/components/landing/commerce-engine";
-import { BangladeshCommerce } from "@/components/landing/bangladesh-commerce";
-import { InventorySection } from "@/components/landing/inventory-section";
-import { OrderManagement } from "@/components/landing/order-management";
-import { CustomDomain } from "@/components/landing/custom-domain";
-import { DeveloperSection } from "@/components/landing/developer-section";
-import { SecuritySection } from "@/components/landing/security-section";
-import { PricingRedesign } from "@/components/landing/pricing-redesign";
-import { TestimonialsCarousel } from "@/components/landing/testimonials-carousel";
-import { HowItWorks } from "@/components/landing/how-it-works";
-import { FAQ } from "@/components/landing/faq";
-import { FinalCTA } from "@/components/landing/final-cta";
+import { StoryHero } from "@/components/landing/story-hero";
+import { StoryProblem } from "@/components/landing/story-problem";
+import { StoryTransformation } from "@/components/landing/story-transformation";
+import { StoryBuilder } from "@/components/landing/story-builder";
+import { StoryProducts } from "@/components/landing/story-products";
+import { StoryOrders } from "@/components/landing/story-orders";
+import { StoryPaymentsDelivery } from "@/components/landing/story-payments-delivery";
+import { StoryAutomation } from "@/components/landing/story-automation";
+import { StoryAnalytics } from "@/components/landing/story-analytics";
+import { StoryGrowth } from "@/components/landing/story-growth";
+import { StoryDeveloper } from "@/components/landing/story-developer";
+import { StorySocialProof } from "@/components/landing/story-social-proof";
+import { StoryPricing } from "@/components/landing/story-pricing";
+import { StoryFAQ } from "@/components/landing/story-faq";
+import { StoryCTA } from "@/components/landing/story-cta";
 import { Footer } from "@/components/landing/footer";
 
 export const metadata: Metadata = {
-  title: "BornoLand — The Modern Multi-Store E-Commerce SaaS",
+  title: "BornoLand — The Commerce Operating System",
   description:
-    "Launch your online store in minutes. Visual drag & drop builder, live analytics, bKash & COD payments, courier integrations, automated PDF invoices, and multi-store management.",
+    "Your online store, ready in minutes. Visual storefront builder, live analytics, automated PDF invoices, bKash & COD payments, courier integrations, and multi-store management.",
   alternates: { canonical: "/" },
 };
 
@@ -43,77 +38,62 @@ export default function HomePage() {
             applicationCategory: "BusinessApplication",
             operatingSystem: "Web",
             description:
-              "The modern multi-store e-commerce SaaS platform for building, managing, and scaling online businesses.",
+              "The modern multi-store e-commerce operating system for building, managing, and scaling online businesses.",
           }),
         }}
       />
 
-      {/* 1. Translucent Sticky Navigation */}
+      {/* Translucent Navigation */}
       <Header />
 
       <main className="overflow-x-hidden scroll-smooth [scroll-padding-top:4.5rem] sm:[scroll-padding-top:5rem] bg-[#FAFAFA]">
-        {/* 2. Hero + Floating Interactive Revenue & Order Visual */}
-        <HeroRedesign />
+        {/* 1. THE DREAM — Hero + Large Realistic Product Dashboard */}
+        <StoryHero />
 
-        {/* 3. Trust Strip & Stat Counters */}
-        <TrustBar />
+        {/* 2. THE PROBLEM — Scattered 5+ tools before Bornoland */}
+        <StoryProblem />
 
-        {/* 4. Complete Ecommerce Toolkit (Interactive Cards) */}
-        <ProductToolkit />
+        {/* 3. THE TRANSFORMATION — One unified platform for your entire store */}
+        <StoryTransformation />
 
-        {/* 5. Dedicated Analytics Showcase & Multi-Period Breakdown */}
-        <AnalyticsPreview />
+        {/* 4. BUILD — Start with your storefront */}
+        <StoryBuilder />
 
-        {/* 6. Real-Time Activity Timeline */}
-        <ActivityTimeline />
+        {/* 5. SELL — Products catalog and live sync */}
+        <StoryProducts />
 
-        {/* 7. Automated Operations Workflow */}
-        <WorkflowPreview />
+        {/* 6. ORDER — The business comes alive with live streaming orders */}
+        <StoryOrders />
 
-        {/* 8. Visual Storefront Builder Studio */}
-        <StoreBuilder />
+        {/* 7. PAYMENT + DELIVERY — Connected bKash/COD + Courier fulfillment */}
+        <StoryPaymentsDelivery />
 
-        {/* 9. Multi-Store SaaS Architecture */}
-        <MultiStoreSection />
+        {/* 8. AUTOMATION — The magic moment: store runs itself */}
+        <StoryAutomation />
 
-        {/* 10. Commerce Pipeline Engine */}
-        <CommerceEngine />
+        {/* 9. BUSINESS INTELLIGENCE — Real-time analytics and revenue growth */}
+        <StoryAnalytics />
 
-        {/* 11. Bangladesh-First Local Commerce */}
-        <BangladeshCommerce />
+        {/* 10. GROWTH STORY — Scale from 1 store to retail empire */}
+        <StoryGrowth />
 
-        {/* 12. Product Variant & Inventory Tracking */}
-        <InventorySection />
+        {/* 11. DEVELOPER / POWER USER — REST API & webhooks when ready */}
+        <StoryDeveloper />
 
-        {/* 13. Order Lifecycle & Status Engine */}
-        <OrderManagement />
+        {/* 12. SOCIAL PROOF & TRUST — Featured merchant story & 50K+ stats */}
+        <StorySocialProof />
 
-        {/* 14. Branded Custom Domains */}
-        <CustomDomain />
+        {/* 13. PRICING — The decision: clean 4-tier matrix */}
+        <StoryPricing />
 
-        {/* 15. Developer REST API & Webhooks */}
-        <DeveloperSection />
+        {/* 14. FAQ — Remove final objections */}
+        <StoryFAQ />
 
-        {/* 16. Enterprise Security & Infrastructure */}
-        <SecuritySection />
-
-        {/* 17. Transparent Pricing & Feature Comparison Matrix */}
-        <PricingRedesign />
-
-        {/* 18. Auto-sliding Testimonial Carousel */}
-        <TestimonialsCarousel />
-
-        {/* 19. 3-Step Onboarding */}
-        <HowItWorks />
-
-        {/* 20. Essential FAQ Accordion */}
-        <FAQ />
-
-        {/* 21. High-Conversion Final CTA */}
-        <FinalCTA />
+        {/* 15. FINAL CTA — Your store is closer than you think */}
+        <StoryCTA />
       </main>
 
-      {/* 22. 5-Column SaaS Footer */}
+      {/* 16. SaaS Footer */}
       <Footer />
     </LandingLocaleProvider>
   );

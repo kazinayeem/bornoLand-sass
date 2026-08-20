@@ -490,36 +490,37 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                href={`${storeBase}/settings`}
-                className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover: active:scale-[0.98]"
+                href={`${storeBase}/builder`}
+                className="inline-flex items-center gap-2 rounded-apple-pill bg-apple-ink px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition-all duration-200 hover:bg-apple-ink/90 active:scale-[0.98]"
               >
-                Edit Store
+                <Palette className="h-4 w-4" />
+                Builder
               </Link>
               <a
                 href={getStoreUrl(store.subdomain || store.slug)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover: active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-apple-pill border border-apple-hairline bg-white px-4 py-2.5 text-xs font-semibold text-apple-ink transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment active:scale-[0.98]"
               >
                 <Globe className="h-4 w-4" />
                 Visit Store
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </a>
               <Link
-                href={`${storeBase}/builder`}
-                className="inline-flex items-center gap-2 rounded-xl border border-apple-hairline bg-white px-4 py-2.5 text-[13px] font-medium text-apple-ink-muted-80 transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment hover: active:scale-[0.98]"
+                href={`${storeBase}/settings`}
+                className="inline-flex items-center gap-2 rounded-apple-pill border border-apple-hairline bg-white px-4 py-2.5 text-xs font-semibold text-apple-ink transition-all duration-200 hover:border-zinc-300 hover:bg-apple-canvas-parchment active:scale-[0.98]"
               >
-                <Palette className="h-4 w-4" />
-                Builder
+                Edit Store
               </Link>
               <Link
                 href={billingHref}
-                className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-4 py-2.5 text-[13px] font-medium text-white transition-all duration-200 hover:bg-apple-ink-muted-80 hover:shadow-lg active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-apple-pill border border-apple-hairline bg-apple-canvas-parchment px-4 py-2.5 text-xs font-semibold text-apple-ink transition-all duration-200 hover:bg-apple-surface-chip/60 active:scale-[0.98]"
               >
-                <CreditCard className="h-4 w-4" />
+                <CreditCard className="h-4 w-4 text-violet-600" />
                 Upgrade Plan
               </Link>
             </div>
+
           </div>
         </div>
       </DashboardCard>

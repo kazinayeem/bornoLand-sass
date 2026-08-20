@@ -69,7 +69,7 @@ export function DashboardButton({
   children,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "utility" }) {
-  const base = "btn-press inline-flex items-center justify-center gap-2 font-body transition-opacity disabled:cursor-not-allowed disabled:opacity-50";
+  const base = "btn-press inline-flex items-center justify-center gap-2 font-body transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40 shrink-0";
 
   if (variant === "secondary") {
     return (
@@ -77,7 +77,7 @@ export function DashboardButton({
         type="button"
         className={cn(
           base,
-          "rounded-apple-pill border border-apple-primary bg-transparent px-[22px] py-[11px] text-body text-apple-primary",
+          "rounded-apple-pill border border-apple-hairline bg-white px-5 py-2.5 text-sm font-medium text-apple-ink hover:bg-apple-canvas-parchment hover:border-zinc-300 active:scale-[0.98]",
           className
         )}
         {...props}
@@ -93,7 +93,7 @@ export function DashboardButton({
         type="button"
         className={cn(
           base,
-          "rounded-apple-sm bg-apple-ink px-[15px] py-2 text-caption text-apple-on-dark",
+          "rounded-apple-pill border border-apple-hairline bg-apple-canvas-parchment px-3.5 py-1.5 text-caption font-medium text-apple-ink hover:bg-apple-surface-chip/50 active:scale-[0.98]",
           className
         )}
         {...props}
@@ -108,7 +108,7 @@ export function DashboardButton({
       type="button"
       className={cn(
         base,
-        "rounded-apple-pill bg-apple-primary px-[22px] py-[11px] text-body text-apple-on-primary",
+        "rounded-apple-pill bg-apple-ink px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-apple-ink/90 active:scale-[0.98]",
         className
       )}
       {...props}
@@ -129,7 +129,7 @@ export function DashboardButtonLink({
   className?: string;
   children: ReactNode;
 }) {
-  const base = "btn-press inline-flex items-center justify-center gap-2 font-body transition-opacity";
+  const base = "btn-press inline-flex items-center justify-center gap-2 font-body transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0";
 
   if (variant === "secondary") {
     return (
@@ -137,7 +137,7 @@ export function DashboardButtonLink({
         href={href}
         className={cn(
           base,
-          "rounded-apple-pill border border-apple-primary bg-transparent px-[22px] py-[11px] text-body text-apple-primary",
+          "rounded-apple-pill border border-apple-hairline bg-white px-5 py-2.5 text-sm font-medium text-apple-ink hover:bg-apple-canvas-parchment hover:border-zinc-300 active:scale-[0.98]",
           className
         )}
       >
@@ -152,7 +152,7 @@ export function DashboardButtonLink({
         href={href}
         className={cn(
           base,
-          "rounded-apple-sm bg-apple-ink px-[15px] py-2 text-caption text-apple-on-dark",
+          "rounded-apple-pill border border-apple-hairline bg-apple-canvas-parchment px-3.5 py-1.5 text-caption font-medium text-apple-ink hover:bg-apple-surface-chip/50 active:scale-[0.98]",
           className
         )}
       >
@@ -166,7 +166,7 @@ export function DashboardButtonLink({
       href={href}
       className={cn(
         base,
-        "rounded-apple-pill bg-apple-primary px-[22px] py-[11px] text-body text-apple-on-primary",
+        "rounded-apple-pill bg-apple-ink px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-apple-ink/90 active:scale-[0.98]",
         className
       )}
     >
@@ -174,6 +174,7 @@ export function DashboardButtonLink({
     </Link>
   );
 }
+
 
 export function DashboardEmptyState({
   icon,

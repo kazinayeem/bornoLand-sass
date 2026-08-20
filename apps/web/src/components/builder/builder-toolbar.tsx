@@ -142,7 +142,7 @@ export function BuilderToolbar({
           variant="outline"
           size="sm"
           onClick={() => void handlePreview()}
-          className="hidden items-center gap-2 rounded-full text-xs font-semibold sm:inline-flex"
+          className="hidden items-center gap-1.5 rounded-full text-xs font-semibold text-apple-ink hover:bg-apple-canvas-parchment sm:inline-flex"
         >
           <ExternalLink className="h-3.5 w-3.5" />
           Preview
@@ -156,7 +156,7 @@ export function BuilderToolbar({
           onClick={() => void handleSave()}
           disabled={!isDirty && !saving}
           icon={<Save className="h-3.5 w-3.5" />}
-          className="rounded-full text-xs font-semibold"
+          className="rounded-full text-xs font-semibold text-apple-ink border-apple-hairline disabled:opacity-40"
         >
           Save
         </LoadingButton>
@@ -168,7 +168,7 @@ export function BuilderToolbar({
           loadingKey="publish"
           onClick={() => void handlePublish()}
           icon={<Send className="h-3.5 w-3.5" />}
-          className="rounded-full bg-primary hover:bg-primary-hover text-xs font-semibold shadow-sm"
+          className="rounded-full bg-apple-ink text-white hover:bg-apple-ink/90 text-xs font-semibold shadow-sm"
         >
           Publish
         </LoadingButton>
@@ -176,3 +176,4 @@ export function BuilderToolbar({
     </header>
   );
 }
+

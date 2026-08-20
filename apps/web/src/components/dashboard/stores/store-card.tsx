@@ -378,50 +378,52 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
         <div className="flex-1" />
 
         {/* Quick action buttons */}
-        <div className="border-t border-zinc-100 pt-3">
-          {/* Primary actions */}
+        <div className="border-t border-apple-hairline/80 pt-3">
+          {/* Primary & Secondary main actions */}
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => window.open(storeUrl, "_blank")}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-zinc-900 px-3 py-2.5 text-xs font-semibold text-white transition-all hover:bg-zinc-800 active:scale-95"
+              className="inline-flex items-center justify-center gap-1.5 rounded-apple-pill bg-apple-ink px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-apple-ink/90 active:scale-[0.98]"
             >
               <ExternalLink className="h-3.5 w-3.5" /> Open Store
             </button>
             <button
               type="button"
               onClick={() => router.push(`/store/${store.slug}/dashboard`)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-xs font-semibold text-apple-ink-muted-80 transition-all hover:bg-apple-canvas-parchment active:scale-95"
+              className="inline-flex items-center justify-center gap-1.5 rounded-apple-pill border border-apple-hairline bg-white px-4 py-2 text-xs font-semibold text-apple-ink transition-all hover:bg-apple-canvas-parchment active:scale-[0.98]"
             >
               <LayoutGrid className="h-3.5 w-3.5" /> Dashboard
             </button>
           </div>
 
-          {/* Secondary action strip */}
-          <div className="mt-2 flex items-center gap-1">
+          {/* Secondary icon action strip */}
+          <div className="mt-2.5 grid grid-cols-6 gap-1.5">
             {[
-              { id: "edit",     Icon: Pencil,      label: "Edit",     action: () => onManage(store, "overview"),                    cls: "hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200" },
-              { id: "billing",  Icon: CreditCard,   label: "Billing",  action: () => router.push(`/store/${store.slug}/billing`),    cls: "hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200" },
-              { id: "analytics",Icon: BarChart3,    label: "Analytics",action: () => router.push(`/store/${store.slug}/analytics`),  cls: "hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200" },
-              { id: "duplicate",Icon: Layers,       label: "Duplicate",action: () => toast.info("Duplicate Store — coming soon"),    cls: "hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200" },
-              { id: "archive",  Icon: Archive,      label: "Archive",  action: handleArchive,                                        cls: "hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200" },
-              { id: "delete",   Icon: Trash2,       label: "Delete",   action: () => onDelete(store),                                cls: "hover:bg-red-50 hover:text-red-600 hover:border-red-200" },
+              { id: "edit",     Icon: Pencil,      label: "Edit store",     action: () => onManage(store, "overview"),                    cls: "hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200" },
+              { id: "billing",  Icon: CreditCard,   label: "Billing settings",action: () => router.push(`/store/${store.slug}/billing`),    cls: "hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200" },
+              { id: "analytics",Icon: BarChart3,    label: "View analytics", action: () => router.push(`/store/${store.slug}/analytics`),  cls: "hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200" },
+              { id: "duplicate",Icon: Layers,       label: "Duplicate store",action: () => toast.info("Duplicate Store — coming soon"),    cls: "hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200" },
+              { id: "archive",  Icon: Archive,      label: "Archive store",  action: handleArchive,                                        cls: "hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200" },
+              { id: "delete",   Icon: Trash2,       label: "Delete store",   action: () => onDelete(store),                                cls: "hover:bg-red-50 hover:text-red-600 hover:border-red-200" },
             ].map(({ id, Icon, label, action, cls }) => (
               <button
                 key={id}
                 type="button"
+                aria-label={label}
                 title={label}
                 onClick={action}
-                className={`group/btn relative flex h-8 flex-1 items-center justify-center rounded-lg border border-zinc-200 bg-white text-apple-ink-muted-48 transition-all duration-150 active:scale-95 ${cls}`}
+                className={`group/btn relative flex h-8 w-full items-center justify-center rounded-apple-sm border border-apple-hairline bg-white text-apple-ink-muted-80 transition-all duration-150 active:scale-95 ${cls}`}
               >
                 <Icon className="h-3.5 w-3.5" />
-                <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-zinc-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 transition-opacity group-hover/btn:opacity-100 z-10">
+                <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-apple-ink px-2 py-1 text-[10px] font-medium text-white opacity-0 transition-opacity group-hover/btn:opacity-100 z-20 shadow-md">
                   {label}
                 </span>
               </button>
             ))}
           </div>
         </div>
+
       </div>
     </motion.article>
   );

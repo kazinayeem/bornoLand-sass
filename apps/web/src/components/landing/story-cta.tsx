@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { landingContainer } from "./landing-ui";
+import { LandingButton } from "./landing-button";
 import { ArrowRight, ExternalLink, CheckCircle2, ShieldCheck } from "lucide-react";
 
 export function StoryCTA() {
@@ -32,24 +33,29 @@ export function StoryCTA() {
               Build it. Launch it. Grow it. Start selling online with Bornoland today.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <Link
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
+              <LandingButton
+                variant="primary"
+                size="hero"
                 href="/register"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-8 py-3.5 text-sm font-bold text-white shadow-md hover:bg-blue-700 hover:shadow-lg transition-all"
+                className="w-full sm:w-auto"
               >
                 Start Free
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
+                <ArrowRight className="h-4 w-4 ml-0.5" />
+              </LandingButton>
+
+              <LandingButton
+                variant="secondary"
+                size="hero"
                 href="/explore"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/80 px-6 py-3.5 text-sm font-semibold text-zinc-200 shadow-2xs hover:bg-zinc-800 transition-all"
+                className="w-full sm:w-auto"
               >
                 Explore Demo
-                <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
-              </Link>
+                <ExternalLink className="h-3.5 w-3.5 text-zinc-400 ml-0.5" />
+              </LandingButton>
             </div>
 
-            <p className="text-xs text-zinc-500 font-medium">
+            <p className="text-xs text-zinc-500 font-medium pt-1">
               No credit card required · 7-day free trial · Instant setup
             </p>
           </div>

@@ -41,13 +41,14 @@ export const landingIconWrap =
   "mb-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground";
 
 export const landingBtnPrimary =
-  "btn-press inline-flex h-12 min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-md transition-all duration-300 hover:bg-primary-hover hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto sm:min-w-[9rem]";
+  "inline-flex h-11 min-h-[44px] w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(37,99,235,0.18)] transition-all duration-200 hover:bg-blue-700 hover:shadow-[0_6px_16px_rgba(37,99,235,0.24)] hover:-translate-y-0.5 active:bg-blue-800 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 sm:w-auto sm:min-w-[9rem]";
 
 export const landingBtnSecondary =
-  "btn-press inline-flex h-12 min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-primary bg-transparent px-6 text-sm font-semibold text-primary transition-colors duration-300 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto sm:min-w-[9rem]";
+  "inline-flex h-11 min-h-[44px] w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-6 text-sm font-semibold text-zinc-900 shadow-2xs transition-all duration-200 hover:bg-slate-50 hover:border-zinc-400 hover:-translate-y-0.5 active:bg-zinc-100 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 sm:w-auto sm:min-w-[9rem]";
 
 export const landingBtnGhost =
-  "btn-press inline-flex h-12 min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-border bg-card px-6 text-sm font-semibold text-foreground transition-colors duration-300 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto";
+  "inline-flex h-11 min-h-[44px] w-full min-w-0 items-center justify-center gap-2 rounded-xl bg-transparent px-5 text-sm font-semibold text-zinc-700 transition-colors duration-200 hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 sm:w-auto";
+
 
 export const landingProse =
   "max-w-prose text-[15px] leading-relaxed text-muted-foreground sm:text-base sm:leading-relaxed md:text-[17px] md:leading-[1.6]";

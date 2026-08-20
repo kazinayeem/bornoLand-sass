@@ -7,6 +7,7 @@ import { Menu, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLandingLocale, type LandingLocale } from "./landing-locale";
 import { landingContainer } from "./landing-ui";
+import { LandingButton } from "./landing-button";
 import {
   Sheet,
   SheetContent,
@@ -59,16 +60,16 @@ export function Header() {
           {/* Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 group"
+            className="flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 group"
           >
-            <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 shadow-xs transition-transform group-hover:scale-105">
+            <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shadow-xs transition-transform group-hover:scale-105">
               <Image
                 src="/logo.png"
                 alt="BornoLand"
                 width={22}
                 height={22}
                 priority
-                className="h-5 w-5 object-contain"
+                className="h-5 w-5 object-contain brightness-0 invert"
               />
             </div>
             <span className="text-base font-bold tracking-tight text-zinc-950">
@@ -98,19 +99,21 @@ export function Header() {
             >
               {locale === "bn" ? "English" : "বাংলা"}
             </button>
-            <Link
+            <LandingButton
+              variant="ghost"
+              size="sm"
               href="/login"
-              className="text-xs font-semibold text-zinc-700 hover:text-zinc-950 px-3 py-2 transition-colors"
             >
               Log in
-            </Link>
-            <Link
+            </LandingButton>
+            <LandingButton
+              variant="primary"
+              size="sm"
               href="/register"
-              className="inline-flex items-center gap-1.5 rounded-full bg-zinc-950 px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all hover:bg-zinc-800 hover:shadow-sm"
             >
               Get started
               <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            </LandingButton>
           </div>
 
           {/* Mobile Menu Trigger */}
@@ -171,21 +174,25 @@ export function Header() {
                 {locale === "bn" ? "English" : "বাংলা"}
               </button>
             </div>
-            <Link
+            <LandingButton
+              variant="secondary"
+              size="default"
               href="/login"
+              className="w-full"
               onClick={closeMenu}
-              className="flex w-full items-center justify-center rounded-xl border border-zinc-200 py-2.5 text-xs font-semibold text-zinc-800 hover:bg-zinc-50"
             >
               Log in
-            </Link>
-            <Link
+            </LandingButton>
+            <LandingButton
+              variant="primary"
+              size="default"
               href="/register"
+              className="w-full"
               onClick={closeMenu}
-              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-zinc-950 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-zinc-800"
             >
               Get started
               <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            </LandingButton>
           </div>
         </SheetContent>
       </Sheet>

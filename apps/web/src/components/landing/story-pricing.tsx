@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { landingContainer } from "./landing-ui";
+import { LandingButton } from "./landing-button";
 import { Check, ArrowRight } from "lucide-react";
 
 export function StoryPricing() {
@@ -121,7 +122,7 @@ export function StoryPricing() {
               type="button"
               onClick={() => setIsYearly(!isYearly)}
               className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${
-                isYearly ? "bg-zinc-900" : "bg-zinc-300"
+                isYearly ? "bg-blue-600" : "bg-zinc-300"
               }`}
               aria-label="Toggle annual billing"
             >
@@ -183,17 +184,15 @@ export function StoryPricing() {
               </div>
 
               <div className="pt-6 mt-6 border-t border-zinc-100">
-                <Link
+                <LandingButton
+                  variant={plan.popular ? "primary" : "secondary"}
+                  size="default"
                   href="/register"
-                  className={`w-full inline-flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold transition-all ${
-                    plan.popular
-                      ? "bg-blue-600 text-white shadow-xs hover:bg-blue-700"
-                      : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
-                  }`}
+                  className="w-full"
                 >
                   {plan.cta}
                   <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+                </LandingButton>
               </div>
             </div>
           ))}

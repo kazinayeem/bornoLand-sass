@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   ArrowRight,
   ExternalLink,
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 import { landingContainer } from "./landing-ui";
 import { LiveIndicator } from "./live-indicator";
+import { LandingButton } from "./landing-button";
 import { REVENUE_DATA } from "./landing-tokens";
 
 export function StoryHero() {
@@ -47,24 +47,29 @@ export function StoryHero() {
           </p>
 
           {/* Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <Link
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
+            <LandingButton
+              variant="primary"
+              size="hero"
               href="/register"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-8 py-3.5 text-sm font-semibold text-white shadow-md hover:bg-blue-700 hover:shadow-lg transition-all"
+              className="w-full sm:w-auto"
             >
               Start Free
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
+              <ArrowRight className="h-4 w-4 ml-0.5" />
+            </LandingButton>
+
+            <LandingButton
+              variant="secondary"
+              size="hero"
               href="/explore"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-zinc-300 bg-white px-6 py-3.5 text-sm font-semibold text-zinc-800 shadow-2xs hover:bg-zinc-50 transition-all"
+              className="w-full sm:w-auto"
             >
               Explore Demo
-              <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
-            </Link>
+              <ExternalLink className="h-3.5 w-3.5 text-zinc-400 ml-0.5" />
+            </LandingButton>
           </div>
 
-          <p className="text-xs text-zinc-400 font-medium">
+          <p className="text-xs text-zinc-400 font-medium pt-1">
             No credit card required · Start free in 60 seconds
           </p>
         </div>
@@ -145,7 +150,7 @@ export function StoryHero() {
                         type="button"
                         onClick={() => setPeriod(p)}
                         className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all ${
-                          period === p ? "bg-zinc-950 text-white" : "text-zinc-500 hover:bg-zinc-100"
+                          period === p ? "bg-blue-600 text-white" : "text-zinc-500 hover:bg-zinc-100"
                         }`}
                       >
                         {p}

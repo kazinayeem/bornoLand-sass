@@ -24,6 +24,7 @@ import {
   FileText,
   ChevronDown,
   ShieldCheck,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppSelector, useAppDispatch } from "@/hooks/redux";
@@ -40,7 +41,10 @@ const mainNav = [
   { href: "/dashboard/team", label: "Team", icon: Users },
   { href: "/dashboard/activity", label: "Activity", icon: ScrollText },
   { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
-  { href: "/dashboard/account", label: "Profile & settings", icon: Settings },
+];
+
+const accountNav = [
+  { href: "/dashboard/account", label: "Settings", icon: Settings },
   { href: "/dashboard/security", label: "Security", icon: ShieldCheck },
   { href: "/dashboard/help", label: "Help", icon: HelpCircle },
 ];
@@ -58,7 +62,7 @@ const storeNav = [
   { href: "/dashboard/stores/archived", label: "Archived", icon: Archive },
 ];
 
-function NavLink({
+function NavItem({
   href,
   label,
   icon: Icon,
@@ -80,23 +84,42 @@ function NavLink({
     <Link
       href={href}
       onClick={onNavigate}
+      title={collapsed ? label : undefined}
       className={cn(
-        "group flex items-center gap-3 rounded-sm px-3 py-2.5 text-caption transition-all duration-200",
+        "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-all duration-150",
         collapsed && "justify-center px-2",
         active
-          ? "bg-apple-primary text-apple-on-primary"
-          : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment hover:text-apple-ink dark:text-apple-body-muted dark:hover:bg-apple-surface-tile-3 dark:hover:text-apple-body-on-dark"
+          ? "bg-apple-ink/[0.07] text-apple-ink dark:bg-white/10 dark:text-white"
+          : "text-apple-ink-muted-48 hover:bg-apple-ink/[0.04] hover:text-apple-ink dark:text-apple-body-muted dark:hover:bg-white/8 dark:hover:text-white"
       )}
-      title={collapsed ? label : undefined}
     >
+      {/* Active indicator strip */}
+      {active && (
+        <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-apple-ink dark:bg-white" />
+      )}
       <Icon
         className={cn(
-          "h-[18px] w-[18px] shrink-0 transition-colors",
-          active ? "text-apple-on-primary" : "text-apple-ink-muted-48 group-hover:text-apple-ink-muted-80 dark:group-hover:text-apple-body-muted"
+          "h-4 w-4 shrink-0 transition-colors",
+          active
+            ? "text-apple-ink dark:text-white"
+            : "text-apple-ink-muted-48 group-hover:text-apple-ink-muted-80 dark:group-hover:text-apple-body-muted"
         )}
       />
-      {!collapsed && <span>{label}</span>}
+      {!collapsed && <span className="truncate">{label}</span>}
     </Link>
+  );
+}
+
+function NavSection({ label, collapsed }: { label: string; collapsed: boolean }) {
+  return (
+    <p
+      className={cn(
+        "mb-1 mt-4 px-2.5 text-[10px] font-semibold uppercase tracking-widest text-apple-ink-muted-48/70 dark:text-apple-body-muted/50",
+        collapsed && "sr-only"
+      )}
+    >
+      {label}
+    </p>
   );
 }
 
@@ -123,94 +146,101 @@ export function PlatformSidebar() {
     }
   };
 
+  const initials = user?.name
+    ?.split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() ?? "U";
+
   const sidebarContent = (
     <>
+      {/* ── Brand / Logo ─────────────────────────────────────── */}
       <div
         className={cn(
-          "flex h-16 items-center border-b border-apple-hairline px-4 dark:border-apple-surface-tile-3",
+          "flex h-14 items-center border-b border-apple-hairline/60 px-4 dark:border-white/[0.06]",
           collapsed ? "justify-center px-2" : "gap-2.5"
         )}
       >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-apple-primary">
-          <Sparkles className="h-4 w-4 text-apple-on-primary" />
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-apple-ink dark:bg-white">
+          <Sparkles className="h-3.5 w-3.5 text-white dark:text-apple-ink" />
         </div>
         {!collapsed && (
           <div className="min-w-0 flex-1">
-            <p className="truncate text-body-strong text-apple-ink dark:text-apple-body-on-dark">BornoLand</p>
-            <p className="text-fine-print font-semibold uppercase tracking-wider text-apple-ink-muted-48">Workspace</p>
+            <p className="truncate text-sm font-semibold tracking-tight text-apple-ink dark:text-white">
+              BornoLand
+            </p>
           </div>
         )}
         <button
           type="button"
           onClick={() => dispatch(toggleSidebarCollapsed())}
           className={cn(
-            "hidden lg:flex h-11 w-11 items-center justify-center rounded-full text-apple-ink-muted-48 transition-colors hover:bg-apple-canvas-parchment hover:text-apple-ink",
-            collapsed && "lg:mx-auto"
+            "hidden lg:flex h-7 w-7 items-center justify-center rounded-md text-apple-ink-muted-48 transition-colors hover:bg-apple-ink/[0.05] hover:text-apple-ink dark:hover:bg-white/10 dark:hover:text-white",
+            collapsed && "lg:mx-auto mt-0"
           )}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          {collapsed ? (
+            <PanelLeft className="h-3.5 w-3.5" />
+          ) : (
+            <PanelLeftClose className="h-3.5 w-3.5" />
+          )}
         </button>
       </div>
 
-      <div className={cn("border-b border-apple-hairline p-3 dark:border-apple-surface-tile-3", collapsed && "px-2")}>
+      {/* ── Workspace Switcher ───────────────────────────────── */}
+      <div className={cn("border-b border-apple-hairline/60 p-2.5 dark:border-white/[0.06]", collapsed && "px-2")}>
         <WorkspaceSwitcher collapsed={collapsed} />
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <p className={cn("mb-2 px-3 text-fine-print font-semibold uppercase tracking-wider text-apple-ink-muted-48", collapsed && "sr-only")}>
-          Workspace
-        </p>
-        <ul className="space-y-1">
+      {/* ── Navigation ──────────────────────────────────────── */}
+      <nav className="flex-1 overflow-y-auto px-2.5 py-3">
+        <NavSection label="Workspace" collapsed={collapsed} />
+        <ul className="space-y-0.5">
           {mainNav.map((item) => (
             <li key={item.href}>
-              <NavLink {...item} collapsed={collapsed} onNavigate={closeMobile} />
+              <NavItem {...item} collapsed={collapsed} onNavigate={closeMobile} />
             </li>
           ))}
         </ul>
 
-        {isStoresSection && (
-          <>
-            <p className={cn("mb-2 mt-6 px-3 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48", collapsed && "sr-only")}>
-              Stores
-            </p>
-            <ul className="space-y-1">
-              {storeNav.map((item) => (
-                <li key={item.href}>
-                  <NavLink {...item} collapsed={collapsed} onNavigate={closeMobile} />
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-
-        <div className="mt-4">
+        {/* Analytics expandable sub-nav */}
+        <div className="mt-0.5">
           {collapsed ? (
-            <NavLink href="/dashboard/analytics/visitors" label="Analytics" icon={BarChart3} collapsed={true} onNavigate={closeMobile} />
+            <NavItem
+              href="/dashboard/analytics/visitors"
+              label="Analytics"
+              icon={BarChart3}
+              collapsed={true}
+              onNavigate={closeMobile}
+            />
           ) : (
             <>
               <button
+                type="button"
                 onClick={() => {
-                  if (!isAnalyticsSection) {
-                    router.push("/dashboard/analytics/visitors");
-                  }
+                  if (!isAnalyticsSection) router.push("/dashboard/analytics/visitors");
                 }}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-sm px-3 py-2.5 text-caption transition-all",
+                  "group relative flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-all duration-150",
                   isAnalyticsSection
-                    ? "bg-apple-primary text-apple-on-primary"
-                    : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment hover:text-apple-ink dark:hover:bg-apple-surface-tile-3"
+                    ? "bg-apple-ink/[0.07] text-apple-ink dark:bg-white/10 dark:text-white"
+                    : "text-apple-ink-muted-48 hover:bg-apple-ink/[0.04] hover:text-apple-ink dark:text-apple-body-muted dark:hover:bg-white/8 dark:hover:text-white"
                 )}
               >
-                <BarChart3 className={cn("h-[18px] w-[18px] shrink-0", isAnalyticsSection ? "text-apple-on-primary" : "text-apple-ink-muted-48")} />
+                {isAnalyticsSection && (
+                  <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-apple-ink dark:bg-white" />
+                )}
+                <BarChart3 className={cn("h-4 w-4 shrink-0", isAnalyticsSection ? "text-apple-ink dark:text-white" : "text-apple-ink-muted-48 group-hover:text-apple-ink-muted-80")} />
                 <span className="flex-1 text-left">Analytics</span>
-                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isAnalyticsSection && "rotate-180")} />
+                <ChevronDown className={cn("h-3 w-3 text-apple-ink-muted-48 transition-transform", isAnalyticsSection && "rotate-180")} />
               </button>
               {isAnalyticsSection && (
-                <ul className="mt-1 space-y-0.5 pl-3">
+                <ul className="mt-0.5 space-y-0.5 pl-4 border-l border-apple-hairline/60 ml-4">
                   {analyticsSubLinks.map((link) => (
                     <li key={link.href}>
-                      <NavLink {...link} collapsed={false} onNavigate={closeMobile} />
+                      <NavItem {...link} collapsed={false} onNavigate={closeMobile} />
                     </li>
                   ))}
                 </ul>
@@ -218,38 +248,77 @@ export function PlatformSidebar() {
             </>
           )}
         </div>
+
+        {/* Stores sub-nav */}
+        {isStoresSection && !collapsed && (
+          <>
+            <NavSection label="Stores" collapsed={collapsed} />
+            <ul className="space-y-0.5">
+              {storeNav.map((item) => (
+                <li key={item.href}>
+                  <NavItem {...item} collapsed={collapsed} onNavigate={closeMobile} />
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {/* Account nav */}
+        <NavSection label="Account" collapsed={collapsed} />
+        <ul className="space-y-0.5">
+          {accountNav.map((item) => (
+            <li key={item.href}>
+              <NavItem {...item} collapsed={collapsed} onNavigate={closeMobile} />
+            </li>
+          ))}
+        </ul>
       </nav>
 
-      {!collapsed && (
-        <div className="border-t border-apple-hairline p-3 dark:border-apple-surface-tile-3">
-          <div className="mb-2 flex items-center gap-3 rounded-lg bg-apple-canvas-parchment p-3 dark:bg-apple-surface-tile-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-apple-primary text-caption-strong text-apple-on-primary">
-              {user?.name?.split(" ").map((n) => n[0]).join("") ?? "U"}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-caption-strong text-apple-ink dark:text-apple-body-on-dark">{user?.name ?? "User"}</p>
-              <p className="truncate text-fine-print text-apple-ink-muted-48">{user?.email ?? ""}</p>
-            </div>
-          </div>
+      {/* ── User Section ─────────────────────────────────────── */}
+      <div className={cn("border-t border-apple-hairline/60 p-2.5 dark:border-white/[0.06]", collapsed && "px-2")}>
+        {collapsed ? (
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-caption text-apple-ink-muted-48 transition-colors hover:bg-red-50 hover:text-red-600"
+            title="Sign out"
+            className="flex w-full items-center justify-center rounded-md p-2 text-apple-ink-muted-48 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
           >
             <LogOut className="h-4 w-4" />
-            Sign out
           </button>
-        </div>
-      )}
+        ) : (
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-apple-ink text-[11px] font-semibold text-white dark:bg-white dark:text-apple-ink">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-medium text-apple-ink dark:text-white">
+                {user?.name ?? "User"}
+              </p>
+              <p className="truncate text-[11px] text-apple-ink-muted-48 dark:text-apple-body-muted">
+                {user?.email ?? ""}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Sign out"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-apple-ink-muted-48 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
     </>
   );
 
   return (
     <>
+      {/* Mobile overlay */}
       {mobileOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-apple-surface-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-apple-surface-black/50 backdrop-blur-sm lg:hidden"
           onClick={closeMobile}
           aria-label="Close sidebar"
         />
@@ -257,7 +326,7 @@ export function PlatformSidebar() {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-apple-hairline bg-apple-canvas/95 backdrop-blur-xl transition-all duration-300 dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2/95",
+          "fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-apple-hairline/60 bg-apple-canvas/98 backdrop-blur-xl transition-all duration-300 dark:border-white/[0.06] dark:bg-apple-surface-tile-2/98",
           collapsed ? "w-[72px]" : "w-64",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
@@ -267,3 +336,4 @@ export function PlatformSidebar() {
     </>
   );
 }
+

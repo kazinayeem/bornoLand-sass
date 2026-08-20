@@ -1,14 +1,17 @@
 import { baseApi } from "@/redux/api/base-api";
 
 export type ThemeSettings = {
+  themeId?: string;
   primaryColor: string;
   secondaryColor: string;
   font: string;
   buttonStyle: string;
   layoutWidth: string;
   darkMode: boolean;
+  enableBuyNow?: boolean;
   navbarStyle: string;
 };
+
 
 export type PlanLimits = {
   storage: number;

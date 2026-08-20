@@ -134,7 +134,11 @@ export function ProductEditor({
 
   const patchForm = useCallback((patch: Partial<ProductEditorForm>) => {
     setForm((prev) => ({ ...prev, ...patch }));
+    if (patch.productType === "variable") {
+      setActiveTab("variants");
+    }
   }, []);
+
 
   const handleNameChange = useCallback(
     (name: string) => {
@@ -353,6 +357,7 @@ export function ProductEditor({
             form={form}
             product={product}
             storeName={storeName}
+            categories={categories}
             onChange={patchForm}
             onDuplicate={isEdit ? handleDuplicate : undefined}
             onDelete={isEdit ? () => setShowDeleteConfirm(true) : undefined}

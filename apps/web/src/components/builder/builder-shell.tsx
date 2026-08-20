@@ -13,7 +13,7 @@ export function BuilderShell({ children }: { children: ReactNode }) {
   const { store, isLoading, isError } = useStoreFromSlug();
   const { show, exiting } = useMinimumLoading(isLoading);
 
-  if (show) {
+  if (show || isLoading || (!store && !isError)) {
     return <BuilderLoadingScreen exiting={exiting} className="h-screen min-h-0" />;
   }
 
@@ -35,6 +35,7 @@ export function BuilderShell({ children }: { children: ReactNode }) {
       </div>
     );
   }
+
 
   return (
     <div className="h-screen overflow-hidden bg-apple-canvas-parchment">

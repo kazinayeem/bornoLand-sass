@@ -65,12 +65,13 @@ export function StoreProvider({ children, initialStore }: { children: ReactNode;
             trialEndsAt: store.trialEndsAt,
           }
         : null,
-      isLoading: !store && !initialStore && (query.isLoading || (!!storeSlug && !query.isError)),
+      isLoading: (!store && !initialStore) || query.isLoading || query.isFetching,
       isError: query.isError,
       isReady: !!store && !!store._id,
     }),
-    [store, storeSlug, initialStore, query.isLoading, query.isError],
+    [store, storeSlug, initialStore, query.isLoading, query.isFetching, query.isError],
   );
+
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

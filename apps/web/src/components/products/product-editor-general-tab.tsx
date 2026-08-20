@@ -114,47 +114,75 @@ export function ProductEditorGeneralTab({ form, categories, isEdit, onChange, on
         </div>
       </section>
 
-      {form.productType === "simple" && (
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-apple-ink">Pricing</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+      {/* ── Pricing & Product Variant Toggle ─────────────────────── */}
+      <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+          <div>
+            <h2 className="text-sm font-semibold text-apple-ink">Pricing & Stock</h2>
+            <p className="text-xs text-apple-ink-muted-48">Configure base pricing or enable variant-specific pricing</p>
+          </div>
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-semibold text-apple-ink transition-colors hover:bg-zinc-100">
+            <input
+              type="checkbox"
+              checked={form.productType === "variable"}
+              onChange={(e) =>
+                onChange({
+                  productType: e.target.checked ? "variable" : "simple",
+                })
+              }
+              className="rounded border-zinc-300 text-violet-600 focus:ring-violet-500"
+            />
+            This product has variants
+          </label>
+        </div>
+
+        {form.productType === "simple" ? (
+          <div className="grid gap-4 sm:grid-cols-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Price</label>
+              <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Sell / Current Price *</label>
               <input
                 type="number"
                 min={0}
                 step="0.01"
+                placeholder="0.00"
                 value={form.price}
                 onChange={(e) => onChange({ price: e.target.value })}
                 className={inputClass}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Compare at price</label>
+              <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Regular / Old Price</label>
               <input
                 type="number"
                 min={0}
                 step="0.01"
+                placeholder="0.00"
                 value={form.comparePrice}
                 onChange={(e) => onChange({ comparePrice: e.target.value })}
                 className={inputClass}
               />
             </div>
-            {!isEdit && (
-              <div>
-                <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Initial stock</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.stock}
-                  onChange={(e) => onChange({ stock: e.target.value })}
-                  className={inputClass}
-                />
-              </div>
-            )}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-apple-ink-muted-80">Initial Stock</label>
+              <input
+                type="number"
+                min={0}
+                value={form.stock}
+                onChange={(e) => onChange({ stock: e.target.value })}
+                className={inputClass}
+              />
+            </div>
           </div>
-        </section>
-      )}
+        ) : (
+          <div className="rounded-xl border border-violet-100 bg-violet-50/40 p-4 text-xs text-violet-900">
+            <p className="font-semibold">Variant-wise pricing enabled</p>
+            <p className="mt-0.5 text-violet-700">
+              Configure options, prices, stock, and images under the <strong>Variants</strong> tab.
+            </p>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
+

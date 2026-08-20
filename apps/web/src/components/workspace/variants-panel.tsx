@@ -1,11 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { GripVertical, Plus, RefreshCw, Wand2, X } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Edit2,
+  Image as ImageIcon,
+  CheckSquare,
+  Square,
+  Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 import type { ProductOption, ProductVariant } from "@/redux/api/product-api";
 import { MediaPicker } from "@/components/media/media-picker";
 import { selectionMediaId } from "@/lib/media-selection";
+import { VariantDrawer } from "@/components/products/variant-drawer";
 
 type VariantsPanelProps = {
   options: ProductOption[];
@@ -15,38 +24,53 @@ type VariantsPanelProps = {
   billingHref?: string;
 };
 
+const COLOR_PRESETS = [
+  { name: "Black", color: "#000000" },
+  { name: "White", color: "#ffffff" },
+  { name: "Red", color: "#ef4444" },
+  { name: "Blue", color: "#3b82f6" },
+  { name: "Green", color: "#22c55e" },
+  { name: "Yellow", color: "#eab308" },
+  { name: "Purple", color: "#a855f7" },
+  { name: "Pink", color: "#ec4899" },
+  { name: "Gray", color: "#6b7280" },
+  { name: "Navy", color: "#1e3a8a" },
+];
+
 function comboKey(optionValues: Record<string, string>) {
-  return Object.entries(optionValues)
+  return Object.entries(optionValues || {})
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, value]) => `${key}:${value}`)
     .join("|");
 }
 
 function buildVariantTitle(optionValues: Record<string, string>) {
-  return Object.values(optionValues).filter(Boolean).join(" / ");
+  return Object.values(optionValues || {}).filter(Boolean).join(" / ");
 }
 
-function sanitizeOptions(options: ProductOption[]) {
+function sanitizeOptions(options: ProductOption[]): ProductOption[] {
   return options
     .map((option, index) => ({
       ...option,
       name: option.name.trim(),
-      values: option.values.map((value) => value.trim()).filter(Boolean),
+      values: option.values.map((v) => v.trim()).filter(Boolean),
       position: index,
     }))
     .filter((option) => option.name);
 }
 
 function generateCombinations(options: ProductOption[]): Record<string, string>[] {
-  if (options.length === 0 || options.some((option) => option.values.length === 0)) return [];
+  const clean = sanitizeOptions(options);
+  if (clean.length === 0 || clean.some((o) => o.values.length === 0)) return [];
+
   const combos: Record<string, string>[] = [];
   function recurse(idx: number, current: Record<string, string>) {
-    if (idx === options.length) {
+    if (idx === clean.length) {
       combos.push({ ...current });
       return;
     }
-    for (const val of options[idx].values) {
-      current[options[idx].name] = val;
+    for (const val of clean[idx].values) {
+      current[clean[idx].name] = val;
       recurse(idx + 1, current);
     }
   }
@@ -65,21 +89,22 @@ function blankVariant(optionValues: Record<string, string>): ProductVariant {
     sku: "",
     barcode: "",
     imageUrl: "",
-    galleryUrls: [],
     enabled: true,
     status: "active",
     weight: undefined,
   };
 }
 
-function syncVariantsFromOptions(options: ProductOption[], variants: ProductVariant[]) {
-  const normalizedOptions = sanitizeOptions(options);
-  const combos = generateCombinations(normalizedOptions);
+function syncVariantsFromOptions(options: ProductOption[], existingVariants: ProductVariant[]): ProductVariant[] {
+  const combos = generateCombinations(options);
   const variantMap = new Map(
-    variants.map((variant) => [comboKey(variant.optionValues), { ...variant, title: variant.title || buildVariantTitle(variant.optionValues) }])
+    existingVariants.map((v) => [comboKey(v.optionValues), { ...v, title: v.title || buildVariantTitle(v.optionValues) }])
   );
   return combos.map((combo) => variantMap.get(comboKey(combo)) ?? blankVariant(combo));
 }
+
+const inputClass =
+  "h-8 rounded-lg border border-zinc-200 bg-white px-2 text-xs font-medium text-apple-ink focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20";
 
 export function VariantsPanel({
   options,
@@ -91,8 +116,8 @@ export function VariantsPanel({
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [bulkPrice, setBulkPrice] = useState("");
   const [bulkStock, setBulkStock] = useState("");
+  const [drawerVariant, setDrawerVariant] = useState<ProductVariant | null>(null);
 
-  const cleanOptions = useMemo(() => sanitizeOptions(options), [options]);
   const combosWithData = useMemo(() => syncVariantsFromOptions(options, variants), [options, variants]);
 
   const commit = (nextOptions: ProductOption[], nextVariants?: ProductVariant[]) => {
@@ -102,32 +127,27 @@ export function VariantsPanel({
     });
   };
 
-  const addOption = () => {
+  const addOptionGroup = () => {
+    if (options.length >= 3) {
+      toast.info("Maximum 3 option groups recommended");
+    }
     commit([...options, { name: "", values: [""] }]);
   };
 
-  const removeOption = (idx: number) => {
-    const option = options[idx];
-    const nextOptions = options.filter((_, index) => index !== idx);
-    const nextVariants = variants
-      .map((variant) => {
-        const optionValues = { ...variant.optionValues };
-        delete optionValues[option.name];
-        return { ...variant, optionValues, title: buildVariantTitle(optionValues) };
-      })
-      .filter((variant) => Object.keys(variant.optionValues).length > 0);
-    commit(nextOptions, nextVariants);
+  const removeOptionGroup = (idx: number) => {
+    const nextOptions = options.filter((_, i) => i !== idx);
+    commit(nextOptions);
   };
 
   const updateOptionName = (idx: number, name: string) => {
     const previousName = options[idx]?.name;
-    const nextOptions = options.map((option, index) => (index === idx ? { ...option, name } : option));
-    const nextVariants = variants.map((variant) => {
-      if (!previousName || !(previousName in variant.optionValues)) return variant;
-      const optionValues = { ...variant.optionValues };
+    const nextOptions = options.map((opt, i) => (i === idx ? { ...opt, name } : opt));
+    const nextVariants = variants.map((v) => {
+      if (!previousName || !(previousName in (v.optionValues || {}))) return v;
+      const optionValues = { ...v.optionValues };
       optionValues[name] = optionValues[previousName];
       delete optionValues[previousName];
-      return { ...variant, optionValues, title: buildVariantTitle(optionValues) };
+      return { ...v, optionValues, title: buildVariantTitle(optionValues) };
     });
     commit(nextOptions, nextVariants);
   };
@@ -135,395 +155,437 @@ export function VariantsPanel({
   const updateOptionValue = (optIdx: number, valIdx: number, value: string) => {
     const optionName = options[optIdx]?.name;
     const previousValue = options[optIdx]?.values[valIdx] ?? "";
-    const nextOptions = options.map((option, index) => {
-      if (index !== optIdx) return option;
-      const values = [...option.values];
+    const nextOptions = options.map((opt, i) => {
+      if (i !== optIdx) return opt;
+      const values = [...opt.values];
       values[valIdx] = value;
-      return { ...option, values };
+      return { ...opt, values };
     });
-    const nextVariants = variants.map((variant) => {
-      if (!optionName || variant.optionValues[optionName] !== previousValue) return variant;
-      const optionValues = { ...variant.optionValues, [optionName]: value };
-      return { ...variant, optionValues, title: buildVariantTitle(optionValues) };
+
+    const nextVariants = variants.map((v) => {
+      if (!optionName || v.optionValues?.[optionName] !== previousValue) return v;
+      const optionValues = { ...v.optionValues, [optionName]: value };
+      return { ...v, optionValues, title: buildVariantTitle(optionValues) };
     });
     commit(nextOptions, nextVariants);
   };
 
   const addOptionValue = (optIdx: number) => {
-    const nextOptions = options.map((option, index) =>
-      index === optIdx ? { ...option, values: [...option.values, ""] } : option
+    const nextOptions = options.map((opt, i) =>
+      i === optIdx ? { ...opt, values: [...opt.values, ""] } : opt
     );
     commit(nextOptions);
   };
 
   const removeOptionValue = (optIdx: number, valIdx: number) => {
-    const optionName = options[optIdx]?.name;
-    const removedValue = options[optIdx]?.values[valIdx] ?? "";
-    const nextOptions = options.map((option, index) => {
-      if (index !== optIdx) return option;
-      const values = option.values.filter((_, valueIndex) => valueIndex !== valIdx);
-      return { ...option, values: values.length > 0 ? values : [""] };
+    const nextOptions = options.map((opt, i) => {
+      if (i !== optIdx) return opt;
+      const values = opt.values.filter((_, vIdx) => vIdx !== valIdx);
+      return { ...opt, values: values.length > 0 ? values : [""] };
     });
-    const nextVariants = variants.filter(
-      (variant) => !optionName || variant.optionValues[optionName] !== removedValue
-    );
-    commit(nextOptions, nextVariants);
+    commit(nextOptions);
   };
 
-  const handleGenerate = () => {
-    if (cleanOptions.length === 0) {
-      toast.error("Add at least one option first");
-      return;
+  const updateVariantRow = (idx: number, patch: Partial<ProductVariant>) => {
+    const next = combosWithData.map((v, i) => (i === idx ? { ...v, ...patch } : v));
+    onChange({ options, variants: next });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedKeys.size === combosWithData.length) {
+      setSelectedKeys(new Set());
+    } else {
+      setSelectedKeys(new Set(combosWithData.map((v) => comboKey(v.optionValues))));
     }
-    if (cleanOptions.some((option) => option.values.length === 0)) {
-      toast.error("Each option needs at least one value");
-      return;
-    }
-    onChange({ options, variants: syncVariantsFromOptions(options, variants) });
-    toast.success("Variant combinations generated");
   };
 
-  const updateVariantField = <K extends keyof ProductVariant>(idx: number, field: K, value: ProductVariant[K]) => {
-    const nextVariants = combosWithData.map((variant, variantIdx) => {
-      if (variantIdx !== idx) return variant;
-      return { ...variant, [field]: value };
-    });
-    onChange({ options, variants: nextVariants });
-  };
-
-  const toggleSelect = (key: string) => {
-    setSelectedKeys((previous) => {
-      const next = new Set(previous);
+  const toggleSelectRow = (key: string) => {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
       return next;
     });
   };
 
-  const runBulk = (action: "update_price" | "update_stock" | "generate_sku" | "delete") => {
+  const applyBulkAction = (action: "price" | "stock" | "sku" | "delete") => {
     if (selectedKeys.size === 0) {
-      toast.error("Select variants first");
+      toast.error("Select at least one variant");
       return;
     }
-    let nextVariants = combosWithData.filter((variant) =>
-      action === "delete" ? !selectedKeys.has(comboKey(variant.optionValues)) : true
-    );
 
-    nextVariants = nextVariants.map((variant, index) => {
-      if (!selectedKeys.has(comboKey(variant.optionValues))) return variant;
-      if (action === "update_price") return { ...variant, price: Number(bulkPrice || 0) };
-      if (action === "update_stock") return { ...variant, stock: Number(bulkStock || 0) };
-      if (action === "generate_sku") {
-        return { ...variant, sku: `VAR-${buildVariantTitle(variant.optionValues).replace(/[^A-Z0-9]+/gi, "-").toUpperCase()}` };
+    if (action === "delete") {
+      const next = combosWithData.filter((v) => !selectedKeys.has(comboKey(v.optionValues)));
+      onChange({ options, variants: next });
+      setSelectedKeys(new Set());
+      toast.success("Selected variants deleted");
+      return;
+    }
+
+    const next = combosWithData.map((v) => {
+      if (!selectedKeys.has(comboKey(v.optionValues))) return v;
+      if (action === "price" && bulkPrice !== "") {
+        return { ...v, price: Number(bulkPrice) };
       }
-      return variant;
+      if (action === "stock" && bulkStock !== "") {
+        return { ...v, stock: Number(bulkStock) };
+      }
+      if (action === "sku") {
+        return { ...v, sku: `SKU-${buildVariantTitle(v.optionValues).replace(/[^A-Z0-9]/gi, "-").toUpperCase()}` };
+      }
+      return v;
     });
 
-    onChange({ options, variants: nextVariants });
-    setSelectedKeys(new Set());
+    onChange({ options, variants: next });
     toast.success("Bulk update applied");
   };
 
-  if (options.length === 0 && variants.length === 0) {
-    return (
-      <div className="py-8 text-center">
-        <p className="mb-2 text-sm font-medium text-apple-ink-muted-80">No variants yet</p>
-        <p className="mb-4 text-sm text-apple-ink-muted-48">
-          Add options like Color or Size to create product variants.
-        </p>
-        <button
-          type="button"
-          onClick={addOption}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-apple-ink px-4 py-2 text-xs font-semibold text-white hover:bg-apple-ink-muted-80"
-        >
-          <Plus className="h-3.5 w-3.5" /> Add First Option
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-apple-ink">Variant Builder</h3>
-          <p className="text-xs text-apple-ink-muted-48">Create options, then fill each generated combination.</p>
-        </div>
-        <button
-          type="button"
-          onClick={addOption}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
-        >
-          <Plus className="h-3 w-3" /> Add Option
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {options.map((option, optionIndex) => (
-          <div key={optionIndex} className="rounded-apple-lg border border-apple-hairline bg-apple-canvas-parchment p-4">
-            <div className="mb-3 flex items-center gap-3">
-              <GripVertical className="h-4 w-4 text-apple-ink-muted-48" />
-              <input
-                type="text"
-                value={option.name}
-                onChange={(event) => updateOptionName(optionIndex, event.target.value)}
-                placeholder="Option name (e.g. Color)"
-                className="h-9 flex-1 rounded-xl border border-apple-hairline bg-white px-3 text-sm font-medium"
-              />
-              <button
-                type="button"
-                onClick={() => removeOption(optionIndex)}
-                className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:text-red-500"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {option.values.map((value, valueIndex) => (
-                <div key={valueIndex} className="flex items-center gap-1">
-                  <input
-                    type="text"
-                    value={value}
-                    onChange={(event) => updateOptionValue(optionIndex, valueIndex, event.target.value)}
-                    placeholder={`Value ${valueIndex + 1}`}
-                    className="h-8 w-28 rounded-lg border border-apple-hairline bg-white px-2.5 text-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeOptionValue(optionIndex, valueIndex)}
-                    className="rounded p-1 text-apple-ink-muted-48 hover:text-red-500"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => addOptionValue(optionIndex)}
-                className="inline-flex h-8 items-center gap-1 rounded-lg border border-dashed border-zinc-300 px-2.5 text-xs text-apple-ink-muted-48"
-              >
-                <Plus className="h-3 w-3" /> Add value
-              </button>
-            </div>
+      {/* ── Option Groups Configuration ─────────────────────────── */}
+      <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-apple-ink">Option Groups</h3>
+            <p className="text-xs text-apple-ink-muted-48">Define product options (e.g., Color, Size, Material)</p>
           </div>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-apple-divider-soft pt-2">
-        <p className="text-xs text-apple-ink-muted-48">
-          {combosWithData.length > 0
-            ? `${combosWithData.length} variant${combosWithData.length !== 1 ? "s" : ""} ready`
-            : "Complete option names and values to generate combinations"}
-        </p>
-        <button
-          type="button"
-          onClick={handleGenerate}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-apple-ink px-4 py-2 text-xs font-semibold text-white hover:bg-apple-ink-muted-80"
-        >
-          <RefreshCw className="h-3.5 w-3.5" /> Generate All Combinations
-        </button>
-      </div>
-
-      {selectedKeys.size > 0 && (
-        <div className="flex flex-wrap items-end gap-2 rounded-xl border border-apple-hairline bg-apple-canvas-parchment p-3">
-          <p className="w-full text-xs font-medium text-apple-ink-muted-80">{selectedKeys.size} selected</p>
-          <input
-            type="number"
-            placeholder="Bulk price"
-            value={bulkPrice}
-            onChange={(event) => setBulkPrice(event.target.value)}
-            className="h-8 w-28 rounded-lg border border-apple-hairline px-2 text-xs"
-          />
           <button
             type="button"
-            onClick={() => runBulk("update_price")}
-            className="rounded-lg bg-apple-ink px-3 py-1.5 text-xs text-white"
+            onClick={addOptionGroup}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-apple-ink hover:bg-zinc-50"
           >
-            Set price
-          </button>
-          <input
-            type="number"
-            placeholder="Bulk stock"
-            value={bulkStock}
-            onChange={(event) => setBulkStock(event.target.value)}
-            className="h-8 w-28 rounded-lg border border-apple-hairline px-2 text-xs"
-          />
-          <button
-            type="button"
-            onClick={() => runBulk("update_stock")}
-            className="rounded-lg bg-apple-ink px-3 py-1.5 text-xs text-white"
-          >
-            Set stock
-          </button>
-          <button type="button" onClick={() => runBulk("generate_sku")} className="rounded-lg border px-3 py-1.5 text-xs">
-            <Wand2 className="mr-1 inline h-3 w-3" />
-            Gen SKU
-          </button>
-          <button
-            type="button"
-            onClick={() => runBulk("delete")}
-            className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-600"
-          >
-            Delete
+            <Plus className="h-3.5 w-3.5" /> Add Option
           </button>
         </div>
-      )}
 
-      {combosWithData.length > 0 && (
-        <div className="overflow-x-auto rounded-apple-lg border border-apple-hairline">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-apple-hairline bg-apple-canvas-parchment">
-                <th className="px-2 py-2.5" />
-                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Variant</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Image</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">SKU</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Barcode</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Price</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Compare</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Cost</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Stock</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Weight</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-apple-ink-muted-80">Status</th>
-                <th className="px-3 py-2.5 text-center font-semibold text-apple-ink-muted-80">Enabled</th>
-              </tr>
-            </thead>
-            <tbody>
-              {combosWithData.map((variant, index) => {
-                const key = comboKey(variant.optionValues);
-                return (
-                  <tr key={key} className="border-b border-apple-divider-soft last:border-b-0 hover:bg-apple-canvas-parchment/50">
-                    <td className="px-2 py-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedKeys.has(key)}
-                        onChange={() => toggleSelect(key)}
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="min-w-[140px]">
-                        <p className="text-sm font-medium text-apple-ink">{variant.title || buildVariantTitle(variant.optionValues)}</p>
-                        <p className="text-[11px] text-apple-ink-muted-48">
-                          {Object.entries(variant.optionValues)
-                            .map(([optionName, value]) => `${optionName}: ${value}`)
-                            .join(" · ")}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="min-w-[180px] px-3 py-2">
-                      <MediaPicker
-                        storeId={storeId}
-                        billingHref={billingHref}
-                        folder="products"
-                        label=""
-                        value={variant.imageUrl}
-                        onChange={(selection) => {
-                          updateVariantField(index, "imageUrl", selection.url);
-                          updateVariantField(index, "imageMediaIds", selectionMediaId(selection) ? [selectionMediaId(selection)!] : []);
+        {options.map((opt, optIdx) => {
+          const isColor = opt.name.toLowerCase() === "color";
+          return (
+            <div key={optIdx} className="space-y-3 rounded-xl border border-zinc-100 bg-zinc-50/50 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <input
+                  type="text"
+                  placeholder="Option Name (e.g. Color, Size)"
+                  value={opt.name}
+                  onChange={(e) => updateOptionName(optIdx, e.target.value)}
+                  className="h-9 w-64 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-bold text-apple-ink focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeOptionGroup(optIdx)}
+                  className="rounded-lg p-1.5 text-red-500 hover:bg-red-50"
+                  title="Remove option group"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Option Values List */}
+              <div className="flex flex-wrap items-center gap-2">
+                {opt.values.map((val, valIdx) => (
+                  <div
+                    key={valIdx}
+                    className="flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-2.5 py-1.5 text-xs shadow-2xs"
+                  >
+                    {isColor && (
+                      <span
+                        className="h-3.5 w-3.5 shrink-0 rounded-full border border-zinc-300 shadow-2xs"
+                        style={{
+                          backgroundColor:
+                            COLOR_PRESETS.find((c) => c.name.toLowerCase() === val.toLowerCase())?.color || "#94a3b8",
                         }}
                       />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="text"
-                        value={variant.sku}
-                        onChange={(event) => updateVariantField(index, "sku", event.target.value)}
-                        className="h-8 w-28 rounded-lg border border-apple-hairline px-2 text-xs"
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="text"
-                        value={variant.barcode ?? ""}
-                        onChange={(event) => updateVariantField(index, "barcode", event.target.value)}
-                        className="h-8 w-28 rounded-lg border border-apple-hairline px-2 text-xs"
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={variant.price ?? ""}
-                        onChange={(event) =>
-                          updateVariantField(index, "price", event.target.value ? Number(event.target.value) : undefined)
-                        }
-                        className="h-8 w-20 rounded-lg border border-apple-hairline px-2 text-xs"
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={variant.comparePrice ?? ""}
-                        onChange={(event) =>
-                          updateVariantField(index, "comparePrice", event.target.value ? Number(event.target.value) : undefined)
-                        }
-                        className="h-8 w-20 rounded-lg border border-apple-hairline px-2 text-xs"
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={variant.costPrice ?? ""}
-                        onChange={(event) =>
-                          updateVariantField(index, "costPrice", event.target.value ? Number(event.target.value) : undefined)
-                        }
-                        className="h-8 w-20 rounded-lg border border-apple-hairline px-2 text-xs"
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        min={0}
-                        value={variant.stock}
-                        onChange={(event) => updateVariantField(index, "stock", Number(event.target.value))}
-                        className="h-8 w-16 rounded-lg border border-apple-hairline px-2 text-xs"
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        value={variant.weight ?? ""}
-                        onChange={(event) =>
-                          updateVariantField(index, "weight", event.target.value ? Number(event.target.value) : undefined)
-                        }
-                        className="h-8 w-16 rounded-lg border border-apple-hairline px-2 text-xs"
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <select
-                        value={variant.status ?? "active"}
-                        onChange={(event) => updateVariantField(index, "status", event.target.value as ProductVariant["status"])}
-                        className="h-8 rounded-lg border border-apple-hairline px-2 text-xs"
-                      >
-                        <option value="active">Active</option>
-                        <option value="draft">Draft</option>
-                        <option value="out_of_stock">Out of stock</option>
-                        <option value="hidden">Hidden</option>
-                        <option value="archived">Archived</option>
-                      </select>
-                    </td>
-                    <td className="px-3 py-2 text-center">
-                      <input
-                        type="checkbox"
-                        checked={variant.enabled}
-                        onChange={(event) => updateVariantField(index, "enabled", event.target.checked)}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    )}
+                    <input
+                      type="text"
+                      placeholder="Value"
+                      value={val}
+                      onChange={(e) => updateOptionValue(optIdx, valIdx, e.target.value)}
+                      className="w-20 bg-transparent text-xs font-medium text-apple-ink outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeOptionValue(optIdx, valIdx)}
+                      className="text-zinc-400 hover:text-red-500"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => addOptionValue(optIdx)}
+                  className="inline-flex items-center gap-1 rounded-xl border border-dashed border-zinc-300 px-3 py-1.5 text-xs font-medium text-violet-600 hover:border-violet-400 hover:bg-violet-50"
+                >
+                  <Plus className="h-3 w-3" /> Add Value
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Generated Variant Matrix Table ─────────────────────── */}
+      {combosWithData.length > 0 && (
+        <div className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+          {/* Quick Apply & Bulk Actions Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-apple-ink">
+                Variants ({combosWithData.length})
+              </span>
+              {selectedKeys.size > 0 && (
+                <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">
+                  {selectedKeys.size} selected
+                </span>
+              )}
+            </div>
+
+            {/* Quick Setters */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  placeholder="Price"
+                  value={bulkPrice}
+                  onChange={(e) => setBulkPrice(e.target.value)}
+                  className="h-8 w-20 rounded-lg border border-zinc-200 bg-white px-2 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => applyBulkAction("price")}
+                  className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-apple-ink hover:bg-zinc-100"
+                >
+                  Apply Price
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  placeholder="Stock"
+                  value={bulkStock}
+                  onChange={(e) => setBulkStock(e.target.value)}
+                  className="h-8 w-16 rounded-lg border border-zinc-200 bg-white px-2 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => applyBulkAction("stock")}
+                  className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-apple-ink hover:bg-zinc-100"
+                >
+                  Apply Stock
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => applyBulkAction("sku")}
+                className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-apple-ink hover:bg-zinc-100"
+              >
+                Auto SKUs
+              </button>
+
+              {selectedKeys.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => applyBulkAction("delete")}
+                  className="rounded-lg bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-100"
+                >
+                  Delete Selected
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Matrix Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-zinc-200 bg-zinc-50/50 text-apple-ink-muted-48">
+                  <th className="p-2.5 w-8">
+                    <button type="button" onClick={toggleSelectAll}>
+                      {selectedKeys.size === combosWithData.length ? (
+                        <CheckSquare className="h-4 w-4 text-violet-600" />
+                      ) : (
+                        <Square className="h-4 w-4" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="p-2.5 w-12">Image</th>
+                  <th className="p-2.5 font-bold text-apple-ink">Variant</th>
+                  <th className="p-2.5">SKU</th>
+                  <th className="p-2.5">Price *</th>
+                  <th className="p-2.5">Compare Price</th>
+                  <th className="p-2.5">Cost</th>
+                  <th className="p-2.5">Stock</th>
+                  <th className="p-2.5 w-16 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {combosWithData.map((v, idx) => {
+                  const key = comboKey(v.optionValues);
+                  const isSelected = selectedKeys.has(key);
+                  const stock = v.stock ?? 0;
+                  const stockBadgeClass =
+                    stock > 5
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : stock > 0
+                      ? "bg-amber-50 text-amber-700 border-amber-200"
+                      : "bg-red-50 text-red-700 border-red-200";
+
+                  return (
+                    <tr
+                      key={key}
+                      className={`group transition-colors ${
+                        isSelected ? "bg-violet-50/30" : "hover:bg-zinc-50/50"
+                      }`}
+                    >
+                      {/* Checkbox */}
+                      <td className="p-2.5">
+                        <button type="button" onClick={() => toggleSelectRow(key)}>
+                          {isSelected ? (
+                            <CheckSquare className="h-4 w-4 text-violet-600" />
+                          ) : (
+                            <Square className="h-4 w-4 text-zinc-300 group-hover:text-zinc-500" />
+                          )}
+                        </button>
+                      </td>
+
+                      {/* Image Thumbnail */}
+                      <td className="p-2.5">
+                        <MediaPicker
+                          storeId={storeId}
+                          billingHref={billingHref || "#"}
+                          value={v.imageUrl || ""}
+                          onChange={(selection) => {
+                            if (selection?.url) {
+                              updateVariantRow(idx, {
+                                imageUrl: selection.url,
+                              });
+                            }
+                          }}
+                        />
+                      </td>
+
+
+                      {/* Variant Title */}
+                      <td className="p-2.5 font-bold text-apple-ink">
+                        {v.title}
+                      </td>
+
+                      {/* SKU */}
+                      <td className="p-2.5">
+                        <input
+                          type="text"
+                          value={v.sku || ""}
+                          placeholder="SKU"
+                          onChange={(e) => updateVariantRow(idx, { sku: e.target.value })}
+                          className={`${inputClass} w-24`}
+                        />
+                      </td>
+
+                      {/* Price */}
+                      <td className="p-2.5">
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          placeholder="0.00"
+                          value={v.price ?? ""}
+                          onChange={(e) =>
+                            updateVariantRow(idx, { price: parseFloat(e.target.value) || 0 })
+                          }
+                          className={`${inputClass} w-20 font-bold text-violet-700`}
+                        />
+                      </td>
+
+                      {/* Compare Price */}
+                      <td className="p-2.5">
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          placeholder="0.00"
+                          value={v.comparePrice ?? ""}
+                          onChange={(e) =>
+                            updateVariantRow(idx, { comparePrice: parseFloat(e.target.value) || undefined })
+                          }
+                          className={`${inputClass} w-20 text-zinc-500`}
+                        />
+                      </td>
+
+                      {/* Cost Price */}
+                      <td className="p-2.5">
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          placeholder="0.00"
+                          value={v.costPrice ?? ""}
+                          onChange={(e) =>
+                            updateVariantRow(idx, { costPrice: parseFloat(e.target.value) || undefined })
+                          }
+                          className={`${inputClass} w-20`}
+                        />
+                      </td>
+
+                      {/* Stock & Status Badge */}
+                      <td className="p-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            min={0}
+                            value={v.stock ?? 0}
+                            onChange={(e) =>
+                              updateVariantRow(idx, { stock: parseInt(e.target.value) || 0 })
+                            }
+                            className={`${inputClass} w-16`}
+                          />
+                          <span
+                            className={`rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${stockBadgeClass}`}
+                          >
+                            {stock > 5 ? "In Stock" : stock > 0 ? "Low" : "Out"}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Row Actions */}
+                      <td className="p-2.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setDrawerVariant(v)}
+                            className="rounded-lg p-1 text-apple-ink-muted-80 hover:bg-zinc-100 hover:text-apple-ink"
+                            title="Edit variant details"
+                          >
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
+
+      {/* ── Slide-Over Variant Inspector Drawer ──────────────────── */}
+      <VariantDrawer
+        open={!!drawerVariant}
+        variant={drawerVariant}
+        storeId={storeId}
+        billingHref={billingHref}
+        onClose={() => setDrawerVariant(null)}
+        onSave={(updated) => {
+          const next = combosWithData.map((v) =>
+            comboKey(v.optionValues) === comboKey(updated.optionValues) ? updated : v
+          );
+          onChange({ options, variants: next });
+          toast.success("Variant details updated");
+        }}
+      />
     </div>
   );
 }

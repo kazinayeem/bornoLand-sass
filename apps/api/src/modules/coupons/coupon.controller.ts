@@ -1,4 +1,4 @@
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 import { StoreModel } from "../stores/store.model.js";
@@ -8,11 +8,12 @@ import {
   getCoupon,
   listCoupons,
   updateCoupon,
+  validateCouponForCart,
 } from "./coupon.service.js";
 
 async function verifyStoreOwner(storeId: string, userId?: string) {
   const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
-  return store ? true : false;
+  return Boolean(store);
 }
 
 export async function listCouponsController(request: AuthRequest, response: Response) {
@@ -61,4 +62,15 @@ export async function deleteCouponController(request: AuthRequest, response: Res
   }
   const result = await deleteCoupon(storeId, id);
   return result.ok ? sendSuccess(response, undefined, result.message) : sendFailure(response, result.message, 404);
+}
+
+// ── Public Storefront Coupon Validation Controller ────────────────────
+
+export async function validateCouponController(request: Request, response: Response) {
+  const storeId = (request.params.storeId as string) || (request.body?.storeId as string) || (request as any).store?._id;
+  if (!storeId) {
+    return sendFailure(response, "Store ID is required", 400);
+  }
+  const result = await validateCouponForCart(String(storeId), request.body);
+  return result.ok ? sendSuccess(response, result.data) : sendFailure(response, result.message, 400);
 }

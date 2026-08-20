@@ -9,10 +9,11 @@ import { getContrastColor } from "@/lib/color-utils";
 import type { StorefrontSectionLike } from "./storefront-types";
 
 const heroHeightMap: Record<string, string> = {
-  sm: "min-h-[400px]",
-  md: "min-h-[560px]",
-  lg: "min-h-[700px]",
+  sm: "min-h-[440px] sm:min-h-[480px]",
+  md: "min-h-[520px] sm:min-h-[600px]",
+  lg: "min-h-[600px] sm:min-h-[720px]",
 };
+
 
 export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
   const { store, theme, sliders } = useTenant();

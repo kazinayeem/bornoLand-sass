@@ -74,7 +74,8 @@ const mainLinks = [
   { href: "/inventory", label: "Inventory", icon: Boxes, featureKey: "inventory" },
   { href: "/orders", label: "Orders", icon: ShoppingBag },
   { href: "/customers", label: "Customers", icon: Users },
-  { href: "/reviews", label: "Reviews", icon: Star, featureKey: "reviews", comingSoon: true },
+  { href: "/reviews", label: "Reviews", icon: Star, featureKey: "reviews" },
+
   { href: "/coupons", label: "Coupons", icon: Ticket, featureKey: "coupons" },
   { href: "/customer-messages", label: "Messages", icon: Mail, featureKey: "cms" },
   { href: "/media", label: "Media", icon: Image, featureKey: "media" },

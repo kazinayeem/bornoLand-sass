@@ -7,9 +7,13 @@ import {
   getCouponController,
   listCouponsController,
   updateCouponController,
+  validateCouponController,
 } from "./coupon.controller.js";
 
 export const couponRouter: Router = Router({ mergeParams: true });
+
+// Public coupon validation endpoint under store params
+couponRouter.post("/validate", validateCouponController);
 
 couponRouter.use(requireAuth);
 

@@ -185,26 +185,26 @@ export function ProductCard({ product, badge }: ProductCardProps) {
               {badge && <div className="absolute right-2 top-2">{badge}</div>}
             </div>
 
-            <h3 className={cn("line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-foreground leading-snug", classes.heading)}>
+            <h3 className={cn("line-clamp-2 min-h-[2.75rem] text-sm sm:text-base font-semibold text-foreground leading-snug", classes.heading)}>
               {product.name}
             </h3>
 
-            <div className="mt-1 flex items-center gap-1">
+            <div className="mt-1.5 flex items-center gap-1">
               {[1, 2, 3, 4, 5].map((s) => (
                 <Star
                   key={s}
-                  className={cn("h-3 w-3", s <= 4 ? "fill-amber-400 text-amber-400" : "text-border")}
+                  className={cn("h-3.5 w-3.5", s <= 4 ? "fill-amber-400 text-amber-400" : "text-border")}
                 />
               ))}
-              <span className={cn("ml-1 text-[10px] text-muted-foreground font-medium", classes.muted)}>(24)</span>
+              <span className={cn("ml-1 text-xs text-muted-foreground font-medium", classes.muted)}>(24)</span>
             </div>
 
-            <div className="mt-2 flex items-center gap-2">
-              <span className={cn("text-sm font-bold text-foreground", classes.heading)}>
+            <div className="mt-2.5 flex items-center gap-2">
+              <span className={cn("text-base sm:text-lg font-bold text-foreground", classes.heading)}>
                 {formatCurrency(product.price, settings)}
               </span>
               {product.comparePrice && product.comparePrice > product.price && (
-                <span className={cn("text-xs line-through text-muted-foreground", classes.muted)}>
+                <span className={cn("text-xs sm:text-sm line-through text-muted-foreground", classes.muted)}>
                   {formatCurrency(product.comparePrice, settings)}
                 </span>
               )}
@@ -245,13 +245,14 @@ export function ProductCard({ product, badge }: ProductCardProps) {
               type="button"
               onClick={handleAddToCart}
               disabled={adding}
-              className="relative z-[3] mt-3 h-9 w-full rounded-full text-xs font-semibold shadow-sm transition-all"
+              className="relative z-[3] mt-3 h-10 w-full rounded-xl text-xs sm:text-sm font-semibold shadow-sm transition-all"
               style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
             >
-              <ShoppingCart className="h-3.5 w-3.5 mr-1" />
+              <ShoppingCart className="h-4 w-4 mr-1.5" />
               {adding ? "Adding…" : "Add to Cart"}
             </Button>
           )}
+
         </Card>
       </motion.div>
 

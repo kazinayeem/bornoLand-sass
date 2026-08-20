@@ -104,9 +104,10 @@ export function StorefrontShell({
       <StorefrontHeaderSettingsProvider settings={headerSettings}>
         <div
           data-surface={builderMode ? undefined : "storefront"}
-          className={builderMode ? undefined : theme.darkMode ? "dark" : undefined}
-          style={{ fontFamily: theme.font, backgroundColor: theme.darkMode ? "var(--color-apple-surface-black)" : "var(--color-apple-canvas)" }}
+          className={`min-h-screen w-full overflow-x-hidden antialiased ${builderMode ? "" : theme.darkMode ? "dark bg-zinc-950 text-white" : "bg-white text-zinc-900"}`}
+          style={{ fontFamily: theme.font || "Inter, sans-serif" }}
         >
+
           <TenantProvider value={tenantValue}>
             <AuthInit />
             {hasBuilderHeader ? (

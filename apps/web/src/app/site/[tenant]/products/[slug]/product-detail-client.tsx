@@ -17,6 +17,8 @@ import { getProductGalleryUrls, getProductImageUrl } from "@/lib/product-media";
 import { resolveMediaUrl } from "@/lib/resolve-media-url";
 import { toast } from "sonner";
 import { SmartImage } from "@/components/ui/smart-image";
+import { ProductReviews } from "@/components/storefront/product-reviews";
+
 
 type ProductOption = { _id?: string; name: string; values: string[] };
 type ProductVariant = {
@@ -56,7 +58,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
   useTrackProductView(product._id, product.name);
 
   const dispatch = useDispatch();
-  const { theme, products, settings } = useTenant();
+  const { store, theme, products, settings } = useTenant();
+
   const { primaryColor } = theme;
   const [addToCartRemote] = useAddToCartMutation();
   const [quantity, setQuantity] = useState(1);
@@ -465,6 +468,14 @@ export function ProductDetailClient({ product }: { product: Product }) {
             </div>
           </div>
         </section>
+
+        <ProductReviews
+          storeId={store._id}
+          productId={product._id}
+          productName={product.name}
+          primaryColor={primaryColor}
+        />
+
 
         {relatedProducts.length > 0 && (
           <section className="mt-8">

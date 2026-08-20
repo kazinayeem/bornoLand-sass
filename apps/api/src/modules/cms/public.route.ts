@@ -122,6 +122,8 @@ publicRouter.get("/page/:slug", getPublicPageController);
 publicRouter.get("/faqs", getPublicFaqsController);
 publicRouter.get("/blog/posts", getPublicBlogPostsController);
 publicRouter.get("/contact", getPublicStoreContactController);
-publicRouter.get("/payment-methods", paymentMethodsController);
-publicRouter.get("/delivery-zones", deliveryZonesController);
-publicRouter.get("/order-track", trackOrderController);
+import { validateCouponController } from "../coupons/coupon.controller.js";
+
+publicRouter.post("/coupons/validate", validateCouponController);
+
+

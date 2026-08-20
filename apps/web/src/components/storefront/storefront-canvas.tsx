@@ -117,7 +117,16 @@ function findEditableProp(section: StorefrontSectionLike, target: HTMLElement) {
 }
 
 export function StorefrontCanvas({ sections, selectedSectionId, hoveredSectionId, onSelectSection, onHoverSection, onQuickEditRequest, onQuickEditDismiss, onQuickInsert, onInlineTextChange, onSectionAction }: StorefrontCanvasProps) {
-  const visibleSections = sections.filter((section) => section.visible !== false);
+  const visibleSections = useMemo(() => {
+    const seen = new Set<string>();
+    return sections.filter((section) => {
+      if (section.visible === false || !section.id) return false;
+      if (seen.has(section.id)) return false;
+      seen.add(section.id);
+      return true;
+    });
+  }, [sections]);
+
   const [hoveredInsertIndex, setHoveredInsertIndex] = useState<number | null>(null);
   const [clickedInsertIndex, setClickedInsertIndex] = useState<number | null>(null);
   const [hoverCard, setHoverCard] = useState<HoverCard | null>(null);

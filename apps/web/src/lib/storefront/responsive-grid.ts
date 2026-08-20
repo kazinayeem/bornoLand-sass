@@ -37,22 +37,21 @@ export function sectionColumnGridClass(columns: string | undefined, gap = "16"):
   return { grid, gap: gapMap[gap] || "gap-4" };
 }
 
-/** Device-aware product grid columns. */
 export function productGridClass(columns: string, view: "grid" | "list", device?: Breakpoint): string {
   if (view === "list") return "grid-cols-1";
   const n = clampColumns(columns, 4);
 
-  if (device) {
-    return COL_CLASS[n] || "grid-cols-2";
-  }
+  if (device === "mobile") return "grid-cols-2";
+  if (device === "tablet") return "grid-cols-2 sm:grid-cols-3";
 
   if (n <= 1) return "grid-cols-1";
   if (n === 2) return "grid-cols-1 sm:grid-cols-2";
-  if (n === 3) return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
-  if (n === 4) return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
+  if (n === 3) return "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3";
+  if (n === 4) return "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
   if (n === 5) return "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5";
   return "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6";
 }
+
 
 /** Footer column layout by device. */
 export function footerGridClass(device: Breakpoint, columns: number): string {

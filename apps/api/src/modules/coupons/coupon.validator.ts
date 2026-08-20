@@ -16,8 +16,8 @@ export const createCouponSchema = z.object({
   categoryIds: z.array(z.string()).optional().default([]),
   usageLimit: z.number().int().min(0).optional().default(0),
   usagePerCustomer: z.number().int().min(0).optional().default(0),
-  startsAt: z.string().datetime().optional().nullable(),
-  expiresAt: z.string().datetime().optional().nullable(),
+  startsAt: z.string().optional().nullable(),
+  expiresAt: z.string().optional().nullable(),
   autoApply: z.boolean().optional().default(false),
   status: z.enum(["draft", "active", "expired"]).optional().default("draft"),
 });
@@ -28,5 +28,21 @@ export const applyCouponSchema = z.object({
   code: z.string().min(1).max(50),
 });
 
+export const validateCouponCartSchema = z.object({
+  storeId: z.string().min(1, "Store ID is required"),
+  code: z.string().min(1, "Coupon code is required"),
+  subtotal: z.number().min(0),
+  shipping: z.number().min(0).optional().default(0),
+  customerId: z.string().optional(),
+  customerEmail: z.string().optional(),
+  items: z.array(z.object({
+    productId: z.string(),
+    categoryId: z.string().optional(),
+    quantity: z.number().min(1),
+    price: z.number().min(0),
+  })).optional().default([]),
+});
+
 export type CreateCouponInput = z.infer<typeof createCouponSchema>;
 export type UpdateCouponInput = z.infer<typeof updateCouponSchema>;
+export type ValidateCouponCartInput = z.infer<typeof validateCouponCartSchema>;

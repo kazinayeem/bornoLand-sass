@@ -68,9 +68,9 @@ const G = {
 // ─── Common prop sets ────────────────────────────────────────────
 
 const layout = {
-  maxWidth: G.select("maxWidth", "Max Width", "1200px", [
+  maxWidth: G.select("maxWidth", "Max Width", "1280px", [
     { value: "100%", label: "Full Width" }, { value: "800px", label: "Narrow" },
-    { value: "1200px", label: "Default" }, { value: "1400px", label: "Wide" },
+    { value: "1200px", label: "Default" }, { value: "1280px", label: "Modern (1280px)" }, { value: "1400px", label: "Wide" },
   ], "layout"),
   shadow: G.select("shadow", "Shadow", "none", [
     { value: "none", label: "None" }, { value: "sm", label: "Small" },
@@ -88,11 +88,12 @@ const layout = {
     { value: "slideUp", label: "Slide Up" }, { value: "slideInLeft", label: "Slide In Left" },
     { value: "slideInRight", label: "Slide In Right" }, { value: "zoomIn", label: "Zoom In" },
   ], "advanced"),
-  paddingY: G.range("paddingY", "Padding Y", "48", 0, 120, 8, "spacing"),
-  paddingX: G.range("paddingX", "Padding X", "16", 0, 64, 8, "spacing"),
+  paddingY: G.range("paddingY", "Padding Y", "64", 0, 120, 8, "spacing"),
+  paddingX: G.range("paddingX", "Padding X", "24", 0, 64, 8, "spacing"),
   marginTop: G.range("marginTop", "Margin Top", "0", 0, 120, 8, "spacing"),
   marginBottom: G.range("marginBottom", "Margin Bottom", "0", 0, 120, 8, "spacing"),
 };
+
 
 const bg = {
   bgColor: G.color("bgColor", "Background Color", ""),

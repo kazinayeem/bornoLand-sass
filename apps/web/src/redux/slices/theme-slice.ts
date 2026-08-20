@@ -1,6 +1,8 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { THEME_PRESETS, type PresetKey } from "@/lib/design-system/theme-presets";
 
 export type ThemeSettings = {
+  preset?: PresetKey;
   primaryColor: string;
   secondaryColor: string;
   font: string;
@@ -21,18 +23,19 @@ export type ThemeSettings = {
 };
 
 const initialState: ThemeSettings = {
+  preset: "modern",
   primaryColor: "#2563eb",
   secondaryColor: "#0f172a",
   font: "Inter",
-  buttonStyle: "rounded-lg",
-  layoutWidth: "1200px",
+  buttonStyle: "rounded-xl",
+  layoutWidth: "1280px",
   darkMode: false,
   navbarStyle: "fixed",
   headingFont: "Inter",
   bodyFont: "Inter",
-  borderRadius: 12,
+  borderRadius: 14,
   shadowSize: "md",
-  spacing: 16,
+  spacing: 20,
   productCardStyle: "default",
   gridColumns: 4,
   showBadges: true,
@@ -49,6 +52,25 @@ const themeSlice = createSlice({
     },
     resetTheme() {
       return { ...initialState };
+    },
+    applyPreset(state, action: PayloadAction<PresetKey>) {
+      const presetConfig = THEME_PRESETS[action.payload];
+      if (presetConfig) {
+        state.preset = action.payload;
+        state.primaryColor = presetConfig.primaryColor;
+        state.secondaryColor = presetConfig.secondaryColor;
+        state.font = presetConfig.font;
+        state.headingFont = presetConfig.headingFont;
+        state.bodyFont = presetConfig.bodyFont;
+        state.buttonStyle = presetConfig.buttonStyle;
+        state.layoutWidth = presetConfig.layoutWidth;
+        state.borderRadius = presetConfig.borderRadius;
+        state.shadowSize = presetConfig.shadowSize;
+        state.spacing = presetConfig.spacing;
+        state.productCardStyle = presetConfig.productCardStyle;
+        state.gridColumns = presetConfig.gridColumns;
+        state.heroHeight = presetConfig.heroHeight;
+      }
     },
     setPrimaryColor(state, action: PayloadAction<string>) {
       state.primaryColor = action.payload;
@@ -99,7 +121,7 @@ const themeSlice = createSlice({
 });
 
 export const {
-  setTheme, resetTheme,
+  setTheme, resetTheme, applyPreset,
   setPrimaryColor, setSecondaryColor, setFont, setDarkMode,
   setButtonStyle, setLayoutWidth, setNavbarStyle,
   setBorderRadius, setShadowSize, setSpacing,
@@ -107,3 +129,4 @@ export const {
   setHeroHeight,
 } = themeSlice.actions;
 export const themeReducer = themeSlice.reducer;
+

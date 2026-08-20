@@ -9,6 +9,7 @@ import { StoreFooter } from "@/components/storefront/store-footer";
 import { StoreNavbar } from "@/components/storefront/store-navbar";
 import { SectionRenderer, type SectionData } from "@/components/sections/section-renderer";
 import { BuilderProvider } from "@/components/sections/builder-link";
+import { generateThemeCssVariables } from "@/lib/design-system/theme-presets";
 
 const CartDrawer = dynamic(
   () => import("./cart-drawer").then((module) => module.CartDrawer),
@@ -84,6 +85,7 @@ export function StorefrontShell({
   builderMode = false,
   children,
 }: StorefrontShellProps) {
+  const themeCssVars = useMemo(() => generateThemeCssVariables(theme), [theme]);
   const tenantValue = useMemo<TenantContextType>(
     () => ({ store, theme, products, categories, settings, sliders, navigations, contact }),
     [store._id, store.slug, theme, products, categories, settings, sliders, navigations, contact],
@@ -105,8 +107,12 @@ export function StorefrontShell({
         <div
           data-surface={builderMode ? undefined : "storefront"}
           className={`min-h-screen w-full overflow-x-hidden antialiased ${builderMode ? "" : theme.darkMode ? "dark bg-zinc-950 text-white" : "bg-white text-zinc-900"}`}
-          style={{ fontFamily: theme.font || "Inter, sans-serif" }}
+          style={{
+            fontFamily: theme.font || "Inter, sans-serif",
+            ...themeCssVars,
+          } as React.CSSProperties}
         >
+
 
           <TenantProvider value={tenantValue}>
             <AuthInit />

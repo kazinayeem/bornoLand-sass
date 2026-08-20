@@ -2,41 +2,96 @@
 
 import { BuilderLink as Link } from "./builder-link";
 import { SectionWrapper, type SectionData } from "./section-renderer";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 export function SplitHero({ section }: { section: SectionData }) {
   const p = section.props;
   const imgLeft = p.imagePosition === "left";
   const cw = p.contentWidth || "50";
+  const textColor = p.textColor || "#0f172a";
 
   return (
     <SectionWrapper section={section}>
-      <div className="flex flex-col-reverse md:flex-row items-center min-h-[400px] md:min-h-[500px]">
-        <div className={`flex-1 px-6 py-12 md:py-16 ${imgLeft ? "md:order-1" : "md:order-2"}`}
-          style={{ flex: `${cw}%` }}>
-          <div className={`max-w-lg mx-auto ${p.textAlignment === "center" ? "text-center" : p.textAlignment === "right" ? "text-right ml-auto" : ""}`}>
-            <h1 className="text-3xl font-bold sm:text-4xl lg:text-5xl" style={{ color: p.textColor || "#18181b" }}>
-              {p.headline || "Split Hero Title"}
-            </h1>
-            {p.subheadline && (
-              <p className="mt-4 text-sm sm:text-base" style={{ color: p.textColor ? `${p.textColor}cc` : "#52525b" }}>
-                {p.subheadline}
-              </p>
-            )}
-            {p.buttonText && (
-              <Link href={p.buttonLink || "#"}
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 transition-all">
-                {p.buttonText}
-              </Link>
-            )}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+        <div className={`flex flex-col-reverse items-center gap-8 md:gap-12 lg:gap-16 ${imgLeft ? "md:flex-row-reverse" : "md:flex-row"}`}>
+          {/* Content Column */}
+          <div
+            className="flex-1 w-full"
+            style={{ flex: `${cw}%` }}
+          >
+            <div className={`flex flex-col gap-4 sm:gap-5 ${p.textAlignment === "center" ? "items-center text-center mx-auto" : p.textAlignment === "right" ? "items-end text-right ml-auto" : "items-start text-left"}`}>
+              {p.kicker && (
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50/80 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-700 shadow-sm">
+                  <Sparkles className="h-3 w-3 text-blue-600" />
+                  <span>{p.kicker}</span>
+                </div>
+              )}
+              <h1
+                className="font-extrabold tracking-tight leading-[1.15]"
+                style={{
+                  color: textColor,
+                  fontSize: "clamp(2rem, 4.5vw, 3.5rem)",
+                }}
+              >
+                {p.headline || "Elevate Your Everyday Style"}
+              </h1>
+              {p.subheadline && (
+                <p
+                  className="max-w-xl font-normal leading-relaxed text-sm sm:text-base md:text-lg"
+                  style={{ color: p.textColor ? `${p.textColor}b3` : "#475569" }}
+                >
+                  {p.subheadline}
+                </p>
+              )}
+              {(p.buttonText || p.secondaryButtonText) && (
+                <div className="mt-2 flex flex-wrap items-center gap-3.5">
+                  {p.buttonText && (
+                    <Link
+                      href={p.buttonLink || "#"}
+                      className="group inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-zinc-900 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-zinc-900/10 transition-all duration-200 hover:scale-[1.02] hover:bg-zinc-800 active:scale-[0.98]"
+                    >
+                      <span>{p.buttonText}</span>
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </Link>
+                  )}
+                  {p.secondaryButtonText && (
+                    <Link
+                      href={p.secondaryButtonLink || "#"}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-zinc-300 bg-transparent px-6 py-3 text-sm font-semibold text-zinc-700 transition-all duration-200 hover:bg-zinc-50 active:scale-[0.98]"
+                    >
+                      {p.secondaryButtonText}
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-        <div className={`flex-1 min-h-[300px] md:min-h-[500px] bg-cover bg-center ${imgLeft ? "md:order-2" : "md:order-1"}`}
-          style={{ flex: `${100 - Number(cw)}%`, backgroundImage: p.imageUrl ? `url(${p.imageUrl})` : undefined, backgroundColor: p.imageUrl ? undefined : "#f4f4f5" }}>
-          {!p.imageUrl && (
-            <div className="flex h-full items-center justify-center text-zinc-300 text-sm">Image</div>
-          )}
+
+          {/* Media Column */}
+          <div
+            className="flex-1 w-full"
+            style={{ flex: `${100 - Number(cw)}%` }}
+          >
+            <div className="relative aspect-[4/3] sm:aspect-[16/11] md:aspect-square w-full overflow-hidden rounded-3xl border border-zinc-200/80 bg-zinc-100 shadow-xl shadow-zinc-950/5">
+              {p.imageUrl ? (
+                <img
+                  src={p.imageUrl}
+                  alt={p.headline || "Hero visual"}
+                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                />
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-zinc-400">
+                  <div className="h-12 w-12 rounded-2xl bg-zinc-200 flex items-center justify-center text-zinc-400 font-bold">
+                    HD
+                  </div>
+                  <span className="text-xs font-medium">Add Hero Image</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </SectionWrapper>
   );
 }
+

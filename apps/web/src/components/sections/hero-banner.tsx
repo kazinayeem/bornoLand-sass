@@ -4,12 +4,13 @@ import { BuilderLink as Link } from "./builder-link";
 import { SectionWrapper, type SectionData } from "./section-renderer";
 import { resolveTextAlignment, resolveTextColor } from "@/lib/resolve-section-visuals";
 import { useDevice } from "@/lib/device-context";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 const heightMap: Record<string, string> = {
-  sm: "min-h-[280px] sm:min-h-[360px] md:min-h-[400px]",
-  md: "min-h-[360px] sm:min-h-[480px] md:min-h-[560px]",
-  lg: "min-h-[420px] sm:min-h-[560px] md:min-h-[700px]",
-  full: "min-h-[70vh] md:min-h-screen",
+  sm: "min-h-[320px] sm:min-h-[400px] md:min-h-[460px]",
+  md: "min-h-[420px] sm:min-h-[540px] md:min-h-[640px]",
+  lg: "min-h-[520px] sm:min-h-[680px] md:min-h-[780px]",
+  full: "min-h-[85vh] md:min-h-screen",
 };
 
 export function HeroBanner({ section }: { section: SectionData }) {
@@ -26,23 +27,24 @@ export function HeroBanner({ section }: { section: SectionData }) {
         : "items-center text-center";
   const contentAlign =
     textAlignment === "left" ? "items-start" : textAlignment === "right" ? "items-end" : "items-center";
-  const paddingY = device === "mobile" ? p.mobilePaddingY || p.paddingY || "40px 0" : p.paddingY || "48px 0";
+  const paddingY = device === "mobile" ? p.mobilePaddingY || p.paddingY || "48px 0" : p.paddingY || "72px 0";
 
   return (
     <SectionWrapper section={section} className={height}>
-      <div className={`flex h-full min-h-[inherit] w-full items-center px-4 sm:px-6 lg:px-8 ${align}`}>
-        <div className={`flex w-full max-w-3xl flex-col gap-3 sm:gap-4 ${contentAlign}`} style={{ padding: paddingY }}>
+      <div className={`flex h-full min-h-[inherit] w-full items-center justify-center px-4 sm:px-6 lg:px-8 ${align}`}>
+        <div className={`flex w-full max-w-4xl flex-col gap-4 sm:gap-6 ${contentAlign}`} style={{ padding: paddingY }}>
           {p.kicker && (
-            <span className="inline-flex w-fit max-w-full rounded-full border border-white/20 px-3 py-1 text-[11px] font-medium uppercase tracking-widest text-white/80 backdrop-blur-sm sm:text-xs">
-              {p.kicker}
-            </span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-widest text-white backdrop-blur-md shadow-sm">
+              <Sparkles className="h-3 w-3 text-amber-300" />
+              <span>{p.kicker}</span>
+            </div>
           )}
           {p.headline && (
             <h1
-              className="max-w-full break-words font-bold leading-tight"
+              className="max-w-3xl break-words font-extrabold tracking-tight leading-[1.1]"
               style={{
                 color: textColor,
-                fontSize: "clamp(1.75rem, 5vw, 3rem)",
+                fontSize: "clamp(2.25rem, 5.5vw, 4rem)",
               }}
             >
               {p.headline}
@@ -50,29 +52,29 @@ export function HeroBanner({ section }: { section: SectionData }) {
           )}
           {p.subheadline && (
             <p
-              className="max-w-xl break-words leading-relaxed"
+              className="max-w-2xl break-words font-normal leading-relaxed text-sm sm:text-base md:text-lg"
               style={{
-                color: textColor ? `${textColor}cc` : "rgba(255,255,255,0.8)",
-                fontSize: "clamp(0.875rem, 2.2vw, 1.125rem)",
+                color: textColor ? `${textColor}d9` : "rgba(255,255,255,0.85)",
               }}
             >
               {p.subheadline}
             </p>
           )}
           {(p.buttonText || p.secondaryButtonText) && (
-            <div className={`mt-1 flex w-full flex-wrap gap-3 sm:mt-2 ${contentAlign}`}>
+            <div className={`mt-2 flex w-full flex-wrap items-center gap-3 sm:gap-4 ${contentAlign}`}>
               {p.buttonText && (
                 <Link
                   href={p.buttonLink || "#"}
-                  className="btn-press inline-flex min-h-11 items-center justify-center gap-2 rounded-pill bg-white px-5 py-2.5 text-sm font-semibold text-apple-ink transition-all hover:bg-apple-canvas-parchment sm:min-h-[44px] sm:px-6 sm:text-base"
+                  className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-7 py-3 text-sm sm:text-base font-semibold text-zinc-900 shadow-lg shadow-black/10 transition-all duration-200 hover:scale-[1.02] hover:bg-zinc-100 hover:shadow-xl active:scale-[0.98]"
                 >
-                  {p.buttonText}
+                  <span>{p.buttonText}</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>
               )}
               {p.secondaryButtonText && (
                 <Link
                   href={p.secondaryButtonLink || "#"}
-                  className="btn-press inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-white/20 bg-transparent px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 sm:min-h-[44px] sm:px-6 sm:text-base"
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-7 py-3 text-sm sm:text-base font-semibold text-white backdrop-blur-md transition-all duration-200 hover:bg-white/20 active:scale-[0.98]"
                 >
                   {p.secondaryButtonText}
                 </Link>
@@ -84,3 +86,4 @@ export function HeroBanner({ section }: { section: SectionData }) {
     </SectionWrapper>
   );
 }
+

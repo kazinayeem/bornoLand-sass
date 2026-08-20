@@ -268,21 +268,21 @@ export function SectionTitle({
   const alignClass = resolvedAlign === "left" ? "text-left" : resolvedAlign === "right" ? "text-right" : "text-center";
 
   return (
-    <div className={`mb-8 sm:mb-10 ${alignClass}`}>
+    <div className={`mb-8 sm:mb-12 ${alignClass}`}>
       <h2
-        className="text-display-lg"
+        className="font-extrabold tracking-tight leading-tight"
         style={{
-          color: resolvedColor || "var(--section-text-color, #1d1d1f)",
+          color: resolvedColor || "var(--section-text-color, #0f172a)",
           fontFamily: "var(--section-font-family, inherit)",
-          fontSize: "var(--section-font-size, inherit)",
+          fontSize: "var(--section-font-size, clamp(1.75rem, 3.5vw, 2.5rem))",
         }}
       >
         {title}
       </h2>
       {subtitle && (
         <p
-          className="mt-3 text-lead"
-          style={{ color: resolvedColor ? `${resolvedColor}cc` : "var(--section-text-color, #52525b)" }}
+          className={`mt-2.5 text-sm sm:text-base md:text-lg font-normal leading-relaxed max-w-2xl ${textAlignment === "center" ? "mx-auto" : textAlignment === "right" ? "ml-auto" : ""}`}
+          style={{ color: resolvedColor ? `${resolvedColor}cc` : "var(--section-text-color, #64748b)" }}
         >
           {subtitle}
         </p>
@@ -290,6 +290,7 @@ export function SectionTitle({
     </div>
   );
 }
+
 
 // ─── Column grid helper ──────────────────────────────────────────
 

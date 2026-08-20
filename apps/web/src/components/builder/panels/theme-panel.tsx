@@ -3,12 +3,15 @@
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import {
+  applyPreset,
   setPrimaryColor, setSecondaryColor, setFont, setDarkMode,
   setButtonStyle, setLayoutWidth, setNavbarStyle,
   setBorderRadius, setShadowSize, setSpacing,
   setProductCardStyle, setGridColumns, setShowBadges, setShowRatings,
   setHeroHeight,
 } from "@/redux/slices/theme-slice";
+import { THEME_PRESETS, type PresetKey } from "@/lib/design-system/theme-presets";
+import { Sparkles, Check } from "lucide-react";
 
 const FONTS = ["Inter", "Poppins", "Roboto", "Playfair Display", "DM Sans", "Space Grotesk", "Clash Display"];
 const BUTTON_STYLES = ["rounded-sm", "rounded", "rounded-lg", "rounded-xl", "rounded-full"];
@@ -79,10 +82,62 @@ function ToggleControl({ label, value, onChange }: ToggleControlProps) {
 export function ThemePanel() {
   const dispatch = useDispatch();
   const t = useSelector((s: RootState) => s.theme);
+  const activePreset = t.preset || "modern";
 
   return (
     <div className="h-full overflow-y-auto overscroll-contain p-3 space-y-5">
+      {/* ── Global Style Presets ── */}
       <div>
+        <div className="mb-2 flex items-center gap-1.5">
+          <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">
+            Design Presets
+          </p>
+        </div>
+        <p className="mb-3 text-[11px] text-zinc-500">
+          Apply a professional, cohesive design system across all sections with 1 click.
+        </p>
+
+        <div className="grid grid-cols-1 gap-2">
+          {(Object.keys(THEME_PRESETS) as PresetKey[]).map((key) => {
+            const preset = THEME_PRESETS[key];
+            const isSelected = activePreset === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => dispatch(applyPreset(key))}
+                className={`group flex items-start gap-3 rounded-xl border p-2.5 text-left transition-all ${
+                  isSelected
+                    ? "border-blue-600 bg-blue-50/50 shadow-sm ring-1 ring-blue-600/30"
+                    : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50"
+                }`}
+              >
+                <div
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border shadow-sm"
+                  style={{ backgroundColor: preset.previewBg, borderColor: "rgba(0,0,0,0.08)" }}
+                >
+                  <div
+                    className="h-3 w-3 rounded-full"
+                    style={{ backgroundColor: preset.previewAccent }}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-zinc-900">{preset.name}</span>
+                    {isSelected && <Check className="h-3.5 w-3.5 text-blue-600" />}
+                  </div>
+                  <p className="text-[10px] text-zinc-500 leading-tight line-clamp-2 mt-0.5">
+                    {preset.description}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="border-t border-zinc-100 pt-4">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Colors</p>
         <div className="space-y-2.5">
           <ColorPicker label="Primary Color" value={t.primaryColor} onChange={(v) => dispatch(setPrimaryColor(v))} />
@@ -127,3 +182,4 @@ export function ThemePanel() {
     </div>
   );
 }
+

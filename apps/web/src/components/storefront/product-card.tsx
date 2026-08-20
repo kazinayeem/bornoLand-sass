@@ -131,13 +131,14 @@ export function ProductCard({ product, badge }: ProductCardProps) {
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         onMouseEnter={prefetchProduct}
         onFocus={prefetchProduct}
+        className="h-full"
       >
-        <Card className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/40">
+        <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-3.5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-xl hover:shadow-zinc-900/5">
           {!isBuilder && (
             <Link
               href={productHref}
@@ -148,112 +149,121 @@ export function ProductCard({ product, badge }: ProductCardProps) {
             </Link>
           )}
 
-          <div className="relative z-[1] pointer-events-none flex flex-col">
-            <div className={cn("relative mb-3 aspect-square overflow-hidden rounded-xl bg-muted/50", classes.imageWell)}>
-              {imageUrl && !imageFailed ? (
-                <SmartImage
-                  src={imageUrl}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-                  onError={() => setImageFailed(true)}
-                  fallback={
-                    <div className="flex h-full items-center justify-center">
-                      <ShoppingCart className="h-10 w-10 text-muted-foreground/30" />
-                    </div>
-                  }
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <ShoppingCart className="h-10 w-10 text-muted-foreground/30" />
-                </div>
-              )}
+          {/* Product Image Box */}
+          <div className="relative mb-3 aspect-[4/5] sm:aspect-square w-full overflow-hidden rounded-xl bg-zinc-100/80">
+            {imageUrl && !imageFailed ? (
+              <SmartImage
+                src={imageUrl}
+                alt={product.name}
+                fill
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                onError={() => setImageFailed(true)}
+                fallback={
+                  <div className="flex h-full items-center justify-center">
+                    <ShoppingCart className="h-10 w-10 text-zinc-300" />
+                  </div>
+                }
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <ShoppingCart className="h-10 w-10 text-zinc-300" />
+              </div>
+            )}
 
+            {/* Badges Top Left */}
+            <div className="absolute left-2.5 top-2.5 z-10 flex flex-col gap-1.5 pointer-events-none">
               {discount > 0 && (
-                <Badge className="absolute left-2 top-2 bg-primary text-primary-foreground font-bold px-2 py-0.5 text-[10px]">
+                <span className="inline-flex items-center rounded-md bg-rose-600 px-2 py-0.5 text-[11px] font-bold tracking-tight text-white shadow-sm">
                   -{discount}%
-                </Badge>
+                </span>
               )}
-
               {isOutOfStock && (
-                <Badge variant="outline" className="absolute left-2 top-2 bg-background/90 font-medium px-2 py-0.5 text-[10px]">
-                  Out of Stock
-                </Badge>
-              )}
-
-              {badge && <div className="absolute right-2 top-2">{badge}</div>}
-            </div>
-
-            <h3 className={cn("line-clamp-2 min-h-[2.75rem] text-sm sm:text-base font-semibold text-foreground leading-snug", classes.heading)}>
-              {product.name}
-            </h3>
-
-            <div className="mt-1.5 flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <Star
-                  key={s}
-                  className={cn("h-3.5 w-3.5", s <= 4 ? "fill-amber-400 text-amber-400" : "text-border")}
-                />
-              ))}
-              <span className={cn("ml-1 text-xs text-muted-foreground font-medium", classes.muted)}>(24)</span>
-            </div>
-
-            <div className="mt-2.5 flex items-center gap-2">
-              <span className={cn("text-base sm:text-lg font-bold text-foreground", classes.heading)}>
-                {formatCurrency(product.price, settings)}
-              </span>
-              {product.comparePrice && product.comparePrice > product.price && (
-                <span className={cn("text-xs sm:text-sm line-through text-muted-foreground", classes.muted)}>
-                  {formatCurrency(product.comparePrice, settings)}
+                <span className="inline-flex items-center rounded-md bg-zinc-900/90 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm shadow-sm">
+                  Sold Out
                 </span>
               )}
             </div>
+
+            {/* Quick Action Top Right */}
+            <div className="absolute right-2.5 top-2.5 z-10 flex flex-col gap-1.5">
+              <button
+                type="button"
+                onClick={handleWishlist}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-zinc-600 shadow-sm backdrop-blur-md transition-all hover:scale-110 hover:bg-white hover:text-rose-600"
+                aria-label={`Save ${product.name} to wishlist`}
+              >
+                <Heart className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleQuickView}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-zinc-600 shadow-sm backdrop-blur-md transition-all hover:scale-110 hover:bg-white hover:text-zinc-900"
+                aria-label={`Quick view ${product.name}`}
+              >
+                <Eye className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
-          <div className="pointer-events-none absolute inset-3 z-[2] flex items-center justify-center gap-2 rounded-2xl bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              disabled={isOutOfStock || adding}
-              className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-primary shadow-md transition-transform hover:scale-110 disabled:opacity-50"
-              style={{ color: primaryColor }}
-              aria-label={`Add ${product.name} to cart`}
-            >
-              <ShoppingCart className={cn("h-4 w-4", adding && "animate-pulse")} />
-            </button>
-            <button
-              type="button"
-              onClick={handleQuickView}
-              className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-foreground shadow-md transition-transform hover:scale-110"
-              aria-label={`Quick view ${product.name}`}
-            >
-              <Eye className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleWishlist}
-              className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-foreground shadow-md transition-transform hover:scale-110 hover:text-destructive"
-              aria-label={`Save ${product.name} to wishlist`}
-            >
-              <Heart className="h-4 w-4" />
-            </button>
+          {/* Product Meta */}
+          <div className="relative z-[1] flex flex-1 flex-col justify-between">
+            <div>
+              {/* Category / Brand */}
+              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-600 truncate">
+                {product.brand || product.category || "Collection"}
+              </div>
+
+              {/* Title */}
+              <h3 className="line-clamp-2 text-sm font-semibold text-zinc-900 leading-snug group-hover:text-blue-600 transition-colors">
+                {product.name}
+              </h3>
+
+              {/* Ratings */}
+              <div className="mt-1.5 flex items-center gap-1">
+                <div className="flex text-amber-400">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star
+                      key={s}
+                      className={cn("h-3 w-3", s <= 4 ? "fill-amber-400 text-amber-400" : "text-zinc-200 fill-zinc-200")}
+                    />
+                  ))}
+                </div>
+                <span className="text-[11px] font-medium text-zinc-600 ml-0.5">4.9 (24)</span>
+              </div>
+            </div>
+
+            {/* Pricing & CTA */}
+            <div className="mt-3 pt-2 border-t border-zinc-100">
+              <div className="flex items-baseline gap-2 mb-2.5">
+                <span className="text-base sm:text-lg font-bold text-zinc-900">
+                  {formatCurrency(product.price, settings)}
+                </span>
+                {product.comparePrice && product.comparePrice > product.price && (
+                  <span className="text-xs line-through text-zinc-600">
+                    {formatCurrency(product.comparePrice, settings)}
+                  </span>
+                )}
+              </div>
+
+              {!isOutOfStock && (
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={adding}
+                  className="relative z-10 flex h-9 w-full items-center justify-center gap-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+                  style={{
+                    backgroundColor: primaryColor || "#2563eb",
+                    color: getContrastColor(primaryColor || "#2563eb"),
+                  }}
+                >
+                  <ShoppingCart className={cn("h-3.5 w-3.5", adding && "animate-pulse")} />
+                  <span>{adding ? "Adding…" : "Add to Cart"}</span>
+                </button>
+              )}
+            </div>
           </div>
-
-          {!isOutOfStock && (
-            <Button
-              type="button"
-              onClick={handleAddToCart}
-              disabled={adding}
-              className="relative z-[3] mt-3 h-10 w-full rounded-xl text-xs sm:text-sm font-semibold shadow-sm transition-all"
-              style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
-            >
-              <ShoppingCart className="h-4 w-4 mr-1.5" />
-              {adding ? "Adding…" : "Add to Cart"}
-            </Button>
-          )}
-
-        </Card>
+        </div>
       </motion.div>
 
       {quickViewOpen && (
@@ -262,3 +272,4 @@ export function ProductCard({ product, badge }: ProductCardProps) {
     </>
   );
 }
+

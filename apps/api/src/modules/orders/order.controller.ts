@@ -35,16 +35,8 @@ export async function createOrderController(request: SubdomainRequest, response:
       ? sessionHeader.trim()
       : crypto.randomUUID();
 
-  let customerId = getCustomerId(request);
+  let customerId = getCustomerId(request) || (typeof request.body?.customerId === "string" ? request.body.customerId : null);
 
-  if (!customerId) {
-    const guestEmail = typeof request.body?.email === "string" ? request.body.email.trim().toLowerCase() : "";
-    if (!guestEmail) return sendFailure(response, "Not authenticated", 401);
-
-    const { createGuestCustomer } = await import("../customers/customer.service.js");
-    const guest = await createGuestCustomer(storeId, guestEmail, request.body?.shippingAddress?.fullName);
-    customerId = String(guest.data.customer._id);
-  }
 
   console.info("[orders] createOrder request", {
     storeId,

@@ -278,12 +278,27 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
                     {node.category.active ? "Active" : "Draft"}
                   </button>
                 </div>
-                <div className="flex items-center justify-end gap-0.5">
+                <div className="flex items-center justify-end gap-1">
+                  {node.depth === 0 && (
+                    <button
+                      onClick={() => {
+                        resetForm();
+                        setEditCat({ parentId: node.category._id } as any);
+                        setShowForm(true);
+                      }}
+                      title="Add Subcategory"
+                      className="rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700 hover:bg-blue-100 transition-colors flex items-center gap-1"
+                    >
+                      <Plus className="h-3 w-3" /> Sub
+                    </button>
+                  )}
                   <button onClick={() => openEdit(node.category)}
+                    title="Edit Category"
                     className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button onClick={() => setDeleteTarget(node.category)}
+                    title="Delete Category"
                     className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-red-50 hover:text-red-500 transition-colors">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -293,6 +308,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
           })}
         </div>
       )}
+
 
       {/* Form Modal */}
       <CategoryFormModal

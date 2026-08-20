@@ -62,7 +62,13 @@ export async function getCategories(storeId: string, query: Record<string, unkno
   if (textFilter?.$or) clauses.push({ $or: textFilter.$or });
   if (params.status === "active") clauses.push({ active: true });
   if (params.status === "inactive") clauses.push({ active: false });
+  if (query.parentId === "null" || query.parentId === "root") {
+    clauses.push({ parentId: null });
+  } else if (query.parentId && query.parentId !== "all") {
+    clauses.push({ parentId: query.parentId });
+  }
   const filter = clauses.length === 1 ? clauses[0] : { $and: clauses };
+
 
   const sort = params.sort ?? { sortOrder: 1, name: 1 };
   const [categories, total] = await Promise.all([

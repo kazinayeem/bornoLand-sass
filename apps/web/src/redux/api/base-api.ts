@@ -131,11 +131,18 @@ const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown,
       return result;
     }
 
-    // No merchant access token and no customer bearer — attempt refresh before logout.
+    // If there was no merchant access token and no authorization header (e.g., guest user or public storefront),
+    // do NOT attempt merchant refresh and do NOT show "Session expired" error.
+    const hadMerchantToken = Boolean(getAccessToken());
+    if (!hadMerchantToken && !authorization) {
+      return result;
+    }
+
+    // Merchant access token was present — attempt refresh before logout.
     authLog("info", "merchant 401 — attempting refresh", {
       url,
       backendMessage,
-      accessTokenPresent: Boolean(getAccessToken()),
+      accessTokenPresent: hadMerchantToken,
       authorizationAttached: Boolean(authorization),
     });
 
@@ -152,13 +159,18 @@ const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown,
         authLog("info", "retry success", { url });
       } else if (result.error.status === 401) {
         clearMerchantSession(api, `retry still 401 after refresh on ${url}`);
-        emitApiError({ status: 401, message: "Session expired. Please sign in again." });
+        if (hadMerchantToken) {
+          emitApiError({ status: 401, message: "Session expired. Please sign in again." });
+        }
       }
     } else {
       clearMerchantSession(api, `refresh failed for ${url}`);
-      emitApiError({ status: 401, message: "Session expired. Please sign in again." });
+      if (hadMerchantToken) {
+        emitApiError({ status: 401, message: "Session expired. Please sign in again." });
+      }
     }
   }
+
 
   if (result.error) {
     const status = result.error.status;

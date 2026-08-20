@@ -20,6 +20,8 @@ export async function revalidateStorefront(args: {
   if (storeId) {
     revalidateTag(cacheTags.store(storeId));
     revalidateTag(cacheTags.cmsStore(storeId));
+    revalidateTag(cacheTags.storeHomepage(storeId));
+    revalidateTag(cacheTags.storeTheme(storeId));
   }
 
   revalidateTag(cacheTags.storeMetadata(tenantSlug));
@@ -27,6 +29,7 @@ export async function revalidateStorefront(args: {
 
   if (scope === "all" || scope === "theme") {
     revalidateTag(cacheTags.tenantTheme(tenantSlug));
+    if (storeId) revalidateTag(cacheTags.storeTheme(storeId));
   }
 
   if ((scope === "all" || scope === "cms") && storeId) {
@@ -42,7 +45,14 @@ export async function revalidateStorefront(args: {
 
   if ((scope === "all" || scope === "products") && productSlug) {
     revalidateTag(cacheTags.product(productSlug));
+    if (storeId) revalidateTag(cacheTags.storeProduct(storeId, productSlug));
   }
+
+  if ((scope === "all" || scope === "categories") && categorySlug && storeId) {
+    revalidateTag(cacheTags.category(categorySlug));
+    revalidateTag(cacheTags.storeCategory(storeId, categorySlug));
+  }
+
 
   if (scope === "all" || scope === "categories") {
     revalidatePath(`/site/${tenantSlug}/categories`);

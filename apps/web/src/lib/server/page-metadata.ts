@@ -231,3 +231,110 @@ export async function generateStorefrontPageMetadata(args: {
     ogImage: store?.logoUrl,
   });
 }
+
+export async function generateStorefrontProductMetadata(args: {
+  tenant: string;
+  product: {
+    name: string;
+    description?: string;
+    price?: number;
+    comparePrice?: number;
+    imageUrl?: string;
+    slug: string;
+    sku?: string;
+    brand?: string;
+    category?: string;
+  };
+}): Promise<Metadata> {
+  const store = await getTenantMetadataContext(args.tenant);
+  const storeName = store?.shortName || store?.name || "Store";
+  const title = `${args.product.name} • ${storeName}`;
+  const description = args.product.description?.slice(0, 160) || `Buy ${args.product.name} online from ${storeName}.`;
+  const canonicalUrl = getTenantCanonicalUrl(args.tenant, `/products/${args.product.slug}`);
+
+  return buildPageMetadata({
+    title,
+    description,
+    canonicalPath: canonicalUrl,
+    iconUrl: store?.faviconUrl || store?.logoUrl,
+    ogImage: args.product.imageUrl || store?.logoUrl,
+    keywords: [args.product.name, args.product.brand, args.product.category, storeName].filter(Boolean).join(", "),
+  });
+}
+
+export function buildProductJsonLd(args: {
+  product: {
+    _id?: string;
+    name: string;
+    description?: string;
+    price: number;
+    comparePrice?: number;
+    imageUrl?: string;
+    galleryImageUrls?: string[];
+    slug: string;
+    sku?: string;
+    brand?: string;
+    stock?: number;
+    averageRating?: number;
+    reviewCount?: number;
+  };
+  currencyCode?: string;
+  storeName?: string;
+  canonicalUrl?: string;
+}) {
+  const { product, currencyCode = "USD", storeName = "Store", canonicalUrl = "" } = args;
+  const images = [product.imageUrl, ...(product.galleryImageUrls || [])].filter(Boolean) as string[];
+
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    name: product.name,
+    description: product.description || product.name,
+    image: images.length > 0 ? images : undefined,
+    sku: product.sku || product._id || product.slug,
+    url: canonicalUrl,
+    brand: product.brand ? { "@type": "Brand", name: product.brand } : { "@type": "Brand", name: storeName },
+    offers: {
+      "@type": "Offer",
+      url: canonicalUrl,
+      priceCurrency: currencyCode,
+      price: product.price,
+      availability: (product.stock ?? 1) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      seller: {
+        "@type": "Organization",
+        name: storeName,
+      },
+    },
+  };
+
+  if (product.averageRating && product.reviewCount && product.reviewCount > 0) {
+    schema.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: product.averageRating,
+      reviewCount: product.reviewCount,
+    };
+  }
+
+  return schema;
+}
+
+export function buildCategoryJsonLd(args: {
+  category: { name: string; description?: string; slug: string };
+  canonicalUrl: string;
+  breadcrumbs?: Array<{ name: string; url: string }>;
+}) {
+  const { category, canonicalUrl, breadcrumbs = [] } = args;
+  const items = breadcrumbs.map((bc, idx) => ({
+    "@type": "ListItem",
+    position: idx + 1,
+    name: bc.name,
+    item: bc.url,
+  }));
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items,
+  };
+}
+

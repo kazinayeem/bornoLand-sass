@@ -89,9 +89,13 @@ export function CategoryFormModal({
         metaDescription: category.metaDescription || "",
       });
     } else {
-      setForm(EMPTY_FORM);
+      setForm({
+        ...EMPTY_FORM,
+        parentId: category?.parentId || "",
+      });
     }
   }, [category, mode, open]);
+
 
   if (!open) return null;
 

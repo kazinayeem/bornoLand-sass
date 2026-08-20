@@ -169,10 +169,28 @@ export const sectionRegistry: SectionDef[] = [
   {
     type: "slider-hero", label: "Slider Hero", category: "hero", icon: "GalleryHorizontal", description: "Auto-rotating hero slider with multiple slides",
     props: merge(
-      { slideCount: G.number("slideCount", "Number of Slides", "3"), autoplaySpeed: G.number("autoplaySpeed", "Autoplay Speed (ms)", "5000"), showArrows: G.toggle("showArrows", "Show Arrows", "true"), showDots: G.toggle("showDots", "Show Dots", "true"), slide1Image: G.image("slide1Image", "Slide 1 Image"), slide1Title: G.text("slide1Title", "Slide 1 Title", "Slide 1"), slide1ButtonText: G.text("slide1ButtonText", "Slide 1 Button Text", "Shop"), slide2Image: G.image("slide2Image", "Slide 2 Image"), slide2Title: G.text("slide2Title", "Slide 2 Title", "Slide 2"), slide2ButtonText: G.text("slide2ButtonText", "Slide 2 Button Text", "Shop"), slide3Image: G.image("slide3Image", "Slide 3 Image"), slide3Title: G.text("slide3Title", "Slide 3 Title", "Slide 3"), slide3ButtonText: G.text("slide3ButtonText", "Slide 3 Button Text", "Shop") },
+      {
+        slides: G.textarea("slides", "Hero Slides Data", "[]"),
+        slideCount: G.number("slideCount", "Number of Slides", "3"),
+        autoplay: G.toggle("autoplay", "Autoplay", "true"),
+        autoplaySpeed: G.number("autoplaySpeed", "Autoplay Speed (ms)", "5000"),
+        showArrows: G.toggle("showArrows", "Show Arrows", "true"),
+        showDots: G.toggle("showDots", "Show Dots", "true"),
+
+        slide1Image: G.image("slide1Image", "Slide 1 Image"),
+        slide1Title: G.text("slide1Title", "Slide 1 Title", "Slide 1"),
+        slide1ButtonText: G.text("slide1ButtonText", "Slide 1 Button Text", "Shop"),
+        slide2Image: G.image("slide2Image", "Slide 2 Image"),
+        slide2Title: G.text("slide2Title", "Slide 2 Title", "Slide 2"),
+        slide2ButtonText: G.text("slide2ButtonText", "Slide 2 Button Text", "Shop"),
+        slide3Image: G.image("slide3Image", "Slide 3 Image"),
+        slide3Title: G.text("slide3Title", "Slide 3 Title", "Slide 3"),
+        slide3ButtonText: G.text("slide3ButtonText", "Slide 3 Button Text", "Shop"),
+      },
       layout, bg, typography,
     ),
   },
+
   {
     type: "image-hero", label: "Image Hero", category: "hero", icon: "Image", description: "Clean hero with a single striking image",
     props: merge(

@@ -17,4 +17,9 @@ export const cacheTags = {
   product: (slug: string) => `product-${slug}`,
   category: (slug: string) => `category-${slug}`,
   tenantTheme: (slug: string) => `tenant-theme-${slug}`,
+  storeProduct: (storeId: string, productId: string) => `store:${storeId}:product:${productId}`,
+  storeCategory: (storeId: string, categoryId: string) => `store:${storeId}:category:${categoryId}`,
+  storeHomepage: (storeId: string) => `store:${storeId}:homepage`,
+  storeTheme: (storeId: string) => `store:${storeId}:theme`,
 };
+

@@ -55,8 +55,21 @@ const paymentVerificationSchema = new Schema(
 const orderSchema = new Schema(
   {
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, index: true },
-    customerId: { type: Schema.Types.ObjectId, ref: "Customer", required: true, index: true },
+    customerId: { type: Schema.Types.ObjectId, ref: "Customer", required: false, index: true },
+    customerType: { type: String, enum: ["registered", "guest"], default: "registered" },
+    customerSnapshot: {
+      name: { type: String, default: "" },
+      email: { type: String, default: "" },
+      phone: { type: String, default: "" },
+      address: { type: String, default: "" },
+      country: { type: String, default: "Bangladesh" },
+      state: { type: String, default: "" },
+      city: { type: String, default: "" },
+      area: { type: String, default: "" },
+      zip: { type: String, default: "" },
+    },
     items: [orderItemSchema],
+
     subtotal: { type: Number, required: true },
     shipping: { type: Number, default: 0 },
     deliveryCharge: { type: Number, default: 0 },

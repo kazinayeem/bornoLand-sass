@@ -394,21 +394,33 @@ export async function updateStoreCustomer(
   return { ok: true as const, data: { customer } };
 }
 
-export async function createGuestCustomer(storeId: string, email: string, name?: string) {
+export async function createGuestCustomer(storeId: string, email?: string, name?: string, phone?: string) {
   await connectDatabase();
-  const existing = await CustomerModel.findOne({ storeId, email: email.toLowerCase().trim() });
+  const normalizedEmail = (email || "").toLowerCase().trim();
+  const normalizedPhone = (phone || "").trim();
+
+  let existing = null;
+  if (normalizedEmail) {
+    existing = await CustomerModel.findOne({ storeId, email: normalizedEmail });
+  }
+  if (!existing && normalizedPhone) {
+    existing = await CustomerModel.findOne({ storeId, phone: normalizedPhone });
+  }
+
   if (existing) return { ok: true as const, data: { customer: existing }, created: false };
 
   const customer = await CustomerModel.create({
     storeId,
-    name: name || email.split("@")[0],
-    email: email.toLowerCase().trim(),
+    name: name || (normalizedEmail ? normalizedEmail.split("@")[0] : normalizedPhone || "Walk-in Customer"),
+    email: normalizedEmail || `guest_${Date.now()}_${Math.floor(Math.random() * 1000)}@store.com`,
+    phone: normalizedPhone || "",
     passwordHash: "",
     isGuest: true,
   });
 
   return { ok: true as const, data: { customer }, created: true };
 }
+
 
 /**
  * Always returns success to avoid email enumeration.

@@ -260,13 +260,27 @@ export const storeOrderApi = baseApi.injectEndpoints({
         { type: "Orders", id: `${storeId}_${orderId}` },
       ],
     }),
-  })
+    createStoreOrder: builder.mutation<
+      SingleOrderResponse,
+      { storeId: string; body: Record<string, unknown> }
+    >({
+      query: ({ storeId, body }) => ({
+        url: `/stores/${storeId}/orders`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { storeId }) => [
+        { type: "Orders", id: storeId },
+      ],
+    }),
+  }),
 });
 
 export const {
   useGetStoreOrdersQuery,
   useLazyGetStoreOrdersQuery,
   useGetStoreOrderQuery,
+  useCreateStoreOrderMutation,
   useUpdateOrderStatusMutation,
   useUpdatePaymentStatusMutation,
   useGetShipmentOptionsQuery,
@@ -275,3 +289,4 @@ export const {
   useCancelOrderShipmentMutation,
   useTrackOrderShipmentMutation,
 } = storeOrderApi;
+

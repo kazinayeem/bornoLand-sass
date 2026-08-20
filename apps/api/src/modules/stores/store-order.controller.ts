@@ -548,3 +548,70 @@ export async function emailStoreOrderInvoiceController(request: AuthRequest, res
     response.status(500).json({ message: "Failed to email invoice" });
   }
 }
+
+export async function createStoreOrderController(request: AuthRequest, response: Response) {
+  try {
+    const { storeId } = request.params;
+    const userId = request.user?.userId;
+
+    const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
+    if (!store) {
+      return response.status(404).json({ success: false, message: "Store not found or access denied" });
+    }
+
+    let customerId = request.body?.customerId;
+    if (!customerId) {
+      const email =
+        typeof request.body?.email === "string"
+          ? request.body.email.trim()
+          : typeof request.body?.shippingAddress?.email === "string"
+          ? request.body.shippingAddress.email.trim()
+          : "";
+      const phone =
+        typeof request.body?.phone === "string"
+          ? request.body.phone.trim()
+          : typeof request.body?.shippingAddress?.phone === "string"
+          ? request.body.shippingAddress.phone.trim()
+          : "";
+      const name =
+        typeof request.body?.fullName === "string"
+          ? request.body.fullName.trim()
+          : typeof request.body?.shippingAddress?.fullName === "string"
+          ? request.body.shippingAddress.fullName.trim()
+          : "Walk-in Customer";
+
+      const { createGuestCustomer } = await import("../customers/customer.service.js");
+      const guestRes = await createGuestCustomer(storeId, email, name, phone);
+      if (guestRes.ok && guestRes.data?.customer?._id) {
+        customerId = String(guestRes.data.customer._id);
+      }
+    }
+
+    const { createOrder } = await import("../orders/order.service.js");
+    const sessionId = (request.headers["x-session-id"] as string) || crypto.randomUUID();
+
+    const result = await createOrder(storeId, customerId, sessionId, request.body);
+
+    if (!result.ok) {
+      return response.status(400).json({ success: false, message: result.message });
+    }
+
+    await recordAuditFromRequest(request, {
+      action: AUDIT_ACTIONS.ORDER_UPDATE,
+      module: AUDIT_MODULES.ORDERS,
+      targetId: String(result.data.order._id),
+      targetName: `Order #${result.data.order.orderNumber}`,
+      details: { orderNumber: result.data.order.orderNumber, total: result.data.order.total },
+    });
+
+    return response.status(201).json({
+      success: true,
+      data: result.data,
+      message: "Order created successfully",
+    });
+  } catch (error: any) {
+    console.error("createStoreOrder error:", error);
+    return response.status(500).json({ success: false, message: error?.message || "Failed to create order" });
+  }
+}
+

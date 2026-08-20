@@ -24,8 +24,9 @@ import { useGetProductsQuery, type Product, type ProductVariant } from "@/redux/
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
 import { useGetStoreCustomersQuery } from "@/redux/api/store-customers-api";
 import { useValidateCouponMutation, type ValidateCouponResponse } from "@/redux/api/coupon-api";
-import { useCreateOrderMutation } from "@/redux/api/order-api";
+import { useCreateStoreOrderMutation } from "@/redux/api/store-order-api";
 import { PosVariantModal } from "./pos-variant-modal";
+
 import { formatCurrency } from "@/lib/format-currency";
 import { useTenant } from "@/providers/tenant-provider";
 import { toast } from "sonner";
@@ -84,7 +85,7 @@ export function PosOrderModal({
   const { data: customersData } = useGetStoreCustomersQuery({ storeId, search: customerSearch }, { skip: !open || !storeId });
 
   const [validateCoupon, { isLoading: isValidatingCoupon }] = useValidateCouponMutation();
-  const [createOrder, { isLoading: isSubmittingOrder }] = useCreateOrderMutation();
+  const [createStoreOrder, { isLoading: isSubmittingOrder }] = useCreateStoreOrderMutation();
 
   const products = productsData?.data?.products ?? [];
   const categories = categoriesData?.data?.categories ?? [];
@@ -161,7 +162,6 @@ export function PosOrderModal({
           price: variant.price ?? variantProduct.price ?? 0,
           quantity: qty,
           stock: variant.stock ?? 0,
-
         },
       ];
     });
@@ -226,6 +226,7 @@ export function PosOrderModal({
 
   // Complete POS Order Submission
   const handleCompleteOrder = async () => {
+    if (isSubmittingOrder) return;
     if (lineItems.length === 0) {
       toast.error("Cart is empty");
       return;
@@ -233,10 +234,10 @@ export function PosOrderModal({
 
     try {
       const customerName = selectedCustomer ? selectedCustomer.name : "Walk-in Customer";
-      const customerPhone = selectedCustomer ? selectedCustomer.phone : "N/A";
-      const customerEmail = selectedCustomer ? selectedCustomer.email : "walkin@store.com";
+      const customerPhone = selectedCustomer ? selectedCustomer.phone : "";
+      const customerEmail = selectedCustomer ? selectedCustomer.email : "";
 
-      const res = await createOrder({
+      const payload = {
         storeId,
         customerId: selectedCustomer?.id,
         items: lineItems.map((item) => ({
@@ -251,25 +252,35 @@ export function PosOrderModal({
         paymentMethod,
         shippingAddress: {
           fullName: customerName,
-          phone: customerPhone,
+          phone: customerPhone || "01700000000",
           email: customerEmail,
           city: "POS Store Walk-in",
           street: "Counter Sales",
-          orderNotes: `POS Direct Counter Sale • Coupon: ${appliedCoupon?.coupon.code || "None"}`,
+          orderNotes: `POS Counter Sale • Payment: ${paymentMethod.toUpperCase()}`,
         },
-      }).unwrap();
+      };
 
-      if (res.success) {
-        toast.success(`POS Order #${res.data?.order?.orderNumber || ""} completed!`);
+      const res = await createStoreOrder({ storeId, body: payload }).unwrap();
+
+      if (res.data?.order) {
+        toast.success(`POS Order #${res.data.order.orderNumber} created!`);
+        setLineItems([]);
+        setAppliedCoupon(null);
+        setProductSearch("");
         onSuccess?.();
         onClose();
+      } else {
+        toast.error((res as any).message || "Failed to create POS order");
       }
+
     } catch (err: any) {
-      toast.error(err?.data?.message || "Failed to complete POS order");
+      const errorMsg = err?.data?.message || err?.message || "Failed to create POS order";
+      toast.error(errorMsg);
     }
   };
 
   return (
+
     <AnimatePresence>
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-5"

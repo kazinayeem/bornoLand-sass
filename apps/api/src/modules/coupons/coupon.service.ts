@@ -95,11 +95,12 @@ export async function validateCouponForCart(
     if (customerId && allowedCustomerIds.includes(String(customerId))) {
       matched = true;
     } else if (customerEmail) {
-      const customerDoc = await CustomerModel.findOne({ storeId, email: customerEmail.toLowerCase() }).lean();
+      const customerDoc: any = await CustomerModel.findOne({ storeId, email: customerEmail.toLowerCase() }).lean();
       if (customerDoc && allowedCustomerIds.includes(String(customerDoc._id))) {
         matched = true;
       }
     }
+
 
     if (!matched) {
       return { ok: false as const, message: "This coupon is restricted to specific eligible customers" };

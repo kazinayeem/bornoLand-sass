@@ -147,10 +147,11 @@ export async function refreshController(request: Request, response: Response) {
   // Rotate refresh token cookie
   const rtMaxAge = result.data.sessionMaxAge ?? getRefreshTokenCookieMaxAge();
   writeSessionCookies(response, {
-    refreshToken: result.data.refreshToken,
+    refreshToken: result.data.refreshToken || refreshTokenValue,
     sessionToken: result.data.sessionToken,
     sessionMaxAge: rtMaxAge,
   });
+
 
   return sendSuccess(response, {
     accessToken: result.data.accessToken,

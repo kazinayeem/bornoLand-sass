@@ -8,9 +8,10 @@ import { DeliveryZoneModel } from "../delivery/delivery-zone.model.js";
 import { CartModel } from "../cart/cart.model.js";
 import { incrementCouponUsage } from "../coupons/coupon.service.js";
 import { calculateTax } from "../../common/utils/tax.js";
-import { checkLimit } from "../../common/middleware/plan-enforcement.middleware.js";
-import { createBillingNotification } from "../billing/billing.service.js";
-import { createCustomerNotification } from "../notifications/notification.service.js";
+import { checkLimit } from "../features/feature-access.service.js";
+import { createBillingNotification } from "../notifications/billing-notification.service.js";
+
+import { NotificationModel } from "../notifications/notification.model.js";
 
 function generateOrderNumber(prefix = "ORD"): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -30,63 +31,30 @@ async function decrementProductStock(
   meta?: { orderId?: string; orderNumber?: string },
 ) {
   try {
-    const { recordInventoryMovement } = await import("../inventory/inventory-movement.service.js");
     const pid = String(item.productId);
     const product = await ProductModel.findOne({ _id: pid, storeId });
     if (!product) return;
-
-    let previousStock = product.stock;
-    let nextStock = product.stock;
 
     if (item.variantId && product.variants?.length) {
       const vid = String(item.variantId);
       const vIndex = product.variants.findIndex((v: { _id?: unknown }) => String(v._id) === vid);
       if (vIndex > -1) {
         const variant = product.variants[vIndex];
-        previousStock = variant.stock;
         variant.stock = Math.max(0, variant.stock - item.quantity);
-        nextStock = variant.stock;
         product.stock = product.variants.reduce((sum: number, v: { stock: number }) => sum + (v.stock || 0), 0);
         product.markModified("variants");
         await product.save();
-
-        await recordInventoryMovement({
-          storeId,
-          productId: pid,
-          variantId: vid,
-          type: "sale",
-          quantity: -item.quantity,
-          previousStock,
-          newStock: nextStock,
-          referenceType: "order",
-          referenceId: meta?.orderId,
-          referenceNumber: meta?.orderNumber,
-          notes: `Automatic inventory deduction for order ${meta?.orderNumber || ""}`.trim(),
-        });
         return;
       }
     }
 
     product.stock = Math.max(0, product.stock - item.quantity);
-    nextStock = product.stock;
     await product.save();
-
-    await recordInventoryMovement({
-      storeId,
-      productId: pid,
-      type: "sale",
-      quantity: -item.quantity,
-      previousStock,
-      newStock: nextStock,
-      referenceType: "order",
-      referenceId: meta?.orderId,
-      referenceNumber: meta?.orderNumber,
-      notes: `Automatic inventory deduction for order ${meta?.orderNumber || ""}`.trim(),
-    });
   } catch (err) {
-    console.error("[orders] Stock decrement error:", err);
+    console.error("[orders] Failed to decrement product stock", err);
   }
 }
+
 
 export async function createOrder(
   storeId: string,
@@ -460,7 +428,7 @@ export async function createOrder(
   }
 
   try {
-    await createCustomerNotification({
+    await NotificationModel.create({
       customerId,
       storeId,
       type: "order",
@@ -503,16 +471,17 @@ async function autoSaveCustomerAddressFromOrder(
     landmark?: string;
   },
 ) {
-  const cust = await CustomerModel.findOne({ _id: customerId, storeId });
+  const cust: any = await CustomerModel.findOne({ _id: customerId, storeId });
   if (!cust) return;
 
   const existingAddresses = cust.addresses ?? [];
   const exists = existingAddresses.some(
-    (a) =>
-      a.city.toLowerCase() === address.city.toLowerCase() &&
-      a.street.toLowerCase() === address.street.toLowerCase() &&
+    (a: any) =>
+      a.city?.toLowerCase() === address.city.toLowerCase() &&
+      a.street?.toLowerCase() === address.street.toLowerCase() &&
       a.phone === address.phone,
   );
+
 
   if (!exists) {
     cust.addresses.push({

@@ -29,7 +29,7 @@ export async function submitContact(
     status: "new",
   });
 
-  const store = await StoreModel.findById(storeId).select("userId slug name").lean();
+  const store: any = await StoreModel.findById(storeId).select("userId slug name").lean();
   if (store?.userId) {
     await NotificationModel.create({
       userId: store.userId,
@@ -43,6 +43,7 @@ export async function submitContact(
     });
   }
 
+
   return { ok: true as const, message: "Message sent successfully" };
 }
 
@@ -51,8 +52,9 @@ export async function listContactMessages(storeId: string, userId: string, query
   if (!parsed.success) return { ok: false as const, message: "Invalid query parameters" };
 
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
+  const store: any = await StoreModel.findOne({ _id: storeId, userId }).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
+
 
   const { page, limit, search, status, archived } = parsed.data;
   const filter: Record<string, unknown> = { storeId };
@@ -151,11 +153,11 @@ export async function deleteContactMessage(storeId: string, userId: string, mess
 }
 
 export async function exportContactMessages(storeId: string, userId: string, query: unknown) {
-  const parsed = listContactMessagesSchema.safeParse({ ...query, page: 1, limit: 10000 });
+  const parsed = listContactMessagesSchema.safeParse(Object.assign({}, (query as object) || {}, { page: 1, limit: 10000 }));
   if (!parsed.success) return { ok: false as const, message: "Invalid query parameters" };
 
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
+  const store: any = await StoreModel.findOne({ _id: storeId, userId }).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
 
   const { search, status, archived } = parsed.data;
@@ -192,3 +194,4 @@ export async function exportContactMessages(storeId: string, userId: string, que
 
   return { ok: true as const, data: { csv, filename: `contact-messages-${store.slug}-${Date.now()}.csv` } };
 }
+

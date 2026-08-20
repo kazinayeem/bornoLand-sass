@@ -31,8 +31,9 @@ export function requireCustomerAuth(request: SubdomainRequest, response: Respons
     return CustomerModel.findById(decoded.customerId)
       .select({ tokenVersion: 1 })
       .lean()
-      .then((customer: { tokenVersion?: number } | null) => {
+      .then((customer: any) => {
         if (!customer) return sendFailure(response, "Not authenticated", 401);
+
 
         // Legacy docs may omit tokenVersion; treat missing as 0 to match token issuance.
         const storedVersion = resolveCustomerTokenVersion(customer.tokenVersion);

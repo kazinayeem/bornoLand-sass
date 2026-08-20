@@ -58,7 +58,7 @@ export async function getCartController(request: SubdomainRequest, response: Res
     storeId,
     customerId: customerId ?? null,
     sessionId: sessionId ?? null,
-    itemCount: result.data?.cart?.items?.length ?? 0,
+    itemCount: (result.data?.cart as any)?.items?.length ?? 0,
     cartId: (result.data?.cart as { _id?: unknown } | undefined)?._id ?? null,
   });
   return sendSuccess(response, result.data);
@@ -72,7 +72,7 @@ export async function addToCartController(request: SubdomainRequest, response: R
   if (!productId && !variantId) return sendFailure(response, "Product ID or Variant ID required");
   const result = await addToCart(
     storeId,
-    productId || variantId,
+    (productId || variantId) as string,
     quantity ?? 1,
     customerId,
     effectiveSessionId,
@@ -92,7 +92,7 @@ export async function updateCartController(request: SubdomainRequest, response: 
   }
   const result = await updateCartItem(
     storeId,
-    productId || variantId,
+    (productId || variantId) as string,
     quantity,
     customerId,
     sessionId,
@@ -113,11 +113,12 @@ export async function removeFromCartController(request: SubdomainRequest, respon
   if (!productId && !variantId) return sendFailure(response, "Product ID or Variant ID required");
   const result = await removeFromCart(
     storeId,
-    productId || variantId,
+    (productId || variantId) as string,
     customerId,
     sessionId,
     variantId,
   );
+
   return result.ok
     ? sendSuccess(response, result.data, "Removed from cart")
     : sendFailure(response, result.message);

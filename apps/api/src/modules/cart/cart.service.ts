@@ -357,18 +357,28 @@ export async function applyCouponToCart(storeId: string, code: string, customerI
   if (!cart || cart.items.length === 0) return { ok: false as const, message: "Cart is empty" };
 
   const subtotal = cart.items.reduce((sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity, 0);
-  const productIds = cart.items.map((i: { productId: unknown }) => String(i.productId));
-  const result = await validateCouponForCart(storeId, code, subtotal, 0, customerId, productIds);
+  const result = await validateCouponForCart(storeId, {
+    code,
+    subtotal,
+    shipping: 0,
+    customerId,
+    items: cart.items.map((i: any) => ({
+      productId: String(i.productId),
+      price: i.price,
+      quantity: i.quantity,
+    })),
+  });
   if (!result.ok) return result;
 
   cart.couponCode = result.data.coupon.code;
-  (cart as { couponId?: unknown }).couponId = result.data.coupon._id;
+  (cart as { couponId?: unknown }).couponId = (result.data.coupon as any)._id || (result.data.coupon as any).id;
   cart.discount = result.data.discount;
   await cart.save();
 
   const settings = await getTaxSettings(storeId);
   return { ok: true as const, data: { cart: cartResponse(cart, settings ?? {}), coupon: result.data.coupon } };
 }
+
 
 export async function removeCouponFromCart(storeId: string, customerId?: string, sessionId?: string) {
   await connectDatabase();

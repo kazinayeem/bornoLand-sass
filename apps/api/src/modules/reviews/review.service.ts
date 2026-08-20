@@ -122,7 +122,7 @@ export async function createReview(storeId: string, payload: unknown, customerId
 
   // Verify purchase if orderId is provided or by customer lookup
   if (parsed.data.orderId && mongoose.Types.ObjectId.isValid(parsed.data.orderId)) {
-    const existingOrder = await OrderModel.findOne({
+    const existingOrder: any = await OrderModel.findOne({
       _id: parsed.data.orderId,
       storeId,
     }).lean();
@@ -142,6 +142,7 @@ export async function createReview(storeId: string, payload: unknown, customerId
           productId: parsed.data.productId,
           orderId: existingOrder._id,
         }).lean();
+
 
         if (duplicate) {
           return { ok: false as const, message: "You have already submitted a review for this product from this order." };

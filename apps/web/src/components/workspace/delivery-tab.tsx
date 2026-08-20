@@ -14,8 +14,10 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
+import { revalidateStorefrontForStore } from "@/lib/revalidate-storefront-client";
 
 type DeliveryTabProps = { storeId: string };
+
 
 type DeliveryZone = {
   _id: string;
@@ -87,6 +89,7 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
     value.split(",").map((s) => s.trim()).filter(Boolean);
 
   const handleSave = async () => {
+
     if (!form.name.trim() || !form.charge) { toast.error("Name and charge are required"); return; }
     setSaving(true);
     try {
@@ -107,6 +110,9 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
         await createZone({ storeId, data: payload }).unwrap();
         toast.success("Zone created");
       }
+      try {
+        await revalidateStorefrontForStore({ _id: storeId }, { scope: "all" });
+      } catch {}
       resetForm();
     } catch (err: any) {
       toast.error(err?.data?.message ?? "Failed to save");
@@ -117,6 +123,9 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
     if (!deleteId) return;
     try {
       await deleteZone({ storeId, id: deleteId }).unwrap();
+      try {
+        await revalidateStorefrontForStore({ _id: storeId }, { scope: "all" });
+      } catch {}
       toast.success("Zone deleted");
       setDeleteId(null);
     } catch { toast.error("Failed to delete"); }
@@ -125,8 +134,12 @@ export function DeliveryTab({ storeId }: DeliveryTabProps) {
   const toggleEnabled = async (z: DeliveryZone) => {
     try {
       await updateZone({ storeId, id: z._id, data: { enabled: !z.enabled } }).unwrap();
+      try {
+        await revalidateStorefrontForStore({ _id: storeId }, { scope: "all" });
+      } catch {}
     } catch { toast.error("Failed to toggle"); }
   };
+
 
   const columns: Column<DeliveryZone>[] = [
     {

@@ -29,10 +29,15 @@ import type { StoreContact } from "@/redux/api/store-contact-api";
 import { TenantProvider } from "@/providers/tenant-provider";
 import { StorefrontDeviceProvider } from "@/lib/device-context";
 import type { StorefrontSectionLike } from "@/components/storefront/storefront-types";
+import { normalizeSectionType } from "@/lib/section-registry";
 import {
   StorefrontHeaderOffsetProvider,
   StorefrontHeaderSettingsProvider,
 } from "@/components/storefront/storefront-header-offset";
+
+const HEADER_TYPES = new Set(["header-bar", "header-logo", "header-nav", "header-icons", "header"]);
+const FOOTER_TYPES = new Set(["simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer", "footer-links", "footer-copyright", "footer-social", "footer"]);
+
 
 export type StorefrontShellProps = {
   store: StoreData;
@@ -91,15 +96,19 @@ export function StorefrontShell({
     [store._id, store.slug, theme, products, categories, settings, sliders, navigations, contact],
   );
 
-  const hasBuilderHeader = Boolean(headerSections && headerSections.length > 0);
-  const hasBuilderFooter = Boolean(footerSections && footerSections.length > 0);
+  const actualHeaderSections = (headerSections ?? []).filter(
+    (s) => s.visible !== false && (HEADER_TYPES.has(normalizeSectionType(s.type)) || s.type.startsWith("header-")),
+  );
+  const actualFooterSections = (footerSections ?? []).filter(
+    (s) => s.visible !== false && (FOOTER_TYPES.has(normalizeSectionType(s.type)) || s.type.includes("footer")),
+  );
 
-  const visibleHeaderSections = hasBuilderHeader
-    ? (headerSections ?? []).filter((s) => s.visible !== false)
-    : [];
-  const visibleFooterSections = hasBuilderFooter
-    ? (footerSections ?? []).filter((s) => s.visible !== false)
-    : [];
+  const hasBuilderHeader = actualHeaderSections.length > 0;
+  const hasBuilderFooter = actualFooterSections.length > 0;
+
+  const visibleHeaderSections = actualHeaderSections;
+  const visibleFooterSections = actualFooterSections;
+
 
   const shellContent = (
     <StorefrontHeaderOffsetProvider>

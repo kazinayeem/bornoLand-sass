@@ -6,8 +6,10 @@ import {
   useUpdateStoreSettingsMutation,
 } from "@/redux/api/store-settings-api";
 import { DeliveryTab } from "@/components/workspace/delivery-tab";
+import { revalidateStorefrontForStore } from "@/lib/revalidate-storefront-client";
 import { toast } from "sonner";
 import { Loader2, Truck } from "lucide-react";
+
 
 type ShippingSettingsTabProps = { storeId: string };
 
@@ -30,6 +32,7 @@ export function ShippingSettingsTab({ storeId }: ShippingSettingsTabProps) {
   }, [settings]);
 
   const saveGeneral = async () => {
+
     try {
       await updateSettings({
         storeId,
@@ -40,11 +43,17 @@ export function ShippingSettingsTab({ storeId }: ShippingSettingsTabProps) {
           taxIncluded,
         },
       }).unwrap();
-      toast.success("Shipping settings saved");
+
+      try {
+        await revalidateStorefrontForStore({ _id: storeId }, { scope: "all" });
+      } catch {}
+
+      toast.success("Shipping settings saved successfully");
     } catch {
       toast.error("Could not save shipping settings");
     }
   };
+
 
   if (isLoading) {
     return (

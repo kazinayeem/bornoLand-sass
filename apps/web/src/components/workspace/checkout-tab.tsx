@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { revalidateStorefrontForStore } from "@/lib/revalidate-storefront-client";
+
 type CheckoutTabProps = { storeId: string };
 
 export function CheckoutTab({ storeId }: CheckoutTabProps) {
@@ -22,7 +24,7 @@ export function CheckoutTab({ storeId }: CheckoutTabProps) {
   const [guestCheckout, setGuestCheckout] = useState(true);
   const [requireLogin, setRequireLogin] = useState(false);
   const [codEnabled, setCodEnabled] = useState(true);
-  const [autoConfirm, setAutoConfirm] = useState(true);
+  const [autoConfirm, setAutoConfirm] = useState(false);
   const [minOrderAmount, setMinOrderAmount] = useState(0);
   const [taxRate, setTaxRate] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -30,11 +32,11 @@ export function CheckoutTab({ storeId }: CheckoutTabProps) {
   useEffect(() => {
     if (settings) {
       const s = settings as any;
-      setGuestCheckout(s.guestCheckout ?? true);
-      setRequireLogin(s.requireLogin ?? false);
-      setCodEnabled(s.codEnabled ?? true);
-      setAutoConfirm(s.autoConfirm ?? true);
-      setMinOrderAmount(s.minOrderAmount ?? 0);
+      setGuestCheckout(s.guestCheckoutEnabled ?? s.guestCheckout ?? true);
+      setRequireLogin(s.requireLoginEnabled ?? s.requireLogin ?? false);
+      setCodEnabled(s.paymentSettings?.codEnabled ?? s.codEnabled ?? s.cashOnDelivery ?? true);
+      setAutoConfirm(s.autoConfirmOrders ?? s.autoConfirm ?? false);
+      setMinOrderAmount(s.minimumOrderAmount ?? s.minOrderAmount ?? 0);
       setTaxRate(settings.taxRate ?? 0);
     }
   }, [settings]);
@@ -45,19 +47,41 @@ export function CheckoutTab({ storeId }: CheckoutTabProps) {
       await updateStoreSettings({
         storeId,
         data: {
-          guestCheckout, requireLogin, codEnabled, autoConfirm,
-          minOrderAmount, taxRate,
+          guestCheckoutEnabled: guestCheckout,
+          guestCheckout,
+          requireLoginEnabled: requireLogin,
+          requireLogin,
+          paymentSettings: {
+            ...((settings as any)?.paymentSettings || {}),
+            codEnabled,
+          },
+          codEnabled,
+          cashOnDelivery: codEnabled,
+          autoConfirmOrders: autoConfirm,
+          autoConfirm,
+          minimumOrderAmount: Number(minOrderAmount) || 0,
+          minOrderAmount: Number(minOrderAmount) || 0,
+          taxRate: Number(taxRate) || 0,
+          taxEnabled: Number(taxRate) > 0,
         } as any,
       }).unwrap();
-      toast.success("Checkout settings saved");
+
+      try {
+        await revalidateStorefrontForStore({ _id: storeId }, { scope: "all" });
+      } catch {}
+
+      toast.success("Checkout settings saved successfully");
     } catch {
-      toast.error("Failed to save");
-    } finally { setSaving(false); }
+      toast.error("Failed to save checkout settings");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" /></div>;
   }
+
 
   const Toggle = ({ value, onChange, label, desc }: { value: boolean; onChange: (v: boolean) => void; label: string; desc: string }) => (
     <div className="flex items-center justify-between rounded-xl border border-apple-hairline p-4">

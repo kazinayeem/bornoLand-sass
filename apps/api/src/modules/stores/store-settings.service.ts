@@ -44,11 +44,40 @@ export async function updateStoreSettings(storeId: string, userId: string, paylo
   const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
 
+  const rawData = { ...parsed.data } as Record<string, any>;
+
+  // Normalize aliases
+  if (rawData.guestCheckout !== undefined && rawData.guestCheckoutEnabled === undefined) {
+    rawData.guestCheckoutEnabled = rawData.guestCheckout;
+  }
+  if (rawData.requireLogin !== undefined && rawData.requireLoginEnabled === undefined) {
+    rawData.requireLoginEnabled = rawData.requireLogin;
+  }
+  if (rawData.minOrderAmount !== undefined && rawData.minimumOrderAmount === undefined) {
+    rawData.minimumOrderAmount = rawData.minOrderAmount;
+  }
+  if (rawData.autoConfirm !== undefined && rawData.autoConfirmOrders === undefined) {
+    rawData.autoConfirmOrders = rawData.autoConfirm;
+  }
+  if (rawData.codEnabled !== undefined || rawData.cashOnDelivery !== undefined) {
+    const codVal = rawData.codEnabled ?? rawData.cashOnDelivery;
+    rawData.paymentSettings = {
+      ...(rawData.paymentSettings || {}),
+      codEnabled: codVal,
+    };
+  }
+
+  // If taxRate was updated and taxEnabled was not specified, turn on taxEnabled if taxRate > 0
+  if (rawData.taxRate !== undefined && rawData.taxEnabled === undefined) {
+    rawData.taxEnabled = rawData.taxRate > 0;
+  }
+
   const settings = await StoreSettingsModel.findOneAndUpdate(
     { storeId },
-    { $set: parsed.data, $setOnInsert: { storeId } },
+    { $set: rawData, $setOnInsert: { storeId } },
     { upsert: true, new: true }
   ).lean();
 
   return { ok: true as const, data: { settings } };
 }
+

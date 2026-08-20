@@ -33,6 +33,8 @@ const storeSettingsSchema = new Schema(
     guestCheckoutEnabled: { type: Boolean, default: true },
     requireLoginEnabled: { type: Boolean, default: false },
     minimumOrderAmount: { type: Number, default: 0, min: 0 },
+    autoConfirmOrders: { type: Boolean, default: false },
+
 
     // Payment Methods Configuration
     paymentSettings: {

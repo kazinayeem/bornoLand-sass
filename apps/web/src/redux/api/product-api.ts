@@ -181,8 +181,24 @@ export const productApi = baseApi.injectEndpoints({
     }),
     updateProduct: builder.mutation<ApiEnvelope<{ product: Product }>, { storeId: string; id: string; data: UpdateProductRequest }>({
       query: ({ storeId, id, data }) => ({ url: `/products/${storeId}/${id}`, method: "PUT", body: data }),
+      async onQueryStarted({ storeId, id, data }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          productApi.util.updateQueryData("getProducts" as any, { storeId } as any, (draft: any) => {
+            const product = draft?.data?.products?.find((p: any) => p._id === id);
+            if (product) {
+              Object.assign(product, data);
+            }
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
       invalidatesTags: (_result, _error, { storeId }) => [{ type: "Products", id: storeId }]
     }),
+
     deleteProduct: builder.mutation<ApiEnvelope<never>, { storeId: string; id: string }>({
       query: ({ storeId, id }) => ({ url: `/products/${storeId}/${id}`, method: "DELETE" }),
       invalidatesTags: (_result, _error, { storeId }) => [{ type: "Products", id: storeId }]

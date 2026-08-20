@@ -60,11 +60,11 @@ export function AdminProfileDropdown() {
     try {
       await logout().unwrap();
       router.replace(getLoginUrlForCurrentPage("/admin/login"));
-      router.refresh();
     } catch {
       toast.error("Could not sign out. Please try again.");
     }
   };
+
 
   return (
     <div ref={ref} className="relative">

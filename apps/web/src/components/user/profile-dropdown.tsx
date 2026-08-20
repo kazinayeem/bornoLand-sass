@@ -51,9 +51,10 @@ export function ProfileDropdown({ compact = false }: { compact?: boolean }) {
   }, [open]);
 
   const handleLogout = async () => {
-    try { await logout().unwrap(); dispatch(clearUserProfile()); router.replace(getLoginUrlForCurrentPage()); router.refresh(); }
+    try { await logout().unwrap(); dispatch(clearUserProfile()); router.replace(getLoginUrlForCurrentPage()); }
     catch { toast.error("Could not sign out. Please try again."); }
   };
+
 
   return <div ref={ref} className="relative">
     <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label="Open profile menu" className={cn("flex items-center gap-1 rounded-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-apple-ink", compact && "rounded-sm border border-apple-hairline py-1 pl-1 pr-2")}><UserAvatar showChevron={compact}/></button>

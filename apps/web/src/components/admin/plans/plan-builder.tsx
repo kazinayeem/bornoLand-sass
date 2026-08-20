@@ -477,8 +477,8 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     try {
       await updatePlan({ id: plan._id, data: payload }).unwrap();
       toast.success("Plan saved successfully");
-      router.refresh();
     } catch (error) {
+
       const msg =
         error && typeof error === "object" && "data" in error
           ? (error as { data: { message?: string } }).data?.message ?? "Failed to save plan"

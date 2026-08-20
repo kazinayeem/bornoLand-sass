@@ -122,12 +122,28 @@ export const reviewApi = baseApi.injectEndpoints({
         method: "PUT",
         body: { status },
       }),
+      async onQueryStarted({ storeId, reviewId, status }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          reviewApi.util.updateQueryData("getStoreReviews" as any, { storeId } as any, (draft: any) => {
+            const review = draft?.data?.reviews?.find((r: any) => r._id === reviewId);
+            if (review) {
+              review.status = status;
+            }
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
       invalidatesTags: (result, error, { reviewId }) => [
         { type: "Reviews", id: reviewId },
         { type: "Reviews", id: "LIST" },
         { type: "Reviews", id: "PUBLIC_LIST" },
       ],
     }),
+
 
     deleteReview: builder.mutation<
       { success: boolean; message?: string },

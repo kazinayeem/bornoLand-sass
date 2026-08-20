@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterInput } from "@/validators/auth";
@@ -33,9 +34,11 @@ export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<typeof Card>) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [registerRequest] = useRegisterMutation();
   const { startNavigation } = useLoading();
+
   const {
     register,
     handleSubmit,
@@ -78,8 +81,9 @@ export function RegisterForm({
 
     toast.success("Account created. Check your email for verification.");
     startNavigation();
-    window.location.href = "/login";
+    router.push("/login");
   });
+
 
   return (
     <Card

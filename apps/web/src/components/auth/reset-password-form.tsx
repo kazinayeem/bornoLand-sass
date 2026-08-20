@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useResetPasswordMutation } from "@/redux/api/auth-api";
 import { Label } from "@/components/ui/label";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { FormLoadingShell } from "@/components/loading/form-loading-shell";
 
 export function ResetPasswordForm({ token }: { token: string }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [resetPassword] = useResetPasswordMutation();
 
@@ -23,12 +25,13 @@ export function ResetPasswordForm({ token }: { token: string }) {
         setLoading(true);
         const response = await resetPassword({
           token,
-          password: String(new FormData(event.currentTarget).get("password") ?? ""),
+          password: new FormData(event.currentTarget).get("password") as string,
         });
         setLoading(false);
         if ("error" in response) {
           const message =
             (response.error &&
+            typeof response.error === "object" &&
             "data" in response.error &&
             response.error.data &&
             typeof response.error.data === "object" &&
@@ -39,7 +42,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           return;
         }
         toast.success("Password updated. You can sign in now.");
-        window.location.href = "/login";
+        router.push("/login");
       }}
     >
       <div className="space-y-2">

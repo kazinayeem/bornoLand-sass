@@ -136,6 +136,21 @@ export const storeOrderApi = baseApi.injectEndpoints({
         method: "PUT",
         body: { status }
       }),
+      async onQueryStarted({ storeId, orderId, status }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          storeOrderApi.util.updateQueryData("getStoreOrders" as any, { storeId } as any, (draft: any) => {
+            const order = draft?.data?.orders?.find((o: any) => o._id === orderId);
+            if (order) {
+              order.status = status;
+            }
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
       invalidatesTags: (_result, _error, { storeId, orderId }) => [
         { type: "Orders", id: storeId },
         { type: "Orders", id: `${storeId}_${orderId}` }
@@ -147,11 +162,27 @@ export const storeOrderApi = baseApi.injectEndpoints({
         method: "PUT",
         body: { paymentStatus }
       }),
+      async onQueryStarted({ storeId, orderId, paymentStatus }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          storeOrderApi.util.updateQueryData("getStoreOrders" as any, { storeId } as any, (draft: any) => {
+            const order = draft?.data?.orders?.find((o: any) => o._id === orderId);
+            if (order) {
+              order.paymentStatus = paymentStatus;
+            }
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
       invalidatesTags: (_result, _error, { storeId, orderId }) => [
         { type: "Orders", id: storeId },
         { type: "Orders", id: `${storeId}_${orderId}` }
       ]
     }),
+
     getShipmentOptions: builder.query<
       {
         data: {

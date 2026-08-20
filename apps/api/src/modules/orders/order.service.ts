@@ -329,7 +329,20 @@ export async function createOrder(
   const order = await OrderModel.create({
     storeId,
     customerId,
+    customerType: customerIdInput ? "registered" : "guest",
+    customerSnapshot: {
+      name: normalizedShippingAddress.fullName,
+      email: normalizedShippingAddress.email,
+      phone: normalizedShippingAddress.phone,
+      address: [normalizedShippingAddress.street, normalizedShippingAddress.apartment, normalizedShippingAddress.area].filter(Boolean).join(", "),
+      country: normalizedShippingAddress.country,
+      state: normalizedShippingAddress.state,
+      city: normalizedShippingAddress.city,
+      area: normalizedShippingAddress.area,
+      zip: normalizedShippingAddress.zip,
+    },
     items: cart.items.map((item: {
+
       productId: unknown;
       variantId?: unknown;
       variantTitle?: string;

@@ -26,8 +26,13 @@ function getCustomerId(request: SubdomainRequest): string | null {
 }
 
 export async function createOrderController(request: SubdomainRequest, response: Response) {
-  const storeId = request.store?._id?.toString();
+  const storeId =
+    request.store?._id?.toString() ??
+    (request.body?.storeId as string | undefined) ??
+    (request.query?.storeId as string | undefined) ??
+    (request.headers["x-store-id"] as string | undefined);
   if (!storeId) return sendFailure(response, "Store not found", 404);
+
 
   const sessionHeader = request.headers["x-session-id"];
   const sessionId =

@@ -34,7 +34,10 @@ function getCustomerId(request: SubdomainRequest): string | undefined {
 }
 
 function getIds(request: SubdomainRequest) {
-  const storeId = request.store?._id?.toString();
+  const storeId =
+    request.store?._id?.toString() ??
+    (request.query?.storeId as string | undefined) ??
+    (request.headers["x-store-id"] as string | undefined);
   const customerId = getCustomerId(request);
   const headerSession = request.headers["x-session-id"];
   const sessionId =
@@ -43,6 +46,7 @@ function getIds(request: SubdomainRequest) {
       : undefined;
   return { storeId, customerId, sessionId };
 }
+
 
 export async function getCartController(request: SubdomainRequest, response: Response) {
   const { storeId, customerId, sessionId } = getIds(request);

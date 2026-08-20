@@ -3,7 +3,7 @@
 import { useMemo, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
-import { setActiveTab, toggleLeftPanel } from "@/redux/slices/builder-slice";
+import { setActiveTab, toggleLeftPanel, openSectionLibrary } from "@/redux/slices/builder-slice";
 import type { LeftTab } from "@/redux/slices/builder-slice";
 import {
   LayoutTemplate,
@@ -12,6 +12,7 @@ import {
   ListTree,
   History,
   PanelLeftClose,
+  Plus,
 } from "lucide-react";
 import { TemplatesPanel } from "./panels/templates-panel";
 import { MediaPanel } from "./panels/media-panel";
@@ -28,10 +29,10 @@ type TabDef = {
 };
 
 const SIDEBAR_TABS: TabDef[] = [
+  { key: "navigator", icon: ListTree, label: "Sections" },
   { key: "templates", icon: LayoutTemplate, label: "Layouts" },
   { key: "media", icon: ImagePlus, label: "Images" },
   { key: "theme", icon: Palette, label: "Colors" },
-  { key: "navigator", icon: ListTree, label: "Sections" },
   { key: "history", icon: History, label: "History" },
 ];
 
@@ -103,7 +104,22 @@ export function BuilderSidebar() {
         </div>
 
         <div className="min-h-0 flex-1 overflow-hidden">
-          {showPanelHeading ? (
+          {/* Quick "+ Add Section" bar for the Sections tab */}
+          {activeTab === "navigator" && (
+            <div className="flex items-center justify-between border-b border-apple-hairline/60 px-3 py-2">
+              <span className="text-[12px] font-semibold text-apple-ink">Sections</span>
+              <button
+                type="button"
+                title="Add section (Shift+A)"
+                onClick={() => dispatch(openSectionLibrary({ insertPosition: null, targetZone: "body" }))}
+                className="flex items-center gap-1 rounded-lg bg-zinc-900 px-2 py-1 text-[11px] font-medium text-white transition-opacity hover:opacity-80"
+              >
+                <Plus className="h-3 w-3" />
+                Add
+              </button>
+            </div>
+          )}
+          {showPanelHeading && activeTab !== "navigator" ? (
             <div className="border-b border-apple-hairline px-3 py-3">
               <h2 className="text-[13px] font-semibold text-apple-ink">{panelMeta.label}</h2>
             </div>

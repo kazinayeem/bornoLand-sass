@@ -34,6 +34,7 @@ import { StorePreview } from "@/components/builder/store-preview";
 import { PropertiesPanel } from "@/components/builder/properties-panel";
 import { SectionLibraryModal } from "@/components/builder/section-library-modal";
 import { BuilderFloatingToolbar } from "@/components/builder/builder-floating-toolbar";
+import { BuilderCommandPalette } from "@/components/builder/builder-command-palette";
 import {
   BuilderLoadingScreen,
   useMinimumLoading,
@@ -140,7 +141,7 @@ const ResizeHandle = memo(function ResizeHandle({
       onMouseDown={onMouseDown}
       className={cn(
         "group relative flex w-[5px] shrink-0 cursor-col-resize items-center justify-center transition-colors",
-        "bg-zinc-200/50 hover:bg-zinc-400 active:bg-apple-canvas-parchment0"
+        "bg-zinc-200/50 hover:bg-zinc-400 active:bg-apple-canvas-parchment"
       )}
       aria-label={`Resize ${side} panel`}
     >
@@ -198,8 +199,11 @@ export function BuilderEditor() {
   const fullscreen = useSelector((s: RootState) => s.builder.fullscreen);
   const [resizing, setResizing] = useState<"left" | "right" | null>(null);
   const [contentRevision, setContentRevision] = useState(0);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
-  // Bump revision on every meaningful edit so idle timer resets and concurrent saves stay safe
+  // Bump revision on every meaningful edit so idle timer resets and concurrent saves stay safe.
+  // NOTE: `settings` is intentionally excluded — it never changes inside the builder and
+  // including it caused spurious revision bumps that triggered unnecessary autosaves.
   useEffect(() => {
     if (!isDirty) return;
     setContentRevision((n) => n + 1);
@@ -211,7 +215,6 @@ export function BuilderEditor() {
     headerSettings,
     footerSettings,
     currentTheme,
-    settings,
   ]);
 
   const getDraftPayload = useCallback((): BuilderDraftPayload | null => {
@@ -407,17 +410,35 @@ export function BuilderEditor() {
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       const mod = event.metaKey || event.ctrlKey;
+      const target = event.target as HTMLElement;
+      // Detect whether the user is actively typing in an editable field
+      const isEditing =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" ||
+        target.isContentEditable;
+
+      // ⌘K / Ctrl+K → Command palette (always)
+      if (mod && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setCommandPaletteOpen((o) => !o);
+        return;
+      }
+
+      // Shortcuts that should work even while editing
+      if (mod && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        void saveNow();
+        return;
+      }
+
+      // Shortcuts below must NOT fire while user is typing in an editable field
+      if (isEditing) return;
 
       // Shift + A - Open Section Library
       if (event.key.toLowerCase() === "a" && event.shiftKey && !mod) {
         event.preventDefault();
         dispatch(openSectionLibrary({}));
-        return;
-      }
-
-      if (mod && event.key.toLowerCase() === "s") {
-        event.preventDefault();
-        void saveNow();
         return;
       }
 
@@ -451,7 +472,8 @@ export function BuilderEditor() {
         return;
       }
 
-      if (event.key === "Delete" && selectedSectionId) {
+      // Delete/Backspace — guarded: only fires when no text input is focused
+      if ((event.key === "Delete" || event.key === "Backspace") && selectedSectionId) {
         event.preventDefault();
         dispatch(removeSection(selectedSectionId));
       }
@@ -551,6 +573,10 @@ export function BuilderEditor() {
       </div>
 
       <SectionLibraryModal />
+      <BuilderCommandPalette
+        open={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+      />
     </div>
   );
 }

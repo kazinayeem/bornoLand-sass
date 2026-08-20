@@ -362,6 +362,8 @@ export type GlobalSnapshot = {
   sections: BuilderSection[];
   headerSections: BuilderSection[];
   footerSections: BuilderSection[];
+  /** ISO timestamp of when the snapshot was taken */
+  timestamp?: string;
 };
 
 function cloneSections(list: BuilderSection[]): BuilderSection[] {
@@ -373,6 +375,7 @@ function takeSnapshot(state: BuilderState): GlobalSnapshot {
     sections: cloneSections(state.sections),
     headerSections: cloneSections(state.headerSections),
     footerSections: cloneSections(state.footerSections),
+    timestamp: new Date().toISOString(),
   };
 }
 
@@ -396,7 +399,7 @@ function applySnapshot(state: BuilderState, snapshot: GlobalSnapshot): void {
 }
 
 /** Rolling undo/redo window — keep only the latest N snapshots. */
-export const BUILDER_HISTORY_LIMIT = 10;
+export const BUILDER_HISTORY_LIMIT = 50;
 
 function trimPast(state: BuilderState): void {
   while (state.past.length > BUILDER_HISTORY_LIMIT) {

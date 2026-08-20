@@ -1,6 +1,6 @@
 "use client";
 
-import { Monitor, Smartphone, Tablet, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Minimize } from "lucide-react";
+import { Monitor, Smartphone, Tablet, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Minimize, Laptop2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setDevice, setZoom } from "@/redux/slices/preview-slice";
@@ -8,10 +8,10 @@ import { setFullscreen, undoBuilder, redoBuilder } from "@/redux/slices/builder-
 import { cn } from "@/lib/utils";
 
 const devices = [
-  { key: "desktop" as const, icon: Monitor, label: "Desktop" },
-  { key: "laptop" as const, icon: Monitor, label: "Laptop" },
-  { key: "tablet" as const, icon: Tablet, label: "Tablet" },
-  { key: "mobile" as const, icon: Smartphone, label: "Mobile" },
+  { key: "desktop" as const, icon: Monitor, label: "Desktop (1440px)" },
+  { key: "laptop" as const, icon: Laptop2, label: "Laptop (1280px)" },
+  { key: "tablet" as const, icon: Tablet, label: "Tablet (768px)" },
+  { key: "mobile" as const, icon: Smartphone, label: "Mobile (375px)" },
 ];
 
 export function BuilderFloatingToolbar() {

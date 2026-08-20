@@ -14,47 +14,70 @@
 
 @theme {
   /* Colors */
-  --color-apple-primary: #0066cc;
-  --color-apple-primary-focus: #0071e3;
-  --color-apple-primary-on-dark: #2997ff;
-  --color-apple-ink: #1d1d1f;
-  --color-apple-body: #1d1d1f;
+  --color-canvas-night: #000000;
+  --color-canvas-night-elevated: #0a0a0a;
+  --color-surface-elevated-dark: #1e2c31;
+  --color-canvas-light: #ffffff;
+  --color-canvas-cream: #fbfbf5;
+  --color-hairline-light: #e4e4e7;
+  --color-hairline-dark: #1e2c31;
+  --color-aloe-10: #c1fbd4;
+  --color-pistachio-10: #d4f9e0;
+  --color-link-cool-1: #9dabad;
+  --color-link-cool-2: #9797a2;
+  --color-link-cool-3: #bdbdca;
+  --color-link-mint: #99b3ad;
+
+  --color-shade-30: #d4d4d8;
+  --color-shade-40: #a1a1aa;
+  --color-shade-50: #71717a;
+  --color-shade-60: #52525b;
+  --color-shade-70: #3f3f46;
+  --color-ink: #000000;
+  --color-on-primary: #ffffff;
+
+  /* Backward-compatible Apple / platform aliases */
+  --color-apple-primary: #18181b;
+  --color-apple-primary-focus: #000000;
+  --color-apple-primary-on-dark: #ffffff;
+  --color-apple-ink: #09090b;
+  --color-apple-body: #18181b;
   --color-apple-body-on-dark: #ffffff;
-  --color-apple-body-muted: #cccccc;
-  --color-apple-ink-muted-80: #333333;
-  --color-apple-ink-muted-48: #7a7a7a;
-  --color-apple-divider-soft: #f0f0f0;
-  --color-apple-hairline: #e0e0e0;
+  --color-apple-body-muted: #a1a1aa;
+  --color-apple-ink-muted-80: #3f3f46;
+  --color-apple-ink-muted-48: #71717a;
+  --color-apple-divider-soft: #f4f4f5;
+  --color-apple-hairline: #e4e4e7;
   --color-apple-canvas: #ffffff;
-  --color-apple-canvas-parchment: #f5f5f7;
-  --color-apple-surface-pearl: #fafafc;
-  --color-apple-surface-tile-1: #272729;
-  --color-apple-surface-tile-2: #2a2a2c;
-  --color-apple-surface-tile-3: #252527;
+  --color-apple-canvas-parchment: #fafafa;
+  --color-apple-surface-pearl: #fcfcfc;
+  --color-apple-surface-tile-1: #09090b;
+  --color-apple-surface-tile-2: #121215;
+  --color-apple-surface-tile-3: #18181b;
   --color-apple-surface-black: #000000;
-  --color-apple-surface-chip: #d2d2d7;
+  --color-apple-surface-chip: #e4e4e7;
   --color-apple-on-primary: #ffffff;
   --color-apple-on-dark: #ffffff;
 
   /* Semantic aliases */
-  --color-background: var(--color-apple-canvas);
-  --color-foreground: var(--color-apple-ink);
-  --color-primary: var(--color-apple-primary);
-  --color-primary-foreground: var(--color-apple-on-primary);
-  --color-primary-hover: var(--color-apple-primary-focus);
-  --color-secondary: var(--color-apple-surface-pearl);
-  --color-secondary-foreground: var(--color-apple-ink-muted-80);
-  --color-accent: var(--color-apple-primary);
-  --color-accent-foreground: var(--color-apple-on-primary);
-  --color-popover: var(--color-apple-canvas);
-  --color-popover-foreground: var(--color-apple-ink);
-  --color-muted: var(--color-apple-canvas-parchment);
-  --color-muted-foreground: var(--color-apple-ink-muted-48);
-  --color-border: var(--color-apple-hairline);
-  --color-input: var(--color-apple-hairline);
-  --color-ring: var(--color-apple-primary-focus);
-  --color-card: var(--color-apple-canvas);
-  --color-card-foreground: var(--color-apple-ink);
+  --color-background: var(--color-canvas-light);
+  --color-foreground: var(--color-ink);
+  --color-primary: #000000;
+  --color-primary-foreground: #ffffff;
+  --color-primary-hover: var(--color-shade-70);
+  --color-secondary: var(--color-canvas-cream);
+  --color-secondary-foreground: var(--color-shade-70);
+  --color-accent: var(--color-aloe-10);
+  --color-accent-foreground: var(--color-ink);
+  --color-popover: var(--color-canvas-light);
+  --color-popover-foreground: var(--color-ink);
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: var(--color-shade-50);
+  --color-border: var(--color-hairline-light);
+  --color-input: var(--color-hairline-light);
+  --color-ring: var(--color-shade-70);
+  --color-card: var(--color-canvas-light);
+  --color-card-foreground: var(--color-ink);
   --color-destructive: #dc2626;
   --color-destructive-foreground: #ffffff;
   --color-destructive-hover: #b91c1c;
@@ -62,34 +85,44 @@
   --color-success-foreground: #ffffff;
   --color-success-hover: #047857;
 
-  /* Border radius — Apple tokens use apple- prefix to avoid overriding Tailwind defaults */
+  /* Border radius — safe custom tokens */
+  --radius-xs: 4px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+  --radius-pill: 9999px;
+
   --radius-apple-none: 0px;
-  --radius-apple-xs: 5px;
+  --radius-apple-xs: 4px;
   --radius-apple-sm: 8px;
-  --radius-apple-md: 11px;
-  --radius-apple-lg: 18px;
+  --radius-apple-md: 10px;
+  --radius-apple-lg: 12px;
   --radius-apple-pill: 9999px;
   --radius-apple-full: 9999px;
-  /* Safe custom token — does not collide with Tailwind defaults */
-  --radius-pill: 9999px;
-  --radius-apple-xl: 22px;
+  --radius-apple-xl: 20px;
 
-  /* Apple spacing — prefixed to avoid breaking max-w-*, w-*, gap-*, p-* defaults */
+  /* Spacing */
   --spacing-apple-xxs: 4px;
   --spacing-apple-xs: 8px;
   --spacing-apple-sm: 12px;
-  --spacing-apple-md: 17px;
+  --spacing-apple-md: 16px;
   --spacing-apple-lg: 24px;
   --spacing-apple-xl: 32px;
   --spacing-apple-xxl: 48px;
   --spacing-apple-section: 80px;
 
   /* Typography families */
-  --font-display: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: "SF Pro Text", var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Neue Haas Grotesk Display", "Inter Display", "Inter", system-ui, -apple-system, sans-serif;
+  --font-body: var(--font-inter), "Inter Variable", "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Shadows */
-  --shadow-product: 3px 5px 30px 0 rgba(0, 0, 0, 0.22);
+  /* Elevation Shadows (DESIGN.md) */
+  --shadow-level-1: 0 1px 2px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-level-2: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.3), 0 5px 10px rgba(0, 0, 0, 0.2);
+  --shadow-level-3: 0 8px 8px rgba(0, 0, 0, 0.03), 0 4px 4px rgba(0, 0, 0, 0.03), 0 2px 2px rgba(0, 0, 0, 0.02), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --shadow-level-4: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-product: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
 
   /* Animation */
   --ease-apple: cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -100,25 +133,26 @@
 
 :root {
   color-scheme: light;
+  font-feature-settings: "ss03" 1;
 }
 
 .dark {
   color-scheme: dark;
-  --color-background: var(--color-apple-surface-tile-1);
-  --color-foreground: var(--color-apple-body-on-dark);
-  --color-primary-hover: var(--color-apple-primary-focus);
-  --color-secondary: var(--color-apple-surface-tile-2);
-  --color-secondary-foreground: var(--color-apple-body-muted);
-  --color-accent: var(--color-apple-primary-on-dark);
-  --color-accent-foreground: var(--color-apple-surface-black);
-  --color-popover: var(--color-apple-surface-tile-2);
-  --color-popover-foreground: var(--color-apple-body-on-dark);
-  --color-muted: var(--color-apple-surface-tile-2);
-  --color-muted-foreground: var(--color-apple-body-muted);
-  --color-border: var(--color-apple-surface-tile-3);
-  --color-input: var(--color-apple-surface-tile-3);
-  --color-card: var(--color-apple-surface-tile-2);
-  --color-card-foreground: var(--color-apple-body-on-dark);
+  --color-background: var(--color-canvas-night);
+  --color-foreground: var(--color-on-primary);
+  --color-primary-hover: var(--color-shade-70);
+  --color-secondary: var(--color-canvas-night-elevated);
+  --color-secondary-foreground: var(--color-shade-40);
+  --color-accent: var(--color-aloe-10);
+  --color-accent-foreground: var(--color-ink);
+  --color-popover: var(--color-canvas-night-elevated);
+  --color-popover-foreground: var(--color-on-primary);
+  --color-muted: var(--color-surface-elevated-dark);
+  --color-muted-foreground: var(--color-shade-40);
+  --color-border: var(--color-hairline-dark);
+  --color-input: var(--color-hairline-dark);
+  --color-card: var(--color-canvas-night-elevated);
+  --color-card-foreground: var(--color-on-primary);
 }
 
 html,
@@ -130,39 +164,20 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-
-  @keyframes skeleton-pulse {
-    0%, 100% {
-      opacity: 0.5;
-    }
-  }
+  font-feature-settings: "ss03" 1;
 }
 
 body {
-  background-color: var(--color-apple-canvas-parchment);
-  color: var(--color-apple-ink);
+  background-color: var(--color-canvas-cream);
+  color: var(--color-ink);
   font-family: var(--font-body);
-  font-size: 17px;
-  font-weight: 400;
-  line-height: 1.47;
-  letter-spacing: -0.374px;
+  font-size: 16px;
+  font-weight: 420;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss03" 1;
 }
 
 .dark body {
@@ -825,13 +840,165 @@ svg {
 }
 
 [data-surface="dashboard"] .dashboard-kpi-card {
-  border-radius: var(--radius-apple-lg);
-  border: 1px solid var(--color-apple-hairline);
-  background: var(--color-apple-canvas);
-  padding: var(--spacing-apple-lg);
-  transition: border-color 200ms var(--ease-apple);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-hairline-light);
+  background: var(--color-canvas-light);
+  padding: 20px;
+  box-shadow: var(--shadow-level-3);
+  transition: all 200ms var(--ease-apple);
 }
 
 [data-surface="dashboard"] .dashboard-kpi-card:hover {
-  border-color: color-mix(in srgb, var(--color-apple-primary) 20%, var(--color-apple-hairline));
+  border-color: var(--color-shade-40);
 }
+
+/* ── DESIGN.md Component Classes ────────────────────────────────── */
+
+.button-primary-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 20px;
+  transition: all var(--duration-fast) var(--ease-apple);
+  border: none;
+  cursor: pointer;
+}
+
+.button-primary-pill:hover {
+  background-color: var(--color-shade-70);
+}
+
+.button-primary-pill:active {
+  background-color: var(--color-shade-70);
+  transform: scale(0.98);
+}
+
+.button-outline-on-light {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-canvas-light);
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 20px;
+  transition: all var(--duration-fast) var(--ease-apple);
+  cursor: pointer;
+}
+
+.button-outline-on-light:hover {
+  background-color: var(--color-muted);
+}
+
+.button-outline-on-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background-color: transparent;
+  color: var(--color-on-primary);
+  border: 2px solid var(--color-on-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 20px;
+  transition: all var(--duration-fast) var(--ease-apple);
+  cursor: pointer;
+}
+
+.button-outline-on-dark:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.button-aloe-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-aloe-10);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 20px;
+  transition: all var(--duration-fast) var(--ease-apple);
+  border: none;
+  cursor: pointer;
+}
+
+.button-aloe-pill:hover {
+  filter: brightness(0.96);
+}
+
+.pill-tag-mint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-aloe-10);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+}
+
+.pill-tag-shade {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-shade-30);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+}
+
+.card-pricing {
+  background-color: var(--color-canvas-light);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-hairline-light);
+  padding: 32px;
+  box-shadow: var(--shadow-level-3);
+}
+
+.card-pricing-featured {
+  background-color: var(--color-aloe-10);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-aloe-10);
+  padding: 32px;
+  box-shadow: var(--shadow-level-3);
+}
+
+.card-feature-cinematic {
+  background-color: var(--color-canvas-night-elevated);
+  color: var(--color-on-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-level-1);
+}
+
+.shadow-level-1 {
+  box-shadow: var(--shadow-level-1);
+}
+
+.shadow-level-2 {
+  box-shadow: var(--shadow-level-2);
+}
+
+.shadow-level-3 {
+  box-shadow: var(--shadow-level-3);
+}
+
+.shadow-level-4 {
+  box-shadow: var(--shadow-level-4);
+}
+

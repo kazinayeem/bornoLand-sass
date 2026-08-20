@@ -15,11 +15,11 @@ const buttonVariants = cva(
         outline:
           "border border-primary bg-transparent text-primary rounded-pill px-[22px] py-[11px] text-[17px] font-normal leading-[1.47] tracking-[-0.374px] hover:bg-primary/5",
         secondary:
-          "bg-secondary text-secondary-foreground rounded-apple-md px-[14px] py-2 text-caption border-[3px] border-border hover:bg-border/50",
+          "bg-secondary text-secondary-foreground rounded-pill px-[22px] py-[11px] text-[17px] font-normal leading-[1.47] tracking-[-0.374px] border-[3px] border-border hover:bg-border/50",
         ghost:
-          "text-foreground hover:bg-muted rounded-apple-sm px-[15px] py-2 text-caption",
+          "text-foreground hover:bg-muted rounded-pill px-[22px] py-[11px] text-[17px] font-normal leading-[1.47] tracking-[-0.374px]",
         dark:
-          "bg-apple-ink text-apple-on-dark rounded-apple-sm px-[15px] py-2 text-caption dark:bg-apple-surface-tile-3 dark:text-apple-body-on-dark",
+          "bg-apple-ink text-apple-on-dark rounded-pill px-[22px] py-[11px] text-[17px] font-normal leading-[1.47] tracking-[-0.374px] dark:bg-apple-surface-tile-3 dark:text-apple-body-on-dark",
         danger:
           "bg-destructive text-destructive-foreground rounded-pill px-[22px] py-[11px] text-[17px] font-normal hover:bg-destructive-hover focus-visible:ring-destructive",
         success:

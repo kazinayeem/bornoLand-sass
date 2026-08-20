@@ -59,13 +59,36 @@ export function FloatingSectionToolbar() {
 
   const selectedSectionId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const rightPanelOpen = useSelector((s: RootState) => s.builder.rightPanelOpen);
-  const selectedSection = useSelector((s: RootState) =>
-    s.builder.sections.find((sec) => sec.id === selectedSectionId),
-  );
-  const selectedIndex = useSelector((s: RootState) =>
-    s.builder.sections.findIndex((sec) => sec.id === selectedSectionId),
-  );
-  const totalSections = useSelector((s: RootState) => s.builder.sections.length);
+  const editingZone = useSelector((s: RootState) => s.builder.editingZone);
+
+  // Search all three zones so header/footer selections also show the toolbar
+  const selectedSection = useSelector((s: RootState) => {
+    if (!s.builder.selectedSectionId) return undefined;
+    return (
+      s.builder.sections.find((sec) => sec.id === s.builder.selectedSectionId) ??
+      s.builder.headerSections.find((sec) => sec.id === s.builder.selectedSectionId) ??
+      s.builder.footerSections.find((sec) => sec.id === s.builder.selectedSectionId)
+    );
+  });
+
+  // Index and total within the active zone for move-up/down
+  const selectedIndex = useSelector((s: RootState) => {
+    if (!s.builder.selectedSectionId) return -1;
+    const zone = s.builder.editingZone;
+    const list =
+      zone === "header" ? s.builder.headerSections
+      : zone === "footer" ? s.builder.footerSections
+      : s.builder.sections;
+    return list.findIndex((sec) => sec.id === s.builder.selectedSectionId);
+  });
+
+  const totalSections = useSelector((s: RootState) => {
+    const zone = s.builder.editingZone;
+    if (zone === "header") return s.builder.headerSections.length;
+    if (zone === "footer") return s.builder.footerSections.length;
+    return s.builder.sections.length;
+  });
+
 
   const rect = useSectionRect(selectedSectionId);
 

@@ -86,6 +86,7 @@ export function StorePreview({ store, theme, products = [], categories = [], set
   const selectCanvasSection = useCallback((sectionId: string) => {
     dispatch(setSelectedSection(sectionId));
     dispatch(setActiveRightTab("content"));
+    // Auto-open the right panel so properties are always visible on first selection
     dispatch(setRightPanelOpen(true));
   }, [dispatch]);
 

@@ -32,6 +32,7 @@ import {
 import { setZoom } from "@/redux/slices/preview-slice";
 import { useGetProductsQuery } from "@/redux/api/product-api";
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
+import { useGetStoreNavigationsQuery } from "@/redux/api/navigation-api";
 import { Layers, Plus } from "lucide-react";
 
 type StorePreviewProps = {
@@ -50,8 +51,10 @@ export function StorePreview({ store, theme, products = [], categories = [], set
   const dispatch = useDispatch();
   const { data: productData } = useGetProductsQuery(store._id, { skip: !store._id || products.length > 0 });
   const { data: categoryData } = useGetCategoriesQuery(store._id, { skip: !store._id || categories.length > 0 });
+  const { data: navigationData } = useGetStoreNavigationsQuery(store._id, { skip: !store._id });
   const liveProducts = products.length > 0 ? products : (productData?.data?.products ?? []);
   const liveCategories = categories.length > 0 ? categories : (categoryData?.data?.categories ?? []);
+  const liveNavigations = navigationData?.data?.navigations ?? [];
   const device = useSelector((s: RootState) => s.preview.device);
   const zoom = useSelector((s: RootState) => s.preview.zoom);
   const showGrid = useSelector((s: RootState) => s.preview.showGrid);
@@ -299,6 +302,7 @@ export function StorePreview({ store, theme, products = [], categories = [], set
             categories={liveCategories}
             settings={settings}
             sliders={sliders}
+            navigations={liveNavigations}
             pageSections={sections}
             headerSections={headerSections}
             footerSections={footerSections}

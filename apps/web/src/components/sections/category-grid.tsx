@@ -4,14 +4,11 @@ import { useMemo } from "react";
 import { BuilderLink as Link } from "./builder-link";
 import { SectionWrapper, SectionTitle, type SectionData } from "./section-renderer";
 import { useTenant } from "@/providers/tenant-provider";
-import { useBuilderCategories, useBuilderProducts } from "@/lib/use-builder-demo";
 import { Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function CategoryGrid({ section }: { section: SectionData }) {
-  const { categories: realCategories, products: realProducts } = useTenant();
-  const rawCategories = useBuilderCategories(realCategories);
-  const products = useBuilderProducts(realProducts);
+  const { categories: rawCategories, products } = useTenant();
   const p = section.props;
 
   const source = p.categorySource || "all";

@@ -4,11 +4,9 @@ import { TrendingUp } from "lucide-react";
 import { ProductCard } from "@/components/storefront/product-card";
 import { SectionWrapper, ColumnGrid, SectionTitle, type SectionData } from "./section-renderer";
 import { useTenant } from "@/providers/tenant-provider";
-import { useBuilderProducts } from "@/lib/use-builder-demo";
 
 export function BestSellers({ section }: { section: SectionData }) {
-  const { products: realProducts } = useTenant();
-  const products = useBuilderProducts(realProducts);
+  const { products } = useTenant();
   const p = section.props;
   const count = Number(p.productCount) || 8;
   const cols = p.gridColumns || "4";

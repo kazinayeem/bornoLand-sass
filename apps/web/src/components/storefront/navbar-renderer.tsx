@@ -15,9 +15,6 @@ import {
   LogOut,
   Heart,
   Home,
-  Grid3X3,
-  Info,
-  Mail,
   ChevronRight,
   MapPin,
   Bell,
@@ -61,7 +58,7 @@ export function NavbarRenderer({
   const router = useRouter();
   const pathname = usePathname() || "";
   const device = useDevice();
-  const { store, theme, navigations } = useTenant();
+  const { store, theme, navigations, categories } = useTenant();
   const { classes, primaryColor } = useStorefrontSurface();
   const itemCount = useSelector((state: RootState) => state.cart.items.reduce((sum, i) => sum + i.quantity, 0));
   const customer = useSelector((state: RootState) => state.customer);
@@ -97,13 +94,6 @@ export function NavbarRenderer({
 
   const primaryNavigation = navigations.find((navigation) => navigation.key === "primary" && navigation.isActive);
   const mobileNavigation = navigations.find((navigation) => navigation.key === "mobile" && navigation.isActive) ?? primaryNavigation;
-  const defaultNavLinks = [
-    { name: "Home", href: "/", icon: Home },
-    { name: "Shop", href: "/shop", icon: Grid3X3 },
-    { name: "Categories", href: "/categories", icon: Grid3X3 },
-    { name: "About", href: "/about", icon: Info },
-    { name: "Contact", href: "/contact", icon: Mail },
-  ];
   const navigationLinks = (items?: NavigationItemData[]) =>
     (items ?? [])
       .filter((item) => item.isVisible !== false)
@@ -121,7 +111,17 @@ export function NavbarRenderer({
     ? navLinksOverride.map((l) => ({ ...l, icon: Home, children: [], openInNewTab: false }))
     : primaryNavigation?.items?.length
       ? navigationLinks(primaryNavigation.items)
-      : defaultNavLinks.map((l) => ({ ...l, children: [], openInNewTab: false }));
+      : (categories ?? [])
+          .filter((cat) => cat.active !== false)
+          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+          .slice(0, 6)
+          .map((cat) => ({
+            name: cat.nameEn || cat.name,
+            href: `/category/${cat.slug}`,
+            icon: Home,
+            children: [],
+            openInNewTab: false,
+          }));
   const mobileLinks = mobileNavigation?.items?.length
     ? navigationLinks(mobileNavigation.items)
     : navLinks;

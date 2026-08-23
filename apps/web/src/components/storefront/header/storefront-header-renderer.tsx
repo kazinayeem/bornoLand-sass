@@ -8,6 +8,12 @@ import { MarketplaceHeader } from "./templates/marketplace-header";
 import { MinimalFashionHeader } from "./templates/minimal-fashion-header";
 import { ModernGeneralHeader } from "./templates/modern-general-header";
 import { useRegisterStorefrontHeaderOffset } from "@/components/storefront/storefront-header-offset";
+import {
+  isGlobalHeaderEnabled,
+  normalizeHeaderSettings,
+  resolveHeaderTemplateId,
+  type HeaderTemplateId,
+} from "@/lib/storefront/global-navigation";
 import { cn } from "@/lib/utils";
 
 export interface StorefrontHeaderRendererProps {
@@ -29,19 +35,6 @@ function readScrollY(target: HTMLElement | Window): number {
   return target === window ? window.scrollY : (target as HTMLElement).scrollTop;
 }
 
-function isHeaderDisabled(headerSettings: Record<string, unknown>): boolean {
-  return (
-    headerSettings.enabled === false ||
-    headerSettings.visible === false ||
-    headerSettings.show === false ||
-    headerSettings.enabled === "false" ||
-    headerSettings.visible === "false" ||
-    headerSettings.template === "none" ||
-    headerSettings.template === null ||
-    headerSettings.templateId === null
-  );
-}
-
 export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHeaderRendererProps) {
   const { theme } = useActiveTheme();
   const themeId = theme.id || "grocery";
@@ -52,30 +45,57 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
   const lastScrollYRef = useRef(0);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const disabled = isHeaderDisabled(headerSettings);
+  const config = useMemo(
+    () =>
+      normalizeHeaderSettings(headerSettings, {
+        themeId,
+        themeColors: {
+          primary: (theme as any).primaryColor,
+          secondary: (theme as any).secondaryColor,
+          accent: (theme as any).accentColor,
+          background: (theme as any).backgroundColor,
+          text: (theme as any).textColor,
+        },
+      }),
+    [headerSettings, themeId, theme],
+  );
 
-  const template = useMemo(() => {
-    return (
-      (headerSettings.template as string) ||
-      (headerSettings.headerTemplate as string) ||
-      (headerSettings.templateId as string) ||
-      (headerSettings.layout as string) ||
-      (themeId === "electronics" ? "compact-professional" : "modern-ecommerce")
-    );
-  }, [headerSettings.template, headerSettings.headerTemplate, headerSettings.templateId, headerSettings.layout, themeId]);
+  const disabled = !config.enabled || !isGlobalHeaderEnabled(headerSettings);
+  const template: HeaderTemplateId = config.templateId;
+  const position = config.position;
+  const autoHideOnScroll = config.autoHideOnScroll;
+  const shadow = config.shadow;
+  const transparent = config.transparent;
 
-  const position =
-    (headerSettings.position as string) || (headerSettings.sticky === false ? "static" : "sticky");
-  const autoHideOnScroll =
-    headerSettings.autoHideOnScroll === true || headerSettings.autoHideOnScroll === "true";
-  const shadow = (headerSettings.shadow as string) || "none";
-  const transparent =
-    headerSettings.transparent === true || headerSettings.transparent === "true";
+  // Pass normalized config + raw settings so templates keep full keys while sharing nav limits
+  const templateSettings = useMemo(
+    () => ({
+      ...headerSettings,
+      template,
+      templateId: template,
+      headerTemplate: template,
+      maxVisibleCategories: config.maxVisibleItems,
+      maxVisibleNavigationItems: config.maxVisibleItems,
+      showMoreMenu: config.showMoreMenu,
+      enableCategoryHover: config.enableCategoryHover,
+      showAllCategoriesButton: config.showAllCategoriesButton,
+      showSearch: config.showSearch,
+      showWishlist: config.showWishlist,
+      showCart: config.showCart,
+      showProfile: config.showProfile,
+      showAnnouncement: config.showAnnouncement,
+      announcementText: config.announcementText,
+      logoUrl: config.logoUrl || headerSettings.logoUrl,
+      primaryColor: config.colors.primary,
+      secondaryColor: config.colors.secondary,
+      accentColor: config.colors.accent,
+    }),
+    [headerSettings, template, config],
+  );
 
   const publishMetrics = useCallback(
     (height: number) => {
       setHeaderHeight(height);
-      // Content offset only when fixed removes flow space — never double-offset sticky
       const offset = position === "fixed" && !transparent ? height : 0;
       registerContentOffset(height, offset);
     },
@@ -88,9 +108,7 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       return;
     }
     const updateHeight = () => {
-      if (headerRef.current) {
-        publishMetrics(headerRef.current.offsetHeight);
-      }
+      if (headerRef.current) publishMetrics(headerRef.current.offsetHeight);
     };
     updateHeight();
     const observer = new ResizeObserver(updateHeight);
@@ -106,11 +124,9 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
     if (!autoHideOnScroll && position !== "sticky" && position !== "fixed") return;
 
     const scrollTarget = getScrollParent(headerRef.current);
-
     const handleScroll = () => {
       const currentScrollY = readScrollY(scrollTarget);
       setIsScrolled(currentScrollY > 20);
-
       if (autoHideOnScroll) {
         if (currentScrollY > lastScrollYRef.current && currentScrollY > 120) {
           setIsVisible(false);
@@ -133,41 +149,26 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
   const renderHeaderContent = () => {
     switch (template) {
       case "minimal-clean":
-      case "minimal":
-      case "minimal-fashion":
-      case "clean":
-        return <MinimalFashionHeader key="header-minimal-clean" headerSettings={headerSettings} />;
-
+        return <MinimalFashionHeader key="header-minimal-clean" headerSettings={templateSettings} />;
       case "modern-ecommerce":
-      case "grocery":
-      case "organic":
-      case "ecommerce":
-        return <GroceryHeader key="header-modern-ecommerce" headerSettings={headerSettings} />;
-
+        return <GroceryHeader key="header-modern-ecommerce" headerSettings={templateSettings} />;
       case "marketplace":
-      case "daraz":
-      case "multivendor":
-        return <MarketplaceHeader key="header-marketplace" headerSettings={headerSettings} />;
-
+        return <MarketplaceHeader key="header-marketplace" headerSettings={templateSettings} />;
       case "premium-luxury":
-      case "premium":
-      case "luxury":
-      case "fashion":
-      case "modern-general":
-        return <ModernGeneralHeader key="header-premium-luxury" headerSettings={headerSettings} />;
-
+        return <ModernGeneralHeader key="header-premium-luxury" headerSettings={templateSettings} />;
       case "compact-professional":
-      case "compact":
-      case "professional":
-      case "tech-mega":
-      case "electronics":
-      case "computer":
-        return <TechMegaHeader key="header-compact-professional" headerSettings={headerSettings} />;
-
+        return <TechMegaHeader key="header-compact-professional" headerSettings={templateSettings} />;
       default:
-        return <GroceryHeader key="header-default-modern" headerSettings={headerSettings} />;
+        return <GroceryHeader key="header-default-modern" headerSettings={templateSettings} />;
     }
   };
+
+  const colorStyle = {
+    ["--store-header-height" as string]: `${headerHeight}px`,
+    ...(config.colors.primary ? { ["--store-primary" as string]: config.colors.primary } : {}),
+    ...(config.colors.secondary ? { ["--store-secondary" as string]: config.colors.secondary } : {}),
+    ...(config.colors.accent ? { ["--store-accent" as string]: config.colors.accent } : {}),
+  } as React.CSSProperties;
 
   return (
     <header
@@ -175,11 +176,7 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       data-global-header={template}
       data-header-position={position}
       className="relative z-50 w-full max-w-full min-w-0"
-      style={
-        {
-          ["--store-header-height" as string]: `${headerHeight}px`,
-        } as React.CSSProperties
-      }
+      style={colorStyle}
     >
       <div
         ref={headerRef}
@@ -209,3 +206,6 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
     </header>
   );
 }
+
+// re-export for tests / tooling
+export { resolveHeaderTemplateId };

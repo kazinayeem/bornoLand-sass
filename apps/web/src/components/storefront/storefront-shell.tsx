@@ -70,7 +70,21 @@ export function StorefrontShell({
   builderMode = false,
   children,
 }: StorefrontShellProps) {
-  const themeCssVars = useMemo(() => generateThemeCssVariables(theme), [theme]);
+  const themeCssVars = useMemo(() => generateThemeCssVariables({
+    primaryColor: theme.primaryColor,
+    secondaryColor: theme.secondaryColor,
+    accentColor: (theme as any).accentColor,
+    backgroundColor: (theme as any).backgroundColor,
+    textColor: (theme as any).textColor,
+    mutedTextColor: (theme as any).mutedTextColor,
+    borderColor: (theme as any).borderColor,
+    borderRadius: theme.borderRadius,
+    shadowSize: theme.shadowSize,
+    layoutWidth: theme.layoutWidth,
+    font: theme.font,
+    headingFont: (theme as any).headingFont,
+    bodyFont: (theme as any).bodyFont,
+  }), [theme]);
   const tenantValue = useMemo<TenantContextType>(
     () => ({ store, theme, products, categories, settings, sliders, navigations, contact }),
     [store._id, store.slug, theme, products, categories, settings, sliders, navigations, contact],

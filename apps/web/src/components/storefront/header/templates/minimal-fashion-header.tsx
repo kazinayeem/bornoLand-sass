@@ -12,7 +12,6 @@ import {
   Heart,
   ChevronDown,
   ChevronRight,
-  Sparkles,
 } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { openCart } from "@/redux/slices/cart-slice";

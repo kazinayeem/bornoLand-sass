@@ -11,15 +11,10 @@ import {
   User,
   Heart,
   Zap,
-  PhoneCall,
   ChevronDown,
   ChevronRight,
   Flame,
-  Layers,
   Cpu,
-  Gift,
-  Clock,
-  Award,
 } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { openCart } from "@/redux/slices/cart-slice";

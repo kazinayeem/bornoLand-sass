@@ -96,7 +96,7 @@ export function ThemePanel() {
     dispatch(setAccentColor(targetTheme.tokens.colors.accent || "#f59e0b"));
     dispatch(setBackgroundColor(targetTheme.tokens.colors.background || "#ffffff"));
     dispatch(setTextColor(targetTheme.tokens.colors.text || "#18181b"));
-    dispatch(setMutedTextColor(targetTheme.tokens.colors.muted || "#71717a"));
+    dispatch(setMutedTextColor(targetTheme.tokens.colors.textMuted || "#71717a"));
     dispatch(setBorderColor(targetTheme.tokens.colors.border || "#e4e4e7"));
     dispatch(setBorderRadius(targetTheme.tokens.layout.borderRadius));
     dispatch(setSpacing(targetTheme.tokens.layout.spacing));

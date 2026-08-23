@@ -326,6 +326,11 @@ export function BuilderEditor() {
     themeRef.current = signature;
     dispatch(setTheme({
       primaryColor: store.theme.primaryColor, secondaryColor: store.theme.secondaryColor,
+      accentColor: (store.theme as any).accentColor,
+      backgroundColor: (store.theme as any).backgroundColor,
+      textColor: (store.theme as any).textColor,
+      mutedTextColor: (store.theme as any).mutedTextColor,
+      borderColor: (store.theme as any).borderColor,
       font: store.theme.font, buttonStyle: store.theme.buttonStyle,
       layoutWidth: store.theme.layoutWidth, darkMode: store.theme.darkMode,
       navbarStyle: store.theme.navbarStyle,

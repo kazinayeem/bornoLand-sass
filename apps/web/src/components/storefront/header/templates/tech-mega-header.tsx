@@ -245,8 +245,8 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
               {t("shop", storeLang)}
             </Link>
 
-            {/* Dynamic Root Categories with StarTech-style Mega Menu Hover */}
-            {rootCategories.map((cat) => {
+            {/* Dynamic Root Categories (Top 6) with StarTech-style Mega Menu Hover */}
+            {rootCategories.slice(0, 6).map((cat) => {
               const subs = subcategoriesByParent[cat._id] || [];
               const hasSubs = subs.length > 0;
               const isHovered = activeMegaCategory === cat._id;
@@ -261,7 +261,7 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
                   <Link
                     href={`/category/${cat.slug}`}
                     className={cn(
-                      "inline-flex items-center gap-1 px-3 py-2 rounded-lg transition-colors",
+                      "inline-flex items-center gap-1 px-3 py-2 rounded-lg transition-colors whitespace-nowrap",
                       isHovered ? "text-white bg-white/10" : "hover:text-white hover:bg-white/5"
                     )}
                   >
@@ -283,6 +283,30 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
                 </div>
               );
             })}
+
+            {/* More Categories Dropdown if > 6 categories */}
+            {rootCategories.length > 6 && (
+              <div className="relative group">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-lg hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
+                >
+                  <span>More</span>
+                  <ChevronDown className="w-3 h-3 opacity-60 group-hover:rotate-180 transition-transform" />
+                </button>
+                <div className="absolute left-0 top-full hidden group-hover:block w-48 py-2 bg-[#081621] border border-[#172b3c] rounded-xl shadow-2xl z-50 animate-in fade-in-50 duration-150">
+                  {rootCategories.slice(6).map((cat) => (
+                    <Link
+                      key={cat._id}
+                      href={`/category/${cat.slug}`}
+                      className="block px-4 py-2 text-xs text-zinc-300 hover:text-white hover:bg-[#0071dc]/20 transition-colors truncate"
+                    >
+                      {getLocalizedName(cat, storeLang)}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <Link href="/pc-builder" className="px-3 py-2 rounded-lg text-[#0071dc] font-bold hover:bg-[#0071dc]/10 transition-colors flex items-center gap-1">
               <Cpu className="w-3.5 h-3.5" />

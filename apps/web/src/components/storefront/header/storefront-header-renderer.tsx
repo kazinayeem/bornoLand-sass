@@ -124,8 +124,10 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       case "tech-mega":
       case "electronics":
       case "computer":
-      default:
         return <TechMegaHeader key="header-compact-professional" headerSettings={headerSettings} />;
+
+      default:
+        return <GroceryHeader key="header-default-modern" headerSettings={headerSettings} />;
     }
   };
 

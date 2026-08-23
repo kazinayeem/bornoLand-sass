@@ -73,6 +73,9 @@ const storeSchema = new Schema(
       darkMode: { type: Boolean, default: false },
       navbarStyle: { type: String, default: "fixed" }
     },
+    headerSettings: { type: Schema.Types.Mixed, default: () => ({}) },
+    footerSettings: { type: Schema.Types.Mixed, default: () => ({}) },
+    design: { type: Schema.Types.Mixed, default: () => ({}) },
     storageUsedBytes: { type: Number, default: 0, min: 0 },
     storageLimitBytes: { type: Number, default: 0, min: 0 },
     storageUpdatedAt: { type: Date },

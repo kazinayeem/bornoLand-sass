@@ -70,8 +70,10 @@ export function StorefrontFooterRenderer({ footerSettings = {} }: StorefrontFoot
       case "premium-luxury":
       case "modern-store":
       case "luxury":
-      default:
         return <ModernStoreFooter key="footer-premium" footerSettings={footerSettings} />;
+
+      default:
+        return <GroceryFooter key="footer-default-classic" footerSettings={footerSettings} />;
     }
   };
 

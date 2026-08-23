@@ -77,14 +77,22 @@ const pageThemeSchema = new Schema(
 
 const headerSettingsSchema = new Schema(
   {
+    enabled: { type: Boolean, default: true },
+    visible: { type: Boolean, default: true },
+    template: { type: String, default: "modern-ecommerce" },
+    templateId: { type: String },
+    headerTemplate: { type: String },
+    position: { type: String, default: "sticky" },
+    scrollingBehavior: { type: String, default: "always" },
+    autoHideOnScroll: { type: Boolean, default: false },
+    shadow: { type: String, default: "none" },
+    transparent: { type: Boolean, default: false },
     logo: { type: String, default: "" },
     logoWidth: { type: Number, default: 140 },
     sticky: { type: Boolean, default: false },
-    transparent: { type: Boolean, default: false },
     height: { type: String, default: "auto" },
     background: { type: String, default: "" },
     borderColor: { type: String, default: "" },
-    shadow: { type: String, default: "none" },
     padding: { type: String, default: "16px 24px" },
     showSearch: { type: Boolean, default: true },
     showWishlist: { type: Boolean, default: true },
@@ -93,17 +101,26 @@ const headerSettingsSchema = new Schema(
     showLanguageSwitcher: { type: Boolean, default: false },
     showCurrencySwitcher: { type: Boolean, default: false },
     announcementBar: { type: String, default: "" },
+    announcementText: { type: String, default: "" },
+    showAnnouncement: { type: Boolean, default: true },
     topBar: { type: String, default: "" },
     desktopLayout: { type: String, default: "default" },
     mobileLayout: { type: String, default: "hamburger" },
   },
-  { _id: false }
+  { _id: false, strict: false }
 );
 
 // ─── Footer Settings sub-schema ──────────────────────────────────────────────
 
 const footerSettingsSchema = new Schema(
   {
+    enabled: { type: Boolean, default: true },
+    visible: { type: Boolean, default: true },
+    template: { type: String, default: "classic-ecommerce" },
+    templateId: { type: String },
+    footerTemplate: { type: String },
+    layout: { type: String, default: "classic-ecommerce" },
+    mobileLayout: { type: String, default: "accordion" },
     logo: { type: String, default: "" },
     description: { type: String, default: "" },
     showNewsletter: { type: Boolean, default: false },
@@ -116,7 +133,7 @@ const footerSettingsSchema = new Schema(
     textColor: { type: String, default: "" },
     padding: { type: String, default: "48px 24px 24px" },
   },
-  { _id: false }
+  { _id: false, strict: false }
 );
 
 // ─── Store Page Schema ───────────────────────────────────────────────────────

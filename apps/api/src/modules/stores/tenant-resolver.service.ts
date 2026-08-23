@@ -118,8 +118,44 @@ export async function resolveBySubdomain(
     deletedAt: null,
   }).lean() as any;
 
-  // Store exists even when a specific CMS page is missing/unpublished.
-  // Callers render an empty canvas rather than treating the whole store as 404.
+  let resolvedPage = page;
+  if (!resolvedPage && normalizedSlug !== "/") {
+    // If specific CMS page is not found as a custom StorePage, fetch the home page's layout configuration
+    const homePage = await StorePageModel.findOne({
+      storeId: store._id,
+      slug: "/",
+      status: "published",
+      deletedAt: null,
+    }).lean() as any;
+    if (homePage) {
+      resolvedPage = {
+        _id: "global-shell",
+        title: store.name,
+        slug: normalizedSlug,
+        headerSections: homePage.headerSections || [],
+        footerSections: homePage.footerSections || [],
+        headerSettings: homePage.headerSettings || store.headerSettings || {},
+        footerSettings: homePage.footerSettings || store.footerSettings || {},
+        sections: [],
+      };
+    }
+  } else if (resolvedPage && normalizedSlug !== "/") {
+    // Inherit global header/footer from home page if not explicitly customized on sub-page
+    if (!resolvedPage.headerSettings?.template && resolvedPage.headerSettings?.enabled === undefined) {
+      const homePage = await StorePageModel.findOne({
+        storeId: store._id,
+        slug: "/",
+        status: "published",
+        deletedAt: null,
+      }).lean() as any;
+      if (homePage?.headerSettings) {
+        resolvedPage.headerSettings = homePage.headerSettings;
+      }
+      if (homePage?.footerSettings) {
+        resolvedPage.footerSettings = homePage.footerSettings;
+      }
+    }
+  }
 
   const products = await ProductModel.find({ storeId: store._id, status: "active" }).sort({ createdAt: -1 }).limit(20).lean() as any[];
   const categories = await CategoryModel.find({ storeId: store._id, active: true }).sort({ sortOrder: 1, name: 1 }).lean() as any[];
@@ -144,7 +180,7 @@ export async function resolveBySubdomain(
     data: {
       store: store ?? null,
       tenant: tenant ?? null,
-      page: page ?? null,
+      page: resolvedPage ?? null,
       products: products ?? [],
       categories: categories ?? [],
       settings: settings ?? null,

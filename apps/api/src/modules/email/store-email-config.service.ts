@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { connectDatabase } from "../../common/database/connection.js";
 import { StoreModel } from "../../models/store.model.js";
 import { StoreEmailConfigModel } from "./store-email-config.model.js";
@@ -41,12 +42,15 @@ function serializeConfig(doc: Record<string, unknown> | null | undefined, storeI
   };
 }
 
-export async function ensureDefaultEmailConfig(storeId: string) {
+export async function ensureDefaultEmailConfig(storeId: string, session?: mongoose.ClientSession) {
   await connectDatabase();
-  const existing = await StoreEmailConfigModel.findOne({ storeId }).lean() as Record<string, unknown> | null;
+  const query = StoreEmailConfigModel.findOne({ storeId });
+  if (session) query.session(session);
+  const existing = await query.lean() as Record<string, unknown> | null;
   if (existing) return serializeConfig(existing, storeId);
-  const created = await StoreEmailConfigModel.create({ storeId, ...defaultConfig });
-  return serializeConfig(created.toObject() as Record<string, unknown>, storeId);
+  const createOptions = session ? { session } : {};
+  const created = await StoreEmailConfigModel.create([{ storeId, ...defaultConfig }], createOptions);
+  return serializeConfig(created[0].toObject() as Record<string, unknown>, storeId);
 }
 
 export async function getEmailConfig(storeId: string, userId?: string) {

@@ -37,6 +37,8 @@ import { useStorePage } from "@/components/store-dashboard/store-page";
 import { canAccessThemeBuilder } from "@/lib/permissions/entitlements";
 import { useAppSelector } from "@/hooks/redux";
 import { THEMES, getThemeById, migrateThemeSections } from "@/themes/registry";
+import type { BuilderSection } from "@/redux/slices/builder-slice";
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { SmartImage } from "@/components/ui/smart-image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +50,16 @@ type TabMode = "themes" | "navigation" | "builder" | "styles" | "reset";
 type StoreDesignHubProps = {
   storeId: string;
 };
+
+function logThemeFlowError(label: string, error: unknown) {
+  if (process.env.NODE_ENV !== "development") return;
+  const rtkError = error as { data?: { message?: string }; status?: number | string };
+  console.error(`[theme-switch] ${label}`, {
+    message: rtkError?.data?.message ?? (error instanceof Error ? error.message : error),
+    status: rtkError?.status,
+    error,
+  });
+}
 
 export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
   const router = useRouter();
@@ -148,20 +160,24 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
         },
       }).unwrap();
 
-      // 2. Migrate Homepage Sections to target theme defaults safely
+      // 2. Migrate homepage sections — preserve compatible user content
       if (homePage?._id) {
-        const migratedSections = targetTheme.defaultSections.map((s) => ({
-          ...s,
-          id: `${s.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        }));
+        const migratedSections = migrateThemeSections(
+          targetTheme.id,
+          (homePage.sections as BuilderSection[] | undefined) ?? [],
+        );
 
         await updatePage({
           id: homePage._id,
           storeId,
           data: {
             sections: migratedSections,
-            headerSettings: targetTheme.header?.announcementText ? { announcementText: targetTheme.header.announcementText } : {},
-            footerSettings: { copyright: `© ${new Date().getFullYear()} ${store?.name || "Store"}. All rights reserved.` },
+            headerSettings: targetTheme.header?.announcementText
+              ? { announcementText: targetTheme.header.announcementText }
+              : {},
+            footerSettings: {
+              copyright: `© ${new Date().getFullYear()} ${store?.name || "Store"}. All rights reserved.`,
+            },
           },
         }).unwrap();
       }
@@ -174,7 +190,11 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
       setProductCardVariant(targetTheme.productCardVariant);
 
       if (storeContext) {
-        await revalidateStorefrontForStore(storeContext, { scope: "all" });
+        try {
+          await revalidateStorefrontForStore(storeContext, { scope: "all" });
+        } catch (revalidateError) {
+          logThemeFlowError("Storefront revalidation failed after theme switch", revalidateError);
+        }
       }
       await refetchPages();
       toast.success(`Switched to ${targetTheme.name}! Opening builder…`);
@@ -183,8 +203,21 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
       if (slug && permission.allowed) {
         router.push(`/store/${slug}/builder/home`);
       }
-    } catch {
-      toast.error("Failed to switch theme");
+    } catch (error) {
+      logThemeFlowError("Failed to switch theme", error);
+      const apiMessage =
+        error && typeof error === "object" && "data" in error
+          ? (error as FetchBaseQueryError).data &&
+            typeof (error as FetchBaseQueryError).data === "object" &&
+            "message" in ((error as FetchBaseQueryError).data as object)
+            ? String(((error as FetchBaseQueryError).data as { message?: string }).message)
+            : undefined
+          : undefined;
+      toast.error(
+        process.env.NODE_ENV === "development" && apiMessage
+          ? `Failed to switch theme: ${apiMessage}`
+          : "Failed to switch theme. Please try again.",
+      );
     } finally {
       setSaving(false);
     }
@@ -207,10 +240,15 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
       }).unwrap();
 
       if (storeContext) {
-        await revalidateStorefrontForStore(storeContext, { scope: "theme" });
+        try {
+          await revalidateStorefrontForStore(storeContext, { scope: "theme" });
+        } catch (revalidateError) {
+          logThemeFlowError("Storefront revalidation failed after global styles save", revalidateError);
+        }
       }
       toast.success("Global styles updated successfully!");
-    } catch {
+    } catch (error) {
+      logThemeFlowError("Failed to save global styles", error);
       toast.error("Failed to save global styles");
     } finally {
       setSaving(false);
@@ -261,11 +299,16 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
       setSecondaryColor(targetTheme.tokens.colors.secondary);
 
       if (storeContext) {
-        await revalidateStorefrontForStore(storeContext, { scope: "all" });
+        try {
+          await revalidateStorefrontForStore(storeContext, { scope: "all" });
+        } catch (revalidateError) {
+          logThemeFlowError("Storefront revalidation failed after website reset", revalidateError);
+        }
       }
       refetchPages();
       toast.success("Website design has been reset to clean defaults. Products & data are safe.");
-    } catch {
+    } catch (error) {
+      logThemeFlowError("Failed to reset website", error);
       toast.error("Failed to reset website");
     } finally {
       setSaving(false);

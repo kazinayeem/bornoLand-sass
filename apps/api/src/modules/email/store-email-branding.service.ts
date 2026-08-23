@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { connectDatabase } from "../../common/database/connection.js";
 import { StoreModel } from "../../models/store.model.js";
 import { StoreEmailBrandingModel } from "./store-email-branding.model.js";
@@ -40,12 +41,15 @@ function serializeBranding(doc: Record<string, unknown> | null | undefined, stor
   };
 }
 
-export async function ensureDefaultEmailBranding(storeId: string) {
+export async function ensureDefaultEmailBranding(storeId: string, session?: mongoose.ClientSession) {
   await connectDatabase();
-  const existing = await StoreEmailBrandingModel.findOne({ storeId }).lean() as Record<string, unknown> | null;
+  const query = StoreEmailBrandingModel.findOne({ storeId });
+  if (session) query.session(session);
+  const existing = await query.lean() as Record<string, unknown> | null;
   if (existing) return serializeBranding(existing, storeId);
-  const created = await StoreEmailBrandingModel.create({ storeId, ...defaultBranding });
-  return serializeBranding(created.toObject() as Record<string, unknown>, storeId);
+  const createOptions = session ? { session } : {};
+  const created = await StoreEmailBrandingModel.create([{ storeId, ...defaultBranding }], createOptions);
+  return serializeBranding(created[0].toObject() as Record<string, unknown>, storeId);
 }
 
 export async function getEmailBranding(storeId: string, userId?: string) {

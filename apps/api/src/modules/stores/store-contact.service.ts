@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { connectDatabase } from "../../common/database/connection.js";
 import { StoreModel } from "../../models/store.model.js";
 import { StoreContactModel } from "./store-contact.model.js";
@@ -57,12 +58,15 @@ function serializeStoreContact(doc: Record<string, unknown> | null | undefined, 
   };
 }
 
-export async function ensureDefaultStoreContact(storeId: string) {
+export async function ensureDefaultStoreContact(storeId: string, session?: mongoose.ClientSession) {
   await connectDatabase();
-  const existing: any = await StoreContactModel.findOne({ storeId }).lean();
+  const query = StoreContactModel.findOne({ storeId });
+  if (session) query.session(session);
+  const existing: any = await query.lean();
   if (existing) return serializeStoreContact(existing, storeId);
-  const created = await StoreContactModel.create({ storeId, ...defaultContact });
-  return serializeStoreContact(created.toObject() as Record<string, unknown>, storeId);
+  const createOptions = session ? { session } : {};
+  const created = await StoreContactModel.create([{ storeId, ...defaultContact }], createOptions);
+  return serializeStoreContact(created[0].toObject() as Record<string, unknown>, storeId);
 }
 
 export async function getStoreContact(storeId: string, userId?: string) {

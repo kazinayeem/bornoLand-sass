@@ -31,17 +31,17 @@ function parseSlides(p: Record<string, string>): HeroSlide[] {
       const parsed = typeof p.slides === "string" ? JSON.parse(p.slides) : p.slides;
       if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed.map((item: any, idx: number) => ({
-          id: item.id || `slide-${idx}`,
-          image: item.image || item.imageUrl || "",
+          id: item.id || `slide-${idx + 1}`,
+          image: item.image || item.imageUrl || item.desktopImage || "",
           mobileImage: item.mobileImage || item.mobileImageUrl || "",
           tabletImage: item.tabletImage || "",
-          badge: item.badge || item.kicker || "",
-          title: item.title || item.headline || `Slide ${idx + 1}`,
-          subtitle: item.subtitle || item.subheadline || "",
-          buttonText: item.buttonText || "",
-          buttonLink: item.buttonLink || item.buttonUrl || "/shop",
-          secondaryButtonText: item.secondaryButtonText || "",
-          secondaryButtonLink: item.secondaryButtonLink || "",
+          badge: item.badge ?? item.kicker ?? "",
+          title: item.title ?? item.headline ?? "",
+          subtitle: item.subtitle ?? item.subheadline ?? item.description ?? "",
+          buttonText: item.buttonText ?? item.primaryButtonText ?? "",
+          buttonLink: item.buttonLink ?? item.primaryButtonLink ?? "/shop",
+          secondaryButtonText: item.secondaryButtonText ?? "",
+          secondaryButtonLink: item.secondaryButtonLink ?? "",
           overlayColor: item.overlayColor || p.overlayColor || "rgba(0, 0, 0, 0.45)",
           textAlignment: item.textAlignment || (p.textAlignment as any) || "left",
           textColor: item.textColor || p.textColor || "#ffffff",
@@ -54,12 +54,12 @@ function parseSlides(p: Record<string, string>): HeroSlide[] {
   }
 
   // Fallback to legacy flat keys (slide1Image, slide2Image, etc.)
-  const count = Number(p.slideCount) || 3;
+  const count = Number(p.slideCount) || 2;
   return Array.from({ length: count }, (_, i) => {
     const idx = i + 1;
     return {
       id: `slide-${idx}`,
-      image: p[`slide${idx}Image` as keyof typeof p] || "",
+      image: p[`slide${idx}Image` as keyof typeof p] || p[`slide${idx}DesktopImage` as keyof typeof p] || "",
       mobileImage: p[`slide${idx}MobileImage` as keyof typeof p] || "",
       badge: p[`slide${idx}Badge` as keyof typeof p] || (i === 0 ? "Featured Deal" : ""),
       title: p[`slide${idx}Title` as keyof typeof p] || (i === 0 ? (p.headline || "Special Collection") : `Slide ${idx}`),
@@ -141,6 +141,8 @@ export function SliderHero({ section }: { section: SectionData }) {
         {/* Slides Container */}
         {slides.map((slide, i) => {
           const isCurrent = i === active;
+          const bgImage = slide.image || slide.mobileImage;
+
           return (
             <div
               key={slide.id || i}
@@ -149,9 +151,9 @@ export function SliderHero({ section }: { section: SectionData }) {
               }`}
             >
               {/* Responsive Background Images */}
-              {slide.image ? (
+              {bgImage ? (
                 <div className="relative h-full w-full">
-                  <picture>
+                  <picture className="h-full w-full">
                     {slide.mobileImage && (
                       <source media="(max-width: 640px)" srcSet={slide.mobileImage} />
                     )}
@@ -159,7 +161,7 @@ export function SliderHero({ section }: { section: SectionData }) {
                       <source media="(max-width: 1024px)" srcSet={slide.tabletImage} />
                     )}
                     <SmartImage
-                      src={slide.image}
+                      src={bgImage}
                       alt={slide.title || "Hero banner"}
                       fill
                       priority={i === 0}
@@ -175,7 +177,7 @@ export function SliderHero({ section }: { section: SectionData }) {
               <div
                 className="absolute inset-0"
                 style={{
-                  backgroundColor: slide.overlayColor || "rgba(0, 0, 0, 0.45)",
+                  backgroundColor: slide.overlayColor || p.overlayColor || "rgba(0, 0, 0, 0.45)",
                 }}
               />
             </div>
@@ -288,4 +290,3 @@ export function SliderHero({ section }: { section: SectionData }) {
     </SectionWrapper>
   );
 }
-

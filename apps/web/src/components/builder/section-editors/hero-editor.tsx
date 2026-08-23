@@ -8,9 +8,9 @@ import { RepeaterEditor, type RepeaterField } from "../repeater-editor";
 const SLIDER_HERO_FIELDS: RepeaterField[] = [
   { key: "image", label: "Desktop Image", type: "image" },
   { key: "mobileImage", label: "Mobile Image", type: "image" },
-  { key: "badge", label: "Badge / Kicker", type: "text", placeholder: "Featured Deal" },
-  { key: "title", label: "Heading Title", type: "text", placeholder: "Gaming Deals" },
-  { key: "subtitle", label: "Subtitle Description", type: "textarea", placeholder: "Latest products at special prices" },
+  { key: "badge", label: "Badge / Kicker", type: "text", placeholder: "Special Offer" },
+  { key: "title", label: "Heading Title", type: "text", placeholder: "Main Banner Title" },
+  { key: "subtitle", label: "Subtitle Description", type: "textarea", placeholder: "High quality products at best price" },
   { key: "buttonText", label: "Primary Button Text", type: "text", placeholder: "Shop Now" },
   { key: "buttonLink", label: "Primary Button Link", type: "url", placeholder: "/shop" },
   { key: "secondaryButtonText", label: "Secondary Button Text", type: "text", placeholder: "Learn More" },
@@ -31,23 +31,39 @@ export function HeroEditor({
     let slides: Record<string, string>[] = [];
     try {
       if (p.slides) {
-        slides = typeof p.slides === "string" ? JSON.parse(p.slides) : p.slides;
+        const parsed = typeof p.slides === "string" ? JSON.parse(p.slides) : p.slides;
+        if (Array.isArray(parsed)) {
+          slides = parsed.map((item: any, idx: number) => ({
+            id: item.id || `slide-${idx + 1}`,
+            image: item.image || item.imageUrl || item.desktopImage || "",
+            mobileImage: item.mobileImage || item.mobileImageUrl || "",
+            badge: item.badge || item.kicker || "",
+            title: item.title || item.headline || "",
+            subtitle: item.subtitle || item.subheadline || item.description || "",
+            buttonText: item.buttonText || item.primaryButtonText || "",
+            buttonLink: item.buttonLink || item.primaryButtonLink || "/shop",
+            secondaryButtonText: item.secondaryButtonText || "",
+            secondaryButtonLink: item.secondaryButtonLink || "",
+          }));
+        }
       }
     } catch {
       slides = [];
     }
 
     if (!slides.length) {
-      const count = Number(p.slideCount) || 3;
+      const count = Number(p.slideCount) || 2;
       slides = Array.from({ length: count }, (_, i) => ({
         id: `slide-${i + 1}`,
-        image: p[`slide${i + 1}Image`] || "",
+        image: p[`slide${i + 1}Image`] || p[`slide${i + 1}DesktopImage`] || "",
         mobileImage: p[`slide${i + 1}MobileImage`] || "",
         badge: p[`slide${i + 1}Badge`] || (i === 0 ? "Featured Deal" : ""),
-        title: p[`slide${i + 1}Title`] || `Slide ${i + 1}`,
-        subtitle: p[`slide${i + 1}Subtitle`] || "Discover our latest trending products.",
+        title: p[`slide${i + 1}Title`] || (i === 0 ? "Welcome to Our Store" : `Special Collection ${i + 1}`),
+        subtitle: p[`slide${i + 1}Subtitle`] || "Discover our latest trending products at exclusive prices.",
         buttonText: p[`slide${i + 1}ButtonText`] || "Shop Now",
         buttonLink: p[`slide${i + 1}ButtonLink`] || "/shop",
+        secondaryButtonText: p[`slide${i + 1}SecondaryButtonText`] || "",
+        secondaryButtonLink: p[`slide${i + 1}SecondaryButtonLink`] || "",
       }));
     }
 
@@ -57,7 +73,7 @@ export function HeroEditor({
     };
 
     return (
-      <div>
+      <div className="space-y-4">
         <SectionBlock title="Slider Controls">
           <Field label="Autoplay">
             <ToggleField
@@ -89,6 +105,42 @@ export function HeroEditor({
           </Field>
         </SectionBlock>
 
+        <SectionBlock title="Hero Style & Appearance">
+          <Field label="Text Alignment">
+            <SelectField
+              value={p.textAlignment ?? "left"}
+              onChange={(v) => onPropChange("textAlignment", v)}
+              options={[
+                { value: "left", label: "Left Aligned" },
+                { value: "center", label: "Centered" },
+                { value: "right", label: "Right Aligned" },
+              ]}
+            />
+          </Field>
+          <Field label="Overlay Darkness">
+            <SelectField
+              value={p.overlayDarkness ?? "medium"}
+              onChange={(v) => {
+                onPropChange("overlayDarkness", v);
+                const color =
+                  v === "light"
+                    ? "rgba(0, 0, 0, 0.25)"
+                    : v === "heavy"
+                    ? "rgba(0, 0, 0, 0.65)"
+                    : v === "none"
+                    ? "rgba(0, 0, 0, 0)"
+                    : "rgba(0, 0, 0, 0.45)";
+                onPropChange("overlayColor", color);
+              }}
+              options={[
+                { value: "none", label: "None (0%)" },
+                { value: "light", label: "Light (25%)" },
+                { value: "medium", label: "Medium (45%)" },
+                { value: "heavy", label: "Heavy (65%)" },
+              ]}
+            />
+          </Field>
+        </SectionBlock>
 
         <SectionBlock title="Hero Slides">
           <RepeaterEditor
@@ -100,12 +152,12 @@ export function HeroEditor({
             storeId={storeId}
             storeSlug={storeSlug}
             mediaFolder="hero"
+            minItems={1}
           />
         </SectionBlock>
       </div>
     );
   }
-
 
   return (
     <div>
@@ -138,74 +190,10 @@ export function HeroEditor({
               <TextField value={p.secondaryButtonText ?? ""} onChange={(v) => onPropChange("secondaryButtonText", v)} placeholder="Learn more" />
             </Field>
             <Field label="Secondary link">
-              <TextField value={p.secondaryButtonLink ?? ""} onChange={(v) => onPropChange("secondaryButtonLink", v)} placeholder="/about" />
+              <TextField value={p.secondaryButtonLink ?? ""} onChange={(v) => onPropChange("secondaryButtonLink", v)} placeholder="/contact" />
             </Field>
           </>
         )}
-      </SectionBlock>
-
-      <SectionBlock title="Background">
-        <MediaField
-          label="Background image"
-          storeId={storeId}
-          storeSlug={storeSlug}
-          propKey={p.productImage !== undefined ? "productImage" : "imageUrl"}
-          sectionProps={p}
-          onPropsChange={onPropsChange}
-        />
-        {p.mobileImageUrl !== undefined || section.type === "hero-banner" ? (
-          <MediaField
-            label="Mobile image"
-            storeId={storeId}
-            storeSlug={storeSlug}
-            propKey="mobileImageUrl"
-            sectionProps={p}
-            onPropsChange={onPropsChange}
-          />
-        ) : null}
-        {(section.type === "video-hero" || p.posterImage !== undefined) && (
-          <MediaField
-            label="Video poster"
-            storeId={storeId}
-            storeSlug={storeSlug}
-            propKey="posterImage"
-            sectionProps={p}
-            onPropsChange={onPropsChange}
-          />
-        )}
-        {(section.type === "video-hero" || p.videoUrl !== undefined || p.showVideoModal !== undefined) && (
-          <Field label="Background / modal video" error={videoError} hint="YouTube, Vimeo, or MP4 URL">
-            <TextField value={p.videoUrl ?? ""} onChange={(v) => onPropChange("videoUrl", v)} placeholder="https://..." />
-          </Field>
-        )}
-        {p.overlayColor !== undefined || section.type.includes("hero") ? (
-          <>
-            <Field label="Overlay color">
-              <TextField value={p.overlayColor ?? ""} onChange={(v) => onPropChange("overlayColor", v)} placeholder="rgba(0,0,0,0.4)" />
-            </Field>
-            {p.overlayOpacity !== undefined && (
-              <Field label="Overlay opacity">
-                <TextField value={p.overlayOpacity ?? "45"} onChange={(v) => onPropChange("overlayOpacity", v)} placeholder="45" />
-              </Field>
-            )}
-          </>
-        ) : null}
-        {p.heroHeight !== undefined && (
-          <Field label="Height">
-            <SelectField
-              value={p.heroHeight || "md"}
-              onChange={(v) => onPropChange("heroHeight", v)}
-              options={[
-                { value: "sm", label: "Small" },
-                { value: "md", label: "Medium" },
-                { value: "lg", label: "Large" },
-                { value: "full", label: "Fullscreen" },
-              ]}
-            />
-          </Field>
-        )}
-        {p.muted !== undefined && <ToggleField label="Mute video" value={p.muted} onChange={(v) => onPropChange("muted", v)} />}
-        {p.loop !== undefined && <ToggleField label="Loop video" value={p.loop} onChange={(v) => onPropChange("loop", v)} />}
       </SectionBlock>
     </div>
   );

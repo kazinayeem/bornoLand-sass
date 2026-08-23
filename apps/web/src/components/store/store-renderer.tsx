@@ -73,6 +73,9 @@ export interface StoreRendererProps {
   hoveredSectionId?: string | null;
 }
 
+const HEADER_TYPES = new Set(["header", "header-bar", "header-logo", "header-nav", "header-icons"]);
+const FOOTER_TYPES = new Set(["footer", "simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer", "footer-links", "footer-social", "footer-copyright"]);
+
 export function StoreRenderer({
   themeId,
   sections,
@@ -80,14 +83,19 @@ export function StoreRenderer({
   footerSettings = {},
   builderMode = false,
 }: StoreRendererProps) {
-  const visibleSections = sections.filter((s) => s.visible !== false);
+  // Filter out disabled sections and any legacy header/footer sections from the body
+  const bodySections = sections.filter((s) => {
+    if (s.visible === false) return false;
+    const type = s.type?.toLowerCase().trim() || "";
+    return !HEADER_TYPES.has(type) && !FOOTER_TYPES.has(type);
+  });
 
   const content = (
     <div className="flex flex-col min-h-screen">
       <ThemeHeader headerSettings={headerSettings} />
 
       <main className="flex-1">
-        {visibleSections.map((s) => (
+        {bodySections.map((s) => (
           <SectionErrorBoundary key={s.id} sectionId={s.id} sectionType={s.type}>
             <SectionRenderer section={toSectionData(s)} />
           </SectionErrorBoundary>

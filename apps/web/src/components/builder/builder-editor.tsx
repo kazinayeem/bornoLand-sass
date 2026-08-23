@@ -620,7 +620,7 @@ function sanitizeHomepageSections(rawSections: unknown[] | undefined, themeId?: 
             className="min-h-0 flex-shrink-0 overflow-hidden border-l border-apple-hairline/60 bg-apple-canvas/95 backdrop-blur-xl"
             style={{ width: rightPanelWidth }}
           >
-            <PropertiesPanel />
+            <PropertiesPanel storeId={storeId} storeSlug={storeSlug} />
           </div>
         )}
       </div>

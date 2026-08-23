@@ -130,50 +130,17 @@ export function StorefrontShell({
           <TenantProvider value={tenantValue}>
             <AuthInit />
             <ThemeProvider themeId={(theme as any)?.themeId || (store.theme as any)?.themeId || "grocery"}>
-              {hasBuilderHeader ? (
-                <header>
-                  {builderMode ? (
-                    <BuilderProvider>
-                      {visibleHeaderSections.map((s) => (
-                        <SectionRenderer key={s.id} section={toSectionData(s)} />
-                      ))}
-                    </BuilderProvider>
-                  ) : (
-                    visibleHeaderSections.map((s) => (
-                      <SectionRenderer key={s.id} section={toSectionData(s)} />
-                    ))
-                  )}
-                </header>
-              ) : (
-                <ThemeHeader headerSettings={headerSettings} />
-              )}
+              {/* Single, authoritative Global Header pipeline */}
+              <ThemeHeader headerSettings={headerSettings} />
+
               <CartProvider>
                 <CartDrawer primaryColor={theme.primaryColor} />
                 {children}
               </CartProvider>
-              {hasBuilderFooter ? (
-                <footer>
-                  {builderMode ? (
-                    <BuilderProvider>
-                      {visibleFooterSections.map((s) => (
-                        <SectionRenderer key={s.id} section={toSectionData(s)} />
-                      ))}
-                    </BuilderProvider>
-                  ) : (
-                    visibleFooterSections.map((s) => (
-                      <SectionRenderer key={s.id} section={toSectionData(s)} />
-                    ))
-                  )}
-                </footer>
-              ) : footerSection ? (
-                <StoreFooter
-                  section={footerSection}
-                  footerSections={footerSections}
-                  footerSettings={footerSettings}
-                />
-              ) : (
-                <ThemeFooter footerSettings={footerSettings} />
-              )}
+
+              {/* Single, authoritative Global Footer pipeline */}
+              <ThemeFooter footerSettings={footerSettings} />
+
               {showAdminBar ? (
                 <FloatingAdminBar storeSlug={store.slug} primaryColor={theme.primaryColor} />
               ) : null}

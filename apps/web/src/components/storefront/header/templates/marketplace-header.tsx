@@ -133,74 +133,82 @@ export function MarketplaceHeader({ headerSettings = {} }: MarketplaceHeaderProp
         </Link>
 
         {/* Large Marketplace Search Bar */}
-        <div className="flex-1 max-w-2xl hidden md:block">
-          <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search in Marketplace for products, brands and categories..."
-              className="w-full h-11 pl-4 pr-28 rounded-lg border-2 border-[#f85606] bg-zinc-50 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:bg-white transition-all shadow-inner"
-            />
-            <button
-              type="submit"
-              className="absolute right-1 top-1 bottom-1 px-6 rounded-md bg-[#f85606] hover:bg-[#e04800] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs"
-            >
-              <Search className="w-3.5 h-3.5" />
-              <span>Search</span>
-            </button>
-          </form>
-        </div>
+        {headerSettings.showSearch !== false && (
+          <div className="flex-1 max-w-2xl hidden md:block">
+            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search in Marketplace for products, brands and categories..."
+                className="w-full h-11 pl-4 pr-28 rounded-lg border-2 border-[#f85606] bg-zinc-50 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:bg-white transition-all shadow-inner"
+              />
+              <button
+                type="submit"
+                className="absolute right-1 top-1 bottom-1 px-6 rounded-md bg-[#f85606] hover:bg-[#e04800] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>Search</span>
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Right Utilities */}
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          <Link
-            href="/account"
-            className="hidden sm:flex items-center gap-2 p-2 rounded-lg text-zinc-700 hover:text-[#f85606] transition-colors"
-          >
-            <User className="w-5 h-5 text-zinc-600" />
-            <div className="hidden lg:flex flex-col text-left text-xs leading-none">
-              <span className="text-[10px] text-zinc-400">{t("account", storeLang)}</span>
-              <span className="font-bold text-zinc-800 mt-0.5">{t("login", storeLang)}</span>
-            </div>
-          </Link>
+          {headerSettings.showProfile !== false && (
+            <Link
+              href="/account"
+              className="hidden sm:flex items-center gap-2 p-2 rounded-lg text-zinc-700 hover:text-[#f85606] transition-colors"
+            >
+              <User className="w-5 h-5 text-zinc-600" />
+              <div className="hidden lg:flex flex-col text-left text-xs leading-none">
+                <span className="text-[10px] text-zinc-400">{t("account", storeLang)}</span>
+                <span className="font-bold text-zinc-800 mt-0.5">{t("login", storeLang)}</span>
+              </div>
+            </Link>
+          )}
 
-          <Link
-            href="/account/wishlist"
-            className="relative p-2 rounded-lg text-zinc-700 hover:text-[#f85606] transition-colors"
-            aria-label="Wishlist"
-          >
-            <Heart className="w-5 h-5" />
-            {wishlistCount > 0 && (
-              <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-[#f85606] text-white text-[10px] font-bold flex items-center justify-center">
-                {wishlistCount}
-              </span>
-            )}
-          </Link>
-
-          {/* Cart Button */}
-          <button
-            type="button"
-            onClick={() => dispatch(openCart())}
-            className="flex items-center gap-2.5 px-4 py-2 rounded-lg bg-[#f85606] hover:bg-[#e04800] text-white transition-all shadow-md active:scale-95"
-            aria-label="View Cart"
-          >
-            <div className="relative">
-              <ShoppingCart className="w-4 h-4" />
-              {itemCount > 0 && (
-                <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-zinc-900 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
-                  {itemCount}
+          {headerSettings.showWishlist !== false && (
+            <Link
+              href="/account/wishlist"
+              className="relative p-2 rounded-lg text-zinc-700 hover:text-[#f85606] transition-colors"
+              aria-label="Wishlist"
+            >
+              <Heart className="w-5 h-5" />
+              {wishlistCount > 0 && (
+                <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-[#f85606] text-white text-[10px] font-bold flex items-center justify-center">
+                  {wishlistCount}
                 </span>
               )}
-            </div>
-            <div className="hidden sm:flex flex-col text-left text-xs leading-none">
-              <span className="text-[10px] text-orange-200">{t("myCart", storeLang)}</span>
-              <span className="font-bold text-white mt-0.5">
-                {formatCurrency(cartTotal, settings)}
-              </span>
-            </div>
-          </button>
+            </Link>
+          )}
+
+          {/* Cart Button */}
+          {headerSettings.showCart !== false && (
+            <button
+              type="button"
+              onClick={() => dispatch(openCart())}
+              className="flex items-center gap-2.5 px-4 py-2 rounded-lg bg-[#f85606] hover:bg-[#e04800] text-white transition-all shadow-md active:scale-95"
+              aria-label="View Cart"
+            >
+              <div className="relative">
+                <ShoppingCart className="w-4 h-4" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-white text-[#f85606] text-[10px] font-black flex items-center justify-center border-2 border-[#f85606]">
+                    {itemCount}
+                  </span>
+                )}
+              </div>
+              <div className="hidden sm:flex flex-col text-left text-xs leading-none">
+                <span className="text-[10px] text-white/80">{t("myCart", storeLang)}</span>
+                <span className="font-bold text-white mt-0.5">
+                  {formatCurrency(cartTotal, settings)}
+                </span>
+              </div>
+            </button>
+          )}
 
           {/* Mobile Toggle */}
           <button

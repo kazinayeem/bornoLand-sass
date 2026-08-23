@@ -111,21 +111,33 @@ export function HeaderBuilderSettings() {
       </div>
 
       <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
+        {/* Header Visibility */}
+        <Section label="Visibility & Master Switch">
+          <Toggle
+            label="Enable Global Header"
+            value={headerSettings.enabled !== false && headerSettings.visible !== false}
+            onChange={(v) => {
+              update("enabled", v);
+              update("visible", v);
+            }}
+          />
+        </Section>
+
         {/* Layout */}
-        <Section label="Layout">
+        <Section label="Template & Layout">
           <SelectInput
             label="Header Template"
-            value={headerSettings.template ?? headerSettings.headerTemplate ?? "grocery"}
+            value={headerSettings.template ?? headerSettings.headerTemplate ?? "modern-ecommerce"}
             onChange={(v) => {
               update("template", v);
               update("headerTemplate", v);
             }}
             options={[
-              { value: "grocery", label: "Grocery & Organic Header" },
-              { value: "tech-mega", label: "Computer & Tech Mega Header" },
-              { value: "marketplace", label: "Marketplace Header (Daraz Style)" },
-              { value: "minimal-fashion", label: "Minimal / Fashion Header" },
-              { value: "modern-general", label: "Modern General E-commerce Header" },
+              { value: "minimal-clean", label: "HEADER 1 — Minimal / Clean Store" },
+              { value: "modern-ecommerce", label: "HEADER 2 — Modern Ecommerce" },
+              { value: "marketplace", label: "HEADER 3 — Marketplace Header" },
+              { value: "premium-luxury", label: "HEADER 4 — Premium / Luxury" },
+              { value: "compact-professional", label: "HEADER 5 — Compact / Professional" },
             ]}
           />
           <SelectInput
@@ -136,9 +148,9 @@ export function HeaderBuilderSettings() {
               update("sticky", v === "sticky" || v === "fixed");
             }}
             options={[
-              { value: "static", label: "Static" },
-              { value: "sticky", label: "Sticky (Default)" },
-              { value: "fixed", label: "Fixed" },
+              { value: "static", label: "Static (Normal Flow)" },
+              { value: "sticky", label: "Sticky (Sticks on Scroll)" },
+              { value: "fixed", label: "Fixed (Permanent Top Overlay)" },
             ]}
           />
           <SelectInput

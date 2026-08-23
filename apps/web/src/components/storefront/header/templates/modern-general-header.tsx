@@ -103,25 +103,27 @@ export function ModernGeneralHeader({ headerSettings = {} }: ModernGeneralHeader
         </Link>
 
         {/* Global Search */}
-        <div className="flex-1 max-w-xl hidden md:block">
-          <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("search", storeLang)}
-              className="w-full h-10 pl-4 pr-24 rounded-full border border-zinc-300 bg-zinc-50 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-800 focus:bg-white transition-all shadow-inner"
-            />
-            <button
-              type="submit"
-              className="absolute right-1 top-1 bottom-1 px-4 rounded-full bg-zinc-900 hover:bg-black text-white text-xs font-semibold flex items-center gap-1 transition-all"
-            >
-              <Search className="w-3.5 h-3.5" />
-              <span>{t("searchButton", storeLang)}</span>
-            </button>
-          </form>
-        </div>
+        {headerSettings.showSearch !== false && (
+          <div className="flex-1 max-w-xl hidden md:block">
+            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t("search", storeLang)}
+                className="w-full h-10 pl-4 pr-24 rounded-full border border-zinc-300 bg-zinc-50 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-800 focus:bg-white transition-all shadow-inner"
+              />
+              <button
+                type="submit"
+                className="absolute right-1 top-1 bottom-1 px-4 rounded-full bg-zinc-900 hover:bg-black text-white text-xs font-semibold flex items-center gap-1 transition-all"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>{t("searchButton", storeLang)}</span>
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Right Actions: Phone Hotline, Account, Wishlist, Cart */}
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
@@ -130,38 +132,44 @@ export function ModernGeneralHeader({ headerSettings = {} }: ModernGeneralHeader
             <span>{storePhone}</span>
           </div>
 
-          <Link href="/account" className="hidden sm:flex items-center gap-1.5 p-2 rounded-lg text-zinc-700 hover:text-black">
-            <User className="w-4 h-4" />
-            <span className="text-xs font-semibold">{t("account", storeLang)}</span>
-          </Link>
+          {headerSettings.showProfile !== false && (
+            <Link href="/account" className="hidden sm:flex items-center gap-1.5 p-2 rounded-lg text-zinc-700 hover:text-black">
+              <User className="w-4 h-4" />
+              <span className="text-xs font-semibold">{t("account", storeLang)}</span>
+            </Link>
+          )}
 
-          <Link href="/account/wishlist" className="relative p-2 rounded-lg text-zinc-700 hover:text-black" aria-label="Wishlist">
-            <Heart className="w-5 h-5" />
-            {wishlistCount > 0 && (
-              <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center">
-                {wishlistCount}
-              </span>
-            )}
-          </Link>
-
-          {/* Cart */}
-          <button
-            type="button"
-            onClick={() => dispatch(openCart())}
-            className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-zinc-900 hover:bg-black text-white transition-all shadow-md active:scale-95"
-          >
-            <div className="relative">
-              <ShoppingCart className="w-4 h-4" />
-              {itemCount > 0 && (
-                <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
-                  {itemCount}
+          {headerSettings.showWishlist !== false && (
+            <Link href="/account/wishlist" className="relative p-2 rounded-lg text-zinc-700 hover:text-black" aria-label="Wishlist">
+              <Heart className="w-5 h-5" />
+              {wishlistCount > 0 && (
+                <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center">
+                  {wishlistCount}
                 </span>
               )}
-            </div>
-            <span className="hidden sm:inline text-xs font-bold">
-              {formatCurrency(cartTotal, settings)}
-            </span>
-          </button>
+            </Link>
+          )}
+
+          {/* Cart */}
+          {headerSettings.showCart !== false && (
+            <button
+              type="button"
+              onClick={() => dispatch(openCart())}
+              className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-zinc-900 hover:bg-black text-white transition-all shadow-md active:scale-95"
+            >
+              <div className="relative">
+                <ShoppingCart className="w-4 h-4" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
+                    {itemCount}
+                  </span>
+                )}
+              </div>
+              <span className="hidden sm:inline text-xs font-bold">
+                {formatCurrency(cartTotal, settings)}
+              </span>
+            </button>
+          )}
 
           {/* Mobile Menu */}
           <button

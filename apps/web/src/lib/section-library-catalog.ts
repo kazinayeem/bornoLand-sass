@@ -297,46 +297,22 @@ function footerTemplate(
 }
 
 /** Header presets — all render via header-bar with different defaults. */
+/** Header presets — 5 dedicated professional header templates. */
 export const HEADER_LIBRARY_TEMPLATES: Array<SectionDef & { keywords: string[] }> = [
-  headerTemplate("header-grocery", "Grocery & Organic Header", "Warm natural e-commerce header with announcement topbar, large search, and All Categories mega button", ["grocery", "organic", "food", "bangladeshi"], { template: "grocery", showSearch: "true", showCart: "true", sticky: "true", headerHeight: "76" }),
-  headerTemplate("header-tech-mega", "Computer & Tech Mega Header", "Star Tech-inspired dark navy header with 2nd row dynamic tech categories and multi-column mega menu", ["tech", "computer", "electronics", "startech"], { template: "tech-mega", showSearch: "true", layout: "logo-icons-nav", sticky: "true", headerBg: "#081621" }),
-  headerTemplate("header-marketplace", "Marketplace Header", "Daraz-style marketplace header with prominent search, Flash Sale banner, and large mega menu", ["marketplace", "daraz", "deals", "mega"], { template: "marketplace", showSearch: "true", showCart: "true", showAccount: "true", sticky: "true" }),
-  headerTemplate("header-minimal-fashion", "Minimal / Fashion Header", "Editorial luxury typography, generous whitespace, sleek search, and transparent header support", ["minimal", "fashion", "luxury", "boutique"], { template: "minimal-fashion", sticky: "true", transparent: "false", showWishlist: "true" }),
-  headerTemplate("header-modern-general", "Modern General E-commerce Header", "Versatile 2-row commercial header with phone hotline, All Categories dropdown, and subcategory hover menus", ["modern", "general", "versatile", "all-purpose"], { template: "modern-general", layout: "logo-nav-icons", sticky: "true", showSearch: "true" }),
-  headerTemplate("header-minimal", "Minimal Header", "Clean logo and links only", ["minimal", "simple", "clean"], { layout: "logo-nav-icons", sticky: "false", transparent: "false", headerBg: "#ffffff", showSearch: "false", showWishlist: "false" }),
-  headerTemplate("header-modern", "Modern Header", "Balanced nav with search and cart", ["modern", "default"], { layout: "logo-nav-icons", sticky: "true", headerBg: "#ffffff", showSearch: "true" }),
-  headerTemplate("header-center-logo", "Center Logo Header", "Logo centered with nav around it", ["center", "logo", "fashion"], { layout: "nav-logo-icons", navPosition: "center", sticky: "true" }),
-  headerTemplate("header-mega", "Mega Menu Header", "Roomy header for large menus", ["mega", "menu", "large"], { layout: "logo-nav-icons", headerHeight: "80", sticky: "true", showSearch: "true" }),
-  headerTemplate("header-transparent", "Transparent Header", "Overlays your hero image", ["transparent", "overlay", "hero"], { transparent: "true", sticky: "true", headerBg: "transparent" }),
-  headerTemplate("header-sticky", "Sticky Header", "Stays visible while scrolling", ["sticky", "fixed"], { sticky: "true", headerBg: "#ffffff" }),
-  headerTemplate("header-luxury", "Luxury Header", "Elegant dark header for premium brands", ["luxury", "premium", "dark"], { headerBg: "#0a0a0a", sticky: "true", showWishlist: "true" }),
-  headerTemplate("header-fashion", "Fashion Header", "Editorial style for apparel stores", ["fashion", "apparel", "clothing"], { layout: "nav-logo-icons", headerHeight: "72", sticky: "true", showWishlist: "true" }),
-  headerTemplate("header-electronics", "Electronics Header", "Search-first header for tech shops", ["electronics", "tech", "search"], { showSearch: "true", layout: "logo-icons-nav", sticky: "true" }),
-  headerTemplate("header-mobile", "Mobile Header", "Compact layout tuned for phones", ["mobile", "compact"], { headerHeight: "48", showSearch: "true", showAccount: "false" }),
-  headerTemplate("header-search-focus", "Search Focus Header", "Search bar front and center", ["search", "find"], { showSearch: "true", layout: "logo-icons-nav", sticky: "true" }),
-  headerTemplate("header-brand", "Brand Header", "Logo-forward with sparse links", ["brand", "logo"], { showName: "true", showSearch: "false", showWishlist: "false", sticky: "false" }),
-  headerTemplate("header-light", "Light Utility Header", "Bright utility bar with all icons", ["utility", "light"], { headerBg: "#f5f5f7", showSearch: "true", showWishlist: "true", showCart: "true", showAccount: "true" }),
-  headerTemplate("header-split", "Split Utility Header", "Icons grouped for quick actions", ["split", "utility"], { layout: "logo-icons-nav", sticky: "true" }),
+  headerTemplate("header-minimal-clean", "HEADER 1 — Minimal / Clean Store", "Logo left, main navigation, search, wishlist, cart, and clean ecommerce layout", ["header", "minimal", "clean", "store", "fashion", "boutique"], { template: "minimal-clean", sticky: "true", showSearch: "true", showCart: "true", showWishlist: "true" }),
+  headerTemplate("header-modern-ecommerce", "HEADER 2 — Modern Ecommerce", "Top announcement bar, logo/search row, dynamic category navigation, and modern style", ["header", "modern", "ecommerce", "grocery", "organic", "natural"], { template: "modern-ecommerce", sticky: "true", showSearch: "true", showCart: "true", showAnnouncement: "true" }),
+  headerTemplate("header-marketplace", "HEADER 3 — Marketplace Header", "Daraz-style marketplace layout with large search, Flash Sale topbar, and All Categories mega menu", ["header", "marketplace", "daraz", "multivendor", "search", "deals"], { template: "marketplace", sticky: "true", showSearch: "true", showCart: "true", showAccount: "true" }),
+  headerTemplate("header-premium-luxury", "HEADER 4 — Premium / Luxury", "Refined typography, spacious layout, hotline strip, categories dropdown, and premium feel", ["header", "premium", "luxury", "lifestyle", "general"], { template: "premium-luxury", sticky: "true", showSearch: "true", showCart: "true" }),
+  headerTemplate("header-compact-professional", "HEADER 5 — Compact / Professional", "Star Tech-inspired dark navy header with 2nd row tech categories, PC Builder, and helpline", ["header", "compact", "professional", "tech", "computer", "electronics"], { template: "compact-professional", sticky: "true", showSearch: "true", showCart: "true" }),
 ];
 
-/** Footer presets. */
+/** Footer presets — 5 dedicated professional footer templates. */
 export const FOOTER_LIBRARY_TEMPLATES: Array<SectionDef & { keywords: string[] }> = [
-  footerTemplate("footer-simple-light", "Simple Footer", "Minimal copyright bar", ["simple", "minimal"], "simple", { layout: "centered", bgColor: "#09090b", showSocial: "true" }),
-  footerTemplate("footer-ecommerce", "Ecommerce Footer", "Links, contact, and newsletter", ["ecommerce", "shop", "links"], "ecom", { columns: "4", showNewsletter: "true", showPaymentIcons: "true" }),
-  footerTemplate("footer-luxury", "Luxury Footer", "Dark elegant footer for premium brands", ["luxury", "premium", "dark"], "simple", { bgColor: "#0a0a0a", textColor: "#f5f5f7", layout: "split", showSocial: "true" }),
-  footerTemplate("footer-newsletter", "Newsletter Footer", "Email signup with store links", ["newsletter", "subscribe", "email"], "ecom", { showNewsletter: "true", columns: "3" }),
-  footerTemplate("footer-multi-column", "Multi-column Footer", "Several columns of helpful links", ["columns", "links"], "ecom", { columns: "5", showNewsletter: "false" }),
-  footerTemplate("footer-brand", "Brand Footer", "Brand story with social links", ["brand", "story"], "mega", { showBrand: "true", showNewsletter: "false", showPayment: "false" }),
-  footerTemplate("footer-dark", "Dark Footer", "High-contrast dark footer", ["dark"], "simple", { bgColor: "#000000", textColor: "#ffffff", layout: "split" }),
-  footerTemplate("footer-minimal-light", "Minimal Footer", "Quiet footer that stays out of the way", ["minimal", "light"], "simple", { layout: "centered", showSocial: "false", bgColor: "#f5f5f7", textColor: "#1d1d1f" }),
-  footerTemplate("footer-corporate", "Corporate Footer", "Structured links for larger stores", ["corporate", "business"], "ecom", { columns: "4", showPaymentIcons: "true", showNewsletter: "false" }),
-  footerTemplate("footer-marketplace", "Marketplace Footer", "Dense footer for multi-vendor style shops", ["marketplace"], "mega", { showLinks: "true", showPayment: "true", showBadges: "true", showNewsletter: "true" }),
-  footerTemplate("footer-split", "Split Footer", "Copyright on one side, social on the other", ["split"], "simple", { layout: "split", showSocial: "true" }),
-  footerTemplate("footer-contact-heavy", "Contact Footer", "Email, phone, and address forward", ["contact", "support"], "ecom", { columns: "3", showNewsletter: "false", contactEmail: "hello@example.com" }),
-  footerTemplate("footer-payment", "Payment Footer", "Emphasize trusted payment methods", ["payment", "trust"], "ecom", { showPaymentIcons: "true", columns: "3" }),
-  footerTemplate("footer-social-focus", "Social Footer", "Social channels front and center", ["social", "instagram"], "simple", { showSocial: "true", layout: "centered" }),
-  footerTemplate("footer-wide", "Wide Link Footer", "Extra-wide multi-column link footer", ["wide", "links"], "mega", { showLinks: "true", columns: "5" }),
-  footerTemplate("footer-store-info", "Store Info Footer", "Hours-friendly store details", ["store", "info", "hours"], "ecom", { columns: "3", showNewsletter: "true" }),
+  footerTemplate("footer-classic-ecommerce", "FOOTER 1 — Classic Ecommerce", "4 Value guarantee badges, hotline, dynamic categories, delivery info, and payment methods", ["footer", "classic", "ecommerce", "grocery", "organic"], "mega", { template: "classic-ecommerce", columns: "4", showSocial: "true", showPaymentIcons: "true" }),
+  footerTemplate("footer-modern-multi-column", "FOOTER 2 — Modern Multi Column", "Star Tech-style navy footer with top newsletter strip, helpline 16789, and partner brands", ["footer", "modern", "multi-column", "tech", "electronics", "newsletter"], "ecom", { template: "modern-multi-column", columns: "5", showNewsletter: "true", showSocial: "true" }),
+  footerTemplate("footer-minimal", "FOOTER 3 — Minimal", "Clean minimalist footer with curated links, dynamic store categories, and copyright bar", ["footer", "minimal", "clean", "simple", "fashion"], "simple", { template: "minimal", columns: "4", showSocial: "true", showPaymentIcons: "false" }),
+  footerTemplate("footer-marketplace", "FOOTER 4 — Marketplace", "Daraz-style multi-vendor footer with value propositions, Customer Care, and return policy", ["footer", "marketplace", "daraz", "multivendor", "support"], "mega", { template: "marketplace", columns: "5", showSocial: "true", showPaymentIcons: "true" }),
+  footerTemplate("footer-premium", "FOOTER 5 — Premium", "Sleek dark luxury footer featuring a prominent member circle CTA, clean columns, and social icons", ["footer", "premium", "luxury", "newsletter", "modern-store"], "ecom", { template: "premium", columns: "4", showNewsletter: "true", showSocial: "true" }),
 ];
 
 /** Named presets that fill gaps in the business catalog (alias → existing components). */

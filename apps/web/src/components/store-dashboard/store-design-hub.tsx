@@ -27,6 +27,7 @@ import {
   ShieldCheck,
   RefreshCw,
   PanelTop,
+  PanelBottom,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useGetStoreQuery, useChangeStoreThemeMutation } from "@/redux/api/store-api";
@@ -42,8 +43,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { NavigationManager } from "@/components/store-dashboard/navigation-manager/navigation-manager";
 import { HeaderTemplateSelector } from "@/components/store-dashboard/header-template-selector";
+import { FooterTemplateSelector } from "@/components/store-dashboard/footer-template-selector";
 
-type TabMode = "themes" | "header" | "navigation" | "builder" | "styles" | "reset";
+type TabMode = "themes" | "header" | "footer" | "navigation" | "builder" | "styles" | "reset";
 
 type StoreDesignHubProps = {
   storeId: string;
@@ -344,6 +346,19 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
 
         <button
           type="button"
+          onClick={() => setActiveTab("footer")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-colors ${
+            activeTab === "footer"
+              ? "border-zinc-900 text-zinc-900"
+              : "border-transparent text-zinc-500 hover:text-zinc-800"
+          }`}
+        >
+          <PanelBottom className="w-4 h-4" />
+          Footer
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab("navigation")}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-colors ${
             activeTab === "navigation"
@@ -385,6 +400,14 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
       {/* ── TAB: HEADER TEMPLATES ── */}
       {activeTab === "header" && (
         <HeaderTemplateSelector
+          storeId={storeId}
+          storeSlug={storeContext?.slug || (store as any)?.slug || "nayeem"}
+        />
+      )}
+
+      {/* ── TAB: FOOTER TEMPLATES ── */}
+      {activeTab === "footer" && (
+        <FooterTemplateSelector
           storeId={storeId}
           storeSlug={storeContext?.slug || (store as any)?.slug || "nayeem"}
         />

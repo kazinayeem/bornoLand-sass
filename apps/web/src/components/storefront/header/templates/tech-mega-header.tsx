@@ -135,25 +135,27 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
         </Link>
 
         {/* Global Search Bar */}
-        <div className="flex-1 max-w-2xl hidden md:block">
-          <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("search", storeLang)}
-              className="w-full h-11 pl-4 pr-24 rounded-xl border border-[#172b3c] bg-[#050e15] text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#0071dc] focus:ring-1 focus:ring-[#0071dc] transition-all shadow-inner"
-            />
-            <button
-              type="submit"
-              className="absolute right-1 top-1 bottom-1 px-5 rounded-lg bg-[#0071dc] hover:bg-[#005bb5] text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
-            >
-              <Search className="w-3.5 h-3.5" />
-              <span>{t("searchButton", storeLang)}</span>
-            </button>
-          </form>
-        </div>
+        {headerSettings.showSearch !== false && (
+          <div className="flex-1 max-w-2xl hidden md:block">
+            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t("search", storeLang)}
+                className="w-full h-11 pl-4 pr-24 rounded-xl border border-[#172b3c] bg-[#050e15] text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#0071dc] focus:ring-1 focus:ring-[#0071dc] transition-all shadow-inner"
+              />
+              <button
+                type="submit"
+                className="absolute right-1 top-1 bottom-1 px-5 rounded-lg bg-[#0071dc] hover:bg-[#005bb5] text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>{t("searchButton", storeLang)}</span>
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Right Utility Actions */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -165,54 +167,60 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
             <span>Offers</span>
           </Link>
 
-          <Link
-            href="/account"
-            className="hidden sm:flex items-center gap-2 p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
-          >
-            <div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-300">
-              <User className="w-4 h-4" />
-            </div>
-            <div className="hidden lg:flex flex-col text-left text-xs leading-none">
-              <span className="text-[10px] text-zinc-400">{t("account", storeLang)}</span>
-              <span className="font-bold text-white mt-0.5">{t("login", storeLang)}</span>
-            </div>
-          </Link>
+          {headerSettings.showProfile !== false && (
+            <Link
+              href="/account"
+              className="hidden sm:flex items-center gap-2 p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              <div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-300">
+                <User className="w-4 h-4" />
+              </div>
+              <div className="hidden lg:flex flex-col text-left text-xs leading-none">
+                <span className="text-[10px] text-zinc-400">{t("account", storeLang)}</span>
+                <span className="font-bold text-white mt-0.5">{t("login", storeLang)}</span>
+              </div>
+            </Link>
+          )}
 
-          <Link
-            href="/account/wishlist"
-            className="relative p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
-            aria-label="Wishlist"
-          >
-            <Heart className="w-5 h-5" />
-            {wishlistCount > 0 && (
-              <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-[#e2136e] text-white text-[10px] font-bold flex items-center justify-center">
-                {wishlistCount}
-              </span>
-            )}
-          </Link>
-
-          {/* Cart Trigger */}
-          <button
-            type="button"
-            onClick={() => dispatch(openCart())}
-            className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-[#0071dc] hover:bg-[#005bb5] text-white transition-all shadow-md active:scale-95"
-            aria-label="View Cart"
-          >
-            <div className="relative">
-              <ShoppingCart className="w-4 h-4" />
-              {itemCount > 0 && (
-                <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-[#ef4444] text-white text-[10px] font-bold flex items-center justify-center border-2 border-[#081621]">
-                  {itemCount}
+          {headerSettings.showWishlist !== false && (
+            <Link
+              href="/account/wishlist"
+              className="relative p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
+              aria-label="Wishlist"
+            >
+              <Heart className="w-5 h-5" />
+              {wishlistCount > 0 && (
+                <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-[#e2136e] text-white text-[10px] font-bold flex items-center justify-center">
+                  {wishlistCount}
                 </span>
               )}
-            </div>
-            <div className="hidden sm:flex flex-col text-left text-xs leading-none">
-              <span className="text-[10px] text-blue-200">{t("myCart", storeLang)}</span>
-              <span className="font-bold text-white mt-0.5">
-                {formatCurrency(cartTotal, settings)}
-              </span>
-            </div>
-          </button>
+            </Link>
+          )}
+
+          {/* Cart Trigger */}
+          {headerSettings.showCart !== false && (
+            <button
+              type="button"
+              onClick={() => dispatch(openCart())}
+              className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-[#0071dc] hover:bg-[#005bb5] text-white transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+              aria-label="View Cart"
+            >
+              <div className="relative">
+                <ShoppingCart className="w-4 h-4" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-[#ef4444] text-white text-[10px] font-bold flex items-center justify-center border-2 border-[#081621]">
+                    {itemCount}
+                  </span>
+                )}
+              </div>
+              <div className="hidden sm:flex flex-col text-left text-xs leading-none">
+                <span className="text-[10px] text-blue-200">{t("myCart", storeLang)}</span>
+                <span className="font-bold text-white mt-0.5">
+                  {formatCurrency(cartTotal, settings)}
+                </span>
+              </div>
+            </button>
+          )}
 
           {/* Mobile Menu Toggle */}
           <button

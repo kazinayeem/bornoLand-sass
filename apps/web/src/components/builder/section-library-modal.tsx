@@ -13,6 +13,8 @@ import {
   addToRecentlyUsed,
   addSection,
   setEditingZone,
+  setHeaderSettings,
+  setFooterSettings,
   undoBuilder,
 } from "@/redux/slices/builder-slice";
 import { motion, AnimatePresence } from "framer-motion";
@@ -619,20 +621,61 @@ export function SectionLibraryModal({
     recentlyUsed,
   ]);
 
+  const headerSettings = useSelector((state: RootState) => state.builder.headerSettings);
+  const footerSettings = useSelector((state: RootState) => state.builder.footerSettings);
+
   const handleAddSection = useCallback(
     (section: LibrarySection) => {
+      // ── Handle Global Header selection ──
+      if (section.libraryCategory === "header") {
+        const defaults = getLibraryDefaults(section.type);
+        const tplId = (defaults.template as string) || section.type.replace("header-", "");
+        dispatch(
+          setHeaderSettings({
+            ...headerSettings,
+            ...defaults,
+            template: tplId,
+            headerTemplate: tplId,
+            enabled: true,
+            visible: true,
+          })
+        );
+        dispatch(addToRecentlyUsed(section.type));
+        dispatch(closeSectionLibrary());
+        setPreviewSection(null);
+        toast.success(`Active Header updated to "${section.label}"`, {
+          description: "Global header template applied.",
+        });
+        return;
+      }
+
+      // ── Handle Global Footer selection ──
+      if (section.libraryCategory === "footer") {
+        const defaults = getLibraryDefaults(section.type);
+        const tplId = (defaults.template as string) || section.type.replace("footer-", "");
+        dispatch(
+          setFooterSettings({
+            ...footerSettings,
+            ...defaults,
+            template: tplId,
+            footerTemplate: tplId,
+            enabled: true,
+            visible: true,
+          })
+        );
+        dispatch(addToRecentlyUsed(section.type));
+        dispatch(closeSectionLibrary());
+        setPreviewSection(null);
+        toast.success(`Active Footer updated to "${section.label}"`, {
+          description: "Global footer template applied.",
+        });
+        return;
+      }
+
+      // ── Handle Body Content Sections ──
       const renderType = resolveLibraryRenderType(section.type);
       const id = `${section.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      const zone =
-        section.libraryCategory === "header"
-          ? "header"
-          : section.libraryCategory === "footer"
-          ? "footer"
-          : "body";
-
-      if (targetZone !== zone) {
-        dispatch(setEditingZone(zone));
-      }
+      dispatch(setEditingZone("body"));
 
       const newSection = {
         id,
@@ -685,7 +728,7 @@ export function SectionLibraryModal({
         },
       });
     },
-    [dispatch, insertPosition, onSectionAdded, targetZone]
+    [dispatch, headerSettings, footerSettings, insertPosition, onSectionAdded]
   );
 
   const handleToggleFavorite = useCallback(

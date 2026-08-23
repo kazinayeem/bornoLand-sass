@@ -71,6 +71,8 @@ export type StorePageTheme = {
 };
 
 export type HeaderSettings = {
+  enabled?: boolean;
+  visible?: boolean;
   template?: string;
   headerTemplate?: string;
   logo?: string;
@@ -130,7 +132,12 @@ export type HeaderSettings = {
 };
 
 export type FooterSettings = {
+  enabled?: boolean;
+  visible?: boolean;
   template?: string;
+  footerTemplate?: string;
+  mobileLayout?: string;
+  copyrightText?: string;
   showNewsletter?: boolean;
   showSocial?: boolean;
   showPaymentIcons?: boolean;

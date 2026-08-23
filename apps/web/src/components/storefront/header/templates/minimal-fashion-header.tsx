@@ -157,59 +157,67 @@ export function MinimalFashionHeader({ headerSettings = {} }: MinimalFashionHead
         {/* Right Action Icons: Search, Wishlist, Account, Cart */}
         <div className="flex items-center gap-4 sm:gap-5 shrink-0 text-zinc-700">
           {/* Search Trigger */}
-          {searchOpen ? (
-            <form onSubmit={handleSearchSubmit} className="relative flex items-center animate-in fade-in-50 duration-150">
-              <input
-                ref={searchInputRef}
-                type="text"
-                autoFocus
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search fashion..."
-                className="w-48 sm:w-64 h-9 pl-3 pr-8 rounded-full border border-zinc-300 bg-zinc-50 text-xs focus:outline-none focus:bg-white"
-              />
+          {headerSettings.showSearch !== false && (
+            searchOpen ? (
+              <form onSubmit={handleSearchSubmit} className="relative flex items-center animate-in fade-in-50 duration-150">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  autoFocus
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search fashion..."
+                  className="w-48 sm:w-64 h-9 pl-3 pr-8 rounded-full border border-zinc-300 bg-zinc-50 text-xs focus:outline-none focus:bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(false)}
+                  className="absolute right-2 p-1 text-zinc-400 hover:text-zinc-700"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </form>
+            ) : (
               <button
                 type="button"
-                onClick={() => setSearchOpen(false)}
-                className="absolute right-2 p-1 text-zinc-400 hover:text-zinc-700"
+                onClick={() => setSearchOpen(true)}
+                className="p-1.5 hover:text-black transition-colors"
+                aria-label="Search"
               >
-                <X className="w-3.5 h-3.5" />
+                <Search className="w-4 h-4" />
               </button>
-            </form>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="p-1.5 hover:text-black transition-colors"
-              aria-label="Search"
-            >
-              <Search className="w-4 h-4" />
-            </button>
+            )
           )}
 
-          <Link href="/account" className="hidden sm:block p-1.5 hover:text-black transition-colors" aria-label="Account">
-            <User className="w-4 h-4" />
-          </Link>
+          {headerSettings.showProfile !== false && (
+            <Link href="/account" className="hidden sm:block p-1.5 hover:text-black transition-colors" aria-label="Account">
+              <User className="w-4 h-4" />
+            </Link>
+          )}
 
-          <Link href="/account/wishlist" className="relative p-1.5 hover:text-black transition-colors" aria-label="Wishlist">
-            <Heart className="w-4 h-4" />
-            {wishlistCount > 0 && (
-              <span className="absolute 0 top-0.5 right-0.5 h-3.5 w-3.5 rounded-full bg-zinc-900 text-white text-[9px] font-bold flex items-center justify-center">
-                {wishlistCount}
-              </span>
-            )}
-          </Link>
+          {headerSettings.showWishlist !== false && (
+            <Link href="/account/wishlist" className="relative p-1.5 hover:text-black transition-colors" aria-label="Wishlist">
+              <Heart className="w-4 h-4" />
+              {wishlistCount > 0 && (
+                <span className="absolute 0 top-0.5 right-0.5 h-3.5 w-3.5 rounded-full bg-zinc-900 text-white text-[9px] font-bold flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+          )}
 
           {/* Minimalist Cart */}
-          <button
-            type="button"
-            onClick={() => dispatch(openCart())}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-zinc-300 hover:border-black text-xs font-semibold transition-all active:scale-95"
-            aria-label="Cart"
-          >
-            <ShoppingCart className="w-3.5 h-3.5" />
-            <span>{itemCount}</span>
-          </button>
+          {headerSettings.showCart !== false && (
+            <button
+              type="button"
+              onClick={() => dispatch(openCart())}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-zinc-300 hover:border-black text-xs font-semibold transition-all active:scale-95"
+              aria-label="Cart"
+            >
+              <ShoppingCart className="w-3.5 h-3.5" />
+              <span>{itemCount}</span>
+            </button>
+          )}
 
           {/* Mobile Menu Toggle */}
           <button

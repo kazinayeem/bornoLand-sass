@@ -14,6 +14,7 @@ const SOURCE_OPTIONS = [
 export function ProductSectionEditor({
   section,
   onPropChange,
+  onPropsChange,
 }: SectionEditorProps) {
   const p = section.props;
   const source = p.productSource || (
@@ -72,23 +73,18 @@ export function ProductSectionEditor({
             <ToggleField label="Rows per page" value={p.allowRowsPerPage ?? "false"} onChange={(v) => onPropChange("allowRowsPerPage", v)} />
           </>
         )}
-        {p.gridColumns !== undefined && (
-          <Field label="Columns">
-            <SelectField
-              value={p.desktopColumns || p.gridColumns || "4"}
-              onChange={(v) => {
-                onPropChange("gridColumns", v);
-                onPropChange("desktopColumns", v);
-              }}
-              options={[
-                { value: "2", label: "2" },
-                { value: "3", label: "3" },
-                { value: "4", label: "4" },
-                { value: "5", label: "5" },
-              ]}
-            />
-          </Field>
-        )}
+        <Field label="Columns">
+          <SelectField
+            value={p.desktopColumns || p.gridColumns || "4"}
+            onChange={(v) => onPropsChange({ ...p, gridColumns: v, desktopColumns: v })}
+            options={[
+              { value: "2", label: "2" },
+              { value: "3", label: "3" },
+              { value: "4", label: "4" },
+              { value: "5", label: "5" },
+            ]}
+          />
+        </Field>
         {section.type === "product-grid" && (
           <>
             <Field label="Tablet columns">

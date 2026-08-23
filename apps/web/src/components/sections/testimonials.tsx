@@ -2,15 +2,22 @@
 
 import { Star, CheckCircle2, Quote } from "lucide-react";
 import { SectionWrapper, ColumnGrid, SectionTitle, type SectionData } from "./section-renderer";
-import { useBuilderTestimonials } from "@/lib/use-builder-demo";
-import type { DemoTestimonial } from "@/lib/demo-data";
+
+type TestimonialItem = {
+  id: string;
+  name: string;
+  role: string;
+  text: string;
+  rating: number | string;
+  avatar: string;
+  avatarMediaId?: string;
+  badge?: string;
+};
 
 export function Testimonials({ section }: { section: SectionData }) {
   const p = section.props;
-  const styleItems = (section.style?.testimonialItems ?? []) as { id: string; name: string; role: string; text: string; rating: number | string; avatar: string; avatarMediaId?: string; badge?: string }[];
-  const realTestimonials: DemoTestimonial[] = [];
-  const demoItems = useBuilderTestimonials(realTestimonials);
-  const items = styleItems.length > 0 ? styleItems : demoItems;
+  const styleItems = (section.style?.testimonialItems ?? []) as TestimonialItem[];
+  const items = styleItems.length > 0 ? styleItems : [];
   const count = Number(p.testimonialsCount) || 6;
   const display = items.slice(0, count);
   const cols = p.layout === "carousel" ? "4" : "3";
@@ -22,8 +29,8 @@ export function Testimonials({ section }: { section: SectionData }) {
         {display.length > 0 ? (
           <ColumnGrid columns={cols}>
             {display.map((t, i) => {
-              const id = (t as any).id || (t as any)._id || i;
-              const avatarSrc = (t as any).avatar || "";
+              const id = t.id || (t as any)._id || i;
+              const avatarSrc = t.avatar || "";
               const rating = Number(t.rating) || 5;
               return (
                 <div
@@ -69,10 +76,15 @@ export function Testimonials({ section }: { section: SectionData }) {
             })}
           </ColumnGrid>
         ) : (
-          <p className="text-sm text-zinc-400 text-center py-8">No testimonials yet. Add them in the Content tab.</p>
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-zinc-200 bg-zinc-50/50 py-16 text-center">
+            <Quote className="h-10 w-10 text-zinc-300 mb-3" />
+            <h4 className="text-sm font-semibold text-zinc-700">No testimonials yet</h4>
+            <p className="text-xs text-zinc-400 mt-1 max-w-sm">
+              Add testimonials in the Content tab to display customer reviews.
+            </p>
+          </div>
         )}
       </div>
     </SectionWrapper>
   );
 }
-

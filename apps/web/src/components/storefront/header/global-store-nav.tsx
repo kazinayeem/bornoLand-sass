@@ -83,7 +83,7 @@ export function GlobalStoreNav({
   allCategoriesButtonClassName,
   layout = "desktop",
 }: GlobalStoreNavProps) {
-  const { categories: storeCategories, brands = [], settings } = useTenant();
+  const { store, categories: storeCategories, brands = [], settings } = useTenant();
   const pathname = usePathname() || "";
   const storeLang: StoreLanguage = propLang || (settings?.language === "bn" ? "bn" : "en");
 
@@ -92,6 +92,17 @@ export function GlobalStoreNav({
       (a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0),
     );
   }, [storeCategories]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Storefront Header Categories]", {
+        storeId: store?._id,
+        storeSlug: store?.slug,
+        count: categories.length,
+        categories: categories.map((c) => ({ id: c._id, name: c.name, slug: c.slug })),
+      });
+    }
+  }, [store?._id, store?.slug, categories]);
 
   const { roots, visible, remaining, byParent } = useMemo(
     () => partitionCategories(categories as CategoryData[], maxVisibleItems),

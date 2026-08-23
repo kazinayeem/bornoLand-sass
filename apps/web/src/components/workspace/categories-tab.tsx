@@ -734,9 +734,12 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
           billingHref={billingHref || "#"}
           brand={brandModal.brand}
           onClose={() => setBrandModal({ open: false, brand: null })}
-          onSuccess={() => {
+          onSuccess={async () => {
             refetchBrands();
             setBrandModal({ open: false, brand: null });
+            if (store) {
+              await revalidateStorefrontForStore(store, { scope: "all" });
+            }
           }}
         />
       )}

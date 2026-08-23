@@ -48,6 +48,7 @@ export function MarketplaceHeader({ headerSettings = {} }: MarketplaceHeaderProp
     "🛒 Mega Marketplace Deals | Flash Sale Active: Save Up to 60% with Fast Home Delivery!";
   const showAnnouncement = headerSettings.showAnnouncement !== false;
   const storeName = store.name || "BornoLand Marketplace";
+  const storeTagline = store.tagline || storeName;
   const logoUrl = (headerSettings.logoUrl as string) || store.logoUrl || "";
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -106,7 +107,7 @@ export function MarketplaceHeader({ headerSettings = {} }: MarketplaceHeaderProp
                   {storeName}
                 </span>
                 <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest -mt-1">
-                  Online Marketplace
+                  {storeTagline}
                 </span>
               </div>
             </div>
@@ -122,7 +123,7 @@ export function MarketplaceHeader({ headerSettings = {} }: MarketplaceHeaderProp
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search in Marketplace for products, brands and categories..."
+                placeholder={t("search", storeLang)}
                 className="w-full h-11 pl-4 pr-28 rounded-lg border-2 border-[#f85606] bg-zinc-50 text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:bg-white transition-all shadow-inner"
               />
               <button
@@ -130,7 +131,7 @@ export function MarketplaceHeader({ headerSettings = {} }: MarketplaceHeaderProp
                 className="absolute right-1 top-1 bottom-1 px-6 rounded-md bg-[#f85606] hover:bg-[#e04800] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs"
               >
                 <Search className="w-3.5 h-3.5" />
-                <span>Search</span>
+                <span>{t("searchButton", storeLang)}</span>
               </button>
             </form>
           </div>

@@ -2,17 +2,25 @@
 
 import { BuilderLink as Link } from "./builder-link";
 import { SectionWrapper, ColumnGrid, SectionTitle, type SectionData } from "./section-renderer";
-import { useTenant } from "@/providers/tenant-provider";
 import { ProductCard } from "@/components/storefront/product-card";
-import { ArrowRight, ShoppingBag } from "lucide-react";
+import { useSectionProducts } from "@/hooks/use-section-products";
+import { isSectionPropEnabled, resolveProductCategoryLabel } from "@/lib/storefront/product-section-data";
+import { ArrowRight, Loader2, ShoppingBag } from "lucide-react";
 
 export function FeaturedProducts({ section }: { section: SectionData }) {
-  const { products } = useTenant();
   const p = section.props;
-  const count = Number(p.productCount) || 8;
-  const cols = p.gridColumns || "4";
-  const display = products.slice(0, count);
-  const showViewAll = p.showViewAll !== "false";
+  const cols = p.gridColumns || p.desktopColumns || "4";
+  const { products, categories, isLoading } = useSectionProducts({
+    sectionType: section.type,
+    props: p,
+  });
+
+  const showBadges = isSectionPropEnabled(p.showBadges, true);
+  const showRatings = isSectionPropEnabled(p.showRatings, true);
+  const showViewNow = isSectionPropEnabled(p.showViewNow, false);
+  const showViewAll = isSectionPropEnabled(p.showViewAll, true);
+  const viewNowText = p.viewNowText?.trim() || "View Now";
+  const viewAllText = p.viewAllText?.trim() || "View All";
 
   return (
     <SectionWrapper section={section}>
@@ -24,10 +32,22 @@ export function FeaturedProducts({ section }: { section: SectionData }) {
           textAlignment={p.textAlignment}
         />
 
-        {display.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+          </div>
+        ) : products.length > 0 ? (
           <ColumnGrid columns={cols}>
-            {display.map((pr) => (
-              <ProductCard key={pr._id} product={pr} />
+            {products.map((product) => (
+              <ProductCard
+                key={product._id}
+                product={product}
+                showBadges={showBadges}
+                showRatings={showRatings}
+                showViewNow={showViewNow}
+                viewNowText={viewNowText}
+                categoryLabel={resolveProductCategoryLabel(product, categories)}
+              />
             ))}
           </ColumnGrid>
         ) : (
@@ -40,13 +60,13 @@ export function FeaturedProducts({ section }: { section: SectionData }) {
           </div>
         )}
 
-        {showViewAll && display.length > 0 && (
+        {showViewAll && products.length > 0 && (
           <div className="mt-10 sm:mt-12 text-center">
             <Link
               href={p.viewAllLink || "/shop"}
               className="group inline-flex items-center gap-2 rounded-full border border-zinc-300 bg-white px-7 py-3 text-sm font-semibold text-zinc-900 shadow-sm transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50 hover:shadow active:scale-95"
             >
-              <span>{p.viewAllText || "View All Products"}</span>
+              <span>{viewAllText}</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
@@ -55,4 +75,3 @@ export function FeaturedProducts({ section }: { section: SectionData }) {
     </SectionWrapper>
   );
 }
-

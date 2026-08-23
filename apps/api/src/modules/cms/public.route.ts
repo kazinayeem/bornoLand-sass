@@ -14,6 +14,12 @@ import {
 import { getPublicPageController, getPublicFaqsController, getPublicBlogPostsController } from "./cms.controller.js";
 import { getPublicStoreContactController } from "../stores/store-contact.controller.js";
 import { trackOrderController } from "../orders/order.controller.js";
+import { validateCouponController } from "../coupons/coupon.controller.js";
+import { getPublicCategoriesController } from "../categories/category.controller.js";
+import {
+  getPublicReviewsController,
+  submitPublicReviewController,
+} from "../reviews/review.controller.js";
 import { InvoiceModel } from "../subscriptions/invoice.model.js";
 import { OrderModel } from "../../models/order.model.js";
 import { StoreModel } from "../../models/store.model.js";
@@ -116,14 +122,16 @@ publicRouter.get("/tenant-by-host", resolveTenantByHostController);
 publicRouter.get("/product/:slug", resolveProductByHostController);
 publicRouter.get("/product/:storeSlug/:productSlug", resolveProductBySlugController);
 
+publicRouter.get("/reviews", getPublicReviewsController);
+publicRouter.post("/reviews", submitPublicReviewController);
+
 publicRouter.use(resolveStoreFromSubdomain);
 publicRouter.get("/products", getPublicProductsController);
+publicRouter.get("/categories", getPublicCategoriesController);
 publicRouter.get("/page/:slug", getPublicPageController);
 publicRouter.get("/faqs", getPublicFaqsController);
 publicRouter.get("/blog/posts", getPublicBlogPostsController);
 publicRouter.get("/contact", getPublicStoreContactController);
-import { validateCouponController } from "../coupons/coupon.controller.js";
-
 publicRouter.post("/coupons/validate", validateCouponController);
 
 

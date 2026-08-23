@@ -302,14 +302,18 @@ function footerTemplate(
   };
 }
 
-/** Header presets — all render via header-bar with different defaults. */
-/** Header presets — 5 dedicated professional header templates. */
+/** Header presets — 10 dedicated professional header templates. */
 export const HEADER_LIBRARY_TEMPLATES: Array<SectionDef & { keywords: string[] }> = [
   headerTemplate("header-minimal-clean", "HEADER 1 — Minimal / Clean Store", "Logo left, main navigation, search, wishlist, cart, and clean ecommerce layout", ["header", "minimal", "clean", "store", "fashion", "boutique"], { template: "minimal-clean", sticky: "true", showSearch: "true", showCart: "true", showWishlist: "true" }),
-  headerTemplate("header-modern-ecommerce", "HEADER 2 — Modern Ecommerce", "Top announcement bar, logo/search row, dynamic category navigation, and modern style", ["header", "modern", "ecommerce", "grocery", "organic", "natural"], { template: "modern-ecommerce", sticky: "true", showSearch: "true", showCart: "true", showAnnouncement: "true" }),
-  headerTemplate("header-marketplace", "HEADER 3 — Marketplace Header", "Daraz-style marketplace layout with large search, Flash Sale topbar, and All Categories mega menu", ["header", "marketplace", "daraz", "multivendor", "search", "deals"], { template: "marketplace", sticky: "true", showSearch: "true", showCart: "true", showAccount: "true" }),
-  headerTemplate("header-premium-luxury", "HEADER 4 — Premium / Luxury", "Refined typography, spacious layout, hotline strip, categories dropdown, and premium feel", ["header", "premium", "luxury", "lifestyle", "general"], { template: "premium-luxury", sticky: "true", showSearch: "true", showCart: "true" }),
-  headerTemplate("header-compact-professional", "HEADER 5 — Compact / Professional", "Star Tech-inspired dark navy header with 2nd row tech categories, PC Builder, and helpline", ["header", "compact", "professional", "tech", "computer", "electronics"], { template: "compact-professional", sticky: "true", showSearch: "true", showCart: "true" }),
+  headerTemplate("header-modern-ecommerce", "HEADER 2 — Modern Ecommerce", "Top announcement bar, logo/search row, dynamic category navigation, and modern style", ["header", "modern", "ecommerce"], { template: "modern-ecommerce", sticky: "true", showSearch: "true", showCart: "true", showAnnouncement: "true" }),
+  headerTemplate("header-marketplace", "HEADER 3 — Marketplace Header", "Marketplace layout with large search, top bar, and All Categories mega menu", ["header", "marketplace", "daraz", "multivendor", "search", "deals"], { template: "marketplace", sticky: "true", showSearch: "true", showCart: "true", showAccount: "true" }),
+  headerTemplate("header-premium-luxury", "HEADER 4 — Premium / Luxury", "Refined typography, spacious layout, categories dropdown, and premium feel", ["header", "premium", "luxury", "lifestyle", "general"], { template: "premium-luxury", sticky: "true", showSearch: "true", showCart: "true" }),
+  headerTemplate("header-compact-professional", "HEADER 5 — Compact / Professional", "Compact utility bar with dense category navigation", ["header", "compact", "professional", "tech"], { template: "compact-professional", sticky: "true", showSearch: "true", showCart: "true" }),
+  headerTemplate("header-fashion-boutique", "HEADER 6 — Fashion Boutique", "Centered logo with navigation underneath and fashion spacing", ["header", "fashion", "boutique", "apparel"], { template: "fashion-boutique", sticky: "true", showSearch: "true", showWishlist: "true", showCart: "true" }),
+  headerTemplate("header-grocery-natural", "HEADER 7 — Grocery / Natural", "Announcement, All Categories button, and grocery-focused layout", ["header", "grocery", "organic", "natural", "food"], { template: "grocery-natural", sticky: "true", showSearch: "true", showCart: "true", showAnnouncement: "true" }),
+  headerTemplate("header-electronics-tech", "HEADER 8 — Electronics / Tech", "Search-first layout with flash-sale link and category row", ["header", "electronics", "tech", "computer"], { template: "electronics-tech", sticky: "true", showSearch: "true", showCart: "true" }),
+  headerTemplate("header-bold-promotional", "HEADER 9 — Bold / Promotional", "Strong promotional bar with deals and flash-sale navigation", ["header", "promotional", "deals", "sale"], { template: "bold-promotional", sticky: "true", showSearch: "true", showCart: "true", showAnnouncement: "true" }),
+  headerTemplate("header-mobile-first", "HEADER 10 — Mobile First / Modern", "Mobile-optimized header with clean desktop behavior", ["header", "mobile", "responsive", "modern"], { template: "mobile-first", sticky: "true", showSearch: "true", showCart: "true" }),
 ];
 
 /** Footer presets — 5 dedicated professional footer templates. */

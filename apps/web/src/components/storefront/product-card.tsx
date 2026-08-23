@@ -4,9 +4,9 @@ import dynamic from "next/dynamic";
 import { useMemo, useState, useCallback, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { StoreLink as Link } from "./store-link";
 import { useProductHref } from "@/lib/store-href";
-import { ShoppingCart, Star, Heart, Eye } from "lucide-react";
+import { ProductRatingRow } from "./product-rating-row";
+import { ShoppingCart, Heart, Eye } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { addToCart } from "@/redux/slices/cart-slice";
 import { toggleWishlist } from "@/redux/slices/wishlist-slice";
@@ -19,9 +19,6 @@ import { getProductImageUrl } from "@/lib/product-media";
 import { SmartImage } from "@/components/ui/smart-image";
 import { getContrastColor } from "@/lib/color-utils";
 import { useStorefrontSurface } from "./storefront-ui";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const QuickViewModal = dynamic(
@@ -56,13 +53,27 @@ type ProductCardProps = {
   product: ProductCardProduct;
   badge?: ReactNode;
   variant?: "default" | "grocery" | "electronics" | "minimal" | "bordered" | "elevated";
+  showBadges?: boolean;
+  showRatings?: boolean;
+  showViewNow?: boolean;
+  viewNowText?: string;
+  categoryLabel?: string;
 };
 
-export function ProductCard({ product, badge, variant: variantProp }: ProductCardProps) {
+export function ProductCard({
+  product,
+  badge,
+  variant: variantProp,
+  showBadges = true,
+  showRatings = true,
+  showViewNow = false,
+  viewNowText = "View Now",
+  categoryLabel,
+}: ProductCardProps) {
   const isBuilder = useIsBuilder();
   const router = useRouter();
   const dispatch = useDispatch();
-  const { theme, settings } = useTenant();
+  const { theme, settings, store } = useTenant();
   const themeId = (theme as any)?.themeId || (theme as any)?.preset || "grocery";
   const variant = variantProp || (themeId === "electronics" ? "electronics" : themeId === "grocery" ? "grocery" : "default");
 
@@ -73,6 +84,7 @@ export function ProductCard({ product, badge, variant: variantProp }: ProductCar
   const [adding, setAdding] = useState(false);
 
   const isOutOfStock = product.stock <= 0;
+  const ratingStoreId = product.storeId || store._id;
   const imageUrl = useMemo(() => getProductImageUrl(product), [product]);
   const productHref = useProductHref(product.slug, isBuilder);
 
@@ -85,6 +97,18 @@ export function ProductCard({ product, badge, variant: variantProp }: ProductCar
     if (isBuilder || productHref === "#") return;
     router.prefetch(productHref);
   }, [isBuilder, productHref, router]);
+
+  const navigateToProduct = useCallback(
+    (e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      e?.preventDefault();
+      if (isBuilder || productHref === "#") return;
+      router.push(productHref);
+    },
+    [isBuilder, productHref, router],
+  );
+
+  const displayCategory = categoryLabel ?? product.brand ?? product.category ?? "";
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -142,16 +166,25 @@ export function ProductCard({ product, badge, variant: variantProp }: ProductCar
         onFocus={prefetchProduct}
         className="h-full"
       >
-        <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-3.5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-xl hover:shadow-zinc-900/5">
-          {!isBuilder && (
-            <Link
-              href={productHref}
-              className="absolute inset-0 z-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-              aria-label={`View ${product.name}`}
-            >
-              <span className="sr-only">View {product.name}</span>
-            </Link>
+        <div
+          role={!isBuilder && productHref !== "#" ? "link" : undefined}
+          tabIndex={!isBuilder && productHref !== "#" ? 0 : undefined}
+          onClick={!isBuilder ? navigateToProduct : undefined}
+          onKeyDown={
+            !isBuilder && productHref !== "#"
+              ? (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigateToProduct();
+                  }
+                }
+              : undefined
+          }
+          className={cn(
+            "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-3.5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-xl hover:shadow-zinc-900/5",
+            !isBuilder && productHref !== "#" && "cursor-pointer",
           )}
+        >
 
           {/* Product Image Box */}
           <div className="relative mb-3 aspect-[4/5] sm:aspect-square w-full overflow-hidden rounded-xl bg-zinc-100/80">
@@ -177,7 +210,7 @@ export function ProductCard({ product, badge, variant: variantProp }: ProductCar
 
             {/* Badges Top Left */}
             <div className="absolute left-2.5 top-2.5 z-10 flex flex-col gap-1.5 pointer-events-none">
-              {discount > 0 && (
+              {showBadges && discount > 0 && (
                 <span className={cn(
                   "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold tracking-tight text-white shadow-sm",
                   variant === "grocery" ? "bg-[#e05a00]" : variant === "electronics" ? "bg-[#e2136e]" : "bg-rose-600"
@@ -217,27 +250,20 @@ export function ProductCard({ product, badge, variant: variantProp }: ProductCar
           <div className="relative z-[1] flex flex-1 flex-col justify-between">
             <div>
               {/* Category / Brand */}
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 truncate">
-                {product.brand || product.category || "Collection"}
-              </div>
+              {displayCategory ? (
+                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 truncate">
+                  {displayCategory}
+                </div>
+              ) : null}
 
               {/* Title */}
               <h3 className="line-clamp-2 text-sm font-semibold text-zinc-900 leading-snug group-hover:text-primary transition-colors">
                 {product.name}
               </h3>
 
-              {/* Ratings */}
-              <div className="mt-1.5 flex items-center gap-1">
-                <div className="flex text-amber-400">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star
-                      key={s}
-                      className={cn("h-3 w-3", s <= 4 ? "fill-amber-400 text-amber-400" : "text-zinc-200 fill-zinc-200")}
-                    />
-                  ))}
-                </div>
-                <span className="text-[11px] font-medium text-zinc-500 ml-0.5">4.9 (24)</span>
-              </div>
+              {showRatings && ratingStoreId ? (
+                <ProductRatingRow storeId={ratingStoreId} productId={product._id} />
+              ) : null}
             </div>
 
             {/* Pricing & CTA */}
@@ -255,6 +281,16 @@ export function ProductCard({ product, badge, variant: variantProp }: ProductCar
                   </span>
                 )}
               </div>
+
+              {showViewNow && !isBuilder ? (
+                <button
+                  type="button"
+                  onClick={navigateToProduct}
+                  className="relative z-10 mb-2 flex h-9 w-full items-center justify-center rounded-xl border border-zinc-200 bg-white text-xs sm:text-sm font-semibold text-zinc-900 transition-all hover:border-zinc-300 hover:bg-zinc-50 active:scale-[0.98]"
+                >
+                  {viewNowText}
+                </button>
+              ) : null}
 
               {!isOutOfStock && (
                 <button

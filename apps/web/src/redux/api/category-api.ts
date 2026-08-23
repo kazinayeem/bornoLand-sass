@@ -97,6 +97,23 @@ export const categoryApi = baseApi.injectEndpoints({
       },
       providesTags: (_result, _error, arg) => [{ type: "Categories", id: typeof arg === "string" ? arg : arg.storeId }],
     }),
+    getPublicCategories: builder.query<
+      ApiEnvelope<CategoriesResponse>,
+      { storeId: string; page?: number; limit?: number; status?: string } | void
+    >({
+      query: (params) => ({
+        url: "/public/categories",
+        params: {
+          page: 1,
+          limit: 100,
+          status: "active",
+          ...(params ?? {}),
+        },
+      }),
+      providesTags: (_result, _error, arg) => [
+        { type: "Categories", id: arg?.storeId ? `public-${arg.storeId}` : "public" },
+      ],
+    }),
     getCategory: builder.query<ApiEnvelope<CategoryResponse>, { storeId: string; id: string }>({
       query: ({ storeId, id }) => ({ url: `/categories/${storeId}/${id}` }),
       providesTags: (_result, _error, { id }) => [{ type: "Categories", id }],
@@ -122,6 +139,7 @@ export const categoryApi = baseApi.injectEndpoints({
 
 export const {
   useGetCategoriesQuery,
+  useGetPublicCategoriesQuery,
   useGetCategoryQuery,
   useCreateCategoryMutation,
   useUpdateCategoryMutation,

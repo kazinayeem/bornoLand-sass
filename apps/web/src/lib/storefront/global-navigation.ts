@@ -52,6 +52,11 @@ export const HEADER_TEMPLATE_IDS = [
   "marketplace",
   "premium-luxury",
   "compact-professional",
+  "fashion-boutique",
+  "grocery-natural",
+  "electronics-tech",
+  "bold-promotional",
+  "mobile-first",
 ] as const;
 
 export type HeaderTemplateId = (typeof HEADER_TEMPLATE_IDS)[number];
@@ -62,8 +67,6 @@ const TEMPLATE_ALIASES: Record<string, HeaderTemplateId> = {
   "minimal-fashion": "minimal-clean",
   clean: "minimal-clean",
   "modern-ecommerce": "modern-ecommerce",
-  grocery: "modern-ecommerce",
-  organic: "modern-ecommerce",
   ecommerce: "modern-ecommerce",
   marketplace: "marketplace",
   daraz: "marketplace",
@@ -71,14 +74,26 @@ const TEMPLATE_ALIASES: Record<string, HeaderTemplateId> = {
   "premium-luxury": "premium-luxury",
   premium: "premium-luxury",
   luxury: "premium-luxury",
-  fashion: "premium-luxury",
+  fashion: "fashion-boutique",
   "modern-general": "premium-luxury",
   "compact-professional": "compact-professional",
   compact: "compact-professional",
   professional: "compact-professional",
   "tech-mega": "compact-professional",
-  electronics: "compact-professional",
-  computer: "compact-professional",
+  electronics: "electronics-tech",
+  computer: "electronics-tech",
+  "fashion-boutique": "fashion-boutique",
+  boutique: "fashion-boutique",
+  "grocery-natural": "grocery-natural",
+  grocery: "grocery-natural",
+  organic: "grocery-natural",
+  "electronics-tech": "electronics-tech",
+  tech: "electronics-tech",
+  "bold-promotional": "bold-promotional",
+  promotional: "bold-promotional",
+  deals: "bold-promotional",
+  "mobile-first": "mobile-first",
+  mobile: "mobile-first",
 };
 
 const FOOTER_ALIASES: Record<string, string> = {
@@ -204,7 +219,11 @@ export function normalizeHeaderSettings(
 ): NormalizedHeaderConfig {
   const settings = (raw ?? {}) as Record<string, unknown>;
   const themeFallback: HeaderTemplateId =
-    opts?.themeId === "electronics" ? "compact-professional" : "modern-ecommerce";
+    opts?.themeId === "electronics"
+      ? "electronics-tech"
+      : opts?.themeId === "grocery"
+        ? "grocery-natural"
+        : "modern-ecommerce";
   const templateId = resolveHeaderTemplateId(settings, themeFallback);
 
   const maxVisibleItems = asNumber(

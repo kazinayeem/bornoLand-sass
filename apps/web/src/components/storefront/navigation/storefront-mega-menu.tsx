@@ -7,7 +7,7 @@ import { ArrowRight, ChevronRight, Layers, Award, Sparkles } from "lucide-react"
 import type { Category } from "@/redux/api/category-api";
 import type { Brand } from "@/redux/api/brand-api";
 import { getCategoryEnglishName } from "@/lib/storefront/category-label";
-import { t, type StoreLanguage } from "@/lib/i18n/translations";
+import { t, HEADER_TEMPLATE_UI_LANG, type StoreLanguage } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 
 interface StorefrontMegaMenuProps {
@@ -39,7 +39,7 @@ export function StorefrontMegaMenu({
   selectedRootId,
   onRootSelect,
   brands = [],
-  lang = "bn",
+  lang = HEADER_TEMPLATE_UI_LANG,
   onItemClick,
   className,
   themeVariant = "default",

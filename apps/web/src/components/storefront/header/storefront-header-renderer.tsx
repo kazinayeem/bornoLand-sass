@@ -3,11 +3,6 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useActiveTheme } from "@/components/store/theme-provider";
 import { useTenant } from "@/providers/tenant-provider";
-import { GroceryHeader } from "@/themes/grocery/components/grocery-header";
-import { TechMegaHeader } from "./templates/tech-mega-header";
-import { MarketplaceHeader } from "./templates/marketplace-header";
-import { MinimalFashionHeader } from "./templates/minimal-fashion-header";
-import { ModernGeneralHeader } from "./templates/modern-general-header";
 import { useRegisterStorefrontHeaderOffset } from "@/components/storefront/storefront-header-offset";
 import {
   isGlobalHeaderEnabled,
@@ -16,6 +11,7 @@ import {
   resolveHeaderTemplateId,
   type HeaderTemplateId,
 } from "@/lib/storefront/global-navigation";
+import { resolveHeaderTemplateComponent } from "./header-template-registry";
 import { cn } from "@/lib/utils";
 
 export interface StorefrontHeaderRendererProps {
@@ -75,7 +71,6 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
     [headerSettings, store],
   );
 
-  // Pass normalized config + raw settings so templates keep full keys while sharing nav limits
   const templateSettings = useMemo(
     () => ({
       ...headerSettings,
@@ -99,6 +94,11 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       accentColor: config.colors.accent,
     }),
     [headerSettings, template, config, resolvedLogoUrl],
+  );
+
+  const TemplateComponent = useMemo(
+    () => resolveHeaderTemplateComponent(template),
+    [template],
   );
 
   const publishMetrics = useCallback(
@@ -154,23 +154,6 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
     return null;
   }
 
-  const renderHeaderContent = () => {
-    switch (template) {
-      case "minimal-clean":
-        return <MinimalFashionHeader key="header-minimal-clean" headerSettings={templateSettings} />;
-      case "modern-ecommerce":
-        return <GroceryHeader key="header-modern-ecommerce" headerSettings={templateSettings} />;
-      case "marketplace":
-        return <MarketplaceHeader key="header-marketplace" headerSettings={templateSettings} />;
-      case "premium-luxury":
-        return <ModernGeneralHeader key="header-premium-luxury" headerSettings={templateSettings} />;
-      case "compact-professional":
-        return <TechMegaHeader key="header-compact-professional" headerSettings={templateSettings} />;
-      default:
-        return <GroceryHeader key="header-default-modern" headerSettings={templateSettings} />;
-    }
-  };
-
   const colorStyle = {
     ["--store-header-height" as string]: `${headerHeight}px`,
     ...(config.colors.primary ? { ["--store-primary" as string]: config.colors.primary } : {}),
@@ -200,7 +183,7 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
           transparent && "bg-transparent backdrop-blur-md",
         )}
       >
-        {renderHeaderContent()}
+        <TemplateComponent key={`header-${template}`} headerSettings={templateSettings} />
       </div>
 
       {position === "fixed" && !transparent && headerHeight > 0 && (
@@ -215,5 +198,4 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
   );
 }
 
-// re-export for tests / tooling
 export { resolveHeaderTemplateId };

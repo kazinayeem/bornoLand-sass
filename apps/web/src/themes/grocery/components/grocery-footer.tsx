@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTenant } from "@/providers/tenant-provider";
+import { useStoreCategories } from "@/hooks/use-store-categories";
 import { StoreLink as Link } from "@/components/storefront/store-link";
 import { SmartImage } from "@/components/ui/smart-image";
 import {
@@ -27,7 +28,8 @@ export interface GroceryFooterProps {
 }
 
 export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
-  const { store, categories = [], brands = [], contact } = useTenant();
+  const { store, brands = [], contact } = useTenant();
+  const { categories } = useStoreCategories();
   const storeLang: StoreLanguage = (store?.defaultLanguage as StoreLanguage) || "bn";
   const storeName = store.name || "BornoLand Grocery";
   const logoUrl = (footerSettings.logoUrl as string) || store.logoUrl || "";

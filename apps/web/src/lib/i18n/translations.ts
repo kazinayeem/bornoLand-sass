@@ -5,6 +5,9 @@
 
 export type StoreLanguage = "en" | "bn" | "bilingual";
 
+/** Header templates always render static UI labels in English. */
+export const HEADER_TEMPLATE_UI_LANG: StoreLanguage = "en";
+
 export const UI_TRANSLATIONS = {
   // Navigation & Header
   home: { en: "Home", bn: "হোম" },

@@ -117,6 +117,45 @@ export async function getCategories(storeId: string, query: Record<string, unkno
   };
 }
 
+/** Attach product/subcategory counts to category rows (storefront + tenant resolver). */
+export async function enrichCategoriesWithCounts<T extends Record<string, unknown>>(
+  storeId: string,
+  categories: T[],
+): Promise<Array<T & { productCount: number; subcategoryCount: number }>> {
+  if (categories.length === 0) return [];
+
+  await connectDatabase();
+  const storeObjectId = new mongoose.Types.ObjectId(storeId);
+
+  const [productCounts, subcategoryCounts] = await Promise.all([
+    ProductModel.aggregate([
+      { $match: { storeId: storeObjectId } },
+      { $unwind: "$categoryIds" },
+      { $group: { _id: "$categoryIds", count: { $sum: 1 } } },
+    ]),
+    CategoryModel.aggregate([
+      { $match: { storeId: storeObjectId, parentId: { $ne: null } } },
+      { $group: { _id: "$parentId", count: { $sum: 1 } } },
+    ]),
+  ]);
+
+  const productCountMap = new Map<string, number>();
+  for (const item of productCounts) {
+    if (item._id) productCountMap.set(String(item._id), item.count);
+  }
+
+  const subcategoryCountMap = new Map<string, number>();
+  for (const item of subcategoryCounts) {
+    if (item._id) subcategoryCountMap.set(String(item._id), item.count);
+  }
+
+  return categories.map((c) => ({
+    ...c,
+    productCount: productCountMap.get(String(c._id)) ?? 0,
+    subcategoryCount: subcategoryCountMap.get(String(c._id)) ?? 0,
+  }));
+}
+
 
 export async function getCategory(categoryId: string, storeId: string) {
   await connectDatabase();

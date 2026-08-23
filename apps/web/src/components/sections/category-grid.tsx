@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { BuilderLink as Link } from "./builder-link";
 import { SectionWrapper, SectionTitle, type SectionData } from "./section-renderer";
 import { useStoreCategories } from "@/hooks/use-store-categories";
@@ -10,7 +10,7 @@ import { Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function CategoryGrid({ section }: { section: SectionData }) {
-  const { storeId, categories, isLoading, isError } = useStoreCategories();
+  const { categories, isLoading, isError } = useStoreCategories();
   const p = section.props;
 
   const limit = Math.min(Math.max(Number(p.categoryCount) || 6, 1), 12);
@@ -27,27 +27,6 @@ export function CategoryGrid({ section }: { section: SectionData }) {
       }),
     [categories, section.type, p.categorySource, p.categoryIds, limit],
   );
-
-  useEffect(() => {
-    if (process.env.NODE_ENV !== "development") return;
-    console.log("[Featured Categories Section]", {
-      storeId,
-      sectionType: section.type,
-      source: p.categorySource || (section.type === "featured-categories" ? "featured" : "all"),
-      count: displayCategories.length,
-      isLoading,
-      isError,
-      categories: displayCategories.map((c) => ({
-        id: c._id,
-        label: getCategoryEnglishName(c),
-        slug: c.slug,
-        parentId: c.parentId,
-        active: c.active,
-        featured: c.featured,
-        productCount: c.productCount,
-      })),
-    });
-  }, [storeId, section.type, p.categorySource, displayCategories, isLoading, isError]);
 
   if (isLoading && displayCategories.length === 0) {
     return (
@@ -69,7 +48,22 @@ export function CategoryGrid({ section }: { section: SectionData }) {
     );
   }
 
-  if (isError || displayCategories.length === 0) {
+  if (isError && displayCategories.length === 0) {
+    return (
+      <SectionWrapper section={section}>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 text-center">
+          <SectionTitle
+            title={p.title || "Shop by Category"}
+            subtitle="Could not load categories. Please refresh the page."
+            textColor={p.textColor}
+            textAlignment={p.textAlignment}
+          />
+        </div>
+      </SectionWrapper>
+    );
+  }
+
+  if (displayCategories.length === 0) {
     if (section.type === "featured-categories" || p.categorySource === "featured") {
       return null;
     }

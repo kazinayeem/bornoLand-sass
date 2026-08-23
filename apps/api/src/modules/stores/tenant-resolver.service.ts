@@ -160,7 +160,9 @@ export async function resolveBySubdomain(
   }
 
   const products = await ProductModel.find({ storeId: store._id, status: "active" }).sort({ createdAt: -1 }).limit(20).lean() as any[];
-  const categories = await CategoryModel.find({ storeId: store._id, active: true }).sort({ sortOrder: 1, name: 1 }).lean() as any[];
+  const rawCategories = await CategoryModel.find({ storeId: store._id, active: true }).sort({ sortOrder: 1, name: 1 }).lean() as any[];
+  const { enrichCategoriesWithCounts } = await import("../categories/category.service.js");
+  const categories = await enrichCategoriesWithCounts(String(store._id), rawCategories);
   const settings = await StoreSettingsModel.findOne({ storeId: store._id }).lean() as any;
   const sliders = await HomepageSliderModel.find({ storeId: store._id, isActive: true }).sort({ sortOrder: 1, createdAt: 1 }).lean() as any[];
   const navigations = await NavigationModel.find({ storeId: store._id, isActive: true }).sort({ sortOrder: 1 }).lean() as any[];

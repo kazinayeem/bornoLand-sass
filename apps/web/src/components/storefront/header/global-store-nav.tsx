@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 import { StoreLink as Link } from "@/components/storefront/store-link";
 import { useTenant, type CategoryData } from "@/providers/tenant-provider";
 import { useStoreCategories } from "@/hooks/use-store-categories";
-import { t, type StoreLanguage } from "@/lib/i18n/translations";
+import { t, HEADER_TEMPLATE_UI_LANG, type StoreLanguage } from "@/lib/i18n/translations";
 import { getCategoryEnglishName } from "@/lib/storefront/category-label";
 import {
   DEFAULT_PRIMARY_NAV_DEFS,
@@ -85,10 +85,10 @@ export function GlobalStoreNav({
   allCategoriesButtonClassName,
   layout = "desktop",
 }: GlobalStoreNavProps) {
-  const { store, brands = [], settings } = useTenant();
-  const { storeId, categories, isLoading, isError } = useStoreCategories();
+  const { store, brands = [] } = useTenant();
+  const { categories, isLoading, isError } = useStoreCategories();
   const pathname = usePathname() || "";
-  const storeLang: StoreLanguage = propLang || (settings?.language === "bn" ? "bn" : "en");
+  const storeLang: StoreLanguage = propLang || HEADER_TEMPLATE_UI_LANG;
 
   const { roots, visible, remaining, byParent } = useMemo(
     () => partitionCategories(categories as CategoryData[], maxVisibleItems),
@@ -99,25 +99,6 @@ export function GlobalStoreNav({
     (parentId: string) => byParent[String(parentId)] ?? [],
     [byParent],
   );
-
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.log("[Builder Header Categories]", {
-        storeId,
-        count: categories.length,
-        rootCount: roots.length,
-        categories: categories.map((c) => ({
-          id: c._id,
-          label: getCategoryEnglishName(c),
-          slug: c.slug,
-          parentId: c.parentId,
-          active: c.active,
-        })),
-        isLoading,
-        isError,
-      });
-    }
-  }, [storeId, categories, roots.length]);
 
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);

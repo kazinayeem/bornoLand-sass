@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTenant } from "@/providers/tenant-provider";
+import { useStoreCategories } from "@/hooks/use-store-categories";
 import { StoreLink as Link } from "@/components/storefront/store-link";
 import { SmartImage } from "@/components/ui/smart-image";
 import {
@@ -27,7 +28,8 @@ export interface ModernStoreFooterProps {
 }
 
 export function ModernStoreFooter({ footerSettings = {} }: ModernStoreFooterProps) {
-  const { store, categories = [], brands = [], contact } = useTenant();
+  const { store, brands = [], contact } = useTenant();
+  const { categories } = useStoreCategories();
   const storeLang: StoreLanguage = (store?.defaultLanguage as StoreLanguage) || "en";
   const storeName = store.name || "BornoLand Modern";
   const logoUrl = (footerSettings.logoUrl as string) || store.logoUrl || "";

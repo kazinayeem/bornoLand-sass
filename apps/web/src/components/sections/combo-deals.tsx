@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useDispatch } from "react-redux";
 import { SectionWrapper, ColumnGrid, SectionTitle, type SectionData } from "./section-renderer";
+import { useSectionProducts } from "@/hooks/use-section-products";
 import { useTenant } from "@/providers/tenant-provider";
 import { useIsBuilder } from "@/lib/device-context";
 import { formatCurrency } from "@/lib/format-currency";
@@ -25,9 +26,10 @@ type ComboItem = {
 export function ComboDeals({ section }: { section: SectionData }) {
   const dispatch = useDispatch();
   const isBuilder = useIsBuilder();
-  const { products = [], settings } = useTenant();
-  const [addToCartRemote] = useAddToCartMutation();
   const p = section.props;
+  const { settings } = useTenant();
+  const { products } = useSectionProducts({ sectionType: section.type, props: p });
+  const [addToCartRemote] = useAddToCartMutation();
 
   const count = Number(p.productCount) || 3;
   const gridColumns = p.gridColumns || "3";

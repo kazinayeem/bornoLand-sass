@@ -29,6 +29,7 @@ import type { StoreContact } from "@/redux/api/store-contact-api";
 import { TenantProvider } from "@/providers/tenant-provider";
 import { StorefrontDeviceProvider } from "@/lib/device-context";
 import { getStoreLogoUrl } from "@/lib/store-branding";
+import { normalizeStoreId } from "@/hooks/use-store-categories";
 import type { StorefrontSectionLike } from "@/components/storefront/storefront-types";
 import {
   StorefrontHeaderOffsetProvider,
@@ -89,13 +90,24 @@ export function StorefrontShell({
   const storeWithBranding = useMemo(
     () => ({
       ...store,
+      _id: normalizeStoreId(store._id) || store._id,
       logoUrl: getStoreLogoUrl({ logoUrl: store.logoUrl ?? "" }) || store.logoUrl || "",
     }),
     [store],
   );
   const tenantValue = useMemo<TenantContextType>(
-    () => ({ store: storeWithBranding, theme, products, categories, settings, sliders, navigations, contact }),
-    [storeWithBranding, theme, products, categories, settings, sliders, navigations, contact],
+    () => ({
+      store: storeWithBranding,
+      theme,
+      products,
+      // Categories are loaded live via useStoreCategories() — never SSR seed/ISR cache.
+      categories: [],
+      settings,
+      sliders,
+      navigations,
+      contact,
+    }),
+    [storeWithBranding, theme, products, settings, sliders, navigations, contact],
   );
 
   const shellContent = (

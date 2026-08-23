@@ -2,6 +2,7 @@
 
 import { SectionWrapper, type SectionData } from "./section-renderer";
 import { StorefrontProductGrid } from "@/components/storefront/storefront-product-grid";
+import { isSectionPropEnabled } from "@/lib/storefront/product-section-data";
 
 export function ProductGrid({ section }: { section: SectionData }) {
   const p = section.props;
@@ -22,6 +23,17 @@ export function ProductGrid({ section }: { section: SectionData }) {
           showLoadMore={p.showLoadMore === "true"}
           paginationMode={(p.paginationMode as "pages" | "load-more" | "infinite" | undefined) ?? "pages"}
           allowRowsPerPage={p.allowRowsPerPage === "true"}
+          showBadges={isSectionPropEnabled(p.showBadges, true)}
+          showRatings={isSectionPropEnabled(p.showRatings, true)}
+          showViewNow={isSectionPropEnabled(p.showViewNow, false)}
+          viewNowText={p.viewNowText?.trim() || "View Now"}
+          showViewAll={isSectionPropEnabled(p.showViewAll, false)}
+          viewAllText={p.viewAllText?.trim() || "View All"}
+          viewAllLink={p.viewAllLink || "/shop"}
+          productSource={p.productSource}
+          categorySlug={p.categorySlug}
+          productIds={p.productIds}
+          sectionType={section.type}
         />
       </div>
     </SectionWrapper>

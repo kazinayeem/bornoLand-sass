@@ -78,38 +78,7 @@ function TextInput({ value, onChange, label, placeholder }: { value: string; onC
   );
 }
 
-const HEADER_TEMPLATES = [
-  {
-    id: "minimal-clean",
-    name: "1. Minimal / Clean Store",
-    desc: "Logo left, navigation center, search & cart right.",
-    tag: "Minimal & Boutique",
-  },
-  {
-    id: "modern-ecommerce",
-    name: "2. Modern Ecommerce",
-    desc: "Top announcement bar, dynamic category navigation.",
-    tag: "Grocery & Natural",
-  },
-  {
-    id: "marketplace",
-    name: "3. Marketplace Header",
-    desc: "Prominent search, Flash Sale topbar & mega menu.",
-    tag: "Marketplace & Multi-vendor",
-  },
-  {
-    id: "premium-luxury",
-    name: "4. Premium / Luxury",
-    desc: "Spacious layout, hotline strip & elegant dropdowns.",
-    tag: "Fashion & Luxury",
-  },
-  {
-    id: "compact-professional",
-    name: "5. Compact / Professional",
-    desc: "Star Tech-style navy header with 2nd row categories.",
-    tag: "Tech & Electronics",
-  },
-];
+import { HEADER_TEMPLATE_LIST } from "@/components/storefront/header/header-template-registry";
 
 export function HeaderBuilderSettings() {
   const dispatch = useDispatch();
@@ -162,10 +131,9 @@ export function HeaderBuilderSettings() {
           )}
         </div>
 
-        {/* 5 Header Templates Picker */}
-        <Section label="Select Header Template (5 Designs)">
+        <Section label="Select Header Template (10 Designs)">
           <div className="space-y-2">
-            {HEADER_TEMPLATES.map((tpl) => {
+            {HEADER_TEMPLATE_LIST.map((tpl, index) => {
               const isSelected = activeTemplate === tpl.id;
               return (
                 <div
@@ -180,7 +148,7 @@ export function HeaderBuilderSettings() {
                 >
                   <div className="flex items-center justify-between">
                     <span className={cn("text-xs font-bold", isSelected ? "text-white" : "text-zinc-900")}>
-                      {tpl.name}
+                      {index + 1}. {tpl.name}
                     </span>
                     {isSelected && (
                       <span className="flex items-center gap-1 text-[10px] font-semibold bg-white/20 px-2 py-0.5 rounded-full text-white">
@@ -189,7 +157,7 @@ export function HeaderBuilderSettings() {
                     )}
                   </div>
                   <p className={cn("text-[11px] mt-1 leading-snug", isSelected ? "text-zinc-300" : "text-zinc-500")}>
-                    {tpl.desc}
+                    {tpl.description}
                   </p>
                   <span className={cn("inline-block text-[9px] font-semibold uppercase tracking-wider mt-1.5 px-1.5 py-0.5 rounded", isSelected ? "bg-white/15 text-zinc-200" : "bg-zinc-100 text-zinc-600")}>
                     {tpl.tag}

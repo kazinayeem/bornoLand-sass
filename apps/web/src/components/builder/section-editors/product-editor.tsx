@@ -2,6 +2,7 @@
 
 import { Field, SectionBlock, SelectField, TextField, ToggleField } from "./shared";
 import type { SectionEditorProps } from "./types";
+import { isSectionPropEnabled } from "@/lib/storefront/product-section-data";
 
 const SOURCE_OPTIONS = [
   { value: "featured", label: "Featured products" },
@@ -112,11 +113,22 @@ export function ProductSectionEditor({
         )}
         <ToggleField label="Show badges" value={p.showBadges ?? "true"} onChange={(v) => onPropChange("showBadges", v)} />
         <ToggleField label="Show ratings" value={p.showRatings ?? "true"} onChange={(v) => onPropChange("showRatings", v)} />
-        <ToggleField label="Show view all" value={p.showViewAll ?? "true"} onChange={(v) => onPropChange("showViewAll", v)} />
-        {(p.viewAllLink !== undefined || p.showViewAll === "true") && (
-          <Field label="View all link">
-            <TextField value={p.viewAllLink ?? "/shop"} onChange={(v) => onPropChange("viewAllLink", v)} placeholder="/shop" />
+        <ToggleField label="Show view now" value={p.showViewNow ?? "false"} onChange={(v) => onPropChange("showViewNow", v)} />
+        {isSectionPropEnabled(p.showViewNow, false) && (
+          <Field label="View now text">
+            <TextField value={p.viewNowText ?? "View Now"} onChange={(v) => onPropChange("viewNowText", v)} placeholder="View Now" />
           </Field>
+        )}
+        <ToggleField label="Show view all" value={p.showViewAll ?? "true"} onChange={(v) => onPropChange("showViewAll", v)} />
+        {isSectionPropEnabled(p.showViewAll, true) && (
+          <>
+            <Field label="View all text">
+              <TextField value={p.viewAllText ?? "View All"} onChange={(v) => onPropChange("viewAllText", v)} placeholder="View All" />
+            </Field>
+            <Field label="View all link">
+              <TextField value={p.viewAllLink ?? "/shop"} onChange={(v) => onPropChange("viewAllLink", v)} placeholder="/shop" />
+            </Field>
+          </>
         )}
       </SectionBlock>
     </div>

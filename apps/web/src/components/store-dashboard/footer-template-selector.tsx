@@ -123,7 +123,7 @@ interface FooterTemplateSelectorProps {
 
 export function FooterTemplateSelector({ storeId, storeSlug }: FooterTemplateSelectorProps) {
   const router = useRouter();
-  const { data: pagesData, refetch: refetchPages } = useGetStorePagesQuery(storeId, { skip: !storeId });
+  const { data: pagesData } = useGetStorePagesQuery(storeId, { skip: !storeId });
   const [updateFooterSettings, { isLoading: isUpdating }] = useUpdatePageFooterSettingsMutation();
 
   const homePage = pagesData?.data?.pages?.find(
@@ -171,7 +171,6 @@ export function FooterTemplateSelector({ storeId, storeSlug }: FooterTemplateSel
       }).unwrap();
 
       setPreviewTemplateId(tpl.id);
-      refetchPages();
       toast.success(`Active footer updated to "${tpl.name}"!`);
     } catch {
       toast.error("Failed to update active footer");
@@ -192,7 +191,6 @@ export function FooterTemplateSelector({ storeId, storeSlug }: FooterTemplateSel
         storeId,
         footerSettings: mergedSettings,
       }).unwrap();
-      refetchPages();
       toast.success("Footer settings saved!");
     } catch {
       toast.error("Failed to save footer settings");

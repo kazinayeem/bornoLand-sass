@@ -133,7 +133,7 @@ interface HeaderTemplateSelectorProps {
 
 export function HeaderTemplateSelector({ storeId, storeSlug }: HeaderTemplateSelectorProps) {
   const router = useRouter();
-  const { data: pagesData, refetch: refetchPages } = useGetStorePagesQuery(storeId, { skip: !storeId });
+  const { data: pagesData } = useGetStorePagesQuery(storeId, { skip: !storeId });
   const [updateHeaderSettings, { isLoading: isUpdating }] = useUpdatePageHeaderSettingsMutation();
 
   const homePage = pagesData?.data?.pages?.find(
@@ -183,7 +183,6 @@ export function HeaderTemplateSelector({ storeId, storeSlug }: HeaderTemplateSel
       }).unwrap();
 
       setPreviewTemplateId(tpl.id);
-      refetchPages();
       toast.success(`Active header updated to "${tpl.name}"!`);
     } catch {
       toast.error("Failed to update active header");
@@ -206,7 +205,6 @@ export function HeaderTemplateSelector({ storeId, storeSlug }: HeaderTemplateSel
         storeId,
         headerSettings: mergedSettings,
       }).unwrap();
-      refetchPages();
       toast.success("Header behavior settings saved!");
     } catch {
       toast.error("Failed to save header settings");

@@ -10,15 +10,16 @@ import {
   setProductCardStyle, setGridColumns, setShowBadges, setShowRatings,
   setHeroHeight,
 } from "@/redux/slices/theme-slice";
-import { THEME_PRESETS, type PresetKey } from "@/lib/design-system/theme-presets";
-import { Sparkles, Check } from "lucide-react";
+import { THEMES } from "@/themes/registry";
+import { Sparkles, Check, Store, Cpu, Layers } from "lucide-react";
+import { toast } from "sonner";
 
 const FONTS = ["Inter", "Poppins", "Roboto", "Playfair Display", "DM Sans", "Space Grotesk", "Clash Display"];
 const BUTTON_STYLES = ["rounded-sm", "rounded", "rounded-lg", "rounded-xl", "rounded-full"];
 const NAVBAR_STYLES = ["fixed", "sticky", "static"];
 const LAYOUT_WIDTHS = ["100%", "1200px", "1280px", "1400px"];
 const SHADOW_SIZES = ["none", "sm", "md", "lg"] as const;
-const CARD_STYLES = ["default", "minimal", "bordered", "elevated"] as const;
+const CARD_STYLES = ["default", "grocery", "electronics", "minimal", "bordered", "elevated"] as const;
 const HERO_HEIGHTS = ["sm", "md", "lg"] as const;
 
 type ColorPickerProps = { label: string; value: string; onChange: (v: string) => void };
@@ -82,53 +83,68 @@ function ToggleControl({ label, value, onChange }: ToggleControlProps) {
 export function ThemePanel() {
   const dispatch = useDispatch();
   const t = useSelector((s: RootState) => s.theme);
-  const activePreset = t.preset || "modern";
+  const activeThemeId = (t as any).themeId || t.preset || "grocery";
+
+  const handleSelectTheme = (themeId: string) => {
+    const targetTheme = THEMES.find((th) => th.id === themeId);
+    if (!targetTheme) return;
+
+    dispatch(setPrimaryColor(targetTheme.tokens.colors.primary));
+    dispatch(setSecondaryColor(targetTheme.tokens.colors.secondary));
+    dispatch(setBorderRadius(targetTheme.tokens.layout.borderRadius));
+    dispatch(setSpacing(targetTheme.tokens.layout.spacing));
+    dispatch(setProductCardStyle(targetTheme.productCardVariant as any));
+    dispatch(setGridColumns(targetTheme.id === "electronics" ? 5 : 4));
+    toast.success(`Theme switched to ${targetTheme.name}`);
+  };
 
   return (
     <div className="h-full overflow-y-auto overscroll-contain p-3 space-y-5">
-      {/* ── Global Style Presets ── */}
+      {/* ── Core Theme System ── */}
       <div>
         <div className="mb-2 flex items-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+          <Layers className="h-3.5 w-3.5 text-[#e05a00]" />
           <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">
-            Design Presets
+            Platform Themes
           </p>
         </div>
         <p className="mb-3 text-[11px] text-zinc-500">
-          Apply a professional, cohesive design system across all sections with 1 click.
+          Switch store theme preset without affecting your products or store data.
         </p>
 
-        <div className="grid grid-cols-1 gap-2">
-          {(Object.keys(THEME_PRESETS) as PresetKey[]).map((key) => {
-            const preset = THEME_PRESETS[key];
-            const isSelected = activePreset === key;
+        <div className="grid grid-cols-1 gap-2.5">
+          {THEMES.map((theme) => {
+            const isSelected = activeThemeId === theme.id;
             return (
               <button
-                key={key}
+                key={theme.id}
                 type="button"
-                onClick={() => dispatch(applyPreset(key))}
-                className={`group flex items-start gap-3 rounded-xl border p-2.5 text-left transition-all ${
+                onClick={() => handleSelectTheme(theme.id)}
+                className={`group flex items-start gap-3 rounded-xl border p-3 text-left transition-all ${
                   isSelected
-                    ? "border-blue-600 bg-blue-50/50 shadow-sm ring-1 ring-blue-600/30"
+                    ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30"
                     : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50"
                 }`}
               >
                 <div
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border shadow-sm"
-                  style={{ backgroundColor: preset.previewBg, borderColor: "rgba(0,0,0,0.08)" }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border shadow-sm"
+                  style={{
+                    backgroundColor: theme.tokens.colors.background,
+                    borderColor: theme.tokens.colors.border,
+                  }}
                 >
                   <div
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: preset.previewAccent }}
+                    className="h-4 w-4 rounded-full"
+                    style={{ backgroundColor: theme.tokens.colors.primary }}
                   />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-zinc-900">{preset.name}</span>
-                    {isSelected && <Check className="h-3.5 w-3.5 text-blue-600" />}
+                    <span className="text-xs font-bold text-zinc-900">{theme.name}</span>
+                    {isSelected && <Check className="h-4 w-4 text-primary" />}
                   </div>
                   <p className="text-[10px] text-zinc-500 leading-tight line-clamp-2 mt-0.5">
-                    {preset.description}
+                    {theme.description}
                   </p>
                 </div>
               </button>
@@ -137,44 +153,47 @@ export function ThemePanel() {
         </div>
       </div>
 
+      {/* ── Brand Colors ── */}
       <div className="border-t border-zinc-100 pt-4">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Colors</p>
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Colors & Palette</p>
         <div className="space-y-2.5">
           <ColorPicker label="Primary Color" value={t.primaryColor} onChange={(v) => dispatch(setPrimaryColor(v))} />
           <ColorPicker label="Secondary Color" value={t.secondaryColor} onChange={(v) => dispatch(setSecondaryColor(v))} />
         </div>
       </div>
 
+      {/* ── Typography & Buttons ── */}
       <div className="border-t border-zinc-100 pt-4">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Typography</p>
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Typography & Styling</p>
         <div className="space-y-2.5">
           <SelectControl label="Font Family" value={t.font} options={FONTS} onChange={(v) => dispatch(setFont(v))} />
           <SelectControl label="Button Style" value={t.buttonStyle} options={BUTTON_STYLES} onChange={(v) => dispatch(setButtonStyle(v))} />
         </div>
       </div>
 
+      {/* ── Layout & Radii ── */}
       <div className="border-t border-zinc-100 pt-4">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Layout</p>
         <div className="space-y-2.5">
           <SelectControl label="Navbar Style" value={t.navbarStyle} options={NAVBAR_STYLES} onChange={(v) => dispatch(setNavbarStyle(v))} />
           <SelectControl label="Layout Width" value={t.layoutWidth} options={LAYOUT_WIDTHS} onChange={(v) => dispatch(setLayoutWidth(v))} />
-          <SelectControl label="Hero Height" value={t.heroHeight} options={HERO_HEIGHTS} onChange={(v: string) => dispatch(setHeroHeight(v as typeof t.heroHeight))} />
           <RangeControl label="Border Radius" value={t.borderRadius} min={0} max={24} onChange={(v) => dispatch(setBorderRadius(v))} unit="px" />
           <RangeControl label="Spacing" value={t.spacing} min={0} max={48} step={4} onChange={(v) => dispatch(setSpacing(v))} unit="px" />
-          <SelectControl label="Shadow Size" value={t.shadowSize} options={SHADOW_SIZES} onChange={(v: string) => dispatch(setShadowSize(v as typeof t.shadowSize))} />
         </div>
       </div>
 
+      {/* ── Products & Cards ── */}
       <div className="border-t border-zinc-100 pt-4">
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Products</p>
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Product Card Variants</p>
         <div className="space-y-2.5">
-          <SelectControl label="Card Style" value={t.productCardStyle} options={CARD_STYLES} onChange={(v: string) => dispatch(setProductCardStyle(v as typeof t.productCardStyle))} />
+          <SelectControl label="Card Style" value={t.productCardStyle} options={CARD_STYLES} onChange={(v) => dispatch(setProductCardStyle(v as typeof t.productCardStyle))} />
           <RangeControl label="Grid Columns" value={t.gridColumns} min={2} max={6} onChange={(v) => dispatch(setGridColumns(v))} />
           <ToggleControl label="Show Badges" value={t.showBadges} onChange={(v) => dispatch(setShowBadges(v))} />
           <ToggleControl label="Show Ratings" value={t.showRatings} onChange={(v) => dispatch(setShowRatings(v))} />
         </div>
       </div>
 
+      {/* ── Dark Mode ── */}
       <div className="border-t border-zinc-100 pt-4">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Mode</p>
         <ToggleControl label="Dark Mode" value={t.darkMode} onChange={(v) => dispatch(setDarkMode(v))} />
@@ -182,4 +201,3 @@ export function ThemePanel() {
     </div>
   );
 }
-

@@ -47,16 +47,17 @@ import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
 import { PanelLeftOpen, PanelRightOpen, GripVertical } from "lucide-react";
 
-function getDefaultSectionsForPageType(pageType: string): BuilderSection[] {
+import { getThemeById } from "@/themes/registry";
+
+function getDefaultSectionsForPageType(pageType: string, themeId?: string): BuilderSection[] {
   const id = (type: string) => `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   const shared = { visible: true };
-  const home: BuilderSection[] = [
-    { id: id("hero-banner"), type: "hero-banner", label: "Hero Banner", ...shared, props: { headline: "Welcome to Our Store", subheadline: "Discover amazing products curated just for you", buttonText: "Shop Now", buttonLink: "/shop", imageUrl: "", overlayColor: "rgba(15, 23, 42, 0.45)", textAlignment: "left", heroHeight: "md", kicker: "Welcome" } },
-    { id: id("category-grid"), type: "category-grid", label: "Categories", ...shared, props: { title: "Shop by Category", subtitle: "Browse our collections", gridColumns: "4" } },
-    { id: id("featured-products"), type: "featured-products", label: "Featured Products", ...shared, props: { title: "Featured Products", subtitle: "Our best selling items", gridColumns: "4", showBadges: "true", showRatings: "true" } },
-    { id: id("testimonials"), type: "testimonials", label: "Testimonials", ...shared, props: { title: "What Customers Say", subtitle: "Hear from our happy customers", layout: "grid", cardStyle: "default", avatarStyle: "circle" } },
-    { id: id("newsletter"), type: "newsletter", label: "Newsletter", ...shared, props: { headline: "Stay in the Loop", subheadline: "Subscribe to get special offers, free giveaways, and exclusive deals.", buttonText: "Subscribe", placeholderText: "Enter your email" } },
-  ];
+  const theme = getThemeById(themeId);
+  const home: BuilderSection[] = theme.defaultSections.map((s) => ({
+    ...s,
+    id: `${s.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+  }));
+
   const productPage: BuilderSection[] = [
     { id: id("category-banner"), type: "category-banner", label: "Category Banner", ...shared, props: { title: "Shop Our Collection", subtitle: "Find the perfect item for you", bgImage: "", height: "300px", overlayColor: "rgba(15, 23, 42, 0.4)" } },
     { id: id("product-grid"), type: "product-grid", label: "Product Grid", ...shared, props: { title: "All Products", subtitle: "Browse our full catalog", gridColumns: "4", showBadges: "true", showRatings: "true" } },
@@ -372,7 +373,7 @@ export function BuilderEditor() {
           if (!createdPage?._id) return;
           dispatch(loadPage({
             page: { id: createdPage._id, title: createdPage.title, slug: createdPage.slug, pageType: "home" as any, isSystem: false, description: "", status: "draft" as any },
-            sections: getDefaultSectionsForPageType("home"),
+            sections: getDefaultSectionsForPageType("home", (store.theme as any)?.themeId),
             headerSections: getDefaultHeaderSections(),
             footerSections: getDefaultFooterSections(),
           }));
@@ -398,12 +399,13 @@ export function BuilderEditor() {
         description: homePage.description ?? "",
         status: (homePage.status || "draft") as any,
       },
-      sections: (homePage.sections?.length ? homePage.sections : getDefaultSectionsForPageType("home")) as BuilderSection[],
+      sections: (homePage.sections?.length ? homePage.sections : getDefaultSectionsForPageType("home", (store.theme as any)?.themeId)) as BuilderSection[],
       headerSections: (homePage.headerSections?.length ? homePage.headerSections : getDefaultHeaderSections()) as BuilderSection[],
       footerSections: (homePage.footerSections?.length ? homePage.footerSections : getDefaultFooterSections()) as BuilderSection[],
       headerSettings: (homePage.headerSettings as any) ?? {},
       footerSettings: (homePage.footerSettings as any) ?? {},
     }));
+
   }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug]);
 
   // ─── Keyboard shortcuts ────────────────────────────────────────────────────

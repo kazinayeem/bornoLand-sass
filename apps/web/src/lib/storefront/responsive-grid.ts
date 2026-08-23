@@ -7,12 +7,13 @@ const COL_CLASS: Record<number, string> = {
   4: "grid-cols-4",
   5: "grid-cols-5",
   6: "grid-cols-6",
+  7: "grid-cols-7",
 };
 
 function clampColumns(value: string | number | undefined, fallback: number): number {
   const n = Number(value);
   if (!Number.isFinite(n)) return fallback;
-  return Math.min(6, Math.max(1, Math.round(n)));
+  return Math.min(7, Math.max(1, Math.round(n)));
 }
 
 /** Responsive grid for builder section ColumnGrid (mobile-first). */
@@ -32,7 +33,8 @@ export function sectionColumnGridClass(columns: string | undefined, gap = "16"):
   else if (n === 3) grid = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
   else if (n === 4) grid = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
   else if (n === 5) grid = "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5";
-  else grid = "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6";
+  else if (n === 6) grid = "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6";
+  else grid = "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7";
 
   return { grid, gap: gapMap[gap] || "gap-4" };
 }
@@ -49,8 +51,10 @@ export function productGridClass(columns: string, view: "grid" | "list", device?
   if (n === 3) return "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3";
   if (n === 4) return "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
   if (n === 5) return "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5";
-  return "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6";
+  if (n === 6) return "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6";
+  return "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7";
 }
+
 
 
 /** Footer column layout by device. */

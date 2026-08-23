@@ -10,6 +10,10 @@ import { StoreNavbar } from "@/components/storefront/store-navbar";
 import { SectionRenderer, type SectionData } from "@/components/sections/section-renderer";
 import { BuilderProvider } from "@/components/sections/builder-link";
 import { generateThemeCssVariables } from "@/lib/design-system/theme-presets";
+import { ThemeProvider } from "@/components/store/theme-provider";
+import { ThemeHeader } from "@/components/store/theme-header";
+import { ThemeFooter } from "@/components/store/theme-footer";
+
 
 const CartDrawer = dynamic(
   () => import("./cart-drawer").then((module) => module.CartDrawer),
@@ -125,51 +129,55 @@ export function StorefrontShell({
 
           <TenantProvider value={tenantValue}>
             <AuthInit />
-            {hasBuilderHeader ? (
-              <header>
-                {builderMode ? (
-                  <BuilderProvider>
-                    {visibleHeaderSections.map((s) => (
+            <ThemeProvider themeId={(theme as any)?.themeId || (store.theme as any)?.themeId || "grocery"}>
+              {hasBuilderHeader ? (
+                <header>
+                  {builderMode ? (
+                    <BuilderProvider>
+                      {visibleHeaderSections.map((s) => (
+                        <SectionRenderer key={s.id} section={toSectionData(s)} />
+                      ))}
+                    </BuilderProvider>
+                  ) : (
+                    visibleHeaderSections.map((s) => (
                       <SectionRenderer key={s.id} section={toSectionData(s)} />
-                    ))}
-                  </BuilderProvider>
-                ) : (
-                  visibleHeaderSections.map((s) => (
-                    <SectionRenderer key={s.id} section={toSectionData(s)} />
-                  ))
-                )}
-              </header>
-            ) : (
-              <StoreNavbar navLinksOverride={navLinksOverride} headerSettings={headerSettings} />
-            )}
-            <CartProvider>
-              <CartDrawer primaryColor={theme.primaryColor} />
-              {children}
-            </CartProvider>
-            {hasBuilderFooter ? (
-              <footer>
-                {builderMode ? (
-                  <BuilderProvider>
-                    {visibleFooterSections.map((s) => (
+                    ))
+                  )}
+                </header>
+              ) : (
+                <ThemeHeader headerSettings={headerSettings} />
+              )}
+              <CartProvider>
+                <CartDrawer primaryColor={theme.primaryColor} />
+                {children}
+              </CartProvider>
+              {hasBuilderFooter ? (
+                <footer>
+                  {builderMode ? (
+                    <BuilderProvider>
+                      {visibleFooterSections.map((s) => (
+                        <SectionRenderer key={s.id} section={toSectionData(s)} />
+                      ))}
+                    </BuilderProvider>
+                  ) : (
+                    visibleFooterSections.map((s) => (
                       <SectionRenderer key={s.id} section={toSectionData(s)} />
-                    ))}
-                  </BuilderProvider>
-                ) : (
-                  visibleFooterSections.map((s) => (
-                    <SectionRenderer key={s.id} section={toSectionData(s)} />
-                  ))
-                )}
-              </footer>
-            ) : (
-              <StoreFooter
-                section={footerSection ?? undefined}
-                footerSections={footerSections}
-                footerSettings={footerSettings}
-              />
-            )}
-            {showAdminBar ? (
-              <FloatingAdminBar storeSlug={store.slug} primaryColor={theme.primaryColor} />
-            ) : null}
+                    ))
+                  )}
+                </footer>
+              ) : footerSection ? (
+                <StoreFooter
+                  section={footerSection}
+                  footerSections={footerSections}
+                  footerSettings={footerSettings}
+                />
+              ) : (
+                <ThemeFooter footerSettings={footerSettings} />
+              )}
+              {showAdminBar ? (
+                <FloatingAdminBar storeSlug={store.slug} primaryColor={theme.primaryColor} />
+              ) : null}
+            </ThemeProvider>
           </TenantProvider>
         </div>
       </StorefrontHeaderSettingsProvider>

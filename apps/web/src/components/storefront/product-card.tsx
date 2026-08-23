@@ -55,13 +55,17 @@ export type ProductCardProduct = {
 type ProductCardProps = {
   product: ProductCardProduct;
   badge?: ReactNode;
+  variant?: "default" | "grocery" | "electronics" | "minimal" | "bordered" | "elevated";
 };
 
-export function ProductCard({ product, badge }: ProductCardProps) {
+export function ProductCard({ product, badge, variant: variantProp }: ProductCardProps) {
   const isBuilder = useIsBuilder();
   const router = useRouter();
   const dispatch = useDispatch();
-  const { settings } = useTenant();
+  const { theme, settings } = useTenant();
+  const themeId = (theme as any)?.themeId || (theme as any)?.preset || "grocery";
+  const variant = variantProp || (themeId === "electronics" ? "electronics" : themeId === "grocery" ? "grocery" : "default");
+
   const { classes, primaryColor } = useStorefrontSurface();
   const [addToCartRemote] = useAddToCartMutation();
   const [quickViewOpen, setQuickViewOpen] = useState(false);
@@ -174,8 +178,11 @@ export function ProductCard({ product, badge }: ProductCardProps) {
             {/* Badges Top Left */}
             <div className="absolute left-2.5 top-2.5 z-10 flex flex-col gap-1.5 pointer-events-none">
               {discount > 0 && (
-                <span className="inline-flex items-center rounded-md bg-rose-600 px-2 py-0.5 text-[11px] font-bold tracking-tight text-white shadow-sm">
-                  -{discount}%
+                <span className={cn(
+                  "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold tracking-tight text-white shadow-sm",
+                  variant === "grocery" ? "bg-[#e05a00]" : variant === "electronics" ? "bg-[#e2136e]" : "bg-rose-600"
+                )}>
+                  {variant === "electronics" && product.comparePrice ? `Save ${formatCurrency(product.comparePrice - product.price, settings)}` : `-${discount}%`}
                 </span>
               )}
               {isOutOfStock && (
@@ -210,12 +217,12 @@ export function ProductCard({ product, badge }: ProductCardProps) {
           <div className="relative z-[1] flex flex-1 flex-col justify-between">
             <div>
               {/* Category / Brand */}
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-600 truncate">
+              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 truncate">
                 {product.brand || product.category || "Collection"}
               </div>
 
               {/* Title */}
-              <h3 className="line-clamp-2 text-sm font-semibold text-zinc-900 leading-snug group-hover:text-blue-600 transition-colors">
+              <h3 className="line-clamp-2 text-sm font-semibold text-zinc-900 leading-snug group-hover:text-primary transition-colors">
                 {product.name}
               </h3>
 
@@ -229,18 +236,21 @@ export function ProductCard({ product, badge }: ProductCardProps) {
                     />
                   ))}
                 </div>
-                <span className="text-[11px] font-medium text-zinc-600 ml-0.5">4.9 (24)</span>
+                <span className="text-[11px] font-medium text-zinc-500 ml-0.5">4.9 (24)</span>
               </div>
             </div>
 
             {/* Pricing & CTA */}
             <div className="mt-3 pt-2 border-t border-zinc-100">
               <div className="flex items-baseline gap-2 mb-2.5">
-                <span className="text-base sm:text-lg font-bold text-zinc-900">
+                <span className={cn(
+                  "text-base sm:text-lg font-black",
+                  variant === "grocery" ? "text-[#055c3a]" : variant === "electronics" ? "text-[#ef4444]" : "text-zinc-900"
+                )}>
                   {formatCurrency(product.price, settings)}
                 </span>
                 {product.comparePrice && product.comparePrice > product.price && (
-                  <span className="text-xs line-through text-zinc-600">
+                  <span className="text-xs line-through text-zinc-400">
                     {formatCurrency(product.comparePrice, settings)}
                   </span>
                 )}
@@ -251,14 +261,21 @@ export function ProductCard({ product, badge }: ProductCardProps) {
                   type="button"
                   onClick={handleAddToCart}
                   disabled={adding}
-                  className="relative z-10 flex h-9 w-full items-center justify-center gap-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
-                  style={{
-                    backgroundColor: primaryColor || "#2563eb",
-                    color: getContrastColor(primaryColor || "#2563eb"),
-                  }}
+                  className={cn(
+                    "relative z-10 flex h-9 w-full items-center justify-center gap-2 rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all duration-200 hover:opacity-95 active:scale-[0.98] disabled:opacity-50 text-white",
+                    variant === "grocery" ? "bg-[#e05a00] hover:bg-[#c2410c]" : variant === "electronics" ? "bg-[#081621] hover:bg-[#0071dc]" : ""
+                  )}
+                  style={
+                    variant !== "grocery" && variant !== "electronics"
+                      ? {
+                          backgroundColor: primaryColor || "#2563eb",
+                          color: getContrastColor(primaryColor || "#2563eb"),
+                        }
+                      : undefined
+                  }
                 >
                   <ShoppingCart className={cn("h-3.5 w-3.5", adding && "animate-pulse")} />
-                  <span>{adding ? "Adding…" : "Add to Cart"}</span>
+                  <span>{adding ? "Adding…" : variant === "grocery" ? "অর্ডার করুন" : variant === "electronics" ? "Buy Now" : "Add to Cart"}</span>
                 </button>
               )}
             </div>

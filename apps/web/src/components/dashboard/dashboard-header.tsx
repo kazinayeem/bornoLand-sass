@@ -229,7 +229,7 @@ function StoreDashboardHeader({
       { label: "Media", sub: store.name, href: `${storeBase}/media`, type: "Page" },
       { label: "Settings", sub: store.name, href: `${storeBase}/settings`, type: "Page" },
       { label: "Billing", sub: store.name, href: `${storeBase}/billing`, type: "Page" },
-      { label: "Themes", sub: store.name, href: `${storeBase}/theme`, type: "Page" },
+      { label: "Design", sub: store.name, href: `${storeBase}/design`, type: "Page" },
       { label: "Apps", sub: store.name, href: `${storeBase}/apps`, type: "Page" },
       { label: "Domain", sub: store.name, href: `${storeBase}/appearance/domain`, type: "Page" },
     ];

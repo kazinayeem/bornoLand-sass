@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Save, Send, ExternalLink } from "lucide-react";
+import { ArrowLeft, Save, Send, ExternalLink, AlertTriangle } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { markSaved, setPublishing, setSaveError } from "@/redux/slices/builder-slice";
@@ -41,6 +41,7 @@ export function BuilderToolbar({
 
   const [publishPage] = usePublishStorePageMutation();
   const [statusVisible, setStatusVisible] = useState(true);
+  const [unsavedModalOpen, setUnsavedModalOpen] = useState(false);
 
   useEffect(() => {
     if (autoSaveStatus === "saved") {
@@ -55,10 +56,16 @@ export function BuilderToolbar({
     setStatusVisible(true);
   }, [autoSaveStatus]);
 
-  const handleBack = async () => {
+  const handleBackClick = () => {
     if (isDirty) {
-      await onForceSave();
+      setUnsavedModalOpen(true);
+    } else {
+      onBack();
     }
+  };
+
+  const handleConfirmDiscard = () => {
+    setUnsavedModalOpen(false);
     onBack();
   };
 
@@ -108,72 +115,114 @@ export function BuilderToolbar({
           : null;
 
   return (
-    <header className="sticky top-0 z-40 flex min-h-14 items-center justify-between gap-4 border-b border-border bg-card/90 px-4 py-2 backdrop-blur-xl sm:px-6">
-      <div className="flex min-w-0 items-center gap-3">
-        <button
-          type="button"
-          onClick={() => void handleBack()}
-          aria-label="Back to dashboard"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-muted/60 text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">{store.shortName || store.name}</p>
-          <p
-            className={cn(
-              "truncate text-xs font-medium transition-opacity duration-300",
-              autoSaveStatus === "unsaved" && "text-amber-600",
-              autoSaveStatus === "saving" && "text-primary",
-              autoSaveStatus === "saved" && "text-emerald-600",
-              autoSaveStatus === "error" && "text-destructive",
-              (autoSaveStatus === "idle" || !statusLabel) && "text-muted-foreground",
-            )}
-            aria-live="polite"
+    <>
+      <header className="sticky top-0 z-40 flex min-h-14 items-center justify-between gap-4 border-b border-border bg-card/90 px-4 py-2 backdrop-blur-xl sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={handleBackClick}
+            aria-label="Back to dashboard"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-muted/60 text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
           >
-            Homepage{statusLabel ? ` · ${statusLabel}` : ""}
-          </p>
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-foreground">{store.shortName || store.name}</p>
+            <p
+              className={cn(
+                "truncate text-xs font-medium transition-opacity duration-300",
+                autoSaveStatus === "unsaved" && "text-amber-600",
+                autoSaveStatus === "saving" && "text-primary",
+                autoSaveStatus === "saved" && "text-emerald-600",
+                autoSaveStatus === "error" && "text-destructive",
+                (autoSaveStatus === "idle" || !statusLabel) && "text-muted-foreground",
+              )}
+              aria-live="polite"
+            >
+              Homepage{statusLabel ? ` · ${statusLabel}` : ""}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => void handlePreview()}
-          className="hidden items-center gap-1.5 rounded-full text-xs font-semibold text-apple-ink hover:bg-apple-canvas-parchment sm:inline-flex"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-          Preview
-        </Button>
-        <LoadingButton
-          type="button"
-          variant="outline"
-          size="sm"
-          loading={saving}
-          loadingKey="save"
-          onClick={() => void handleSave()}
-          disabled={!isDirty && !saving}
-          icon={<Save className="h-3.5 w-3.5" />}
-          className="rounded-full text-xs font-semibold text-apple-ink border-apple-hairline disabled:opacity-40"
-        >
-          Save
-        </LoadingButton>
-        <LoadingButton
-          type="button"
-          variant="primary"
-          size="sm"
-          loading={publishing}
-          loadingKey="publish"
-          onClick={() => void handlePublish()}
-          icon={<Send className="h-3.5 w-3.5" />}
-          className="rounded-full bg-apple-ink text-white hover:bg-apple-ink/90 text-xs font-semibold shadow-sm"
-        >
-          Publish
-        </LoadingButton>
-      </div>
-    </header>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void handlePreview()}
+            className="hidden items-center gap-1.5 rounded-full text-xs font-semibold text-apple-ink hover:bg-apple-canvas-parchment sm:inline-flex"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Preview
+          </Button>
+          <LoadingButton
+            type="button"
+            variant="outline"
+            size="sm"
+            loading={saving}
+            loadingKey="save"
+            onClick={() => void handleSave()}
+            disabled={!isDirty && !saving}
+            icon={<Save className="h-3.5 w-3.5" />}
+            className="rounded-full text-xs font-semibold text-apple-ink border-apple-hairline disabled:opacity-40"
+          >
+            Save
+          </LoadingButton>
+          <LoadingButton
+            type="button"
+            variant="primary"
+            size="sm"
+            loading={publishing}
+            loadingKey="publish"
+            onClick={() => void handlePublish()}
+            icon={<Send className="h-3.5 w-3.5" />}
+            className="rounded-full bg-apple-ink text-white hover:bg-apple-ink/90 text-xs font-semibold shadow-sm"
+          >
+            Publish
+          </LoadingButton>
+        </div>
+      </header>
+
+      {/* ── Unsaved Changes Modal ── */}
+      {unsavedModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl border border-zinc-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 text-amber-600">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-zinc-900">Unsaved changes</h3>
+                <p className="text-xs text-zinc-500">You have unsaved changes.</p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs text-zinc-600">
+              Are you sure you want to leave? Any changes made since your last save will be discarded.
+            </p>
+
+            <div className="mt-5 flex items-center justify-end gap-2.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setUnsavedModalOpen(false)}
+                className="text-xs"
+              >
+                Stay
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleConfirmDiscard}
+                className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold"
+              >
+                Discard & Go Back
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
-

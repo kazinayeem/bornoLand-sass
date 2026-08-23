@@ -683,10 +683,10 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
             delay={0.73}
           />
           <QuickActionCard
-            label="Theme"
-            description="Colors, fonts & branding"
+            label="Design"
+            description="Themes, builder & global styles"
             icon={Palette}
-            href={`${storeBase}/theme`}
+            href={`${storeBase}/design`}
             color="text-apple-ink-muted-80"
             bg="bg-apple-canvas-parchment"
             delay={0.76}

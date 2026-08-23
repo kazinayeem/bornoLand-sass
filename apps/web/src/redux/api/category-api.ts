@@ -17,11 +17,14 @@ export type Category = {
   active: boolean;
   featured: boolean;
   sortOrder: number;
+  productCount?: number;
+  subcategoryCount?: number;
   metaTitle?: string;
   metaDescription?: string;
   createdAt?: string;
   updatedAt?: string;
 };
+
 
 type ApiEnvelope<T> = { success: boolean; data?: T; message?: string };
 

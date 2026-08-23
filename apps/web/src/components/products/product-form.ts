@@ -14,11 +14,14 @@ export type ProductEditorForm = {
   comparePrice: string;
   stock: string;
   category: string;
+  categoryId: string;
+  subcategoryId: string;
   categoryIds: string[];
   status: "active" | "inactive" | "draft" | "archived";
   sku: string;
   barcode: string;
   brand: string;
+  brandId: string;
   vendor: string;
   tags: string;
   imageUrl: string;
@@ -56,11 +59,15 @@ export const EMPTY_PRODUCT_FORM: ProductEditorForm = {
   comparePrice: "",
   stock: "0",
   category: "",
+  categoryId: "",
+  subcategoryId: "",
   categoryIds: [],
   status: "draft",
   sku: "",
   barcode: "",
   brand: "",
+  brandId: "",
+
   vendor: "",
   tags: "",
   imageUrl: "",
@@ -101,12 +108,16 @@ export function productToForm(product: Product): ProductEditorForm {
     comparePrice: product.comparePrice ? String(product.comparePrice) : "",
     stock: String(product.stock ?? 0),
     category: product.category || "",
+    categoryId: (product as any).categoryId || (product.categoryIds?.[0] || ""),
+    subcategoryId: (product as any).subcategoryId || (product.categoryIds?.[1] || ""),
     categoryIds: product.categoryIds ?? [],
     status: (product.status as ProductEditorForm["status"]) ?? "active",
     sku: product.sku || "",
     barcode: (product as Product & { barcode?: string }).barcode || "",
     brand: (product as Product & { brand?: string }).brand || "",
+    brandId: (product as any).brandId || "",
     vendor: (product as Product & { vendor?: string }).vendor || "",
+
     tags: ((product as Product & { tags?: string[] }).tags ?? []).join(", "),
     imageUrl: product.imageUrl || "",
     thumbnailUrl: product.thumbnailUrl || "",
@@ -197,7 +208,11 @@ export function buildProductPayload(
     galleryImageUrls: form.gallery.map((g) => g.url).filter(Boolean),
     description: form.description,
     featured: form.featured,
+    categoryId: form.categoryId || undefined,
+    subcategoryId: form.subcategoryId || undefined,
+    brandId: form.brandId || undefined,
     categoryIds: form.categoryIds.length > 0 ? form.categoryIds : undefined,
+
     trackInventory: form.trackInventory,
     lowStockThreshold: Number(form.lowStockThreshold) || 5,
     weight: form.weight ? Number(form.weight) : undefined,

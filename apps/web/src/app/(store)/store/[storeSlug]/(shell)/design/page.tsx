@@ -4,7 +4,7 @@ import { StoreDesignHub } from "@/components/store-dashboard/store-design-hub";
 import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-page";
 import { Loader2 } from "lucide-react";
 
-export default function StoreThemePage() {
+export default function StoreDesignPage() {
   const { storeId, isLoading } = useStorePage();
 
   if (isLoading || !storeId) {

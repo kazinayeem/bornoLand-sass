@@ -347,32 +347,78 @@ export function BuilderEditor() {
     }));
   }, [settings, dispatch]);
 
+const THEME_LEVEL_TYPES = new Set([
+  "header-bar", "header", "simple-footer", "ecommerce-footer", "modern-footer", "footer",
+]);
+
+function sanitizeHomepageSections(rawSections: unknown[] | undefined, themeId?: string): BuilderSection[] {
+  if (!rawSections || !Array.isArray(rawSections) || rawSections.length === 0) {
+    return getDefaultSectionsForPageType("home", themeId);
+  }
+
+  // Filter out theme-level header and footer blocks from body canvas sections
+  const filtered = rawSections.filter((sec) => {
+    if (!sec || typeof sec !== "object") return false;
+    const type = String((sec as any).type || "").toLowerCase();
+    if (THEME_LEVEL_TYPES.has(type)) return false;
+    if (type.startsWith("header-") || type.endsWith("-footer")) return false;
+    return true;
+  });
+
+  // Deduplicate section IDs and corrupt entries
+  const seenIds = new Set<string>();
+  const sanitized: BuilderSection[] = [];
+
+  for (const raw of filtered) {
+    const sec = raw as Record<string, any>;
+    let id = sec.id ? String(sec.id) : `${sec.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    if (seenIds.has(id)) {
+      id = `${sec.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    }
+    seenIds.add(id);
+    sanitized.push({
+      id,
+      type: sec.type,
+      label: sec.label || sec.type,
+      visible: sec.visible !== false,
+      props: (sec.props && typeof sec.props === "object") ? sec.props : {},
+      style: sec.style,
+    });
+  }
+
+  if (sanitized.length === 0) {
+    return getDefaultSectionsForPageType("home", themeId);
+  }
+
+  return sanitized;
+}
+
   // ─── Home-only builder routing ─────────────────────────────────────────────
   useEffect(() => {
     if (!routePageSlug || routePageSlug === "home") return;
     router.replace(`/store/${storeSlug}/builder/home`);
   }, [routePageSlug, router, storeSlug]);
 
-  // ─── Load home page only ───────────────────────────────────────────────────
+  // ─── Load home page strictly ───────────────────────────────────────────────
   useEffect(() => {
     const pages = pagesData?.data?.pages;
     if (!pages) return;
     if (routePageSlug && routePageSlug !== "home") return;
 
+    // Strict Home Page resolution (never fall back to contact or about page)
     const homePage =
-      pages.find((page) => page.slug === "/" || page.slug === "home" || page.isHomePage) ??
-      pages[0];
+      pages.find((page) => page.isHomePage || page.slug === "/" || page.slug === "home" || (page as any).pageType === "home");
 
     if (!homePage) {
       if (loadedRef.current === `create:${storeId}`) return;
       loadedRef.current = `create:${storeId}`;
-      createPage({ storeId, title: "Home", slug: "/" })
+      createPage({ storeId, title: "Home", slug: "/", pageType: "home" as any, isSystem: true })
         .unwrap()
         .then((res) => {
           const createdPage = res.data?.page;
           if (!createdPage?._id) return;
           dispatch(loadPage({
-            page: { id: createdPage._id, title: createdPage.title, slug: createdPage.slug, pageType: "home" as any, isSystem: false, description: "", status: "draft" as any },
+            page: { id: createdPage._id, title: createdPage.title, slug: createdPage.slug, pageType: "home" as any, isSystem: true, description: "", status: "draft" as any },
             sections: getDefaultSectionsForPageType("home", (store.theme as any)?.themeId),
             headerSections: getDefaultHeaderSections(),
             footerSections: getDefaultFooterSections(),
@@ -389,17 +435,22 @@ export function BuilderEditor() {
     if (loadedRef.current === loadKey) return;
     loadedRef.current = loadKey;
 
+    const sanitizedSections = sanitizeHomepageSections(
+      homePage.sections,
+      (store.theme as any)?.themeId
+    );
+
     dispatch(loadPage({
       page: {
         id: homePage._id,
         title: homePage.title,
         slug: homePage.slug,
         pageType: "home" as any,
-        isSystem: homePage.isSystem ?? false,
+        isSystem: homePage.isSystem ?? true,
         description: homePage.description ?? "",
         status: (homePage.status || "draft") as any,
       },
-      sections: (homePage.sections?.length ? homePage.sections : getDefaultSectionsForPageType("home", (store.theme as any)?.themeId)) as BuilderSection[],
+      sections: sanitizedSections,
       headerSections: (homePage.headerSections?.length ? homePage.headerSections : getDefaultHeaderSections()) as BuilderSection[],
       footerSections: (homePage.footerSections?.length ? homePage.footerSections : getDefaultFooterSections()) as BuilderSection[],
       headerSettings: (homePage.headerSettings as any) ?? {},
@@ -505,7 +556,7 @@ export function BuilderEditor() {
     >
       {!fullscreen && (
         <BuilderToolbar
-          onBack={() => router.push(`/store/${storeSlug}/dashboard`)}
+          onBack={() => router.push(`/store/${storeSlug}/design`)}
           saving={saving}
           publishing={publishing}
           isDirty={isDirty}

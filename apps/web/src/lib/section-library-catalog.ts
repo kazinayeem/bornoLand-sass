@@ -183,6 +183,13 @@ const META: Record<string, Meta> = {
   // FAQ
   "faq": { category: "faq", label: "Accordion FAQ", description: "Expandable questions and answers", keywords: ["faq", "help", "questions", "accordion", "support", "contact"] },
   "accordion": { category: "faq", label: "Searchable FAQ", description: "FAQ list customers can scan quickly", keywords: ["faq", "search", "help", "support"] },
+
+  // Specialized Theme Sections
+  "combo-deals": { category: "promotions", label: "Combo Deals & Bundles", description: "Curated value bundles with instant savings", keywords: ["combo", "deals", "bundle", "save", "package"] },
+  "brand-showcase": { category: "services", label: "Brand Showcase", description: "Authorized brands, partner farms, and manufacturers", keywords: ["brand", "partners", "farms", "distributors"] },
+  "quick-service-links": { category: "services", label: "Quick Service Links", description: "Fast action shortcuts for PC builder, services, and store support", keywords: ["service", "shortcuts", "support", "laptop"] },
+  "seo-content": { category: "about", label: "SEO Content Block", description: "Expandable long-form store authority content for search engines", keywords: ["seo", "content", "story", "google"] },
+  "store-locator-banner": { category: "contact", label: "Store Locator Banner", description: "Highlight physical store branches nationwide", keywords: ["stores", "locator", "outlets", "branches", "physical"] },
 };
 
 const HEADER_BASE_PROPS = (): Record<string, SectionPropDef> => {

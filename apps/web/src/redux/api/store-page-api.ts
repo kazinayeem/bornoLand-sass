@@ -71,6 +71,8 @@ export type StorePageTheme = {
 };
 
 export type HeaderSettings = {
+  template?: string;
+  headerTemplate?: string;
   logo?: string;
   logoWidth?: number | string;
   logoHeight?: number | string;

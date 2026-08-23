@@ -6,8 +6,12 @@ const brandSchema = new Schema(
   {
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, index: true },
     name: { type: String, required: true, trim: true },
+    nameEn: { type: String, default: "", trim: true },
+    nameBn: { type: String, default: "", trim: true },
     slug: { type: String, required: true, lowercase: true, trim: true },
     description: { type: String, default: "", trim: true },
+    descriptionEn: { type: String, default: "", trim: true },
+    descriptionBn: { type: String, default: "", trim: true },
     logoUrl: { type: String, default: "" },
     logoId: { type: Schema.Types.ObjectId, ref: "MediaFile", default: null },
     bannerUrl: { type: String, default: "" },

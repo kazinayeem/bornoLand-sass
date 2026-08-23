@@ -6,6 +6,8 @@ const categorySchema = new Schema(
   {
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, index: true },
     name: { type: String, required: true, trim: true },
+    nameEn: { type: String, default: "", trim: true },
+    nameBn: { type: String, default: "", trim: true },
     slug: { type: String, required: true, lowercase: true, trim: true },
     imageUrl: { type: String, default: "" },
     imageId: { type: Schema.Types.ObjectId, ref: "MediaFile", default: null },
@@ -14,6 +16,8 @@ const categorySchema = new Schema(
     iconUrl: { type: String, default: "" },
     iconId: { type: Schema.Types.ObjectId, ref: "MediaFile", default: null },
     description: { type: String, default: "" },
+    descriptionEn: { type: String, default: "" },
+    descriptionBn: { type: String, default: "" },
     parentId: { type: Schema.Types.ObjectId, ref: "Category", default: null },
     active: { type: Boolean, default: true },
     featured: { type: Boolean, default: false },

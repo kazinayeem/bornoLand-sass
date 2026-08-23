@@ -14,14 +14,11 @@ import {
   PhoneCall,
   ChevronDown,
   ChevronRight,
-  Monitor,
-  Laptop,
-  HardDrive,
-  Headphones,
-  Tv,
-  Camera,
+  Flame,
   Layers,
-  Sparkles,
+  Cpu,
+  Gift,
+  Clock,
   Award,
 } from "lucide-react";
 import type { RootState } from "@/redux/store";
@@ -36,11 +33,11 @@ import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations
 import { cn } from "@/lib/utils";
 import type { Category } from "@/redux/api/category-api";
 
-export interface ElectronicsHeaderProps {
+export interface TechMegaHeaderProps {
   headerSettings?: Record<string, unknown>;
 }
 
-export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProps) {
+export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
   const dispatch = useDispatch();
   const router = useRouter();
   const pathname = usePathname() || "";
@@ -61,12 +58,12 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
   const storeLang: StoreLanguage = (store?.defaultLanguage as StoreLanguage) || "en";
   const announcementText =
     (headerSettings.announcementText as string) ||
-    "⚡ Mega Tech Deals: Up to ৳15,000 Cashback on Selected Gaming Laptops & GPUs | All BD Express Delivery";
+    "⚡ Tech Mega Deals: Up to ৳15,000 Cashback on Selected Gaming Laptops & GPUs | All Bangladesh Express Delivery";
   const showAnnouncement = headerSettings.showAnnouncement !== false;
   const storeName = store.name || "BornoLand Tech";
   const logoUrl = (headerSettings.logoUrl as string) || store.logoUrl || "";
 
-  // Group root categories & subcategories dynamically
+  // Dynamic root categories & subcategories from store data
   const rootCategories = (categories as Category[]).filter((c) => !c.parentId);
   const subcategoriesByParent = (categories as Category[]).reduce<Record<string, Category[]>>((acc, cat) => {
     if (cat.parentId) {
@@ -86,21 +83,21 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
   const storePhone = contact?.phone || store.phone || "16789";
 
   return (
-    <header className="w-full bg-[#081621] text-white border-b border-[#172b3c] shadow-md select-none sticky top-0 z-40">
+    <header className="w-full bg-[#081621] text-white border-b border-[#172b3c] shadow-md select-none">
       {/* ── Top Announcement Strip ── */}
       {showAnnouncement && (
-        <div className="bg-gradient-to-r from-[#e2136e] to-[#ef4444] text-white text-[11px] font-semibold py-1.5 px-4 transition-colors">
+        <div className="bg-gradient-to-r from-[#e2136e] via-[#ef4444] to-[#f97316] text-white text-[11px] font-semibold py-1.5 px-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 truncate">
               <Zap className="w-3.5 h-3.5 shrink-0 fill-current animate-pulse" />
               <span className="truncate">{announcementText}</span>
             </div>
             <div className="hidden lg:flex items-center gap-4 shrink-0 text-white/90 text-[10px]">
-              <span>Official Warranty Guaranteed</span>
+              <span className="hover:text-white cursor-pointer">Official Brand Warranty</span>
               <span>•</span>
-              <span>0% EMI Available</span>
+              <span className="hover:text-white cursor-pointer">0% EMI Facility</span>
               <span>•</span>
-              <span>Helpline: {storePhone}</span>
+              <span className="hover:text-white cursor-pointer">Helpline: {storePhone}</span>
             </div>
           </div>
         </div>
@@ -122,7 +119,7 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
             </div>
           ) : (
             <div className="flex items-center gap-2.5">
-              <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-[#0071dc] text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-blue-500/20">
+              <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-[#0071dc] text-white flex items-center justify-center font-black text-xl shadow-lg shadow-blue-500/20">
                 {storeName.charAt(0) || "T"}
               </div>
               <div className="flex flex-col">
@@ -164,7 +161,7 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
             href="/offers"
             className="hidden xl:flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-white transition-colors"
           >
-            <Zap className="w-4 h-4 text-[#ef4444]" />
+            <Flame className="w-4 h-4 text-[#ef4444]" />
             <span>Offers</span>
           </Link>
 
@@ -240,7 +237,7 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
               {t("shop", storeLang)}
             </Link>
 
-            {/* Dynamic Root Categories with Mega Menu Hover */}
+            {/* Dynamic Root Categories with StarTech-style Mega Menu Hover */}
             {rootCategories.map((cat) => {
               const subs = subcategoriesByParent[cat._id] || [];
               const hasSubs = subs.length > 0;
@@ -279,8 +276,9 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
               );
             })}
 
-            <Link href="/pc-builder" className="px-3 py-2 rounded-lg text-[#0071dc] font-bold hover:bg-[#0071dc]/10 transition-colors">
-              PC Builder
+            <Link href="/pc-builder" className="px-3 py-2 rounded-lg text-[#0071dc] font-bold hover:bg-[#0071dc]/10 transition-colors flex items-center gap-1">
+              <Cpu className="w-3.5 h-3.5" />
+              <span>PC Builder</span>
             </Link>
           </nav>
         </div>

@@ -5,6 +5,8 @@ export type Category = {
   _id: string;
   storeId: string;
   name: string;
+  nameEn?: string;
+  nameBn?: string;
   slug: string;
   imageUrl: string;
   imageId?: string | null;
@@ -13,6 +15,8 @@ export type Category = {
   iconUrl?: string;
   iconId?: string | null;
   description: string;
+  descriptionEn?: string;
+  descriptionBn?: string;
   parentId: string | null;
   active: boolean;
   featured: boolean;
@@ -40,6 +44,8 @@ type CategoryResponse = { category: Category };
 
 type CreateCategoryPayload = {
   name: string;
+  nameEn?: string;
+  nameBn?: string;
   slug: string;
   imageUrl?: string;
   imageId?: string | null;
@@ -48,6 +54,8 @@ type CreateCategoryPayload = {
   iconUrl?: string;
   iconId?: string | null;
   description?: string;
+  descriptionEn?: string;
+  descriptionBn?: string;
   parentId?: string | null;
   active?: boolean;
   featured?: boolean;
@@ -57,14 +65,18 @@ type CreateCategoryPayload = {
 
 type UpdateCategoryPayload = {
   name?: string;
+  nameEn?: string;
+  nameBn?: string;
   slug?: string;
+  description?: string;
+  descriptionEn?: string;
+  descriptionBn?: string;
   imageUrl?: string;
   imageId?: string | null;
   bannerUrl?: string;
   bannerId?: string | null;
   iconUrl?: string;
   iconId?: string | null;
-  description?: string;
   parentId?: string | null;
   active?: boolean;
   featured?: boolean;

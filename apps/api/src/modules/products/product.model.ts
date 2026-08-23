@@ -25,8 +25,12 @@ const productSchema = new Schema(
   {
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, index: true },
     name: { type: String, required: true, trim: true },
+    nameEn: { type: String, default: "", trim: true },
+    nameBn: { type: String, default: "", trim: true },
     slug: { type: String, required: true, lowercase: true, trim: true },
     description: { type: String, default: "", trim: true },
+    descriptionEn: { type: String, default: "", trim: true },
+    descriptionBn: { type: String, default: "", trim: true },
     productType: {
       type: String,
       enum: ["simple", "variable", "digital", "downloadable", "service"],

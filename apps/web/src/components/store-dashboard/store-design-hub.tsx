@@ -26,6 +26,7 @@ import {
   ExternalLink,
   ShieldCheck,
   RefreshCw,
+  PanelTop,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useGetStoreQuery, useChangeStoreThemeMutation } from "@/redux/api/store-api";
@@ -39,8 +40,10 @@ import { SmartImage } from "@/components/ui/smart-image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { NavigationManager } from "@/components/store-dashboard/navigation-manager/navigation-manager";
+import { HeaderTemplateSelector } from "@/components/store-dashboard/header-template-selector";
 
-type TabMode = "themes" | "builder" | "styles" | "reset";
+type TabMode = "themes" | "header" | "navigation" | "builder" | "styles" | "reset";
 
 type StoreDesignHubProps = {
   storeId: string;
@@ -328,6 +331,32 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
 
         <button
           type="button"
+          onClick={() => setActiveTab("header")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-colors ${
+            activeTab === "header"
+              ? "border-zinc-900 text-zinc-900"
+              : "border-transparent text-zinc-500 hover:text-zinc-800"
+          }`}
+        >
+          <PanelTop className="w-4 h-4" />
+          Header
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("navigation")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-colors ${
+            activeTab === "navigation"
+              ? "border-zinc-900 text-zinc-900"
+              : "border-transparent text-zinc-500 hover:text-zinc-800"
+          }`}
+        >
+          <Layout className="w-4 h-4" />
+          Navigation
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab("builder")}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-colors ${
             activeTab === "builder"
@@ -352,6 +381,21 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
           Global Styles
         </button>
       </div>
+
+      {/* ── TAB: HEADER TEMPLATES ── */}
+      {activeTab === "header" && (
+        <HeaderTemplateSelector
+          storeId={storeId}
+          storeSlug={storeContext?.slug || (store as any)?.slug || "nayeem"}
+        />
+      )}
+
+      {/* ── TAB: NAVIGATION ── */}
+      {activeTab === "navigation" && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          <NavigationManager storeId={storeId} />
+        </div>
+      )}
 
       {/* ── TAB 1: THEMES ── */}
       {activeTab === "themes" && (

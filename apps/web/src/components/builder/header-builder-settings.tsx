@@ -114,6 +114,21 @@ export function HeaderBuilderSettings() {
         {/* Layout */}
         <Section label="Layout">
           <SelectInput
+            label="Header Template"
+            value={headerSettings.template ?? headerSettings.headerTemplate ?? "grocery"}
+            onChange={(v) => {
+              update("template", v);
+              update("headerTemplate", v);
+            }}
+            options={[
+              { value: "grocery", label: "Grocery & Organic Header" },
+              { value: "tech-mega", label: "Computer & Tech Mega Header" },
+              { value: "marketplace", label: "Marketplace Header (Daraz Style)" },
+              { value: "minimal-fashion", label: "Minimal / Fashion Header" },
+              { value: "modern-general", label: "Modern General E-commerce Header" },
+            ]}
+          />
+          <SelectInput
             label="Header Position"
             value={headerSettings.position ?? (headerSettings.sticky === false ? "static" : "sticky")}
             onChange={(v) => {

@@ -5,8 +5,12 @@ export type Brand = {
   _id: string;
   storeId: string;
   name: string;
+  nameEn?: string;
+  nameBn?: string;
   slug: string;
   description: string;
+  descriptionEn?: string;
+  descriptionBn?: string;
   logoUrl: string;
   logoId?: string | null;
   bannerUrl?: string;
@@ -36,8 +40,12 @@ type BrandResponse = { brand: Brand };
 
 type CreateBrandPayload = {
   name: string;
+  nameEn?: string;
+  nameBn?: string;
   slug: string;
   description?: string;
+  descriptionEn?: string;
+  descriptionBn?: string;
   logoUrl?: string;
   logoId?: string | null;
   bannerUrl?: string;
@@ -51,8 +59,12 @@ type CreateBrandPayload = {
 
 type UpdateBrandPayload = {
   name?: string;
+  nameEn?: string;
+  nameBn?: string;
   slug?: string;
   description?: string;
+  descriptionEn?: string;
+  descriptionBn?: string;
   logoUrl?: string;
   logoId?: string | null;
   bannerUrl?: string;

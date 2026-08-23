@@ -298,6 +298,11 @@ function footerTemplate(
 
 /** Header presets — all render via header-bar with different defaults. */
 export const HEADER_LIBRARY_TEMPLATES: Array<SectionDef & { keywords: string[] }> = [
+  headerTemplate("header-grocery", "Grocery & Organic Header", "Warm natural e-commerce header with announcement topbar, large search, and All Categories mega button", ["grocery", "organic", "food", "bangladeshi"], { template: "grocery", showSearch: "true", showCart: "true", sticky: "true", headerHeight: "76" }),
+  headerTemplate("header-tech-mega", "Computer & Tech Mega Header", "Star Tech-inspired dark navy header with 2nd row dynamic tech categories and multi-column mega menu", ["tech", "computer", "electronics", "startech"], { template: "tech-mega", showSearch: "true", layout: "logo-icons-nav", sticky: "true", headerBg: "#081621" }),
+  headerTemplate("header-marketplace", "Marketplace Header", "Daraz-style marketplace header with prominent search, Flash Sale banner, and large mega menu", ["marketplace", "daraz", "deals", "mega"], { template: "marketplace", showSearch: "true", showCart: "true", showAccount: "true", sticky: "true" }),
+  headerTemplate("header-minimal-fashion", "Minimal / Fashion Header", "Editorial luxury typography, generous whitespace, sleek search, and transparent header support", ["minimal", "fashion", "luxury", "boutique"], { template: "minimal-fashion", sticky: "true", transparent: "false", showWishlist: "true" }),
+  headerTemplate("header-modern-general", "Modern General E-commerce Header", "Versatile 2-row commercial header with phone hotline, All Categories dropdown, and subcategory hover menus", ["modern", "general", "versatile", "all-purpose"], { template: "modern-general", layout: "logo-nav-icons", sticky: "true", showSearch: "true" }),
   headerTemplate("header-minimal", "Minimal Header", "Clean logo and links only", ["minimal", "simple", "clean"], { layout: "logo-nav-icons", sticky: "false", transparent: "false", headerBg: "#ffffff", showSearch: "false", showWishlist: "false" }),
   headerTemplate("header-modern", "Modern Header", "Balanced nav with search and cart", ["modern", "default"], { layout: "logo-nav-icons", sticky: "true", headerBg: "#ffffff", showSearch: "true" }),
   headerTemplate("header-center-logo", "Center Logo Header", "Logo centered with nav around it", ["center", "logo", "fashion"], { layout: "nav-logo-icons", navPosition: "center", sticky: "true" }),
@@ -307,11 +312,9 @@ export const HEADER_LIBRARY_TEMPLATES: Array<SectionDef & { keywords: string[] }
   headerTemplate("header-luxury", "Luxury Header", "Elegant dark header for premium brands", ["luxury", "premium", "dark"], { headerBg: "#0a0a0a", sticky: "true", showWishlist: "true" }),
   headerTemplate("header-fashion", "Fashion Header", "Editorial style for apparel stores", ["fashion", "apparel", "clothing"], { layout: "nav-logo-icons", headerHeight: "72", sticky: "true", showWishlist: "true" }),
   headerTemplate("header-electronics", "Electronics Header", "Search-first header for tech shops", ["electronics", "tech", "search"], { showSearch: "true", layout: "logo-icons-nav", sticky: "true" }),
-  headerTemplate("header-grocery", "Grocery Header", "Practical header for everyday shopping", ["grocery", "food", "daily"], { showSearch: "true", showCart: "true", sticky: "true", headerHeight: "64" }),
   headerTemplate("header-mobile", "Mobile Header", "Compact layout tuned for phones", ["mobile", "compact"], { headerHeight: "48", showSearch: "true", showAccount: "false" }),
   headerTemplate("header-search-focus", "Search Focus Header", "Search bar front and center", ["search", "find"], { showSearch: "true", layout: "logo-icons-nav", sticky: "true" }),
   headerTemplate("header-brand", "Brand Header", "Logo-forward with sparse links", ["brand", "logo"], { showName: "true", showSearch: "false", showWishlist: "false", sticky: "false" }),
-  headerTemplate("header-marketplace", "Marketplace Header", "Dense utility header for many categories", ["marketplace", "multi"], { showSearch: "true", showCart: "true", showAccount: "true", sticky: "true", headerHeight: "72" }),
   headerTemplate("header-light", "Light Utility Header", "Bright utility bar with all icons", ["utility", "light"], { headerBg: "#f5f5f7", showSearch: "true", showWishlist: "true", showCart: "true", showAccount: "true" }),
   headerTemplate("header-split", "Split Utility Header", "Icons grouped for quick actions", ["split", "utility"], { layout: "logo-icons-nav", sticky: "true" }),
 ];
@@ -498,16 +501,39 @@ export function getLibraryDefaults(type: string): Record<string, string> {
 }
 
 export const POPULAR_LIBRARY_TYPES = [
+  "slider-hero",
   "hero-banner",
-  "header-modern",
   "featured-products",
   "category-grid",
-  "flash-sale",
-  "testimonials",
+  "best-sellers",
+  "brand-showcase",
+  "combo-deals",
   "discount-banner",
+  "testimonials",
+  "trust-badges",
   "newsletter",
-  "footer-ecommerce",
   "faq",
+  "quick-service-links",
+  "store-locator-banner",
+];
+
+export const NEW_LIBRARY_TYPES = [
+  "combo-deals",
+  "quick-service-links",
+  "brand-showcase",
+  "video-hero",
+  "store-locator-banner",
+  "seo-content",
+  "product-tabs",
+];
+
+export const PRO_LIBRARY_TYPES = [
+  "slider-hero",
+  "combo-deals",
+  "video-hero",
+  "flash-sale-hero",
+  "countdown-timer",
+  "mega-category-grid",
 ];
 
 for (const [from, to] of Object.entries(TYPE_ALIASES_FOR_TEMPLATES)) {

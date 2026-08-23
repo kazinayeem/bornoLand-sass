@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Search,
   ShoppingCart,
@@ -11,18 +11,6 @@ import {
   User,
   Heart,
   Zap,
-  PhoneCall,
-  ChevronDown,
-  ChevronRight,
-  Monitor,
-  Laptop,
-  HardDrive,
-  Headphones,
-  Tv,
-  Camera,
-  Layers,
-  Sparkles,
-  Award,
 } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { openCart } from "@/redux/slices/cart-slice";
@@ -31,10 +19,8 @@ import { SmartImage } from "@/components/ui/smart-image";
 import { StoreLink as Link } from "@/components/storefront/store-link";
 import { formatCurrency } from "@/lib/format-currency";
 import { useIsBuilder } from "@/lib/device-context";
-import { StorefrontMegaMenu } from "@/components/storefront/navigation/storefront-mega-menu";
-import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations";
-import { cn } from "@/lib/utils";
-import type { Category } from "@/redux/api/category-api";
+import { GlobalStoreNav, GlobalMobileDrawer } from "@/components/storefront/header/global-store-nav";
+import { t, type StoreLanguage } from "@/lib/i18n/translations";
 
 export interface ElectronicsHeaderProps {
   headerSettings?: Record<string, unknown>;
@@ -42,7 +28,6 @@ export interface ElectronicsHeaderProps {
 
 export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProps) {
   const dispatch = useDispatch();
-  const router = useRouter();
   const pathname = usePathname() || "";
   const isBuilder = useIsBuilder();
   const { store, categories = [], brands = [], settings, contact } = useTenant();
@@ -53,8 +38,6 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
   const wishlistCount = useSelector((state: RootState) => state.wishlist.items.length);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeMegaCategory, setActiveMegaCategory] = useState<string | null>(null);
-  const [mobileExpandedCatId, setMobileExpandedCatId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,21 +49,15 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
   const storeName = store.name || "BornoLand Tech";
   const logoUrl = (headerSettings.logoUrl as string) || store.logoUrl || "";
 
-  // Group root categories & subcategories dynamically
-  const rootCategories = (categories as Category[]).filter((c) => !c.parentId);
-  const subcategoriesByParent = (categories as Category[]).reduce<Record<string, Category[]>>((acc, cat) => {
-    if (cat.parentId) {
-      const pId = String(cat.parentId);
-      if (!acc[pId]) acc[pId] = [];
-      acc[pId].push(cat);
-    }
-    return acc;
-  }, {});
+  const maxVisibleItems = Number(headerSettings.maxVisibleNavigationItems || headerSettings.maxVisibleItems || 6);
+  const showMoreMenu = headerSettings.showMore !== false;
+  const enableCategoryHover = headerSettings.enableCategoryHover !== false;
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim() || isBuilder) return;
-    router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
+    const q = searchQuery.trim();
+    window.location.href = `/shop?q=${encodeURIComponent(q)}`;
   };
 
   const storePhone = contact?.phone || store.phone || "16789";
@@ -106,9 +83,9 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
         </div>
       )}
 
-      {/* ── Main Tech Header Bar (Constrained 72-90px desktop) ── */}
+      {/* ── Main Header Bar ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 min-h-[72px] max-h-[90px] flex items-center justify-between gap-4 md:gap-8">
-        {/* Logo (Constrained max-h 48px, max-w 180px) */}
+        {/* Logo */}
         <Link href="/" className="flex items-center gap-3 shrink-0 group">
           {logoUrl ? (
             <div className="relative max-h-[48px] max-w-[180px] flex items-center">
@@ -160,14 +137,6 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
 
         {/* Right Utility Actions */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <Link
-            href="/offers"
-            className="hidden xl:flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-white transition-colors"
-          >
-            <Zap className="w-4 h-4 text-[#ef4444]" />
-            <span>Offers</span>
-          </Link>
-
           <Link
             href="/account"
             className="hidden sm:flex items-center gap-2 p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
@@ -229,161 +198,37 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
         </div>
       </div>
 
-      {/* ── Category Navigation Bar with Mega Menu ── */}
+      {/* ── Shared global navigation ── */}
       <div className="hidden md:block bg-[#050e15] border-t border-[#172b3c]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <nav className="flex items-center gap-1 sm:gap-4 text-xs font-semibold text-zinc-300 overflow-x-auto py-1">
-            <Link
-              href="/shop"
-              className={cn("px-3 py-2 rounded-lg hover:text-white hover:bg-white/5 transition-colors", pathname === "/shop" && "text-[#0071dc] bg-white/5")}
-            >
-              {t("shop", storeLang)}
-            </Link>
-
-            {/* Dynamic Root Categories with Mega Menu Hover */}
-            {rootCategories.map((cat) => {
-              const subs = subcategoriesByParent[cat._id] || [];
-              const hasSubs = subs.length > 0;
-              const isHovered = activeMegaCategory === cat._id;
-
-              return (
-                <div
-                  key={cat._id}
-                  className="relative group"
-                  onMouseEnter={() => hasSubs && setActiveMegaCategory(cat._id)}
-                  onMouseLeave={() => setActiveMegaCategory(null)}
-                >
-                  <Link
-                    href={`/category/${cat.slug}`}
-                    className={cn(
-                      "inline-flex items-center gap-1 px-3 py-2 rounded-lg transition-colors",
-                      isHovered ? "text-white bg-white/10" : "hover:text-white hover:bg-white/5"
-                    )}
-                  >
-                    <span>{getLocalizedName(cat, storeLang)}</span>
-                    {hasSubs && <ChevronDown className="w-3 h-3 opacity-60 group-hover:rotate-180 transition-transform" />}
-                  </Link>
-
-                  {/* Mega Menu Overlay */}
-                  {isHovered && hasSubs && (
-                    <StorefrontMegaMenu
-                      category={cat}
-                      subcategories={subs}
-                      brands={brands}
-                      lang={storeLang}
-                      themeVariant="electronics"
-                      onItemClick={() => setActiveMegaCategory(null)}
-                    />
-                  )}
-                </div>
-              );
-            })}
-
-            <Link href="/pc-builder" className="px-3 py-2 rounded-lg text-[#0071dc] font-bold hover:bg-[#0071dc]/10 transition-colors">
-              PC Builder
-            </Link>
-          </nav>
+        <div className="max-w-7xl mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-0.5">
+          <GlobalStoreNav
+            maxVisibleItems={maxVisibleItems}
+            showMoreMenu={showMoreMenu}
+            enableCategoryHover={enableCategoryHover}
+            showAllCategoriesButton={false}
+            showPrimaryLinks
+            themeVariant="electronics"
+            lang={storeLang}
+            className="w-full min-w-0 py-1"
+            itemClassName="px-3 py-2 rounded-lg"
+          />
         </div>
       </div>
 
-      {/* ── Mobile Navigation Drawer with Accordion ── */}
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex">
-          <div className="w-4/5 max-w-sm bg-[#081621] text-white h-full overflow-y-auto p-4 flex flex-col justify-between shadow-2xl animate-in slide-in-from-left duration-200 border-r border-[#172b3c]">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-[#172b3c]">
-                <span className="font-bold text-base text-[#0071dc]">{storeName}</span>
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-1.5 rounded-lg text-zinc-400 hover:bg-white/5"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Dynamic Accordion */}
-              <div className="py-4 space-y-1">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 px-2 mb-2">
-                  {t("categories", storeLang)}
-                </p>
-                {rootCategories.map((cat) => {
-                  const isExpanded = mobileExpandedCatId === cat._id;
-                  const subs = subcategoriesByParent[cat._id] || [];
-
-                  return (
-                    <div key={cat._id} className="border-b border-white/5 pb-1">
-                      <div className="flex items-center justify-between px-2 py-2 rounded-lg hover:bg-white/5">
-                        <Link
-                          href={`/category/${cat.slug}`}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="font-semibold text-xs text-zinc-200 hover:text-[#0071dc] flex-1 truncate"
-                        >
-                          {getLocalizedName(cat, storeLang)}
-                        </Link>
-                        {subs.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setMobileExpandedCatId(isExpanded ? null : cat._id)
-                            }
-                            className="p-1 rounded-md text-zinc-400 hover:text-white"
-                          >
-                            <ChevronDown
-                              className={cn(
-                                "w-4 h-4 transition-transform",
-                                isExpanded && "rotate-180"
-                              )}
-                            />
-                          </button>
-                        )}
-                      </div>
-
-                      {isExpanded && subs.length > 0 && (
-                        <div className="pl-4 pr-2 py-1.5 space-y-1 bg-[#050e15] rounded-lg">
-                          {subs.map((sub) => (
-                            <Link
-                              key={sub._id}
-                              href={`/category/${cat.slug}/${sub.slug}`}
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-between py-1 px-2 text-xs text-zinc-400 hover:text-white"
-                            >
-                              <span>{getLocalizedName(sub, storeLang)}</span>
-                              <ChevronRight className="w-3 h-3 text-zinc-600" />
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* General Links */}
-              <div className="py-2 border-t border-[#172b3c] space-y-1">
-                <Link href="/" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-xs font-semibold text-zinc-300">
-                  {t("home", storeLang)}
-                </Link>
-                <Link href="/shop" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-xs font-semibold text-zinc-300">
-                  {t("shop", storeLang)}
-                </Link>
-                <Link href="/pc-builder" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-xs font-semibold text-[#0071dc]">
-                  PC Builder
-                </Link>
-                <Link href="/offers" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-xs font-semibold text-rose-400">
-                  {t("offers", storeLang)}
-                </Link>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-[#172b3c] text-xs text-zinc-400">
-              <p className="font-semibold text-white">Helpline / Support:</p>
-              <p className="text-[#0071dc] font-bold text-sm mt-0.5">{storePhone}</p>
-            </div>
-          </div>
-          <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
+      <GlobalMobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} storeName={storeName} dark>
+        <GlobalStoreNav
+          layout="mobile"
+          maxVisibleItems={maxVisibleItems}
+          showMoreMenu={showMoreMenu}
+          themeVariant="electronics"
+          lang={storeLang}
+          onItemClick={() => setMobileMenuOpen(false)}
+        />
+        <div className="pt-4 border-t border-[#172b3c] text-xs text-zinc-400 mt-4">
+          <p className="font-semibold text-white">Helpline / Support:</p>
+          <p className="text-[#0071dc] font-bold text-sm mt-0.5">{storePhone}</p>
         </div>
-      )}
+      </GlobalMobileDrawer>
     </header>
   );
 }

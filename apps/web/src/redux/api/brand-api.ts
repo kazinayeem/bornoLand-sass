@@ -87,27 +87,27 @@ export const brandApi = baseApi.injectEndpoints({
         const { storeId, ...params } = arg;
         return { url: `/brands/${storeId}`, params };
       },
-      providesTags: (_result, _error, arg) => [{ type: "Brands" as any, id: typeof arg === "string" ? arg : arg.storeId }],
+      providesTags: (_result, _error, arg) => [{ type: "Brands", id: typeof arg === "string" ? arg : arg.storeId }],
     }),
     getBrand: builder.query<ApiEnvelope<BrandResponse>, { storeId: string; id: string }>({
       query: ({ storeId, id }) => ({ url: `/brands/${storeId}/${id}` }),
-      providesTags: (_result, _error, { id }) => [{ type: "Brands" as any, id }],
+      providesTags: (_result, _error, { id }) => [{ type: "Brands", id }],
     }),
     createBrand: builder.mutation<ApiEnvelope<BrandResponse>, { storeId: string; data: CreateBrandPayload }>({
       query: ({ storeId, data }) => ({ url: `/brands/${storeId}/create`, method: "POST", body: data }),
-      invalidatesTags: (_result, _error, { storeId }) => [{ type: "Brands" as any, id: storeId }],
+      invalidatesTags: (_result, _error, { storeId }) => [{ type: "Brands", id: storeId }],
     }),
     updateBrand: builder.mutation<ApiEnvelope<BrandResponse>, { storeId: string; id: string; data: UpdateBrandPayload }>({
       query: ({ storeId, id, data }) => ({ url: `/brands/${storeId}/${id}`, method: "PUT", body: data }),
-      invalidatesTags: (_result, _error, { storeId }) => [{ type: "Brands" as any, id: storeId }],
+      invalidatesTags: (_result, _error, { storeId }) => [{ type: "Brands", id: storeId }],
     }),
     deleteBrand: builder.mutation<ApiEnvelope<never>, { storeId: string; id: string }>({
       query: ({ storeId, id }) => ({ url: `/brands/${storeId}/${id}`, method: "DELETE" }),
-      invalidatesTags: (_result, _error, { storeId }) => [{ type: "Brands" as any, id: storeId }],
+      invalidatesTags: (_result, _error, { storeId }) => [{ type: "Brands", id: storeId }],
     }),
     reorderBrands: builder.mutation<ApiEnvelope<never>, { storeId: string; orderedIds: string[] }>({
       query: ({ storeId, orderedIds }) => ({ url: `/brands/${storeId}/reorder`, method: "PUT", body: { orderedIds } }),
-      invalidatesTags: (_result, _error, { storeId }) => [{ type: "Brands" as any, id: storeId }],
+      invalidatesTags: (_result, _error, { storeId }) => [{ type: "Brands", id: storeId }],
     }),
   }),
 });

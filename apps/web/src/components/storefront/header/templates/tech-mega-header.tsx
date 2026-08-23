@@ -11,7 +11,6 @@ import {
   User,
   Heart,
   Zap,
-  Flame,
 } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { openCart } from "@/redux/slices/cart-slice";
@@ -138,14 +137,6 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
 
         {/* Right Utility Actions */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <Link
-            href="/offers"
-            className="hidden xl:flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-white transition-colors"
-          >
-            <Flame className="w-4 h-4 text-[#ef4444]" />
-            <span>Offers</span>
-          </Link>
-
           {headerSettings.showProfile !== false && (
             <Link
               href="/account"

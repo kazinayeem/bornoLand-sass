@@ -22,7 +22,7 @@ export function ImageBanner({ section }: { section: SectionData }) {
     <SectionWrapper section={section}>
       <Link href={p.link || "#"} className={`relative block w-full overflow-hidden ${height}`}>
         {imageUrl ? (
-          <Image src={imageUrl} alt={p.alt || "Banner"} fill className="object-cover" sizes="100vw" />
+          <Image src={imageUrl} alt={p.alt || "Banner"} fill unoptimized className="object-cover" sizes="100vw" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-zinc-100 text-zinc-300">Banner Image</div>
         )}

@@ -192,36 +192,34 @@ export function StorePreview({ store, theme, products = [], categories = [], set
   const renderZoneLabel = () => {
     if (editingZone === "header") {
       return (
-        <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-apple-pill border border-apple-primary/20 bg-apple-primary/5 px-4 py-2 shadow-lg backdrop-blur-sm">
-          <span className="text-caption font-medium text-apple-primary">Editing top bar</span>
+        <div className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-blue-200 bg-blue-50/90 px-3.5 py-1.5 shadow-sm backdrop-blur-sm">
+          <span className="text-[11px] font-bold text-blue-800 tracking-wide uppercase">
+            Editing Global Header
+          </span>
         </div>
       );
     }
     if (editingZone === "footer") {
       return (
-        <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-apple-pill border border-violet-200 bg-violet-50 px-4 py-2 shadow-lg backdrop-blur-sm">
-          <span className="text-caption font-medium text-violet-700">Editing bottom</span>
+        <div className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-violet-200 bg-violet-50/90 px-3.5 py-1.5 shadow-sm backdrop-blur-sm">
+          <span className="text-[11px] font-bold text-violet-800 tracking-wide uppercase">
+            Editing Global Footer
+          </span>
         </div>
       );
     }
     return null;
   };
 
-  const activeSections = editingZone === "header" ? headerSections
-    : editingZone === "footer" ? footerSections
-    : sections;
+  // Pure Body sections (filtering out any legacy header or footer sections)
+  const bodySections = sections.filter(
+    (s) =>
+      !["footer", "simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer", "header-bar", "header-logo", "header-nav", "header-icons"].includes(
+        normalizeSectionType(s.type)
+      )
+  );
 
-  const activeNavSections = editingZone === "footer"
-    ? []
-    : editingZone === "header"
-    ? []
-    : activeSections.filter((s) => !["footer", "simple-footer", "ecommerce-footer", "mega-footer", "multi-column-footer", "header-bar", "header-logo", "header-nav", "header-icons"].includes(normalizeSectionType(s.type)));
-
-  // When editing header or footer, render only the zone's sections directly
-  const isZoneMode = editingZone === "header" || editingZone === "footer";
-  const zoneSections = editingZone === "header" ? headerSections : footerSections;
-  const canvasSections = isZoneMode ? zoneSections : activeNavSections;
-  const showEmptyState = canvasSections.length === 0;
+  const showEmptyState = bodySections.length === 0;
 
   const emptyState = (
     <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 px-6 py-16 text-center">
@@ -229,15 +227,15 @@ export function StorePreview({ store, theme, products = [], categories = [], set
         <Layers className="h-5 w-5 text-zinc-400" />
       </div>
       <div className="space-y-1">
-        <p className="text-[15px] font-semibold text-zinc-900">No sections yet</p>
+        <p className="text-[15px] font-semibold text-zinc-900">No body content sections</p>
         <p className="max-w-xs text-[13px] leading-5 text-zinc-500">
-          Add a section to start editing, or browse templates when you want a starting layout.
+          Add a section to start building your page content, or browse starting templates.
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">
         <button
           type="button"
-          onClick={() => dispatch(openSectionLibrary({ insertPosition: null, targetZone: editingZone === "header" || editingZone === "footer" ? editingZone : "body" }))}
+          onClick={() => dispatch(openSectionLibrary({ insertPosition: null, targetZone: "body" }))}
           className="inline-flex items-center gap-1.5 rounded-full bg-zinc-900 px-4 py-2.5 text-[13px] font-medium text-white"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -256,70 +254,85 @@ export function StorePreview({ store, theme, products = [], categories = [], set
 
   return (
     <BuilderDeviceProvider device={device}>
-    <div ref={canvasScrollerRef} onWheel={handleCanvasWheel} onDoubleClick={(event) => { if (event.target === event.currentTarget) dispatch(setZoom(100)); }} className="flex min-h-full w-full items-start justify-center overflow-x-hidden overflow-y-auto px-4 py-8 sm:px-6"
-      style={{ backgroundColor: theme.darkMode ? "#09090b" : "#ececef", backgroundImage: showGrid ? "linear-gradient(rgba(59,130,246,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,.08) 1px, transparent 1px)" : undefined, backgroundSize: showGrid ? "20px 20px" : undefined }}>
-      {showGuides && <><div className="pointer-events-none fixed inset-y-0 left-1/2 z-20 w-px bg-pink-400/60" /><div className="pointer-events-none fixed inset-x-0 top-1/2 z-20 h-px bg-pink-400/60" /></>}
-      {showGuides && <div className="pointer-events-none absolute left-0 top-0 z-20 h-5 w-full border-b border-zinc-300 bg-white/80 text-[9px] text-apple-ink-muted-48">0&nbsp;&nbsp;&nbsp;&nbsp;100&nbsp;&nbsp;&nbsp;&nbsp;200&nbsp;&nbsp;&nbsp;&nbsp;300&nbsp;&nbsp;&nbsp;&nbsp;400&nbsp;&nbsp;&nbsp;&nbsp;500</div>}
       <div
-        className="relative shrink-0 overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-[0_20px_60px_-24px_rgba(0,0,0,0.28)] transition-transform duration-300 will-change-transform motion-reduce:transition-none"
-        style={{ width: previewWidth, maxWidth: "calc(100vw - 2rem)", transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}>
-        {renderZoneLabel()}
-        {isZoneMode ? (
-          <div className="min-h-[200px] p-4">
-            {showEmptyState ? emptyState : (
-            <StorefrontCanvas
-              sections={zoneSections}
-              selectedSectionId={selectedSectionId}
-              hoveredSectionId={hoveredSectionId}
-              onSelectSection={selectCanvasSection}
-              onHoverSection={(sectionId) => dispatch(setHoveredSection(sectionId))}
-              onQuickEditRequest={openQuickEdit}
-              onQuickEditDismiss={closeQuickEdit}
-              onInlineTextChange={({ sectionId, key, value }) => {
-                const section = zoneSections.find((item) => item.id === sectionId);
-                if (section) dispatch(updateSectionProps({ id: sectionId, props: { ...section.props, [key]: value } as Record<string, string> }));
-              }}
-              onSectionAction={({ sectionId, action }) => handleCanvasAction(sectionId, action)}
-              onQuickInsert={onQuickInsert}
-            />
-            )}
-          </div>
-        ) : (
-        <StorefrontFrame
-          store={store}
-          theme={theme}
-          products={liveProducts}
-          categories={liveCategories}
-          settings={settings}
-          sliders={sliders}
-          pageSections={activeSections}
-          headerSections={headerSections}
-          footerSections={footerSections}
-          headerSettings={headerSettings}
-          footerSettings={footerSettings}
-          footerSection={footerSection}
-          builderMode
-        >
-          {showEmptyState ? emptyState : (
-          <StorefrontCanvas
-            sections={activeNavSections}
-            selectedSectionId={selectedSectionId}
-            hoveredSectionId={hoveredSectionId}
-            onSelectSection={selectCanvasSection}
-            onHoverSection={(sectionId) => dispatch(setHoveredSection(sectionId))}
-            onQuickEditRequest={openQuickEdit}
-            onQuickEditDismiss={closeQuickEdit}
-            onInlineTextChange={({ sectionId, key, value }) => {
-              const section = activeNavSections.find((item) => item.id === sectionId);
-              if (section) dispatch(updateSectionProps({ id: sectionId, props: { ...section.props, [key]: value } as Record<string, string> }));
-            }}
-            onSectionAction={({ sectionId, action }) => handleCanvasAction(sectionId, action)}
-            onQuickInsert={onQuickInsert}
-          />
-          )}
-        </StorefrontFrame>
+        ref={canvasScrollerRef}
+        onWheel={handleCanvasWheel}
+        onDoubleClick={(event) => {
+          if (event.target === event.currentTarget) dispatch(setZoom(100));
+        }}
+        className="flex min-h-full w-full items-start justify-center overflow-x-hidden overflow-y-auto px-4 py-8 sm:px-6"
+        style={{
+          backgroundColor: theme.darkMode ? "#09090b" : "#ececef",
+          backgroundImage: showGrid
+            ? "linear-gradient(rgba(59,130,246,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,.08) 1px, transparent 1px)"
+            : undefined,
+          backgroundSize: showGrid ? "20px 20px" : undefined,
+        }}
+      >
+        {showGuides && (
+          <>
+            <div className="pointer-events-none fixed inset-y-0 left-1/2 z-20 w-px bg-pink-400/60" />
+            <div className="pointer-events-none fixed inset-x-0 top-1/2 z-20 h-px bg-pink-400/60" />
+          </>
         )}
-      </div>
+        {showGuides && (
+          <div className="pointer-events-none absolute left-0 top-0 z-20 h-5 w-full border-b border-zinc-300 bg-white/80 text-[9px] text-apple-ink-muted-48">
+            0&nbsp;&nbsp;&nbsp;&nbsp;100&nbsp;&nbsp;&nbsp;&nbsp;200&nbsp;&nbsp;&nbsp;&nbsp;300&nbsp;&nbsp;&nbsp;&nbsp;400&nbsp;&nbsp;&nbsp;&nbsp;500
+          </div>
+        )}
+        <div
+          className="relative shrink-0 overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-[0_20px_60px_-24px_rgba(0,0,0,0.28)] transition-transform duration-300 will-change-transform motion-reduce:transition-none"
+          style={{
+            width: previewWidth,
+            maxWidth: "calc(100vw - 2rem)",
+            transform: `scale(${zoom / 100})`,
+            transformOrigin: "top center",
+          }}
+        >
+          {renderZoneLabel()}
+
+          <StorefrontFrame
+            store={store}
+            theme={theme}
+            products={liveProducts}
+            categories={liveCategories}
+            settings={settings}
+            sliders={sliders}
+            pageSections={sections}
+            headerSections={headerSections}
+            footerSections={footerSections}
+            headerSettings={headerSettings}
+            footerSettings={footerSettings}
+            footerSection={footerSection}
+            builderMode
+          >
+            {showEmptyState ? (
+              emptyState
+            ) : (
+              <StorefrontCanvas
+                sections={bodySections}
+                selectedSectionId={selectedSectionId}
+                hoveredSectionId={hoveredSectionId}
+                onSelectSection={selectCanvasSection}
+                onHoverSection={(sectionId) => dispatch(setHoveredSection(sectionId))}
+                onQuickEditRequest={openQuickEdit}
+                onQuickEditDismiss={closeQuickEdit}
+                onInlineTextChange={({ sectionId, key, value }) => {
+                  const section = bodySections.find((item) => item.id === sectionId);
+                  if (section)
+                    dispatch(
+                      updateSectionProps({
+                        id: sectionId,
+                        props: { ...section.props, [key]: value } as Record<string, string>,
+                      })
+                    );
+                }}
+                onSectionAction={({ sectionId, action }) => handleCanvasAction(sectionId, action)}
+                onQuickInsert={onQuickInsert}
+              />
+            )}
+          </StorefrontFrame>
+        </div>
 
       <ContextualQuickEdit
         open={Boolean(selectedSection && quickEditFields && quickEditMode && quickEditAnchor)}

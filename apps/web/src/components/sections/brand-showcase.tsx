@@ -1,73 +1,121 @@
 "use client";
 
+import { useMemo } from "react";
+import { BuilderLink as Link } from "./builder-link";
 import { SectionWrapper, SectionTitle, type SectionData } from "./section-renderer";
-import { StoreLink as Link } from "@/components/storefront/store-link";
-import { SmartImage } from "@/components/ui/smart-image";
-import { Award, CheckCircle2 } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
 import { useGetBrandsQuery } from "@/redux/api/brand-api";
+import { Tag } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function BrandShowcase({ section }: { section: SectionData }) {
   const p = section.props;
-  const tenant = useTenant();
-  const storeId = tenant?.store?._id;
-
+  const { store, brands: tenantBrands } = useTenant();
+  const storeId = store._id;
   const { data: brandData } = useGetBrandsQuery(storeId || "", {
     skip: !storeId,
   });
 
-  const realBrands = brandData?.data?.brands ?? [];
+  const rawBrands = brandData?.data?.brands ?? tenantBrands ?? [];
 
-  const defaultBrands = [
-    { name: "Honeyraj", logoUrl: "", desc: "Pure Honey Specialist" },
-    { name: "Khaijuri", logoUrl: "", desc: "Authentic Arabian Dates" },
-    { name: "Glarevest", logoUrl: "", desc: "Premium Cold-Pressed Oils" },
-    { name: "Shomi", logoUrl: "", desc: "Pure Mustard & Ghee" },
-    { name: "Pure Harvest", logoUrl: "", desc: "Natural Organic Foods" },
-    { name: "Deshi Naturals", logoUrl: "", desc: "Traditional Spices" },
-  ];
+  const source = p.brandSource || "all";
+  const limit = Math.min(Math.max(Number(p.brandCount) || 6, 1), 12);
+  const cols = p.gridColumns || "6";
 
-  const displayBrands =
-    realBrands.length > 0
-      ? realBrands.filter((b) => b.active).map((b) => ({
-          name: b.name,
-          slug: b.slug,
-          logoUrl: b.logoUrl,
-          desc: b.description || "Official Brand Partner",
-        }))
-      : defaultBrands;
+  // Selected Brand IDs
+  const selectedIds: string[] = useMemo(() => {
+    if (!p.brandIds) return [];
+    try {
+      if (p.brandIds.startsWith("[")) return JSON.parse(p.brandIds);
+      return p.brandIds.split(",").map((s) => s.trim()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }, [p.brandIds]);
+
+  const displayBrands = useMemo(() => {
+    let list = rawBrands.filter((b) => b.active !== false);
+
+    if (source === "selected" && selectedIds.length > 0) {
+      // Respect user's custom ordering
+      const ordered = selectedIds
+        .map((id) => list.find((b) => b._id === id || b.slug === id))
+        .filter(Boolean) as typeof list;
+      return ordered.slice(0, limit);
+    }
+
+    if (source === "featured") {
+      list = list.filter((b) => b.featured);
+    } else if (source === "popular") {
+      list = list.sort((a, b) => (b.sortOrder ?? 0) - (a.sortOrder ?? 0));
+    }
+
+    // Fallback demo brands if brand list is empty
+    if (list.length === 0) {
+      return [
+        { _id: "b1", name: "Apple", slug: "apple", logoUrl: "" },
+        { _id: "b2", name: "Samsung", slug: "samsung", logoUrl: "" },
+        { _id: "b3", name: "Sony", slug: "sony", logoUrl: "" },
+        { _id: "b4", name: "Asus", slug: "asus", logoUrl: "" },
+        { _id: "b5", name: "Dell", slug: "dell", logoUrl: "" },
+        { _id: "b6", name: "HP", slug: "hp", logoUrl: "" },
+      ].slice(0, limit);
+    }
+
+    return list.slice(0, limit);
+  }, [rawBrands, source, selectedIds, limit]);
+
+  if (displayBrands.length === 0) return null;
+
+  const gridClass =
+    cols === "3"
+      ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3"
+      : cols === "4"
+      ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+      : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6";
+
+  const showLogo = p.showLogo !== "false";
+  const showName = p.showName !== "false";
 
   return (
     <SectionWrapper section={section}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <SectionTitle
           title={p.title || "Our Trusted Brands & Partners"}
-          subtitle={p.subtitle || "Authentic products directly sourced from verified farms and authorized distributors"}
+          subtitle={p.subtitle || "Official warranty & authentic products guaranteed"}
           textColor={p.textColor}
           textAlignment={p.textAlignment}
         />
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
-          {displayBrands.map((b, idx) => (
+        <div className={cn("grid gap-4 sm:gap-6", gridClass)}>
+          {displayBrands.map((b) => (
             <Link
-              key={idx}
-              href={(b as any).slug ? `/brand/${(b as any).slug}` : "/shop"}
-              className="flex flex-col items-center justify-center p-4 rounded-2xl border border-zinc-200/70 bg-white shadow-2xs hover:border-zinc-300 hover:shadow-md transition-all text-center group cursor-pointer"
+              key={b._id}
+              href={b.slug ? `/brand/${b.slug}` : "/shop"}
+              className="group flex flex-col items-center justify-center rounded-2xl border border-zinc-200/80 bg-white p-5 text-center shadow-2xs transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-md"
             >
-              <div className="relative h-12 w-12 rounded-xl overflow-hidden bg-zinc-50 border border-zinc-100 mb-2 p-1.5 flex items-center justify-center">
-                {b.logoUrl ? (
-                  <SmartImage src={b.logoUrl} alt={b.name} fill className="object-contain p-1" />
-                ) : (
-                  <Award className="w-6 h-6 text-zinc-400 group-hover:text-amber-500 transition-colors" />
-                )}
-              </div>
-              <span className="font-bold text-xs text-zinc-800 line-clamp-1 group-hover:text-emerald-700 transition-colors">
-                {b.name}
-              </span>
-              <span className="text-[10px] text-zinc-400 mt-0.5 flex items-center gap-1">
-                <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
-                <span className="truncate">{b.desc}</span>
-              </span>
+              {showLogo && (
+                <div className="relative mb-3 flex h-14 w-full items-center justify-center overflow-hidden rounded-xl px-2">
+                  {b.logoUrl ? (
+                    <img
+                      src={b.logoUrl}
+                      alt={b.name}
+                      className="max-h-12 max-w-full object-contain grayscale transition-all duration-300 group-hover:grayscale-0 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-zinc-400 group-hover:text-zinc-900 transition-colors">
+                      <Tag className="h-5 w-5" />
+                      <span className="text-xs font-bold uppercase tracking-wider">{b.name}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {showName && (
+                <span className="text-xs sm:text-sm font-semibold text-zinc-900 group-hover:text-blue-600 transition-colors truncate max-w-full">
+                  {b.name}
+                </span>
+              )}
             </Link>
           ))}
         </div>

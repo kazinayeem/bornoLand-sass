@@ -1,6 +1,6 @@
 "use client";
 
-import { Field, MediaField, SectionBlock, SelectField, TextField, ToggleField } from "./shared";
+import { Field, SectionBlock, SelectField, TextField, ToggleField } from "./shared";
 import type { SectionEditorProps } from "./types";
 import { isVideoUrl } from "./types";
 import { RepeaterEditor, type RepeaterField } from "../repeater-editor";
@@ -22,7 +22,6 @@ export function HeroEditor({
   storeId,
   storeSlug,
   onPropChange,
-  onPropsChange,
 }: SectionEditorProps) {
   const p = section.props;
   const videoError = p.videoUrl && !isVideoUrl(p.videoUrl) ? "Enter a valid YouTube, Vimeo, or MP4 URL" : undefined;
@@ -33,18 +32,23 @@ export function HeroEditor({
       if (p.slides) {
         const parsed = typeof p.slides === "string" ? JSON.parse(p.slides) : p.slides;
         if (Array.isArray(parsed)) {
-          slides = parsed.map((item: any, idx: number) => ({
-            id: item.id || `slide-${idx + 1}`,
-            image: item.image || item.imageUrl || item.desktopImage || "",
-            mobileImage: item.mobileImage || item.mobileImageUrl || "",
-            badge: item.badge || item.kicker || "",
-            title: item.title || item.headline || "",
-            subtitle: item.subtitle || item.subheadline || item.description || "",
-            buttonText: item.buttonText || item.primaryButtonText || "",
-            buttonLink: item.buttonLink || item.primaryButtonLink || "/shop",
-            secondaryButtonText: item.secondaryButtonText || "",
-            secondaryButtonLink: item.secondaryButtonLink || "",
-          }));
+          slides = parsed.map((item: any, idx: number) => {
+            const img = item.image || item.imageUrl || item.desktopImage || item.desktop_image || "";
+            const mobImg = item.mobileImage || item.mobileImageUrl || item.mobile_image || "";
+            return {
+              id: item.id || `slide-${idx + 1}`,
+              image: img,
+              desktopImage: img,
+              mobileImage: mobImg,
+              badge: item.badge || item.kicker || "",
+              title: item.title || item.headline || "",
+              subtitle: item.subtitle || item.subheadline || item.description || "",
+              buttonText: item.buttonText || item.primaryButtonText || "",
+              buttonLink: item.buttonLink || item.primaryButtonLink || "/shop",
+              secondaryButtonText: item.secondaryButtonText || "",
+              secondaryButtonLink: item.secondaryButtonLink || "",
+            };
+          });
         }
       }
     } catch {
@@ -53,23 +57,41 @@ export function HeroEditor({
 
     if (!slides.length) {
       const count = Number(p.slideCount) || 2;
-      slides = Array.from({ length: count }, (_, i) => ({
-        id: `slide-${i + 1}`,
-        image: p[`slide${i + 1}Image`] || p[`slide${i + 1}DesktopImage`] || "",
-        mobileImage: p[`slide${i + 1}MobileImage`] || "",
-        badge: p[`slide${i + 1}Badge`] || (i === 0 ? "Featured Deal" : ""),
-        title: p[`slide${i + 1}Title`] || (i === 0 ? "Welcome to Our Store" : `Special Collection ${i + 1}`),
-        subtitle: p[`slide${i + 1}Subtitle`] || "Discover our latest trending products at exclusive prices.",
-        buttonText: p[`slide${i + 1}ButtonText`] || "Shop Now",
-        buttonLink: p[`slide${i + 1}ButtonLink`] || "/shop",
-        secondaryButtonText: p[`slide${i + 1}SecondaryButtonText`] || "",
-        secondaryButtonLink: p[`slide${i + 1}SecondaryButtonLink`] || "",
-      }));
+      slides = Array.from({ length: count }, (_, i) => {
+        const idx = i + 1;
+        const fallbackImage = i === 0 ? (p.imageUrl || p.image || p.desktopImage || "") : "";
+        const img = p[`slide${idx}Image`] || p[`slide${idx}DesktopImage`] || fallbackImage;
+        const mobImg = p[`slide${idx}MobileImage`] || "";
+        return {
+          id: `slide-${idx}`,
+          image: img,
+          desktopImage: img,
+          mobileImage: mobImg,
+          badge: p[`slide${idx}Badge`] || (i === 0 ? "Featured Deal" : ""),
+          title: p[`slide${idx}Title`] || (i === 0 ? (p.headline || "Welcome to Our Store") : `Special Collection ${idx}`),
+          subtitle: p[`slide${idx}Subtitle`] || (i === 0 ? (p.subheadline || "Discover our latest trending products at exclusive prices.") : "High quality products at best price."),
+          buttonText: p[`slide${idx}ButtonText`] || (p.buttonText || "Shop Now"),
+          buttonLink: p[`slide${idx}ButtonLink`] || (p.buttonLink || "/shop"),
+          secondaryButtonText: p[`slide${idx}SecondaryButtonText`] || "",
+          secondaryButtonLink: p[`slide${idx}SecondaryButtonLink`] || "",
+        };
+      });
     }
 
     const handleSlidesUpdate = (newSlides: Record<string, string>[]) => {
-      onPropChange("slides", JSON.stringify(newSlides));
-      onPropChange("slideCount", String(newSlides.length));
+      // Normalize and sync desktopImage & image keys so both always contain the latest value
+      const normalized = newSlides.map((s) => {
+        const img = s.image || s.desktopImage || "";
+        const mobImg = s.mobileImage || "";
+        return {
+          ...s,
+          image: img,
+          desktopImage: img,
+          mobileImage: mobImg,
+        };
+      });
+      onPropChange("slides", JSON.stringify(normalized));
+      onPropChange("slideCount", String(normalized.length));
     };
 
     return (

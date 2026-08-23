@@ -16,6 +16,7 @@ export type LibraryCategoryId =
   | "footer"
   | "products"
   | "category"
+  | "brands"
   | "reviews"
   | "promotions"
   | "gallery"
@@ -41,6 +42,7 @@ export const LIBRARY_CATEGORIES: LibraryCategory[] = [
   { id: "footer", label: "Footer", emoji: "🦶", description: "Links & store info" },
   { id: "products", label: "Products", emoji: "🛍", description: "Show your catalog" },
   { id: "category", label: "Categories", emoji: "📂", description: "Browse by collection" },
+  { id: "brands", label: "Brands", emoji: "🏷", description: "Official partners & brand logos" },
   { id: "reviews", label: "Reviews", emoji: "⭐", description: "Trust & social proof" },
   { id: "promotions", label: "Promotions", emoji: "🎯", description: "Sales & offers" },
   { id: "gallery", label: "Gallery", emoji: "🖼", description: "Photos & visuals" },
@@ -114,6 +116,11 @@ const META: Record<string, Meta> = {
   "mega-category-grid": { category: "category", label: "Icon Categories", description: "Large icon-style category tiles", keywords: ["icons", "categories"] },
   "category-banner": { category: "category", label: "Category Banner", description: "Promotional category banner", keywords: ["banner", "category"] },
 
+  // Brands
+  "brand-showcase": { category: "brands", label: "Brand Showcase", description: "Official brand partners & logo grid", keywords: ["brands", "partners", "logos", "trust"] },
+  "brand-grid": { category: "brands", label: "Brand Grid", description: "Multi-column brand logos grid", keywords: ["brands", "grid", "logos"] },
+  "brand-slider": { category: "brands", label: "Brand Carousel", description: "Swipeable brand logo slider", keywords: ["brands", "slider", "carousel"] },
+
   // Reviews
   "testimonials": { category: "reviews", label: "Testimonials", description: "Customer quotes and stories", keywords: ["reviews", "testimonials", "quotes"] },
   "customer-reviews": { category: "reviews", label: "Customer Reviews", description: "Star ratings with written reviews", keywords: ["reviews", "ratings", "stars"] },
@@ -186,7 +193,6 @@ const META: Record<string, Meta> = {
 
   // Specialized Theme Sections
   "combo-deals": { category: "promotions", label: "Combo Deals & Bundles", description: "Curated value bundles with instant savings", keywords: ["combo", "deals", "bundle", "save", "package"] },
-  "brand-showcase": { category: "services", label: "Brand Showcase", description: "Authorized brands, partner farms, and manufacturers", keywords: ["brand", "partners", "farms", "distributors"] },
   "quick-service-links": { category: "services", label: "Quick Service Links", description: "Fast action shortcuts for PC builder, services, and store support", keywords: ["service", "shortcuts", "support", "laptop"] },
   "seo-content": { category: "about", label: "SEO Content Block", description: "Expandable long-form store authority content for search engines", keywords: ["seo", "content", "story", "google"] },
   "store-locator-banner": { category: "contact", label: "Store Locator Banner", description: "Highlight physical store branches nationwide", keywords: ["stores", "locator", "outlets", "branches", "physical"] },

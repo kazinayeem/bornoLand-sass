@@ -125,6 +125,8 @@ export type HeaderSettings = {
   showProfile?: boolean;
   showLanguageSwitcher?: boolean;
   showCurrencySwitcher?: boolean;
+  showAnnouncement?: boolean;
+  announcementText?: string;
   announcementBar?: string;
   topBar?: string;
   desktopLayout?: string;

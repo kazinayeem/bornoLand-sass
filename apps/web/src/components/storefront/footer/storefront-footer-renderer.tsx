@@ -15,13 +15,16 @@ export function StorefrontFooterRenderer({ footerSettings = {} }: StorefrontFoot
   const { theme } = useActiveTheme();
   const themeId = theme.id || "grocery";
 
-  // If footer is disabled or hidden, render NOTHING - absolutely NO fallback footer!
+  // If footer is disabled, hidden, or template is null/none, render NOTHING - absolutely NO fallback footer!
   if (
     footerSettings.enabled === false ||
     footerSettings.visible === false ||
     footerSettings.show === false ||
     footerSettings.enabled === "false" ||
-    footerSettings.visible === "false"
+    footerSettings.visible === "false" ||
+    footerSettings.template === "none" ||
+    footerSettings.template === null ||
+    footerSettings.templateId === null
   ) {
     return null;
   }
@@ -30,42 +33,55 @@ export function StorefrontFooterRenderer({ footerSettings = {} }: StorefrontFoot
   const template =
     (footerSettings.template as string) ||
     (footerSettings.footerTemplate as string) ||
+    (footerSettings.templateId as string) ||
     (themeId === "electronics" ? "modern-multi-column" : "classic-ecommerce");
 
-  switch (template) {
-    // FOOTER 1: Classic Ecommerce
-    case "classic-ecommerce":
-    case "classic":
-    case "grocery":
-    case "organic":
-    case "commerce":
-      return <GroceryFooter footerSettings={footerSettings} />;
+  const renderFooterContent = () => {
+    switch (template) {
+      // FOOTER 1: Classic Ecommerce
+      case "classic-ecommerce":
+      case "classic":
+      case "grocery":
+      case "organic":
+      case "commerce":
+        return <GroceryFooter key="footer-classic-ecommerce" footerSettings={footerSettings} />;
 
-    // FOOTER 2: Modern Multi Column
-    case "modern-multi-column":
-    case "modern":
-    case "tech":
-    case "electronics":
-    case "tech-electronics":
-      return <TechElectronicsFooter footerSettings={footerSettings} />;
+      // FOOTER 2: Modern Multi Column
+      case "modern-multi-column":
+      case "modern":
+      case "tech":
+      case "electronics":
+      case "tech-electronics":
+        return <TechElectronicsFooter key="footer-modern-multi-column" footerSettings={footerSettings} />;
 
-    // FOOTER 3: Minimal
-    case "minimal":
-    case "minimal-commerce":
-    case "simple":
-      return <MinimalCommerceFooter footerSettings={footerSettings} />;
+      // FOOTER 3: Minimal
+      case "minimal":
+      case "minimal-commerce":
+      case "simple":
+        return <MinimalCommerceFooter key="footer-minimal" footerSettings={footerSettings} />;
 
-    // FOOTER 4: Marketplace
-    case "marketplace":
-    case "daraz":
-      return <MarketplaceFooter footerSettings={footerSettings} />;
+      // FOOTER 4: Marketplace
+      case "marketplace":
+      case "daraz":
+        return <MarketplaceFooter key="footer-marketplace" footerSettings={footerSettings} />;
 
-    // FOOTER 5: Premium
-    case "premium":
-    case "premium-luxury":
-    case "modern-store":
-    case "luxury":
-    default:
-      return <ModernStoreFooter footerSettings={footerSettings} />;
-  }
+      // FOOTER 5: Premium
+      case "premium":
+      case "premium-luxury":
+      case "modern-store":
+      case "luxury":
+      default:
+        return <ModernStoreFooter key="footer-premium" footerSettings={footerSettings} />;
+    }
+  };
+
+  return (
+    <footer
+      key={`global-footer-${template}-${footerSettings.columns ?? 4}`}
+      data-global-footer={template}
+      className="relative z-40 w-full"
+    >
+      {renderFooterContent()}
+    </footer>
+  );
 }

@@ -19,13 +19,16 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
-  // If header is disabled or hidden, render NOTHING - absolutely NO fallback header!
+  // If header is disabled, hidden, or template is null/none, render NOTHING - absolutely NO fallback header!
   if (
     headerSettings.enabled === false ||
     headerSettings.visible === false ||
     headerSettings.show === false ||
     headerSettings.enabled === "false" ||
-    headerSettings.visible === "false"
+    headerSettings.visible === "false" ||
+    headerSettings.template === "none" ||
+    headerSettings.template === null ||
+    headerSettings.templateId === null
   ) {
     return null;
   }
@@ -34,6 +37,7 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
   const template =
     (headerSettings.template as string) ||
     (headerSettings.headerTemplate as string) ||
+    (headerSettings.templateId as string) ||
     (headerSettings.layout as string) ||
     (themeId === "electronics" ? "compact-professional" : "modern-ecommerce");
 
@@ -90,20 +94,20 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       case "minimal":
       case "minimal-fashion":
       case "clean":
-        return <MinimalFashionHeader headerSettings={headerSettings} />;
+        return <MinimalFashionHeader key="header-minimal-clean" headerSettings={headerSettings} />;
 
       // HEADER 2: Modern Ecommerce
       case "modern-ecommerce":
       case "grocery":
       case "organic":
       case "ecommerce":
-        return <GroceryHeader headerSettings={headerSettings} />;
+        return <GroceryHeader key="header-modern-ecommerce" headerSettings={headerSettings} />;
 
       // HEADER 3: Marketplace Header
       case "marketplace":
       case "daraz":
       case "multivendor":
-        return <MarketplaceHeader headerSettings={headerSettings} />;
+        return <MarketplaceHeader key="header-marketplace" headerSettings={headerSettings} />;
 
       // HEADER 4: Premium / Luxury
       case "premium-luxury":
@@ -111,7 +115,7 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       case "luxury":
       case "fashion":
       case "modern-general":
-        return <ModernGeneralHeader headerSettings={headerSettings} />;
+        return <ModernGeneralHeader key="header-premium-luxury" headerSettings={headerSettings} />;
 
       // HEADER 5: Compact / Professional
       case "compact-professional":
@@ -121,12 +125,16 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       case "electronics":
       case "computer":
       default:
-        return <TechMegaHeader headerSettings={headerSettings} />;
+        return <TechMegaHeader key="header-compact-professional" headerSettings={headerSettings} />;
     }
   };
 
   return (
-    <>
+    <header
+      key={`global-header-${template}-${position}`}
+      data-global-header={template}
+      className="relative z-50 w-full"
+    >
       <div
         ref={headerRef}
         className={cn(
@@ -148,6 +156,6 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       {position === "fixed" && !transparent && headerHeight > 0 && (
         <div style={{ height: headerHeight }} aria-hidden="true" className="w-full shrink-0 pointer-events-none" />
       )}
-    </>
+    </header>
   );
 }

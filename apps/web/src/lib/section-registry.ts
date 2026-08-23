@@ -403,7 +403,34 @@ export const sectionRegistry: SectionDef[] = [
   {
     type: "category-grid", label: "Category Grid", category: "category", icon: "Grid3x3", description: "Grid layout for categories",
     props: merge(
-      { title: G.text("title", "Section Title", "Shop by Category"), subtitle: G.text("subtitle", "Subtitle", "Browse our collections"), gridColumns: G.gridCols(), cardStyle: G.select("cardStyle", "Card Style", "default", [{ value: "default", label: "Default" }, { value: "minimal", label: "Minimal" }, { value: "bordered", label: "Bordered" }, { value: "elevated", label: "Elevated" }], "layout"), showProductCount: G.toggle("showProductCount", "Show Product Count", "true") },
+      {
+        title: G.text("title", "Section Title", "Shop by Category"),
+        subtitle: G.text("subtitle", "Subtitle", "Browse our collections"),
+        categorySource: G.select("categorySource", "Content Source", "all", [
+          { value: "all", label: "All Categories" },
+          { value: "selected", label: "Selected Categories" },
+          { value: "featured", label: "Featured Categories" },
+          { value: "popular", label: "Popular Categories" },
+          { value: "latest", label: "Latest Categories" },
+        ]),
+        categoryCount: G.select("categoryCount", "Max Categories", "6", [
+          { value: "4", label: "4" },
+          { value: "6", label: "6" },
+          { value: "8", label: "8" },
+          { value: "10", label: "10" },
+          { value: "12", label: "12" },
+        ]),
+        categoryIds: G.text("categoryIds", "Selected Category IDs", "[]"),
+        gridColumns: G.gridCols(),
+        cardStyle: G.select("cardStyle", "Card Style", "card", [
+          { value: "card", label: "Rounded Card" },
+          { value: "circle", label: "Circular Icon" },
+          { value: "minimal", label: "Minimalist Pill" },
+        ], "layout"),
+        showImage: G.toggle("showImage", "Show Category Image", "true"),
+        showName: G.toggle("showName", "Show Category Name", "true"),
+        showProductCount: G.toggle("showProductCount", "Show Product Count", "true"),
+      },
       layout, bg, typography,
     ),
   },
@@ -1089,8 +1116,25 @@ export const sectionRegistry: SectionDef[] = [
     type: "brand-showcase", label: "Brands & Partners", category: "trust", icon: "Award", description: "Grid or carousel of partner brands, verified farms, and official distributors",
     props: merge(
       {
-        title: G.text("title", "Section Title", "Our Trusted Brands"),
-        subtitle: G.text("subtitle", "Subtitle", "Authentic products directly sourced from verified partners"),
+        title: G.text("title", "Section Title", "Our Trusted Brands & Partners"),
+        subtitle: G.text("subtitle", "Subtitle", "Official warranty & authentic products guaranteed"),
+        brandSource: G.select("brandSource", "Content Source", "all", [
+          { value: "all", label: "All Brands" },
+          { value: "selected", label: "Selected Brands" },
+          { value: "featured", label: "Featured Brands" },
+          { value: "popular", label: "Popular Brands" },
+        ]),
+        brandCount: G.select("brandCount", "Max Brands", "6", [
+          { value: "4", label: "4" },
+          { value: "6", label: "6" },
+          { value: "8", label: "8" },
+          { value: "10", label: "10" },
+          { value: "12", label: "12" },
+        ]),
+        brandIds: G.text("brandIds", "Selected Brand IDs", "[]"),
+        gridColumns: G.gridCols(),
+        showLogo: G.toggle("showLogo", "Show Brand Logo", "true"),
+        showName: G.toggle("showName", "Show Brand Name", "true"),
       },
       layout, bg, typography,
     ),

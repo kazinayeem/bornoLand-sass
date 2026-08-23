@@ -3,8 +3,14 @@
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setFooterSettings } from "@/redux/slices/builder-slice";
-import { ChevronDown, Info } from "lucide-react";
+import {
+  ChevronDown,
+  Check,
+  PanelBottom,
+  Info,
+} from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 function Section({ label, children, defaultOpen = true }: { label: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -27,6 +33,7 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: bool
     <div className="flex items-center justify-between">
       <span className="text-[11px] text-apple-ink-muted-80">{label}</span>
       <button
+        type="button"
         onClick={() => onChange(!value)}
         className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${value ? "bg-zinc-900" : "bg-zinc-200"}`}
       >
@@ -68,178 +75,177 @@ function TextInput({ value, onChange, label, placeholder }: { value: string; onC
   );
 }
 
-function ColorInput({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
-  return (
-    <div>
-      <label className="mb-1 block text-[10px] font-medium text-apple-ink-muted-48 uppercase tracking-wider">{label}</label>
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={value || "#000000"}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-7 w-7 cursor-pointer rounded border border-zinc-200 p-0.5"
-        />
-        <input
-          type="text"
-          value={value || ""}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="#000000"
-          className="h-7 flex-1 rounded-lg border border-zinc-200 bg-transparent px-2 text-[11px] text-apple-ink-muted-80 placeholder:text-zinc-300 focus:border-zinc-400 focus:outline-none"
-        />
-      </div>
-    </div>
-  );
-}
+const FOOTER_TEMPLATES = [
+  {
+    id: "classic-ecommerce",
+    name: "1. Classic Ecommerce",
+    desc: "4 Value guarantee badges, hotline, categories, delivery info.",
+    tag: "Grocery & Natural",
+  },
+  {
+    id: "modern-multi-column",
+    name: "2. Modern Multi Column",
+    desc: "Star Tech-style navy footer with top newsletter strip.",
+    tag: "Tech & Electronics",
+  },
+  {
+    id: "minimal",
+    name: "3. Minimal",
+    desc: "Clean minimalist layout, curated links & copyright bar.",
+    tag: "Minimal & Clean",
+  },
+  {
+    id: "marketplace",
+    name: "4. Marketplace",
+    desc: "Daraz-style multi-vendor footer with value propositions.",
+    tag: "Marketplace",
+  },
+  {
+    id: "premium",
+    name: "5. Premium",
+    desc: "Dark luxury footer with member circle CTA & social icons.",
+    tag: "Luxury & Fashion",
+  },
+];
 
 export function FooterBuilderSettings() {
   const dispatch = useDispatch();
   const footerSettings = useSelector((state: RootState) => state.builder.footerSettings);
 
+  const activeTemplate = (footerSettings.template as string) || (footerSettings.footerTemplate as string) || "classic-ecommerce";
+  const isEnabled = footerSettings.enabled !== false && footerSettings.visible !== false;
+
   const update = (key: string, value: unknown) => {
     dispatch(setFooterSettings({ ...footerSettings, [key]: value }));
+  };
+
+  const selectTemplate = (templateId: string) => {
+    dispatch(
+      setFooterSettings({
+        ...footerSettings,
+        template: templateId,
+        footerTemplate: templateId,
+        enabled: true,
+        visible: true,
+      })
+    );
   };
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
         <div>
-          <h3 className="text-xs font-semibold text-apple-ink">Footer Settings</h3>
-          <p className="text-[10px] text-apple-ink-muted-48">Layout & appearance — content loads from Branding, Contact CMS, and Categories.</p>
-        </div>
-      </div>
-
-      <div className="mx-4 mt-3 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2.5">
-        <div className="flex items-start gap-2">
-          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
-          <p className="text-[10px] leading-relaxed text-blue-900/80">
-            Store name, logo, email, phone, address, and partner brands are managed in Branding & Contact CMS — single source of truth.
-          </p>
+          <h3 className="text-xs font-semibold text-apple-ink">Global Footer Settings</h3>
+          <p className="text-[10px] text-apple-ink-muted-48">Single source of truth for footer configuration</p>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto divide-y divide-zinc-100">
         {/* Footer Visibility */}
-        <Section label="Visibility & Master Switch">
+        <div className="p-4 bg-zinc-50/50 space-y-3">
           <Toggle
             label="Enable Global Footer"
-            value={footerSettings.enabled !== false && footerSettings.visible !== false}
+            value={isEnabled}
             onChange={(v) => {
               update("enabled", v);
               update("visible", v);
             }}
           />
+          {!isEnabled && (
+            <p className="text-[10px] text-rose-500 font-medium">
+              Footer is disabled. No footer will be rendered on the storefront.
+            </p>
+          )}
+        </div>
+
+        {/* 5 Footer Templates Picker */}
+        <Section label="Select Footer Template (5 Designs)">
+          <div className="space-y-2">
+            {FOOTER_TEMPLATES.map((tpl) => {
+              const isSelected = activeTemplate === tpl.id || (tpl.id === "classic-ecommerce" && activeTemplate === "grocery") || (tpl.id === "modern-multi-column" && activeTemplate === "tech-electronics") || (tpl.id === "minimal" && activeTemplate === "minimal-commerce") || (tpl.id === "premium" && activeTemplate === "modern-store");
+              return (
+                <div
+                  key={tpl.id}
+                  onClick={() => selectTemplate(tpl.id)}
+                  className={cn(
+                    "cursor-pointer rounded-xl border p-2.5 transition-all text-left",
+                    isSelected
+                      ? "border-zinc-900 bg-zinc-900 text-white shadow-xs"
+                      : "border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={cn("text-xs font-bold", isSelected ? "text-white" : "text-zinc-900")}>
+                      {tpl.name}
+                    </span>
+                    {isSelected && (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold bg-white/20 px-2 py-0.5 rounded-full text-white">
+                        <Check className="h-3 w-3" /> Active
+                      </span>
+                    )}
+                  </div>
+                  <p className={cn("text-[11px] mt-1 leading-snug", isSelected ? "text-zinc-300" : "text-zinc-500")}>
+                    {tpl.desc}
+                  </p>
+                  <span className={cn("inline-block text-[9px] font-semibold uppercase tracking-wider mt-1.5 px-1.5 py-0.5 rounded", isSelected ? "bg-white/15 text-zinc-200" : "bg-zinc-100 text-zinc-600")}>
+                    {tpl.tag}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </Section>
 
-        <Section label="Template">
+        {/* Layout & Responsiveness */}
+        <Section label="Columns & Mobile Layout">
           <SelectInput
-            label="Footer Template"
-            value={String(footerSettings.template ?? "classic-ecommerce")}
-            onChange={(v) => {
-              update("template", v);
-              update("footerTemplate", v);
-            }}
-            options={[
-              { value: "classic-ecommerce", label: "FOOTER 1 — Classic Ecommerce" },
-              { value: "modern-multi-column", label: "FOOTER 2 — Modern Multi Column" },
-              { value: "minimal", label: "FOOTER 3 — Minimal" },
-              { value: "marketplace", label: "FOOTER 4 — Marketplace" },
-              { value: "premium", label: "FOOTER 5 — Premium" },
-            ]}
-          />
-        </Section>
-
-        <Section label="Layout & Responsiveness">
-          <SelectInput
-            label="Columns"
+            label="Column Count"
             value={String(footerSettings.columns ?? 4)}
             onChange={(v) => update("columns", Number(v))}
             options={[
               { value: "2", label: "2 Columns" },
               { value: "3", label: "3 Columns" },
-              { value: "4", label: "4 Columns" },
+              { value: "4", label: "4 Columns (Default)" },
               { value: "5", label: "5 Columns" },
             ]}
           />
           <SelectInput
-            label="Mobile Layout"
+            label="Mobile Display Mode"
             value={String(footerSettings.mobileLayout ?? "accordion")}
             onChange={(v) => update("mobileLayout", v)}
             options={[
-              { value: "accordion", label: "Accordion (Tap to expand)" },
+              { value: "accordion", label: "Accordion (Tap column to expand)" },
               { value: "stacked", label: "Always Stacked" },
             ]}
           />
-          <TextInput
-            label="Padding"
-            value={footerSettings.padding ?? ""}
-            onChange={(v) => update("padding", v)}
-            placeholder="48px 24px"
-          />
         </Section>
 
-        <Section label="Content & Elements">
+        {/* Feature Toggles */}
+        <Section label="Footer Sections & Badges">
           <Toggle
-            label="Newsletter Subscription Strip"
+            label="Show Newsletter Subscription"
             value={footerSettings.showNewsletter !== false}
             onChange={(v) => update("showNewsletter", v)}
           />
           <Toggle
-            label="Social Media Links"
+            label="Show Social Media Icons"
             value={footerSettings.showSocial !== false}
             onChange={(v) => update("showSocial", v)}
           />
           <Toggle
-            label="Payment Badges (bKash, Visa, etc.)"
+            label="Show Payment Method Badges"
             value={footerSettings.showPaymentIcons !== false}
             onChange={(v) => update("showPaymentIcons", v)}
           />
+        </Section>
+
+        {/* Copyright Text */}
+        <Section label="Copyright Notice" defaultOpen={false}>
           <TextInput
-            label="Copyright Text"
-            value={String(footerSettings.copyrightText ?? "")}
+            label="Custom Copyright Text"
+            value={(footerSettings.copyrightText as string) ?? ""}
             onChange={(v) => update("copyrightText", v)}
-            placeholder="© 2026 Store Name. All rights reserved."
-          />
-        </Section>
-
-        <Section label="Appearance" defaultOpen={false}>
-          <ColorInput
-            label="Background"
-            value={footerSettings.background ?? ""}
-            onChange={(v) => update("background", v)}
-          />
-          <ColorInput
-            label="Text Color"
-            value={footerSettings.textColor ?? ""}
-            onChange={(v) => update("textColor", v)}
-          />
-          <ColorInput
-            label="Border Color"
-            value={footerSettings.borderColor ?? ""}
-            onChange={(v) => update("borderColor", v)}
-          />
-          <Toggle label="Show Divider" value={footerSettings.divider !== false} onChange={(v) => update("divider", v)} />
-        </Section>
-
-        <Section label="Positions" defaultOpen={false}>
-          <SelectInput
-            label="Copyright Position"
-            value={String(footerSettings.copyrightPosition ?? "left")}
-            onChange={(v) => update("copyrightPosition", v)}
-            options={[
-              { value: "left", label: "Left" },
-              { value: "center", label: "Center" },
-              { value: "right", label: "Right" },
-            ]}
-          />
-          <SelectInput
-            label="Newsletter Position"
-            value={String(footerSettings.newsletterPosition ?? "bottom")}
-            onChange={(v) => update("newsletterPosition", v)}
-            options={[
-              { value: "top", label: "Top" },
-              { value: "inline", label: "Inline" },
-              { value: "bottom", label: "Bottom" },
-            ]}
+            placeholder="© 2026 BornoLand Store. All rights reserved."
           />
         </Section>
       </div>

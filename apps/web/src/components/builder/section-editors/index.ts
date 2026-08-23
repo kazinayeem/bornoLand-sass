@@ -6,6 +6,8 @@ import { BeforeAfterEditor } from "./before-after-editor";
 import { VideoEditor } from "./video-editor";
 import { TestimonialsEditor, TeamEditor, LogoCloudEditor } from "./list-editors";
 import { ProductSectionEditor } from "./product-editor";
+import { CategorySectionEditor } from "./category-editor";
+import { BrandSectionEditor } from "./brand-editor";
 import { ContactEditor, GoogleMapEditor } from "./contact-editor";
 import type { SectionEditorEntry } from "./types";
 import { normalizeSectionType } from "@/lib/section-registry";
@@ -22,6 +24,14 @@ const PRODUCT_TYPES = [
   "recently-viewed", "recommended-products", "related-products", "bundle-products",
 ];
 
+const CATEGORY_TYPES = [
+  "category-grid", "category-slider", "category-showcase", "categories", "featured-categories",
+];
+
+const BRAND_TYPES = [
+  "brand-showcase", "brand-grid", "brand-slider", "brands", "featured-brands",
+];
+
 const VIDEO_TYPES = ["video-section", "youtube-embed", "vimeo-embed", "tiktok-embed"];
 
 const GALLERY_TYPES = ["gallery", "image-grid", "masonry-gallery"];
@@ -33,6 +43,12 @@ for (const type of HERO_TYPES) {
 }
 for (const type of PRODUCT_TYPES) {
   entries[type] = { mode: "replace", tabs: ["style", "layout", "responsive", "advanced"], Component: ProductSectionEditor };
+}
+for (const type of CATEGORY_TYPES) {
+  entries[type] = { mode: "replace", tabs: ["style", "layout", "responsive", "advanced"], Component: CategorySectionEditor };
+}
+for (const type of BRAND_TYPES) {
+  entries[type] = { mode: "replace", tabs: ["style", "layout", "responsive", "advanced"], Component: BrandSectionEditor };
 }
 for (const type of VIDEO_TYPES) {
   entries[type] = { mode: "replace", tabs: ["style", "layout", "responsive", "advanced"], Component: VideoEditor };

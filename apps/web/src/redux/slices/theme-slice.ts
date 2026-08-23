@@ -31,6 +31,11 @@ const initialState: ThemeSettings = {
   preset: "modern",
   primaryColor: "#2563eb",
   secondaryColor: "#0f172a",
+  accentColor: "#f59e0b",
+  backgroundColor: "#ffffff",
+  textColor: "#18181b",
+  mutedTextColor: "#71717a",
+  borderColor: "#e4e4e7",
   font: "Inter",
   buttonStyle: "rounded-xl",
   layoutWidth: "1280px",
@@ -64,6 +69,11 @@ const themeSlice = createSlice({
         state.preset = action.payload;
         state.primaryColor = presetConfig.primaryColor;
         state.secondaryColor = presetConfig.secondaryColor;
+        state.accentColor = presetConfig.accentColor;
+        state.backgroundColor = presetConfig.backgroundColor;
+        state.textColor = presetConfig.textColor;
+        state.mutedTextColor = presetConfig.mutedTextColor;
+        state.borderColor = presetConfig.borderColor;
         state.font = presetConfig.font;
         state.headingFont = presetConfig.headingFont;
         state.bodyFont = presetConfig.bodyFont;
@@ -82,6 +92,21 @@ const themeSlice = createSlice({
     },
     setSecondaryColor(state, action: PayloadAction<string>) {
       state.secondaryColor = action.payload;
+    },
+    setAccentColor(state, action: PayloadAction<string>) {
+      state.accentColor = action.payload;
+    },
+    setBackgroundColor(state, action: PayloadAction<string>) {
+      state.backgroundColor = action.payload;
+    },
+    setTextColor(state, action: PayloadAction<string>) {
+      state.textColor = action.payload;
+    },
+    setMutedTextColor(state, action: PayloadAction<string>) {
+      state.mutedTextColor = action.payload;
+    },
+    setBorderColor(state, action: PayloadAction<string>) {
+      state.borderColor = action.payload;
     },
     setFont(state, action: PayloadAction<string>) {
       state.font = action.payload;
@@ -127,7 +152,9 @@ const themeSlice = createSlice({
 
 export const {
   setTheme, resetTheme, applyPreset,
-  setPrimaryColor, setSecondaryColor, setFont, setDarkMode,
+  setPrimaryColor, setSecondaryColor, setAccentColor,
+  setBackgroundColor, setTextColor, setMutedTextColor, setBorderColor,
+  setFont, setDarkMode,
   setButtonStyle, setLayoutWidth, setNavbarStyle,
   setBorderRadius, setShadowSize, setSpacing,
   setProductCardStyle, setGridColumns, setShowBadges, setShowRatings,

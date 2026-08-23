@@ -21,7 +21,6 @@ import { SmartImage } from "@/components/ui/smart-image";
 import { StoreLink as Link } from "@/components/storefront/store-link";
 import { formatCurrency } from "@/lib/format-currency";
 import { useIsBuilder } from "@/lib/device-context";
-import { StorefrontMegaMenu } from "@/components/storefront/navigation/storefront-mega-menu";
 import { DynamicCategoryNav } from "@/components/storefront/header/dynamic-category-nav";
 import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
@@ -45,7 +44,6 @@ export function MinimalFashionHeader({ headerSettings = {} }: MinimalFashionHead
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [activeCategoryMenuId, setActiveCategoryMenuId] = useState<string | null>(null);
   const [mobileExpandedCatId, setMobileExpandedCatId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);

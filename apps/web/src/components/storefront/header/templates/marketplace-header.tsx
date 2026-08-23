@@ -13,13 +13,7 @@ import {
   ChevronDown,
   ChevronRight,
   Flame,
-  Layers,
-  Sparkles,
-  Award,
   Zap,
-  TrendingUp,
-  Tag,
-  Package,
 } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { openCart } from "@/redux/slices/cart-slice";

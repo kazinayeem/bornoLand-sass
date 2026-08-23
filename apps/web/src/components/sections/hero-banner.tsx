@@ -30,9 +30,9 @@ export function HeroBanner({ section }: { section: SectionData }) {
   const paddingY = device === "mobile" ? p.mobilePaddingY || p.paddingY || "48px 0" : p.paddingY || "72px 0";
 
   return (
-    <SectionWrapper section={section} className={height}>
-      <div className={`flex h-full min-h-[inherit] w-full items-center justify-center px-4 sm:px-6 lg:px-8 ${align}`}>
-        <div className={`flex w-full max-w-4xl flex-col gap-4 sm:gap-6 ${contentAlign}`} style={{ padding: paddingY }}>
+    <SectionWrapper section={section} className={`w-full max-w-full min-w-0 ${height}`}>
+      <div className={`flex h-full min-h-[inherit] w-full max-w-full min-w-0 items-center justify-center px-4 sm:px-6 lg:px-8 ${align}`}>
+        <div className={`flex w-full max-w-4xl min-w-0 flex-col gap-4 sm:gap-6 ${contentAlign}`} style={{ padding: paddingY }}>
           {p.kicker && (
             <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-widest text-white backdrop-blur-md shadow-sm">
               <Sparkles className="h-3 w-3 text-amber-300" />

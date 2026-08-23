@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useActiveTheme } from "@/components/store/theme-provider";
 import { GroceryHeader } from "@/themes/grocery/components/grocery-header";
 import { TechMegaHeader } from "./templates/tech-mega-header";
@@ -29,15 +29,8 @@ function readScrollY(target: HTMLElement | Window): number {
   return target === window ? window.scrollY : (target as HTMLElement).scrollTop;
 }
 
-export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHeaderRendererProps) {
-  const { theme } = useActiveTheme();
-  const themeId = theme.id || "grocery";
-  const headerRef = useRef<HTMLDivElement>(null);
-  const registerContentOffset = useRegisterStorefrontHeaderOffset();
-  const [headerHeight, setHeaderHeight] = useState<number>(0);
-
-  // If header is disabled, hidden, or template is null/none, render NOTHING - absolutely NO fallback header!
-  if (
+function isHeaderDisabled(headerSettings: Record<string, unknown>): boolean {
+  return (
     headerSettings.enabled === false ||
     headerSettings.visible === false ||
     headerSettings.show === false ||
@@ -46,42 +39,54 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
     headerSettings.template === "none" ||
     headerSettings.template === null ||
     headerSettings.templateId === null
-  ) {
-    return null;
-  }
+  );
+}
 
-  // Determine active template: user-selected template overrides theme default
-  const template =
-    (headerSettings.template as string) ||
-    (headerSettings.headerTemplate as string) ||
-    (headerSettings.templateId as string) ||
-    (headerSettings.layout as string) ||
-    (themeId === "electronics" ? "compact-professional" : "modern-ecommerce");
-
-  // Behavior settings: static, sticky, fixed
-  const position = (headerSettings.position as string) || (headerSettings.sticky === false ? "static" : "sticky");
-  const autoHideOnScroll = headerSettings.autoHideOnScroll === true || headerSettings.autoHideOnScroll === "true";
-  const shadow = (headerSettings.shadow as string) || "none";
-  const transparent = headerSettings.transparent === true || headerSettings.transparent === "true";
-
-  // Auto-hide on scroll state
+export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHeaderRendererProps) {
+  const { theme } = useActiveTheme();
+  const themeId = theme.id || "grocery";
+  const headerRef = useRef<HTMLDivElement>(null);
+  const registerContentOffset = useRegisterStorefrontHeaderOffset();
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollYRef = useRef(0);
   const [isScrolled, setIsScrolled] = useState(false);
 
+  const disabled = isHeaderDisabled(headerSettings);
+
+  const template = useMemo(() => {
+    return (
+      (headerSettings.template as string) ||
+      (headerSettings.headerTemplate as string) ||
+      (headerSettings.templateId as string) ||
+      (headerSettings.layout as string) ||
+      (themeId === "electronics" ? "compact-professional" : "modern-ecommerce")
+    );
+  }, [headerSettings.template, headerSettings.headerTemplate, headerSettings.templateId, headerSettings.layout, themeId]);
+
+  const position =
+    (headerSettings.position as string) || (headerSettings.sticky === false ? "static" : "sticky");
+  const autoHideOnScroll =
+    headerSettings.autoHideOnScroll === true || headerSettings.autoHideOnScroll === "true";
+  const shadow = (headerSettings.shadow as string) || "none";
+  const transparent =
+    headerSettings.transparent === true || headerSettings.transparent === "true";
+
   const publishMetrics = useCallback(
     (height: number) => {
       setHeaderHeight(height);
-      // Always expose measured height; content offset only when fixed removes flow space
+      // Content offset only when fixed removes flow space — never double-offset sticky
       const offset = position === "fixed" && !transparent ? height : 0;
       registerContentOffset(height, offset);
     },
     [position, transparent, registerContentOffset],
   );
 
-  // Measure header height for fixed spacer + CSS variables
   useEffect(() => {
-    if (!headerRef.current) return;
+    if (disabled || !headerRef.current) {
+      registerContentOffset(0, 0);
+      return;
+    }
     const updateHeight = () => {
       if (headerRef.current) {
         publishMetrics(headerRef.current.offsetHeight);
@@ -94,10 +99,10 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       observer.disconnect();
       registerContentOffset(0, 0);
     };
-  }, [template, headerSettings, publishMetrics, registerContentOffset]);
+  }, [disabled, template, headerSettings, publishMetrics, registerContentOffset]);
 
-  // Scroll listener works for both window (storefront) and builder canvas scroller
   useEffect(() => {
+    if (disabled) return;
     if (!autoHideOnScroll && position !== "sticky" && position !== "fixed") return;
 
     const scrollTarget = getScrollParent(headerRef.current);
@@ -119,7 +124,11 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
     scrollTarget.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => scrollTarget.removeEventListener("scroll", handleScroll);
-  }, [autoHideOnScroll, position, template]);
+  }, [disabled, autoHideOnScroll, position, template]);
+
+  if (disabled) {
+    return null;
+  }
 
   const renderHeaderContent = () => {
     switch (template) {
@@ -189,7 +198,6 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
         {renderHeaderContent()}
       </div>
 
-      {/* Spacer only for fixed (out of flow) non-transparent headers — never double-offset sticky */}
       {position === "fixed" && !transparent && headerHeight > 0 && (
         <div
           style={{ height: headerHeight }}

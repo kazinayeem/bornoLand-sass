@@ -82,7 +82,7 @@ export function StorefrontShell({
         <div
           data-surface="storefront"
           data-builder-preview={builderMode ? "true" : undefined}
-          className={`min-h-screen w-full max-w-full min-w-0 overflow-x-clip antialiased ${builderMode ? "" : theme.darkMode ? "dark bg-zinc-950 text-white" : "bg-white text-zinc-900"}`}
+          className={`min-h-screen w-full max-w-full min-w-0 antialiased ${builderMode ? "" : theme.darkMode ? "dark bg-zinc-950 text-white" : "bg-white text-zinc-900"}`}
           style={{
             fontFamily: theme.font || "Inter, sans-serif",
             ...themeCssVars,
@@ -91,12 +91,13 @@ export function StorefrontShell({
           <TenantProvider value={tenantValue}>
             <AuthInit />
             <ThemeProvider themeId={(theme as any)?.themeId || (store.theme as any)?.themeId || "grocery"}>
-              {/* Single, authoritative Global Header pipeline — same for builder + storefront */}
+              {/* Single, authoritative Global Header pipeline — same for builder + storefront.
+                  Header stays OUTSIDE main overflow so position:sticky is not broken by clip. */}
               <ThemeHeader headerSettings={headerSettings} />
 
               <CartProvider>
                 <CartDrawer primaryColor={theme.primaryColor} />
-                <main className="relative w-full max-w-full min-w-0">
+                <main className="relative w-full max-w-full min-w-0 overflow-x-clip">
                   {children}
                 </main>
               </CartProvider>

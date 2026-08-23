@@ -28,7 +28,6 @@ import { SmartImage } from "@/components/ui/smart-image";
 import { StoreLink as Link } from "@/components/storefront/store-link";
 import { formatCurrency } from "@/lib/format-currency";
 import { useIsBuilder } from "@/lib/device-context";
-import { StorefrontMegaMenu } from "@/components/storefront/navigation/storefront-mega-menu";
 import { DynamicCategoryNav } from "@/components/storefront/header/dynamic-category-nav";
 import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
@@ -51,7 +50,6 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
   const wishlistCount = useSelector((state: RootState) => state.wishlist.items.length);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeMegaCategory, setActiveMegaCategory] = useState<string | null>(null);
   const [mobileExpandedCatId, setMobileExpandedCatId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);

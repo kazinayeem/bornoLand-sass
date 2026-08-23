@@ -4,7 +4,9 @@ import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import {
   applyPreset,
-  setPrimaryColor, setSecondaryColor, setFont, setDarkMode,
+  setPrimaryColor, setSecondaryColor, setAccentColor,
+  setBackgroundColor, setTextColor, setMutedTextColor, setBorderColor,
+  setFont, setDarkMode,
   setButtonStyle, setLayoutWidth, setNavbarStyle,
   setBorderRadius, setShadowSize, setSpacing,
   setProductCardStyle, setGridColumns, setShowBadges, setShowRatings,
@@ -91,6 +93,11 @@ export function ThemePanel() {
 
     dispatch(setPrimaryColor(targetTheme.tokens.colors.primary));
     dispatch(setSecondaryColor(targetTheme.tokens.colors.secondary));
+    dispatch(setAccentColor(targetTheme.tokens.colors.accent || "#f59e0b"));
+    dispatch(setBackgroundColor(targetTheme.tokens.colors.background || "#ffffff"));
+    dispatch(setTextColor(targetTheme.tokens.colors.text || "#18181b"));
+    dispatch(setMutedTextColor(targetTheme.tokens.colors.muted || "#71717a"));
+    dispatch(setBorderColor(targetTheme.tokens.colors.border || "#e4e4e7"));
     dispatch(setBorderRadius(targetTheme.tokens.layout.borderRadius));
     dispatch(setSpacing(targetTheme.tokens.layout.spacing));
     dispatch(setProductCardStyle(targetTheme.productCardVariant as any));
@@ -159,6 +166,18 @@ export function ThemePanel() {
         <div className="space-y-2.5">
           <ColorPicker label="Primary Color" value={t.primaryColor} onChange={(v) => dispatch(setPrimaryColor(v))} />
           <ColorPicker label="Secondary Color" value={t.secondaryColor} onChange={(v) => dispatch(setSecondaryColor(v))} />
+          <ColorPicker label="Accent Color" value={t.accentColor} onChange={(v) => dispatch(setAccentColor(v))} />
+        </div>
+      </div>
+
+      {/* ── Store Surface Colors ── */}
+      <div className="border-t border-zinc-100 pt-4">
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Surface & Text Colors</p>
+        <div className="space-y-2.5">
+          <ColorPicker label="Background Color" value={t.backgroundColor} onChange={(v) => dispatch(setBackgroundColor(v))} />
+          <ColorPicker label="Text Color" value={t.textColor} onChange={(v) => dispatch(setTextColor(v))} />
+          <ColorPicker label="Muted Text Color" value={t.mutedTextColor} onChange={(v) => dispatch(setMutedTextColor(v))} />
+          <ColorPicker label="Border Color" value={t.borderColor} onChange={(v) => dispatch(setBorderColor(v))} />
         </div>
       </div>
 

@@ -48,7 +48,6 @@ export function ModernGeneralHeader({ headerSettings = {} }: ModernGeneralHeader
   const wishlistCount = useSelector((state: RootState) => state.wishlist.items.length);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeMegaCategory, setActiveMegaCategory] = useState<string | null>(null);
   const [allCategoriesOpen, setAllCategoriesOpen] = useState(false);
   const [mobileExpandedCatId, setMobileExpandedCatId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -109,7 +108,7 @@ export function ModernGeneralHeader({ headerSettings = {} }: ModernGeneralHeader
 
         {/* Global Search */}
         {headerSettings.showSearch !== false && (
-          <div className="flex-1 max-w-xl hidden md:block">
+          <div className="flex-1 min-w-0 max-w-xl hidden md:block">
             <form onSubmit={handleSearchSubmit} className="relative flex items-center">
               <input
                 ref={searchInputRef}

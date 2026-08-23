@@ -775,10 +775,16 @@ svg {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: clip;
+  /* Do NOT set overflow-x here — it creates a containing block and breaks sticky headers */
   max-width: 100%;
   width: 100%;
   min-width: 0;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
 }
 
 [data-surface="storefront"] img,
@@ -800,12 +806,13 @@ svg {
   max-width: 100%;
 }
 
-/* Hero / first content respects container — no 100vw bleed */
+/* Hero / body content — clip horizontal overflow without wrapping sticky header */
 [data-surface="storefront"] main,
 [data-surface="storefront"] [data-storefront-canvas] {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  overflow-x: clip;
 }
 
 [data-surface="storefront"] .storefront-prose {

@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { StoreLink as Link } from "@/components/storefront/store-link";
-import { useTenantStore, type CategoryData } from "@/providers/tenant-provider";
+import { useTenant, type CategoryData } from "@/providers/tenant-provider";
 import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations";
 import { ChevronDown, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -37,7 +37,7 @@ export function DynamicCategoryNav({
   moreButtonClassName,
   dropdownClassName,
 }: DynamicCategoryNavProps) {
-  const { categories: storeCategories, settings } = useTenantStore();
+  const { categories: storeCategories, settings } = useTenant();
   const pathname = usePathname();
   const storeLang: StoreLanguage = propLang || (settings?.language === "bn" ? "bn" : "en");
 

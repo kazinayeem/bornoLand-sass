@@ -147,7 +147,7 @@ export function GroceryHeader({ headerSettings = {} }: GroceryHeaderProps) {
 
         {/* Dynamic Global Search Bar */}
         {headerSettings.showSearch !== false && (
-          <div className="flex-1 max-w-2xl hidden md:block">
+          <div className="flex-1 min-w-0 max-w-2xl hidden md:block">
             <form onSubmit={handleSearchSubmit} className="relative flex items-center">
               <input
                 ref={searchInputRef}

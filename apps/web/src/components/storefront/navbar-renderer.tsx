@@ -25,6 +25,9 @@ import type { RootState } from "@/redux/store";
 import { clearCustomer } from "@/redux/slices/customer-slice";
 import { openCart } from "@/redux/slices/cart-slice";
 import { useTenant } from "@/providers/tenant-provider";
+import { useStoreCategories } from "@/hooks/use-store-categories";
+import { normalizeCategoryParentId } from "@/lib/storefront/global-navigation";
+import { getCategoryEnglishName } from "@/lib/storefront/category-label";
 import { SmartImage } from "@/components/ui/smart-image";
 import { BuilderLink, BuilderIconButton } from "@/components/sections/builder-link";
 import { useStorefrontSurface } from "./storefront-ui";
@@ -58,7 +61,8 @@ export function NavbarRenderer({
   const router = useRouter();
   const pathname = usePathname() || "";
   const device = useDevice();
-  const { store, theme, navigations, categories } = useTenant();
+  const { store, theme, navigations } = useTenant();
+  const { categories: storeCategories } = useStoreCategories();
   const { classes, primaryColor } = useStorefrontSurface();
   const itemCount = useSelector((state: RootState) => state.cart.items.reduce((sum, i) => sum + i.quantity, 0));
   const customer = useSelector((state: RootState) => state.customer);
@@ -111,12 +115,11 @@ export function NavbarRenderer({
     ? navLinksOverride.map((l) => ({ ...l, icon: Home, children: [], openInNewTab: false }))
     : primaryNavigation?.items?.length
       ? navigationLinks(primaryNavigation.items)
-      : (categories ?? [])
-          .filter((cat) => cat.active !== false)
-          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      : storeCategories
+          .filter((cat) => normalizeCategoryParentId(cat.parentId) === null)
           .slice(0, 6)
           .map((cat) => ({
-            name: cat.nameEn || cat.name,
+            name: getCategoryEnglishName(cat),
             href: `/category/${cat.slug}`,
             icon: Home,
             children: [],

@@ -3,7 +3,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setHeaderSettings } from "@/redux/slices/builder-slice";
-import { applyHeaderTemplateSelection } from "@/lib/storefront/global-navigation";
+import { applyHeaderTemplateSelection, resolveHeaderTemplateId } from "@/lib/storefront/global-navigation";
 import {
   ChevronDown,
   Check,
@@ -115,11 +115,18 @@ export function HeaderBuilderSettings() {
   const dispatch = useDispatch();
   const headerSettings = useSelector((state: RootState) => state.builder.headerSettings);
 
-  const activeTemplate = (headerSettings.template as string) || (headerSettings.headerTemplate as string) || "modern-ecommerce";
+  const activeTemplate = resolveHeaderTemplateId(
+    headerSettings as Record<string, unknown>,
+    "modern-ecommerce",
+  );
   const isEnabled = headerSettings.enabled !== false && headerSettings.visible !== false;
 
   const update = (key: string, value: unknown) => {
     dispatch(setHeaderSettings({ ...headerSettings, [key]: value }));
+  };
+
+  const updateMany = (patch: Record<string, unknown>) => {
+    dispatch(setHeaderSettings({ ...headerSettings, ...patch }));
   };
 
   const selectTemplate = (templateId: string) => {
@@ -146,10 +153,7 @@ export function HeaderBuilderSettings() {
           <Toggle
             label="Enable Global Header"
             value={isEnabled}
-            onChange={(v) => {
-              update("enabled", v);
-              update("visible", v);
-            }}
+            onChange={(v) => updateMany({ enabled: v, visible: v })}
           />
           {!isEnabled && (
             <p className="text-[10px] text-rose-500 font-medium">
@@ -162,7 +166,7 @@ export function HeaderBuilderSettings() {
         <Section label="Select Header Template (5 Designs)">
           <div className="space-y-2">
             {HEADER_TEMPLATES.map((tpl) => {
-              const isSelected = activeTemplate === tpl.id || (tpl.id === "modern-ecommerce" && activeTemplate === "grocery") || (tpl.id === "compact-professional" && activeTemplate === "tech-mega") || (tpl.id === "minimal-clean" && activeTemplate === "minimal-fashion") || (tpl.id === "premium-luxury" && activeTemplate === "modern-general");
+              const isSelected = activeTemplate === tpl.id;
               return (
                 <div
                   key={tpl.id}
@@ -202,8 +206,10 @@ export function HeaderBuilderSettings() {
             label="Position Mode"
             value={headerSettings.position ?? (headerSettings.sticky === false ? "static" : "sticky")}
             onChange={(v) => {
-              update("position", v);
-              update("sticky", v === "sticky" || v === "fixed");
+              updateMany({
+                position: v,
+                sticky: v === "sticky" || v === "fixed",
+              });
             }}
             options={[
               { value: "static", label: "Static (Scrolls with page)" },

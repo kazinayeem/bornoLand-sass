@@ -15,7 +15,7 @@ import {
   useGetMediaFilesQuery,
   useImportMediaFromUrlMutation,
 } from "@/redux/api/media-api";
-import { resolveMediaUrl } from "@/lib/resolve-media-url";
+import { resolveMediaUrl, absoluteMediaUrl } from "@/lib/resolve-media-url";
 import {
   mediaSelectionFromFile,
   selectionMediaId,
@@ -339,8 +339,9 @@ export function MediaPicker({
 
   const handleCopyUrl = useCallback(async () => {
     if (!previewUrl) return;
+    const urlToCopy = absoluteMediaUrl(previewUrl) || previewUrl;
     try {
-      await navigator.clipboard.writeText(previewUrl);
+      await navigator.clipboard.writeText(urlToCopy);
       toast.success("URL copied");
     } catch {
       toast.error("Could not copy URL");

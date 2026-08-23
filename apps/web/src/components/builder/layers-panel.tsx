@@ -304,7 +304,6 @@ export function LayersPanel() {
         danger: true,
         disabled: Boolean(section.locked),
         onClick: () => {
-          dispatch(setEditingZone("body"));
           dispatch(removeSection(section.id));
         },
       },

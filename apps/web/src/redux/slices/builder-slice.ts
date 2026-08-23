@@ -527,8 +527,14 @@ const builderSlice = createSlice({
 
     removeSection(state, action: PayloadAction<string>) {
       const id = action.payload;
-      const sections = getSections(state).filter((s) => s.id !== id);
-      setSectionsForZone(state, sections);
+      const location = findSectionLocation(state, id);
+      if (!location) return;
+
+      const sections = getSectionList(state, location.zone).filter((s) => s.id !== id);
+      if (location.zone === "header") state.headerSections = sections;
+      else if (location.zone === "footer") state.footerSections = sections;
+      else state.sections = sections;
+
       if (state.selectedSectionId === id) {
         state.selectedSectionId = null;
         state.hoveredSectionId = null;

@@ -6,12 +6,17 @@ import { SmartImage } from "@/components/ui/smart-image";
 import { ArrowRight, ChevronRight, Layers, Award, Sparkles } from "lucide-react";
 import type { Category } from "@/redux/api/category-api";
 import type { Brand } from "@/redux/api/brand-api";
-import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations";
+import { getCategoryEnglishName } from "@/lib/storefront/category-label";
+import { t, type StoreLanguage } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 
 interface StorefrontMegaMenuProps {
   category: Category;
   subcategories: Category[];
+  allRoots?: Category[];
+  byParent?: Record<string, Category[]>;
+  selectedRootId?: string;
+  onRootSelect?: (rootId: string) => void;
   brands?: Array<{
     _id: string;
     name: string;
@@ -29,13 +34,17 @@ interface StorefrontMegaMenuProps {
 export function StorefrontMegaMenu({
   category,
   subcategories,
+  allRoots,
+  byParent: byParentProp,
+  selectedRootId,
+  onRootSelect,
   brands = [],
   lang = "bn",
   onItemClick,
   className,
   themeVariant = "default",
 }: StorefrontMegaMenuProps) {
-  const categoryName = getLocalizedName(category, lang);
+  const categoryName = getCategoryEnglishName(category);
 
   // Group subcategories into 2-3 clean columns
   const subcategoryColumns = useMemo(() => {
@@ -111,7 +120,7 @@ export function StorefrontMegaMenu({
         </div>
 
         {/* ── Center Subcategory Columns ── */}
-        <div className="md:col-span-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className={cn("grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4", brands.length > 0 ? "md:col-span-6" : "md:col-span-9")}>
           {subcategoryColumns.length === 0 ? (
             <div className="col-span-3 py-8 text-center text-zinc-400 text-xs">
               <p>{categoryName} {t("allCategories", lang)}</p>
@@ -120,7 +129,7 @@ export function StorefrontMegaMenu({
             subcategoryColumns.map((col, cIdx) => (
               <div key={cIdx} className="space-y-2">
                 {col.map((sub) => {
-                  const subName = getLocalizedName(sub, lang);
+                  const subName = getCategoryEnglishName(sub);
                   return (
                     <Link
                       key={sub._id}
@@ -144,23 +153,19 @@ export function StorefrontMegaMenu({
         </div>
 
         {/* ── Right Brands & Featured Strip ── */}
-        <div
-          className={cn(
-            "md:col-span-3 border-t md:border-t-0 md:border-l pl-0 md:pl-6 space-y-4",
-            isDark ? "border-[#1c354d]" : "border-zinc-100"
-          )}
-        >
-          <div>
-            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-2.5">
-              <Award className="w-3.5 h-3.5 text-amber-500" />
-              <span>{t("popularBrands", lang)}</span>
-            </div>
-
-            {brands.length === 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                <span className="text-[11px] text-zinc-400">100% Genuine Partner Brands</span>
+        {brands.length > 0 && (
+          <div
+            className={cn(
+              "md:col-span-3 border-t md:border-t-0 md:border-l pl-0 md:pl-6 space-y-4",
+              isDark ? "border-[#1c354d]" : "border-zinc-100"
+            )}
+          >
+            <div>
+              <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-2.5">
+                <Award className="w-3.5 h-3.5 text-amber-500" />
+                <span>{t("popularBrands", lang)}</span>
               </div>
-            ) : (
+
               <div className="flex flex-wrap gap-1.5">
                 {brands.slice(0, 8).map((brand) => (
                   <Link
@@ -178,24 +183,24 @@ export function StorefrontMegaMenu({
                   </Link>
                 ))}
               </div>
-            )}
-          </div>
-
-          <div
-            className={cn(
-              "rounded-xl p-3 text-xs",
-              isDark
-                ? "bg-[#0071dc]/10 border border-[#0071dc]/30 text-blue-200"
-                : "bg-emerald-50 border border-emerald-200 text-emerald-900"
-            )}
-          >
-            <div className="flex items-center gap-1.5 font-bold mb-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>{t("pureGuarantee", lang)}</span>
             </div>
-            <p className="text-[10px] opacity-80">{t("pureGuaranteeSub", lang)}</p>
+
+            <div
+              className={cn(
+                "rounded-xl p-3 text-xs",
+                isDark
+                  ? "bg-[#0071dc]/10 border border-[#0071dc]/30 text-blue-200"
+                  : "bg-emerald-50 border border-emerald-200 text-emerald-900"
+              )}
+            >
+              <div className="flex items-center gap-1.5 font-bold mb-1">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>{t("pureGuarantee", lang)}</span>
+              </div>
+              <p className="text-[10px] opacity-80">{t("pureGuaranteeSub", lang)}</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

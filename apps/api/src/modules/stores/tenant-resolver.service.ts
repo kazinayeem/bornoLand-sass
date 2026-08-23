@@ -140,20 +140,22 @@ export async function resolveBySubdomain(
       };
     }
   } else if (resolvedPage && normalizedSlug !== "/") {
-    // Inherit global header/footer from home page if not explicitly customized on sub-page
-    if (!resolvedPage.headerSettings?.template && resolvedPage.headerSettings?.enabled === undefined) {
-      const homePage = await StorePageModel.findOne({
-        storeId: store._id,
-        slug: "/",
-        status: "published",
-        deletedAt: null,
-      }).lean() as any;
-      if (homePage?.headerSettings) {
-        resolvedPage.headerSettings = homePage.headerSettings;
-      }
-      if (homePage?.footerSettings) {
-        resolvedPage.footerSettings = homePage.footerSettings;
-      }
+    // Merge home page global header/footer as base; sub-page overrides win when set
+    const homePage = await StorePageModel.findOne({
+      storeId: store._id,
+      slug: "/",
+      status: "published",
+      deletedAt: null,
+    }).lean() as any;
+    if (homePage) {
+      resolvedPage.headerSettings = {
+        ...(homePage.headerSettings || store.headerSettings || {}),
+        ...(resolvedPage.headerSettings || {}),
+      };
+      resolvedPage.footerSettings = {
+        ...(homePage.footerSettings || store.footerSettings || {}),
+        ...(resolvedPage.footerSettings || {}),
+      };
     }
   }
 

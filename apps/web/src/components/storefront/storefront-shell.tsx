@@ -28,6 +28,7 @@ import type {
 import type { StoreContact } from "@/redux/api/store-contact-api";
 import { TenantProvider } from "@/providers/tenant-provider";
 import { StorefrontDeviceProvider } from "@/lib/device-context";
+import { getStoreLogoUrl } from "@/lib/store-branding";
 import type { StorefrontSectionLike } from "@/components/storefront/storefront-types";
 import {
   StorefrontHeaderOffsetProvider,
@@ -85,9 +86,16 @@ export function StorefrontShell({
     headingFont: (theme as any).headingFont,
     bodyFont: (theme as any).bodyFont,
   }), [theme]);
+  const storeWithBranding = useMemo(
+    () => ({
+      ...store,
+      logoUrl: getStoreLogoUrl({ logoUrl: store.logoUrl ?? "" }) || store.logoUrl || "",
+    }),
+    [store],
+  );
   const tenantValue = useMemo<TenantContextType>(
-    () => ({ store, theme, products, categories, settings, sliders, navigations, contact }),
-    [store._id, store.slug, theme, products, categories, settings, sliders, navigations, contact],
+    () => ({ store: storeWithBranding, theme, products, categories, settings, sliders, navigations, contact }),
+    [storeWithBranding, theme, products, categories, settings, sliders, navigations, contact],
   );
 
   const shellContent = (

@@ -22,6 +22,7 @@ export function HeroEditor({
   storeId,
   storeSlug,
   onPropChange,
+  onPropsChange,
 }: SectionEditorProps) {
   const p = section.props;
   const videoError = p.videoUrl && !isVideoUrl(p.videoUrl) ? "Enter a valid YouTube, Vimeo, or MP4 URL" : undefined;
@@ -90,8 +91,11 @@ export function HeroEditor({
           mobileImage: mobImg,
         };
       });
-      onPropChange("slides", JSON.stringify(normalized));
-      onPropChange("slideCount", String(normalized.length));
+      onPropsChange({
+        ...p,
+        slides: JSON.stringify(normalized),
+        slideCount: String(normalized.length),
+      });
     };
 
     return (
@@ -143,7 +147,6 @@ export function HeroEditor({
             <SelectField
               value={p.overlayDarkness ?? "medium"}
               onChange={(v) => {
-                onPropChange("overlayDarkness", v);
                 const color =
                   v === "light"
                     ? "rgba(0, 0, 0, 0.25)"
@@ -152,7 +155,11 @@ export function HeroEditor({
                     : v === "none"
                     ? "rgba(0, 0, 0, 0)"
                     : "rgba(0, 0, 0, 0.45)";
-                onPropChange("overlayColor", color);
+                onPropsChange({
+                  ...p,
+                  overlayDarkness: v,
+                  overlayColor: color,
+                });
               }}
               options={[
                 { value: "none", label: "None (0%)" },

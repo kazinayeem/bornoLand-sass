@@ -9,7 +9,9 @@ import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { StoreLink as Link } from "@/components/storefront/store-link";
 import { useTenant, type CategoryData } from "@/providers/tenant-provider";
-import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations";
+import { useStoreCategories } from "@/hooks/use-store-categories";
+import { t, type StoreLanguage } from "@/lib/i18n/translations";
+import { getCategoryEnglishName } from "@/lib/storefront/category-label";
 import {
   DEFAULT_PRIMARY_NAV_DEFS,
   partitionCategories,
@@ -83,31 +85,39 @@ export function GlobalStoreNav({
   allCategoriesButtonClassName,
   layout = "desktop",
 }: GlobalStoreNavProps) {
-  const { store, categories: storeCategories, brands = [], settings } = useTenant();
+  const { store, brands = [], settings } = useTenant();
+  const { storeId, categories, isLoading, isError } = useStoreCategories();
   const pathname = usePathname() || "";
   const storeLang: StoreLanguage = propLang || (settings?.language === "bn" ? "bn" : "en");
-
-  const categories = useMemo(() => {
-    return [...(storeCategories || [])].sort(
-      (a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0),
-    );
-  }, [storeCategories]);
-
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.log("[Storefront Header Categories]", {
-        storeId: store?._id,
-        storeSlug: store?.slug,
-        count: categories.length,
-        categories: categories.map((c) => ({ id: c._id, name: c.name, slug: c.slug })),
-      });
-    }
-  }, [store?._id, store?.slug, categories]);
 
   const { roots, visible, remaining, byParent } = useMemo(
     () => partitionCategories(categories as CategoryData[], maxVisibleItems),
     [categories, maxVisibleItems],
   );
+
+  const childCategoriesFor = useCallback(
+    (parentId: string) => byParent[String(parentId)] ?? [],
+    [byParent],
+  );
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Builder Header Categories]", {
+        storeId,
+        count: categories.length,
+        rootCount: roots.length,
+        categories: categories.map((c) => ({
+          id: c._id,
+          label: getCategoryEnglishName(c),
+          slug: c.slug,
+          parentId: c.parentId,
+          active: c.active,
+        })),
+        isLoading,
+        isError,
+      });
+    }
+  }, [storeId, categories, roots.length]);
 
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
@@ -171,12 +181,14 @@ export function GlobalStoreNav({
           {t("categories", storeLang)}
         </p>
 
-        {roots.length === 0 ? (
+        {isLoading && roots.length === 0 ? (
+          <p className="px-2 py-3 text-xs text-zinc-400">Loading categories…</p>
+        ) : roots.length === 0 ? (
           <p className="px-2 py-3 text-xs text-zinc-400">{t("categories", storeLang)} — empty</p>
         ) : (
           roots.map((cat) => {
             const isExpanded = mobileExpandedId === cat._id;
-            const subs = byParent[cat._id] || [];
+            const subs = childCategoriesFor(cat._id);
             return (
               <div key={cat._id} className="border-b border-zinc-50 pb-1">
                 <div className="flex items-center justify-between px-2 py-2 rounded-lg hover:bg-zinc-50">
@@ -185,7 +197,7 @@ export function GlobalStoreNav({
                     onClick={onItemClick}
                     className="font-semibold text-xs text-zinc-800 flex-1 truncate"
                   >
-                    {getLocalizedName(cat, storeLang)}
+                    {getCategoryEnglishName(cat)}
                   </Link>
                   {subs.length > 0 && (
                     <button
@@ -207,7 +219,7 @@ export function GlobalStoreNav({
                         onClick={onItemClick}
                         className="flex items-center justify-between py-1 px-2 text-xs text-zinc-600"
                       >
-                        <span>{getLocalizedName(sub, storeLang)}</span>
+                        <span>{getCategoryEnglishName(sub)}</span>
                         <ChevronRight className="w-3 h-3 text-zinc-400" />
                       </Link>
                     ))}
@@ -257,7 +269,7 @@ export function GlobalStoreNav({
             <div className="absolute left-0 top-full z-[60] pt-0 min-w-[min(100vw-2rem,64rem)]">
               <StorefrontMegaMenu
                 category={megaCategory as unknown as Category}
-                subcategories={(byParent[megaCategory._id] || []) as unknown as Category[]}
+                subcategories={childCategoriesFor(megaCategory._id) as unknown as Category[]}
                 brands={brands as any}
                 lang={storeLang}
                 themeVariant={
@@ -301,8 +313,12 @@ export function GlobalStoreNav({
           );
         })}
 
+      {isLoading && visible.length === 0 ? (
+        <span className="shrink-0 px-2 py-2 text-xs text-zinc-400 animate-pulse">Loading categories…</span>
+      ) : null}
+
       {visible.map((cat) => {
-        const subs = byParent[cat._id] || [];
+        const subs = childCategoriesFor(cat._id);
         const hasChildren = subs.length > 0;
         const isOpen = activeMenuId === cat._id;
         const isActive =
@@ -328,7 +344,7 @@ export function GlobalStoreNav({
                 itemClassName,
               )}
             >
-              <span>{getLocalizedName(cat, storeLang)}</span>
+              <span>{getCategoryEnglishName(cat)}</span>
               {hasChildren && (
                 <ChevronDown
                   className={cn(
@@ -355,7 +371,7 @@ export function GlobalStoreNav({
                 >
                   <div className="px-3.5 py-1.5 border-b border-zinc-100/20 mb-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                      {getLocalizedName(cat, storeLang)}
+                      {getCategoryEnglishName(cat)}
                     </span>
                   </div>
                   {subs.map((sub) => (
@@ -373,7 +389,7 @@ export function GlobalStoreNav({
                           : "hover:bg-zinc-100",
                       )}
                     >
-                      <span className="truncate">{getLocalizedName(sub, storeLang)}</span>
+                        <span className="truncate">{getCategoryEnglishName(sub)}</span>
                       <ArrowRight className="w-3 h-3 opacity-40 shrink-0 ml-2" />
                     </Link>
                   ))}
@@ -460,7 +476,7 @@ export function GlobalStoreNav({
                   )}
                 >
                   {remaining.map((cat) => {
-                    const subCount = (byParent[cat._id] || []).length;
+                    const subCount = childCategoriesFor(cat._id).length;
                     return (
                       <Link
                         key={cat._id}
@@ -476,7 +492,7 @@ export function GlobalStoreNav({
                             : "hover:bg-zinc-100",
                         )}
                       >
-                        <span className="truncate font-medium">{getLocalizedName(cat, storeLang)}</span>
+                        <span className="truncate font-medium">{getCategoryEnglishName(cat)}</span>
                         {subCount > 0 && (
                           <span className="text-[9px] text-zinc-400 font-semibold px-1 rounded bg-black/5 shrink-0 ml-1">
                             +{subCount}

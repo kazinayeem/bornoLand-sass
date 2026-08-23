@@ -1,54 +1,78 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { BuilderLink as Link } from "./builder-link";
 import { SectionWrapper, SectionTitle, type SectionData } from "./section-renderer";
-import { useTenant } from "@/providers/tenant-provider";
+import { useStoreCategories } from "@/hooks/use-store-categories";
+import { resolveCategorySectionDisplay } from "@/lib/storefront/category-section-data";
+import { getCategoryEnglishName } from "@/lib/storefront/category-label";
 import { Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function CategoryGrid({ section }: { section: SectionData }) {
-  const { categories: rawCategories, products } = useTenant();
+  const { storeId, categories, isLoading, isError } = useStoreCategories();
   const p = section.props;
 
-  const source = p.categorySource || "all";
   const limit = Math.min(Math.max(Number(p.categoryCount) || 6, 1), 12);
   const cols = p.gridColumns || "6";
   const cardStyle = p.cardStyle || "card";
 
-  // Selected Category IDs
-  const selectedIds: string[] = useMemo(() => {
-    if (!p.categoryIds) return [];
-    try {
-      if (p.categoryIds.startsWith("[")) return JSON.parse(p.categoryIds);
-      return p.categoryIds.split(",").map((s) => s.trim()).filter(Boolean);
-    } catch {
-      return [];
+  const displayCategories = useMemo(
+    () =>
+      resolveCategorySectionDisplay(categories, {
+        sectionType: section.type,
+        categorySource: p.categorySource,
+        categoryIds: p.categoryIds,
+        limit,
+      }),
+    [categories, section.type, p.categorySource, p.categoryIds, limit],
+  );
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    console.log("[Featured Categories Section]", {
+      storeId,
+      sectionType: section.type,
+      source: p.categorySource || (section.type === "featured-categories" ? "featured" : "all"),
+      count: displayCategories.length,
+      isLoading,
+      isError,
+      categories: displayCategories.map((c) => ({
+        id: c._id,
+        label: getCategoryEnglishName(c),
+        slug: c.slug,
+        parentId: c.parentId,
+        active: c.active,
+        featured: c.featured,
+        productCount: c.productCount,
+      })),
+    });
+  }, [storeId, section.type, p.categorySource, displayCategories, isLoading, isError]);
+
+  if (isLoading && displayCategories.length === 0) {
+    return (
+      <SectionWrapper section={section}>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 text-center">
+          <SectionTitle
+            title={p.title || "Shop by Category"}
+            subtitle={p.subtitle || ""}
+            textColor={p.textColor}
+            textAlignment={p.textAlignment}
+          />
+          <div className="mt-6 flex justify-center gap-3">
+            {Array.from({ length: Math.min(limit, 6) }).map((_, i) => (
+              <div key={i} className="h-20 w-20 animate-pulse rounded-2xl bg-zinc-100" />
+            ))}
+          </div>
+        </div>
+      </SectionWrapper>
+    );
+  }
+
+  if (isError || displayCategories.length === 0) {
+    if (section.type === "featured-categories" || p.categorySource === "featured") {
+      return null;
     }
-  }, [p.categoryIds]);
-
-  const displayCategories = useMemo(() => {
-    let list = [...rawCategories];
-
-    if (source === "selected" && selectedIds.length > 0) {
-      // Respect user's custom ordering
-      const ordered = selectedIds
-        .map((id) => list.find((c) => c._id === id || c.slug === id))
-        .filter(Boolean) as typeof list;
-      return ordered.slice(0, limit);
-    }
-
-    if (source === "featured") {
-      list = list.filter((c) => c.featured);
-    } else if (source === "popular" || source === "latest") {
-      // Sort by sortOrder / createdAt
-      list = list.sort((a, b) => (b.sortOrder ?? 0) - (a.sortOrder ?? 0));
-    }
-
-    return list.slice(0, limit);
-  }, [rawCategories, source, selectedIds, limit]);
-
-  if (displayCategories.length === 0) {
     return (
       <SectionWrapper section={section}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 text-center">
@@ -66,9 +90,6 @@ export function CategoryGrid({ section }: { section: SectionData }) {
       </SectionWrapper>
     );
   }
-
-  const productCount = (catId: string) =>
-    products.filter((pr) => (pr.categoryIds ?? []).includes(catId) || pr.category === catId).length;
 
   const gridClass =
     cols === "2"
@@ -91,7 +112,8 @@ export function CategoryGrid({ section }: { section: SectionData }) {
 
         <div className={cn("grid gap-4 sm:gap-6", gridClass)}>
           {displayCategories.map((cat) => {
-            const count = productCount(cat._id);
+            const label = getCategoryEnglishName(cat);
+            const count = cat.productCount ?? 0;
             const showImg = p.showImage !== "false";
             const showTitle = p.showName !== "false";
             const showCount = p.showProductCount !== "false";
@@ -108,7 +130,7 @@ export function CategoryGrid({ section }: { section: SectionData }) {
                       {cat.imageUrl ? (
                         <img
                           src={cat.imageUrl}
-                          alt={cat.name}
+                          alt={label}
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                       ) : (
@@ -118,7 +140,7 @@ export function CategoryGrid({ section }: { section: SectionData }) {
                   )}
                   {showTitle && (
                     <span className="text-xs sm:text-sm font-semibold text-zinc-900 group-hover:text-blue-600 transition-colors truncate max-w-full">
-                      {cat.name}
+                      {label}
                     </span>
                   )}
                   {showCount && (
@@ -141,7 +163,7 @@ export function CategoryGrid({ section }: { section: SectionData }) {
                     {cat.imageUrl ? (
                       <img
                         src={cat.imageUrl}
-                        alt={cat.name}
+                        alt={label}
                         className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
                       />
                     ) : (
@@ -151,7 +173,7 @@ export function CategoryGrid({ section }: { section: SectionData }) {
                 )}
                 {showTitle && (
                   <span className="text-xs sm:text-sm font-semibold text-zinc-900 group-hover:text-blue-600 transition-colors truncate max-w-full">
-                    {cat.name}
+                    {label}
                   </span>
                 )}
                 {showCount && (

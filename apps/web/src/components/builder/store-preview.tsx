@@ -15,6 +15,7 @@ import {
   removeSection,
   setActiveRightTab,
   setActiveTab,
+  setEditingZone,
   setHoveredSection,
   setRightPanelOpen,
   setSelectedSection,
@@ -50,10 +51,12 @@ type StorePreviewProps = {
 export function StorePreview({ store, theme, products = [], categories = [], settings = {} as StoreSettingsData, sliders = [], sections, headerSections = [], footerSections = [], onQuickInsert }: StorePreviewProps & { onQuickInsert?: (index: number, event: React.MouseEvent) => void }) {
   const dispatch = useDispatch();
   const { data: productData } = useGetProductsQuery(store._id, { skip: !store._id || products.length > 0 });
-  const { data: categoryData } = useGetCategoriesQuery(store._id, { skip: !store._id || categories.length > 0 });
+  const { data: categoryData } = useGetCategoriesQuery(store._id, { skip: !store._id });
   const { data: navigationData } = useGetStoreNavigationsQuery(store._id, { skip: !store._id });
   const liveProducts = products.length > 0 ? products : (productData?.data?.products ?? []);
-  const liveCategories = categories.length > 0 ? categories : (categoryData?.data?.categories ?? []);
+  const liveCategories = (categoryData?.data?.categories ?? categories).filter(
+    (c) => c.active === true,
+  );
   const liveNavigations = navigationData?.data?.navigations ?? [];
   const device = useSelector((s: RootState) => s.preview.device);
   const zoom = useSelector((s: RootState) => s.preview.zoom);
@@ -87,6 +90,7 @@ export function StorePreview({ store, theme, products = [], categories = [], set
   }, []);
 
   const selectCanvasSection = useCallback((sectionId: string) => {
+    dispatch(setEditingZone("body"));
     dispatch(setSelectedSection(sectionId));
     dispatch(setActiveRightTab("content"));
     // Auto-open the right panel so properties are always visible on first selection

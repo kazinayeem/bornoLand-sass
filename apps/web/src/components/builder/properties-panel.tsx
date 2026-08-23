@@ -394,7 +394,10 @@ function SectionPropertiesInspectorBody({ section }: { section: BuilderSection }
   };
 
   const handleSectionPropsChange = (props: Record<string, string | undefined>) => {
-    dispatch(updateSectionProps({ id: section.id, props: props as typeof section.props }));
+    dispatch(updateSectionProps({
+      id: section.id,
+      props: { ...section.props, ...props } as typeof section.props,
+    }));
   };
 
   const def = getSectionDef(section.type);

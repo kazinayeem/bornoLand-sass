@@ -3,6 +3,8 @@
  * Header templates are visual only — they all consume this normalized config.
  */
 
+import { resolveMediaUrl } from "@/lib/resolve-media-url";
+
 export type GlobalNavItemKind = "link" | "category" | "more";
 
 export type GlobalNavItem = {
@@ -180,6 +182,18 @@ export function isGlobalFooterEnabled(settings: Record<string, unknown> | undefi
   return true;
 }
 
+/** Resolved logo URL for header templates — headerSettings.logoUrl/logo, then store.logoUrl. */
+export function resolveHeaderLogoUrl(
+  headerSettings: Record<string, unknown> | undefined | null,
+  store?: { logoUrl?: string | null } | null,
+): string {
+  const fromHeader = resolveMediaUrl(
+    asString(headerSettings?.logoUrl || headerSettings?.logo),
+  );
+  if (fromHeader) return fromHeader;
+  return resolveMediaUrl(store?.logoUrl) || "";
+}
+
 /**
  * Normalize raw headerSettings from API/Redux into a stable config.
  * Writing this shape back on template select keeps all alias fields in sync.
@@ -276,32 +290,36 @@ export function applyFooterTemplateSelection(
   };
 }
 
+/** Normalize parentId from flat category API rows — roots only when parentId is null. */
+export function normalizeCategoryParentId(parentId: unknown): string | null {
+  if (parentId == null || parentId === "null" || parentId === "root" || parentId === "") {
+    return null;
+  }
+  return String(parentId);
+}
+
 export function partitionCategories<T extends { _id: string; parentId?: string | null }>(
   categories: T[],
   maxVisible: number,
 ): { roots: T[]; visible: T[]; remaining: T[]; byParent: Record<string, T[]> } {
-  const sorted = [...categories].sort(
-    (a, b) => Number((a as any).sortOrder ?? 0) - Number((b as any).sortOrder ?? 0),
-  );
   const roots: T[] = [];
   const byParent: Record<string, T[]> = {};
 
-  sorted.forEach((cat) => {
-    const parentId = cat.parentId ? String(cat.parentId) : null;
-    if (!parentId || parentId === "null" || parentId === "root" || parentId === "") {
+  categories.forEach((cat) => {
+    const parentKey = normalizeCategoryParentId((cat as { parentId?: string | null }).parentId);
+    if (parentKey === null) {
       roots.push(cat);
     } else {
-      if (!byParent[parentId]) byParent[parentId] = [];
-      byParent[parentId].push(cat);
+      if (!byParent[parentKey]) byParent[parentKey] = [];
+      byParent[parentKey].push(cat);
     }
   });
 
-  const resolvedRoots = roots.length > 0 ? roots : sorted;
   const limit = Math.max(1, maxVisible);
   return {
-    roots: resolvedRoots,
-    visible: resolvedRoots.slice(0, limit),
-    remaining: resolvedRoots.slice(limit),
+    roots,
+    visible: roots.slice(0, limit),
+    remaining: roots.slice(limit),
     byParent,
   };
 }

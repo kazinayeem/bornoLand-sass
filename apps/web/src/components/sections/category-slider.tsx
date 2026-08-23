@@ -3,12 +3,22 @@
 import { BuilderLink as Link } from "./builder-link";
 import { ImageIcon } from "lucide-react";
 import { SectionWrapper, SectionTitle, type SectionData } from "./section-renderer";
-import { useTenant } from "@/providers/tenant-provider";
+import { useStoreCategories } from "@/hooks/use-store-categories";
+import { resolveCategorySectionDisplay } from "@/lib/storefront/category-section-data";
+import { getCategoryEnglishName } from "@/lib/storefront/category-label";
 
 export function CategorySlider({ section }: { section: SectionData }) {
-  const { categories } = useTenant();
+  const { categories, isLoading } = useStoreCategories();
   const p = section.props;
-  const display = categories;
+
+  const display = resolveCategorySectionDisplay(categories, {
+    sectionType: section.type,
+    categorySource: p.categorySource,
+    categoryIds: p.categoryIds,
+    limit: 12,
+  });
+
+  if (isLoading && display.length === 0) return null;
   if (display.length === 0) return null;
 
   return (
@@ -16,19 +26,21 @@ export function CategorySlider({ section }: { section: SectionData }) {
       <div className="px-4 sm:px-6 lg:px-8">
         <SectionTitle title={p.title || "Categories"} subtitle={p.subtitle || ""} textColor={p.textColor} textAlignment={p.textAlignment} />
         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-          {display.map((cat) => (
+          {display.map((cat) => {
+            const label = getCategoryEnglishName(cat);
+            return (
             <Link key={cat._id} href={`/category/${cat.slug}`}
               className="group flex w-[160px] shrink-0 flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-5 transition-all hover:shadow-md hover:-translate-y-0.5">
               <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-apple-canvas-parchment">
                 {cat.imageUrl ? (
-                  <img src={cat.imageUrl} alt={cat.name} className="h-full w-full object-cover" />
+                  <img src={cat.imageUrl} alt={label} className="h-full w-full object-cover" />
                 ) : (
                   <ImageIcon className="h-5 w-5 text-apple-ink-muted-48" />
                 )}
               </div>
-              <span className="text-xs font-semibold text-apple-ink">{cat.name}</span>
+              <span className="text-xs font-semibold text-apple-ink">{label}</span>
             </Link>
-          ))}
+          );})}
         </div>
       </div>
     </SectionWrapper>

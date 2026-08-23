@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 import { Field, SectionBlock, SelectField, TextField, ToggleField } from "./shared";
 import type { SectionEditorProps } from "./types";
-import { useTenant } from "@/providers/tenant-provider";
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
+import { getCategoryEnglishName } from "@/lib/storefront/category-label";
 import { Check, GripVertical, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,9 +37,11 @@ export function CategorySectionEditor({
   onPropChange,
 }: SectionEditorProps) {
   const p = section.props;
-  const { categories: tenantCategories } = useTenant();
   const { data: catData } = useGetCategoriesQuery(storeId || "", { skip: !storeId });
-  const realCategories = catData?.data?.categories ?? tenantCategories ?? [];
+  const realCategories = useMemo(
+    () => (catData?.data?.categories ?? []).filter((c) => c.active === true),
+    [catData],
+  );
 
   const source = p.categorySource || "all";
   const limit = Number(p.categoryCount) || 6;
@@ -132,7 +134,7 @@ export function CategorySectionEditor({
                       className="flex items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs shadow-2xs"
                     >
                       <span className="font-medium text-zinc-800 truncate">
-                        {index + 1}. {cat?.name || id}
+                        {index + 1}. {cat ? getCategoryEnglishName(cat) : id}
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
                         <button
@@ -184,7 +186,7 @@ export function CategorySectionEditor({
                           : "hover:bg-zinc-100 text-zinc-800"
                       )}
                     >
-                      <span className="truncate">{cat.name}</span>
+                      <span className="truncate">{getCategoryEnglishName(cat)}</span>
                       {isSelected ? (
                         <Check className="h-3.5 w-3.5 shrink-0 text-white" />
                       ) : (

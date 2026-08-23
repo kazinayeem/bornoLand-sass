@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useActiveTheme } from "@/components/store/theme-provider";
+import { useTenant } from "@/providers/tenant-provider";
 import { GroceryHeader } from "@/themes/grocery/components/grocery-header";
 import { TechMegaHeader } from "./templates/tech-mega-header";
 import { MarketplaceHeader } from "./templates/marketplace-header";
@@ -11,6 +12,7 @@ import { useRegisterStorefrontHeaderOffset } from "@/components/storefront/store
 import {
   isGlobalHeaderEnabled,
   normalizeHeaderSettings,
+  resolveHeaderLogoUrl,
   resolveHeaderTemplateId,
   type HeaderTemplateId,
 } from "@/lib/storefront/global-navigation";
@@ -37,6 +39,7 @@ function readScrollY(target: HTMLElement | Window): number {
 
 export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHeaderRendererProps) {
   const { theme } = useActiveTheme();
+  const { store } = useTenant();
   const themeId = theme.id || "grocery";
   const headerRef = useRef<HTMLDivElement>(null);
   const registerContentOffset = useRegisterStorefrontHeaderOffset();
@@ -67,6 +70,11 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
   const shadow = config.shadow;
   const transparent = config.transparent;
 
+  const resolvedLogoUrl = useMemo(
+    () => resolveHeaderLogoUrl(headerSettings, store),
+    [headerSettings, store],
+  );
+
   // Pass normalized config + raw settings so templates keep full keys while sharing nav limits
   const templateSettings = useMemo(
     () => ({
@@ -85,12 +93,12 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       showProfile: config.showProfile,
       showAnnouncement: config.showAnnouncement,
       announcementText: config.announcementText,
-      logoUrl: config.logoUrl || headerSettings.logoUrl,
+      logoUrl: resolvedLogoUrl,
       primaryColor: config.colors.primary,
       secondaryColor: config.colors.secondary,
       accentColor: config.colors.accent,
     }),
-    [headerSettings, template, config],
+    [headerSettings, template, config, resolvedLogoUrl],
   );
 
   const publishMetrics = useCallback(

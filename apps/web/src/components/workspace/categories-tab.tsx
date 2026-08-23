@@ -717,9 +717,12 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
           category={categoryModal.category}
           rootCategories={rootCategories}
           onClose={() => setCategoryModal({ open: false, isSubcategory: false, category: null })}
-          onSuccess={() => {
+          onSuccess={async () => {
             refetchCats();
             setCategoryModal({ open: false, isSubcategory: false, category: null });
+            if (store) {
+              await revalidateStorefrontForStore(store, { scope: "all" });
+            }
           }}
         />
       )}
@@ -917,7 +920,7 @@ function CategoryModal({
                   setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
                 }
               }}
-              placeholder="e.g. Raw Honey"
+              placeholder="e.g. Electronics"
               className="text-xs h-9"
             />
           </div>

@@ -112,7 +112,7 @@ export function MinimalFashionHeader({ headerSettings = {} }: MinimalFashionHead
                   autoFocus
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search fashion..."
+                  placeholder={t("search", storeLang)}
                   className="w-48 sm:w-64 h-9 pl-3 pr-8 rounded-full border border-zinc-300 bg-zinc-50 text-xs focus:outline-none focus:bg-white"
                 />
                 <button

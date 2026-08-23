@@ -47,6 +47,7 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
     "⚡ Mega Tech Deals: Up to ৳15,000 Cashback on Selected Gaming Laptops & GPUs | All BD Express Delivery";
   const showAnnouncement = headerSettings.showAnnouncement !== false;
   const storeName = store.name || "BornoLand Tech";
+  const storeTagline = store.tagline || storeName;
   const logoUrl = (headerSettings.logoUrl as string) || store.logoUrl || "";
 
   const maxVisibleItems = Number(headerSettings.maxVisibleNavigationItems || headerSettings.maxVisibleItems || 6);
@@ -107,7 +108,7 @@ export function ElectronicsHeader({ headerSettings = {} }: ElectronicsHeaderProp
                   {storeName}
                 </span>
                 <span className="text-[10px] font-semibold text-[#0071dc] -mt-1 tracking-wider uppercase">
-                  Tech & Electronics
+                  {storeTagline}
                 </span>
               </div>
             </div>

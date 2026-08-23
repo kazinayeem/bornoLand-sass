@@ -47,6 +47,7 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
     "⚡ Tech Mega Deals: Up to ৳15,000 Cashback on Selected Gaming Laptops & GPUs | All Bangladesh Express Delivery";
   const showAnnouncement = headerSettings.showAnnouncement !== false;
   const storeName = store.name || "BornoLand Tech";
+  const storeTagline = store.tagline || storeName;
   const logoUrl = (headerSettings.logoUrl as string) || store.logoUrl || "";
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -105,7 +106,7 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
                   {storeName}
                 </span>
                 <span className="text-[10px] font-semibold text-[#0071dc] -mt-1 tracking-wider uppercase">
-                  Tech & Electronics
+                  {storeTagline}
                 </span>
               </div>
             </div>

@@ -49,6 +49,7 @@ export function GroceryHeader({ headerSettings = {} }: GroceryHeaderProps) {
     "🌿 ১০০% খাঁটি ও নির্ভেজাল পণ্যের বিশ্বস্ত প্রতিষ্ঠান | সারাদেশে ক্যাশ অন ডেলিভারি";
   const showAnnouncement = headerSettings.showAnnouncement !== false;
   const storeName = store.name || "BornoLand Grocery";
+  const storeTagline = store.tagline || storeName;
   const logoUrl = (headerSettings.logoUrl as string) || store.logoUrl || "";
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -116,7 +117,7 @@ export function GroceryHeader({ headerSettings = {} }: GroceryHeaderProps) {
                   {storeName}
                 </span>
                 <span className="text-[10px] font-semibold text-[var(--store-primary,#e05a00)] -mt-1 tracking-wider uppercase">
-                  100% Pure & Organic
+                  {storeTagline}
                 </span>
               </div>
             </div>

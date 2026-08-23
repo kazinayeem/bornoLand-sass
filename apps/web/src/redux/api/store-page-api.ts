@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/api/base-api";
+import { assertApiSuccess, type ApiEnvelope as SharedApiEnvelope } from "@/lib/api/envelope";
 
 // ─── Page Types ──────────────────────────────────────────────────────────────
 
@@ -290,6 +291,10 @@ export const storePageApi = baseApi.injectEndpoints({
       { id: string; storeId: string; data: Record<string, unknown> }
     >({
       query: ({ id, storeId, data }) => ({ url: `/store-pages/${id}`, method: "PUT", body: { ...data, storeId } }),
+      transformResponse: (response: SharedApiEnvelope<{ page: StorePage }>) => {
+        assertApiSuccess(response, "Failed to update store page");
+        return response;
+      },
       invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }, { type: "StorePages" }],
     }),
 

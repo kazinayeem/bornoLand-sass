@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/api/base-api";
+import { assertApiSuccess, type ApiEnvelope as SharedApiEnvelope } from "@/lib/api/envelope";
 
 export type ThemeSettings = {
   themeId?: string;
@@ -305,6 +306,13 @@ export const storeApi = baseApi.injectEndpoints({
     }),
     changeStoreTheme: builder.mutation<ApiEnvelope<{ store: Store }>, { id: string; data: { templateId?: string; theme?: Partial<ThemeSettings> } }>({
       query: ({ id, data }) => ({ url: `/stores/${id}/theme`, method: "PUT", body: data }),
+      transformResponse: (response: SharedApiEnvelope<{ store: Store }>) => {
+        if (process.env.NODE_ENV === "development") {
+          console.debug("[changeStoreTheme] response", response);
+        }
+        assertApiSuccess(response, "Failed to update store theme");
+        return response;
+      },
       invalidatesTags: (_result, _error, { id }) => ["Stores", { type: "Stores", id }]
     }),
     getStoreBranding: builder.query<ApiEnvelope<{ branding: StoreBranding }>, string>({

@@ -77,8 +77,9 @@ export function migrateThemeSections(
     ];
 
     for (const key of contentKeys) {
-      if (existing.props[key] && existing.props[key].trim() !== "") {
-        mergedProps[key] = existing.props[key];
+      const value = existing.props[key];
+      if (typeof value === "string" && value.trim() !== "") {
+        mergedProps[key] = value;
       }
     }
 

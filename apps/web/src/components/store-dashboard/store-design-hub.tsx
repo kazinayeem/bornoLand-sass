@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Palette,
@@ -38,7 +38,7 @@ import { canAccessThemeBuilder } from "@/lib/permissions/entitlements";
 import { useAppSelector } from "@/hooks/redux";
 import { THEMES, getThemeById, migrateThemeSections } from "@/themes/registry";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
-import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import { getMutationErrorMessage } from "@/lib/api/envelope";
 import { SmartImage } from "@/components/ui/smart-image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,12 +53,7 @@ type StoreDesignHubProps = {
 
 function logThemeFlowError(label: string, error: unknown) {
   if (process.env.NODE_ENV !== "development") return;
-  const rtkError = error as { data?: { message?: string }; status?: number | string };
-  console.error(`[theme-switch] ${label}`, {
-    message: rtkError?.data?.message ?? (error instanceof Error ? error.message : error),
-    status: rtkError?.status,
-    error,
-  });
+  console.error(`[theme-switch] ${label}`, error);
 }
 
 export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
@@ -70,7 +65,7 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
   const initialTab = (searchParams.get("tab") as TabMode) || "themes";
   const [activeTab, setActiveTab] = useState<TabMode>(initialTab);
 
-  const { data, isLoading } = useGetStoreQuery(storeId);
+  const { data, isLoading, refetch: refetchStore } = useGetStoreQuery(storeId);
   const { data: pagesData, refetch: refetchPages } = useGetStorePagesQuery(storeId);
   const [changeTheme] = useChangeStoreThemeMutation();
   const [updatePage] = useUpdateStorePageMutation();
@@ -81,6 +76,8 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
   const [previewThemeId, setPreviewThemeId] = useState<string>("grocery");
   const [previewViewport, setPreviewViewport] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
+  const [switchingThemeId, setSwitchingThemeId] = useState<string | null>(null);
+  const skipThemeSyncRef = useRef(false);
 
   // Global Style States
   const [primaryColor, setPrimaryColor] = useState("#055c3a");
@@ -97,6 +94,7 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
   const [resetWebsiteModal, setResetWebsiteModal] = useState(false);
 
   useEffect(() => {
+    if (skipThemeSyncRef.current) return;
     if (store?.theme) {
       const current = (store.theme.themeId as string) || "grocery";
       setActiveThemeId(current);
@@ -139,15 +137,18 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
 
   const handleConfirmSwitchTheme = async () => {
     const targetThemeId = switchThemeModal.targetThemeId;
-    if (!targetThemeId) return;
+    if (!targetThemeId || switchingThemeId) return;
 
     setSaving(true);
+    setSwitchingThemeId(targetThemeId);
     setSwitchThemeModal({ open: false, targetThemeId: "" });
+    skipThemeSyncRef.current = true;
+
     const targetTheme = getThemeById(targetThemeId);
 
     try {
-      // 1. Update Store Theme Presentation Layer
-      await changeTheme({
+      // 1. Persist theme on store (canonical source of truth)
+      const themeResult = await changeTheme({
         id: storeId,
         data: {
           theme: {
@@ -160,34 +161,49 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
         },
       }).unwrap();
 
-      // 2. Migrate homepage sections — preserve compatible user content
-      if (homePage?._id) {
-        const migratedSections = migrateThemeSections(
-          targetTheme.id,
-          (homePage.sections as BuilderSection[] | undefined) ?? [],
-        );
+      const savedStore = themeResult.data?.store;
+      const savedThemeId = (savedStore?.theme?.themeId as string | undefined) || targetTheme.id;
 
-        await updatePage({
-          id: homePage._id,
-          storeId,
-          data: {
-            sections: migratedSections,
-            headerSettings: targetTheme.header?.announcementText
-              ? { announcementText: targetTheme.header.announcementText }
-              : {},
-            footerSettings: {
-              copyright: `© ${new Date().getFullYear()} ${store?.name || "Store"}. All rights reserved.`,
-            },
-          },
-        }).unwrap();
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[theme-switch] theme mutation result", themeResult);
       }
 
-      setActiveThemeId(targetTheme.id);
-      setPreviewThemeId(targetTheme.id);
+      // 2. Migrate homepage sections (non-blocking — theme is already saved)
+      if (homePage?._id) {
+        try {
+          const migratedSections = migrateThemeSections(
+            targetTheme.id,
+            (homePage.sections as BuilderSection[] | undefined) ?? [],
+          );
+
+          await updatePage({
+            id: homePage._id,
+            storeId,
+            data: {
+              sections: migratedSections,
+              headerSettings: targetTheme.header?.announcementText
+                ? { announcementText: targetTheme.header.announcementText }
+                : {},
+              footerSettings: {
+                copyright: `© ${new Date().getFullYear()} ${store?.name || "Store"}. All rights reserved.`,
+              },
+            },
+          }).unwrap();
+        } catch (pageError) {
+          logThemeFlowError("Homepage section migration failed (theme was saved)", pageError);
+        }
+      }
+
+      // 3. Sync UI immediately from persisted theme
+      setActiveThemeId(savedThemeId);
+      setPreviewThemeId(savedThemeId);
       setPrimaryColor(targetTheme.tokens.colors.primary);
       setSecondaryColor(targetTheme.tokens.colors.secondary);
       setFontFamily(targetTheme.tokens.typography.fontFamily);
       setProductCardVariant(targetTheme.productCardVariant);
+
+      await refetchStore();
+      await refetchPages();
 
       if (storeContext) {
         try {
@@ -196,7 +212,7 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
           logThemeFlowError("Storefront revalidation failed after theme switch", revalidateError);
         }
       }
-      await refetchPages();
+
       toast.success(`Switched to ${targetTheme.name}! Opening builder…`);
 
       const slug = storeContext?.slug || store?.slug;
@@ -205,20 +221,15 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
       }
     } catch (error) {
       logThemeFlowError("Failed to switch theme", error);
-      const apiMessage =
-        error && typeof error === "object" && "data" in error
-          ? (error as FetchBaseQueryError).data &&
-            typeof (error as FetchBaseQueryError).data === "object" &&
-            "message" in ((error as FetchBaseQueryError).data as object)
-            ? String(((error as FetchBaseQueryError).data as { message?: string }).message)
-            : undefined
-          : undefined;
+      const message = getMutationErrorMessage(error, "Failed to switch theme. Please try again.");
       toast.error(
-        process.env.NODE_ENV === "development" && apiMessage
-          ? `Failed to switch theme: ${apiMessage}`
+        process.env.NODE_ENV === "development"
+          ? message
           : "Failed to switch theme. Please try again.",
       );
     } finally {
+      skipThemeSyncRef.current = false;
+      setSwitchingThemeId(null);
       setSaving(false);
     }
   };

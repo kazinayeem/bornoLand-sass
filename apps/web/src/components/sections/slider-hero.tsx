@@ -4,11 +4,11 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { BuilderLink as Link } from "./builder-link";
 import { ChevronLeft, ChevronRight, ArrowRight, Sparkles } from "lucide-react";
 import { SectionWrapper, type SectionData } from "./section-renderer";
-import { SmartImage } from "@/components/ui/smart-image";
 
 export type HeroSlide = {
   id?: string;
   image?: string;
+  desktopImage?: string;
   mobileImage?: string;
   tabletImage?: string;
   badge?: string;
@@ -30,40 +30,50 @@ function parseSlides(p: Record<string, string>): HeroSlide[] {
     try {
       const parsed = typeof p.slides === "string" ? JSON.parse(p.slides) : p.slides;
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((item: any, idx: number) => ({
-          id: item.id || `slide-${idx}`,
-          image: item.image || item.imageUrl || "",
-          mobileImage: item.mobileImage || item.mobileImageUrl || "",
-          tabletImage: item.tabletImage || "",
-          badge: item.badge || item.kicker || "",
-          title: item.title || item.headline || `Slide ${idx + 1}`,
-          subtitle: item.subtitle || item.subheadline || "",
-          buttonText: item.buttonText || "",
-          buttonLink: item.buttonLink || item.buttonUrl || "/shop",
-          secondaryButtonText: item.secondaryButtonText || "",
-          secondaryButtonLink: item.secondaryButtonLink || "",
-          overlayColor: item.overlayColor || p.overlayColor || "rgba(0, 0, 0, 0.45)",
-          textAlignment: item.textAlignment || (p.textAlignment as any) || "left",
-          textColor: item.textColor || p.textColor || "#ffffff",
-          isActive: item.isActive !== false,
-        }));
+        return parsed.map((item: any, idx: number) => {
+          const img = item.image || item.imageUrl || item.desktopImage || item.desktop_image || "";
+          const mobImg = item.mobileImage || item.mobileImageUrl || item.mobile_image || "";
+          return {
+            id: item.id || `slide-${idx + 1}`,
+            image: img,
+            desktopImage: img,
+            mobileImage: mobImg,
+            tabletImage: item.tabletImage || "",
+            badge: item.badge ?? item.kicker ?? "",
+            title: item.title ?? item.headline ?? "",
+            subtitle: item.subtitle ?? item.subheadline ?? item.description ?? "",
+            buttonText: item.buttonText ?? item.primaryButtonText ?? "",
+            buttonLink: item.buttonLink ?? item.primaryButtonLink ?? "/shop",
+            secondaryButtonText: item.secondaryButtonText ?? "",
+            secondaryButtonLink: item.secondaryButtonLink ?? "",
+            overlayColor: item.overlayColor || p.overlayColor || "rgba(0, 0, 0, 0.45)",
+            textAlignment: item.textAlignment || (p.textAlignment as any) || "left",
+            textColor: item.textColor || p.textColor || "#ffffff",
+            isActive: item.isActive !== false,
+          };
+        });
       }
     } catch {
       // fallback to flat keys
     }
   }
 
-  // Fallback to legacy flat keys (slide1Image, slide2Image, etc.)
-  const count = Number(p.slideCount) || 3;
+  // Fallback to legacy flat keys (slide1Image, slide2Image, etc.) or section root imageUrl
+  const count = Number(p.slideCount) || 2;
   return Array.from({ length: count }, (_, i) => {
     const idx = i + 1;
+    const fallbackImage = i === 0 ? (p.imageUrl || p.image || p.desktopImage || "") : "";
+    const img = p[`slide${idx}Image` as keyof typeof p] || p[`slide${idx}DesktopImage` as keyof typeof p] || fallbackImage;
+    const mobImg = p[`slide${idx}MobileImage` as keyof typeof p] || "";
     return {
       id: `slide-${idx}`,
-      image: p[`slide${idx}Image` as keyof typeof p] || "",
-      mobileImage: p[`slide${idx}MobileImage` as keyof typeof p] || "",
-      badge: p[`slide${idx}Badge` as keyof typeof p] || (i === 0 ? "Featured Deal" : ""),
-      title: p[`slide${idx}Title` as keyof typeof p] || (i === 0 ? (p.headline || "Special Collection") : `Slide ${idx}`),
-      subtitle: p[`slide${idx}Subtitle` as keyof typeof p] || (p.subheadline || "Discover top trending products at exclusive prices."),
+      image: img,
+      desktopImage: img,
+      mobileImage: mobImg,
+      tabletImage: "",
+      badge: p[`slide${idx}Badge` as keyof typeof p] || (i === 0 ? (p.kicker || p.badge || "Featured Deal") : ""),
+      title: p[`slide${idx}Title` as keyof typeof p] || (i === 0 ? (p.headline || p.title || "Special Collection") : `Slide ${idx}`),
+      subtitle: p[`slide${idx}Subtitle` as keyof typeof p] || (i === 0 ? (p.subheadline || p.subtitle || "Discover top trending products at exclusive prices.") : "High quality products at best price."),
       buttonText: p[`slide${idx}ButtonText` as keyof typeof p] || (p.buttonText || "Shop Now"),
       buttonLink: p[`slide${idx}ButtonLink` as keyof typeof p] || (p.buttonLink || "/shop"),
       secondaryButtonText: p[`slide${idx}SecondaryButtonText` as keyof typeof p] || p.secondaryButtonText || "",
@@ -141,6 +151,8 @@ export function SliderHero({ section }: { section: SectionData }) {
         {/* Slides Container */}
         {slides.map((slide, i) => {
           const isCurrent = i === active;
+          const bgImage = slide.image || slide.desktopImage || slide.mobileImage;
+
           return (
             <div
               key={slide.id || i}
@@ -149,21 +161,21 @@ export function SliderHero({ section }: { section: SectionData }) {
               }`}
             >
               {/* Responsive Background Images */}
-              {slide.image ? (
+              {bgImage ? (
                 <div className="relative h-full w-full">
-                  <picture>
+                  <picture className="block h-full w-full">
                     {slide.mobileImage && (
                       <source media="(max-width: 640px)" srcSet={slide.mobileImage} />
                     )}
                     {slide.tabletImage && (
                       <source media="(max-width: 1024px)" srcSet={slide.tabletImage} />
                     )}
-                    <SmartImage
-                      src={slide.image}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={bgImage}
                       alt={slide.title || "Hero banner"}
-                      fill
-                      priority={i === 0}
-                      className="object-cover object-center"
+                      loading={i === 0 ? "eager" : "lazy"}
+                      className="h-full w-full object-cover object-center"
                     />
                   </picture>
                 </div>
@@ -173,9 +185,9 @@ export function SliderHero({ section }: { section: SectionData }) {
 
               {/* Dynamic Overlay */}
               <div
-                className="absolute inset-0"
+                className="absolute inset-0 pointer-events-none"
                 style={{
-                  backgroundColor: slide.overlayColor || "rgba(0, 0, 0, 0.45)",
+                  backgroundColor: slide.overlayColor || p.overlayColor || "rgba(0, 0, 0, 0.45)",
                 }}
               />
             </div>
@@ -186,7 +198,7 @@ export function SliderHero({ section }: { section: SectionData }) {
         <div className="relative z-20 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
           <div className={`flex flex-col max-w-2xl ${textAlignClass}`}>
             {current?.badge && (
-              <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-md">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-md mb-4 shadow-xs">
                 <Sparkles className="h-3.5 w-3.5 text-amber-300" />
                 <span>{current.badge}</span>
               </div>
@@ -194,11 +206,8 @@ export function SliderHero({ section }: { section: SectionData }) {
 
             {current?.title && (
               <h1
-                className="font-extrabold tracking-tight text-white leading-tight"
-                style={{
-                  color: current.textColor || "#ffffff",
-                  fontSize: "clamp(2rem, 5vw, 3.75rem)",
-                }}
+                className="text-3xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-balance leading-tight"
+                style={{ color: current.textColor || "#ffffff" }}
               >
                 {current.title}
               </h1>
@@ -206,39 +215,30 @@ export function SliderHero({ section }: { section: SectionData }) {
 
             {current?.subtitle && (
               <p
-                className="mt-4 text-sm sm:text-base md:text-lg text-white/85 leading-relaxed max-w-xl"
-                style={{ color: current.textColor ? `${current.textColor}dd` : "#e2e8f0" }}
+                className="mt-4 text-base sm:text-lg text-white/90 text-balance leading-relaxed max-w-xl"
+                style={{ color: current.textColor ? `${current.textColor}ea` : "rgba(255, 255, 255, 0.9)" }}
               >
                 {current.subtitle}
               </p>
             )}
 
-            {/* Action Buttons */}
             {(current?.buttonText || current?.secondaryButtonText) && (
-              <div
-                className={`mt-8 flex flex-wrap gap-3.5 ${
-                  current.textAlignment === "center"
-                    ? "justify-center"
-                    : current.textAlignment === "right"
-                    ? "justify-end"
-                    : "justify-start"
-                }`}
-              >
-                {current.buttonText && (
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                {current?.buttonText && (
                   <Link
                     href={current.buttonLink || "/shop"}
-                    className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-7 py-3 text-sm sm:text-base font-semibold text-zinc-900 shadow-md transition-all duration-200 hover:scale-105 hover:bg-zinc-50 active:scale-95"
+                    className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-zinc-950 shadow-md hover:bg-zinc-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
                   >
                     <span>{current.buttonText}</span>
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
                 )}
-                {current.secondaryButtonText && (
+                {current?.secondaryButtonText && (
                   <Link
                     href={current.secondaryButtonLink || "/about"}
-                    className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/40 bg-white/10 px-7 py-3 text-sm sm:text-base font-semibold text-white backdrop-blur-md transition-all duration-200 hover:bg-white/20 active:scale-95"
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-black/20 px-6 py-3 text-sm font-bold text-white backdrop-blur-md hover:bg-white/20 transition-all"
                   >
-                    {current.secondaryButtonText}
+                    <span>{current.secondaryButtonText}</span>
                   </Link>
                 )}
               </div>
@@ -246,22 +246,28 @@ export function SliderHero({ section }: { section: SectionData }) {
           </div>
         </div>
 
-        {/* Prev / Next Arrows */}
+        {/* Navigation Arrows */}
         {p.showArrows !== "false" && slideCount > 1 && (
           <>
             <button
               type="button"
-              onClick={prevSlide}
+              onClick={(e) => {
+                e.stopPropagation();
+                prevSlide();
+              }}
               aria-label="Previous slide"
-              className="absolute left-4 sm:left-6 top-1/2 z-30 -translate-y-1/2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md border border-white/10 transition-all hover:bg-black/60 hover:scale-105 active:scale-95"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-md transition-all hover:bg-black/60 hover:scale-105 active:scale-95 focus:outline-none"
             >
               <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
             <button
               type="button"
-              onClick={nextSlide}
+              onClick={(e) => {
+                e.stopPropagation();
+                nextSlide();
+              }}
               aria-label="Next slide"
-              className="absolute right-4 sm:right-6 top-1/2 z-30 -translate-y-1/2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md border border-white/10 transition-all hover:bg-black/60 hover:scale-105 active:scale-95"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/20 bg-black/30 text-white backdrop-blur-md transition-all hover:bg-black/60 hover:scale-105 active:scale-95 focus:outline-none"
             >
               <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
@@ -270,15 +276,15 @@ export function SliderHero({ section }: { section: SectionData }) {
 
         {/* Pagination Dots */}
         {p.showDots !== "false" && slideCount > 1 && (
-          <div className="absolute bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/30 px-3.5 py-1.5 backdrop-blur-md border border-white/10">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 backdrop-blur-md">
             {slides.map((_, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => setActive(i)}
                 aria-label={`Go to slide ${i + 1}`}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i === active ? "w-7 bg-white" : "w-2 bg-white/40 hover:bg-white/70"
+                className={`h-2 rounded-full transition-all ${
+                  i === active ? "w-6 bg-white" : "w-2 bg-white/40 hover:bg-white/70"
                 }`}
               />
             ))}
@@ -288,4 +294,3 @@ export function SliderHero({ section }: { section: SectionData }) {
     </SectionWrapper>
   );
 }
-

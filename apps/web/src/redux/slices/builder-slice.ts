@@ -527,8 +527,14 @@ const builderSlice = createSlice({
 
     removeSection(state, action: PayloadAction<string>) {
       const id = action.payload;
-      const sections = getSections(state).filter((s) => s.id !== id);
-      setSectionsForZone(state, sections);
+      const location = findSectionLocation(state, id);
+      if (!location) return;
+
+      const sections = getSectionList(state, location.zone).filter((s) => s.id !== id);
+      if (location.zone === "header") state.headerSections = sections;
+      else if (location.zone === "footer") state.footerSections = sections;
+      else state.sections = sections;
+
       if (state.selectedSectionId === id) {
         state.selectedSectionId = null;
         state.hoveredSectionId = null;
@@ -761,6 +767,14 @@ const builderSlice = createSlice({
       state.sectionLibrary.activeCategory = action.payload;
     },
 
+    setFavoriteSections(state, action: PayloadAction<string[]>) {
+      state.sectionLibrary.favoriteSections = action.payload;
+    },
+
+    setRecentlyUsedSections(state, action: PayloadAction<string[]>) {
+      state.sectionLibrary.recentlyUsed = action.payload;
+    },
+
     toggleFavoriteSection(state, action: PayloadAction<string>) {
       const idx = state.sectionLibrary.favoriteSections.indexOf(action.payload);
       if (idx === -1) {
@@ -772,7 +786,7 @@ const builderSlice = createSlice({
 
     addToRecentlyUsed(state, action: PayloadAction<string>) {
       const filtered = state.sectionLibrary.recentlyUsed.filter((type) => type !== action.payload);
-      state.sectionLibrary.recentlyUsed = [action.payload, ...filtered].slice(0, 10);
+      state.sectionLibrary.recentlyUsed = [action.payload, ...filtered].slice(0, 15);
     },
 
     clearRecentlyUsed(state) {
@@ -858,6 +872,7 @@ export const {
   markSaved, setSaving, setSaveError, setPublishing, loadSections,
   openSectionLibrary, closeSectionLibrary,
   setSectionLibrarySearch, setSectionLibraryCategory,
+  setFavoriteSections, setRecentlyUsedSections,
   toggleFavoriteSection, addToRecentlyUsed, clearRecentlyUsed,
 } = builderSlice.actions;
 

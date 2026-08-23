@@ -15,9 +15,6 @@ import {
   LogOut,
   Heart,
   Home,
-  Grid3X3,
-  Info,
-  Mail,
   ChevronRight,
   MapPin,
   Bell,
@@ -28,6 +25,9 @@ import type { RootState } from "@/redux/store";
 import { clearCustomer } from "@/redux/slices/customer-slice";
 import { openCart } from "@/redux/slices/cart-slice";
 import { useTenant } from "@/providers/tenant-provider";
+import { useStoreCategories } from "@/hooks/use-store-categories";
+import { normalizeCategoryParentId } from "@/lib/storefront/global-navigation";
+import { getCategoryEnglishName } from "@/lib/storefront/category-label";
 import { SmartImage } from "@/components/ui/smart-image";
 import { BuilderLink, BuilderIconButton } from "@/components/sections/builder-link";
 import { useStorefrontSurface } from "./storefront-ui";
@@ -62,6 +62,7 @@ export function NavbarRenderer({
   const pathname = usePathname() || "";
   const device = useDevice();
   const { store, theme, navigations } = useTenant();
+  const { categories: storeCategories } = useStoreCategories();
   const { classes, primaryColor } = useStorefrontSurface();
   const itemCount = useSelector((state: RootState) => state.cart.items.reduce((sum, i) => sum + i.quantity, 0));
   const customer = useSelector((state: RootState) => state.customer);
@@ -97,13 +98,6 @@ export function NavbarRenderer({
 
   const primaryNavigation = navigations.find((navigation) => navigation.key === "primary" && navigation.isActive);
   const mobileNavigation = navigations.find((navigation) => navigation.key === "mobile" && navigation.isActive) ?? primaryNavigation;
-  const defaultNavLinks = [
-    { name: "Home", href: "/", icon: Home },
-    { name: "Shop", href: "/shop", icon: Grid3X3 },
-    { name: "Categories", href: "/categories", icon: Grid3X3 },
-    { name: "About", href: "/about", icon: Info },
-    { name: "Contact", href: "/contact", icon: Mail },
-  ];
   const navigationLinks = (items?: NavigationItemData[]) =>
     (items ?? [])
       .filter((item) => item.isVisible !== false)
@@ -121,7 +115,16 @@ export function NavbarRenderer({
     ? navLinksOverride.map((l) => ({ ...l, icon: Home, children: [], openInNewTab: false }))
     : primaryNavigation?.items?.length
       ? navigationLinks(primaryNavigation.items)
-      : defaultNavLinks.map((l) => ({ ...l, children: [], openInNewTab: false }));
+      : storeCategories
+          .filter((cat) => normalizeCategoryParentId(cat.parentId) === null)
+          .slice(0, 6)
+          .map((cat) => ({
+            name: getCategoryEnglishName(cat),
+            href: `/category/${cat.slug}`,
+            icon: Home,
+            children: [],
+            openInNewTab: false,
+          }));
   const mobileLinks = mobileNavigation?.items?.length
     ? navigationLinks(mobileNavigation.items)
     : navLinks;
@@ -153,7 +156,8 @@ export function NavbarRenderer({
   const registerContentOffset = useRegisterStorefrontHeaderOffset();
 
   useEffect(() => {
-    registerContentOffset(needsContentOffset ? contentOffset : 0);
+    const height = contentOffset || 0;
+    registerContentOffset(height, needsContentOffset ? height : 0);
   }, [registerContentOffset, needsContentOffset, contentOffset]);
 
   const navHeight = headerConfig.height;

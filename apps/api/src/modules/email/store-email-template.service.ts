@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { connectDatabase } from "../../common/database/connection.js";
 import { StoreModel } from "../../models/store.model.js";
 import { StoreEmailTemplateModel } from "./store-email-template.model.js";
@@ -30,9 +31,11 @@ const DEFAULT_TEMPLATES: Array<{ name: string; subject: string; body: string; va
   { name: "custom_event", subject: "{{event.subject}}", body: "<h1>{{event.title}}</h1><p>{{event.message}}</p>", variables: ["event.subject", "event.title", "event.message", "store.name"], description: "Custom event notification" },
 ];
 
-export async function ensureDefaultEmailTemplates(storeId: string) {
+export async function ensureDefaultEmailTemplates(storeId: string, session?: mongoose.ClientSession) {
   await connectDatabase();
-  const existing = await StoreEmailTemplateModel.countDocuments({ storeId }).lean();
+  const countQuery = StoreEmailTemplateModel.countDocuments({ storeId });
+  if (session) countQuery.session(session);
+  const existing = await countQuery.lean();
   if (existing > 0) return;
 
   const templates = DEFAULT_TEMPLATES.map((t) => ({
@@ -41,7 +44,11 @@ export async function ensureDefaultEmailTemplates(storeId: string) {
     isDefault: true,
   }));
 
-  await StoreEmailTemplateModel.insertMany(templates);
+  if (session) {
+    await StoreEmailTemplateModel.insertMany(templates, { session, ordered: true });
+  } else {
+    await StoreEmailTemplateModel.insertMany(templates);
+  }
 }
 
 export async function getEmailTemplates(storeId: string, userId?: string) {

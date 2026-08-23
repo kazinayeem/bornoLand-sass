@@ -25,8 +25,12 @@ const productSchema = new Schema(
   {
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, index: true },
     name: { type: String, required: true, trim: true },
+    nameEn: { type: String, default: "", trim: true },
+    nameBn: { type: String, default: "", trim: true },
     slug: { type: String, required: true, lowercase: true, trim: true },
     description: { type: String, default: "", trim: true },
+    descriptionEn: { type: String, default: "", trim: true },
+    descriptionBn: { type: String, default: "", trim: true },
     productType: {
       type: String,
       enum: ["simple", "variable", "digital", "downloadable", "service"],
@@ -36,10 +40,14 @@ const productSchema = new Schema(
     price: { type: Number, required: true, min: 0 },
     comparePrice: { type: Number, min: 0 },
     category: { type: String, default: "general", trim: true },
+    categoryId: { type: Schema.Types.ObjectId, ref: "Category", default: null },
+    subcategoryId: { type: Schema.Types.ObjectId, ref: "Category", default: null },
     categoryIds: [{ type: Schema.Types.ObjectId, ref: "Category" }],
     collectionIds: [{ type: Schema.Types.ObjectId, ref: "Collection" }],
     tags: { type: [String], default: [] },
     brand: { type: String, default: "", trim: true },
+    brandId: { type: Schema.Types.ObjectId, ref: "Brand", default: null },
+
     vendor: { type: String, default: "", trim: true },
     barcode: { type: String, default: "", trim: true },
     stock: { type: Number, default: 0, min: 0 },

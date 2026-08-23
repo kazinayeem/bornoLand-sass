@@ -57,11 +57,11 @@ export function BuilderSidebar() {
       case "theme":
         return <ThemePanel />;
       case "navigator":
-        return <LayersPanel title="Sections" />;
+        return <LayersPanel />;
       case "history":
         return <HistoryPanel />;
       default:
-        return <LayersPanel title="Sections" />;
+        return <LayersPanel />;
     }
   };
 

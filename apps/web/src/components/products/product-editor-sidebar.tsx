@@ -2,13 +2,14 @@
 
 import type { ProductEditorForm } from "@/components/products/product-form";
 import type { Product } from "@/redux/api/product-api";
-import { Copy, ExternalLink, Trash2, FolderPlus } from "lucide-react";
+import { Copy, ExternalLink, Trash2 } from "lucide-react";
 
 type ProductEditorSidebarProps = {
   form: ProductEditorForm;
   product?: Product | null;
   storeName: string;
-  categories?: { _id: string; name: string }[];
+  categories?: { _id: string; name: string; parentId?: string | null }[];
+  brands?: { _id: string; name: string }[];
   onChange: (patch: Partial<ProductEditorForm>) => void;
   onDuplicate?: () => void;
   onDelete?: () => void;
@@ -23,40 +24,106 @@ export function ProductEditorSidebar({
   product,
   storeName,
   categories = [],
+  brands = [],
   onChange,
   onDuplicate,
   onDelete,
   previewHref,
 }: ProductEditorSidebarProps) {
+  const rootCategories = categories.filter((c) => !c.parentId);
+  const selectedRootId = form.categoryId || (form.categoryIds?.[0] ? categories.find((c) => c._id === form.categoryIds[0] && !c.parentId)?._id : "");
+
+  const matchingSubcategories = selectedRootId
+    ? categories.filter((c) => c.parentId === selectedRootId)
+    : [];
+
   return (
     <div className="space-y-4 lg:sticky lg:top-24">
-      {/* ── Category Section ───────────────────────────────────── */}
-      <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-apple-ink-muted-48">Category</h3>
-        <select
-          value={form.categoryIds?.[0] || form.category || ""}
-          onChange={(e) => onChange({ category: e.target.value, categoryIds: e.target.value ? [e.target.value] : [] })}
-          className={inputClass}
-        >
-          <option value="">No assigned category</option>
-          {categories.map((c) => (
-            <option key={c._id} value={c._id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+      {/* ── Category & Subcategory Section ─────────────────────── */}
+      <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm space-y-3">
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-apple-ink-muted-48 mb-1.5">Category</h3>
+          <select
+            value={selectedRootId || ""}
+            onChange={(e) => {
+              const catId = e.target.value;
+              const cat = categories.find((c) => c._id === catId);
+              onChange({
+                categoryId: catId,
+                category: cat?.name || "",
+                subcategoryId: "",
+                categoryIds: catId ? [catId] : [],
+              });
+            }}
+            className={inputClass}
+          >
+            <option value="">Select Category</option>
+            {rootCategories.map((c) => (
+              <option key={c._id} value={c._id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {selectedRootId && matchingSubcategories.length > 0 && (
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-apple-ink-muted-48 mb-1.5">Subcategory</h3>
+            <select
+              value={form.subcategoryId || ""}
+              onChange={(e) => {
+                const subId = e.target.value;
+                const newCategoryIds = [selectedRootId, subId].filter(Boolean);
+                onChange({
+                  subcategoryId: subId,
+                  categoryIds: newCategoryIds,
+                });
+              }}
+              className={inputClass}
+            >
+              <option value="">No subcategory</option>
+              {matchingSubcategories.map((s) => (
+                <option key={s._id} value={s._id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </section>
 
-      {/* ── Brand (SEO & Data Feed) ───────────────────────────── */}
+      {/* ── Brand Section ─────────────────────────────────────── */}
       <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-apple-ink-muted-48">Brand (SEO & Data Feed)</h3>
-        <input
-          type="text"
-          placeholder="Brand Name"
-          value={form.brand || ""}
-          onChange={(e) => onChange({ brand: e.target.value })}
-          className={inputClass}
-        />
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-apple-ink-muted-48">Brand</h3>
+        {brands.length > 0 ? (
+          <select
+            value={form.brandId || ""}
+            onChange={(e) => {
+              const bId = e.target.value;
+              const b = brands.find((item) => item._id === bId);
+              onChange({
+                brandId: bId,
+                brand: b?.name || "",
+              });
+            }}
+            className={inputClass}
+          >
+            <option value="">No Brand / Generic</option>
+            {brands.map((b) => (
+              <option key={b._id} value={b._id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type="text"
+            placeholder="Brand Name"
+            value={form.brand || ""}
+            onChange={(e) => onChange({ brand: e.target.value })}
+            className={inputClass}
+          />
+        )}
       </section>
 
       {/* ── Product Weight & Dimensions ───────────────────────── */}
@@ -101,7 +168,6 @@ export function ProductEditorSidebar({
       </section>
 
       {/* ── Product Status ─────────────────────────────────────── */}
-
       <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-apple-ink-muted-48">Product Status</h3>
         <select
@@ -152,4 +218,3 @@ export function ProductEditorSidebar({
     </div>
   );
 }
-

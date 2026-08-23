@@ -79,6 +79,13 @@ function safeId(id: string): mongoose.Types.ObjectId | null {
   return requireObjectId(id).ok ? new mongoose.Types.ObjectId(id) : null;
 }
 
+function formatCreateStoreError(error: unknown): string {
+  const base = "Failed to create store. All changes have been rolled back.";
+  if (process.env.NODE_ENV === "production") return base;
+  const detail = error instanceof Error ? error.message : String(error);
+  return `${base} ${detail}`;
+}
+
 import { listPlans } from "../plans/plan.service.js";
 
 async function ensurePlans() {
@@ -137,6 +144,7 @@ export async function createStore(userId: string, payload: unknown) {
     : await PlanModel.findOne({ slug: parsed.data.plan }).lean()) as { slug: string; _id: unknown } | null;
 
   const session = await mongoose.startSession();
+  const txnOpts = { session, ordered: true as const };
   try {
     session.startTransaction();
 
@@ -151,9 +159,9 @@ export async function createStore(userId: string, payload: unknown) {
         subdomain: slug,
         plan: requestedPlan?.slug ?? parsed.data.plan ?? "free",
         status: "active"
-      }], { session });
+      }], txnOpts);
       tenantId = tenant._id;
-      await TeamMemberModel.create([{ tenantId, userId, role: "owner", status: "active", invitedAt: new Date(), acceptedAt: new Date() }], { session });
+      await TeamMemberModel.create([{ tenantId, userId, role: "owner", status: "active", invitedAt: new Date(), acceptedAt: new Date() }], txnOpts);
     }
 
     const trialFields = await buildTrialFields();
@@ -180,7 +188,7 @@ export async function createStore(userId: string, payload: unknown) {
       ...(parsed.data.courierAccess
         ? { courierAccess: { providers: parsed.data.courierAccess.providers ?? [] } }
         : {}),
-    }], { session });
+    }], txnOpts);
 
     const storeId = store._id;
 
@@ -222,7 +230,7 @@ export async function createStore(userId: string, payload: unknown) {
         settings: { layoutWidth: "1200px" },
         seo: { title: p.title, description: p.description },
       })),
-      { session }
+      txnOpts
     );
 
     // PageModel docs (builder-facing)
@@ -247,7 +255,7 @@ export async function createStore(userId: string, payload: unknown) {
         sections: p.hasSections && p.pageType === "home" ? homeSections : [],
         theme: store.theme ?? {},
       })),
-      { session }
+      txnOpts
     );
 
     // ── Auto-create default navigations ───────────────────────────
@@ -276,14 +284,14 @@ export async function createStore(userId: string, payload: unknown) {
         { navigationId: primaryNavId, storeId, title: "Contact", link: "/contact", linkType: "page", sortOrder: 4 },
         { navigationId: primaryNavId, storeId, title: "Blog", link: "/blog", linkType: "page", sortOrder: 5 },
         { navigationId: primaryNavId, storeId, title: "FAQ", link: "/faq", linkType: "page", sortOrder: 6 },
-      ], { session });
+      ], txnOpts);
     }
 
     await ensureDefaultStoreSettings(store._id.toString(), session);
-    await ensureDefaultStoreContact(store._id.toString());
-    await ensureDefaultEmailConfig(store._id.toString());
-    await ensureDefaultEmailTemplates(store._id.toString());
-    await ensureDefaultEmailBranding(store._id.toString());
+    await ensureDefaultStoreContact(store._id.toString(), session);
+    await ensureDefaultEmailConfig(store._id.toString(), session);
+    await ensureDefaultEmailTemplates(store._id.toString(), session);
+    await ensureDefaultEmailBranding(store._id.toString(), session);
     await HomepageSliderModel.deleteMany({ storeId: store._id }).session(session);
     await HomepageSliderModel.create([{
       storeId: store._id,
@@ -296,7 +304,7 @@ export async function createStore(userId: string, payload: unknown) {
       isActive: true,
       overlayColor: "rgba(15, 23, 42, 0.45)",
       textAlignment: "left"
-    }], { session });
+    }], txnOpts);
 
     const planIdForTrial = requestedPlan?._id ?? (await PlanModel.findOne({ slug: "free" }).session(session).lean() as { _id: unknown } | null)?._id;
     if (planIdForTrial && trialFields.trialEndsAt) {
@@ -322,8 +330,11 @@ export async function createStore(userId: string, payload: unknown) {
     return { ok: true as const, data: { store: store.toObject() } };
   } catch (error) {
     await session.abortTransaction();
-    console.error("[store.service] createStore transaction failed:", error);
-    return { ok: false as const, message: "Failed to create store. All changes have been rolled back." };
+    console.error("[createStore]", error);
+    if (error instanceof Error && error.stack) {
+      console.error(error.stack);
+    }
+    return { ok: false as const, message: formatCreateStoreError(error) };
   } finally {
     session.endSession();
   }
@@ -686,13 +697,23 @@ export async function changeStoreTheme(storeId: string, userId: string, payload:
     if (!template) return { ok: false as const, message: "Template not found" };
 
     if (template.theme) {
-      store.theme = { ...store.theme.toObject?.() ?? store.theme, ...template.theme };
+      const current =
+        typeof store.theme?.toObject === "function"
+          ? store.theme.toObject()
+          : { ...(store.theme ?? {}) };
+      store.set("theme", { ...current, ...template.theme });
+      store.markModified("theme");
     }
     store.category = template.category ?? store.category;
   }
 
   if (payload.theme) {
-    store.theme = { ...store.theme.toObject?.() ?? store.theme, ...payload.theme };
+    const current =
+      typeof store.theme?.toObject === "function"
+        ? store.theme.toObject()
+        : { ...(store.theme ?? {}) };
+    store.set("theme", { ...current, ...payload.theme });
+    store.markModified("theme");
   }
 
   await store.save();

@@ -394,7 +394,10 @@ function SectionPropertiesInspectorBody({ section }: { section: BuilderSection }
   };
 
   const handleSectionPropsChange = (props: Record<string, string | undefined>) => {
-    dispatch(updateSectionProps({ id: section.id, props: props as typeof section.props }));
+    dispatch(updateSectionProps({
+      id: section.id,
+      props: { ...section.props, ...props } as typeof section.props,
+    }));
   };
 
   const def = getSectionDef(section.type);
@@ -1101,8 +1104,13 @@ function EmptyInspectorPanel() {
   );
 }
 
+export interface PropertiesPanelProps {
+  storeId?: string;
+  storeSlug?: string;
+}
+
 /** Routes to exactly one inspector; remounts on every selection change. */
-export function PropertiesPanel() {
+export function PropertiesPanel({ storeId, storeSlug }: PropertiesPanelProps = {}) {
   const selectedId = useSelector((s: RootState) => s.builder.selectedSectionId);
   const editingZone = useSelector((s: RootState) => s.builder.editingZone);
   const section = useSelector((s: RootState) => {

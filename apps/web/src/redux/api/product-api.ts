@@ -51,6 +51,11 @@ export type Product = {
   totalStock?: number;
   variantCount?: number;
   category: string;
+  categoryId?: string | null;
+  subcategoryId?: string | null;
+  brand?: string;
+  brandId?: string | null;
+  tags?: string[];
   stock: number;
   status: "active" | "inactive" | "draft" | "archived";
   sku: string;
@@ -67,6 +72,7 @@ export type Product = {
   createdAt: string;
   updatedAt: string;
 };
+
 
 type ApiEnvelope<T> = { success: boolean; data?: T; message?: string };
 

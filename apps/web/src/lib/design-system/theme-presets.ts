@@ -6,6 +6,11 @@ export type ThemePresetConfig = {
   description: string;
   primaryColor: string;
   secondaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  textColor: string;
+  mutedTextColor: string;
+  borderColor: string;
   font: string;
   headingFont: string;
   bodyFont: string;
@@ -28,6 +33,11 @@ export const THEME_PRESETS: Record<PresetKey, ThemePresetConfig> = {
     description: "Balanced, clean & contemporary with smooth radius and vibrant accents.",
     primaryColor: "#2563eb",
     secondaryColor: "#0f172a",
+    accentColor: "#f59e0b",
+    backgroundColor: "#ffffff",
+    textColor: "#18181b",
+    mutedTextColor: "#71717a",
+    borderColor: "#e4e4e7",
     font: "Inter",
     headingFont: "Inter",
     bodyFont: "Inter",
@@ -48,6 +58,11 @@ export const THEME_PRESETS: Record<PresetKey, ThemePresetConfig> = {
     description: "Ultra-clean monochrome with sharp lines, high contrast and thin borders.",
     primaryColor: "#18181b",
     secondaryColor: "#71717a",
+    accentColor: "#3b82f6",
+    backgroundColor: "#ffffff",
+    textColor: "#09090b",
+    mutedTextColor: "#a1a1aa",
+    borderColor: "#e4e4e7",
     font: "Space Grotesk",
     headingFont: "Space Grotesk",
     bodyFont: "Inter",
@@ -68,6 +83,11 @@ export const THEME_PRESETS: Record<PresetKey, ThemePresetConfig> = {
     description: "Luxurious feel with generous spacing, deep tones and subtle gradients.",
     primaryColor: "#4f46e5",
     secondaryColor: "#09090b",
+    accentColor: "#a78bfa",
+    backgroundColor: "#ffffff",
+    textColor: "#18181b",
+    mutedTextColor: "#71717a",
+    borderColor: "#e4e4e7",
     font: "Clash Display",
     headingFont: "Clash Display",
     bodyFont: "Inter",
@@ -88,6 +108,11 @@ export const THEME_PRESETS: Record<PresetKey, ThemePresetConfig> = {
     description: "Refined serif headlines with magazine-quality typographic hierarchy.",
     primaryColor: "#881337",
     secondaryColor: "#1c1917",
+    accentColor: "#f43f5e",
+    backgroundColor: "#ffffff",
+    textColor: "#1c1917",
+    mutedTextColor: "#78716c",
+    borderColor: "#e7e5e4",
     font: "Playfair Display",
     headingFont: "Playfair Display",
     bodyFont: "Inter",
@@ -108,6 +133,11 @@ export const THEME_PRESETS: Record<PresetKey, ThemePresetConfig> = {
     description: "High-conversion storefront design with bold pricing and prominent CTAs.",
     primaryColor: "#059669",
     secondaryColor: "#111827",
+    accentColor: "#f59e0b",
+    backgroundColor: "#ffffff",
+    textColor: "#111827",
+    mutedTextColor: "#6b7280",
+    borderColor: "#e5e7eb",
     font: "Poppins",
     headingFont: "Poppins",
     bodyFont: "Inter",
@@ -149,6 +179,11 @@ export function getShadowValue(size?: "none" | "sm" | "md" | "lg"): string {
 export function generateThemeCssVariables(theme: {
   primaryColor?: string;
   secondaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  mutedTextColor?: string;
+  borderColor?: string;
   borderRadius?: number;
   shadowSize?: "none" | "sm" | "md" | "lg";
   layoutWidth?: string;
@@ -158,6 +193,11 @@ export function generateThemeCssVariables(theme: {
 }): Record<string, string> {
   const primary = theme.primaryColor || "#2563eb";
   const secondary = theme.secondaryColor || "#0f172a";
+  const accent = theme.accentColor || "#f59e0b";
+  const background = theme.backgroundColor || "#ffffff";
+  const text = theme.textColor || "#18181b";
+  const muted = theme.mutedTextColor || "#71717a";
+  const border = theme.borderColor || "#e4e4e7";
   const radius = getRadiusValue(theme.borderRadius);
   const shadow = getShadowValue(theme.shadowSize);
   const maxWidth = theme.layoutWidth || "1280px";
@@ -168,6 +208,13 @@ export function generateThemeCssVariables(theme: {
   return {
     "--color-primary": primary,
     "--color-secondary": secondary,
+    "--store-primary": primary,
+    "--store-secondary": secondary,
+    "--store-accent": accent,
+    "--store-background": background,
+    "--store-text": text,
+    "--store-muted": muted,
+    "--store-border": border,
     "--radius-theme": radius,
     "--shadow-theme": shadow,
     "--container-max-width": maxWidth,

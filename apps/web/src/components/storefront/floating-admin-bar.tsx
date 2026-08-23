@@ -37,7 +37,7 @@ export function FloatingAdminBar({ storeSlug, primaryColor }: FloatingAdminBarPr
   const links = [
     { icon: LayoutDashboard, label: "Dashboard", href: `/store/${storeSlug}/dashboard` },
     { icon: ShoppingBag, label: "Open Store",   href: storeUrl, external: true },
-    { icon: Palette,      label: "Theme",        href: `/store/${storeSlug}/theme` },
+    { icon: Palette,      label: "Design",       href: `/store/${storeSlug}/design` },
     { icon: Package,      label: "Products",     href: `/store/${storeSlug}/products` },
   ];
 

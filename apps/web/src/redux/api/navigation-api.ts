@@ -43,6 +43,8 @@ export type MenuItemTree = MenuItem & {
 };
 
 export type HeaderSettings = {
+  template?: string;
+  headerTemplate?: string;
   sticky?: boolean;
   transparent?: boolean;
   height?: string;

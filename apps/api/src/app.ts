@@ -29,6 +29,8 @@ import { paymentMethodRouter } from "./modules/payments/payment-method.route.js"
 import { deliveryZoneRouter } from "./modules/delivery/delivery-zone.route.js";
 import { cmsRouter } from "./modules/cms/cms.route.js";
 import { categoryRouter } from "./modules/categories/category.route.js";
+import { brandRouter } from "./modules/brands/brand.route.js";
+
 import { subscriptionPaymentRouter } from "./modules/payments/subscription-payment.route.js";
 import { subscriptionRouter } from "./modules/subscriptions/subscription.route.js";
 import { invoiceRouter } from "./modules/subscriptions/invoice.route.js";
@@ -237,6 +239,8 @@ app.use("/payment-methods", paymentMethodRouter);
 app.use("/delivery-zones", deliveryZoneRouter);
 app.use("/cms", cmsRouter);
 app.use("/categories", categoryRouter);
+app.use("/brands", brandRouter);
+
 app.use("/subscription-payments", subscriptionPaymentRouter);
 app.use("/subscriptions", subscriptionRouter);
 app.use("/invoices", invoiceRouter);

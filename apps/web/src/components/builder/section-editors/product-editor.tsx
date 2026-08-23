@@ -2,6 +2,7 @@
 
 import { Field, SectionBlock, SelectField, TextField, ToggleField } from "./shared";
 import type { SectionEditorProps } from "./types";
+import { isSectionPropEnabled } from "@/lib/storefront/product-section-data";
 
 const SOURCE_OPTIONS = [
   { value: "featured", label: "Featured products" },
@@ -14,6 +15,7 @@ const SOURCE_OPTIONS = [
 export function ProductSectionEditor({
   section,
   onPropChange,
+  onPropsChange,
 }: SectionEditorProps) {
   const p = section.props;
   const source = p.productSource || (
@@ -72,23 +74,18 @@ export function ProductSectionEditor({
             <ToggleField label="Rows per page" value={p.allowRowsPerPage ?? "false"} onChange={(v) => onPropChange("allowRowsPerPage", v)} />
           </>
         )}
-        {p.gridColumns !== undefined && (
-          <Field label="Columns">
-            <SelectField
-              value={p.desktopColumns || p.gridColumns || "4"}
-              onChange={(v) => {
-                onPropChange("gridColumns", v);
-                onPropChange("desktopColumns", v);
-              }}
-              options={[
-                { value: "2", label: "2" },
-                { value: "3", label: "3" },
-                { value: "4", label: "4" },
-                { value: "5", label: "5" },
-              ]}
-            />
-          </Field>
-        )}
+        <Field label="Columns">
+          <SelectField
+            value={p.desktopColumns || p.gridColumns || "4"}
+            onChange={(v) => onPropsChange({ ...p, gridColumns: v, desktopColumns: v })}
+            options={[
+              { value: "2", label: "2" },
+              { value: "3", label: "3" },
+              { value: "4", label: "4" },
+              { value: "5", label: "5" },
+            ]}
+          />
+        </Field>
         {section.type === "product-grid" && (
           <>
             <Field label="Tablet columns">
@@ -116,11 +113,23 @@ export function ProductSectionEditor({
         )}
         <ToggleField label="Show badges" value={p.showBadges ?? "true"} onChange={(v) => onPropChange("showBadges", v)} />
         <ToggleField label="Show ratings" value={p.showRatings ?? "true"} onChange={(v) => onPropChange("showRatings", v)} />
-        <ToggleField label="Show view all" value={p.showViewAll ?? "true"} onChange={(v) => onPropChange("showViewAll", v)} />
-        {(p.viewAllLink !== undefined || p.showViewAll === "true") && (
-          <Field label="View all link">
-            <TextField value={p.viewAllLink ?? "/shop"} onChange={(v) => onPropChange("viewAllLink", v)} placeholder="/shop" />
+        <ToggleField label="Show view now" value={p.showViewNow ?? "false"} onChange={(v) => onPropChange("showViewNow", v)} />
+        {isSectionPropEnabled(p.showViewNow, false) && (
+          <Field label="View now text">
+            <TextField value={p.viewNowText ?? "View Now"} onChange={(v) => onPropChange("viewNowText", v)} placeholder="View Now" />
           </Field>
+        )}
+        <ToggleField label="Show add to cart" value={p.showAddToCart ?? "true"} onChange={(v) => onPropChange("showAddToCart", v)} />
+        <ToggleField label="Show view all" value={p.showViewAll ?? "true"} onChange={(v) => onPropChange("showViewAll", v)} />
+        {isSectionPropEnabled(p.showViewAll, true) && (
+          <>
+            <Field label="View all text">
+              <TextField value={p.viewAllText ?? "View All"} onChange={(v) => onPropChange("viewAllText", v)} placeholder="View All" />
+            </Field>
+            <Field label="View all link">
+              <TextField value={p.viewAllLink ?? "/shop"} onChange={(v) => onPropChange("viewAllLink", v)} placeholder="/shop" />
+            </Field>
+          </>
         )}
       </SectionBlock>
     </div>

@@ -118,11 +118,51 @@ export async function resolveBySubdomain(
     deletedAt: null,
   }).lean() as any;
 
-  // Store exists even when a specific CMS page is missing/unpublished.
-  // Callers render an empty canvas rather than treating the whole store as 404.
+  let resolvedPage = page;
+  if (!resolvedPage && normalizedSlug !== "/") {
+    // If specific CMS page is not found as a custom StorePage, fetch the home page's layout configuration
+    const homePage = await StorePageModel.findOne({
+      storeId: store._id,
+      slug: "/",
+      status: "published",
+      deletedAt: null,
+    }).lean() as any;
+    if (homePage) {
+      resolvedPage = {
+        _id: "global-shell",
+        title: store.name,
+        slug: normalizedSlug,
+        headerSections: homePage.headerSections || [],
+        footerSections: homePage.footerSections || [],
+        headerSettings: homePage.headerSettings || store.headerSettings || {},
+        footerSettings: homePage.footerSettings || store.footerSettings || {},
+        sections: [],
+      };
+    }
+  } else if (resolvedPage && normalizedSlug !== "/") {
+    // Merge home page global header/footer as base; sub-page overrides win when set
+    const homePage = await StorePageModel.findOne({
+      storeId: store._id,
+      slug: "/",
+      status: "published",
+      deletedAt: null,
+    }).lean() as any;
+    if (homePage) {
+      resolvedPage.headerSettings = {
+        ...(homePage.headerSettings || store.headerSettings || {}),
+        ...(resolvedPage.headerSettings || {}),
+      };
+      resolvedPage.footerSettings = {
+        ...(homePage.footerSettings || store.footerSettings || {}),
+        ...(resolvedPage.footerSettings || {}),
+      };
+    }
+  }
 
   const products = await ProductModel.find({ storeId: store._id, status: "active" }).sort({ createdAt: -1 }).limit(20).lean() as any[];
-  const categories = await CategoryModel.find({ storeId: store._id, active: true }).sort({ sortOrder: 1, name: 1 }).lean() as any[];
+  const rawCategories = await CategoryModel.find({ storeId: store._id, active: true }).sort({ sortOrder: 1, name: 1 }).lean() as any[];
+  const { enrichCategoriesWithCounts } = await import("../categories/category.service.js");
+  const categories = await enrichCategoriesWithCounts(String(store._id), rawCategories);
   const settings = await StoreSettingsModel.findOne({ storeId: store._id }).lean() as any;
   const sliders = await HomepageSliderModel.find({ storeId: store._id, isActive: true }).sort({ sortOrder: 1, createdAt: 1 }).lean() as any[];
   const navigations = await NavigationModel.find({ storeId: store._id, isActive: true }).sort({ sortOrder: 1 }).lean() as any[];
@@ -144,7 +184,7 @@ export async function resolveBySubdomain(
     data: {
       store: store ?? null,
       tenant: tenant ?? null,
-      page: page ?? null,
+      page: resolvedPage ?? null,
       products: products ?? [],
       categories: categories ?? [],
       settings: settings ?? null,

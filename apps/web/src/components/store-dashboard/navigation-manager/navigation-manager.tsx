@@ -50,13 +50,15 @@ const NAV_ICONS: Record<string, typeof Menu> = {
   sidebar: Menu,
 };
 
+export const MAX_TOP_LEVEL_NAV_ITEMS = 6;
+export const MAX_DROPDOWN_CHILDREN = 6;
+
 const LINK_TYPES = [
-  { value: "custom", label: "Custom URL" },
-  { value: "page", label: "Internal Page" },
+  { value: "page", label: "Page" },
   { value: "product", label: "Product" },
   { value: "category", label: "Category" },
-  { value: "collection", label: "Collection" },
-  { value: "blog", label: "Blog" },
+  { value: "brand", label: "Brand" },
+  { value: "custom", label: "Custom URL" },
   { value: "external", label: "External Link" },
 ] as const;
 
@@ -82,6 +84,9 @@ export function NavigationManager({ storeId }: Props) {
   const navigations = data?.data?.navigations ?? [];
   const availablePages = pagesData?.data?.pages ?? [];
   const activeNav = navigations.find((n) => n._id === activeNavId) ?? navigations[0];
+
+  const topLevelCount = activeNav?.items?.length ?? 0;
+  const isTopLevelFull = topLevelCount >= MAX_TOP_LEVEL_NAV_ITEMS;
 
   const flatItems = useMemo(() => {
     if (!activeNav?.items) return [];
@@ -135,6 +140,10 @@ export function NavigationManager({ storeId }: Props) {
 
   const handleAddItem = async () => {
     if (!newItem.title.trim() || !activeNav) return;
+    if (isTopLevelFull) {
+      toast.error("Maximum 6 navigation items allowed.");
+      return;
+    }
     try {
       await addItem({
         navigationId: activeNav._id,
@@ -153,6 +162,10 @@ export function NavigationManager({ storeId }: Props) {
 
   const handleAddPageAsItem = async (page: { _id: string; title: string; slug: string }) => {
     if (!activeNav) return;
+    if (isTopLevelFull) {
+      toast.error("Maximum 6 navigation items allowed.");
+      return;
+    }
     try {
       await addItem({
         navigationId: activeNav._id,
@@ -301,8 +314,13 @@ export function NavigationManager({ storeId }: Props) {
                   )}>
                     {activeNav.isActive ? "Active" : "Hidden"}
                   </span>
-                  <span className="text-[10px] text-apple-ink-muted-48">
-                    {flatItems.length} {flatItems.length === 1 ? "item" : "items"}
+                  <span className={cn(
+                    "text-[10px] font-medium px-2 py-0.5 rounded-full",
+                    isTopLevelFull
+                      ? "bg-amber-50 text-amber-700 border border-amber-200"
+                      : "bg-zinc-100 text-apple-ink-muted-80"
+                  )}>
+                    {topLevelCount} / {MAX_TOP_LEVEL_NAV_ITEMS} items
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -324,8 +342,21 @@ export function NavigationManager({ storeId }: Props) {
                     {bulkMode ? "Done" : "Select"}
                   </button>
                   <button
-                    onClick={() => setShowAddItem(true)}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-apple-ink px-3 py-1.5 text-[11px] font-medium text-white hover:bg-apple-ink-muted-80"
+                    onClick={() => {
+                      if (isTopLevelFull) {
+                        toast.error("Maximum 6 navigation items allowed.");
+                        return;
+                      }
+                      setShowAddItem(true);
+                    }}
+                    disabled={isTopLevelFull}
+                    title={isTopLevelFull ? "Maximum 6 navigation items allowed." : undefined}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium transition-colors",
+                      isTopLevelFull
+                        ? "bg-zinc-200 text-zinc-400 cursor-not-allowed"
+                        : "bg-apple-ink text-white hover:bg-apple-ink-muted-80"
+                    )}
                   >
                     <Plus className="h-3 w-3" />
                     Add Item

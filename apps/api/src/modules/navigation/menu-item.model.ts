@@ -10,6 +10,8 @@ const menuItemSchema = new Schema(
     parentId: { type: Schema.Types.ObjectId, ref: "MenuItem", default: null, index: true },
 
     title: { type: String, required: true, trim: true },
+    titleEn: { type: String, default: "", trim: true },
+    titleBn: { type: String, default: "", trim: true },
     link: { type: String, default: "" },
     icon: { type: String, default: "" },
     badge: { type: String, default: "" },
@@ -17,7 +19,19 @@ const menuItemSchema = new Schema(
 
     linkType: {
       type: String,
-      enum: ["custom", "page", "collection", "category", "product", "blog", "external"],
+      enum: [
+        "custom",
+        "page",
+        "collection",
+        "category",
+        "subcategory",
+        "brand",
+        "mega_menu",
+        "dropdown",
+        "product",
+        "blog",
+        "external",
+      ],
       default: "custom",
     },
     referenceId: { type: String, default: "" },

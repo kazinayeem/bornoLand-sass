@@ -12,23 +12,6 @@ export type AsyncImageProps = Omit<ImageProps, "onLoad" | "onError"> & {
   onError?: () => void;
 };
 
-const KNOWN_REMOTE_HOSTS = new Set([
-  "res.cloudinary.com",
-  "localhost",
-  "127.0.0.1",
-  "picsum.photos",
-  "placehold.co",
-]);
-
-function isKnownImageSrc(src: string) {
-  if (src.startsWith("/")) return true;
-  try {
-    return KNOWN_REMOTE_HOSTS.has(new URL(src).hostname);
-  } catch {
-    return false;
-  }
-}
-
 export function AsyncImage({
   src,
   alt,
@@ -37,6 +20,7 @@ export function AsyncImage({
   skeletonClassName,
   onError,
   fill,
+  unoptimized,
   ...props
 }: AsyncImageProps) {
   const [loaded, setLoaded] = useState(false);
@@ -49,7 +33,9 @@ export function AsyncImage({
   }, [onError]);
 
   if (!src || error) return <>{fallback}</>;
-  if (!isKnownImageSrc(src)) return <>{fallback}</>;
+
+  const isRelative = src.startsWith("/");
+  const shouldBeUnoptimized = unoptimized ?? (!isRelative && !src.includes("res.cloudinary.com"));
 
   return (
     <span className={cn("relative block h-full w-full overflow-hidden", fill && "absolute inset-0")}>
@@ -63,6 +49,7 @@ export function AsyncImage({
         src={src}
         alt={alt}
         fill={fill}
+        unoptimized={shouldBeUnoptimized}
         {...props}
         onLoad={handleLoad}
         onError={handleError}

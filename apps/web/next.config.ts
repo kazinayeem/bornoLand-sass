@@ -10,29 +10,53 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "res.cloudinary.com"
+        hostname: "images.unsplash.com",
       },
       {
         protocol: "https",
-        hostname: "picsum.photos"
+        hostname: "unsplash.com",
       },
       {
         protocol: "https",
-        hostname: "placehold.co"
+        hostname: "res.cloudinary.com",
+      },
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
+      {
+        protocol: "https",
+        hostname: "placehold.co",
+      },
+      {
+        protocol: "https",
+        hostname: "**.cloudinary.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.shopify.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.imgur.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.ibb.co",
       },
       {
         protocol: "http",
         hostname: "localhost",
-        port: "4000",
-        pathname: "/uploads/**"
       },
       {
         protocol: "http",
         hostname: "127.0.0.1",
-        port: "4000",
-        pathname: "/uploads/**"
-      }
-    ]
+      },
+    ],
   },
   async rewrites() {
     return [
@@ -40,10 +64,10 @@ const nextConfig: NextConfig = {
         source: "/api/:path*",
         // Server-side proxy target. In Docker Compose use http://backend:4000.
         // Browser clients should use NEXT_PUBLIC_API_URL=/api (same-origin).
-        destination: `${process.env.API_URL ?? ""}/:path*`
-      }
+        destination: `${process.env.API_URL ?? ""}/:path*`,
+      },
     ];
-  }
+  },
 };
 
 export default nextConfig;

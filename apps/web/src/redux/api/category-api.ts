@@ -5,6 +5,8 @@ export type Category = {
   _id: string;
   storeId: string;
   name: string;
+  nameEn?: string;
+  nameBn?: string;
   slug: string;
   imageUrl: string;
   imageId?: string | null;
@@ -13,15 +15,20 @@ export type Category = {
   iconUrl?: string;
   iconId?: string | null;
   description: string;
+  descriptionEn?: string;
+  descriptionBn?: string;
   parentId: string | null;
   active: boolean;
   featured: boolean;
   sortOrder: number;
+  productCount?: number;
+  subcategoryCount?: number;
   metaTitle?: string;
   metaDescription?: string;
   createdAt?: string;
   updatedAt?: string;
 };
+
 
 type ApiEnvelope<T> = { success: boolean; data?: T; message?: string };
 
@@ -37,6 +44,8 @@ type CategoryResponse = { category: Category };
 
 type CreateCategoryPayload = {
   name: string;
+  nameEn?: string;
+  nameBn?: string;
   slug: string;
   imageUrl?: string;
   imageId?: string | null;
@@ -45,6 +54,8 @@ type CreateCategoryPayload = {
   iconUrl?: string;
   iconId?: string | null;
   description?: string;
+  descriptionEn?: string;
+  descriptionBn?: string;
   parentId?: string | null;
   active?: boolean;
   featured?: boolean;
@@ -54,14 +65,18 @@ type CreateCategoryPayload = {
 
 type UpdateCategoryPayload = {
   name?: string;
+  nameEn?: string;
+  nameBn?: string;
   slug?: string;
+  description?: string;
+  descriptionEn?: string;
+  descriptionBn?: string;
   imageUrl?: string;
   imageId?: string | null;
   bannerUrl?: string;
   bannerId?: string | null;
   iconUrl?: string;
   iconId?: string | null;
-  description?: string;
   parentId?: string | null;
   active?: boolean;
   featured?: boolean;
@@ -81,6 +96,23 @@ export const categoryApi = baseApi.injectEndpoints({
         return { url: `/categories/${storeId}`, params };
       },
       providesTags: (_result, _error, arg) => [{ type: "Categories", id: typeof arg === "string" ? arg : arg.storeId }],
+    }),
+    getPublicCategories: builder.query<
+      ApiEnvelope<CategoriesResponse>,
+      { storeId: string; page?: number; limit?: number; status?: string } | void
+    >({
+      query: (params) => ({
+        url: "/public/categories",
+        params: {
+          page: 1,
+          limit: 100,
+          status: "active",
+          ...(params ?? {}),
+        },
+      }),
+      providesTags: (_result, _error, arg) => [
+        { type: "Categories", id: arg?.storeId ? `public-${arg.storeId}` : "public" },
+      ],
     }),
     getCategory: builder.query<ApiEnvelope<CategoryResponse>, { storeId: string; id: string }>({
       query: ({ storeId, id }) => ({ url: `/categories/${storeId}/${id}` }),
@@ -107,6 +139,7 @@ export const categoryApi = baseApi.injectEndpoints({
 
 export const {
   useGetCategoriesQuery,
+  useGetPublicCategoriesQuery,
   useGetCategoryQuery,
   useCreateCategoryMutation,
   useUpdateCategoryMutation,

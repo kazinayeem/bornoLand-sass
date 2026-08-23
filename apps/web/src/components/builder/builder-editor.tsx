@@ -47,16 +47,17 @@ import { useRequiredStore } from "@/providers/store-context";
 import { cn } from "@/lib/utils";
 import { PanelLeftOpen, PanelRightOpen, GripVertical } from "lucide-react";
 
-function getDefaultSectionsForPageType(pageType: string): BuilderSection[] {
+import { getThemeById } from "@/themes/registry";
+
+function getDefaultSectionsForPageType(pageType: string, themeId?: string): BuilderSection[] {
   const id = (type: string) => `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   const shared = { visible: true };
-  const home: BuilderSection[] = [
-    { id: id("hero-banner"), type: "hero-banner", label: "Hero Banner", ...shared, props: { headline: "Welcome to Our Store", subheadline: "Discover amazing products curated just for you", buttonText: "Shop Now", buttonLink: "/shop", imageUrl: "", overlayColor: "rgba(15, 23, 42, 0.45)", textAlignment: "left", heroHeight: "md", kicker: "Welcome" } },
-    { id: id("category-grid"), type: "category-grid", label: "Categories", ...shared, props: { title: "Shop by Category", subtitle: "Browse our collections", gridColumns: "4" } },
-    { id: id("featured-products"), type: "featured-products", label: "Featured Products", ...shared, props: { title: "Featured Products", subtitle: "Our best selling items", gridColumns: "4", showBadges: "true", showRatings: "true" } },
-    { id: id("testimonials"), type: "testimonials", label: "Testimonials", ...shared, props: { title: "What Customers Say", subtitle: "Hear from our happy customers", layout: "grid", cardStyle: "default", avatarStyle: "circle" } },
-    { id: id("newsletter"), type: "newsletter", label: "Newsletter", ...shared, props: { headline: "Stay in the Loop", subheadline: "Subscribe to get special offers, free giveaways, and exclusive deals.", buttonText: "Subscribe", placeholderText: "Enter your email" } },
-  ];
+  const theme = getThemeById(themeId);
+  const home: BuilderSection[] = theme.defaultSections.map((s) => ({
+    ...s,
+    id: `${s.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+  }));
+
   const productPage: BuilderSection[] = [
     { id: id("category-banner"), type: "category-banner", label: "Category Banner", ...shared, props: { title: "Shop Our Collection", subtitle: "Find the perfect item for you", bgImage: "", height: "300px", overlayColor: "rgba(15, 23, 42, 0.4)" } },
     { id: id("product-grid"), type: "product-grid", label: "Product Grid", ...shared, props: { title: "All Products", subtitle: "Browse our full catalog", gridColumns: "4", showBadges: "true", showRatings: "true" } },
@@ -325,6 +326,11 @@ export function BuilderEditor() {
     themeRef.current = signature;
     dispatch(setTheme({
       primaryColor: store.theme.primaryColor, secondaryColor: store.theme.secondaryColor,
+      accentColor: (store.theme as any).accentColor,
+      backgroundColor: (store.theme as any).backgroundColor,
+      textColor: (store.theme as any).textColor,
+      mutedTextColor: (store.theme as any).mutedTextColor,
+      borderColor: (store.theme as any).borderColor,
       font: store.theme.font, buttonStyle: store.theme.buttonStyle,
       layoutWidth: store.theme.layoutWidth, darkMode: store.theme.darkMode,
       navbarStyle: store.theme.navbarStyle,
@@ -346,33 +352,79 @@ export function BuilderEditor() {
     }));
   }, [settings, dispatch]);
 
+const THEME_LEVEL_TYPES = new Set([
+  "header-bar", "header", "simple-footer", "ecommerce-footer", "modern-footer", "footer",
+]);
+
+function sanitizeHomepageSections(rawSections: unknown[] | undefined, themeId?: string): BuilderSection[] {
+  if (!rawSections || !Array.isArray(rawSections) || rawSections.length === 0) {
+    return getDefaultSectionsForPageType("home", themeId);
+  }
+
+  // Filter out theme-level header and footer blocks from body canvas sections
+  const filtered = rawSections.filter((sec) => {
+    if (!sec || typeof sec !== "object") return false;
+    const type = String((sec as any).type || "").toLowerCase();
+    if (THEME_LEVEL_TYPES.has(type)) return false;
+    if (type.startsWith("header-") || type.endsWith("-footer")) return false;
+    return true;
+  });
+
+  // Deduplicate section IDs and corrupt entries
+  const seenIds = new Set<string>();
+  const sanitized: BuilderSection[] = [];
+
+  for (const raw of filtered) {
+    const sec = raw as Record<string, any>;
+    let id = sec.id ? String(sec.id) : `${sec.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    if (seenIds.has(id)) {
+      id = `${sec.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    }
+    seenIds.add(id);
+    sanitized.push({
+      id,
+      type: sec.type,
+      label: sec.label || sec.type,
+      visible: sec.visible !== false,
+      props: (sec.props && typeof sec.props === "object") ? sec.props : {},
+      style: sec.style,
+    });
+  }
+
+  if (sanitized.length === 0) {
+    return getDefaultSectionsForPageType("home", themeId);
+  }
+
+  return sanitized;
+}
+
   // ─── Home-only builder routing ─────────────────────────────────────────────
   useEffect(() => {
     if (!routePageSlug || routePageSlug === "home") return;
     router.replace(`/store/${storeSlug}/builder/home`);
   }, [routePageSlug, router, storeSlug]);
 
-  // ─── Load home page only ───────────────────────────────────────────────────
+  // ─── Load home page strictly ───────────────────────────────────────────────
   useEffect(() => {
     const pages = pagesData?.data?.pages;
     if (!pages) return;
     if (routePageSlug && routePageSlug !== "home") return;
 
+    // Strict Home Page resolution (never fall back to contact or about page)
     const homePage =
-      pages.find((page) => page.slug === "/" || page.slug === "home" || page.isHomePage) ??
-      pages[0];
+      pages.find((page) => page.isHomePage || page.slug === "/" || page.slug === "home" || (page as any).pageType === "home");
 
     if (!homePage) {
       if (loadedRef.current === `create:${storeId}`) return;
       loadedRef.current = `create:${storeId}`;
-      createPage({ storeId, title: "Home", slug: "/" })
+      createPage({ storeId, title: "Home", slug: "/", pageType: "home" as any, isSystem: true })
         .unwrap()
         .then((res) => {
           const createdPage = res.data?.page;
           if (!createdPage?._id) return;
           dispatch(loadPage({
-            page: { id: createdPage._id, title: createdPage.title, slug: createdPage.slug, pageType: "home" as any, isSystem: false, description: "", status: "draft" as any },
-            sections: getDefaultSectionsForPageType("home"),
+            page: { id: createdPage._id, title: createdPage.title, slug: createdPage.slug, pageType: "home" as any, isSystem: true, description: "", status: "draft" as any },
+            sections: getDefaultSectionsForPageType("home", (store.theme as any)?.themeId),
             headerSections: getDefaultHeaderSections(),
             footerSections: getDefaultFooterSections(),
           }));
@@ -388,22 +440,28 @@ export function BuilderEditor() {
     if (loadedRef.current === loadKey) return;
     loadedRef.current = loadKey;
 
+    const sanitizedSections = sanitizeHomepageSections(
+      homePage.sections,
+      (store.theme as any)?.themeId
+    );
+
     dispatch(loadPage({
       page: {
         id: homePage._id,
         title: homePage.title,
         slug: homePage.slug,
         pageType: "home" as any,
-        isSystem: homePage.isSystem ?? false,
+        isSystem: homePage.isSystem ?? true,
         description: homePage.description ?? "",
         status: (homePage.status || "draft") as any,
       },
-      sections: (homePage.sections?.length ? homePage.sections : getDefaultSectionsForPageType("home")) as BuilderSection[],
+      sections: sanitizedSections,
       headerSections: (homePage.headerSections?.length ? homePage.headerSections : getDefaultHeaderSections()) as BuilderSection[],
       footerSections: (homePage.footerSections?.length ? homePage.footerSections : getDefaultFooterSections()) as BuilderSection[],
       headerSettings: (homePage.headerSettings as any) ?? {},
       footerSettings: (homePage.footerSettings as any) ?? {},
     }));
+
   }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug]);
 
   // ─── Keyboard shortcuts ────────────────────────────────────────────────────
@@ -503,7 +561,7 @@ export function BuilderEditor() {
     >
       {!fullscreen && (
         <BuilderToolbar
-          onBack={() => router.push(`/store/${storeSlug}/dashboard`)}
+          onBack={() => router.push(`/store/${storeSlug}/design`)}
           saving={saving}
           publishing={publishing}
           isDirty={isDirty}
@@ -567,7 +625,7 @@ export function BuilderEditor() {
             className="min-h-0 flex-shrink-0 overflow-hidden border-l border-apple-hairline/60 bg-apple-canvas/95 backdrop-blur-xl"
             style={{ width: rightPanelWidth }}
           >
-            <PropertiesPanel />
+            <PropertiesPanel storeId={storeId} storeSlug={storeSlug} />
           </div>
         )}
       </div>

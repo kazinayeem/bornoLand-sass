@@ -15,6 +15,16 @@ import type { Product } from "@/redux/api/product-api";
 import { useIsBuilderContext } from "@/components/sections/builder-link";
 import { useDevice } from "@/lib/device-context";
 import { ProductGridSkeleton } from "@/components/loading/storefront-skeletons";
+import { useStoreCategories } from "@/hooks/use-store-categories";
+import { normalizeStoreId } from "@/hooks/use-store-categories";
+import {
+  buildProductSectionQueryArgs,
+  resolveProductCategoryLabel,
+  resolveProductSectionDisplay,
+  resolveProductSectionSource,
+} from "@/lib/storefront/product-section-data";
+import { BuilderLink as Link } from "@/components/sections/builder-link";
+import { ArrowRight } from "lucide-react";
 
 const PAGE_SIZE_OPTIONS = [4, 8, 12, 16, 20, 24, 32, 48];
 
@@ -34,6 +44,17 @@ type StorefrontProductGridProps = {
   showLoadMore?: boolean;
   paginationMode?: PaginationMode;
   allowRowsPerPage?: boolean;
+  showBadges?: boolean;
+  showRatings?: boolean;
+  showViewNow?: boolean;
+  viewNowText?: string;
+  showViewAll?: boolean;
+  viewAllText?: string;
+  viewAllLink?: string;
+  productSource?: string;
+  categorySlug?: string;
+  productIds?: string;
+  sectionType?: string;
   className?: string;
 };
 
@@ -67,6 +88,17 @@ export function StorefrontProductGrid({
   showLoadMore = false,
   paginationMode = "pages",
   allowRowsPerPage = false,
+  showBadges = true,
+  showRatings = true,
+  showViewNow = false,
+  viewNowText = "View Now",
+  showViewAll = false,
+  viewAllText = "View All",
+  viewAllLink = "/shop",
+  productSource,
+  categorySlug,
+  productIds,
+  sectionType = "product-grid",
   className,
 }: StorefrontProductGridProps) {
   const isBuilder = useIsBuilderContext();
@@ -74,8 +106,24 @@ export function StorefrontProductGrid({
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
-  const { store, categories } = useTenant();
+  const { store } = useTenant();
   const { classes, primaryColor } = useStorefrontSurface();
+  const storeId = normalizeStoreId(store?._id ?? (store as { id?: string } | undefined)?.id);
+  const { categories } = useStoreCategories(storeId);
+
+  const source = resolveProductSectionSource(sectionType, productSource);
+  const sectionProps = useMemo(
+    () => ({
+      productCount: String(productCount),
+      categorySlug,
+      productIds,
+    }),
+    [productCount, categorySlug, productIds],
+  );
+  const sourceQuery = useMemo(
+    () => buildProductSectionQueryArgs(source, sectionProps, categories),
+    [source, sectionProps, categories],
+  );
 
   const activeCategorySlug = typeof params?.slug === "string" ? params.slug : "";
   const queryFromRoute = searchParams.get("q") || searchParams.get("search") || "";
@@ -113,11 +161,12 @@ export function StorefrontProductGrid({
       page,
       limit: pageSize,
       search: search.trim() || undefined,
-      category: selectedCategory || undefined,
-      status: "active",
+      category: selectedCategory || sourceQuery.category || undefined,
+      status: "active" as const,
+      featured: sourceQuery.featured,
       ...sortArgs,
     };
-  }, [page, pageSize, search, selectedCategory, sort]);
+  }, [page, pageSize, search, selectedCategory, sort, sourceQuery.category, sourceQuery.featured]);
 
   const liveQuery = useGetPublicProductsQuery(queryArgs, { skip: isBuilder });
   const builderQuery = useGetProductsQuery({ storeId: store._id, ...queryArgs }, { skip: !isBuilder || !store._id });
@@ -125,7 +174,18 @@ export function StorefrontProductGrid({
   const isLoading = isBuilder ? builderQuery.isLoading || builderQuery.isFetching : liveQuery.isLoading || liveQuery.isFetching;
 
   const rawProducts = data?.data?.products;
-  const items = useMemo(() => rawProducts ?? [], [rawProducts]);
+  const items = useMemo(() => {
+    const rows = rawProducts ?? [];
+    if (source === "manual" || source === "best-sellers") {
+      return resolveProductSectionDisplay(rows, {
+        sectionType,
+        productSource: source,
+        productIds,
+        limit: pageSize,
+      });
+    }
+    return rows;
+  }, [rawProducts, source, sectionType, productIds, pageSize]);
   const pagination = data?.data?.pagination;
   const total = pagination?.total ?? data?.data?.total ?? items.length;
   const totalPages = Math.max(1, pagination?.totalPages ?? data?.data?.totalPages ?? 1);
@@ -364,7 +424,14 @@ export function StorefrontProductGrid({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.03 }}
                     >
-                      <ProductCard product={product} />
+                      <ProductCard
+                        product={product}
+                        showBadges={showBadges}
+                        showRatings={showRatings}
+                        showViewNow={showViewNow}
+                        viewNowText={viewNowText}
+                        categoryLabel={resolveProductCategoryLabel(product, categories)}
+                      />
                     </motion.div>
                   ))}
                 </motion.div>
@@ -401,6 +468,18 @@ export function StorefrontProductGrid({
 
           {effectiveMode === "infinite" && page < totalPages ? (
             <div ref={infiniteSentinelRef} className="h-10 w-full" aria-hidden="true" />
+          ) : null}
+
+          {showViewAll && displayProducts.length > 0 ? (
+            <div className="flex justify-center pt-6">
+              <Link
+                href={viewAllLink}
+                className="group inline-flex items-center gap-2 rounded-full border border-zinc-300 bg-white px-7 py-3 text-sm font-semibold text-zinc-900 shadow-sm transition-all duration-200 hover:border-zinc-400 hover:bg-zinc-50 hover:shadow active:scale-95"
+              >
+                <span>{viewAllText}</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
           ) : null}
         </>
       )}

@@ -6,6 +6,7 @@ import { ChevronRight, Layers, ShoppingBag } from "lucide-react";
 import { StorefrontProductGrid } from "@/components/storefront/storefront-product-grid";
 import { StorefrontPage } from "@/components/storefront/storefront-ui";
 import { useTenant } from "@/providers/tenant-provider";
+import { useStoreCategories } from "@/hooks/use-store-categories";
 import { SmartImage } from "@/components/ui/smart-image";
 
 type CategoryItem = {
@@ -23,8 +24,9 @@ type CategoryPageClientProps = {
 };
 
 export function CategoryPageClient({ slugs }: CategoryPageClientProps) {
-  const { categories, store } = useTenant();
-  const catList = (categories ?? []) as CategoryItem[];
+  const { store } = useTenant();
+  const { categories, isLoading } = useStoreCategories();
+  const catList = categories as CategoryItem[];
 
   // Resolve hierarchy from slug segments
   const hierarchy = useMemo(() => {

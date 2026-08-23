@@ -101,7 +101,15 @@ export function getStoreSlugHeader(host?: string): string | null {
   const raw =
     host ??
     (typeof window !== "undefined" ? window.location.host : "");
-  return resolveTenantFromHost(raw).storeSlug;
+  const fromHost = resolveTenantFromHost(raw).storeSlug;
+  if (fromHost) return fromHost;
+
+  if (typeof window !== "undefined") {
+    const pathMatch = window.location.pathname.match(/^\/site\/([^/]+)/);
+    if (pathMatch?.[1]) return pathMatch[1];
+  }
+
+  return null;
 }
 
 export function getStorefrontTenantHeaders(host?: string): Record<string, string> {

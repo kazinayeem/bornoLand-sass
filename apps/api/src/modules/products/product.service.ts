@@ -116,7 +116,27 @@ function buildProductListFilter(storeId: string, query: ListQueryParams) {
       ],
     });
   }
+  if ((query as any).categoryId && mongoose.Types.ObjectId.isValid(String((query as any).categoryId))) {
+    clauses.push({
+      $or: [
+        { categoryId: new mongoose.Types.ObjectId(String((query as any).categoryId)) },
+        { categoryIds: new mongoose.Types.ObjectId(String((query as any).categoryId)) },
+      ],
+    });
+  }
+  if ((query as any).subcategoryId && mongoose.Types.ObjectId.isValid(String((query as any).subcategoryId))) {
+    clauses.push({
+      $or: [
+        { subcategoryId: new mongoose.Types.ObjectId(String((query as any).subcategoryId)) },
+        { categoryIds: new mongoose.Types.ObjectId(String((query as any).subcategoryId)) },
+      ],
+    });
+  }
+  if ((query as any).brandId && mongoose.Types.ObjectId.isValid(String((query as any).brandId))) {
+    clauses.push({ brandId: new mongoose.Types.ObjectId(String((query as any).brandId)) });
+  }
   if (query.brand) clauses.push({ brand: query.brand });
+
   if (query.featured === "true") clauses.push({ featured: true });
   if (query.featured === "false") clauses.push({ featured: false });
   if (query.stockStatus === "in") clauses.push({ stock: { $gt: 0 } });

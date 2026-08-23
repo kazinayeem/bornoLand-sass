@@ -55,6 +55,12 @@ registerSectionComponent(
   dynamic(() => import("./discount-banner").then((m) => ({ default: m.DiscountBanner })), { ssr: false }),
 );
 registerSectionComponent("deal-of-day", dynamic(() => import("./deal-of-day").then((m) => ({ default: m.DealOfDay })), { ssr: false }));
+registerSectionComponent(["combo-deals", "combo-offers"], dynamic(() => import("./combo-deals").then((m) => ({ default: m.ComboDeals })), { ssr: false }));
+registerSectionComponent(["brand-showcase", "brands", "brand-grid"], dynamic(() => import("./brand-showcase").then((m) => ({ default: m.BrandShowcase })), { ssr: false }));
+registerSectionComponent(["quick-service-links", "service-links"], dynamic(() => import("./quick-service-links").then((m) => ({ default: m.QuickServiceLinks })), { ssr: false }));
+registerSectionComponent(["seo-content", "seo-text"], dynamic(() => import("./seo-content").then((m) => ({ default: m.SeoContentSection })), { ssr: false }));
+registerSectionComponent(["store-locator-banner", "store-banner"], dynamic(() => import("./store-locator-banner").then((m) => ({ default: m.StoreLocatorBanner })), { ssr: false }));
+
 
 // ─── Trust ──────────────────────────────────────────────────────────────────
 registerSectionComponent("testimonials", dynamic(() => import("./testimonials").then((m) => ({ default: m.Testimonials })), { ssr: false }));

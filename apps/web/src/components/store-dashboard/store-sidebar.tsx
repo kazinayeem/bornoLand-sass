@@ -79,9 +79,9 @@ const mainLinks = [
   { href: "/coupons", label: "Coupons", icon: Ticket, featureKey: "coupons" },
   { href: "/customer-messages", label: "Messages", icon: Mail, featureKey: "cms" },
   { href: "/media", label: "Media", icon: Image, featureKey: "media" },
-  { href: "/builder", label: "Builder", icon: Sparkles, featureKey: "builder" },
-  { href: "/theme", label: "Theme", icon: Palette },
+  { href: "/design", label: "Design", icon: Palette },
   { href: "/marketing", label: "Marketing", icon: Megaphone, featureKey: "marketing", comingSoon: true },
+
   { href: "/apps", label: "Apps", icon: Blocks, featureKey: "apps", comingSoon: true },
 ];
 

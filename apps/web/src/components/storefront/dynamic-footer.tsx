@@ -87,6 +87,7 @@ function BrandBlock({
             alt={branding.storeName}
             width={32}
             height={32}
+            unoptimized
             className="h-8 w-8 rounded-apple-sm object-contain"
           />
         ) : (

@@ -1,4 +1,5 @@
 import { baseApi } from "@/redux/api/base-api";
+import { assertApiSuccess, type ApiEnvelope as SharedApiEnvelope } from "@/lib/api/envelope";
 
 // ─── Page Types ──────────────────────────────────────────────────────────────
 
@@ -71,6 +72,11 @@ export type StorePageTheme = {
 };
 
 export type HeaderSettings = {
+  enabled?: boolean;
+  visible?: boolean;
+  template?: string;
+  templateId?: string;
+  headerTemplate?: string;
   logo?: string;
   logoWidth?: number | string;
   logoHeight?: number | string;
@@ -121,14 +127,34 @@ export type HeaderSettings = {
   showProfile?: boolean;
   showLanguageSwitcher?: boolean;
   showCurrencySwitcher?: boolean;
+  showAnnouncement?: boolean;
+  announcementText?: string;
   announcementBar?: string;
   topBar?: string;
   desktopLayout?: string;
   mobileLayout?: string;
+  maxVisibleCategories?: number;
+  maxVisibleNavigationItems?: number;
+  maxVisibleItems?: number;
+  showMoreMenu?: boolean;
+  enableCategoryHover?: boolean;
+  showAllCategoriesButton?: boolean;
+  showUtilityLinks?: boolean;
+  categorySource?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
 };
 
 export type FooterSettings = {
+  enabled?: boolean;
+  visible?: boolean;
   template?: string;
+  templateId?: string;
+  footerTemplate?: string;
+  mobileLayout?: string;
+  copyrightText?: string;
   showNewsletter?: boolean;
   showSocial?: boolean;
   showPaymentIcons?: boolean;
@@ -265,6 +291,10 @@ export const storePageApi = baseApi.injectEndpoints({
       { id: string; storeId: string; data: Record<string, unknown> }
     >({
       query: ({ id, storeId, data }) => ({ url: `/store-pages/${id}`, method: "PUT", body: { ...data, storeId } }),
+      transformResponse: (response: SharedApiEnvelope<{ page: StorePage }>) => {
+        assertApiSuccess(response, "Failed to update store page");
+        return response;
+      },
       invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }, { type: "StorePages" }],
     }),
 
@@ -345,7 +375,11 @@ export const storePageApi = baseApi.injectEndpoints({
       }
     >({
       query: ({ id, storeId, ...data }) => ({ url: `/store-pages/${id}/draft`, method: "PUT", body: { storeId, ...data } }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+      invalidatesTags: (_r, _e, { id, storeId }) => [
+        { type: "StorePage", id },
+        { type: "StorePages", id: storeId },
+        { type: "StorePages" },
+      ],
     }),
 
     reorderStorePages: builder.mutation<
@@ -391,7 +425,7 @@ export const storePageApi = baseApi.injectEndpoints({
         method: "PUT",
         body: { storeId, headerSections },
       }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+      invalidatesTags: (_r, _e, { id, storeId }) => [{ type: "StorePage", id }, { type: "StorePages", id: storeId }, { type: "StorePages" }],
     }),
 
     updatePageFooterSections: builder.mutation<
@@ -403,7 +437,7 @@ export const storePageApi = baseApi.injectEndpoints({
         method: "PUT",
         body: { storeId, footerSections },
       }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+      invalidatesTags: (_r, _e, { id, storeId }) => [{ type: "StorePage", id }, { type: "StorePages", id: storeId }, { type: "StorePages" }],
     }),
 
     updatePageHeaderSettings: builder.mutation<
@@ -415,7 +449,7 @@ export const storePageApi = baseApi.injectEndpoints({
         method: "PUT",
         body: { storeId, headerSettings },
       }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+      invalidatesTags: (_r, _e, { id, storeId }) => [{ type: "StorePage", id }, { type: "StorePages", id: storeId }, { type: "StorePages" }],
     }),
 
     updatePageFooterSettings: builder.mutation<
@@ -427,7 +461,7 @@ export const storePageApi = baseApi.injectEndpoints({
         method: "PUT",
         body: { storeId, footerSettings },
       }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+      invalidatesTags: (_r, _e, { id, storeId }) => [{ type: "StorePage", id }, { type: "StorePages", id: storeId }, { type: "StorePages" }],
     }),
 
     // ─── Versions ──────────────────────────────────────────────────────────

@@ -158,6 +158,10 @@
 html,
 body {
   min-height: 100%;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 html {
@@ -775,13 +779,38 @@ svg {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: clip;
+  /* Do NOT set overflow-x here — it creates a containing block and breaks sticky headers */
   max-width: 100%;
+  width: 100%;
+  min-width: 0;
 }
 
 [data-surface="storefront"] img,
 [data-surface="storefront"] video {
+  display: block;
   max-width: 100%;
+  height: auto;
+}
+
+/* Global header never exceeds viewport/container */
+[data-surface="storefront"] [data-global-header] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+[data-surface="storefront"] [data-global-header] nav {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Hero / body content — clip horizontal overflow without wrapping sticky header */
+[data-surface="storefront"] main,
+[data-surface="storefront"] [data-storefront-canvas] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
 }
 
 [data-surface="storefront"] .storefront-prose {

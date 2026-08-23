@@ -12,6 +12,8 @@ import {
   useUpdateProductMutation,
 } from "@/redux/api/product-api";
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
+import { useGetBrandsQuery } from "@/redux/api/brand-api";
+
 import { VariantsPanel } from "@/components/workspace/variants-panel";
 import { ProductEditorActionBar } from "@/components/products/product-editor-action-bar";
 import { ProductEditorSidebar } from "@/components/products/product-editor-sidebar";
@@ -73,6 +75,9 @@ export function ProductEditor({
   });
   const { data: catsData } = useGetCategoriesQuery(storeId);
   const categories = catsData?.data?.categories ?? [];
+  const { data: brandsData } = useGetBrandsQuery(storeId);
+  const brands = brandsData?.data?.brands ?? [];
+
 
   const [createProduct] = useCreateProductMutation();
   const [updateProduct] = useUpdateProductMutation();
@@ -358,6 +363,7 @@ export function ProductEditor({
             product={product}
             storeName={storeName}
             categories={categories}
+            brands={brands}
             onChange={patchForm}
             onDuplicate={isEdit ? handleDuplicate : undefined}
             onDelete={isEdit ? () => setShowDeleteConfirm(true) : undefined}

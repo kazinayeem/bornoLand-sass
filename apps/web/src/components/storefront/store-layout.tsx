@@ -9,7 +9,7 @@ type StoreLayoutProps = Omit<StorefrontShellProps, "children"> & {
 
 /**
  * Single shared storefront layout used by every tenant page.
- * Renders one Header (StoreNavbar), page content, and one Footer.
+ * Renders one Header (ThemeHeader), page content, and one Footer (ThemeFooter).
  */
 export function StoreLayout({ children, mainClassName, ...shellProps }: StoreLayoutProps) {
   return (

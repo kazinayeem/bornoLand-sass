@@ -1,6 +1,8 @@
+import mongoose from "mongoose";
 import { connectDatabase } from "../../common/database/connection.js";
 import { CategoryModel } from "../../models/category.model.js";
 import { ProductModel } from "../../models/product.model.js";
+
 import { StoreModel } from "../../models/store.model.js";
 import { parseListQuery, paginatedResponse, buildTextSearchFilter } from "../../common/utils/pagination.js";
 import { checkLimit } from "../features/feature-access.service.js";
@@ -71,12 +73,37 @@ export async function getCategories(storeId: string, query: Record<string, unkno
 
 
   const sort = params.sort ?? { sortOrder: 1, name: 1 };
-  const [categories, total] = await Promise.all([
+  const [categories, total, productCounts, subcategoryCounts] = await Promise.all([
     CategoryModel.find(filter).sort(sort).skip(params.skip).limit(params.limit).lean(),
     CategoryModel.countDocuments(filter),
+    ProductModel.aggregate([
+      { $match: { storeId: new mongoose.Types.ObjectId(storeId) } },
+      { $unwind: "$categoryIds" },
+      { $group: { _id: "$categoryIds", count: { $sum: 1 } } },
+    ]),
+    CategoryModel.aggregate([
+      { $match: { storeId: new mongoose.Types.ObjectId(storeId), parentId: { $ne: null } } },
+      { $group: { _id: "$parentId", count: { $sum: 1 } } },
+    ]),
   ]);
 
-  const paginated = paginatedResponse(categories, total, params);
+  const productCountMap = new Map<string, number>();
+  for (const item of productCounts) {
+    if (item._id) productCountMap.set(String(item._id), item.count);
+  }
+
+  const subcategoryCountMap = new Map<string, number>();
+  for (const item of subcategoryCounts) {
+    if (item._id) subcategoryCountMap.set(String(item._id), item.count);
+  }
+
+  const enriched = categories.map((c) => ({
+    ...c,
+    productCount: productCountMap.get(String(c._id)) ?? 0,
+    subcategoryCount: subcategoryCountMap.get(String(c._id)) ?? 0,
+  }));
+
+  const paginated = paginatedResponse(enriched, total, params);
   return {
     ok: true as const,
     data: {
@@ -89,6 +116,46 @@ export async function getCategories(storeId: string, query: Record<string, unkno
     },
   };
 }
+
+/** Attach product/subcategory counts to category rows (storefront + tenant resolver). */
+export async function enrichCategoriesWithCounts<T extends Record<string, unknown>>(
+  storeId: string,
+  categories: T[],
+): Promise<Array<T & { productCount: number; subcategoryCount: number }>> {
+  if (categories.length === 0) return [];
+
+  await connectDatabase();
+  const storeObjectId = new mongoose.Types.ObjectId(storeId);
+
+  const [productCounts, subcategoryCounts] = await Promise.all([
+    ProductModel.aggregate([
+      { $match: { storeId: storeObjectId } },
+      { $unwind: "$categoryIds" },
+      { $group: { _id: "$categoryIds", count: { $sum: 1 } } },
+    ]),
+    CategoryModel.aggregate([
+      { $match: { storeId: storeObjectId, parentId: { $ne: null } } },
+      { $group: { _id: "$parentId", count: { $sum: 1 } } },
+    ]),
+  ]);
+
+  const productCountMap = new Map<string, number>();
+  for (const item of productCounts) {
+    if (item._id) productCountMap.set(String(item._id), item.count);
+  }
+
+  const subcategoryCountMap = new Map<string, number>();
+  for (const item of subcategoryCounts) {
+    if (item._id) subcategoryCountMap.set(String(item._id), item.count);
+  }
+
+  return categories.map((c) => ({
+    ...c,
+    productCount: productCountMap.get(String(c._id)) ?? 0,
+    subcategoryCount: subcategoryCountMap.get(String(c._id)) ?? 0,
+  }));
+}
+
 
 export async function getCategory(categoryId: string, storeId: string) {
   await connectDatabase();

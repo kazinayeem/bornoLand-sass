@@ -10,10 +10,25 @@ export type ThemeData = {
   buttonStyle: string; layoutWidth: string; darkMode: boolean; navbarStyle: string;
 };
 
+export type BrandData = {
+  _id: string;
+  storeId: string;
+  name: string;
+  nameEn?: string;
+  nameBn?: string;
+  slug: string;
+  logoUrl?: string;
+  description?: string;
+  active: boolean;
+  featured?: boolean;
+  sortOrder?: number;
+};
+
 export type StoreData = {
   _id: string; name: string; slug: string; subdomain: string;
   description: string; theme: ThemeData; logoUrl?: string;
   shortName?: string; tagline?: string; faviconUrl?: string;
+  phone?: string; email?: string; defaultLanguage?: string;
 };
 
 export type ProductData = {
@@ -26,7 +41,7 @@ export type ProductData = {
 };
 
 export type CategoryData = {
-  _id: string; storeId: string; name: string; slug: string;
+  _id: string; storeId: string; name: string; nameEn?: string; nameBn?: string; slug: string;
   imageUrl: string; description: string; parentId: string | null;
   active: boolean; featured: boolean; sortOrder: number;
   createdAt?: string; updatedAt?: string;
@@ -111,6 +126,7 @@ export type TenantContextType = {
   theme: ThemeData;
   products: ProductData[];
   categories: CategoryData[];
+  brands?: BrandData[];
   settings: StoreSettingsData;
   sliders: HomepageSliderData[];
   navigations: NavigationData[];

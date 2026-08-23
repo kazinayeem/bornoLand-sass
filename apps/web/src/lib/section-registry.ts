@@ -59,11 +59,36 @@ const G = {
   video: (k: string, l: string): SectionPropDef => ({ label: l, type: "video", default: "", group: "content" }),
   number: (k: string, l: string, d: string, g: SectionPropDef["group"] = "content"): SectionPropDef =>
     ({ label: l, type: "number", default: d, group: g }),
+  productCounts: (defaultCount = "8"): SectionPropDef => ({
+    label: "Number of Products",
+    type: "select",
+    default: defaultCount,
+    options: [
+      { value: "4", label: "4 Products" },
+      { value: "6", label: "6 Products" },
+      { value: "8", label: "8 Products" },
+      { value: "10", label: "10 Products" },
+      { value: "12", label: "12 Products" },
+      { value: "16", label: "16 Products" },
+      { value: "20", label: "20 Products" },
+      { value: "24", label: "24 Products" },
+    ],
+    group: "content",
+  }),
   gridCols: (): SectionPropDef => ({
     label: "Grid Columns", type: "grid-columns", default: "4",
-    options: [{ value: "2", label: "2" }, { value: "3", label: "3" }, { value: "4", label: "4" }, { value: "5", label: "5" }, { value: "6", label: "6" }], group: "layout",
+    options: [
+      { value: "2", label: "2 Columns" },
+      { value: "3", label: "3 Columns" },
+      { value: "4", label: "4 Columns" },
+      { value: "5", label: "5 Columns" },
+      { value: "6", label: "6 Columns" },
+      { value: "7", label: "7 Columns" },
+    ],
+    group: "layout",
   }),
 };
+
 
 // ─── Common prop sets ────────────────────────────────────────────
 
@@ -231,7 +256,7 @@ export const sectionRegistry: SectionDef[] = [
   {
     type: "featured-products", label: "Featured Products", category: "products", icon: "Star", description: "Display featured/picked products",
     props: merge(
-      { title: G.text("title", "Section Title", "Featured Products"), subtitle: G.text("subtitle", "Subtitle", "Handpicked favorites"), gridColumns: G.gridCols(), productCount: G.number("productCount", "Max Products", "8"), showBadges: G.toggle("showBadges", "Show Badges", "true"), showRatings: G.toggle("showRatings", "Show Ratings", "true"), showViewAll: G.toggle("showViewAll", "Show View All Link", "true"), viewAllLink: G.text("viewAllLink", "View All Link", "/shop") },
+      { title: G.text("title", "Section Title", "Featured Products"), subtitle: G.text("subtitle", "Subtitle", "Handpicked favorites"), gridColumns: G.gridCols(), productCount: G.number("productCount", "Max Products", "8"), productSource: G.select("productSource", "Product Source", "featured", [{ value: "featured", label: "Featured products" }, { value: "best-sellers", label: "Best sellers" }, { value: "new-arrivals", label: "New arrivals" }, { value: "manual", label: "Manual selection" }, { value: "category", label: "By category" }], "content"), showBadges: G.toggle("showBadges", "Show Badges", "true"), showRatings: G.toggle("showRatings", "Show Ratings", "true"), showViewNow: G.toggle("showViewNow", "Show View Now", "false"), viewNowText: G.text("viewNowText", "View Now Text", "View Now"), showAddToCart: G.toggle("showAddToCart", "Show Add to Cart", "true"), showViewAll: G.toggle("showViewAll", "Show View All Link", "true"), viewAllText: G.text("viewAllText", "View All Text", "View All"), viewAllLink: G.text("viewAllLink", "View All Link", "/shop") },
       layout, bg, typography,
     ),
   },
@@ -306,6 +331,21 @@ export const sectionRegistry: SectionDef[] = [
           { value: "load-more", label: "Load More" },
           { value: "infinite", label: "Infinite Scroll" },
         ], "layout"),
+        productSource: G.select("productSource", "Product Source", "featured", [
+          { value: "featured", label: "Featured products" },
+          { value: "best-sellers", label: "Best sellers" },
+          { value: "new-arrivals", label: "New arrivals" },
+          { value: "manual", label: "Manual selection" },
+          { value: "category", label: "By category" },
+        ], "content"),
+        showBadges: G.toggle("showBadges", "Show Badges", "true"),
+        showRatings: G.toggle("showRatings", "Show Ratings", "true"),
+        showViewNow: G.toggle("showViewNow", "Show View Now", "false"),
+        showAddToCart: G.toggle("showAddToCart", "Show Add to Cart", "true"),
+        viewNowText: G.text("viewNowText", "View Now Text", "View Now"),
+        showViewAll: G.toggle("showViewAll", "Show View All", "false"),
+        viewAllText: G.text("viewAllText", "View All Text", "View All"),
+        viewAllLink: G.text("viewAllLink", "View All Link", "/shop"),
       },
       layout, bg, typography,
     ),
@@ -378,7 +418,34 @@ export const sectionRegistry: SectionDef[] = [
   {
     type: "category-grid", label: "Category Grid", category: "category", icon: "Grid3x3", description: "Grid layout for categories",
     props: merge(
-      { title: G.text("title", "Section Title", "Shop by Category"), subtitle: G.text("subtitle", "Subtitle", "Browse our collections"), gridColumns: G.gridCols(), cardStyle: G.select("cardStyle", "Card Style", "default", [{ value: "default", label: "Default" }, { value: "minimal", label: "Minimal" }, { value: "bordered", label: "Bordered" }, { value: "elevated", label: "Elevated" }], "layout"), showProductCount: G.toggle("showProductCount", "Show Product Count", "true") },
+      {
+        title: G.text("title", "Section Title", "Shop by Category"),
+        subtitle: G.text("subtitle", "Subtitle", "Browse our collections"),
+        categorySource: G.select("categorySource", "Content Source", "all", [
+          { value: "all", label: "All Categories" },
+          { value: "selected", label: "Selected Categories" },
+          { value: "featured", label: "Featured Categories" },
+          { value: "popular", label: "Popular Categories" },
+          { value: "latest", label: "Latest Categories" },
+        ]),
+        categoryCount: G.select("categoryCount", "Max Categories", "6", [
+          { value: "4", label: "4" },
+          { value: "6", label: "6" },
+          { value: "8", label: "8" },
+          { value: "10", label: "10" },
+          { value: "12", label: "12" },
+        ]),
+        categoryIds: G.text("categoryIds", "Selected Category IDs", "[]"),
+        gridColumns: G.gridCols(),
+        cardStyle: G.select("cardStyle", "Card Style", "card", [
+          { value: "card", label: "Rounded Card" },
+          { value: "circle", label: "Circular Icon" },
+          { value: "minimal", label: "Minimalist Pill" },
+        ], "layout"),
+        showImage: G.toggle("showImage", "Show Category Image", "true"),
+        showName: G.toggle("showName", "Show Category Name", "true"),
+        showProductCount: G.toggle("showProductCount", "Show Product Count", "true"),
+      },
       layout, bg, typography,
     ),
   },
@@ -1048,7 +1115,90 @@ export const sectionRegistry: SectionDef[] = [
       layout, typography,
     ),
   },
+  {
+    type: "combo-deals", label: "Combo Deals", category: "promotions", icon: "Package", description: "Discounted product bundles with bundled item breakdown and high-conversion purchase buttons",
+    props: merge(
+      {
+        title: G.text("title", "Section Title", "Exclusive Combo Deals"),
+        subtitle: G.text("subtitle", "Subtitle", "Save more with our bundled packages"),
+        productCount: G.select("productCount", "Number of Combos", "3", [{ value: "2", label: "2" }, { value: "3", label: "3" }, { value: "4", label: "4" }, { value: "6", label: "6" }]),
+        gridColumns: G.select("gridColumns", "Grid Columns", "3", [{ value: "2", label: "2" }, { value: "3", label: "3" }, { value: "4", label: "4" }], "layout"),
+      },
+      layout, bg, typography,
+    ),
+  },
+  {
+    type: "brand-showcase", label: "Brands & Partners", category: "trust", icon: "Award", description: "Grid or carousel of partner brands, verified farms, and official distributors",
+    props: merge(
+      {
+        title: G.text("title", "Section Title", "Our Trusted Brands & Partners"),
+        subtitle: G.text("subtitle", "Subtitle", "Official warranty & authentic products guaranteed"),
+        brandSource: G.select("brandSource", "Content Source", "all", [
+          { value: "all", label: "All Brands" },
+          { value: "selected", label: "Selected Brands" },
+          { value: "featured", label: "Featured Brands" },
+          { value: "popular", label: "Popular Brands" },
+        ]),
+        brandCount: G.select("brandCount", "Max Brands", "6", [
+          { value: "4", label: "4" },
+          { value: "6", label: "6" },
+          { value: "8", label: "8" },
+          { value: "10", label: "10" },
+          { value: "12", label: "12" },
+        ]),
+        brandIds: G.text("brandIds", "Selected Brand IDs", "[]"),
+        gridColumns: G.gridCols(),
+        showLogo: G.toggle("showLogo", "Show Brand Logo", "true"),
+        showName: G.toggle("showName", "Show Brand Name", "true"),
+      },
+      layout, bg, typography,
+    ),
+  },
+  {
+    type: "quick-service-links", label: "Quick Service Links", category: "layout", icon: "Zap", description: "Tech & retail service shortcuts (Laptop Finder, Complaint RMA, Online Service, Store Locations)",
+    props: merge(
+      {
+        item1Title: G.text("item1Title", "Item 1 Title", "Laptop Finder"),
+        item1Subtitle: G.text("item1Subtitle", "Item 1 Subtitle", "Find your ideal laptop"),
+        item1Link: G.text("item1Link", "Item 1 Link", "/laptop-finder"),
+        item2Title: G.text("item2Title", "Item 2 Title", "Raise a Complaint"),
+        item2Subtitle: G.text("item2Subtitle", "Item 2 Subtitle", "Fast RMA & warranty claim"),
+        item2Link: G.text("item2Link", "Item 2 Link", "/support"),
+        item3Title: G.text("item3Title", "Item 3 Title", "Online Service"),
+        item3Subtitle: G.text("item3Subtitle", "Item 3 Subtitle", "Expert PC diagnostic"),
+        item3Link: G.text("item3Link", "Item 3 Link", "/service"),
+        item4Title: G.text("item4Title", "Item 4 Title", "20+ Physical Stores"),
+        item4Subtitle: G.text("item4Subtitle", "Item 4 Subtitle", "Experience before buying"),
+        item4Link: G.text("item4Link", "Item 4 Link", "/branches"),
+      },
+      layout, bg, typography,
+    ),
+  },
+  {
+    type: "seo-content", label: "SEO Content Block", category: "content", icon: "BookOpen", description: "Structured long-form expandable SEO content block for store authority and organic rankings",
+    props: merge(
+      {
+        title: G.text("title", "Section Title", "Leading Computer, Laptop & Gaming PC Shop in Bangladesh"),
+        contentSnippet: G.textarea("contentSnippet", "Content Snippet", "Technology has become an essential part of modern life..."),
+        showFullContent: G.toggle("showFullContent", "Always Expanded", "false"),
+      },
+      layout, bg, typography,
+    ),
+  },
+  {
+    type: "store-locator-banner", label: "Store Locator Banner", category: "marketing", icon: "Store", description: "High-impact retail store locator banner highlighting nationwide physical presence",
+    props: merge(
+      {
+        headline: G.text("headline", "Headline", "20+ Physical Stores Across Bangladesh"),
+        subheadline: G.text("subheadline", "Subheadline", "Experience products hands-on before you buy."),
+        buttonText: G.text("buttonText", "Button Text", "Find Nearest Store"),
+        buttonLink: G.text("buttonLink", "Button Link", "/branches"),
+      },
+      layout, bg, typography,
+    ),
+  },
 ];
+
 
 // ─── BUILD MAP ────────────────────────────────────────────────────
 

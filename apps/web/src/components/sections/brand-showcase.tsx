@@ -50,22 +50,27 @@ export function BrandShowcase({ section }: { section: SectionData }) {
       list = list.sort((a, b) => (b.sortOrder ?? 0) - (a.sortOrder ?? 0));
     }
 
-    // Fallback demo brands if brand list is empty
-    if (list.length === 0) {
-      return [
-        { _id: "b1", name: "Apple", slug: "apple", logoUrl: "" },
-        { _id: "b2", name: "Samsung", slug: "samsung", logoUrl: "" },
-        { _id: "b3", name: "Sony", slug: "sony", logoUrl: "" },
-        { _id: "b4", name: "Asus", slug: "asus", logoUrl: "" },
-        { _id: "b5", name: "Dell", slug: "dell", logoUrl: "" },
-        { _id: "b6", name: "HP", slug: "hp", logoUrl: "" },
-      ].slice(0, limit);
-    }
-
     return list.slice(0, limit);
   }, [rawBrands, source, selectedIds, limit]);
 
-  if (displayBrands.length === 0) return null;
+  if (displayBrands.length === 0) {
+    return (
+      <SectionWrapper section={section}>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 text-center">
+          <SectionTitle
+            title={p.title || "Our Trusted Brands & Partners"}
+            subtitle={p.subtitle || "No brands yet — add brands in your store dashboard."}
+            textColor={p.textColor}
+            textAlignment={p.textAlignment}
+          />
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-dashed border-zinc-300 px-4 py-2 text-xs text-zinc-500">
+            <Tag className="h-3.5 w-3.5" />
+            Empty brand collection
+          </div>
+        </div>
+      </SectionWrapper>
+    );
+  }
 
   const gridClass =
     cols === "3"

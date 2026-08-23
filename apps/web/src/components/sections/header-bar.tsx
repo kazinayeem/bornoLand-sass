@@ -1,13 +1,14 @@
 "use client";
 
-import { SectionWrapper, type SectionData } from "./section-renderer";
-import { NavbarRenderer } from "@/components/storefront/navbar-renderer";
+import type { SectionData } from "./section-renderer";
 
-/** Builder header section — uses the same NavbarRenderer as the live storefront. */
-export function HeaderBar({ section }: { section: SectionData }) {
-  return (
-    <SectionWrapper section={section} className="w-full" allowSticky bare>
-      <NavbarRenderer sectionProps={section.props} />
-    </SectionWrapper>
-  );
+/**
+ * Legacy body "header-bar" section.
+ *
+ * Global header is exclusively ThemeHeader → StorefrontHeaderRenderer.
+ * Body header sections are filtered from the canvas; if one still reaches
+ * the tree, render nothing so we never inject a second/fallback navbar.
+ */
+export function HeaderBar(_props: { section: SectionData }) {
+  return null;
 }

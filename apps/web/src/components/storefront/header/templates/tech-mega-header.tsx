@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Search,
   ShoppingCart,
@@ -11,10 +11,7 @@ import {
   User,
   Heart,
   Zap,
-  ChevronDown,
-  ChevronRight,
   Flame,
-  Cpu,
 } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { openCart } from "@/redux/slices/cart-slice";
@@ -23,10 +20,8 @@ import { SmartImage } from "@/components/ui/smart-image";
 import { StoreLink as Link } from "@/components/storefront/store-link";
 import { formatCurrency } from "@/lib/format-currency";
 import { useIsBuilder } from "@/lib/device-context";
-import { DynamicCategoryNav } from "@/components/storefront/header/dynamic-category-nav";
-import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations";
-import { cn } from "@/lib/utils";
-import type { Category } from "@/redux/api/category-api";
+import { GlobalStoreNav, GlobalMobileDrawer } from "@/components/storefront/header/global-store-nav";
+import { t, type StoreLanguage } from "@/lib/i18n/translations";
 
 export interface TechMegaHeaderProps {
   headerSettings?: Record<string, unknown>;
@@ -35,9 +30,8 @@ export interface TechMegaHeaderProps {
 export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
   const dispatch = useDispatch();
   const router = useRouter();
-  const pathname = usePathname() || "";
   const isBuilder = useIsBuilder();
-  const { store, categories = [], brands = [], settings, contact } = useTenant();
+  const { store, settings, contact } = useTenant();
 
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -45,7 +39,6 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
   const wishlistCount = useSelector((state: RootState) => state.wishlist.items.length);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileExpandedCatId, setMobileExpandedCatId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,17 +50,6 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
   const storeName = store.name || "BornoLand Tech";
   const logoUrl = (headerSettings.logoUrl as string) || store.logoUrl || "";
 
-  // Dynamic root categories & subcategories from store data
-  const rootCategories = (categories as Category[]).filter((c) => !c.parentId);
-  const subcategoriesByParent = (categories as Category[]).reduce<Record<string, Category[]>>((acc, cat) => {
-    if (cat.parentId) {
-      const pId = String(cat.parentId);
-      if (!acc[pId]) acc[pId] = [];
-      acc[pId].push(cat);
-    }
-    return acc;
-  }, {});
-
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim() || isBuilder) return;
@@ -75,7 +57,7 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
   };
 
   const storePhone = contact?.phone || store.phone || "16789";
-  const maxVisibleCategories = Math.max(1, Number(headerSettings.maxVisibleCategories) || 6);
+  const maxVisibleItems = Math.max(1, Number(headerSettings.maxVisibleNavigationItems ?? headerSettings.maxVisibleCategories) || 6);
   const showMoreMenu = headerSettings.showMoreMenu !== false;
   const enableCategoryHover = headerSettings.enableCategoryHover !== false;
 
@@ -231,138 +213,37 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
         </div>
       </div>
 
-      {/* ── Category Navigation Bar — capped by maxVisibleCategories, overflow → More ── */}
+      {/* ── Shared global navigation ── */}
       <div className="hidden md:block bg-[#050e15] border-t border-[#172b3c]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-3 min-w-0 w-full max-w-full">
-          <Link
-            href="/shop"
-            className={cn(
-              "shrink-0 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/5 transition-colors",
-              pathname === "/shop" && "text-[#0071dc] bg-white/5",
-            )}
-          >
-            {t("shop", storeLang)}
-          </Link>
-
-          <DynamicCategoryNav
-            categories={categories as any}
-            maxVisibleCategories={maxVisibleCategories}
+        <div className="max-w-7xl mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-0.5">
+          <GlobalStoreNav
+            maxVisibleItems={maxVisibleItems}
             showMoreMenu={showMoreMenu}
             enableCategoryHover={enableCategoryHover}
+            showAllCategoriesButton={false}
+            showPrimaryLinks
             themeVariant="electronics"
             lang={storeLang}
-            className="flex-1 min-w-0 py-1"
+            className="w-full min-w-0 py-1"
             itemClassName="px-3 py-2 rounded-lg"
           />
-
-          <Link
-            href="/pc-builder"
-            className="shrink-0 px-3 py-2 rounded-lg text-[#0071dc] text-xs font-bold hover:bg-[#0071dc]/10 transition-colors flex items-center gap-1"
-          >
-            <Cpu className="w-3.5 h-3.5" />
-            <span>PC Builder</span>
-          </Link>
         </div>
       </div>
 
-      {/* ── Mobile Navigation Drawer with Accordion ── */}
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex">
-          <div className="w-4/5 max-w-sm bg-[#081621] text-white h-full overflow-y-auto p-4 flex flex-col justify-between shadow-2xl animate-in slide-in-from-left duration-200 border-r border-[#172b3c]">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-[#172b3c]">
-                <span className="font-bold text-base text-[#0071dc]">{storeName}</span>
-                <button
-                  type="button"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-1.5 rounded-lg text-zinc-400 hover:bg-white/5"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Dynamic Accordion */}
-              <div className="py-4 space-y-1">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 px-2 mb-2">
-                  {t("categories", storeLang)}
-                </p>
-                {rootCategories.map((cat) => {
-                  const isExpanded = mobileExpandedCatId === cat._id;
-                  const subs = subcategoriesByParent[cat._id] || [];
-
-                  return (
-                    <div key={cat._id} className="border-b border-white/5 pb-1">
-                      <div className="flex items-center justify-between px-2 py-2 rounded-lg hover:bg-white/5">
-                        <Link
-                          href={`/category/${cat.slug}`}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="font-semibold text-xs text-zinc-200 hover:text-[#0071dc] flex-1 truncate"
-                        >
-                          {getLocalizedName(cat, storeLang)}
-                        </Link>
-                        {subs.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setMobileExpandedCatId(isExpanded ? null : cat._id)
-                            }
-                            className="p-1 rounded-md text-zinc-400 hover:text-white"
-                          >
-                            <ChevronDown
-                              className={cn(
-                                "w-4 h-4 transition-transform",
-                                isExpanded && "rotate-180"
-                              )}
-                            />
-                          </button>
-                        )}
-                      </div>
-
-                      {isExpanded && subs.length > 0 && (
-                        <div className="pl-4 pr-2 py-1.5 space-y-1 bg-[#050e15] rounded-lg">
-                          {subs.map((sub) => (
-                            <Link
-                              key={sub._id}
-                              href={`/category/${cat.slug}/${sub.slug}`}
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-between py-1 px-2 text-xs text-zinc-400 hover:text-white"
-                            >
-                              <span>{getLocalizedName(sub, storeLang)}</span>
-                              <ChevronRight className="w-3 h-3 text-zinc-600" />
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* General Links */}
-              <div className="py-2 border-t border-[#172b3c] space-y-1">
-                <Link href="/" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-xs font-semibold text-zinc-300">
-                  {t("home", storeLang)}
-                </Link>
-                <Link href="/shop" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-xs font-semibold text-zinc-300">
-                  {t("shop", storeLang)}
-                </Link>
-                <Link href="/pc-builder" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-xs font-semibold text-[#0071dc]">
-                  PC Builder
-                </Link>
-                <Link href="/offers" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-xs font-semibold text-rose-400">
-                  {t("offers", storeLang)}
-                </Link>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-[#172b3c] text-xs text-zinc-400">
-              <p className="font-semibold text-white">Helpline / Support:</p>
-              <p className="text-[#0071dc] font-bold text-sm mt-0.5">{storePhone}</p>
-            </div>
-          </div>
-          <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
+      <GlobalMobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} storeName={storeName} dark>
+        <GlobalStoreNav
+          layout="mobile"
+          maxVisibleItems={maxVisibleItems}
+          showMoreMenu={showMoreMenu}
+          themeVariant="electronics"
+          lang={storeLang}
+          onItemClick={() => setMobileMenuOpen(false)}
+        />
+        <div className="pt-4 border-t border-[#172b3c] text-xs text-zinc-400 mt-4">
+          <p className="font-semibold text-white">Helpline / Support:</p>
+          <p className="text-[#0071dc] font-bold text-sm mt-0.5">{storePhone}</p>
         </div>
-      )}
+      </GlobalMobileDrawer>
     </header>
   );
 }

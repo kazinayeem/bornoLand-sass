@@ -1,11 +1,31 @@
 "use client";
 
 /**
- * @deprecated Prefer GlobalStoreNav — kept as a thin adapter so existing imports keep working.
- * Both use the same global category source and maxVisible limit.
+ * Thin adapter so legacy imports keep working.
+ * All navigation goes through GlobalStoreNav (single source of truth).
  */
 
-export {
-  GlobalStoreNav as DynamicCategoryNav,
-  type GlobalStoreNavProps as DynamicCategoryNavProps,
+import {
+  GlobalStoreNav,
+  type GlobalStoreNavProps,
 } from "./global-store-nav";
+
+export type DynamicCategoryNavProps = GlobalStoreNavProps & {
+  /** @deprecated use maxVisibleItems */
+  maxVisibleCategories?: number;
+  categories?: unknown;
+};
+
+export function DynamicCategoryNav({
+  maxVisibleCategories,
+  maxVisibleItems,
+  categories: _categories,
+  ...rest
+}: DynamicCategoryNavProps) {
+  return (
+    <GlobalStoreNav
+      {...rest}
+      maxVisibleItems={maxVisibleItems ?? maxVisibleCategories ?? 6}
+    />
+  );
+}

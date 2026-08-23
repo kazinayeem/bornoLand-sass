@@ -3,6 +3,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setHeaderSettings } from "@/redux/slices/builder-slice";
+import { applyHeaderTemplateSelection } from "@/lib/storefront/global-navigation";
 import {
   ChevronDown,
   Check,
@@ -122,15 +123,11 @@ export function HeaderBuilderSettings() {
   };
 
   const selectTemplate = (templateId: string) => {
+    // Preserve navigation config — only change visual template identity
     dispatch(
-      setHeaderSettings({
-        ...headerSettings,
-        template: templateId,
-        templateId: templateId,
-        headerTemplate: templateId,
-        enabled: true,
-        visible: true,
-      })
+      setHeaderSettings(
+        applyHeaderTemplateSelection(headerSettings as Record<string, unknown>, templateId) as any,
+      ),
     );
   };
 
@@ -258,19 +255,36 @@ export function HeaderBuilderSettings() {
         {/* Category Navigation Settings */}
         <Section label="Category Navigation & Limit">
           <SelectInput
-            label="Maximum Visible Categories in Top Nav"
-            value={String(headerSettings.maxVisibleCategories ?? 6)}
-            onChange={(v) => update("maxVisibleCategories", Number(v))}
+            label="Maximum Visible Navigation Items"
+            value={String(
+              headerSettings.maxVisibleNavigationItems ??
+                headerSettings.maxVisibleCategories ??
+                6,
+            )}
+            onChange={(v) => {
+              const n = Number(v);
+              dispatch(
+                setHeaderSettings({
+                  ...headerSettings,
+                  maxVisibleCategories: n,
+                  maxVisibleNavigationItems: n,
+                  maxVisibleItems: n,
+                }),
+              );
+            }}
             options={[
-              { value: "3", label: "3 Categories" },
-              { value: "4", label: "4 Categories" },
-              { value: "5", label: "5 Categories" },
-              { value: "6", label: "6 Categories (Recommended)" },
-              { value: "7", label: "7 Categories" },
-              { value: "8", label: "8 Categories" },
-              { value: "10", label: "10 Categories" },
+              { value: "3", label: "3 Items" },
+              { value: "4", label: "4 Items" },
+              { value: "5", label: "5 Items" },
+              { value: "6", label: "6 Items (Recommended)" },
+              { value: "7", label: "7 Items" },
+              { value: "8", label: "8 Items" },
+              { value: "10", label: "10 Items" },
             ]}
           />
+          <p className="text-[10px] text-apple-ink-muted-48 leading-relaxed">
+            Shared by all header templates. Remaining categories open in More ▾. Switching templates never resets this.
+          </p>
           <Toggle
             label="Show 'More ▾' Menu for Remaining Categories"
             value={headerSettings.showMoreMenu !== false}
@@ -280,6 +294,11 @@ export function HeaderBuilderSettings() {
             label="Enable Subcategory Hover Menu"
             value={headerSettings.enableCategoryHover !== false}
             onChange={(v) => update("enableCategoryHover", v)}
+          />
+          <Toggle
+            label="Show All Categories Button"
+            value={headerSettings.showAllCategoriesButton !== false}
+            onChange={(v) => update("showAllCategoriesButton", v)}
           />
         </Section>
 

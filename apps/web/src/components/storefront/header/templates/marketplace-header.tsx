@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Search,
   ShoppingCart,
@@ -10,9 +10,6 @@ import {
   X,
   User,
   Heart,
-  ChevronDown,
-  ChevronRight,
-  Flame,
   Zap,
 } from "lucide-react";
 import type { RootState } from "@/redux/store";
@@ -22,11 +19,9 @@ import { SmartImage } from "@/components/ui/smart-image";
 import { StoreLink as Link } from "@/components/storefront/store-link";
 import { formatCurrency } from "@/lib/format-currency";
 import { useIsBuilder } from "@/lib/device-context";
-import { StorefrontMegaMenu } from "@/components/storefront/navigation/storefront-mega-menu";
-import { DynamicCategoryNav } from "@/components/storefront/header/dynamic-category-nav";
-import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations";
+import { GlobalStoreNav, GlobalMobileDrawer } from "@/components/storefront/header/global-store-nav";
+import { t, type StoreLanguage } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
-import type { Category } from "@/redux/api/category-api";
 
 export interface MarketplaceHeaderProps {
   headerSettings?: Record<string, unknown>;
@@ -35,9 +30,8 @@ export interface MarketplaceHeaderProps {
 export function MarketplaceHeader({ headerSettings = {} }: MarketplaceHeaderProps) {
   const dispatch = useDispatch();
   const router = useRouter();
-  const pathname = usePathname() || "";
   const isBuilder = useIsBuilder();
-  const { store, categories = [], brands = [], settings } = useTenant();
+  const { store, settings } = useTenant();
 
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -45,9 +39,6 @@ export function MarketplaceHeader({ headerSettings = {} }: MarketplaceHeaderProp
   const wishlistCount = useSelector((state: RootState) => state.wishlist.items.length);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [allCategoriesOpen, setAllCategoriesOpen] = useState(false);
-  const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
-  const [mobileExpandedCatId, setMobileExpandedCatId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,25 +50,16 @@ export function MarketplaceHeader({ headerSettings = {} }: MarketplaceHeaderProp
   const storeName = store.name || "BornoLand Marketplace";
   const logoUrl = (headerSettings.logoUrl as string) || store.logoUrl || "";
 
-  const rootCategories = (categories as Category[]).filter((c) => !c.parentId);
-  const subcategoriesByParent = (categories as Category[]).reduce<Record<string, Category[]>>((acc, cat) => {
-    if (cat.parentId) {
-      const pId = String(cat.parentId);
-      if (!acc[pId]) acc[pId] = [];
-      acc[pId].push(cat);
-    }
-    return acc;
-  }, {});
-
-  const currentMegaCat = rootCategories.find((c) => c._id === selectedCatId) || rootCategories[0];
-
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim() || isBuilder) return;
     router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
   };
 
-  const maxVisibleCategories = Math.max(1, Number(headerSettings.maxVisibleCategories) || 6);
+  const maxVisibleItems = Math.max(
+    1,
+    Number(headerSettings.maxVisibleNavigationItems ?? headerSettings.maxVisibleCategories) || 6,
+  );
   const showMoreMenu = headerSettings.showMoreMenu !== false;
   const enableCategoryHover = headerSettings.enableCategoryHover !== false;
 
@@ -85,7 +67,7 @@ export function MarketplaceHeader({ headerSettings = {} }: MarketplaceHeaderProp
     <header className="w-full max-w-full min-w-0 bg-white text-zinc-900 border-b border-zinc-200 shadow-sm select-none relative z-40 overflow-x-clip">
       {/* ── Top Announcement Banner ── */}
       {showAnnouncement && (
-        <div className="bg-[#f85606] text-white text-[11px] font-semibold py-1.5 px-4">
+        <div className="bg-[var(--store-primary,#f85606)] text-white text-[11px] font-semibold py-1.5 px-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 truncate">
               <Zap className="w-3.5 h-3.5 fill-current" />
@@ -220,149 +202,33 @@ export function MarketplaceHeader({ headerSettings = {} }: MarketplaceHeaderProp
         </div>
       </div>
 
-      {/* ── Second Navigation Row — maxVisibleCategories + More ── */}
+      {/* ── Shared global navigation (same data as every template) ── */}
       <div className="hidden md:block bg-zinc-50 border-t border-zinc-200">
-        <div className="max-w-7xl mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 flex items-center gap-3 min-w-0">
-          <div
-            className="relative shrink-0"
-            onMouseLeave={() => setAllCategoriesOpen(false)}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                setAllCategoriesOpen(!allCategoriesOpen);
-                if (!selectedCatId && rootCategories[0]) setSelectedCatId(rootCategories[0]._id);
-              }}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#f85606] text-white font-bold text-xs rounded-t-md hover:bg-[#e04800] transition-colors"
-            >
-              <Menu className="w-4 h-4" />
-              <span>All Categories</span>
-              <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", allCategoriesOpen && "rotate-180")} />
-            </button>
-
-            {allCategoriesOpen && currentMegaCat && (
-              <StorefrontMegaMenu
-                category={currentMegaCat}
-                subcategories={subcategoriesByParent[currentMegaCat._id] || []}
-                brands={brands}
-                lang={storeLang}
-                themeVariant="default"
-                onItemClick={() => setAllCategoriesOpen(false)}
-              />
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
-            <Link
-              href="/shop"
-              className={cn(
-                "shrink-0 py-2.5 text-xs font-semibold text-zinc-700 hover:text-[#f85606] transition-colors",
-                pathname === "/shop" && "text-[#f85606]",
-              )}
-            >
-              {t("shop", storeLang)}
-            </Link>
-
-            <DynamicCategoryNav
-              categories={categories as any}
-              maxVisibleCategories={maxVisibleCategories}
-              showMoreMenu={showMoreMenu}
-              enableCategoryHover={enableCategoryHover}
-              themeVariant="marketplace"
-              lang={storeLang}
-              className="flex-1 min-w-0"
-            />
-
-            <Link
-              href="/offers"
-              className="shrink-0 flex items-center gap-1 py-2.5 text-xs font-semibold text-[#f85606] hover:text-[#e04800] transition-colors"
-            >
-              <Flame className="w-3.5 h-3.5" />
-              <span>Flash Sale</span>
-            </Link>
-          </div>
-
-          <Link
-            href="/track-order"
-            className="shrink-0 text-xs font-semibold text-zinc-600 hover:text-[#f85606] transition-colors"
-          >
-            Track Order
-          </Link>
+        <div className="max-w-7xl mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-0.5">
+          <GlobalStoreNav
+            maxVisibleItems={maxVisibleItems}
+            showMoreMenu={showMoreMenu}
+            enableCategoryHover={enableCategoryHover}
+            showAllCategoriesButton
+            showPrimaryLinks
+            themeVariant="marketplace"
+            lang={storeLang}
+            className="w-full min-w-0"
+            allCategoriesButtonClassName="rounded-t-md font-bold"
+          />
         </div>
       </div>
 
-      {/* ── Mobile Drawer ── */}
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex">
-          <div className="w-4/5 max-w-sm bg-white h-full overflow-y-auto p-4 flex flex-col justify-between shadow-2xl animate-in slide-in-from-left duration-200">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
-                <span className="font-extrabold text-base text-[#f85606]">{storeName}</span>
-                <button type="button" onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Accordion Categories */}
-              <div className="py-4 space-y-1">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 px-2 mb-2">
-                  All Categories
-                </p>
-                {rootCategories.map((cat) => {
-                  const isExpanded = mobileExpandedCatId === cat._id;
-                  const subs = subcategoriesByParent[cat._id] || [];
-
-                  return (
-                    <div key={cat._id} className="border-b border-zinc-50 pb-1">
-                      <div className="flex items-center justify-between px-2 py-2 rounded-lg hover:bg-zinc-50">
-                        <Link
-                          href={`/category/${cat.slug}`}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="font-semibold text-xs text-zinc-800 hover:text-[#f85606] flex-1 truncate"
-                        >
-                          {getLocalizedName(cat, storeLang)}
-                        </Link>
-                        {subs.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setMobileExpandedCatId(isExpanded ? null : cat._id)}
-                            className="p-1 rounded-md text-zinc-400"
-                          >
-                            <ChevronDown className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-180")} />
-                          </button>
-                        )}
-                      </div>
-
-                      {isExpanded && subs.length > 0 && (
-                        <div className="pl-4 pr-2 py-1.5 space-y-1 bg-zinc-50 rounded-lg">
-                          {subs.map((sub) => (
-                            <Link
-                              key={sub._id}
-                              href={`/category/${cat.slug}/${sub.slug}`}
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="flex items-center justify-between py-1 px-2 text-xs text-zinc-600 hover:text-[#f85606]"
-                            >
-                              <span>{getLocalizedName(sub, storeLang)}</span>
-                              <ChevronRight className="w-3 h-3 text-zinc-400" />
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-zinc-100 text-xs text-zinc-500">
-              <Link href="/help" onClick={() => setMobileMenuOpen(false)} className="block py-1.5 font-semibold text-zinc-800">
-                Help & Customer Support
-              </Link>
-            </div>
-          </div>
-          <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
-        </div>
-      )}
+      <GlobalMobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} storeName={storeName}>
+        <GlobalStoreNav
+          layout="mobile"
+          maxVisibleItems={maxVisibleItems}
+          showMoreMenu={showMoreMenu}
+          themeVariant="marketplace"
+          lang={storeLang}
+          onItemClick={() => setMobileMenuOpen(false)}
+        />
+      </GlobalMobileDrawer>
     </header>
   );
 }

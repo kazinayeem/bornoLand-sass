@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Search,
   ShoppingCart,
@@ -10,8 +10,6 @@ import {
   X,
   User,
   Heart,
-  ChevronDown,
-  ChevronRight,
 } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { openCart } from "@/redux/slices/cart-slice";
@@ -20,10 +18,9 @@ import { SmartImage } from "@/components/ui/smart-image";
 import { StoreLink as Link } from "@/components/storefront/store-link";
 import { formatCurrency } from "@/lib/format-currency";
 import { useIsBuilder } from "@/lib/device-context";
-import { DynamicCategoryNav } from "@/components/storefront/header/dynamic-category-nav";
-import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations";
+import { GlobalStoreNav, GlobalMobileDrawer } from "@/components/storefront/header/global-store-nav";
+import { t, type StoreLanguage } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
-import type { Category } from "@/redux/api/category-api";
 
 export interface MinimalFashionHeaderProps {
   headerSettings?: Record<string, unknown>;
@@ -32,9 +29,8 @@ export interface MinimalFashionHeaderProps {
 export function MinimalFashionHeader({ headerSettings = {} }: MinimalFashionHeaderProps) {
   const dispatch = useDispatch();
   const router = useRouter();
-  const pathname = usePathname() || "";
   const isBuilder = useIsBuilder();
-  const { store, categories = [], brands = [], settings } = useTenant();
+  const { store, settings } = useTenant();
 
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -43,7 +39,6 @@ export function MinimalFashionHeader({ headerSettings = {} }: MinimalFashionHead
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [mobileExpandedCatId, setMobileExpandedCatId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -52,23 +47,13 @@ export function MinimalFashionHeader({ headerSettings = {} }: MinimalFashionHead
   const logoUrl = (headerSettings.logoUrl as string) || store.logoUrl || "";
   const isTransparent = headerSettings.transparent === true || headerSettings.transparent === "true";
 
-  const rootCategories = (categories as Category[]).filter((c) => !c.parentId);
-  const subcategoriesByParent = (categories as Category[]).reduce<Record<string, Category[]>>((acc, cat) => {
-    if (cat.parentId) {
-      const pId = String(cat.parentId);
-      if (!acc[pId]) acc[pId] = [];
-      acc[pId].push(cat);
-    }
-    return acc;
-  }, {});
-
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim() || isBuilder) return;
     router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
   };
 
-  const maxVisibleCategories = Math.max(1, Number(headerSettings.maxVisibleCategories) || 6);
+  const maxVisibleItems = Math.max(1, Number(headerSettings.maxVisibleNavigationItems ?? headerSettings.maxVisibleCategories) || 6);
   const showMoreMenu = headerSettings.showMoreMenu !== false;
   const enableCategoryHover = headerSettings.enableCategoryHover !== false;
 
@@ -82,43 +67,18 @@ export function MinimalFashionHeader({ headerSettings = {} }: MinimalFashionHead
       )}
     >
       <div className="max-w-7xl mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-4 min-h-[76px] flex items-center justify-between gap-6">
-        {/* Left Navigation — maxVisibleCategories + More */}
-        <div className="hidden lg:flex items-center gap-4 min-w-0 flex-1 overflow-hidden">
-          <Link
-            href="/"
-            className={cn(
-              "shrink-0 text-[13px] tracking-wider uppercase font-medium text-zinc-600 hover:text-black transition-colors",
-              pathname === "/" && "text-black font-bold",
-            )}
-          >
-            {t("home", storeLang)}
-          </Link>
-          <Link
-            href="/shop"
-            className={cn(
-              "shrink-0 text-[13px] tracking-wider uppercase font-medium text-zinc-600 hover:text-black transition-colors",
-              pathname === "/shop" && "text-black font-bold",
-            )}
-          >
-            {t("shop", storeLang)}
-          </Link>
-
-          <DynamicCategoryNav
-            categories={categories as any}
-            maxVisibleCategories={maxVisibleCategories}
+        {/* Shared global navigation */}
+        <div className="hidden lg:flex items-center min-w-0 flex-1 overflow-visible">
+          <GlobalStoreNav
+            maxVisibleItems={maxVisibleItems}
             showMoreMenu={showMoreMenu}
             enableCategoryHover={enableCategoryHover}
+            showAllCategoriesButton={false}
+            showPrimaryLinks
             themeVariant="fashion"
             lang={storeLang}
-            className="flex-1 min-w-0 text-[13px] tracking-wider uppercase font-medium"
+            className="w-full min-w-0 text-[13px] tracking-wider uppercase font-medium"
           />
-
-          <Link
-            href="/sale"
-            className="shrink-0 text-[13px] tracking-wider uppercase text-rose-600 hover:text-rose-700 transition-colors font-semibold"
-          >
-            Sale
-          </Link>
         </div>
 
         {/* Center / Left Logo */}
@@ -216,51 +176,16 @@ export function MinimalFashionHeader({ headerSettings = {} }: MinimalFashionHead
         </div>
       </div>
 
-      {/* ── Mobile Navigation Drawer ── */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex">
-          <div className="w-4/5 max-w-xs bg-white h-full p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-left duration-200">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
-                <span className="font-serif font-bold text-lg tracking-wider uppercase">{storeName}</span>
-                <button type="button" onClick={() => setMobileMenuOpen(false)} className="p-1 text-zinc-400">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="py-6 space-y-4 text-xs font-semibold tracking-wider uppercase">
-                <Link href="/" onClick={() => setMobileMenuOpen(false)} className="block text-zinc-800 hover:text-black">
-                  {t("home", storeLang)}
-                </Link>
-                <Link href="/shop" onClick={() => setMobileMenuOpen(false)} className="block text-zinc-800 hover:text-black">
-                  {t("shop", storeLang)}
-                </Link>
-                {rootCategories.map((cat) => (
-                  <Link
-                    key={cat._id}
-                    href={`/category/${cat.slug}`}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block text-zinc-600 hover:text-black"
-                  >
-                    {getLocalizedName(cat, storeLang)}
-                  </Link>
-                ))}
-                <Link href="/sale" onClick={() => setMobileMenuOpen(false)} className="block text-rose-600">
-                  Sale
-                </Link>
-                <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="block text-zinc-800 hover:text-black">
-                  {t("contact", storeLang)}
-                </Link>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-zinc-100 text-xs text-zinc-400">
-              <p>© {new Date().getFullYear()} {storeName}</p>
-            </div>
-          </div>
-          <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
-        </div>
-      )}
+      <GlobalMobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} storeName={storeName}>
+        <GlobalStoreNav
+          layout="mobile"
+          maxVisibleItems={maxVisibleItems}
+          showMoreMenu={showMoreMenu}
+          themeVariant="fashion"
+          lang={storeLang}
+          onItemClick={() => setMobileMenuOpen(false)}
+        />
+      </GlobalMobileDrawer>
     </header>
   );
 }

@@ -1,11 +1,16 @@
 "use client";
 
+import { useMemo } from "react";
 import { useActiveTheme } from "@/components/store/theme-provider";
 import { GroceryFooter } from "@/themes/grocery/components/grocery-footer";
 import { MinimalCommerceFooter } from "./templates/minimal-commerce-footer";
 import { TechElectronicsFooter } from "./templates/tech-electronics-footer";
 import { MarketplaceFooter } from "./templates/marketplace-footer";
 import { ModernStoreFooter } from "./templates/modern-store-footer";
+import {
+  isGlobalFooterEnabled,
+  resolveFooterTemplateId,
+} from "@/lib/storefront/global-navigation";
 
 export interface StorefrontFooterRendererProps {
   footerSettings?: Record<string, unknown>;
@@ -15,73 +20,53 @@ export function StorefrontFooterRenderer({ footerSettings = {} }: StorefrontFoot
   const { theme } = useActiveTheme();
   const themeId = theme.id || "grocery";
 
-  // If footer is disabled, hidden, or template is null/none, render NOTHING - absolutely NO fallback footer!
-  if (
-    footerSettings.enabled === false ||
-    footerSettings.visible === false ||
-    footerSettings.show === false ||
-    footerSettings.enabled === "false" ||
-    footerSettings.visible === "false" ||
-    footerSettings.template === "none" ||
-    footerSettings.template === null ||
-    footerSettings.templateId === null
-  ) {
+  // Disabled = render NOTHING. No default/fallback footer.
+  if (!isGlobalFooterEnabled(footerSettings)) {
     return null;
   }
 
-  // Determine active template: user-selected template overrides theme default
-  const template =
-    (footerSettings.template as string) ||
-    (footerSettings.footerTemplate as string) ||
-    (footerSettings.templateId as string) ||
-    (themeId === "electronics" ? "modern-multi-column" : "classic-ecommerce");
+  const template = useMemo(
+    () =>
+      resolveFooterTemplateId(
+        footerSettings,
+        themeId === "electronics" ? "modern-multi-column" : "classic-ecommerce",
+      ),
+    [footerSettings, themeId],
+  );
+
+  // Keep content keys intact; only normalize identity fields for templates
+  const normalizedSettings = useMemo(
+    () => ({
+      ...footerSettings,
+      template,
+      templateId: template,
+      footerTemplate: template,
+    }),
+    [footerSettings, template],
+  );
 
   const renderFooterContent = () => {
     switch (template) {
-      // FOOTER 1: Classic Ecommerce
       case "classic-ecommerce":
-      case "classic":
-      case "grocery":
-      case "organic":
-      case "commerce":
-        return <GroceryFooter key="footer-classic-ecommerce" footerSettings={footerSettings} />;
-
-      // FOOTER 2: Modern Multi Column
+        return <GroceryFooter key="footer-classic-ecommerce" footerSettings={normalizedSettings} />;
       case "modern-multi-column":
-      case "modern":
-      case "tech":
-      case "electronics":
-      case "tech-electronics":
-        return <TechElectronicsFooter key="footer-modern-multi-column" footerSettings={footerSettings} />;
-
-      // FOOTER 3: Minimal
+        return <TechElectronicsFooter key="footer-modern-multi-column" footerSettings={normalizedSettings} />;
       case "minimal":
-      case "minimal-commerce":
-      case "simple":
-        return <MinimalCommerceFooter key="footer-minimal" footerSettings={footerSettings} />;
-
-      // FOOTER 4: Marketplace
+        return <MinimalCommerceFooter key="footer-minimal" footerSettings={normalizedSettings} />;
       case "marketplace":
-      case "daraz":
-        return <MarketplaceFooter key="footer-marketplace" footerSettings={footerSettings} />;
-
-      // FOOTER 5: Premium
+        return <MarketplaceFooter key="footer-marketplace" footerSettings={normalizedSettings} />;
       case "premium":
-      case "premium-luxury":
-      case "modern-store":
-      case "luxury":
-        return <ModernStoreFooter key="footer-premium" footerSettings={footerSettings} />;
-
+        return <ModernStoreFooter key="footer-premium" footerSettings={normalizedSettings} />;
       default:
-        return <GroceryFooter key="footer-default-classic" footerSettings={footerSettings} />;
+        return <GroceryFooter key="footer-default-classic" footerSettings={normalizedSettings} />;
     }
   };
 
   return (
     <footer
-      key={`global-footer-${template}-${footerSettings.columns ?? 4}`}
+      key={`global-footer-${template}-${String(footerSettings.columns ?? 4)}`}
       data-global-footer={template}
-      className="relative z-40 w-full"
+      className="relative z-40 w-full max-w-full min-w-0"
     >
       {renderFooterContent()}
     </footer>

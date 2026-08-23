@@ -50,12 +50,12 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
     `© ${new Date().getFullYear()} ${storeName}। সর্বস্বত্ব সংরক্ষিত।`;
 
   return (
-    <footer className="w-full bg-[#11261f] text-[#e2e8f0] border-t border-[#1d3d32] select-none">
+    <footer className="w-full bg-[var(--store-secondary,#11261f)] text-[var(--store-text,#e2e8f0)] border-t border-[var(--store-border,#1d3d32)] select-none">
       {/* ── Value Guarantees Banner ── */}
-      <div className="border-b border-[#1d3d32] py-8 bg-[#0c1d18]">
+      <div className="border-b border-[var(--store-border,#1d3d32)] py-8 bg-[var(--store-secondary,#0c1d18)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-6">
           <div className="flex items-center gap-3.5">
-            <div className="h-12 w-12 rounded-2xl bg-[#055c3a]/40 border border-[#055c3a] flex items-center justify-center text-[#f97316] shrink-0">
+            <div className="h-12 w-12 rounded-2xl bg-[var(--store-secondary,#055c3a)]/40 border border-[var(--store-secondary,#055c3a)] flex items-center justify-center text-[var(--store-accent,#f97316)] shrink-0">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
@@ -65,7 +65,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="h-12 w-12 rounded-2xl bg-[#055c3a]/40 border border-[#055c3a] flex items-center justify-center text-[#f97316] shrink-0">
+            <div className="h-12 w-12 rounded-2xl bg-[var(--store-secondary,#055c3a)]/40 border border-[var(--store-secondary,#055c3a)] flex items-center justify-center text-[var(--store-accent,#f97316)] shrink-0">
               <Truck className="w-6 h-6" />
             </div>
             <div>
@@ -75,7 +75,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="h-12 w-12 rounded-2xl bg-[#055c3a]/40 border border-[#055c3a] flex items-center justify-center text-[#f97316] shrink-0">
+            <div className="h-12 w-12 rounded-2xl bg-[var(--store-secondary,#055c3a)]/40 border border-[var(--store-secondary,#055c3a)] flex items-center justify-center text-[var(--store-accent,#f97316)] shrink-0">
               <RotateCcw className="w-6 h-6" />
             </div>
             <div>
@@ -85,7 +85,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="h-12 w-12 rounded-2xl bg-[#055c3a]/40 border border-[#055c3a] flex items-center justify-center text-[#f97316] shrink-0">
+            <div className="h-12 w-12 rounded-2xl bg-[var(--store-secondary,#055c3a)]/40 border border-[var(--store-secondary,#055c3a)] flex items-center justify-center text-[var(--store-accent,#f97316)] shrink-0">
               <Headphones className="w-6 h-6" />
             </div>
             <div>
@@ -112,7 +112,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
                 />
               ) : (
                 <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-xl bg-[#e05a00] text-white flex items-center justify-center font-bold text-lg">
+                  <div className="h-10 w-10 rounded-xl bg-[var(--store-primary,#e05a00)] text-white flex items-center justify-center font-bold text-lg">
                     {storeName.charAt(0) || "B"}
                   </div>
                   <span className="font-bold text-lg text-white">{storeName}</span>
@@ -125,13 +125,13 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
 
             {showSocial && (
               <div className="flex items-center gap-3 pt-2">
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full bg-white/10 hover:bg-[#e05a00] text-white flex items-center justify-center transition-colors" aria-label="Facebook">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full bg-white/10 hover:bg-[var(--store-primary,#e05a00)] text-white flex items-center justify-center transition-colors" aria-label="Facebook">
                   <Facebook className="w-4 h-4" />
                 </a>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full bg-white/10 hover:bg-[#e05a00] text-white flex items-center justify-center transition-colors" aria-label="Instagram">
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full bg-white/10 hover:bg-[var(--store-primary,#e05a00)] text-white flex items-center justify-center transition-colors" aria-label="Instagram">
                   <Instagram className="w-4 h-4" />
                 </a>
-                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full bg-white/10 hover:bg-[#e05a00] text-white flex items-center justify-center transition-colors" aria-label="Youtube">
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full bg-white/10 hover:bg-[var(--store-primary,#e05a00)] text-white flex items-center justify-center transition-colors" aria-label="Youtube">
                   <Youtube className="w-4 h-4" />
                 </a>
               </div>
@@ -144,7 +144,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
               onClick={() => toggleMobileCol("cats")}
               className="flex items-center justify-between cursor-pointer md:cursor-default"
             >
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#f97316] mb-3 md:mb-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--store-accent,#f97316)] mb-3 md:mb-4">
                 জনপ্রিয় ক্যাটাগরি
               </h4>
               <ChevronDown
@@ -183,7 +183,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
               onClick={() => toggleMobileCol("service")}
               className="flex items-center justify-between cursor-pointer md:cursor-default"
             >
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#f97316] mb-3 md:mb-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--store-accent,#f97316)] mb-3 md:mb-4">
                 প্রয়োজনীয় লিংক
               </h4>
               <ChevronDown
@@ -233,7 +233,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
               onClick={() => toggleMobileCol("contact")}
               className="flex items-center justify-between cursor-pointer md:cursor-default"
             >
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#f97316] mb-3 md:mb-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--store-accent,#f97316)] mb-3 md:mb-4">
                 যোগাযোগের ঠিকানা
               </h4>
               <ChevronDown
@@ -250,18 +250,18 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
               )}
             >
               <li className="flex items-start gap-3">
-                <div className="h-7 w-7 rounded-lg bg-[#055c3a]/50 text-[#f97316] flex items-center justify-center shrink-0 mt-0.5">
+                <div className="h-7 w-7 rounded-lg bg-[var(--store-secondary,#055c3a)]/50 text-[var(--store-accent,#f97316)] flex items-center justify-center shrink-0 mt-0.5">
                   <PhoneCall className="w-3.5 h-3.5" />
                 </div>
                 <div>
                   <span className="text-[10px] text-zinc-400 block font-semibold">হটলাইন নম্বর:</span>
-                  <a href={`tel:${storePhone}`} className="font-bold text-white hover:text-[#f97316] transition-colors">
+                  <a href={`tel:${storePhone}`} className="font-bold text-white hover:text-[var(--store-accent,#f97316)] transition-colors">
                     {storePhone}
                   </a>
                 </div>
               </li>
               <li className="flex items-start gap-3">
-                <div className="h-7 w-7 rounded-lg bg-[#055c3a]/50 text-[#f97316] flex items-center justify-center shrink-0 mt-0.5">
+                <div className="h-7 w-7 rounded-lg bg-[var(--store-secondary,#055c3a)]/50 text-[var(--store-accent,#f97316)] flex items-center justify-center shrink-0 mt-0.5">
                   <Mail className="w-3.5 h-3.5" />
                 </div>
                 <div>
@@ -272,7 +272,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
                 </div>
               </li>
               <li className="flex items-start gap-3">
-                <div className="h-7 w-7 rounded-lg bg-[#055c3a]/50 text-[#f97316] flex items-center justify-center shrink-0 mt-0.5">
+                <div className="h-7 w-7 rounded-lg bg-[var(--store-secondary,#055c3a)]/50 text-[var(--store-accent,#f97316)] flex items-center justify-center shrink-0 mt-0.5">
                   <MapPin className="w-3.5 h-3.5" />
                 </div>
                 <div>
@@ -285,7 +285,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
         </div>
 
         {/* ── Bottom Payment Gateways & Copyright ── */}
-        <div className="mt-12 pt-6 border-t border-[#1d3d32] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
+        <div className="mt-12 pt-6 border-t border-[var(--store-border,#1d3d32)] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
           <p>{copyrightText}</p>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[11px] text-zinc-400 mr-2">নিরাপদ পেমেন্ট মেথড:</span>

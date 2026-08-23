@@ -166,13 +166,15 @@ export function HeaderTemplateSelector({ storeId, storeSlug }: HeaderTemplateSel
     if (!tpl) return;
 
     try {
-      const mergedSettings = {
-        ...currentHeaderSettings,
-        ...tpl.defaultSettings,
-        template: tpl.id,
-        headerTemplate: tpl.id,
-        ...behaviorSettings,
-      };
+      const { applyHeaderTemplateSelection } = await import("@/lib/storefront/global-navigation");
+      const mergedSettings = applyHeaderTemplateSelection(
+        {
+          ...currentHeaderSettings,
+          ...tpl.defaultSettings,
+          ...behaviorSettings,
+        },
+        tpl.id,
+      );
 
       await updateHeaderSettings({
         id: homePage._id,
@@ -191,11 +193,14 @@ export function HeaderTemplateSelector({ storeId, storeSlug }: HeaderTemplateSel
   const handleSaveBehavior = async () => {
     if (!homePage?._id) return;
     try {
-      const mergedSettings = {
-        ...currentHeaderSettings,
-        ...behaviorSettings,
-        template: previewTemplateId,
-      };
+      const { applyHeaderTemplateSelection } = await import("@/lib/storefront/global-navigation");
+      const mergedSettings = applyHeaderTemplateSelection(
+        {
+          ...currentHeaderSettings,
+          ...behaviorSettings,
+        },
+        previewTemplateId,
+      );
       await updateHeaderSettings({
         id: homePage._id,
         storeId,

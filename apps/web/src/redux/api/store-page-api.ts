@@ -133,9 +133,17 @@ export type HeaderSettings = {
   desktopLayout?: string;
   mobileLayout?: string;
   maxVisibleCategories?: number;
+  maxVisibleNavigationItems?: number;
+  maxVisibleItems?: number;
   showMoreMenu?: boolean;
   enableCategoryHover?: boolean;
+  showAllCategoriesButton?: boolean;
+  showUtilityLinks?: boolean;
   categorySource?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
 };
 
 export type FooterSettings = {

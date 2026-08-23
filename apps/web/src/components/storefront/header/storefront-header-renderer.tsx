@@ -61,7 +61,7 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
   );
 
   const disabled = !config.enabled || !isGlobalHeaderEnabled(headerSettings);
-  const template: HeaderTemplateId = config.templateId;
+  const template = config.templateId as HeaderTemplateId;
   const position = config.position;
   const autoHideOnScroll = config.autoHideOnScroll;
   const shadow = config.shadow;

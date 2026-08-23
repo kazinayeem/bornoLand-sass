@@ -51,12 +51,16 @@ export function StorefrontMegaMenu({
   return (
     <div
       className={cn(
-        "absolute left-0 top-full mt-1 w-full max-w-5xl rounded-2xl p-6 shadow-2xl transition-all border animate-in fade-in-50 zoom-in-95 duration-150 z-50",
+        // Positioned relative to the nav trigger (parent must be relative).
+        // z-[60] sits above product content (typically z-0–z-10) without fighting the header shell (z-50).
+        "absolute left-0 top-full mt-0 w-[min(100vw-2rem,64rem)] max-w-5xl rounded-2xl p-6 shadow-2xl transition-all border animate-in fade-in-50 zoom-in-95 duration-150 z-[60]",
         isDark
           ? "bg-[#0c1d2c] text-white border-[#1c354d] shadow-black/60"
           : "bg-white text-zinc-900 border-zinc-200 shadow-zinc-900/15",
         className
       )}
+      data-storefront-mega-menu="true"
+      role="menu"
     >
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* ── Left Category Overview / Hero Card ── */}

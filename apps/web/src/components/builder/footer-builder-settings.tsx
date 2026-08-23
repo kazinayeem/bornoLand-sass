@@ -3,6 +3,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setFooterSettings } from "@/redux/slices/builder-slice";
+import { applyFooterTemplateSelection } from "@/lib/storefront/global-navigation";
 import {
   ChevronDown,
   Check,
@@ -120,15 +121,11 @@ export function FooterBuilderSettings() {
   };
 
   const selectTemplate = (templateId: string) => {
+    // Preserve footer content — only change visual template identity
     dispatch(
-      setFooterSettings({
-        ...footerSettings,
-        template: templateId,
-        templateId: templateId,
-        footerTemplate: templateId,
-        enabled: true,
-        visible: true,
-      })
+      setFooterSettings(
+        applyFooterTemplateSelection(footerSettings as Record<string, unknown>, templateId) as any,
+      ),
     );
   };
 

@@ -17,6 +17,10 @@ import {
   setFooterSettings,
   undoBuilder,
 } from "@/redux/slices/builder-slice";
+import {
+  applyHeaderTemplateSelection,
+  applyFooterTemplateSelection,
+} from "@/lib/storefront/global-navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -631,14 +635,12 @@ export function SectionLibraryModal({
         const defaults = getLibraryDefaults(section.type);
         const tplId = (defaults.template as string) || section.type.replace("header-", "");
         dispatch(
-          setHeaderSettings({
-            ...headerSettings,
-            ...defaults,
-            template: tplId,
-            headerTemplate: tplId,
-            enabled: true,
-            visible: true,
-          })
+          setHeaderSettings(
+            applyHeaderTemplateSelection(
+              { ...(headerSettings as Record<string, unknown>), ...defaults },
+              tplId,
+            ) as any,
+          ),
         );
         dispatch(addToRecentlyUsed(section.type));
         dispatch(closeSectionLibrary());
@@ -654,14 +656,12 @@ export function SectionLibraryModal({
         const defaults = getLibraryDefaults(section.type);
         const tplId = (defaults.template as string) || section.type.replace("footer-", "");
         dispatch(
-          setFooterSettings({
-            ...footerSettings,
-            ...defaults,
-            template: tplId,
-            footerTemplate: tplId,
-            enabled: true,
-            visible: true,
-          })
+          setFooterSettings(
+            applyFooterTemplateSelection(
+              { ...(footerSettings as Record<string, unknown>), ...defaults },
+              tplId,
+            ) as any,
+          ),
         );
         dispatch(addToRecentlyUsed(section.type));
         dispatch(closeSectionLibrary());

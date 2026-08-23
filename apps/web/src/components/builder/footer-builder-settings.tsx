@@ -124,6 +124,7 @@ export function FooterBuilderSettings() {
       setFooterSettings({
         ...footerSettings,
         template: templateId,
+        templateId: templateId,
         footerTemplate: templateId,
         enabled: true,
         visible: true,

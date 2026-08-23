@@ -30,6 +30,7 @@ import { StoreLink as Link } from "@/components/storefront/store-link";
 import { formatCurrency } from "@/lib/format-currency";
 import { useIsBuilder } from "@/lib/device-context";
 import { StorefrontMegaMenu } from "@/components/storefront/navigation/storefront-mega-menu";
+import { DynamicCategoryNav } from "@/components/storefront/header/dynamic-category-nav";
 import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/redux/api/category-api";
@@ -82,9 +83,12 @@ export function GroceryHeader({ headerSettings = {} }: GroceryHeaderProps) {
   };
 
   const storePhone = contact?.phone || store.phone || "09613-800800";
+  const maxVisibleCategories = Math.max(1, Number(headerSettings.maxVisibleCategories) || 6);
+  const showMoreMenu = headerSettings.showMoreMenu !== false;
+  const enableCategoryHover = headerSettings.enableCategoryHover !== false;
 
   return (
-    <header className="w-full bg-white text-[#1c2826] border-b border-[#ede7df] shadow-xs select-none relative z-40">
+    <header className="w-full max-w-full min-w-0 bg-white text-[#1c2826] border-b border-[#ede7df] shadow-xs select-none relative z-40 overflow-x-clip">
       {/* ── Top Announcement Bar ── */}
       {showAnnouncement && (
         <div className="bg-[#055c3a] text-white text-xs font-medium py-1.5 px-4 transition-colors">
@@ -111,7 +115,7 @@ export function GroceryHeader({ headerSettings = {} }: GroceryHeaderProps) {
       )}
 
       {/* ── Main Header Navbar (Constrained 72-90px desktop) ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 min-h-[72px] max-h-[90px] flex items-center justify-between gap-4 md:gap-8">
+      <div className="max-w-7xl mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-3 min-h-[72px] max-h-[90px] flex items-center justify-between gap-4 md:gap-8">
         {/* Logo & Brand (Constrained max-h 48px, max-w 180px) */}
         <Link href="/" className="flex items-center gap-3 shrink-0 group">
           {logoUrl ? (
@@ -233,12 +237,11 @@ export function GroceryHeader({ headerSettings = {} }: GroceryHeaderProps) {
         </div>
       </div>
 
-      {/* ── Secondary Category Mega Menu & Navigation Bar ── */}
+      {/* ── Secondary Category Nav — maxVisibleCategories + More ── */}
       <div className="hidden md:block bg-[#faf8f5] border-t border-[#ede7df]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Dynamic Categories Dropdown Trigger */}
+        <div className="max-w-7xl mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 flex items-center gap-3 min-w-0">
           <div
-            className="relative"
+            className="relative shrink-0"
             onMouseLeave={() => setActiveMegaMenuCatId(null)}
           >
             <button
@@ -258,7 +261,6 @@ export function GroceryHeader({ headerSettings = {} }: GroceryHeaderProps) {
               />
             </button>
 
-            {/* Dynamic Mega Menu Popup */}
             {activeMegaMenuCatId && rootCategories.length > 0 && (
               <StorefrontMegaMenu
                 category={
@@ -278,48 +280,48 @@ export function GroceryHeader({ headerSettings = {} }: GroceryHeaderProps) {
             )}
           </div>
 
-          {/* Dynamic Root Category / Quick Links */}
-          <nav className="flex items-center gap-1 sm:gap-6 text-xs font-semibold text-zinc-700">
+          <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
             <Link
               href="/"
-              className={cn("py-2.5 hover:text-[#e05a00] transition-colors", pathname === "/" && "text-[#e05a00]")}
+              className={cn(
+                "shrink-0 py-2.5 text-xs font-semibold text-zinc-700 hover:text-[#e05a00] transition-colors",
+                pathname === "/" && "text-[#e05a00]",
+              )}
             >
               {t("home", storeLang)}
             </Link>
             <Link
               href="/shop"
-              className={cn("py-2.5 hover:text-[#e05a00] transition-colors", pathname === "/shop" && "text-[#e05a00]")}
+              className={cn(
+                "shrink-0 py-2.5 text-xs font-semibold text-zinc-700 hover:text-[#e05a00] transition-colors",
+                pathname === "/shop" && "text-[#e05a00]",
+              )}
             >
               {t("shop", storeLang)}
             </Link>
 
-            {/* Dynamic Top Categories in Nav */}
-            {rootCategories.slice(0, 4).map((cat) => (
-              <Link
-                key={cat._id}
-                href={`/category/${cat.slug}`}
-                className="py-2.5 hover:text-[#e05a00] transition-colors"
-              >
-                {getLocalizedName(cat, storeLang)}
-              </Link>
-            ))}
+            <DynamicCategoryNav
+              categories={categories as any}
+              maxVisibleCategories={maxVisibleCategories}
+              showMoreMenu={showMoreMenu}
+              enableCategoryHover={enableCategoryHover}
+              themeVariant="grocery"
+              lang={storeLang}
+              className="flex-1 min-w-0"
+            />
 
-            <Link href="/offers" className="flex items-center gap-1 py-2.5 text-[#e05a00] hover:text-[#c2410c] transition-colors">
+            <Link
+              href="/offers"
+              className="shrink-0 flex items-center gap-1 py-2.5 text-xs font-semibold text-[#e05a00] hover:text-[#c2410c] transition-colors"
+            >
               <Flame className="w-3.5 h-3.5" />
               <span>{t("offers", storeLang)}</span>
             </Link>
-            <Link href="/about" className="py-2.5 hover:text-[#e05a00] transition-colors">
-              {t("about", storeLang)}
-            </Link>
-            <Link href="/contact" className="py-2.5 hover:text-[#e05a00] transition-colors">
-              {t("contact", storeLang)}
-            </Link>
-          </nav>
+          </div>
 
-          {/* Right Outlet Link */}
           <Link
             href="/branches"
-            className="flex items-center gap-1 text-xs font-semibold text-[#055c3a] hover:text-[#e05a00] transition-colors"
+            className="shrink-0 flex items-center gap-1 text-xs font-semibold text-[#055c3a] hover:text-[#e05a00] transition-colors"
           >
             <MapPin className="w-3.5 h-3.5" />
             <span>{t("branches", storeLang)}</span>

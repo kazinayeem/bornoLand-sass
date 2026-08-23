@@ -106,6 +106,10 @@ const headerSettingsSchema = new Schema(
     topBar: { type: String, default: "" },
     desktopLayout: { type: String, default: "default" },
     mobileLayout: { type: String, default: "hamburger" },
+    maxVisibleCategories: { type: Number, default: 6 },
+    showMoreMenu: { type: Boolean, default: true },
+    enableCategoryHover: { type: Boolean, default: true },
+    categorySource: { type: String, default: "store-categories" },
   },
   { _id: false, strict: false }
 );

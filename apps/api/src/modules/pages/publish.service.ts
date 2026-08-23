@@ -148,6 +148,18 @@ export async function publishPage(
   page.scheduledAt = undefined;
   await page.save();
 
+  if (page.isHomePage || page.slug === "/") {
+    await StoreModel.updateOne(
+      { _id: storeId },
+      {
+        $set: {
+          headerSettings: page.headerSettings,
+          footerSettings: page.footerSettings,
+        },
+      }
+    );
+  }
+
   await PageHistoryModel.create({
     storeId,
     pageId,

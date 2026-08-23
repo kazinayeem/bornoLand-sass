@@ -153,7 +153,8 @@ export function NavbarRenderer({
   const registerContentOffset = useRegisterStorefrontHeaderOffset();
 
   useEffect(() => {
-    registerContentOffset(needsContentOffset ? contentOffset : 0);
+    const height = contentOffset || 0;
+    registerContentOffset(height, needsContentOffset ? height : 0);
   }, [registerContentOffset, needsContentOffset, contentOffset]);
 
   const navHeight = headerConfig.height;

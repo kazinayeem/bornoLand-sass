@@ -5,6 +5,11 @@ export type ThemeSettings = {
   preset?: PresetKey;
   primaryColor: string;
   secondaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  textColor: string;
+  mutedTextColor: string;
+  borderColor: string;
   font: string;
   buttonStyle: string;
   layoutWidth: string;

@@ -74,6 +74,7 @@ export type HeaderSettings = {
   enabled?: boolean;
   visible?: boolean;
   template?: string;
+  templateId?: string;
   headerTemplate?: string;
   logo?: string;
   logoWidth?: number | string;
@@ -131,12 +132,17 @@ export type HeaderSettings = {
   topBar?: string;
   desktopLayout?: string;
   mobileLayout?: string;
+  maxVisibleCategories?: number;
+  showMoreMenu?: boolean;
+  enableCategoryHover?: boolean;
+  categorySource?: string;
 };
 
 export type FooterSettings = {
   enabled?: boolean;
   visible?: boolean;
   template?: string;
+  templateId?: string;
   footerTemplate?: string;
   mobileLayout?: string;
   copyrightText?: string;
@@ -356,7 +362,11 @@ export const storePageApi = baseApi.injectEndpoints({
       }
     >({
       query: ({ id, storeId, ...data }) => ({ url: `/store-pages/${id}/draft`, method: "PUT", body: { storeId, ...data } }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+      invalidatesTags: (_r, _e, { id, storeId }) => [
+        { type: "StorePage", id },
+        { type: "StorePages", id: storeId },
+        { type: "StorePages" },
+      ],
     }),
 
     reorderStorePages: builder.mutation<
@@ -402,7 +412,7 @@ export const storePageApi = baseApi.injectEndpoints({
         method: "PUT",
         body: { storeId, headerSections },
       }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+      invalidatesTags: (_r, _e, { id, storeId }) => [{ type: "StorePage", id }, { type: "StorePages", id: storeId }, { type: "StorePages" }],
     }),
 
     updatePageFooterSections: builder.mutation<
@@ -414,7 +424,7 @@ export const storePageApi = baseApi.injectEndpoints({
         method: "PUT",
         body: { storeId, footerSections },
       }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+      invalidatesTags: (_r, _e, { id, storeId }) => [{ type: "StorePage", id }, { type: "StorePages", id: storeId }, { type: "StorePages" }],
     }),
 
     updatePageHeaderSettings: builder.mutation<
@@ -426,7 +436,7 @@ export const storePageApi = baseApi.injectEndpoints({
         method: "PUT",
         body: { storeId, headerSettings },
       }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+      invalidatesTags: (_r, _e, { id, storeId }) => [{ type: "StorePage", id }, { type: "StorePages", id: storeId }, { type: "StorePages" }],
     }),
 
     updatePageFooterSettings: builder.mutation<
@@ -438,7 +448,7 @@ export const storePageApi = baseApi.injectEndpoints({
         method: "PUT",
         body: { storeId, footerSettings },
       }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "StorePage", id }],
+      invalidatesTags: (_r, _e, { id, storeId }) => [{ type: "StorePage", id }, { type: "StorePages", id: storeId }, { type: "StorePages" }],
     }),
 
     // ─── Versions ──────────────────────────────────────────────────────────

@@ -29,6 +29,7 @@ import { StoreLink as Link } from "@/components/storefront/store-link";
 import { formatCurrency } from "@/lib/format-currency";
 import { useIsBuilder } from "@/lib/device-context";
 import { StorefrontMegaMenu } from "@/components/storefront/navigation/storefront-mega-menu";
+import { DynamicCategoryNav } from "@/components/storefront/header/dynamic-category-nav";
 import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/redux/api/category-api";
@@ -81,9 +82,12 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
   };
 
   const storePhone = contact?.phone || store.phone || "16789";
+  const maxVisibleCategories = Math.max(1, Number(headerSettings.maxVisibleCategories) || 6);
+  const showMoreMenu = headerSettings.showMoreMenu !== false;
+  const enableCategoryHover = headerSettings.enableCategoryHover !== false;
 
   return (
-    <header className="w-full bg-[#081621] text-white border-b border-[#172b3c] shadow-md select-none">
+    <header className="w-full max-w-full min-w-0 bg-[#081621] text-white border-b border-[#172b3c] shadow-md select-none overflow-x-clip">
       {/* ── Top Announcement Strip ── */}
       {showAnnouncement && (
         <div className="bg-gradient-to-r from-[#e2136e] via-[#ef4444] to-[#f97316] text-white text-[11px] font-semibold py-1.5 px-4">
@@ -104,7 +108,7 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
       )}
 
       {/* ── Main Tech Header Bar (Constrained 72-90px desktop) ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 min-h-[72px] max-h-[90px] flex items-center justify-between gap-4 md:gap-8">
+      <div className="max-w-7xl mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-3 min-h-[72px] max-h-[90px] flex items-center justify-between gap-4 md:gap-8">
         {/* Logo (Constrained max-h 48px, max-w 180px) */}
         <Link href="/" className="flex items-center gap-3 shrink-0 group">
           {logoUrl ? (
@@ -136,8 +140,8 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
 
         {/* Global Search Bar */}
         {headerSettings.showSearch !== false && (
-          <div className="flex-1 max-w-2xl hidden md:block">
-            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+          <div className="flex-1 min-w-0 max-w-2xl hidden md:block">
+            <form onSubmit={handleSearchSubmit} className="relative flex items-center min-w-0">
               <input
                 ref={searchInputRef}
                 type="text"
@@ -234,85 +238,37 @@ export function TechMegaHeader({ headerSettings = {} }: TechMegaHeaderProps) {
         </div>
       </div>
 
-      {/* ── Category Navigation Bar with Mega Menu ── */}
+      {/* ── Category Navigation Bar — capped by maxVisibleCategories, overflow → More ── */}
       <div className="hidden md:block bg-[#050e15] border-t border-[#172b3c]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <nav className="flex items-center gap-1 sm:gap-4 text-xs font-semibold text-zinc-300 overflow-x-auto py-1">
-            <Link
-              href="/shop"
-              className={cn("px-3 py-2 rounded-lg hover:text-white hover:bg-white/5 transition-colors", pathname === "/shop" && "text-[#0071dc] bg-white/5")}
-            >
-              {t("shop", storeLang)}
-            </Link>
-
-            {/* Dynamic Root Categories (Top 6) with StarTech-style Mega Menu Hover */}
-            {rootCategories.slice(0, 6).map((cat) => {
-              const subs = subcategoriesByParent[cat._id] || [];
-              const hasSubs = subs.length > 0;
-              const isHovered = activeMegaCategory === cat._id;
-
-              return (
-                <div
-                  key={cat._id}
-                  className="relative group"
-                  onMouseEnter={() => hasSubs && setActiveMegaCategory(cat._id)}
-                  onMouseLeave={() => setActiveMegaCategory(null)}
-                >
-                  <Link
-                    href={`/category/${cat.slug}`}
-                    className={cn(
-                      "inline-flex items-center gap-1 px-3 py-2 rounded-lg transition-colors whitespace-nowrap",
-                      isHovered ? "text-white bg-white/10" : "hover:text-white hover:bg-white/5"
-                    )}
-                  >
-                    <span>{getLocalizedName(cat, storeLang)}</span>
-                    {hasSubs && <ChevronDown className="w-3 h-3 opacity-60 group-hover:rotate-180 transition-transform" />}
-                  </Link>
-
-                  {/* Mega Menu Overlay */}
-                  {isHovered && hasSubs && (
-                    <StorefrontMegaMenu
-                      category={cat}
-                      subcategories={subs}
-                      brands={brands}
-                      lang={storeLang}
-                      themeVariant="electronics"
-                      onItemClick={() => setActiveMegaCategory(null)}
-                    />
-                  )}
-                </div>
-              );
-            })}
-
-            {/* More Categories Dropdown if > 6 categories */}
-            {rootCategories.length > 6 && (
-              <div className="relative group">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 px-3 py-2 rounded-lg hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
-                >
-                  <span>More</span>
-                  <ChevronDown className="w-3 h-3 opacity-60 group-hover:rotate-180 transition-transform" />
-                </button>
-                <div className="absolute left-0 top-full hidden group-hover:block w-48 py-2 bg-[#081621] border border-[#172b3c] rounded-xl shadow-2xl z-50 animate-in fade-in-50 duration-150">
-                  {rootCategories.slice(6).map((cat) => (
-                    <Link
-                      key={cat._id}
-                      href={`/category/${cat.slug}`}
-                      className="block px-4 py-2 text-xs text-zinc-300 hover:text-white hover:bg-[#0071dc]/20 transition-colors truncate"
-                    >
-                      {getLocalizedName(cat, storeLang)}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-3 min-w-0 w-full max-w-full">
+          <Link
+            href="/shop"
+            className={cn(
+              "shrink-0 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/5 transition-colors",
+              pathname === "/shop" && "text-[#0071dc] bg-white/5",
             )}
+          >
+            {t("shop", storeLang)}
+          </Link>
 
-            <Link href="/pc-builder" className="px-3 py-2 rounded-lg text-[#0071dc] font-bold hover:bg-[#0071dc]/10 transition-colors flex items-center gap-1">
-              <Cpu className="w-3.5 h-3.5" />
-              <span>PC Builder</span>
-            </Link>
-          </nav>
+          <DynamicCategoryNav
+            categories={categories as any}
+            maxVisibleCategories={maxVisibleCategories}
+            showMoreMenu={showMoreMenu}
+            enableCategoryHover={enableCategoryHover}
+            themeVariant="electronics"
+            lang={storeLang}
+            className="flex-1 min-w-0 py-1"
+            itemClassName="px-3 py-2 rounded-lg"
+          />
+
+          <Link
+            href="/pc-builder"
+            className="shrink-0 px-3 py-2 rounded-lg text-[#0071dc] text-xs font-bold hover:bg-[#0071dc]/10 transition-colors flex items-center gap-1"
+          >
+            <Cpu className="w-3.5 h-3.5" />
+            <span>PC Builder</span>
+          </Link>
         </div>
       </div>
 

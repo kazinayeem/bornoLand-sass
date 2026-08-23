@@ -281,13 +281,14 @@ export function StorePreview({ store, theme, products = [], categories = [], set
           </div>
         )}
         <div
-          className="relative shrink-0 overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-[0_20px_60px_-24px_rgba(0,0,0,0.28)] transition-transform duration-300 will-change-transform motion-reduce:transition-none"
+          className="relative shrink-0 overflow-x-clip overflow-y-visible rounded-[1.75rem] border border-white/70 bg-white shadow-[0_20px_60px_-24px_rgba(0,0,0,0.28)] transition-transform duration-300 will-change-transform motion-reduce:transition-none"
           style={{
             width: previewWidth,
-            maxWidth: "calc(100vw - 2rem)",
+            maxWidth: "calc(100% - 0px)",
             transform: `scale(${zoom / 100})`,
             transformOrigin: "top center",
           }}
+          data-builder-device-frame="true"
         >
           {renderZoneLabel()}
 

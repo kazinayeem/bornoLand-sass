@@ -126,6 +126,7 @@ export function HeaderBuilderSettings() {
       setHeaderSettings({
         ...headerSettings,
         template: templateId,
+        templateId: templateId,
         headerTemplate: templateId,
         enabled: true,
         visible: true,
@@ -251,6 +252,34 @@ export function HeaderBuilderSettings() {
             label="Show Announcement Top Bar"
             value={headerSettings.showAnnouncement !== false}
             onChange={(v) => update("showAnnouncement", v)}
+          />
+        </Section>
+
+        {/* Category Navigation Settings */}
+        <Section label="Category Navigation & Limit">
+          <SelectInput
+            label="Maximum Visible Categories in Top Nav"
+            value={String(headerSettings.maxVisibleCategories ?? 6)}
+            onChange={(v) => update("maxVisibleCategories", Number(v))}
+            options={[
+              { value: "3", label: "3 Categories" },
+              { value: "4", label: "4 Categories" },
+              { value: "5", label: "5 Categories" },
+              { value: "6", label: "6 Categories (Recommended)" },
+              { value: "7", label: "7 Categories" },
+              { value: "8", label: "8 Categories" },
+              { value: "10", label: "10 Categories" },
+            ]}
+          />
+          <Toggle
+            label="Show 'More ▾' Menu for Remaining Categories"
+            value={headerSettings.showMoreMenu !== false}
+            onChange={(v) => update("showMoreMenu", v)}
+          />
+          <Toggle
+            label="Enable Subcategory Hover Menu"
+            value={headerSettings.enableCategoryHover !== false}
+            onChange={(v) => update("enableCategoryHover", v)}
           />
         </Section>
 

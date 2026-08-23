@@ -777,11 +777,35 @@ svg {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: clip;
   max-width: 100%;
+  width: 100%;
+  min-width: 0;
 }
 
 [data-surface="storefront"] img,
 [data-surface="storefront"] video {
+  display: block;
   max-width: 100%;
+  height: auto;
+}
+
+/* Global header never exceeds viewport/container */
+[data-surface="storefront"] [data-global-header] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+[data-surface="storefront"] [data-global-header] nav {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Hero / first content respects container — no 100vw bleed */
+[data-surface="storefront"] main,
+[data-surface="storefront"] [data-storefront-canvas] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 [data-surface="storefront"] .storefront-prose {

@@ -22,6 +22,7 @@ import { StoreLink as Link } from "@/components/storefront/store-link";
 import { formatCurrency } from "@/lib/format-currency";
 import { useIsBuilder } from "@/lib/device-context";
 import { StorefrontMegaMenu } from "@/components/storefront/navigation/storefront-mega-menu";
+import { DynamicCategoryNav } from "@/components/storefront/header/dynamic-category-nav";
 import { getLocalizedName, t, type StoreLanguage } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/redux/api/category-api";
@@ -70,70 +71,58 @@ export function MinimalFashionHeader({ headerSettings = {} }: MinimalFashionHead
     router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
   };
 
+  const maxVisibleCategories = Math.max(1, Number(headerSettings.maxVisibleCategories) || 6);
+  const showMoreMenu = headerSettings.showMoreMenu !== false;
+  const enableCategoryHover = headerSettings.enableCategoryHover !== false;
+
   return (
     <header
       className={cn(
-        "w-full transition-all select-none border-b",
+        "w-full max-w-full min-w-0 transition-all select-none border-b overflow-x-clip",
         isTransparent
           ? "bg-white/80 backdrop-blur-md border-zinc-200/50 text-zinc-900"
           : "bg-white border-zinc-100 text-zinc-900 shadow-xs"
       )}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 min-h-[76px] flex items-center justify-between gap-6">
-        {/* Left Navigation / Categories */}
-        <nav className="hidden lg:flex items-center gap-7 text-[13px] tracking-wider uppercase font-medium text-zinc-600">
+      <div className="max-w-7xl mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8 py-4 min-h-[76px] flex items-center justify-between gap-6">
+        {/* Left Navigation — maxVisibleCategories + More */}
+        <div className="hidden lg:flex items-center gap-4 min-w-0 flex-1 overflow-hidden">
           <Link
             href="/"
-            className={cn("hover:text-black transition-colors", pathname === "/" && "text-black font-bold")}
+            className={cn(
+              "shrink-0 text-[13px] tracking-wider uppercase font-medium text-zinc-600 hover:text-black transition-colors",
+              pathname === "/" && "text-black font-bold",
+            )}
           >
             {t("home", storeLang)}
           </Link>
           <Link
             href="/shop"
-            className={cn("hover:text-black transition-colors", pathname === "/shop" && "text-black font-bold")}
+            className={cn(
+              "shrink-0 text-[13px] tracking-wider uppercase font-medium text-zinc-600 hover:text-black transition-colors",
+              pathname === "/shop" && "text-black font-bold",
+            )}
           >
             {t("shop", storeLang)}
           </Link>
 
-          {/* Dynamic Category Hover Menu */}
-          {rootCategories.slice(0, 3).map((cat) => {
-            const subs = subcategoriesByParent[cat._id] || [];
-            const hasSubs = subs.length > 0;
-            const isHovered = activeCategoryMenuId === cat._id;
+          <DynamicCategoryNav
+            categories={categories as any}
+            maxVisibleCategories={maxVisibleCategories}
+            showMoreMenu={showMoreMenu}
+            enableCategoryHover={enableCategoryHover}
+            themeVariant="fashion"
+            lang={storeLang}
+            className="flex-1 min-w-0 text-[13px] tracking-wider uppercase font-medium"
+          />
 
-            return (
-              <div
-                key={cat._id}
-                className="relative"
-                onMouseEnter={() => hasSubs && setActiveCategoryMenuId(cat._id)}
-                onMouseLeave={() => setActiveCategoryMenuId(null)}
-              >
-                <Link
-                  href={`/category/${cat.slug}`}
-                  className={cn("inline-flex items-center gap-1 hover:text-black transition-colors", isHovered && "text-black")}
-                >
-                  <span>{getLocalizedName(cat, storeLang)}</span>
-                  {hasSubs && <ChevronDown className="w-3 h-3 opacity-50" />}
-                </Link>
-
-                {isHovered && hasSubs && (
-                  <StorefrontMegaMenu
-                    category={cat}
-                    subcategories={subs}
-                    brands={brands}
-                    lang={storeLang}
-                    themeVariant="fashion"
-                    onItemClick={() => setActiveCategoryMenuId(null)}
-                  />
-                )}
-              </div>
-            );
-          })}
-
-          <Link href="/sale" className="text-rose-600 hover:text-rose-700 transition-colors font-semibold">
+          <Link
+            href="/sale"
+            className="shrink-0 text-[13px] tracking-wider uppercase text-rose-600 hover:text-rose-700 transition-colors font-semibold"
+          >
             Sale
           </Link>
-        </nav>
+        </div>
 
         {/* Center / Left Logo */}
         <Link href="/" className="flex items-center shrink-0 group">

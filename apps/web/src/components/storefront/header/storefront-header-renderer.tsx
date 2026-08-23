@@ -1,22 +1,39 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useActiveTheme } from "@/components/store/theme-provider";
 import { GroceryHeader } from "@/themes/grocery/components/grocery-header";
 import { TechMegaHeader } from "./templates/tech-mega-header";
 import { MarketplaceHeader } from "./templates/marketplace-header";
 import { MinimalFashionHeader } from "./templates/minimal-fashion-header";
 import { ModernGeneralHeader } from "./templates/modern-general-header";
+import { useRegisterStorefrontHeaderOffset } from "@/components/storefront/storefront-header-offset";
 import { cn } from "@/lib/utils";
 
 export interface StorefrontHeaderRendererProps {
   headerSettings?: Record<string, unknown>;
 }
 
+function getScrollParent(el: HTMLElement | null): HTMLElement | Window {
+  let node = el?.parentElement ?? null;
+  while (node) {
+    const style = getComputedStyle(node);
+    const oy = style.overflowY;
+    if (oy === "auto" || oy === "scroll" || oy === "overlay") return node;
+    node = node.parentElement;
+  }
+  return window;
+}
+
+function readScrollY(target: HTMLElement | Window): number {
+  return target === window ? window.scrollY : (target as HTMLElement).scrollTop;
+}
+
 export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHeaderRendererProps) {
   const { theme } = useActiveTheme();
   const themeId = theme.id || "grocery";
   const headerRef = useRef<HTMLDivElement>(null);
+  const registerContentOffset = useRegisterStorefrontHeaderOffset();
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
   // If header is disabled, hidden, or template is null/none, render NOTHING - absolutely NO fallback header!
@@ -49,67 +66,80 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
 
   // Auto-hide on scroll state
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollYRef = useRef(0);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Measure header height for fixed header spacer
+  const publishMetrics = useCallback(
+    (height: number) => {
+      setHeaderHeight(height);
+      // Always expose measured height; content offset only when fixed removes flow space
+      const offset = position === "fixed" && !transparent ? height : 0;
+      registerContentOffset(height, offset);
+    },
+    [position, transparent, registerContentOffset],
+  );
+
+  // Measure header height for fixed spacer + CSS variables
   useEffect(() => {
     if (!headerRef.current) return;
     const updateHeight = () => {
       if (headerRef.current) {
-        setHeaderHeight(headerRef.current.offsetHeight);
+        publishMetrics(headerRef.current.offsetHeight);
       }
     };
     updateHeight();
     const observer = new ResizeObserver(updateHeight);
     observer.observe(headerRef.current);
-    return () => observer.disconnect();
-  }, [template, headerSettings]);
+    return () => {
+      observer.disconnect();
+      registerContentOffset(0, 0);
+    };
+  }, [template, headerSettings, publishMetrics, registerContentOffset]);
 
+  // Scroll listener works for both window (storefront) and builder canvas scroller
   useEffect(() => {
-    if (!autoHideOnScroll && position !== "sticky") return;
+    if (!autoHideOnScroll && position !== "sticky" && position !== "fixed") return;
+
+    const scrollTarget = getScrollParent(headerRef.current);
 
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      const currentScrollY = readScrollY(scrollTarget);
       setIsScrolled(currentScrollY > 20);
 
       if (autoHideOnScroll) {
-        if (currentScrollY > lastScrollY && currentScrollY > 120) {
-          setIsVisible(false); // Scrolling down
+        if (currentScrollY > lastScrollYRef.current && currentScrollY > 120) {
+          setIsVisible(false);
         } else {
-          setIsVisible(true); // Scrolling up
+          setIsVisible(true);
         }
       }
-      setLastScrollY(currentScrollY);
+      lastScrollYRef.current = currentScrollY;
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [autoHideOnScroll, lastScrollY, position]);
+    scrollTarget.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => scrollTarget.removeEventListener("scroll", handleScroll);
+  }, [autoHideOnScroll, position, template]);
 
   const renderHeaderContent = () => {
     switch (template) {
-      // HEADER 1: Minimal / Clean Store
       case "minimal-clean":
       case "minimal":
       case "minimal-fashion":
       case "clean":
         return <MinimalFashionHeader key="header-minimal-clean" headerSettings={headerSettings} />;
 
-      // HEADER 2: Modern Ecommerce
       case "modern-ecommerce":
       case "grocery":
       case "organic":
       case "ecommerce":
         return <GroceryHeader key="header-modern-ecommerce" headerSettings={headerSettings} />;
 
-      // HEADER 3: Marketplace Header
       case "marketplace":
       case "daraz":
       case "multivendor":
         return <MarketplaceHeader key="header-marketplace" headerSettings={headerSettings} />;
 
-      // HEADER 4: Premium / Luxury
       case "premium-luxury":
       case "premium":
       case "luxury":
@@ -117,7 +147,6 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       case "modern-general":
         return <ModernGeneralHeader key="header-premium-luxury" headerSettings={headerSettings} />;
 
-      // HEADER 5: Compact / Professional
       case "compact-professional":
       case "compact":
       case "professional":
@@ -135,28 +164,39 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
     <header
       key={`global-header-${template}-${position}`}
       data-global-header={template}
-      className="relative z-50 w-full"
+      data-header-position={position}
+      className="relative z-50 w-full max-w-full min-w-0"
+      style={
+        {
+          ["--store-header-height" as string]: `${headerHeight}px`,
+        } as React.CSSProperties
+      }
     >
       <div
         ref={headerRef}
         className={cn(
-          "w-full transition-transform duration-300 z-50",
+          "w-full max-w-full min-w-0 transition-transform duration-300 z-50",
           position === "sticky" && "sticky top-0",
-          position === "fixed" && "fixed top-0 left-0 right-0",
+          position === "fixed" && "fixed top-0 left-0 right-0 w-full max-w-full",
           autoHideOnScroll && !isVisible && "-translate-y-full",
           shadow === "sm" && "shadow-xs",
           shadow === "md" && "shadow-md",
           shadow === "lg" && "shadow-lg",
           isScrolled && "shadow-md",
-          transparent && "bg-transparent backdrop-blur-md"
+          transparent && "bg-transparent backdrop-blur-md",
         )}
       >
         {renderHeaderContent()}
       </div>
 
-      {/* Spacer for non-transparent fixed header to prevent page content overlap */}
+      {/* Spacer only for fixed (out of flow) non-transparent headers — never double-offset sticky */}
       {position === "fixed" && !transparent && headerHeight > 0 && (
-        <div style={{ height: headerHeight }} aria-hidden="true" className="w-full shrink-0 pointer-events-none" />
+        <div
+          style={{ height: headerHeight }}
+          aria-hidden="true"
+          className="w-full shrink-0 pointer-events-none"
+          data-header-spacer="true"
+        />
       )}
     </header>
   );

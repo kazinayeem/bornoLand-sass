@@ -65,12 +65,13 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
   const initialTab = (searchParams.get("tab") as TabMode) || "themes";
   const [activeTab, setActiveTab] = useState<TabMode>(initialTab);
 
-  const { data, isLoading, refetch: refetchStore } = useGetStoreQuery(storeId);
-  const { data: pagesData, refetch: refetchPages } = useGetStorePagesQuery(storeId);
+  const { data, isLoading: isStoreQueryLoading } = useGetStoreQuery(storeId, { skip: !storeId });
+  const { data: pagesData } = useGetStorePagesQuery(storeId, { skip: !storeId });
   const [changeTheme] = useChangeStoreThemeMutation();
   const [updatePage] = useUpdateStorePageMutation();
 
-  const store = data?.data?.store;
+  const store = data?.data?.store ?? storeContext ?? undefined;
+  const isLoading = !store && isStoreQueryLoading;
 
   const [activeThemeId, setActiveThemeId] = useState<string>("grocery");
   const [previewThemeId, setPreviewThemeId] = useState<string>("grocery");
@@ -128,12 +129,15 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
   };
 
   const handleRequestSwitchTheme = (themeId: string) => {
+    if (switchingThemeId) return;
     if (themeId === activeThemeId) {
       handleOpenBuilder();
       return;
     }
     setSwitchThemeModal({ open: true, targetThemeId: themeId });
   };
+
+  const isThemeSwitching = switchingThemeId !== null;
 
   const handleConfirmSwitchTheme = async () => {
     const targetThemeId = switchThemeModal.targetThemeId;
@@ -202,8 +206,7 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
       setFontFamily(targetTheme.tokens.typography.fontFamily);
       setProductCardVariant(targetTheme.productCardVariant);
 
-      await refetchStore();
-      await refetchPages();
+      // Mutations invalidate Stores / StorePages tags — RTK refetches subscribed queries automatically.
 
       if (storeContext) {
         try {
@@ -316,7 +319,6 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
           logThemeFlowError("Storefront revalidation failed after website reset", revalidateError);
         }
       }
-      refetchPages();
       toast.success("Website design has been reset to clean defaults. Products & data are safe.");
     } catch (error) {
       logThemeFlowError("Failed to reset website", error);
@@ -547,14 +549,18 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
                             <Button
                               type="button"
                               size="sm"
-                              disabled={saving}
+                              disabled={isThemeSwitching}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleRequestSwitchTheme(theme.id);
                               }}
                               className="h-8 text-xs bg-zinc-900 hover:bg-black text-white"
                             >
-                              <Check className="w-3.5 h-3.5 mr-1" />
+                              {switchingThemeId === theme.id ? (
+                                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                              ) : (
+                                <Check className="w-3.5 h-3.5 mr-1" />
+                              )}
                               Use This Theme
                             </Button>
                           ) : (
@@ -670,9 +676,13 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
                         <Button
                           type="button"
                           size="sm"
+                          disabled={isThemeSwitching}
                           onClick={() => handleRequestSwitchTheme(previewDef.id)}
                           className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold"
                         >
+                          {switchingThemeId === previewDef.id ? (
+                            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin inline" />
+                          ) : null}
                           Use {previewDef.name}
                         </Button>
                       )}
@@ -918,10 +928,11 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
               <Button
                 type="button"
                 size="sm"
+                disabled={isThemeSwitching}
                 onClick={handleConfirmSwitchTheme}
                 className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold"
               >
-                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : null}
+                {isThemeSwitching ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : null}
                 Use Theme
               </Button>
             </div>

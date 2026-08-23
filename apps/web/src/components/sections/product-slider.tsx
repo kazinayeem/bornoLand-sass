@@ -19,6 +19,7 @@ export function ProductSlider({ section }: { section: SectionData }) {
   const showBadges = isSectionPropEnabled(p.showBadges, true);
   const showRatings = isSectionPropEnabled(p.showRatings, true);
   const showViewNow = isSectionPropEnabled(p.showViewNow, false);
+  const showAddToCart = isSectionPropEnabled(p.showAddToCart, true);
   const viewNowText = p.viewNowText?.trim() || "View Now";
 
   return (
@@ -40,6 +41,7 @@ export function ProductSlider({ section }: { section: SectionData }) {
                 showBadges={showBadges}
                 showRatings={showRatings}
                 showViewNow={showViewNow}
+                showAddToCart={showAddToCart}
                 viewNowText={viewNowText}
                 categoryLabel={resolveProductCategoryLabel(product, categories)}
               />

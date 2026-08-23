@@ -176,8 +176,13 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
       if (storeContext) {
         await revalidateStorefrontForStore(storeContext, { scope: "all" });
       }
-      refetchPages();
-      toast.success(`Switched to ${targetTheme.name}! All store products & orders preserved.`);
+      await refetchPages();
+      toast.success(`Switched to ${targetTheme.name}! Opening builder…`);
+
+      const slug = storeContext?.slug || store?.slug;
+      if (slug && permission.allowed) {
+        router.push(`/store/${slug}/builder/home`);
+      }
     } catch {
       toast.error("Failed to switch theme");
     } finally {

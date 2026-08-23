@@ -35,6 +35,7 @@ export function ProductSectionGrid({
   const showBadges = isSectionPropEnabled(p.showBadges, true);
   const showRatings = isSectionPropEnabled(p.showRatings, true);
   const showViewNow = isSectionPropEnabled(p.showViewNow, false);
+  const showAddToCart = isSectionPropEnabled(p.showAddToCart, true);
   const viewNowText = p.viewNowText?.trim() || "View Now";
 
   return (
@@ -64,6 +65,7 @@ export function ProductSectionGrid({
               showBadges={showBadges}
               showRatings={showRatings}
               showViewNow={showViewNow}
+              showAddToCart={showAddToCart}
               viewNowText={viewNowText}
               categoryLabel={resolveProductCategoryLabel(product, categories)}
             />

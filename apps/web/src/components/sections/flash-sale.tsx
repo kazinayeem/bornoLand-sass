@@ -21,6 +21,9 @@ export function FlashSale({ section }: { section: SectionData }) {
 
   const showBadges = isSectionPropEnabled(p.showBadges, true);
   const showRatings = isSectionPropEnabled(p.showRatings, true);
+  const showViewNow = isSectionPropEnabled(p.showViewNow, false);
+  const showAddToCart = isSectionPropEnabled(p.showAddToCart, true);
+  const viewNowText = p.viewNowText?.trim() || "View Now";
 
   useEffect(() => {
     if (p.showTimer !== "true") return;
@@ -80,6 +83,9 @@ export function FlashSale({ section }: { section: SectionData }) {
                   product={product}
                   showBadges={showBadges}
                   showRatings={showRatings}
+                  showViewNow={showViewNow}
+                  showAddToCart={showAddToCart}
+                  viewNowText={viewNowText}
                   categoryLabel={resolveProductCategoryLabel(product, categories)}
                 />
               ))}

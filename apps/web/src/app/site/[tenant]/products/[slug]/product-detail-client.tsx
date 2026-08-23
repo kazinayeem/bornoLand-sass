@@ -18,6 +18,7 @@ import { resolveMediaUrl } from "@/lib/resolve-media-url";
 import { toast } from "sonner";
 import { SmartImage } from "@/components/ui/smart-image";
 import { ProductReviews } from "@/components/storefront/product-reviews";
+import { ProductRatingRow } from "@/components/storefront/product-rating-row";
 
 
 type ProductOption = { _id?: string; name: string; values: string[] };
@@ -116,34 +117,15 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
   const tabs = [
     { id: "description" as const, label: "Description" },
-    { id: "features" as const, label: "Features" },
     { id: "specs" as const, label: "Specs" },
     { id: "reviews" as const, label: "Reviews" },
-    { id: "shipping" as const, label: "Shipping" },
-    { id: "refund" as const, label: "Refunds" },
-  ];
-
-  const features = [
-    "Premium build with refined materials",
-    "Fast delivery and easy returns",
-    "Designed for daily use and long-term durability",
-    "Works seamlessly with modern lifestyles",
   ];
 
   const specs = [
     ["SKU", activeVariant?.sku || product.sku],
     ["Category", product.category],
     ["Stock", `${displayStock} units`],
-    ["Material", "Premium composite"],
-    ["Care", "Wipe clean"],
-    ["Warranty", "1 year limited"],
-  ];
-
-  const reviews = [
-    { name: "Sarah J.", text: "Excellent quality and beautiful packaging.", rating: 5 },
-    { name: "Mike R.", text: "Feels premium and the delivery was fast.", rating: 5 },
-    { name: "Emily L.", text: "Exactly what I expected from a premium store.", rating: 4 },
-  ];
+  ].filter(([, value]) => Boolean(value));
 
   const handleAddToCart = async (showToast = true) => {
     dispatch(addToCart({
@@ -261,12 +243,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
               </div>
               <h1 className="mt-3 text-3xl font-semibold tracking-tight text-apple-ink sm:text-4xl">{product.name}</h1>
 
-              <div className="mt-4 flex items-center gap-2">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Star key={index} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                ))}
-                <span className="text-sm text-apple-ink-muted-48">4.8 · 24 reviews</span>
-              </div>
+              <ProductRatingRow storeId={store._id} productId={product._id} className="mt-4" />
 
               <div className="mt-5 flex items-end gap-3">
                 <span className="text-4xl font-semibold tracking-tight text-apple-ink">{formatCurrency(displayPrice, settings)}</span>
@@ -388,56 +365,28 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 </div>
               )}
 
-              {activeTab === "features" && (
-                <ul className="space-y-3 text-sm text-apple-ink-muted-80">
-                  {features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3 rounded-2xl border border-zinc-100 bg-apple-canvas-parchment px-4 py-3">
-                      <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
               {activeTab === "specs" && (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {specs.map(([label, value]) => (
-                    <div key={label} className="rounded-2xl border border-zinc-100 bg-apple-canvas-parchment p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-apple-ink-muted-48">{label}</p>
-                      <p className="mt-2 text-sm font-medium text-apple-ink">{value}</p>
-                    </div>
-                  ))}
-                </div>
+                specs.length > 0 ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {specs.map(([label, value]) => (
+                      <div key={label} className="rounded-2xl border border-zinc-100 bg-apple-canvas-parchment p-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-apple-ink-muted-48">{label}</p>
+                        <p className="mt-2 text-sm font-medium text-apple-ink">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-apple-ink-muted-80">No specifications available.</p>
+                )
               )}
 
               {activeTab === "reviews" && (
-                <div className="space-y-4">
-                  {reviews.map((review) => (
-                    <div key={review.name} className="rounded-2xl border border-zinc-100 bg-apple-canvas-parchment p-4">
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: review.rating }).map((_, index) => (
-                          <Star key={index} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                        ))}
-                      </div>
-                      <p className="mt-3 text-sm leading-6 text-apple-ink-muted-80">{review.text}</p>
-                      <p className="mt-3 text-xs font-semibold text-apple-ink">{review.name}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {activeTab === "shipping" && (
-                <div className="space-y-4 text-sm leading-7 text-apple-ink-muted-80">
-                  <p>Orders usually ship within 24-48 hours. Standard delivery takes 3-5 business days depending on location.</p>
-                  <p>Free shipping is available on qualified orders and tracking is provided as soon as your package leaves the warehouse.</p>
-                </div>
-              )}
-
-              {activeTab === "refund" && (
-                <div className="space-y-4 text-sm leading-7 text-apple-ink-muted-80">
-                  <p>We offer a 30-day return window for unopened or defective items. Contact support to start a return.</p>
-                  <p>Refunds are processed after inspection and credited to your original payment method.</p>
-                </div>
+                <ProductReviews
+                  storeId={store._id}
+                  productId={product._id}
+                  productName={product.name}
+                  primaryColor={primaryColor}
+                />
               )}
             </div>
 
@@ -468,14 +417,6 @@ export function ProductDetailClient({ product }: { product: Product }) {
             </div>
           </div>
         </section>
-
-        <ProductReviews
-          storeId={store._id}
-          productId={product._id}
-          productName={product.name}
-          primaryColor={primaryColor}
-        />
-
 
         {relatedProducts.length > 0 && (
           <section className="mt-8">

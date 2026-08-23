@@ -119,6 +119,7 @@ export function ProductSectionEditor({
             <TextField value={p.viewNowText ?? "View Now"} onChange={(v) => onPropChange("viewNowText", v)} placeholder="View Now" />
           </Field>
         )}
+        <ToggleField label="Show add to cart" value={p.showAddToCart ?? "true"} onChange={(v) => onPropChange("showAddToCart", v)} />
         <ToggleField label="Show view all" value={p.showViewAll ?? "true"} onChange={(v) => onPropChange("showViewAll", v)} />
         {isSectionPropEnabled(p.showViewAll, true) && (
           <>

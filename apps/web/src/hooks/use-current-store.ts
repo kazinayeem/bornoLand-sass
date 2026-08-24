@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import {
@@ -14,7 +13,6 @@ import type { Store } from "@/redux/api/store-api";
 
 export function useCurrentStore() {
   const dispatch = useDispatch();
-  const searchParams = useSearchParams();
   const current = useSelector((s: RootState) => s.currentStore);
   const { data } = useGetMyStoresQuery();
   const stores = data?.data?.stores ?? [];
@@ -29,7 +27,9 @@ export function useCurrentStore() {
 
   // Auto-restore from URL query param ?storeId=
   useEffect(() => {
-    const storeIdFromUrl = searchParams.get("storeId");
+    const storeIdFromUrl = typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("storeId")
+      : null;
     if (storeIdFromUrl && stores.length > 0) {
       const store = stores.find((s) => s._id === storeIdFromUrl);
       if (store) {
@@ -46,7 +46,7 @@ export function useCurrentStore() {
         return;
       }
     }
-  }, [searchParams, stores, dispatch, current.storeId]);
+  }, [stores, dispatch, current.storeId]);
 
   // Auto-restore from global state (from localStorage)/rehydrate
   useEffect(() => {

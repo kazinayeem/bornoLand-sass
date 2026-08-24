@@ -33,6 +33,8 @@ export async function generateMetadata({ params }: { params: Promise<{ tenant: s
   });
 }
 
+import type { PublicStoreTracking } from "@/lib/tracking/types";
+
 export default async function TenantLayout({ params, children }: { params: Promise<{ tenant: string }>; children: React.ReactNode }) {
   const { tenant: slug } = await params;
   const data = (await fetchTenantSite(slug)) as {
@@ -44,6 +46,7 @@ export default async function TenantLayout({ params, children }: { params: Promi
     sliders?: HomepageSliderData[];
     navigations?: NavigationData[];
     contact?: StoreContact | null;
+    tracking?: PublicStoreTracking | null;
   } | null;
 
   // Only 404 when the store itself does not exist. Transient API failures throw
@@ -97,6 +100,7 @@ export default async function TenantLayout({ params, children }: { params: Promi
       sliders={sliders ?? []}
       navigations={navigations}
       contact={contact}
+      tracking={data?.tracking ?? null}
       pageSections={pageSections}
       headerSections={headerSections}
       footerSections={footerSections}

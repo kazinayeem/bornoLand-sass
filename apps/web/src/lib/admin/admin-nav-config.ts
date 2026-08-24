@@ -23,6 +23,7 @@ import {
   Shield,
   Sparkles,
   Store,
+  Target,
   UserCog,
   Users,
   Wallet,
@@ -63,6 +64,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [
       { href: "/admin/dashboard/workspaces", label: "Workspace Management", icon: Building2 },
       { href: "/admin/dashboard/stores", label: "Store Management", icon: Store },
+      { href: "/admin/dashboard/tracking", label: "Tracking Overview", icon: Target, description: "Pixel & tracking adoption" },
       { href: "/admin/dashboard/users", label: "Users", icon: Users },
       { href: "/admin/dashboard/roles", label: "Roles & Permissions", icon: UserCog },
     ],

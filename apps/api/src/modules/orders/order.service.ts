@@ -412,6 +412,13 @@ export async function createOrder(
   await CartModel.deleteOne({ _id: cart._id });
 
   try {
+    const { markCheckoutConverted } = await import("./incomplete-checkout.service.js");
+    await markCheckoutConverted(storeId, sessionId, String(order._id));
+  } catch (err) {
+    console.error("[orders] Failed to mark incomplete checkout converted", err);
+  }
+
+  try {
     const { syncCustomerOrderStats } = await import("../customers/customer.service.js");
     await syncCustomerOrderStats(storeId, customerId);
   } catch (err) {

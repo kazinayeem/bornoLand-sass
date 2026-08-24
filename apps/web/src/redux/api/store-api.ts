@@ -115,6 +115,10 @@ export type PlanFeatureToggles = {
   shipping: boolean;
   localPickup: boolean;
   abandonedCart: boolean;
+  incompleteOrders: boolean;
+  checkoutRecovery: boolean;
+  recoveryAnalytics: boolean;
+  recoveryLinks: boolean;
   emailMarketing: boolean;
   smsMarketing: boolean;
   pushNotification: boolean;
@@ -149,6 +153,12 @@ export type PlanFeatureToggles = {
   analyticsExport: boolean;
   reports: boolean;
   courier: boolean;
+  metaPixel: boolean;
+  tiktokPixel: boolean;
+  customTracking: boolean;
+  googleAnalytics: boolean;
+  conversionTracking: boolean;
+  advancedTracking: boolean;
 };
 
 export type PlanCourierAccess = {

@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { SmartImage } from "@/components/ui/smart-image";
 import { ProductReviews } from "@/components/storefront/product-reviews";
 import { ProductRatingRow } from "@/components/storefront/product-rating-row";
+import { useStorefrontTracking } from "@/hooks/use-storefront-tracking";
 
 
 type ProductOption = { _id?: string; name: string; values: string[] };
@@ -57,6 +58,7 @@ function firstAvailableVariant(product: Product): ProductVariant | undefined {
 
 export function ProductDetailClient({ product }: { product: Product }) {
   useTrackProductView(product._id, product.name);
+  const { trackViewContent, trackAddToCart } = useStorefrontTracking();
 
   const dispatch = useDispatch();
   const { store, theme, products, settings } = useTenant();
@@ -67,6 +69,16 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const [added, setAdded] = useState(false);
   const [activeTab, setActiveTab] = useState<"description" | "features" | "specs" | "reviews" | "shipping" | "refund">("description");
   const [selectedImage, setSelectedImage] = useState(getProductImageUrl(product));
+
+  useEffect(() => {
+    trackViewContent({
+      id: product._id,
+      name: product.name,
+      price: product.price,
+      category: product.category,
+      currency: settings?.currencyCode || "BDT",
+    });
+  }, [product._id, product.name, product.price, product.category, settings?.currencyCode, trackViewContent]);
 
   const hasVariants = (product.options?.length ?? 0) > 0 && (product.variants?.length ?? 0) > 0;
 
@@ -137,6 +149,14 @@ export function ProductDetailClient({ product }: { product: Product }) {
       quantity,
       image: displayImage
     }));
+    trackAddToCart({
+      id: product._id,
+      name: product.name,
+      price: displayPrice,
+      quantity,
+      category: product.category,
+      currency: settings?.currencyCode || "BDT",
+    });
     try {
       await addToCartRemote({
         productId: product._id,

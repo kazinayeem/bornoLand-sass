@@ -102,6 +102,10 @@ const planFeatureSchema = z.object({
   shipping: z.boolean().optional().default(false),
   localPickup: z.boolean().optional().default(false),
   abandonedCart: z.boolean().optional().default(false),
+  incompleteOrders: z.boolean().optional().default(false),
+  checkoutRecovery: z.boolean().optional().default(false),
+  recoveryAnalytics: z.boolean().optional().default(false),
+  recoveryLinks: z.boolean().optional().default(false),
   emailMarketing: z.boolean().optional().default(false),
   smsMarketing: z.boolean().optional().default(false),
   pushNotification: z.boolean().optional().default(false),
@@ -136,6 +140,12 @@ const planFeatureSchema = z.object({
   analyticsExport: z.boolean().optional().default(false),
   reports: z.boolean().optional().default(false),
   courier: z.boolean().optional().default(false),
+  metaPixel: z.boolean().optional().default(false),
+  tiktokPixel: z.boolean().optional().default(false),
+  customTracking: z.boolean().optional().default(false),
+  googleAnalytics: z.boolean().optional().default(false),
+  conversionTracking: z.boolean().optional().default(false),
+  advancedTracking: z.boolean().optional().default(false),
 });
 
 const planCourierAccessSchema = z.object({

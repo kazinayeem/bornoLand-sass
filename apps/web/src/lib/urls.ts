@@ -136,10 +136,15 @@ export function getWorkspaceUrl(path = "/dashboard"): string {
 }
 
 export function getApiUrl(): string {
-  const url =
-    (typeof window === "undefined"
-      ? process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL
-      : process.env.NEXT_PUBLIC_API_URL) ?? "";
+  if (typeof window === "undefined") {
+    const raw = (process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "").trim();
+    if (raw && (raw.startsWith("http://") || raw.startsWith("https://"))) {
+      return stripTrailingSlash(raw);
+    }
+    const port = process.env.NEXT_PUBLIC_API_PORT || process.env.API_PORT || "4000";
+    return `http://localhost:${port}`;
+  }
+  const url = process.env.NEXT_PUBLIC_API_URL ?? "/api";
   return stripTrailingSlash(url);
 }
 

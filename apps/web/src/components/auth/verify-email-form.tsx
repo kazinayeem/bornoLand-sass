@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useVerifyEmailMutation } from "@/redux/api/auth-api";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export function VerifyEmailForm({ token: propToken }: { token?: string } = {}) {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const token = propToken || searchParams?.get("token") || "";
+  const token = propToken || (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("token") || "" : "");
 
   const [verifyEmail] = useVerifyEmailMutation();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");

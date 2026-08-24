@@ -9,6 +9,7 @@ import { HomepageSliderModel } from "../../models/homepage-slider.model.js";
 import { NavigationModel } from "../navigation/navigation.model.js";
 import { MenuItemModel } from "../navigation/menu-item.model.js";
 import { getPublicStoreContact } from "../stores/store-contact.service.js";
+import { getPublicStoreTracking } from "./store-tracking.service.js";
 
 export type TenantStoreResponse = {
   store: Record<string, unknown> | null;
@@ -20,6 +21,7 @@ export type TenantStoreResponse = {
   sliders: Record<string, unknown>[];
   navigations?: Record<string, unknown>[];
   contact?: Record<string, unknown> | null;
+  tracking?: Record<string, unknown> | null;
 };
 
 /**
@@ -177,7 +179,10 @@ export async function resolveBySubdomain(
       return { ...navigation, items: buildMenuItemTree(items) };
     }),
   );
-  const contactResult = await getPublicStoreContact(String(store._id));
+  const [contactResult, trackingResult] = await Promise.all([
+    getPublicStoreContact(String(store._id)),
+    getPublicStoreTracking(String(store._id)),
+  ]);
 
   return {
     ok: true,
@@ -191,6 +196,7 @@ export async function resolveBySubdomain(
       sliders: sliders ?? [],
       navigations: navigationTrees ?? [],
       contact: contactResult.data?.contact ?? null,
+      tracking: trackingResult ?? null,
     },
   };
 }

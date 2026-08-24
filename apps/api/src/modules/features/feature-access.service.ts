@@ -149,8 +149,40 @@ export async function syncStoreUsage(storeId: string) {
   return usage as Record<string, number> | null;
 }
 
+const TOGGLE_KEY_MAP: Record<string, string[]> = {
+  inventory: ["inventory"],
+  inventory_history: ["inventoryHistory"],
+  price_history: ["priceHistory"],
+  cost_history: ["costHistory"],
+  suppliers: ["suppliers"],
+  purchase_orders: ["purchaseOrders"],
+  batch_fifo: ["batchFifo"],
+  warehouses: ["warehousesEnabled", "warehouses"],
+  barcode: ["barcode"],
+  inventory_reports: ["inventoryReports"],
+  low_stock_alerts: ["lowStockAlerts"],
+  stock_transfer: ["stockTransfer"],
+  inventory_audit_log: ["inventoryAuditLog"],
+  courier: ["courier"],
+  meta_pixel: ["metaPixel"],
+  tiktok_pixel: ["tiktokPixel"],
+  custom_tracking: ["customTracking"],
+  google_analytics: ["googleAnalytics"],
+  conversion_tracking: ["conversionTracking"],
+  advanced_tracking: ["advancedTracking"],
+  incomplete_orders: ["incompleteOrders", "abandonedCart"],
+  abandoned_cart: ["abandonedCart", "incompleteOrders"],
+  checkout_recovery: ["checkoutRecovery", "recoveryLinks"],
+  recovery_analytics: ["recoveryAnalytics"],
+  reviews: ["reviews"],
+  coupons: ["coupons"],
+  custom_domain: ["customDomain"],
+  seo: ["seo"],
+};
+
 async function getPlanFeatureAssignment(planId: string, featureKey: string): Promise<PlanFeatureAssignment | null> {
-  const assigned = (await PlanFeatureModel.findOne({ planId, featureKey: featureKey.toLowerCase() }).lean()) as {
+  const normalizedKey = featureKey.toLowerCase();
+  const assigned = (await PlanFeatureModel.findOne({ planId, featureKey: normalizedKey }).lean()) as {
     enabled?: boolean;
     limit?: number;
     tierKey?: string;
@@ -165,6 +197,35 @@ async function getPlanFeatureAssignment(planId: string, featureKey: string): Pro
       value: tierKey,
     };
   }
+
+  // Fallback: check PlanModel featureToggles and courierAccess
+  try {
+    const plan = (await PlanModel.findById(planId).lean()) as any;
+    if (plan) {
+      const toggles = plan.featureToggles || {};
+      const possibleToggleKeys = TOGGLE_KEY_MAP[normalizedKey] || [normalizedKey];
+      const isToggleEnabled = possibleToggleKeys.some((k) => Boolean(toggles[k]));
+
+      if (normalizedKey === "courier") {
+        const courierEnabled = Boolean(
+          plan.courierAccess?.enabled ||
+          plan.courierAccess?.allProviders ||
+          (plan.courierAccess?.providers?.length ?? 0) > 0 ||
+          toggles.courier
+        );
+        if (courierEnabled) {
+          return { enabled: true, limit: 0, tierKey: "enabled", value: "enabled" };
+        }
+      }
+
+      if (isToggleEnabled) {
+        return { enabled: true, limit: 0, tierKey: "enabled", value: "enabled" };
+      }
+    }
+  } catch {
+    // Ignore error
+  }
+
   return null;
 }
 
@@ -269,8 +330,13 @@ export async function checkFeature(storeId: string, featureKey: string): Promise
   const subResult = await checkSubscription(storeId);
   if (!subResult.allowed) return { ...subResult, featureKey };
 
-  const store = (await StoreModel.findById(storeId).lean()) as { planId?: unknown } | null;
-  if (!store?.planId) {
+  const store = (await StoreModel.findById(storeId).lean()) as { planId?: unknown; plan?: string } | null;
+  let planId = store?.planId ? String(store.planId) : null;
+  if (!planId && store?.plan) {
+    const planDoc = (await PlanModel.findOne({ slug: store.plan }).select("_id").lean()) as { _id?: unknown } | null;
+    if (planDoc) planId = String(planDoc._id);
+  }
+  if (!planId) {
     return { allowed: true, featureKey };
   }
 
@@ -286,12 +352,12 @@ export async function checkFeature(storeId: string, featureKey: string): Promise
   }
 
   const type = normalizeFeatureType(feature.type);
-  const assignment = await getPlanFeatureAssignment(String(store.planId), featureKey);
+  const assignment = await getPlanFeatureAssignment(planId, featureKey);
   if (!assignment) {
     return { allowed: true, featureKey, featureName: feature.name };
   }
 
-  const plan = (await PlanModel.findById(store.planId).lean()) as { slug: string; name: string } | null;
+  const plan = (await PlanModel.findById(planId).lean()) as { slug: string; name: string } | null;
   const planInfo = plan ? { slug: plan.slug, name: plan.name } : undefined;
 
   if (type === "boolean") {
@@ -480,22 +546,30 @@ export async function getStoreFeatureAccessMatrix(storeId: string) {
   const store = await getStoreContext(storeId);
   if (!store) return { ok: false as const, message: "Store not found" };
 
-  const plan = store.planId
-    ? ((await PlanModel.findById(store.planId).lean()) as {
+  let planId = store.planId ? String(store.planId) : null;
+  let plan = planId
+    ? ((await PlanModel.findById(planId).lean()) as {
+        _id: unknown;
         slug: string;
         name: string;
         priceBDT: number;
         priceYearly?: number;
       } | null)
     : null;
+
+  if (!plan && store.plan) {
+    plan = ((await PlanModel.findOne({ slug: store.plan }).lean()) as any) || null;
+    if (plan) planId = String(plan._id);
+  }
+
   const usage = await syncStoreUsage(storeId);
   const features = await FeatureModel.find({ isActive: true }).sort({ groupKey: 1, sortOrder: 1 }).lean();
 
   const matrix = await Promise.all(
     features.map(async (feature) => {
       const type = normalizeFeatureType(feature.type) as FeatureType;
-      const assignment = store.planId
-        ? await getPlanFeatureAssignment(String(store.planId), feature.key)
+      const assignment = planId
+        ? await getPlanFeatureAssignment(planId, feature.key)
         : null;
 
       const counterKey = feature.usageCounterKey || feature.key;

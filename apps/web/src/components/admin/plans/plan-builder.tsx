@@ -25,6 +25,16 @@ const FEATURE_KEY_TO_TOGGLE: Partial<Record<string, keyof PlanFeatureToggles>> =
   stock_transfer: "stockTransfer",
   inventory_audit_log: "inventoryAuditLog",
   courier: "courier",
+  meta_pixel: "metaPixel",
+  tiktok_pixel: "tiktokPixel",
+  custom_tracking: "customTracking",
+  google_analytics: "googleAnalytics",
+  conversion_tracking: "conversionTracking",
+  advanced_tracking: "advancedTracking",
+  incomplete_orders: "incompleteOrders",
+  abandoned_cart: "abandonedCart",
+  checkout_recovery: "checkoutRecovery",
+  recovery_analytics: "recoveryAnalytics",
 };
 
 const COURIER_PROVIDER_OPTIONS: Array<{
@@ -112,6 +122,15 @@ type FeatureGroup = {
 
 const FEATURE_GROUPS: FeatureGroup[] = [
   {
+    key: "sales_orders", label: "Sales & Order Management",
+    toggles: [
+      { key: "incompleteOrders", label: "Incomplete Orders", description: "Track progressive checkout sessions and abandoned checkouts" },
+      { key: "abandonedCart", label: "Abandoned Cart", description: "Track and manage customer abandoned carts" },
+      { key: "checkoutRecovery", label: "Checkout Recovery", description: "Generate customer recovery links and restore checkouts" },
+      { key: "recoveryAnalytics", label: "Recovery Analytics", description: "Advanced checkout abandonment and conversion analytics" },
+    ],
+  },
+  {
     key: "products", label: "Products & Inventory",
     toggles: [
       { key: "productVariants", label: "Product Variants", description: "Multiple variants per product (size, color, etc.)" },
@@ -165,6 +184,17 @@ const FEATURE_GROUPS: FeatureGroup[] = [
       { key: "analyticsExport", label: "Analytics Export", description: "Export analytics reports" },
       { key: "advancedAnalytics", label: "Advanced Analytics", description: "Advanced analytics and reports" },
       { key: "reports", label: "Reports", description: "Advanced business reports, analytics, exports and insights" },
+    ],
+  },
+  {
+    key: "marketing", label: "Marketing & Tracking Features",
+    toggles: [
+      { key: "metaPixel", label: "Meta Pixel", description: "Facebook & Instagram advertising pixel tracking" },
+      { key: "tiktokPixel", label: "TikTok Pixel", description: "TikTok advertising pixel tracking" },
+      { key: "customTracking", label: "Custom Tracking Script", description: "Custom HTML/JS header and body tracking scripts" },
+      { key: "googleAnalytics", label: "Google Analytics", description: "Google Analytics 4 measurement" },
+      { key: "conversionTracking", label: "Conversion Tracking", description: "Advanced e-commerce conversion tracking" },
+      { key: "advancedTracking", label: "Advanced Tracking", description: "Server-side and advanced matched tracking" },
     ],
   },
   {
@@ -328,6 +358,10 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     shipping: plan.featureToggles?.shipping ?? false,
     localPickup: plan.featureToggles?.localPickup ?? false,
     abandonedCart: plan.featureToggles?.abandonedCart ?? false,
+    incompleteOrders: plan.featureToggles?.incompleteOrders ?? false,
+    checkoutRecovery: plan.featureToggles?.checkoutRecovery ?? false,
+    recoveryAnalytics: plan.featureToggles?.recoveryAnalytics ?? false,
+    recoveryLinks: plan.featureToggles?.recoveryLinks ?? false,
     emailMarketing: plan.featureToggles?.emailMarketing ?? false,
     smsMarketing: plan.featureToggles?.smsMarketing ?? false,
     pushNotification: plan.featureToggles?.pushNotification ?? false,
@@ -362,6 +396,12 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     analyticsExport: plan.featureToggles?.analyticsExport ?? false,
     reports: plan.featureToggles?.reports ?? false,
     courier: plan.featureToggles?.courier ?? plan.courierAccess?.enabled ?? false,
+    metaPixel: plan.featureToggles?.metaPixel ?? false,
+    tiktokPixel: plan.featureToggles?.tiktokPixel ?? false,
+    customTracking: plan.featureToggles?.customTracking ?? false,
+    googleAnalytics: plan.featureToggles?.googleAnalytics ?? false,
+    conversionTracking: plan.featureToggles?.conversionTracking ?? false,
+    advancedTracking: plan.featureToggles?.advancedTracking ?? false,
   }));
 
   const [courierAccess, setCourierAccess] = useState<PlanCourierAccess>(() => ({

@@ -103,6 +103,10 @@ const planFeatureSchema = new Schema({
   shipping: { type: Boolean, default: false },
   localPickup: { type: Boolean, default: false },
   abandonedCart: { type: Boolean, default: false },
+  incompleteOrders: { type: Boolean, default: false },
+  checkoutRecovery: { type: Boolean, default: false },
+  recoveryAnalytics: { type: Boolean, default: false },
+  recoveryLinks: { type: Boolean, default: false },
   emailMarketing: { type: Boolean, default: false },
   smsMarketing: { type: Boolean, default: false },
   pushNotification: { type: Boolean, default: false },
@@ -137,6 +141,12 @@ const planFeatureSchema = new Schema({
   analyticsExport: { type: Boolean, default: true },
   reports: { type: Boolean, default: false },
   courier: { type: Boolean, default: false },
+  metaPixel: { type: Boolean, default: false },
+  tiktokPixel: { type: Boolean, default: false },
+  customTracking: { type: Boolean, default: false },
+  googleAnalytics: { type: Boolean, default: false },
+  conversionTracking: { type: Boolean, default: false },
+  advancedTracking: { type: Boolean, default: false },
 }, { _id: false });
 
 const planCourierAccessSchema = new Schema(

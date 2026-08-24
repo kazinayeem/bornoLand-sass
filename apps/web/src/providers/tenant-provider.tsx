@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { useDispatch } from "react-redux";
 import { setStoreSettings } from "@/redux/slices/store-settings-slice";
 import type { StoreContact } from "@/redux/api/store-contact-api";
+import type { PublicStoreTracking } from "@/lib/tracking/types";
 
 export type ThemeData = {
   primaryColor: string; secondaryColor: string; font: string;
@@ -131,6 +132,7 @@ export type TenantContextType = {
   sliders: HomepageSliderData[];
   navigations: NavigationData[];
   contact: StoreContact | null;
+  tracking?: PublicStoreTracking | null;
 };
 
 const TenantContext = createContext<TenantContextType | null>(null);

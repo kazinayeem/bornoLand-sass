@@ -151,27 +151,128 @@ export function CartStorefrontSkeleton({ className }: { className?: string }) {
 /** Checkout — form layout */
 export function CheckoutStorefrontSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("mx-auto w-full max-w-5xl animate-fade-in px-4 py-8 sm:px-6", className)} aria-busy aria-label="Loading checkout">
-      <Skeleton className="mb-8 h-8 w-40" />
-      <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="space-y-6">
-          {Array.from({ length: 2 }).map((_, block) => (
-            <div key={block} className="space-y-4 rounded-2xl border border-apple-hairline p-6">
-              <Skeleton className="h-5 w-36" />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Skeleton className="h-11 w-full rounded-xl" />
-                <Skeleton className="h-11 w-full rounded-xl" />
-                <Skeleton className="h-11 w-full rounded-xl sm:col-span-2" />
+    <div
+      className={cn("mx-auto w-full max-w-5xl animate-fade-in px-4 py-8 sm:px-6 lg:px-8", className)}
+      aria-busy="true"
+      aria-label="Loading checkout"
+    >
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-8 w-8 rounded-lg" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-7 w-32 rounded-md" />
+            <Skeleton className="h-3.5 w-24 rounded-sm" />
+          </div>
+        </div>
+        <Skeleton className="h-7 w-36 rounded-full" />
+      </div>
+
+      {/* 5-col Grid */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+        {/* Left Column (3 cols) */}
+        <div className="space-y-6 lg:col-span-3">
+          {/* Step 1: Customer & Address */}
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
+            <div className="flex items-center gap-2 border-b border-zinc-100 pb-3">
+              <Skeleton className="h-5 w-5 rounded-md" />
+              <Skeleton className="h-4 w-48 rounded-md" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1 sm:col-span-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-10 w-full rounded-xl" />
+              </div>
+              <div className="space-y-1">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-10 w-full rounded-xl" />
+              </div>
+              <div className="space-y-1">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-10 w-full rounded-xl" />
+              </div>
+              <div className="space-y-1">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-10 w-full rounded-xl" />
+              </div>
+              <div className="space-y-1">
+                <Skeleton className="h-3 w-28" />
+                <Skeleton className="h-10 w-full rounded-xl" />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-10 w-full rounded-xl" />
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Step 2: Delivery Zone */}
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
+            <div className="flex items-center gap-2 border-b border-zinc-100 pb-3">
+              <Skeleton className="h-5 w-5 rounded-md" />
+              <Skeleton className="h-4 w-44 rounded-md" />
+            </div>
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              <Skeleton className="h-16 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-xl" />
+            </div>
+          </div>
+
+          {/* Step 3: Payment Method */}
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
+            <div className="flex items-center gap-2 border-b border-zinc-100 pb-3">
+              <Skeleton className="h-5 w-5 rounded-md" />
+              <Skeleton className="h-4 w-36 rounded-md" />
+            </div>
+            <div className="grid gap-2.5">
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+            </div>
+          </div>
         </div>
-        <div className="h-fit space-y-4 rounded-2xl border border-apple-hairline p-6">
-          <Skeleton className="h-5 w-28" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-          <Skeleton className="mt-4 h-12 w-full rounded-full" />
+
+        {/* Right Column (2 cols) */}
+        <div className="lg:col-span-2">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
+            <div className="border-b border-zinc-100 pb-3">
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3.5 w-3/4 rounded-sm" />
+                  <Skeleton className="h-3 w-16 rounded-sm" />
+                </div>
+                <Skeleton className="h-4 w-12 rounded-sm" />
+              </div>
+              <div className="flex items-center gap-3 pt-2">
+                <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3.5 w-2/3 rounded-sm" />
+                  <Skeleton className="h-3 w-16 rounded-sm" />
+                </div>
+                <Skeleton className="h-4 w-12 rounded-sm" />
+              </div>
+            </div>
+
+            <div className="space-y-2 border-t border-zinc-100 pt-3">
+              <div className="flex justify-between">
+                <Skeleton className="h-3.5 w-16" />
+                <Skeleton className="h-3.5 w-14" />
+              </div>
+              <div className="flex justify-between">
+                <Skeleton className="h-3.5 w-20" />
+                <Skeleton className="h-3.5 w-12" />
+              </div>
+              <div className="flex justify-between border-t border-zinc-100 pt-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-5 w-20" />
+              </div>
+            </div>
+
+            <Skeleton className="h-11 w-full rounded-xl" />
+          </div>
         </div>
       </div>
     </div>

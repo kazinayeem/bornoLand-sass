@@ -79,7 +79,7 @@ export async function resolveStoreFeature(
   featureKey: string
 ): Promise<boolean> {
   await connectDatabase();
-  const store = await StoreModel.findById(storeId).select("planId").lean() as { planId?: unknown } | null;
+  const store = await StoreModel.findById(storeId).select("planId plan").lean() as { planId?: unknown; plan?: string } | null;
   if (!store) return false;
 
   const override = await StoreOverrideModel.findOne({ storeId }).lean() as Record<string, unknown> | null;
@@ -90,11 +90,19 @@ export async function resolveStoreFeature(
     if (val != null) return Boolean(val);
   }
 
-  const planId = override?.planId
+  let planId = override?.planId
     ? String(override.planId)
     : store.planId
       ? String(store.planId)
       : null;
+
+  if (!planId && store.plan) {
+    const planDoc = await PlanModel.findOne({ slug: store.plan.toLowerCase() }).select("_id").lean() as { _id?: unknown } | null;
+    if (planDoc?._id) {
+      planId = String(planDoc._id);
+    }
+  }
+
   if (!planId) return false;
 
   const plan = await PlanModel.findById(planId).select("featureToggles").lean() as { featureToggles?: Record<string, unknown> } | null;

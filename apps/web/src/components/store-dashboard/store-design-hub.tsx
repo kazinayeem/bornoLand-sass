@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Palette,
@@ -56,7 +56,7 @@ function logThemeFlowError(label: string, error: unknown) {
   console.error(`[theme-switch] ${label}`, error);
 }
 
-export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
+function StoreDesignHubInner({ storeId }: StoreDesignHubProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { store: storeContext } = useStorePage();
@@ -986,5 +986,19 @@ export function StoreDesignHub({ storeId }: StoreDesignHubProps) {
         </div>
       )}
     </div>
+  );
+}
+
+export function StoreDesignHub(props: StoreDesignHubProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-64 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-apple-primary" />
+        </div>
+      }
+    >
+      <StoreDesignHubInner {...props} />
+    </Suspense>
   );
 }

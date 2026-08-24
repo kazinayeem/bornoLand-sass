@@ -105,7 +105,7 @@ export function StoreShell({ children }: { children: ReactNode }) {
               </button>
             </div>
             <div className="sidebar-scroll flex-1 overflow-y-auto">
-              <StoreSidebar store={store} />
+              <StoreSidebar store={store} onNavigate={closeMobileNav} />
             </div>
           </div>
         </div>

@@ -47,6 +47,7 @@ import { recordAuditFromRequest } from "../audit/audit.service.js";
 import { AUDIT_ACTIONS } from "../audit/audit-actions.js";
 import { AUDIT_MODULES } from "../audit/audit.constants.js";
 import { getAdminSubscriptionOverviewController } from "../plans/subscription-admin.controller.js";
+import { getAdminTrackingOverviewController } from "../stores/store-tracking.controller.js";
 import {
   getAdminStoreSettingsController,
   saveStoreOverridesController,
@@ -74,6 +75,7 @@ adminRouter.use("/platform", platformRouter);
 
 // ── Subscription Overview ──────────────────────────────────
 adminRouter.get("/subscriptions/overview", getAdminSubscriptionOverviewController);
+adminRouter.get("/tracking/overview", getAdminTrackingOverviewController);
 
 // ── Analytics Dashboard ──────────────────────────────────────────
 adminRouter.get("/analytics", async (_request, response) => {

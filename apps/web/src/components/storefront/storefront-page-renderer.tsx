@@ -24,6 +24,7 @@ export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
   const categories: CategoryData[] = (data.categories ?? []) as CategoryData[];
   const navigations: NavigationData[] = (data.navigations ?? []) as NavigationData[];
   const contact: StoreContact | null = (data.contact as StoreContact | null) ?? null;
+  const tracking = (data.tracking as any) ?? null;
   const pageSections = (page?.sections as any[]) ?? [];
   const headerSections = (page?.headerSections as any[]) ?? [];
   const footerSections = (page?.footerSections as any[]) ?? [];
@@ -74,6 +75,7 @@ export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
       sliders={sliders ?? []}
       navigations={navigations}
       contact={contact}
+      tracking={tracking}
       pageSections={bodySections}
       headerSections={headerSections}
       footerSections={footerSections}

@@ -23,6 +23,7 @@ import { getProductGalleryUrls, getProductImageUrl } from "@/lib/product-media";
 import { excerptContent, isHtmlContent } from "@/lib/html-content";
 import { SmartImage } from "@/components/ui/smart-image";
 import { cn } from "@/lib/utils";
+import { useStorefrontTracking } from "@/hooks/use-storefront-tracking";
 import type { ProductCardProduct } from "./product-card";
 
 type Props = {
@@ -59,6 +60,7 @@ export function QuickViewModal({ product: initialProduct, onClose }: Props) {
   const { theme, settings, products } = useTenant();
   const { primaryColor, buttonStyle } = theme;
   const [addToCartRemote] = useAddToCartMutation();
+  const { trackAddToCart } = useStorefrontTracking();
 
   const { data: publicData, isLoading: loadingDetails } = useGetPublicProductQuery(initialProduct.slug, {
     skip: !initialProduct.slug,
@@ -201,6 +203,14 @@ export function QuickViewModal({ product: initialProduct, onClose }: Props) {
         quantity,
         variantId: activeVariant?._id,
       }).unwrap();
+      trackAddToCart({
+        id: product._id,
+        name: product.name,
+        price: displayPrice,
+        quantity,
+        category: product.category,
+        currency: settings?.currencyCode || "BDT",
+      });
       toast.success(`${product.name} added to cart`);
       if (openDrawer) {
         dispatch(openCart());

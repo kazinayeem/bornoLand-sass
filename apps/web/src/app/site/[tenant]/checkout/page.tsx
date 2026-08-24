@@ -21,6 +21,7 @@ import {
   Tag,
   Check,
   RotateCcw,
+  RefreshCw,
 } from "lucide-react";
 import type { RootState } from "@/store/store";
 import { clearCart, setCartItems } from "@/redux/slices/cart-slice";
@@ -35,20 +36,12 @@ import {
 import { getOrCreateCartSessionId } from "@/lib/cart-session";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
-import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
 import { CustomerAddressBook } from "@/components/storefront/customer-address-book";
 import type { CustomerAddress } from "@/redux/api/customer-api";
+import { CheckoutStorefrontSkeleton } from "@/components/loading/storefront-skeletons";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useStorefrontTracking } from "@/hooks/use-storefront-tracking";
-
-const PAYMENT_ICONS: Record<string, typeof Banknote> = {
-  cod: Banknote,
-  bkash: Smartphone,
-  nagad: Smartphone,
-  rocket: Smartphone,
-  bank: Landmark,
-};
 
 type CheckoutFormState = {
   label: "Home" | "Office" | "Other";
@@ -88,14 +81,20 @@ export default function CheckoutPage() {
   const dispatch = useDispatch();
   const localCart = useSelector((state: RootState) => state.cart);
   const customer = useSelector((state: RootState) => state.customer.customer);
-  const [createOrder, { isLoading }] = useCreateOrderMutation();
+  const [createOrder, { isLoading: isSubmittingOrder }] = useCreateOrderMutation();
   const [syncCart, { isLoading: isSyncing }] = useSyncCartMutation();
   const [trackProgress] = useTrackCheckoutProgressMutation();
   const [triggerRecover, { isFetching: isRecovering }] = useLazyRecoverCheckoutQuery();
   const { store, settings } = useTenant();
   const { trackInitiateCheckout, trackAddPaymentInfo, trackPurchase } = useStorefrontTracking();
 
+  // Mounting & Initialization States
   const [mounted, setMounted] = useState(false);
+  const [isInitTimedOut, setIsInitTimedOut] = useState(false);
+  const [isAutosaving, setIsAutosaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+
+  // Form & Checkout States
   const [errorMsg, setErrorMsg] = useState("");
   const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; orderId: string; paymentMethod: string } | null>(null);
   const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string | null>(null);
@@ -110,11 +109,21 @@ export default function CheckoutPage() {
     data: cartData,
     isLoading: cartLoading,
     isFetching: cartFetching,
+    isError: cartError,
     refetch: refetchCart,
   } = useGetCartQuery(undefined, { skip: !mounted });
 
-  const { data: pmData } = useGetPublicPaymentMethodsQuery();
-  const { data: dzData } = useGetPublicDeliveryZonesQuery();
+  const {
+    data: pmData,
+    isLoading: pmLoading,
+    refetch: refetchPm,
+  } = useGetPublicPaymentMethodsQuery();
+
+  const {
+    data: dzData,
+    isLoading: dzLoading,
+    refetch: refetchDz,
+  } = useGetPublicDeliveryZonesQuery();
 
   const paymentMethods = pmData?.data?.paymentMethods ?? [];
   const dbDeliveryZones = dzData?.data?.deliveryZones ?? [];
@@ -131,17 +140,25 @@ export default function CheckoutPage() {
   const [selectedZoneId, setSelectedZoneId] = useState("");
   const [selectedPayment, setSelectedPayment] = useState("cod");
 
+  const recoverToken = searchParams?.get("recover");
+  const [recoveryAttempted, setRecoveryAttempted] = useState(!recoverToken);
+
+  // Mount effect & Timeout protection (10 seconds)
   useEffect(() => {
     setMounted(true);
+    const timer = setTimeout(() => {
+      setIsInitTimedOut(true);
+    }, 10000);
+    return () => clearTimeout(timer);
   }, []);
 
   // Handle Abandoned Checkout Recovery from URL token (?recover=xyz)
   useEffect(() => {
-    const recoverToken = searchParams?.get("recover");
-    if (recoverToken && mounted) {
+    if (recoverToken && mounted && !recoveryAttempted) {
       triggerRecover(recoverToken)
         .unwrap()
         .then((res) => {
+          setRecoveryAttempted(true);
           if (res.data?.checkout) {
             const c = res.data.checkout;
             setForm((prev) => ({
@@ -181,6 +198,7 @@ export default function CheckoutPage() {
           }
         })
         .catch((err) => {
+          setRecoveryAttempted(true);
           if (err?.data?.isConverted) {
             toast.info("This checkout has already been completed.");
           } else {
@@ -188,7 +206,7 @@ export default function CheckoutPage() {
           }
         });
     }
-  }, [searchParams, mounted, triggerRecover, dispatch]);
+  }, [recoverToken, mounted, recoveryAttempted, triggerRecover, dispatch]);
 
   const backendCart = cartData?.data?.cart;
   const backendItems = (backendCart?.items ?? []).map((item) => ({
@@ -293,7 +311,7 @@ export default function CheckoutPage() {
     }
   }, [selectedPayment, total, settings.currencyCode, trackAddPaymentInfo]);
 
-  // Progressive Checkout Autosave (Debounced)
+  // Progressive Checkout Autosave (Debounced in background - never locks UI)
   useEffect(() => {
     if (!mounted || !store?._id) return;
 
@@ -309,6 +327,8 @@ export default function CheckoutPage() {
 
     saveTimerRef.current = setTimeout(() => {
       const sessionId = getOrCreateCartSessionId();
+      setIsAutosaving(true);
+
       trackProgress({
         storeId: store._id,
         sessionId,
@@ -345,9 +365,14 @@ export default function CheckoutPage() {
         deliveryZoneName: selectedZone?.name || "",
         paymentMethod: selectedPayment,
         step: selectedPayment ? "payment" : selectedZoneId ? "shipping" : "customer_info",
-      }).catch(() => {
-        // Silently catch background tracking failures
-      });
+      })
+        .then(() => {
+          setIsAutosaving(false);
+          setLastSavedAt(Date.now());
+        })
+        .catch(() => {
+          setIsAutosaving(false);
+        });
     }, 700);
 
     return () => {
@@ -391,8 +416,19 @@ export default function CheckoutPage() {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
+  const handleRetry = () => {
+    setIsInitTimedOut(false);
+    refetchCart();
+    refetchPm();
+    refetchDz();
+  };
+
+  const isCheckingRecovery = Boolean(recoverToken && !recoveryAttempted && isRecovering);
+  const isCheckoutInitializing = !mounted || (!isInitTimedOut && (cartLoading || isCheckingRecovery));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingOrder || isSyncing || isCheckoutInitializing || items.length === 0) return;
     setErrorMsg("");
 
     if (requireLogin) {
@@ -413,7 +449,6 @@ export default function CheckoutPage() {
     }
 
     const payType = (selectedPm?.type || selectedPayment || "cod").toLowerCase();
-
 
     if (payType === "bkash" || payType === "nagad") {
       if (!senderNumber.trim()) {
@@ -494,17 +529,46 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!mounted) {
+  // 1. Initial Full-Page Loading Skeleton (Critical Data Initialization)
+  if (isCheckoutInitializing) {
+    return <CheckoutStorefrontSkeleton />;
+  }
+
+  // 2. Initialization Timeout / Critical Failure Screen
+  if (isInitTimedOut && items.length === 0 && cartError) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-apple-primary border-t-transparent" />
-          <p className="text-xs text-zinc-500">Loading checkout...</p>
+        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+            <AlertCircle className="h-8 w-8" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-apple-ink">Unable to load checkout</h2>
+            <p className="text-xs text-zinc-500 max-w-sm">
+              We couldn't load your checkout details. Please check your connection and try again.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="flex items-center gap-2 rounded-xl bg-apple-primary px-5 py-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> Try Again
+            </button>
+            <Link
+              href="/cart"
+              className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-2.5 text-xs font-semibold text-apple-ink hover:bg-zinc-50"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to Cart
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
+  // 3. Order Placement Success Screen
   if (orderSuccess) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
@@ -537,6 +601,7 @@ export default function CheckoutPage() {
     );
   }
 
+  // 4. Empty Cart State (Rendered only after initialization settles)
   if (items.length === 0) {
     return (
       <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center gap-4 px-4 text-center">
@@ -550,32 +615,59 @@ export default function CheckoutPage() {
     );
   }
 
+  const inputClass =
+    "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed";
+  const textareaClass =
+    "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed resize-none";
+
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="relative mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/cart" className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100">
+          <Link
+            href="/cart"
+            aria-disabled={isSubmittingOrder}
+            className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100",
+              isSubmittingOrder && "pointer-events-none opacity-50"
+            )}
+          >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
-            <h1 className="text-2xl font-extrabold text-apple-ink">Checkout</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-extrabold text-apple-ink">Checkout</h1>
+              {/* Autosave subtle indicator */}
+              {isAutosaving ? (
+                <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
+                  <Loader2 className="h-3 w-3 animate-spin text-apple-primary" /> Autosaving...
+                </span>
+              ) : lastSavedAt ? (
+                <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
+                  <Check className="h-3 w-3 text-emerald-500" /> Saved
+                </span>
+              ) : null}
+            </div>
             <p className="text-xs text-zinc-500">{items.length} item(s) in your order</p>
           </div>
         </div>
 
-        {customer ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
-            <Check className="h-3.5 w-3.5" /> Logged in as {customer.email}
-          </span>
-        ) : settings.requireLoginEnabled ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-800">
-            <Lock className="h-3.5 w-3.5" /> Login Required
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 border border-zinc-200 px-3 py-1 text-xs font-semibold text-zinc-700">
-            Guest Checkout Enabled
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {customer ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
+              <Check className="h-3.5 w-3.5" /> Logged in as {customer.email}
+            </span>
+          ) : settings.requireLoginEnabled ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-800">
+              <Lock className="h-3.5 w-3.5" /> Login Required
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 border border-zinc-200 px-3 py-1 text-xs font-semibold text-zinc-700">
+              Guest Checkout Enabled
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Recovered Checkout Notice */}
@@ -616,81 +708,170 @@ export default function CheckoutPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid gap-8 lg:grid-cols-5">
-          {/* Main Form (3 cols) */}
+      {/* Checkout Form & Grid */}
+      <form onSubmit={handleSubmit} aria-busy={isSubmittingOrder}>
+        <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-5">
+          {/* Form Submission Interaction Overlay */}
+          {isSubmittingOrder && (
+            <div
+              className="absolute inset-0 z-30 flex flex-col items-center justify-center rounded-3xl bg-white/75 backdrop-blur-[2px] transition-all"
+              aria-hidden="true"
+            >
+              <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-6 py-4 shadow-xl">
+                <Loader2 className="h-5 w-5 animate-spin text-apple-primary" />
+                <div className="space-y-0.5">
+                  <p className="text-xs font-bold text-apple-ink">Placing your order...</p>
+                  <p className="text-[10px] text-zinc-500">Please do not refresh or close this window.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Left Form (3 cols) */}
           <div className="space-y-6 lg:col-span-3">
-            {/* Customer Saved Address Book */}
+            {/* Customer Saved Address Book (if logged in) */}
             {customer && (
               <CustomerAddressBook
-                mode="checkout"
                 selectedAddressId={selectedSavedAddressId}
                 onSelectAddress={applySavedAddress}
               />
             )}
 
-            {/* Step 1: Customer & Shipping Address */}
+            {/* Step 1: Customer & Delivery Address */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
               <div className="flex items-center gap-2 border-b border-zinc-100 pb-3">
-                <Truck className="h-5 w-5 text-apple-primary" />
+                <Shield className="h-5 w-5 text-apple-primary" />
                 <h2 className="font-bold text-apple-ink text-sm">1. Customer & Delivery Address</h2>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Full Name *">
-                  <input type="text" value={form.fullName} onChange={handleChange("fullName")} required className={inputClass} placeholder="Your full name" />
-                </Field>
-                <Field label="Phone Number *">
-                  <input type="tel" value={form.phone} onChange={handleChange("phone")} required className={inputClass} placeholder="017XXXXXXXX" />
-                </Field>
-              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Field label="Full Name *">
+                    <input
+                      type="text"
+                      required
+                      value={form.fullName}
+                      onChange={handleChange("fullName")}
+                      placeholder="e.g. Rahim Ahmed"
+                      disabled={isSubmittingOrder}
+                      className={inputClass}
+                    />
+                  </Field>
+                </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="Mobile Phone Number *">
+                  <input
+                    type="tel"
+                    required
+                    value={form.phone}
+                    onChange={handleChange("phone")}
+                    placeholder="e.g. 017XXXXXXXX"
+                    disabled={isSubmittingOrder}
+                    className={inputClass}
+                  />
+                </Field>
+
                 <Field label="Email Address">
-                  <input type="email" value={form.email} onChange={handleChange("email")} className={inputClass} placeholder="email@example.com (optional)" />
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={handleChange("email")}
+                    placeholder="e.g. rahim@example.com"
+                    disabled={isSubmittingOrder}
+                    className={inputClass}
+                  />
                 </Field>
-                <Field label="Address Label">
-                  <select value={form.label} onChange={handleChange("label")} className={inputClass}>
-                    <option value="Home">Home</option>
-                    <option value="Office">Office</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </Field>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Country *">
-                  <input type="text" value={form.country} onChange={handleChange("country")} required className={inputClass} />
+                <Field label="Country">
+                  <input
+                    type="text"
+                    value={form.country}
+                    onChange={handleChange("country")}
+                    disabled={isSubmittingOrder}
+                    className={inputClass}
+                  />
                 </Field>
-                <Field label="Division / State *">
-                  <input type="text" value={form.state} onChange={handleChange("state")} required className={inputClass} placeholder="e.g. Dhaka Division" />
-                </Field>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="District / City *">
-                  <input type="text" value={form.city} onChange={handleChange("city")} required className={inputClass} placeholder="e.g. Dhaka" />
+                <Field label="Division / State">
+                  <input
+                    type="text"
+                    value={form.state}
+                    onChange={handleChange("state")}
+                    placeholder="e.g. Dhaka Division"
+                    disabled={isSubmittingOrder}
+                    className={inputClass}
+                  />
                 </Field>
-                <Field label="Thana / Area">
-                  <input type="text" value={form.area} onChange={handleChange("area")} className={inputClass} placeholder="e.g. Mirpur" />
-                </Field>
-              </div>
 
-              <Field label="Street Address *">
-                <input type="text" value={form.street} onChange={handleChange("street")} required className={inputClass} placeholder="House, Road, Block number" />
-              </Field>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Apartment / Suite">
-                  <input type="text" value={form.apartment} onChange={handleChange("apartment")} className={inputClass} placeholder="Flat 4B" />
+                <Field label="City / District *">
+                  <input
+                    type="text"
+                    required
+                    value={form.city}
+                    onChange={handleChange("city")}
+                    placeholder="e.g. Dhaka"
+                    disabled={isSubmittingOrder}
+                    className={inputClass}
+                  />
                 </Field>
-                <Field label="Postal Code">
-                  <input type="text" value={form.zip} onChange={handleChange("zip")} className={inputClass} placeholder="1216" />
+
+                <Field label="Area / Thana">
+                  <input
+                    type="text"
+                    value={form.area}
+                    onChange={handleChange("area")}
+                    placeholder="e.g. Dhanmondi / Gulshan"
+                    disabled={isSubmittingOrder}
+                    className={inputClass}
+                  />
+                </Field>
+
+                <div className="sm:col-span-2">
+                  <Field label="Street / House & Road Address *">
+                    <input
+                      type="text"
+                      required
+                      value={form.street}
+                      onChange={handleChange("street")}
+                      placeholder="e.g. House 12, Road 4, Sector 7"
+                      disabled={isSubmittingOrder}
+                      className={inputClass}
+                    />
+                  </Field>
+                </div>
+
+                <Field label="Apartment / Suite / Flat (Optional)">
+                  <input
+                    type="text"
+                    value={form.apartment}
+                    onChange={handleChange("apartment")}
+                    placeholder="e.g. Flat 4B"
+                    disabled={isSubmittingOrder}
+                    className={inputClass}
+                  />
+                </Field>
+
+                <Field label="Postal / ZIP Code">
+                  <input
+                    type="text"
+                    value={form.zip}
+                    onChange={handleChange("zip")}
+                    placeholder="e.g. 1209"
+                    disabled={isSubmittingOrder}
+                    className={inputClass}
+                  />
                 </Field>
               </div>
 
               <Field label="Special Delivery Instructions / Notes">
-                <textarea value={form.notes} onChange={handleChange("notes")} rows={2} placeholder="Optional instructions for courier delivery" className={textareaClass} />
+                <textarea
+                  value={form.notes}
+                  onChange={handleChange("notes")}
+                  rows={2}
+                  placeholder="Optional instructions for courier delivery"
+                  disabled={isSubmittingOrder}
+                  className={textareaClass}
+                />
               </Field>
             </motion.div>
 
@@ -706,13 +887,21 @@ export default function CheckoutPage() {
                   {deliveryZones.map((zone) => (
                     <label
                       key={zone._id}
-                      onClick={() => setSelectedZoneId(zone._id)}
+                      onClick={() => !isSubmittingOrder && setSelectedZoneId(zone._id)}
                       className={cn(
                         "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all",
-                        selectedZoneId === zone._id ? "border-apple-primary bg-apple-primary/5 shadow-xs" : "border-zinc-200 hover:border-zinc-300"
+                        selectedZoneId === zone._id ? "border-apple-primary bg-apple-primary/5 shadow-xs" : "border-zinc-200 hover:border-zinc-300",
+                        isSubmittingOrder && "pointer-events-none opacity-60"
                       )}
                     >
-                      <input type="radio" name="zone" checked={selectedZoneId === zone._id} onChange={() => setSelectedZoneId(zone._id)} className="sr-only" />
+                      <input
+                        type="radio"
+                        name="zone"
+                        checked={selectedZoneId === zone._id}
+                        onChange={() => setSelectedZoneId(zone._id)}
+                        disabled={isSubmittingOrder}
+                        className="sr-only"
+                      />
                       <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold", selectedZoneId === zone._id ? "bg-apple-primary text-white" : "bg-zinc-100 text-zinc-500")}>
                         <Truck className="h-4 w-4" />
                       </div>
@@ -741,13 +930,21 @@ export default function CheckoutPage() {
                   return (
                     <label
                       key={pm.id}
-                      onClick={() => setSelectedPayment(pm.id)}
+                      onClick={() => !isSubmittingOrder && setSelectedPayment(pm.id)}
                       className={cn(
                         "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all",
-                        active ? "border-apple-primary bg-apple-primary/5 shadow-xs" : "border-zinc-200 hover:border-zinc-300"
+                        active ? "border-apple-primary bg-apple-primary/5 shadow-xs" : "border-zinc-200 hover:border-zinc-300",
+                        isSubmittingOrder && "pointer-events-none opacity-60"
                       )}
                     >
-                      <input type="radio" name="payment" checked={active} onChange={() => setSelectedPayment(pm.id)} className="sr-only" />
+                      <input
+                        type="radio"
+                        name="payment"
+                        checked={active}
+                        onChange={() => setSelectedPayment(pm.id)}
+                        disabled={isSubmittingOrder}
+                        className="sr-only"
+                      />
                       <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold", active ? "bg-apple-primary text-white" : "bg-zinc-100 text-zinc-500")}>
                         <Icon className="h-4 w-4" />
                       </div>
@@ -795,6 +992,7 @@ export default function CheckoutPage() {
                         value={senderNumber}
                         onChange={(e) => setSenderNumber(e.target.value)}
                         placeholder="e.g. 017XXXXXXXX"
+                        disabled={isSubmittingOrder}
                         className={inputClass}
                       />
                     </Field>
@@ -805,6 +1003,7 @@ export default function CheckoutPage() {
                         value={transactionId}
                         onChange={(e) => setTransactionId(e.target.value.toUpperCase())}
                         placeholder="e.g. ABC123XYZ"
+                        disabled={isSubmittingOrder}
                         className={cn(inputClass, "font-mono uppercase font-bold")}
                       />
                     </Field>
@@ -875,10 +1074,17 @@ export default function CheckoutPage() {
 
               <button
                 type="submit"
-                disabled={isLoading || isSyncing || cartFetching || requireLogin}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-apple-primary py-3 text-xs font-bold text-white shadow-md transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isSubmittingOrder || isSyncing || cartFetching || requireLogin || items.length === 0}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-apple-primary py-3.5 text-xs font-bold text-white shadow-md transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing Order…</> : `Place Order • ${formatCurrency(total, settings)}`}
+                {isSubmittingOrder ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Processing Order…</span>
+                  </>
+                ) : (
+                  `Place Order • ${formatCurrency(total, settings)}`
+                )}
               </button>
             </div>
           </div>
@@ -896,8 +1102,3 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
-
-const inputClass =
-  "h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/20";
-const textareaClass =
-  "min-h-[70px] w-full rounded-xl border border-zinc-200 bg-white p-3 text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/20";

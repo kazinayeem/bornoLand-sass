@@ -1112,3 +1112,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutStorefrontSkeleton />}>
+      <CheckoutForm />
+    </Suspense>
+  );
+}

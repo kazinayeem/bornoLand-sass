@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, Suspense, type ReactNode } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -161,7 +161,7 @@ function LoadingShell() {
 
 /* ── Main Settings Hub Page ───────────────────────────────────────── */
 
-export default function StoreSettingsHubPage() {
+function StoreSettingsHubContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -503,5 +503,13 @@ export default function StoreSettingsHubPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function StoreSettingsHubPage() {
+  return (
+    <Suspense fallback={<LoadingShell />}>
+      <StoreSettingsHubContent />
+    </Suspense>
   );
 }

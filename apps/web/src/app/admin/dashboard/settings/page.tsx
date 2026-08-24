@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Save, Plus, Trash2, PencilLine, Store, Image as ImageIcon, Globe, Shield, CreditCard, ToggleLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,7 +62,7 @@ const defaultSliderForm: SliderFormData = {
   textAlignment: "left"
 };
 
-export default function SettingsPage() {
+function SettingsContent() {
   const searchParams = useSearchParams();
   const [settingsTab, setSettingsTab] = useState(searchParams.get("tab") || "general");
 
@@ -519,5 +519,19 @@ export default function SettingsPage() {
       </>
       )}
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-[60vh] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+        </div>
+      }
+    >
+      <SettingsContent />
+    </Suspense>
   );
 }

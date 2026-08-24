@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { use } from "react";
+import { use, Suspense } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useGetPlansQuery } from "@/redux/api/store-api";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { PlanBuilder } from "@/components/admin/plans/plan-builder";
 import { Badge } from "@/components/ui/badge";
 
-export default function PlanBuilderPage({ params }: { params: Promise<{ planId: string }> }) {
+function PlanBuilderContent({ params }: { params: Promise<{ planId: string }> }) {
   const { planId } = use(params);
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") ?? undefined;
@@ -60,5 +60,19 @@ export default function PlanBuilderPage({ params }: { params: Promise<{ planId: 
 
       <PlanBuilder plan={plan} initialTab={initialTab} />
     </div>
+  );
+}
+
+export default function PlanBuilderPage(props: { params: Promise<{ planId: string }> }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-[60vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      }
+    >
+      <PlanBuilderContent {...props} />
+    </Suspense>
   );
 }

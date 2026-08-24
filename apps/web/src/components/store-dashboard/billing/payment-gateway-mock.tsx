@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStorePage } from "@/components/store-dashboard/store-page";
 import { useCheckoutCallbackMutation } from "@/redux/api/billing-api";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 type GatewayState = "pending" | "confirming" | "success" | "failed";
 
-export function PaymentGatewayMock() {
+function PaymentGatewayMockInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { store, storeId } = useStorePage();
@@ -197,5 +197,19 @@ export function PaymentGatewayMock() {
         )}
       </div>
     </div>
+  );
+}
+
+export function PaymentGatewayMock() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center p-8">
+          <Loader2 className="h-6 w-6 animate-spin text-apple-primary" />
+        </div>
+      }
+    >
+      <PaymentGatewayMockInner />
+    </Suspense>
   );
 }

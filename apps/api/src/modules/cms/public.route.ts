@@ -25,7 +25,15 @@ import { OrderModel } from "../../models/order.model.js";
 import { StoreModel } from "../../models/store.model.js";
 import { sendSuccess, sendFailure } from "../../common/utils/api-response.js";
 
+import {
+  getPublicStoreTrackingController,
+  publicLogStoreTrackingEventController,
+} from "../stores/store-tracking.controller.js";
+
 export const publicRouter: Router = Router();
+
+publicRouter.get("/stores/:storeId/tracking", getPublicStoreTrackingController);
+publicRouter.post("/stores/:storeId/tracking/events", publicLogStoreTrackingEventController);
 
 // ─── Public: Verify invoice by token (subscription or order) ────────────────
 publicRouter.get("/invoice/verify/:token", async (request, response: Response) => {
@@ -126,6 +134,8 @@ publicRouter.get("/reviews", getPublicReviewsController);
 publicRouter.post("/reviews", submitPublicReviewController);
 
 publicRouter.use(resolveStoreFromSubdomain);
+publicRouter.get("/tracking", getPublicStoreTrackingController);
+publicRouter.post("/tracking/events", publicLogStoreTrackingEventController);
 publicRouter.get("/products", getPublicProductsController);
 publicRouter.get("/categories", getPublicCategoriesController);
 publicRouter.get("/page/:slug", getPublicPageController);

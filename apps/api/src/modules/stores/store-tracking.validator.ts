@@ -39,7 +39,7 @@ export const logTrackingEventSchema = z.object({
   eventName: z.string().min(1).max(100),
   platform: z.enum(["meta", "tiktok", "all"]).default("all"),
   status: z.enum(["sent", "skipped", "error"]).default("sent"),
-  payloadSummary: z.record(z.unknown()).optional().default({}),
+  payloadSummary: z.record(z.string(), z.unknown()).optional().default({}),
 });
 
 export type UpdateMetaPixelInput = z.infer<typeof updateMetaPixelSchema>;

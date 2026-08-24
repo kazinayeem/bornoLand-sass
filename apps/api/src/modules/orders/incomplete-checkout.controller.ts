@@ -63,14 +63,14 @@ export async function getIncompleteCheckoutsController(req: Request, res: Respon
   try {
     const authReq = req as AuthRequest;
     const storeId = String(req.params.storeId || req.params.id || "");
-    const userId = authReq.user?.id;
+    const userId = authReq.user?.userId || (authReq.user as any)?.id;
     const userRole = authReq.user?.role;
 
     if (!storeId) {
       return res.status(400).json({ success: false, message: "storeId is required" });
     }
 
-    const hasAccess = await verifyStoreAccess(storeId, userId!, userRole);
+    const hasAccess = await verifyStoreAccess(storeId, userId, userRole);
     if (!hasAccess) {
       return res.status(403).json({ success: false, message: "Access denied to this store" });
     }
@@ -99,12 +99,12 @@ export async function getIncompleteCheckoutByIdController(req: Request, res: Res
     const authReq = req as AuthRequest;
     const storeId = String(req.params.storeId || req.params.id || "");
     const checkoutId = String(req.params.checkoutId || req.params.id || "");
-    const userId = authReq.user?.id;
+    const userId = authReq.user?.userId || (authReq.user as any)?.id;
     const userRole = authReq.user?.role;
 
-    const hasAccess = await verifyStoreAccess(storeId, userId!, userRole);
+    const hasAccess = await verifyStoreAccess(storeId, userId, userRole);
     if (!hasAccess) {
-      return res.status(403).json({ success: false, message: "Access denied" });
+      return res.status(403).json({ success: false, message: "Access denied to this store" });
     }
 
     const result = await getIncompleteCheckoutById(storeId, checkoutId);
@@ -128,14 +128,23 @@ export async function getIncompleteCheckoutByIdController(req: Request, res: Res
 export async function generateRecoveryLinkController(req: Request, res: Response) {
   try {
     const authReq = req as AuthRequest;
-    const storeId = String(req.params.storeId || "");
+    const storeId = String(req.params.storeId || req.params.id || "");
     const checkoutId = String(req.params.checkoutId || "");
-    const userId = authReq.user?.id;
+    const userId = authReq.user?.userId || (authReq.user as any)?.id;
     const userRole = authReq.user?.role;
 
-    const hasAccess = await verifyStoreAccess(storeId, userId!, userRole);
+    const hasAccess = await verifyStoreAccess(storeId, userId, userRole);
     if (!hasAccess) {
-      return res.status(403).json({ success: false, message: "Access denied" });
+      return res.status(403).json({ success: false, message: "Access denied to this store" });
+    }
+
+    const entitlement = await isIncompleteOrdersAllowed(storeId);
+    if (!entitlement.allowed) {
+      return res.status(403).json({
+        success: false,
+        message: "Checkout recovery is not available on your current plan. Please upgrade.",
+        entitlement,
+      });
     }
 
     const result = await generateRecoveryLink(storeId, checkoutId);

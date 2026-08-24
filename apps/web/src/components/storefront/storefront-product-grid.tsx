@@ -25,6 +25,7 @@ import {
 } from "@/lib/storefront/product-section-data";
 import { BuilderLink as Link } from "@/components/sections/builder-link";
 import { ArrowRight } from "lucide-react";
+import { useStorefrontTracking } from "@/hooks/use-storefront-tracking";
 
 const PAGE_SIZE_OPTIONS = [4, 8, 12, 16, 20, 24, 32, 48];
 
@@ -108,6 +109,7 @@ export function StorefrontProductGrid({
   const searchParams = useSearchParams();
   const { store } = useTenant();
   const { classes, primaryColor } = useStorefrontSurface();
+  const { trackSearch } = useStorefrontTracking();
   const storeId = normalizeStoreId(store?._id ?? (store as { id?: string } | undefined)?.id);
   const { categories } = useStoreCategories(storeId);
 
@@ -141,7 +143,10 @@ export function StorefrontProductGrid({
 
   useEffect(() => {
     setSearch(queryFromRoute);
-  }, [queryFromRoute]);
+    if (queryFromRoute.trim()) {
+      trackSearch(queryFromRoute.trim());
+    }
+  }, [queryFromRoute, trackSearch]);
 
   useEffect(() => {
     setSelectedCategory(categoryIdFromSlug ?? "");
@@ -233,6 +238,9 @@ export function StorefrontProductGrid({
 
   const handleCommitSearch = () => {
     const next = search.trim();
+    if (next) {
+      trackSearch(next);
+    }
     if (queryFromRoute !== next) {
       router.replace(next ? `/search?q=${encodeURIComponent(next)}` : "/search");
     }

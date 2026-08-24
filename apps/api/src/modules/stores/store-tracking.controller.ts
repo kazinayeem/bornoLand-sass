@@ -1,5 +1,6 @@
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
+import type { SubdomainRequest } from "../../common/middleware/subdomain.middleware.js";
 import {
   getStoreTrackingSettings,
   updateMetaPixel,
@@ -7,12 +8,50 @@ import {
   testPixelConnection,
   logStoreTrackingEvent,
   getAdminTrackingOverview,
+  getPublicStoreTracking,
 } from "./store-tracking.service.js";
 import { sendSuccess, sendFailure } from "../../common/utils/api-response.js";
 
+export async function getPublicStoreTrackingController(request: SubdomainRequest, response: Response) {
+  const storeId = String(
+    request.params.storeId ||
+    request.params.id ||
+    request.store?._id ||
+    request.subdomain ||
+    ""
+  );
+
+  if (!storeId) return sendFailure(response, "Store identifier required", 400);
+
+  const data = await getPublicStoreTracking(storeId);
+  return sendSuccess(response, data || {
+    metaPixel: null,
+    tiktokPixel: null,
+    googleAnalytics: null,
+    customTracking: null,
+  });
+}
+
+export async function publicLogStoreTrackingEventController(request: SubdomainRequest, response: Response) {
+  const storeId = String(
+    request.params.storeId ||
+    request.params.id ||
+    request.store?._id ||
+    request.subdomain ||
+    ""
+  );
+
+  if (!storeId) return sendFailure(response, "Store ID required", 400);
+
+  const result = await logStoreTrackingEvent(storeId, request.body);
+  return result.ok
+    ? sendSuccess(response, result.data)
+    : sendFailure(response, result.message, result.status || 400);
+}
+
 export async function getStoreTrackingController(request: AuthRequest, response: Response) {
   const userId = request.user?.userId;
-  const storeId = request.params.storeId || request.params.id;
+  const storeId = String(request.params.storeId || request.params.id || "");
   if (!userId) return sendFailure(response, "Unauthorized", 401);
   if (!storeId) return sendFailure(response, "Store ID required", 400);
 
@@ -24,7 +63,7 @@ export async function getStoreTrackingController(request: AuthRequest, response:
 
 export async function updateMetaPixelController(request: AuthRequest, response: Response) {
   const userId = request.user?.userId;
-  const storeId = request.params.storeId || request.params.id;
+  const storeId = String(request.params.storeId || request.params.id || "");
   if (!userId) return sendFailure(response, "Unauthorized", 401);
   if (!storeId) return sendFailure(response, "Store ID required", 400);
 
@@ -36,7 +75,7 @@ export async function updateMetaPixelController(request: AuthRequest, response: 
 
 export async function updateTikTokPixelController(request: AuthRequest, response: Response) {
   const userId = request.user?.userId;
-  const storeId = request.params.storeId || request.params.id;
+  const storeId = String(request.params.storeId || request.params.id || "");
   if (!userId) return sendFailure(response, "Unauthorized", 401);
   if (!storeId) return sendFailure(response, "Store ID required", 400);
 
@@ -48,7 +87,7 @@ export async function updateTikTokPixelController(request: AuthRequest, response
 
 export async function testPixelConnectionController(request: AuthRequest, response: Response) {
   const userId = request.user?.userId;
-  const storeId = request.params.storeId || request.params.id;
+  const storeId = String(request.params.storeId || request.params.id || "");
   if (!userId) return sendFailure(response, "Unauthorized", 401);
   if (!storeId) return sendFailure(response, "Store ID required", 400);
 
@@ -59,7 +98,7 @@ export async function testPixelConnectionController(request: AuthRequest, respon
 }
 
 export async function logStoreTrackingEventController(request: AuthRequest, response: Response) {
-  const storeId = request.params.storeId || request.params.id;
+  const storeId = String(request.params.storeId || request.params.id || "");
   if (!storeId) return sendFailure(response, "Store ID required", 400);
 
   const result = await logStoreTrackingEvent(storeId, request.body);

@@ -14,11 +14,16 @@ const CHECKOUT_EXPIRATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 /**
  * Checks if user is authorized to access the store.
  */
-export async function verifyStoreAccess(storeId: string, userId: string, userRole?: string) {
+export async function verifyStoreAccess(storeId: string, userId?: string, userRole?: string) {
   if (userRole === "super_admin") return true;
-  const store = await StoreModel.findById(storeId).select("userId").lean();
+  if (!userId || !storeId) return false;
+
+  let store = await StoreModel.findById(storeId).select("userId slug").lean();
+  if (!store) {
+    store = await StoreModel.findOne({ slug: storeId.toLowerCase() }).select("userId slug").lean();
+  }
   if (!store) return false;
-  return String((store as { userId?: unknown }).userId) === userId;
+  return String((store as { userId?: unknown }).userId) === String(userId);
 }
 
 /**
@@ -31,20 +36,17 @@ export async function isIncompleteOrdersAllowed(storeId: string): Promise<{
   requiredPlan?: { slug: string; name: string; priceBDT?: number };
 }> {
   await connectDatabase();
-  const subResult = await checkSubscription(storeId);
-  const planSlug = subResult.plan?.slug ?? "free";
-  const planName = subResult.plan?.name ?? "Free";
-
   const featureCheck = await checkFeature(storeId, "incomplete_orders");
   const abandonedCheck = await checkFeature(storeId, "abandoned_cart");
 
   const isAllowed = Boolean(featureCheck.allowed || abandonedCheck.allowed);
+  const currentPlan = featureCheck.currentPlan || abandonedCheck.currentPlan;
 
   if (isAllowed) {
     return {
       allowed: true,
-      featureName: "Incomplete Orders & Abandoned Checkout",
-      currentPlan: { slug: planSlug, name: planName },
+      featureName: "Incomplete Orders",
+      currentPlan,
     };
   }
 
@@ -61,9 +63,9 @@ export async function isIncompleteOrdersAllowed(storeId: string): Promise<{
 
   return {
     allowed: false,
-    featureName: "Incomplete Orders & Abandoned Checkout",
-    currentPlan: { slug: planSlug, name: planName },
-    requiredPlan: requiredPlanDoc
+    featureName: "Incomplete Orders",
+    currentPlan,
+    requiredPlan: featureCheck.requiredPlan || abandonedCheck.requiredPlan || (requiredPlanDoc
       ? {
           slug: (requiredPlanDoc as any).slug,
           name: (requiredPlanDoc as any).name,
@@ -73,7 +75,7 @@ export async function isIncompleteOrdersAllowed(storeId: string): Promise<{
           slug: "starter",
           name: "Starter",
           priceBDT: 499,
-        },
+        }),
   };
 }
 
@@ -534,9 +536,9 @@ export async function recoverCheckoutByToken(token: string) {
     return { ok: false, message: "Invalid recovery token" };
   }
 
-  const checkout = await IncompleteCheckoutModel.findOne({
+  const checkout = (await IncompleteCheckoutModel.findOne({
     recoveryToken: token.trim(),
-  }).lean();
+  }).lean()) as any;
 
   if (!checkout) {
     return { ok: false, message: "Recovery link is invalid or has expired." };
@@ -556,8 +558,8 @@ export async function recoverCheckoutByToken(token: string) {
     };
   }
 
-  const store = await StoreModel.findById(checkout.storeId).select("name slug subdomain status").lean();
-  if (!store || (store as any).status !== "active") {
+  const store = (await StoreModel.findById(checkout.storeId).select("name slug subdomain status").lean()) as any;
+  if (!store || store.status !== "active") {
     return { ok: false, message: "Store is currently unavailable." };
   }
 

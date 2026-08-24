@@ -18,38 +18,54 @@ export function FeatureLocked({
   const isTier = feature.type === "tier";
 
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-apple-canvas-parchment px-6 py-16 text-center">
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-200">
-        <Lock className="h-6 w-6 text-apple-ink-muted-80" />
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-gradient-to-b from-zinc-50/80 to-white px-6 py-16 text-center shadow-xs">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 ring-8 ring-amber-500/5">
+        <Lock className="h-6 w-6" />
       </div>
-      <h3 className="text-lg font-semibold text-apple-ink">{feature.name}</h3>
+      <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+        <Lock className="h-3 w-3" />
+        <span>Plan Upgrade Required</span>
+      </div>
+      <h3 className="mt-3 text-xl font-bold tracking-tight text-apple-ink">{feature.name}</h3>
+      {feature.description && (
+        <p className="mt-1.5 max-w-md text-sm text-apple-ink-muted-48">
+          {feature.description}
+        </p>
+      )}
       {currentPlan && (
-        <p className="mt-1 text-sm text-apple-ink-muted-48">
-          Current plan: <span className="font-medium">{currentPlan}</span>
+        <p className="mt-2 text-xs text-apple-ink-muted-48">
+          Current plan: <span className="font-semibold text-apple-ink">{currentPlan}</span>
         </p>
       )}
-      {isLimit ? (
-        <p className="mt-2 max-w-sm text-sm text-apple-ink-muted-48">
-          <span className="font-semibold text-apple-ink-muted-80">
-            {feature.current} / {feature.limit} used
-          </span>
-          . Upgrade to increase your limit.
-        </p>
-      ) : isTier ? (
-        <p className="mt-2 max-w-sm text-sm text-apple-ink-muted-48">
-          Requires <span className="font-medium text-apple-ink-muted-80">{planLabel}</span>
-        </p>
-      ) : (
-        <p className="mt-2 max-w-sm text-sm text-apple-ink-muted-48">
-          Available in <span className="font-medium text-apple-ink-muted-80">{planLabel}</span>
-        </p>
-      )}
-      <Link
-        href={billingHref}
-        className="mt-6 inline-flex rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800"
-      >
-        Upgrade Now
-      </Link>
+      <div className="mt-4 max-w-sm rounded-xl border border-zinc-200/80 bg-zinc-50 p-3 text-xs text-apple-ink-muted-80">
+        {isLimit ? (
+          <p>
+            You have reached the limit (<span className="font-semibold text-apple-ink">{feature.current} / {feature.limit}</span>). Upgrade your plan to increase limit.
+          </p>
+        ) : isTier ? (
+          <p>
+            Requires <span className="font-semibold text-apple-ink">{planLabel}</span> or higher.
+          </p>
+        ) : (
+          <p>
+            This feature is unlocked in <span className="font-semibold text-apple-ink">{planLabel}</span> and higher plans.
+          </p>
+        )}
+      </div>
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <Link
+          href={billingHref}
+          className="inline-flex items-center gap-2 rounded-xl bg-apple-primary px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-apple-primary/90 transition-colors"
+        >
+          <span>Upgrade Plan</span>
+        </Link>
+        <Link
+          href={billingHref}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-4 py-2.5 text-sm font-medium text-apple-ink hover:bg-zinc-50 transition-colors"
+        >
+          <span>View All Plans</span>
+        </Link>
+      </div>
     </div>
   );
 }

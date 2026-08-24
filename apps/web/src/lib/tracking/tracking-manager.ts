@@ -1,47 +1,75 @@
 import type {
-  TrackingProvider,
+  TrackingAdapter,
   StandardEventName,
   TrackingPayload,
   PublicStoreTracking,
   TrackingPlatform,
+  TrackingUserData,
 } from "./types";
-import { MetaPixelProvider } from "./meta-pixel-provider";
-import { TikTokPixelProvider } from "./tiktok-pixel-provider";
+import { MetaPixelAdapter } from "./meta-pixel-adapter";
+import { TikTokPixelAdapter } from "./tiktok-pixel-adapter";
 
-class TrackingManager {
-  private providers: Map<TrackingPlatform, TrackingProvider> = new Map();
+export class TrackingManager {
+  private adapters: Map<TrackingPlatform, TrackingAdapter> = new Map();
   private storeId = "";
   private isBuilderPreview = false;
   private isInitialized = false;
+  private currentConfig: PublicStoreTracking | null = null;
   private firedEvents: Set<string> = new Set();
+  private userData: TrackingUserData = {};
 
   constructor() {
-    this.providers.set("meta", new MetaPixelProvider());
-    this.providers.set("tiktok", new TikTokPixelProvider());
+    this.adapters.set("meta", new MetaPixelAdapter());
+    this.adapters.set("tiktok", new TikTokPixelAdapter());
   }
 
-  public init(storeId: string, config?: PublicStoreTracking | null, isBuilderPreview = false): void {
+  public registerAdapter(platform: TrackingPlatform, adapter: TrackingAdapter): void {
+    this.adapters.set(platform, adapter);
+  }
+
+  public getAdapter(platform: TrackingPlatform): TrackingAdapter | undefined {
+    return this.adapters.get(platform);
+  }
+
+  public setUserData(userData: TrackingUserData): void {
+    this.userData = { ...this.userData, ...userData };
+  }
+
+  public init(
+    storeId: string,
+    config?: PublicStoreTracking | null,
+    isBuilderPreview = false,
+    userData?: TrackingUserData
+  ): void {
     if (typeof window === "undefined") return;
-    this.storeId = storeId;
+
+    this.storeId = storeId || "";
     this.isBuilderPreview = isBuilderPreview;
+    this.currentConfig = config || null;
+    if (userData) {
+      this.userData = { ...this.userData, ...userData };
+    }
 
     if (this.isBuilderPreview) {
       this.isInitialized = true;
       return;
     }
 
-    if (!config) return;
-
-    // Initialize Meta Pixel if enabled and has ID
-    if (config.metaPixel?.enabled && config.metaPixel.pixelId) {
-      const meta = this.providers.get("meta");
-      meta?.init(config.metaPixel);
+    if (!config) {
+      this.isInitialized = true;
+      return;
     }
 
-    // Initialize TikTok Pixel if enabled and has ID
+    // Initialize Meta Pixel if enabled and has pixel ID
+    if (config.metaPixel?.enabled && config.metaPixel.pixelId) {
+      const meta = this.adapters.get("meta");
+      meta?.init(config.metaPixel, this.userData);
+    }
+
+    // Initialize TikTok Pixel if enabled and has pixel ID
     if (config.tiktokPixel?.enabled && config.tiktokPixel.pixelId) {
-      const tiktok = this.providers.get("tiktok");
-      tiktok?.init(config.tiktokPixel);
+      const tiktok = this.adapters.get("tiktok");
+      tiktok?.init(config.tiktokPixel, this.userData);
     }
 
     this.isInitialized = true;
@@ -82,7 +110,7 @@ class TrackingManager {
     }
     this.firedEvents.add(eventId);
 
-    // Keep memory cache clean
+    // Keep memory cache within bounds
     if (this.firedEvents.size > 200) {
       const iterator = this.firedEvents.values();
       for (let i = 0; i < 50; i++) {
@@ -91,15 +119,24 @@ class TrackingManager {
       }
     }
 
-    // Protection for builder preview and development
+    // Protection for builder preview
     if (this.isBuilderPreview) {
       return;
     }
 
-    // Dispatch to all loaded providers
-    this.providers.forEach((provider) => {
-      if (provider.isLoaded()) {
-        provider.track(eventName, payload, eventId);
+    // Merge global user data if not in payload
+    const mergedPayload: TrackingPayload = {
+      ...payload,
+      user_data: {
+        ...this.userData,
+        ...(payload.user_data || {}),
+      },
+    };
+
+    // Dispatch to all loaded adapters
+    this.adapters.forEach((adapter) => {
+      if (adapter.isLoaded()) {
+        adapter.track(eventName, mergedPayload, eventId);
       }
     });
 
@@ -109,10 +146,12 @@ class TrackingManager {
     }
   }
 
-  private logToBackend(eventName: StandardEventName, payload: TrackingPayload) {
+  private logToBackend(eventName: StandardEventName, payload: TrackingPayload): void {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api/v1";
-      fetch(`${baseUrl}/stores/${this.storeId}/tracking/events`, {
+      const endpoint = `${baseUrl}/public/stores/${encodeURIComponent(this.storeId)}/tracking/events`;
+
+      fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -124,14 +163,19 @@ class TrackingManager {
             currency: payload.currency,
             items: payload.contents?.length || payload.content_ids?.length || 0,
             orderId: payload.order_id,
+            pagePath: payload.page_path,
           },
         }),
       }).catch(() => {
-        // Silently ignore log failures
+        // Silently ignore debug log errors
       });
     } catch {
       // Silently ignore
     }
+  }
+
+  public isReady(): boolean {
+    return this.isInitialized;
   }
 }
 

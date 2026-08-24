@@ -466,14 +466,23 @@ export async function logStoreTrackingEvent(storeId: string, payload: unknown) {
  * Get sanitized tracking config for storefront execution.
  * Only returns enabled providers that are allowed by the store's current subscription plan.
  */
-export async function getPublicStoreTracking(storeId: string) {
+export async function getPublicStoreTracking(storeIdOrSlug: string) {
   await connectDatabase();
-  const store = (await StoreModel.findById(storeId).select("status billingStatus subscriptionStatus planId plan").lean()) as any;
+  if (!storeIdOrSlug) return null;
+
+  let store: any = null;
+  if (/^[0-9a-fA-F]{24}$/.test(storeIdOrSlug)) {
+    store = (await StoreModel.findById(storeIdOrSlug).select("status billingStatus subscriptionStatus planId plan").lean()) as any;
+  }
+  if (!store) {
+    store = (await StoreModel.findOne({ slug: storeIdOrSlug.toLowerCase(), status: "active" }).select("status billingStatus subscriptionStatus planId plan").lean()) as any;
+  }
   if (!store || store.status !== "active") {
     return null;
   }
 
-  const settings = (await StoreTrackingSettingsModel.findOne({ storeId }).lean()) as any;
+  const effectiveStoreId = String(store._id);
+  const settings = (await StoreTrackingSettingsModel.findOne({ storeId: effectiveStoreId }).lean()) as any;
   if (!settings) {
     return {
       metaPixel: null,
@@ -485,10 +494,10 @@ export async function getPublicStoreTracking(storeId: string) {
 
   // Check entitlements
   const [metaAllowed, tiktokAllowed, gaAllowed, customAllowed] = await Promise.all([
-    isTrackingFeatureAllowed(storeId, "metaPixel"),
-    isTrackingFeatureAllowed(storeId, "tiktokPixel"),
-    isTrackingFeatureAllowed(storeId, "googleAnalytics"),
-    isTrackingFeatureAllowed(storeId, "customTracking"),
+    isTrackingFeatureAllowed(effectiveStoreId, "metaPixel"),
+    isTrackingFeatureAllowed(effectiveStoreId, "tiktokPixel"),
+    isTrackingFeatureAllowed(effectiveStoreId, "googleAnalytics"),
+    isTrackingFeatureAllowed(effectiveStoreId, "customTracking"),
   ]);
 
   const metaPixel =

@@ -36,6 +36,7 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { resolveStoreHref } from "@/lib/store-href";
 import { CustomerNotificationBell } from "./customer-notification-bell";
 import { useDevice } from "@/lib/device-context";
+import { useStorefrontTracking } from "@/hooks/use-storefront-tracking";
 import type { NavigationItemData } from "@/providers/tenant-provider";
 import { resolveNavigationItemHref } from "@/lib/storefront/navigation-href";
 import { resolveHeaderConfig } from "@/lib/storefront/header-config";
@@ -64,6 +65,7 @@ export function NavbarRenderer({
   const { store, theme, navigations } = useTenant();
   const { categories: storeCategories } = useStoreCategories();
   const { classes, primaryColor } = useStorefrontSurface();
+  const { trackSearch } = useStorefrontTracking();
   const itemCount = useSelector((state: RootState) => state.cart.items.reduce((sum, i) => sum + i.quantity, 0));
   const customer = useSelector((state: RootState) => state.customer);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -194,8 +196,10 @@ export function NavbarRenderer({
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(getStorefrontLink(`/search?q=${encodeURIComponent(searchQuery.trim())}`));
+    const query = searchQuery.trim();
+    if (query) {
+      trackSearch(query);
+      router.push(getStorefrontLink(`/search?q=${encodeURIComponent(query)}`));
       setSearchOpen(false);
       setSearchQuery("");
     }

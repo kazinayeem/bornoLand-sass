@@ -198,6 +198,7 @@ export function IncompleteOrdersTab({ storeId, storeSlug }: IncompleteOrdersTabP
     data: checkoutsData,
     isLoading,
     isFetching,
+    error,
     refetch,
   } = useGetStoreIncompleteCheckoutsQuery({
     storeId,
@@ -212,7 +213,8 @@ export function IncompleteOrdersTab({ storeId, storeSlug }: IncompleteOrdersTabP
   const [generateRecovery, { isLoading: isGeneratingLink }] = useGenerateRecoveryLinkMutation();
 
   const entitlement = checkoutsData?.entitlement;
-  const isLocked = entitlement && entitlement.allowed === false;
+  const is403 = (error as any)?.status === 403;
+  const isLocked = Boolean((entitlement && entitlement.allowed === false) || is403);
   const stats = checkoutsData?.data?.stats;
   const checkouts = checkoutsData?.data?.checkouts ?? [];
   const pagination = checkoutsData?.data?.pagination;
@@ -233,13 +235,17 @@ export function IncompleteOrdersTab({ storeId, storeSlug }: IncompleteOrdersTabP
 
   // Locked plan state
   if (isLocked) {
-    const requiredPlanName = entitlement.requiredPlan?.name || "Starter";
+    const requiredPlanName = entitlement?.requiredPlan?.name || "Starter";
     return (
-      <div className="rounded-2xl border border-apple-hairline bg-white p-8 text-center shadow-sm">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-          <Lock className="h-8 w-8" />
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-gradient-to-b from-zinc-50/80 to-white px-6 py-16 text-center shadow-xs">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 ring-8 ring-amber-500/5">
+          <Lock className="h-6 w-6" />
         </div>
-        <h2 className="mt-4 text-xl font-bold text-apple-ink">Incomplete Orders & Abandoned Checkout</h2>
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+          <Lock className="h-3 w-3" />
+          <span>Plan Upgrade Required</span>
+        </div>
+        <h2 className="mt-3 text-xl font-bold tracking-tight text-apple-ink">Incomplete Orders & Abandoned Checkout</h2>
         <p className="mx-auto mt-2 max-w-lg text-sm text-apple-ink-muted-48">
           Save and track checkout attempts when customers enter their details but leave without placing an order. Send secure recovery links and convert lost potential revenue.
         </p>
@@ -258,12 +264,18 @@ export function IncompleteOrdersTab({ storeId, storeSlug }: IncompleteOrdersTabP
           </div>
         </div>
 
-        <div className="mt-6 flex justify-center gap-3">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link
             href={storeSlug ? `/store/${storeSlug}/billing` : "/dashboard/billing"}
             className="inline-flex items-center gap-2 rounded-xl bg-apple-primary px-6 py-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 shadow-sm"
           >
             Upgrade Plan to Unlock
+          </Link>
+          <Link
+            href={storeSlug ? `/store/${storeSlug}/billing` : "/dashboard/billing"}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-4 py-2.5 text-xs font-medium text-apple-ink hover:bg-zinc-50 transition-colors"
+          >
+            View All Plans
           </Link>
         </div>
       </div>

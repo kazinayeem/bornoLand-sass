@@ -513,6 +513,16 @@ export default function CheckoutPage() {
           })),
           totalValue: result.data.order.total ?? total,
           currency: settings.currencyCode || "BDT",
+          userData: {
+            email: form.email,
+            phone: form.phone,
+            firstName: form.fullName?.split(" ")[0],
+            lastName: form.fullName?.split(" ").slice(1).join(" "),
+            city: form.city,
+            state: form.state,
+            zip: form.zip,
+            country: form.country,
+          },
         });
 
         dispatch(clearCart());

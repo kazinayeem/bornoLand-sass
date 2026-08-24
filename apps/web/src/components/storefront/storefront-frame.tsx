@@ -11,6 +11,7 @@ import type {
   ThemeData,
   NavigationData,
 } from "@/providers/tenant-provider";
+import type { PublicStoreTracking } from "@/lib/tracking/types";
 import type { StorefrontSectionLike } from "@/components/storefront/storefront-types";
 
 type StorefrontFrameProps = {
@@ -21,6 +22,7 @@ type StorefrontFrameProps = {
   settings: StoreSettingsData;
   sliders: HomepageSliderData[];
   navigations?: NavigationData[];
+  tracking?: PublicStoreTracking | null;
   pageSections: StorefrontSectionLike[];
   headerSections?: StorefrontSectionLike[];
   footerSections?: StorefrontSectionLike[];
@@ -42,6 +44,7 @@ export function StorefrontFrame({
   settings,
   sliders,
   navigations,
+  tracking = null,
   pageSections,
   headerSections,
   footerSections,
@@ -67,6 +70,7 @@ export function StorefrontFrame({
       settings={settings}
       sliders={stableSliders}
       navigations={navigations}
+      tracking={tracking}
       pageSections={stableSections}
       headerSections={headerSections}
       footerSections={footerSections}

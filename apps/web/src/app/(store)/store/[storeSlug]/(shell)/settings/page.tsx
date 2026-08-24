@@ -49,7 +49,7 @@ import { StorePageHeader } from "@/components/store-dashboard/store-page-header"
 
 /* ── Section definitions ──────────────────────────────────────────── */
 
-export type SectionId =
+type SectionId =
   | "general"
   | "branding"
   | "contact"
@@ -73,9 +73,9 @@ export type SectionId =
   | "security"
   | "advanced";
 
-export type SettingsGroupKey = "GENERAL" | "STORE" | "COMMERCE" | "CONTENT" | "COMMUNICATION" | "ADVANCED";
+type SettingsGroupKey = "GENERAL" | "STORE" | "COMMERCE" | "CONTENT" | "COMMUNICATION" | "ADVANCED";
 
-export type SectionDef = {
+type SectionDef = {
   id: SectionId;
   label: string;
   description: string;
@@ -84,7 +84,7 @@ export type SectionDef = {
   keywords?: string[];
 };
 
-export const SETTINGS_GROUPS: Record<SettingsGroupKey, { label: string; description: string }> = {
+const SETTINGS_GROUPS: Record<SettingsGroupKey, { label: string; description: string }> = {
   GENERAL: { label: "General", description: "Basic store identity, branding, and contact details" },
   STORE: { label: "Store", description: "Localization, currency, search engine, and domain" },
   COMMERCE: { label: "Commerce", description: "Checkout rules, payments, shipping, taxes, and invoicing" },
@@ -93,7 +93,7 @@ export const SETTINGS_GROUPS: Record<SettingsGroupKey, { label: string; descript
   ADVANCED: { label: "Advanced", description: "Store security, developer tools, and advanced options" },
 };
 
-export const SETTINGS_SECTIONS: SectionDef[] = [
+const SETTINGS_SECTIONS: SectionDef[] = [
   // GENERAL
   { id: "general", label: "General", description: "Store name, slug, description, and status", icon: Settings2, group: "GENERAL", keywords: ["store name", "slug", "about", "status"] },
   { id: "branding", label: "Branding", description: "Logo, favicon, brand colors, and visual mark", icon: Sparkles, group: "GENERAL", keywords: ["logo", "color", "favicon", "brand"] },

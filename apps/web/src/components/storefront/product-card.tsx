@@ -129,7 +129,7 @@ export function ProductCard({
         price: product.price,
         quantity: 1,
         category: displayCategory,
-        currency: currencySettings?.currencyCode || "BDT",
+        currency: settings?.currencyCode || "BDT",
       });
       await addToCartRemote({ productId: product._id, quantity: 1 }).unwrap();
       toast.success(`${product.name} added to cart`);

@@ -79,6 +79,11 @@ export const SEED_FEATURES: SeedFeature[] = [
   { key: "storage", name: "Storage", description: "File storage space", type: "limit", groupKey: "platform", sortOrder: 22, usageCounterKey: "storageMB", unit: "GB", defaultLimit: 1 },
   { key: "billing", name: "Billing", description: "Billing and subscription management", type: "boolean", groupKey: "platform", sortOrder: 23, defaultEnabled: true },
   { key: "branding", name: "Branding", description: "Store branding and customization", type: "boolean", groupKey: "platform", sortOrder: 24, defaultEnabled: true },
+  // Commerce
+  { key: "abandoned_cart", name: "Abandoned Cart", description: "Track and recover abandoned carts", type: "boolean", groupKey: "commerce", sortOrder: 8, defaultEnabled: false },
+  { key: "incomplete_orders", name: "Incomplete Orders", description: "Track progressive checkout sessions and incomplete orders", type: "boolean", groupKey: "commerce", sortOrder: 9, defaultEnabled: false },
+  { key: "checkout_recovery", name: "Checkout Recovery", description: "Generate secure checkout recovery links and recover sessions", type: "boolean", groupKey: "commerce", sortOrder: 10, defaultEnabled: false },
+  { key: "recovery_analytics", name: "Recovery Analytics", description: "Advanced checkout abandonment and recovery analytics", type: "boolean", groupKey: "commerce", sortOrder: 11, defaultEnabled: false },
   { key: "courier", name: "Courier Management", description: "Third-party courier integrations (Pathao, RedX, Steadfast, Paperfly, Sundarban)", type: "boolean", groupKey: "commerce", sortOrder: 7, defaultEnabled: false },
 ];
 

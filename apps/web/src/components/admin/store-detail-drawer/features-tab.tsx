@@ -52,7 +52,7 @@ const FEATURE_GROUPS: { label: string; keys: string[] }[] = [
   },
   {
     label: "Marketing & Engagement",
-    keys: ["abandonedCart", "emailMarketing", "smsMarketing", "pushNotification", "liveChat"],
+    keys: ["abandonedCart", "incompleteOrders", "checkoutRecovery", "recoveryAnalytics", "emailMarketing", "smsMarketing", "pushNotification", "liveChat"],
   },
   {
     label: "Access & Login",
@@ -119,6 +119,10 @@ const FEATURE_LABELS: Record<string, string> = {
   advancedTracking: "Advanced Tracking",
   localPickup: "Local Pickup",
   abandonedCart: "Abandoned Cart",
+  incompleteOrders: "Incomplete Orders",
+  checkoutRecovery: "Checkout Recovery",
+  recoveryAnalytics: "Recovery Analytics",
+  recoveryLinks: "Recovery Links",
   emailMarketing: "Email Marketing",
   smsMarketing: "SMS Marketing",
   pushNotification: "Push Notifications",

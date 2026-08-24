@@ -115,6 +115,10 @@ export type PlanFeatureToggles = {
   shipping: boolean;
   localPickup: boolean;
   abandonedCart: boolean;
+  incompleteOrders: boolean;
+  checkoutRecovery: boolean;
+  recoveryAnalytics: boolean;
+  recoveryLinks: boolean;
   emailMarketing: boolean;
   smsMarketing: boolean;
   pushNotification: boolean;

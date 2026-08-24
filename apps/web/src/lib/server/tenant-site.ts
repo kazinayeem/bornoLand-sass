@@ -15,6 +15,7 @@ export type TenantSiteData = {
   sliders?: unknown[];
   navigations?: unknown[];
   contact?: unknown;
+  tracking?: Record<string, unknown> | null;
 };
 
 class TenantNotFoundError extends Error {

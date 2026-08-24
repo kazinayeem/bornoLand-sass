@@ -27,6 +27,11 @@ const TOGGLE_TO_FEATURE_KEY: Record<string, string> = {
   googleAnalytics: "google_analytics",
   conversionTracking: "conversion_tracking",
   advancedTracking: "advanced_tracking",
+  abandonedCart: "abandoned_cart",
+  incompleteOrders: "incomplete_orders",
+  checkoutRecovery: "checkout_recovery",
+  recoveryAnalytics: "recovery_analytics",
+  recoveryLinks: "checkout_recovery",
 };
 
 async function syncFeatureTogglesToPlanFeatures(

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -20,6 +20,7 @@ import {
   Lock,
   Tag,
   Check,
+  RotateCcw,
 } from "lucide-react";
 import type { RootState } from "@/store/store";
 import { clearCart, setCartItems } from "@/redux/slices/cart-slice";
@@ -27,6 +28,11 @@ import { useCreateOrderMutation } from "@/redux/api/order-api";
 import { useGetCartQuery, useSyncCartMutation } from "@/redux/api/cart-api";
 import { useGetPublicPaymentMethodsQuery } from "@/redux/api/payment-api";
 import { useGetPublicDeliveryZonesQuery } from "@/redux/api/delivery-api";
+import {
+  useTrackCheckoutProgressMutation,
+  useLazyRecoverCheckoutQuery,
+} from "@/redux/api/incomplete-checkout-api";
+import { getOrCreateCartSessionId } from "@/lib/cart-session";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
 import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
@@ -78,11 +84,14 @@ const EMPTY_FORM: CheckoutFormState = {
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const localCart = useSelector((state: RootState) => state.cart);
   const customer = useSelector((state: RootState) => state.customer.customer);
   const [createOrder, { isLoading }] = useCreateOrderMutation();
   const [syncCart, { isLoading: isSyncing }] = useSyncCartMutation();
+  const [trackProgress] = useTrackCheckoutProgressMutation();
+  const [triggerRecover, { isFetching: isRecovering }] = useLazyRecoverCheckoutQuery();
   const { store, settings } = useTenant();
   const { trackInitiateCheckout, trackAddPaymentInfo, trackPurchase } = useStorefrontTracking();
 
@@ -90,6 +99,8 @@ export default function CheckoutPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; orderId: string; paymentMethod: string } | null>(null);
   const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string | null>(null);
+  const [recoveredBanner, setRecoveredBanner] = useState(false);
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Mobile Banking specific fields
   const [senderNumber, setSenderNumber] = useState("");
@@ -124,18 +135,60 @@ export default function CheckoutPage() {
     setMounted(true);
   }, []);
 
-  // Pre-fill form from logged-in customer profile
+  // Handle Abandoned Checkout Recovery from URL token (?recover=xyz)
   useEffect(() => {
-    if (customer) {
-      setForm((prev) => ({
-        ...prev,
-        fullName: prev.fullName || (customer as any).name || (customer as any).email || "",
-        email: prev.email || customer.email || "",
-        phone: prev.phone || customer.phone || "",
-      }));
+    const recoverToken = searchParams?.get("recover");
+    if (recoverToken && mounted) {
+      triggerRecover(recoverToken)
+        .unwrap()
+        .then((res) => {
+          if (res.data?.checkout) {
+            const c = res.data.checkout;
+            setForm((prev) => ({
+              ...prev,
+              fullName: c.customerName || prev.fullName,
+              phone: c.phone || prev.phone,
+              email: c.email || prev.email,
+              street: c.street || c.address || prev.street,
+              apartment: c.apartment || prev.apartment,
+              city: c.city || prev.city,
+              area: c.area || prev.area,
+              state: c.state || prev.state,
+              zip: c.zip || prev.zip,
+              country: c.country || prev.country,
+              landmark: c.landmark || prev.landmark,
+              notes: c.notes || prev.notes,
+            }));
+            if (c.deliveryZoneId) setSelectedZoneId(c.deliveryZoneId);
+            if (c.paymentMethod) setSelectedPayment(c.paymentMethod);
+            if (c.items && c.items.length > 0) {
+              dispatch(
+                setCartItems(
+                  c.items.map((it: any) => ({
+                    productId: it.productId,
+                    variantId: it.variantId || undefined,
+                    variantTitle: it.variantTitle || "",
+                    name: it.name,
+                    price: it.price,
+                    quantity: it.quantity,
+                    image: it.image || "",
+                  }))
+                )
+              );
+            }
+            setRecoveredBanner(true);
+            toast.success("Previous checkout attempt restored!");
+          }
+        })
+        .catch((err) => {
+          if (err?.data?.isConverted) {
+            toast.info("This checkout has already been completed.");
+          } else {
+            toast.error(err?.data?.message || "Could not recover checkout link.");
+          }
+        });
     }
-  }, [customer]);
-
+  }, [searchParams, mounted, triggerRecover, dispatch]);
 
   const backendCart = cartData?.data?.cart;
   const backendItems = (backendCart?.items ?? []).map((item) => ({
@@ -239,6 +292,95 @@ export default function CheckoutPage() {
       });
     }
   }, [selectedPayment, total, settings.currencyCode, trackAddPaymentInfo]);
+
+  // Progressive Checkout Autosave (Debounced)
+  useEffect(() => {
+    if (!mounted || !store?._id) return;
+
+    const hasCustomerInfo = Boolean(
+      (form.phone && form.phone.trim().length >= 6) ||
+      (form.fullName && form.fullName.trim().length >= 2) ||
+      (form.email && form.email.trim().length >= 5)
+    );
+
+    if (!hasCustomerInfo && items.length === 0) return;
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+
+    saveTimerRef.current = setTimeout(() => {
+      const sessionId = getOrCreateCartSessionId();
+      trackProgress({
+        storeId: store._id,
+        sessionId,
+        customerId: (customer as any)?._id || null,
+        customerName: form.fullName,
+        phone: form.phone,
+        email: form.email,
+        address: [form.street, form.apartment, form.area].filter(Boolean).join(", "),
+        street: form.street,
+        apartment: form.apartment,
+        city: form.city,
+        area: form.area,
+        state: form.state,
+        zip: form.zip,
+        country: form.country,
+        landmark: form.landmark,
+        notes: form.notes,
+        items: items.map((i) => ({
+          productId: i.productId,
+          variantId: i.variantId || undefined,
+          variantTitle: i.variantTitle || "",
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+          image: i.image || "",
+        })),
+        subtotal,
+        discount,
+        shippingFee: deliveryCharge,
+        tax: taxAmount,
+        total,
+        couponCode: backendCart?.couponCode || "",
+        deliveryZoneId: selectedZoneId,
+        deliveryZoneName: selectedZone?.name || "",
+        paymentMethod: selectedPayment,
+        step: selectedPayment ? "payment" : selectedZoneId ? "shipping" : "customer_info",
+      }).catch(() => {
+        // Silently catch background tracking failures
+      });
+    }, 700);
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [
+    mounted,
+    store?._id,
+    customer,
+    form.fullName,
+    form.phone,
+    form.email,
+    form.city,
+    form.area,
+    form.street,
+    form.apartment,
+    form.state,
+    form.zip,
+    form.country,
+    form.landmark,
+    form.notes,
+    items,
+    subtotal,
+    discount,
+    deliveryCharge,
+    taxAmount,
+    total,
+    backendCart?.couponCode,
+    selectedZoneId,
+    selectedZone?.name,
+    selectedPayment,
+    trackProgress,
+  ]);
 
   const requireLogin = Boolean(settings.requireLoginEnabled || (settings as any).requireLogin) && !customer;
 
@@ -424,6 +566,25 @@ export default function CheckoutPage() {
           </span>
         )}
       </div>
+
+      {/* Recovered Checkout Notice */}
+      {recoveredBanner && (
+        <div className="mb-6 flex items-center justify-between rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sky-900">
+          <div className="flex items-center gap-2.5">
+            <RotateCcw className="h-4 w-4 text-sky-600 shrink-0" />
+            <p className="text-xs font-medium">
+              We restored your previous checkout attempt with current prices and inventory. Please review details and complete your order.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setRecoveredBanner(false)}
+            className="text-xs text-sky-600 hover:text-sky-800 font-semibold underline shrink-0 ml-2"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Require Login Warning Card */}
       {requireLogin && (

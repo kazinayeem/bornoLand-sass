@@ -72,7 +72,8 @@ const mainLinks = [
   { href: "/products", label: "Products", icon: Package },
   { href: "/categories", label: "Categories", icon: Tags },
   { href: "/inventory", label: "Inventory", icon: Boxes, featureKey: "inventory" },
-  { href: "/orders", label: "Orders", icon: ShoppingBag },
+  { href: "/orders", label: "Orders", icon: ShoppingBag, exact: true },
+  { href: "/orders/incomplete", label: "Incomplete Orders", icon: ShoppingCart, featureKey: "incomplete_orders" },
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/reviews", label: "Reviews", icon: Star, featureKey: "reviews" },
 

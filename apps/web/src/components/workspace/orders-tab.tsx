@@ -45,6 +45,7 @@ import { formatCurrency } from "@/lib/format-currency";
 import { useGetStoreCouriersQuery } from "@/redux/api/courier-api";
 import { useGetStoreFeatureAccessQuery, getFeatureByKey } from "@/redux/api/feature-api";
 import { OrderShipmentPanel, orderHasShipment } from "@/components/workspace/order-shipment-panel";
+import { IncompleteOrdersTab } from "@/components/orders/incomplete-orders-tab";
 
 const CreateShipmentModal = lazy(() =>
   import("@/components/workspace/create-shipment-modal").then((m) => ({
@@ -210,6 +211,7 @@ const filterControlClass =
 
 
 export function OrdersTab({ storeId }: OrdersTabProps) {
+  const [activeView, setActiveView] = useState<"completed" | "incomplete">("completed");
   const today = todayInput();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -593,25 +595,65 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
   ];
 
   return (
-    <div className="space-y-2.5">
-      {analytics && (
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
-          {[
-            { label: "Orders", value: String(analytics.totalOrders), color: "text-apple-ink" },
-            { label: "Revenue", value: money(analytics.totalRevenue), color: "text-emerald-600" },
-            { label: "Pending", value: String(analytics.pendingOrders), color: "text-amber-600" },
-            { label: "Processing", value: String(analytics.processingOrders), color: "text-blue-600" },
-            { label: "Delivered", value: String(analytics.deliveredOrders), color: "text-emerald-600" },
-          ].map((s) => (
-            <div key={s.label} className="rounded-lg border border-apple-hairline bg-white px-2.5 py-1.5">
-              <p className="text-[8px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">
-                {s.label}
-              </p>
-              <p className={cn("mt-0.5 text-[13px] font-bold tabular-nums leading-tight", s.color)}>{s.value}</p>
-            </div>
-          ))}
+    <div className="space-y-4">
+      {/* View Switcher: Orders vs Incomplete Orders */}
+      <div className="flex items-center justify-between border-b border-apple-hairline pb-2.5">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveView("completed")}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all",
+              activeView === "completed"
+                ? "bg-apple-ink text-white shadow-xs"
+                : "bg-apple-canvas-parchment text-apple-ink-muted-48 hover:text-apple-ink"
+            )}
+          >
+            <ShoppingCart className="h-3.5 w-3.5" />
+            <span>Completed Orders</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveView("incomplete")}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all",
+              activeView === "incomplete"
+                ? "bg-apple-ink text-white shadow-xs"
+                : "bg-apple-canvas-parchment text-apple-ink-muted-48 hover:text-apple-ink"
+            )}
+          >
+            <ShoppingBag className="h-3.5 w-3.5" />
+            <span>Incomplete Orders</span>
+            <span className="rounded-full bg-rose-500/20 px-1.5 py-0.2 text-[9px] font-bold text-rose-400">
+              Abandoned
+            </span>
+          </button>
         </div>
-      )}
+      </div>
+
+      {activeView === "incomplete" ? (
+        <IncompleteOrdersTab storeId={storeId} />
+      ) : (
+        <div className="space-y-2.5">
+          {analytics && (
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+              {[
+                { label: "Orders", value: String(analytics.totalOrders), color: "text-apple-ink" },
+                { label: "Revenue", value: money(analytics.totalRevenue), color: "text-emerald-600" },
+                { label: "Pending", value: String(analytics.pendingOrders), color: "text-amber-600" },
+                { label: "Processing", value: String(analytics.processingOrders), color: "text-blue-600" },
+                { label: "Delivered", value: String(analytics.deliveredOrders), color: "text-emerald-600" },
+              ].map((s) => (
+                <div key={s.label} className="rounded-lg border border-apple-hairline bg-white px-2.5 py-1.5">
+                  <p className="text-[8px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">
+                    {s.label}
+                  </p>
+                  <p className={cn("mt-0.5 text-[13px] font-bold tabular-nums leading-tight", s.color)}>{s.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
 
       <div className="rounded-xl border border-apple-hairline bg-white p-2.5">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -828,6 +870,8 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
           pageSize={pageSize}
           onPageSizeChange={setPageSize}
         />
+      )}
+        </div>
       )}
 
       <Modal

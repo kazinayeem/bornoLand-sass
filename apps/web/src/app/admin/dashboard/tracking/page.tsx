@@ -57,7 +57,6 @@ export default function AdminTrackingOverviewPage() {
       <AdminPageHeader
         title="Tracking & Pixels Overview"
         description="Monitor advertising pixel configurations, entitlements, and adoption across all stores on BornoLand."
-        icon={Target}
         actions={
           <button
             onClick={() => refetch()}

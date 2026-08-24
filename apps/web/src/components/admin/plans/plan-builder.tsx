@@ -31,6 +31,10 @@ const FEATURE_KEY_TO_TOGGLE: Partial<Record<string, keyof PlanFeatureToggles>> =
   google_analytics: "googleAnalytics",
   conversion_tracking: "conversionTracking",
   advanced_tracking: "advancedTracking",
+  incomplete_orders: "incompleteOrders",
+  abandoned_cart: "abandonedCart",
+  checkout_recovery: "checkoutRecovery",
+  recovery_analytics: "recoveryAnalytics",
 };
 
 const COURIER_PROVIDER_OPTIONS: Array<{
@@ -117,6 +121,15 @@ type FeatureGroup = {
 };
 
 const FEATURE_GROUPS: FeatureGroup[] = [
+  {
+    key: "sales_orders", label: "Sales & Order Management",
+    toggles: [
+      { key: "incompleteOrders", label: "Incomplete Orders", description: "Track progressive checkout sessions and abandoned checkouts" },
+      { key: "abandonedCart", label: "Abandoned Cart", description: "Track and manage customer abandoned carts" },
+      { key: "checkoutRecovery", label: "Checkout Recovery", description: "Generate customer recovery links and restore checkouts" },
+      { key: "recoveryAnalytics", label: "Recovery Analytics", description: "Advanced checkout abandonment and conversion analytics" },
+    ],
+  },
   {
     key: "products", label: "Products & Inventory",
     toggles: [
@@ -345,6 +358,10 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     shipping: plan.featureToggles?.shipping ?? false,
     localPickup: plan.featureToggles?.localPickup ?? false,
     abandonedCart: plan.featureToggles?.abandonedCart ?? false,
+    incompleteOrders: plan.featureToggles?.incompleteOrders ?? false,
+    checkoutRecovery: plan.featureToggles?.checkoutRecovery ?? false,
+    recoveryAnalytics: plan.featureToggles?.recoveryAnalytics ?? false,
+    recoveryLinks: plan.featureToggles?.recoveryLinks ?? false,
     emailMarketing: plan.featureToggles?.emailMarketing ?? false,
     smsMarketing: plan.featureToggles?.smsMarketing ?? false,
     pushNotification: plan.featureToggles?.pushNotification ?? false,

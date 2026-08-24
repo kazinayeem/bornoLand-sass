@@ -181,6 +181,7 @@ export const NAV_FEATURE_MAP: Record<string, string> = {
   Categories: "categories",
   Inventory: "inventory",
   Orders: "orders",
+  "Incomplete Orders": "incomplete_orders",
   Customers: "customers",
   Reviews: "reviews",
   Coupons: "coupons",

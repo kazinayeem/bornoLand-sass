@@ -11,8 +11,10 @@ export default function StoreProductsPage() {
   }
   const billingHref = store ? `/store/${store.slug}/billing` : "#";
   return (
-    <StorePageCard>
-      <ProductsTab storeId={storeId} storeSlug={store.slug} billingHref={billingHref} />
-    </StorePageCard>
+    <div className="space-y-6">
+      <StorePageCard>
+        <ProductsTab storeId={storeId} storeSlug={store?.slug} billingHref={billingHref} />
+      </StorePageCard>
+    </div>
   );
 }

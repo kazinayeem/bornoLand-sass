@@ -2,6 +2,7 @@
 
 import { IncompleteOrdersTab } from "@/components/orders/incomplete-orders-tab";
 import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-page";
+import { StorePageHeader } from "@/components/store-dashboard/store-page-header";
 import { Loader2 } from "lucide-react";
 
 export default function StoreIncompleteOrdersPage() {
@@ -14,8 +15,19 @@ export default function StoreIncompleteOrdersPage() {
     );
   }
   return (
-    <StorePageCard>
-      <IncompleteOrdersTab storeId={storeId} storeSlug={store?.slug} />
-    </StorePageCard>
+    <div className="space-y-6">
+      <StorePageHeader
+        title="Incomplete Orders"
+        description="Track and recover abandoned checkout sessions when customers enter their details but do not complete order placement."
+        breadcrumbs={[
+          { label: "Dashboard", href: `/store/${store?.slug}/dashboard` },
+          { label: "Sales" },
+          { label: "Incomplete Orders" },
+        ]}
+      />
+      <StorePageCard>
+        <IncompleteOrdersTab storeId={storeId} storeSlug={store?.slug} />
+      </StorePageCard>
+    </div>
   );
 }

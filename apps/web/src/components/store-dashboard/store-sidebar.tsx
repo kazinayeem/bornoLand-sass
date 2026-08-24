@@ -9,6 +9,7 @@ import {
   Tags,
   Boxes,
   ShoppingBag,
+  ShoppingCart,
   Users,
   Star,
   Ticket,

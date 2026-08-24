@@ -731,13 +731,8 @@ function IncompleteCheckoutDetailModal({
     <Modal
       open={true}
       onClose={onClose}
-      title={
-        <div className="flex items-center gap-2">
-          <ShoppingBag className="h-4 w-4 text-rose-600" />
-          <span>Incomplete Checkout Details</span>
-        </div>
-      }
-      className="max-w-2xl"
+      title="Incomplete Checkout Details"
+      size="xl"
     >
       {isLoading || !checkout ? (
         <div className="py-12 text-center text-apple-ink-muted-48">

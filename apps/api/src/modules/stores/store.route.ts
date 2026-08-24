@@ -37,6 +37,7 @@ import { marketingRouter } from "../marketing/marketing.route.js";
 import { mediaRouter } from "../media/media.route.js";
 import { storeAuditRouter } from "../audit/audit.route.js";
 import { contactMessageRouter } from "../notifications/contact-message.route.js";
+import { storeTrackingRouter } from "./store-tracking.route.js";
 
 export const storeRouter: Router = Router();
 
@@ -93,3 +94,5 @@ storeRouter.use("/:storeId/marketing", marketingRouter);
 storeRouter.use("/:storeId/media", mediaRouter);
 storeRouter.use("/:storeId/audit-logs", storeAuditRouter);
 storeRouter.use("/:storeId/contact-messages", contactMessageRouter);
+storeRouter.use("/:storeId/tracking", storeTrackingRouter);
+storeRouter.use("/:id/tracking", storeTrackingRouter);

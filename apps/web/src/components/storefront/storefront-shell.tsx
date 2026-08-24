@@ -35,6 +35,8 @@ import {
   StorefrontHeaderOffsetProvider,
   StorefrontHeaderSettingsProvider,
 } from "@/components/storefront/storefront-header-offset";
+import type { PublicStoreTracking } from "@/lib/tracking/types";
+import { StorefrontTracker } from "@/components/tracking/storefront-tracker";
 
 export type StorefrontShellProps = {
   store: StoreData;
@@ -45,6 +47,7 @@ export type StorefrontShellProps = {
   sliders: HomepageSliderData[];
   navigations?: NavigationData[];
   contact?: StoreContact | null;
+  tracking?: PublicStoreTracking | null;
   pageSections: StorefrontSectionLike[];
   headerSections?: StorefrontSectionLike[];
   footerSections?: StorefrontSectionLike[];
@@ -66,6 +69,7 @@ export function StorefrontShell({
   sliders,
   navigations = [],
   contact = null,
+  tracking = null,
   headerSettings,
   footerSettings: footerSettings,
   showAdminBar = false,
@@ -106,8 +110,9 @@ export function StorefrontShell({
       sliders,
       navigations,
       contact,
+      tracking,
     }),
-    [storeWithBranding, theme, products, settings, sliders, navigations, contact],
+    [storeWithBranding, theme, products, settings, sliders, navigations, contact, tracking],
   );
 
   const shellContent = (
@@ -122,6 +127,7 @@ export function StorefrontShell({
             ...themeCssVars,
           } as React.CSSProperties}
         >
+          <StorefrontTracker storeId={store._id} tracking={tracking} builderMode={builderMode} />
           <TenantProvider value={tenantValue}>
             <AuthInit />
             <ThemeProvider themeId={(theme as any)?.themeId || (store.theme as any)?.themeId || "grocery"}>

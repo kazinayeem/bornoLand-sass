@@ -136,6 +136,12 @@ const planFeatureSchema = z.object({
   analyticsExport: z.boolean().optional().default(false),
   reports: z.boolean().optional().default(false),
   courier: z.boolean().optional().default(false),
+  metaPixel: z.boolean().optional().default(false),
+  tiktokPixel: z.boolean().optional().default(false),
+  customTracking: z.boolean().optional().default(false),
+  googleAnalytics: z.boolean().optional().default(false),
+  conversionTracking: z.boolean().optional().default(false),
+  advancedTracking: z.boolean().optional().default(false),
 });
 
 const planCourierAccessSchema = z.object({

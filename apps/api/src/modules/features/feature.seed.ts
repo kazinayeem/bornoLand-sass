@@ -30,7 +30,8 @@ export const SEED_GROUPS: SeedGroup[] = [
   { key: "commerce", name: "Commerce", sortOrder: 1 },
   { key: "inventory_mgmt", name: "Inventory Management", sortOrder: 2 },
   { key: "content", name: "Content", sortOrder: 3 },
-  { key: "platform", name: "Platform", sortOrder: 4 },
+  { key: "marketing", name: "Marketing & Tracking", sortOrder: 4 },
+  { key: "platform", name: "Platform", sortOrder: 5 },
 ];
 
 // ── Features (only implemented modules) ─────────────────────────────────────
@@ -62,6 +63,14 @@ export const SEED_FEATURES: SeedFeature[] = [
   { key: "media", name: "Media", description: "Media library and file management", type: "limit", groupKey: "content", sortOrder: 12, usageCounterKey: "media", unit: "files", defaultEnabled: true, defaultLimit: 0 },
   { key: "builder", name: "Builder", description: "Visual store page builder", type: "boolean", groupKey: "content", sortOrder: 13, defaultEnabled: true },
   { key: "theme_builder", name: "Theme", description: "Theme customization and management", type: "boolean", groupKey: "content", sortOrder: 14, defaultEnabled: true },
+
+  // Marketing & Tracking
+  { key: "meta_pixel", name: "Meta Pixel", description: "Facebook & Instagram advertising pixel tracking", type: "boolean", groupKey: "marketing", sortOrder: 1, defaultEnabled: false },
+  { key: "tiktok_pixel", name: "TikTok Pixel", description: "TikTok advertising pixel tracking", type: "boolean", groupKey: "marketing", sortOrder: 2, defaultEnabled: false },
+  { key: "custom_tracking", name: "Custom Tracking Script", description: "Custom HTML / JS header and body scripts", type: "boolean", groupKey: "marketing", sortOrder: 3, defaultEnabled: false },
+  { key: "google_analytics", name: "Google Analytics", description: "Google Analytics 4 measurement", type: "boolean", groupKey: "marketing", sortOrder: 4, defaultEnabled: false },
+  { key: "conversion_tracking", name: "Conversion Tracking", description: "Advanced e-commerce conversion tracking", type: "boolean", groupKey: "marketing", sortOrder: 5, defaultEnabled: false },
+  { key: "advanced_tracking", name: "Advanced Tracking", description: "Server-side and advanced matched tracking", type: "boolean", groupKey: "marketing", sortOrder: 6, defaultEnabled: false },
 
   // Platform
   { key: "analytics", name: "Analytics", description: "Store analytics and insights", type: "tier", groupKey: "platform", sortOrder: 20, defaultTier: "basic" },

@@ -18,6 +18,7 @@ import { SmartImage } from "@/components/ui/smart-image";
 import { getContrastColor } from "@/lib/color-utils";
 import { useStorefrontSurface } from "./storefront-ui";
 import { cn } from "@/lib/utils";
+import { useStorefrontTracking } from "@/hooks/use-storefront-tracking";
 
 export type ProductCardProduct = {
   _id: string;
@@ -75,6 +76,7 @@ export function ProductCard({
 
   const { primaryColor } = useStorefrontSurface();
   const [addToCartRemote] = useAddToCartMutation();
+  const { trackAddToCart } = useStorefrontTracking();
   const [imageFailed, setImageFailed] = useState(false);
   const [adding, setAdding] = useState(false);
 
@@ -121,6 +123,14 @@ export function ProductCard({
           image: getProductImageUrl(product),
         }),
       );
+      trackAddToCart({
+        id: product._id,
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        category: displayCategory,
+        currency: currencySettings?.currencyCode || "BDT",
+      });
       await addToCartRemote({ productId: product._id, quantity: 1 }).unwrap();
       toast.success(`${product.name} added to cart`);
     } catch {

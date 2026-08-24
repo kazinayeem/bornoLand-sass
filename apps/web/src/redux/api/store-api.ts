@@ -149,6 +149,12 @@ export type PlanFeatureToggles = {
   analyticsExport: boolean;
   reports: boolean;
   courier: boolean;
+  metaPixel: boolean;
+  tiktokPixel: boolean;
+  customTracking: boolean;
+  googleAnalytics: boolean;
+  conversionTracking: boolean;
+  advancedTracking: boolean;
 };
 
 export type PlanCourierAccess = {

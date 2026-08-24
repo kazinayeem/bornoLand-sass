@@ -34,6 +34,7 @@ import { CustomerAddressBook } from "@/components/storefront/customer-address-bo
 import type { CustomerAddress } from "@/redux/api/customer-api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useStorefrontTracking } from "@/hooks/use-storefront-tracking";
 
 const PAYMENT_ICONS: Record<string, typeof Banknote> = {
   cod: Banknote,
@@ -83,6 +84,7 @@ export default function CheckoutPage() {
   const [createOrder, { isLoading }] = useCreateOrderMutation();
   const [syncCart, { isLoading: isSyncing }] = useSyncCartMutation();
   const { store, settings } = useTenant();
+  const { trackInitiateCheckout, trackAddPaymentInfo, trackPurchase } = useStorefrontTracking();
 
   const [mounted, setMounted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -217,6 +219,27 @@ export default function CheckoutPage() {
   const taxAmount = taxRate > 0 && !settings.taxIncluded ? (subtotal - discount) * (taxRate / 100) : 0;
   const total = Math.max(0, subtotal - discount + taxAmount + deliveryCharge);
 
+  useEffect(() => {
+    if (items.length > 0 && total > 0) {
+      trackInitiateCheckout({
+        items: items.map((i) => ({ id: i.productId, name: i.name, price: i.price, quantity: i.quantity })),
+        totalValue: total,
+        numItems: items.length,
+        currency: settings.currencyCode || "BDT",
+      });
+    }
+  }, [items.length, total, settings.currencyCode, trackInitiateCheckout]);
+
+  useEffect(() => {
+    if (selectedPayment && total > 0) {
+      trackAddPaymentInfo({
+        paymentMethod: selectedPayment,
+        totalValue: total,
+        currency: settings.currencyCode || "BDT",
+      });
+    }
+  }, [selectedPayment, total, settings.currencyCode, trackAddPaymentInfo]);
+
   const requireLogin = Boolean(settings.requireLoginEnabled || (settings as any).requireLogin) && !customer;
 
   const handleChange =
@@ -303,6 +326,18 @@ export default function CheckoutPage() {
       const result = await createOrder(payload).unwrap();
 
       if (result.success && result.data) {
+        trackPurchase({
+          orderId: result.data.order._id,
+          items: items.map((item) => ({
+            id: item.productId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+          totalValue: result.data.order.total ?? total,
+          currency: settings.currencyCode || "BDT",
+        });
+
         dispatch(clearCart());
         setOrderSuccess({
           orderNumber: result.data.order.orderNumber,

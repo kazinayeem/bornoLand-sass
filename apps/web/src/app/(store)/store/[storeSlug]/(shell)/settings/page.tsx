@@ -6,7 +6,7 @@ import {
   Settings2, Sparkles, MapPin, Globe, DollarSign, Truck, Percent,
   CreditCard, ShoppingCart, Mail, FileText, Menu, Share2, Search,
   Globe2, BookOpen, ShieldCheck, FileText as FileTextIcon, HelpCircle,
-  Lock, Cpu, ChevronDown, ChevronRight, Loader2, Package,
+  Lock, Cpu, ChevronDown, ChevronRight, Loader2, Package, Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SettingsTab } from "@/components/workspace/settings-tab";
@@ -20,6 +20,7 @@ import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-
 import StoreEmailSettingsPage from "@/app/(store)/store/[storeSlug]/(shell)/settings/notifications/page";
 import { CmsTab } from "@/components/workspace/cms-tab";
 import { CmsFaqsEditor } from "@/components/cms/cms-faqs-editor";
+import { StoreTrackingSettingsComponent } from "@/components/tracking/store-tracking-settings";
 import { useGetStoreFeatureAccessQuery, getFeatureByKey } from "@/redux/api/feature-api";
 import { FeatureLocked } from "@/components/features/feature-gate";
 
@@ -29,6 +30,7 @@ type SectionId =
   | "general" | "branding" | "contact"
   | "localization" | "currency"
   | "shipping" | "courier" | "taxes" | "payments" | "checkout" | "email" | "invoice"
+  | "tracking"
   | "navigation" | "social-links"
   | "seo" | "domain" | "cms-pages"
   | "policies" | "faq"
@@ -50,6 +52,9 @@ const SECTIONS: Section[] = [
   // Localization
   { id: "localization", label: "Localization", icon: Globe, group: "Localization" },
   { id: "currency", label: "Currency", icon: DollarSign, group: "Localization" },
+
+  // Marketing & Tracking
+  { id: "tracking", label: "Tracking & Pixels", icon: Target, group: "Marketing" },
 
   // Commerce
   { id: "shipping", label: "Shipping", icon: Truck, group: "Commerce" },
@@ -74,7 +79,7 @@ const SECTIONS: Section[] = [
   { id: "advanced", label: "Advanced", icon: Cpu, group: "System" },
 ];
 
-const GROUP_ORDER = ["General", "Localization", "Commerce", "Content", "System"];
+const GROUP_ORDER = ["General", "Marketing", "Localization", "Commerce", "Content", "System"];
 
 /* ── Placeholder tab ──────────────────────────────────────────────── */
 
@@ -167,6 +172,8 @@ export default function StoreSettingsHubPage() {
             <SettingsTab storeId={storeId} />
           </StorePageCard>
         );
+      case "tracking":
+        return <StoreTrackingSettingsComponent storeId={storeId} storeSlug={storeSlug} />;
       case "shipping":
         return <ShippingSettingsTab storeId={storeId} />;
       case "courier":

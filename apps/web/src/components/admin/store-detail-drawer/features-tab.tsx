@@ -31,6 +31,10 @@ const FEATURE_GROUPS: { label: string; keys: string[] }[] = [
     keys: ["coupons", "giftCards", "flashSales", "bundleDeals", "tieredPricing", "volumeDiscounts", "bogo", "freeShipping"],
   },
   {
+    label: "Marketing & Tracking",
+    keys: ["metaPixel", "tiktokPixel", "customTracking", "googleAnalytics", "conversionTracking", "advancedTracking"],
+  },
+  {
     label: "Content & Design",
     keys: ["blog", "cms", "pageBuilder", "dragDropBuilder", "themeEditor", "fileManager", "mediaLibrary"],
   },
@@ -107,6 +111,12 @@ const FEATURE_LABELS: Record<string, string> = {
   dropshipping: "Dropshipping",
   shipping: "Shipping",
   courier: "Courier Management",
+  metaPixel: "Meta Pixel",
+  tiktokPixel: "TikTok Pixel",
+  customTracking: "Custom Tracking Script",
+  googleAnalytics: "Google Analytics",
+  conversionTracking: "Conversion Tracking",
+  advancedTracking: "Advanced Tracking",
   localPickup: "Local Pickup",
   abandonedCart: "Abandoned Cart",
   emailMarketing: "Email Marketing",

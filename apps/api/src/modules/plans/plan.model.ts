@@ -137,6 +137,12 @@ const planFeatureSchema = new Schema({
   analyticsExport: { type: Boolean, default: true },
   reports: { type: Boolean, default: false },
   courier: { type: Boolean, default: false },
+  metaPixel: { type: Boolean, default: false },
+  tiktokPixel: { type: Boolean, default: false },
+  customTracking: { type: Boolean, default: false },
+  googleAnalytics: { type: Boolean, default: false },
+  conversionTracking: { type: Boolean, default: false },
+  advancedTracking: { type: Boolean, default: false },
 }, { _id: false });
 
 const planCourierAccessSchema = new Schema(

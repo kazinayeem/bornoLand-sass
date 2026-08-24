@@ -17,6 +17,7 @@ import {
   StorefrontButton,
   useStorefrontSurface,
 } from "@/components/storefront/storefront-ui";
+import { useStorefrontTracking } from "@/hooks/use-storefront-tracking";
 
 type CmsPage = CmsPageData;
 
@@ -68,6 +69,7 @@ export function ContactPageClient({
     void load();
   }, [store._id, initialPage, initialContact]);
 
+  const { trackLead } = useStorefrontTracking();
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -91,6 +93,7 @@ export function ContactPageClient({
       });
       const data = await res.json();
       if (data.success) {
+        trackLead({ formName: "Contact Us", email: form.email, phone: form.phone });
         setSent(true);
         toast.success("Message sent successfully!");
       } else {

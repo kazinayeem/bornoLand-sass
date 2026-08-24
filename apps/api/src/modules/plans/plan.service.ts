@@ -21,6 +21,12 @@ const TOGGLE_TO_FEATURE_KEY: Record<string, string> = {
   stockTransfer: "stock_transfer",
   inventoryAuditLog: "inventory_audit_log",
   courier: "courier",
+  metaPixel: "meta_pixel",
+  tiktokPixel: "tiktok_pixel",
+  customTracking: "custom_tracking",
+  googleAnalytics: "google_analytics",
+  conversionTracking: "conversion_tracking",
+  advancedTracking: "advanced_tracking",
 };
 
 async function syncFeatureTogglesToPlanFeatures(

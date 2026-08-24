@@ -160,7 +160,7 @@ export function IncompleteOrdersTab({ storeId, storeSlug }: IncompleteOrdersTabP
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [datePreset, setDatePreset] = useState<DatePreset>("today");
+  const [datePreset, setDatePreset] = useState<DatePreset>("all");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);

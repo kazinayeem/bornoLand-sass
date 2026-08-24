@@ -4,8 +4,8 @@ const { Schema, model, models } = mongoose;
 
 const incompleteCheckoutItemSchema = new Schema(
   {
-    productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
-    variantId: { type: Schema.Types.ObjectId },
+    productId: { type: Schema.Types.Mixed, required: true },
+    variantId: { type: Schema.Types.Mixed },
     variantTitle: { type: String, default: "" },
     name: { type: String, required: true },
     price: { type: Number, required: true },

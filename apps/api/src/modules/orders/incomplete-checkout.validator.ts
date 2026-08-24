@@ -5,7 +5,7 @@ export const trackCheckoutProgressSchema = z.object({
   customerId: z.string().optional().nullable(),
   customerName: z.string().trim().optional().default(""),
   phone: z.string().trim().optional().default(""),
-  email: z.string().trim().email().optional().or(z.literal("")).default(""),
+  email: z.string().trim().optional().default(""),
   address: z.string().trim().optional().default(""),
   street: z.string().trim().optional().default(""),
   apartment: z.string().trim().optional().default(""),
@@ -21,8 +21,8 @@ export const trackCheckoutProgressSchema = z.object({
   items: z
     .array(
       z.object({
-        productId: z.string(),
-        variantId: z.string().optional().nullable(),
+        productId: z.any(),
+        variantId: z.any().optional().nullable(),
         variantTitle: z.string().optional().default(""),
         name: z.string(),
         price: z.number().min(0),

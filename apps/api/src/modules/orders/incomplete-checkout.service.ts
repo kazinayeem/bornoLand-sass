@@ -77,6 +77,20 @@ export async function isIncompleteOrdersAllowed(storeId: string): Promise<{
   };
 }
 
+function sanitizeItems(items: any[] | undefined) {
+  if (!items || !Array.isArray(items)) return [];
+  return items.map((i) => ({
+    productId: isValidObjectId(i.productId) ? i.productId : String(i.productId || ""),
+    variantId: i.variantId && isValidObjectId(i.variantId) ? i.variantId : (i.variantId ? String(i.variantId) : undefined),
+    variantTitle: i.variantTitle || "",
+    name: i.name || "Product",
+    price: Number(i.price) || 0,
+    quantity: Number(i.quantity) || 1,
+    image: i.image || "",
+    sku: i.sku || "",
+  }));
+}
+
 /**
  * Progressively tracks checkout session data from public storefront.
  */
@@ -112,6 +126,8 @@ export async function trackCheckoutProgress(
     sessionId: input.sessionId,
   });
 
+  const sanitizedItems = sanitizeItems(input.items);
+
   if (!doc) {
     // Generate secure unpredictable recovery token
     const recoveryToken = crypto.randomBytes(24).toString("hex");
@@ -133,7 +149,7 @@ export async function trackCheckoutProgress(
       country: input.country || "Bangladesh",
       landmark: input.landmark || "",
       notes: input.notes || "",
-      items: input.items || [],
+      items: sanitizedItems,
       subtotal: input.subtotal || 0,
       discount: input.discount || 0,
       shippingFee: input.shippingFee || 0,
@@ -214,8 +230,8 @@ export async function trackCheckoutProgress(
   if (input.notes) doc.notes = input.notes;
   if (input.step) doc.step = input.step;
 
-  if (input.items && input.items.length > 0) {
-    doc.items = input.items as any;
+  if (sanitizedItems.length > 0) {
+    doc.items = sanitizedItems as any;
   }
   if (input.subtotal !== undefined) doc.subtotal = input.subtotal;
   if (input.discount !== undefined) doc.discount = input.discount;

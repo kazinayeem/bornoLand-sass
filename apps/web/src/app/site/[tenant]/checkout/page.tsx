@@ -494,6 +494,17 @@ export default function CheckoutPage() {
     }
   };
 
+  if (!mounted) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-apple-primary border-t-transparent" />
+          <p className="text-xs text-zinc-500">Loading checkout...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (orderSuccess) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">

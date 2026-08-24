@@ -8,7 +8,7 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { trackingManager } from "@/lib/tracking/tracking-manager";
 import type {
   PublicStoreTracking,
@@ -57,7 +57,6 @@ export function TrackingProvider({
   children,
 }: TrackingProviderProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const isInitializedRef = useRef(false);
   const lastTrackedPathRef = useRef<string | null>(null);
 
@@ -73,15 +72,16 @@ export function TrackingProvider({
   useEffect(() => {
     if (builderMode || !isInitializedRef.current) return;
 
-    const currentPath = `${pathname || ""}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`;
+    const searchStr = typeof window !== "undefined" ? window.location.search : "";
+    const currentPath = `${pathname || ""}${searchStr}`;
     if (lastTrackedPathRef.current === currentPath) return;
     lastTrackedPathRef.current = currentPath;
 
     trackingManager.track("PageView", {
       page_path: pathname || "/",
-      search_params: searchParams?.toString() || "",
+      search_params: searchStr.replace(/^\?/, ""),
     });
-  }, [pathname, searchParams, builderMode]);
+  }, [pathname, builderMode]);
 
   const contextValue = useMemo<TrackingContextType>(
     () => ({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { Grid3X3, List, Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -76,7 +76,7 @@ function mapSort(sort: string) {
 
 import { productGridClass } from "@/lib/storefront/responsive-grid";
 
-export function StorefrontProductGrid({
+function StorefrontProductGridInner({
   title = "Products",
   subtitle = "",
   productCount = 12,
@@ -492,5 +492,13 @@ export function StorefrontProductGrid({
         </>
       )}
     </div>
+  );
+}
+
+export function StorefrontProductGrid(props: StorefrontProductGridProps) {
+  return (
+    <Suspense fallback={<ProductGridSkeleton count={typeof props.productCount === "number" ? props.productCount : 8} />}>
+      <StorefrontProductGridInner {...props} />
+    </Suspense>
   );
 }

@@ -554,6 +554,10 @@ export function AiShopBuilderModal({
                       darkMode: selectedStyle === "Dark",
                       navbarStyle: "sticky",
                     } as any}
+                    products={[]}
+                    categories={[]}
+                    settings={{} as any}
+                    sliders={[]}
                     pageSections={generatedConfig.sections}
                     builderMode={false}
                   >

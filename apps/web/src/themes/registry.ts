@@ -71,55 +71,16 @@ export function getAllThemes(): ThemeDefinition[] {
  */
 export function migrateThemeSections(
   targetThemeId: string,
-  currentSections: BuilderSection[] = [],
+  _currentSections: BuilderSection[] = [],
 ): BuilderSection[] {
   const targetTheme = getThemeById(targetThemeId);
   const defaultSections = targetTheme.defaultSections;
 
-  if (!currentSections || currentSections.length === 0) {
-    return JSON.parse(JSON.stringify(defaultSections));
-  }
-
-  // Create a fast lookup of existing sections by type
-  const existingByType = new Map<string, BuilderSection>();
-  for (const s of currentSections) {
-    if (!existingByType.has(s.type)) {
-      existingByType.set(s.type, s);
-    }
-  }
-
-  // Build migrated section list based on new theme default structure
-  const migrated: BuilderSection[] = defaultSections.map((defaultSec) => {
-    const existing = existingByType.get(defaultSec.type);
-    if (!existing) {
-      return {
-        ...defaultSec,
-        id: `${defaultSec.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      };
-    }
-
-    // Merge custom content from existing section into target theme section props
-    const mergedProps: Record<string, string> = { ...defaultSec.props };
-    const contentKeys = [
-      "headline", "title", "subheadline", "subtitle", "description", "content",
-      "buttonText", "buttonLink", "secondaryButtonText", "secondaryButtonLink",
-      "imageUrl", "bgImage", "overlayColor", "textAlignment",
-    ];
-
-    for (const key of contentKeys) {
-      const value = existing.props[key];
-      if (typeof value === "string" && value.trim() !== "") {
-        mergedProps[key] = value;
-      }
-    }
-
-    return {
-      ...defaultSec,
-      id: `${defaultSec.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      visible: existing.visible !== false,
-      props: mergedProps,
-    };
-  });
-
-  return migrated;
+  // Always generate fresh, authentic sections with full imagery, layout, and copy tailored to the target theme
+  return defaultSections.map((sec) => ({
+    ...sec,
+    id: `${sec.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    visible: sec.visible !== false,
+    props: { ...(sec.props || {}) },
+  }));
 }

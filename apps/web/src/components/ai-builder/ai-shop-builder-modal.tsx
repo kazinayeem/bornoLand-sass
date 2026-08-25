@@ -172,9 +172,10 @@ export function AiShopBuilderModal({
 
     try {
       const themeDef = getThemeById(generatedConfig.themeId);
+      const targetIdentifier = storeId || storeSlug;
 
       await changeStoreTheme({
-        id: storeId,
+        id: targetIdentifier,
         data: {
           theme: {
             themeId: themeDef.id,
@@ -188,8 +189,8 @@ export function AiShopBuilderModal({
       }).unwrap();
 
       await revalidateStorefrontAction({
-        tenantSlug: storeSlug,
-        storeId,
+        tenantSlug: storeSlug || targetIdentifier,
+        storeId: storeId || targetIdentifier,
         scope: "all",
       });
 

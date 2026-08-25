@@ -558,9 +558,22 @@ export async function generateShopWithAi(req: GenerateShopRequest): Promise<Gene
   const baseUrl = (process.env.AGENT_ROUTER_BASE_URL || "https://api.agentrouter.org/v1").replace(/\/+$/, "");
   const model = process.env.AGENT_ROUTER_MODEL || "anthropic/claude-3.5-sonnet";
 
+  const startTime = Date.now();
+  console.log(`[AI Shop Builder] Request received:`, {
+    storeName: req.storeName || "Unnamed Store",
+    storeType: req.storeType,
+    style: req.style || "Modern",
+    language: req.language || "bn",
+    descriptionPreview: req.description?.slice(0, 80) + (req.description?.length > 80 ? "..." : ""),
+    model,
+    hasApiKey: Boolean(apiKey && apiKey !== "mock-key"),
+  });
+
   if (!apiKey || apiKey === "mock-key") {
-    // If no real API key is configured, safely use heuristic generator
-    return generateHeuristicShopConfig(req);
+    console.log(`[AI Shop Builder] No external API key provided. Using built-in heuristic generator.`);
+    const result = generateHeuristicShopConfig(req);
+    console.log(`[AI Shop Builder] Heuristic generated theme "${result.themeId}" with ${result.sections.length} sections in ${Date.now() - startTime}ms.`);
+    return result;
   }
 
   const isBn = req.language === "bn";
@@ -669,6 +682,7 @@ Language: ${isBn ? "Bengali (বাংলা)" : "English"}`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);
 
+    console.log(`[AI Shop Builder] Calling Agent Router endpoint: ${baseUrl}/chat/completions`);
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
@@ -689,9 +703,10 @@ Language: ${isBn ? "Bengali (বাংলা)" : "English"}`;
     });
 
     clearTimeout(timeout);
+    console.log(`[AI Shop Builder] Agent Router response status: ${response.status} in ${Date.now() - startTime}ms`);
 
     if (!response.ok) {
-      console.warn(`[AI Service] Agent Router API returned status ${response.status}. Falling back to heuristic engine.`);
+      console.warn(`[AI Shop Builder] Agent Router HTTP error ${response.status}. Using heuristic fallback.`);
       return generateHeuristicShopConfig(req);
     }
 
@@ -699,6 +714,7 @@ Language: ${isBn ? "Bengali (বাংলা)" : "English"}`;
     const content = data?.choices?.[0]?.message?.content;
 
     if (!content) {
+      console.warn(`[AI Shop Builder] Empty content in Agent Router response. Using heuristic fallback.`);
       return generateHeuristicShopConfig(req);
     }
 
@@ -712,6 +728,7 @@ Language: ${isBn ? "Bengali (বাংলা)" : "English"}`;
       if (match) {
         parsed = JSON.parse(match[0]);
       } else {
+        console.warn(`[AI Shop Builder] Could not parse JSON from model output. Using heuristic fallback.`);
         return generateHeuristicShopConfig(req);
       }
     }
@@ -735,9 +752,10 @@ Language: ${isBn ? "Bengali (বাংলা)" : "English"}`;
       }));
     }
 
+    console.log(`[AI Shop Builder] Successfully validated AI configuration for theme "${parsed.themeId}" with ${parsed.sections.length} sections in ${Date.now() - startTime}ms.`);
     return parsed as GeneratedShopConfig;
-  } catch (error) {
-    console.error("[AI Service] Error calling Agent Router API:", error);
+  } catch (error: any) {
+    console.error("[AI Shop Builder] Exception calling Agent Router API:", error?.message || error);
     return generateHeuristicShopConfig(req);
   }
 }

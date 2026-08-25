@@ -33,11 +33,15 @@ export async function findStoreByHostKey(key: string): Promise<Record<string, un
   const normalized = key.trim().toLowerCase();
   if (!normalized) return null;
 
+  const validStatus = { status: { $ne: "archived" } };
+
+  // 1. Check customDomains
   let store = (await StoreModel.findOne({
     customDomains: normalized,
-    status: "active",
+    ...validStatus,
   }).lean()) as Record<string, unknown> | null;
 
+  // 2. Check tenant customDomain
   if (!store) {
     const tenant = (await TenantModel.findOne({
       customDomain: normalized,
@@ -46,23 +50,40 @@ export async function findStoreByHostKey(key: string): Promise<Record<string, un
     if (tenant?._id) {
       store = (await StoreModel.findOne({
         tenantId: tenant._id,
-        status: "active",
+        ...validStatus,
       }).lean()) as Record<string, unknown> | null;
     }
   }
 
+  // 3. Check subdomain (case-insensitive)
   if (!store) {
     store = (await StoreModel.findOne({
-      subdomain: normalized,
-      status: "active",
+      $or: [{ subdomain: normalized }, { subdomain: key.trim() }],
+      ...validStatus,
     }).lean()) as Record<string, unknown> | null;
   }
 
+  // 4. Check slug (case-insensitive)
   if (!store) {
     store = (await StoreModel.findOne({
-      slug: normalized,
-      status: "active",
+      $or: [{ slug: normalized }, { slug: key.trim() }],
+      ...validStatus,
     }).lean()) as Record<string, unknown> | null;
+  }
+
+  // 5. Fallback: check by _id if key is valid ObjectId
+  if (!store) {
+    try {
+      const { requireObjectId } = await import("../../common/utils/object-id.js");
+      if (requireObjectId(key).ok) {
+        store = (await StoreModel.findOne({
+          _id: key,
+          ...validStatus,
+        }).lean()) as Record<string, unknown> | null;
+      }
+    } catch {
+      // Ignored
+    }
   }
 
   return store;

@@ -463,7 +463,7 @@ function sanitizeHomepageSections(rawSections: unknown[] | undefined, themeId?: 
       footerSettings: (homePage.footerSettings as any) ?? {},
     }));
 
-  }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug]);
+  }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug, store.theme]);
 
   // ─── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {

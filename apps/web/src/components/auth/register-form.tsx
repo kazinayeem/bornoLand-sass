@@ -29,11 +29,14 @@ import {
 } from "@/components/ui/field";
 import { useRegisterMutation } from "@/redux/api/auth-api";
 import { useLoading } from "@/hooks/use-loading";
+import { useLanguage } from "@/providers/language-provider";
 
 export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<typeof Card>) {
+  const { language } = useLanguage();
+  const isBn = language === "bn";
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [registerRequest] = useRegisterMutation();
@@ -74,16 +77,15 @@ export function RegisterForm({
         typeof response.error.data === "object" &&
         "message" in response.error.data
           ? String((response.error.data as { message?: string }).message)
-          : "Registration failed") || "Registration failed";
+          : isBn ? "রেজিস্ট্রেশন ব্যর্থ হয়েছে" : "Registration failed") || (isBn ? "রেজিস্ট্রেশন ব্যর্থ হয়েছে" : "Registration failed");
       toast.error(message);
       return;
     }
 
-    toast.success("Account created. Check your email for verification.");
+    toast.success(isBn ? "অ্যাকাউন্ট তৈরি হয়েছে। ভেরিফিকেশনের জন্য ইমেইল চেক করুন।" : "Account created. Check your email for verification.");
     startNavigation();
     router.push("/login");
   });
-
 
   return (
     <Card
@@ -92,21 +94,21 @@ export function RegisterForm({
     >
       <CardHeader className="space-y-1.5">
         <CardTitle className="text-2xl font-bold tracking-tight">
-          নতুন অ্যাকাউন্ট তৈরি করুন
+          {isBn ? "নতুন অ্যাকাউন্ট তৈরি করুন" : "Create your account"}
         </CardTitle>
         <CardDescription>
-          আপনার ই-কমার্স ব্যবসা শুরু করতে নিজের তথ্য লিখুন
+          {isBn ? "আপনার ই-কমার্স ব্যবসা শুরু করতে নিজের তথ্য লিখুন" : "Enter your details to start your e-commerce store"}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} noValidate>
           <FieldGroup>
             <Field data-invalid={Boolean(errors.name) || undefined}>
-              <FieldLabel htmlFor="register-name">আপনার পূর্ণ নাম</FieldLabel>
+              <FieldLabel htmlFor="register-name">{isBn ? "আপনার পূর্ণ নাম" : "Full name"}</FieldLabel>
               <Input
                 id="register-name"
                 type="text"
-                placeholder="যেমন: মোঃ তামিম রহমান"
+                placeholder={isBn ? "যেমন: মোঃ তামিম রহমান" : "e.g. Tamim Rahman"}
                 autoComplete="name"
                 required
                 aria-invalid={Boolean(errors.name)}
@@ -116,65 +118,65 @@ export function RegisterForm({
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="register-tenant-name">ওয়ার্কস্পেসের নাম</FieldLabel>
+              <FieldLabel htmlFor="register-tenant-name">{isBn ? "ওয়ার্কস্পেসের নাম" : "Workspace name"}</FieldLabel>
               <Input
                 id="register-tenant-name"
                 type="text"
-                placeholder="যেমন: ফ্যাশন হাউজ ওয়ার্কস্পেস"
+                placeholder={isBn ? "যেমন: ফ্যাশন হাউজ ওয়ার্কস্পেস" : "e.g. Fashion House Workspace"}
                 autoComplete="organization"
                 {...register("tenantName")}
               />
               <FieldDescription>
-                ঐচ্ছিক — আপনি পরবর্তীতে ওয়ার্কস্পেসের নাম পরিবর্তন করতে পারবেন।
+                {isBn ? "ঐচ্ছিক — আপনি পরবর্তীতে ওয়ার্কস্পেসের নাম পরিবর্তন করতে পারবেন।" : "Optional — you can change your workspace name anytime later."}
               </FieldDescription>
             </Field>
 
             <Field data-invalid={Boolean(errors.email) || undefined}>
-              <FieldLabel htmlFor="register-email">ইমেইল ঠিকানা</FieldLabel>
+              <FieldLabel htmlFor="register-email">{isBn ? "ইমেইল ঠিকানা" : "Email address"}</FieldLabel>
               <Input
                 id="register-email"
                 type="email"
-                placeholder="যেমন: name@example.com"
+                placeholder={isBn ? "যেমন: name@example.com" : "name@example.com"}
                 autoComplete="email"
                 required
                 aria-invalid={Boolean(errors.email)}
                 {...register("email")}
               />
               <FieldDescription>
-                আপনার অ্যাকাউন্টের তথ্যাদি প্রেরণের জন্য ব্যবহার করা হবে।
+                {isBn ? "আপনার অ্যাকাউন্টের তথ্যাদি প্রেরণের জন্য ব্যবহার করা হবে।" : "Used for account security and notifications."}
               </FieldDescription>
               <FieldError>{errors.email?.message}</FieldError>
             </Field>
 
             <Field data-invalid={Boolean(errors.password) || undefined}>
-              <FieldLabel htmlFor="register-password">পাসওয়ার্ড</FieldLabel>
+              <FieldLabel htmlFor="register-password">{isBn ? "পাসওয়ার্ড" : "Password"}</FieldLabel>
               <PasswordInput
                 id="register-password"
-                placeholder="পাসওয়ার্ড লিখুন"
+                placeholder={isBn ? "পাসওয়ার্ড লিখুন" : "Enter password"}
                 autoComplete="new-password"
                 required
                 aria-invalid={Boolean(errors.password)}
                 {...register("password")}
               />
               <FieldDescription>
-                কমপক্ষে ৮ অক্ষরের শক্তিশালী পাসওয়ার্ড দিন।
+                {isBn ? "কমপক্ষে ৮ অক্ষরের শক্তিশালী পাসওয়ার্ড দিন।" : "At least 8 characters long."}
               </FieldDescription>
               <FieldError>{errors.password?.message}</FieldError>
             </Field>
 
             <Field data-invalid={Boolean(errors.confirmPassword) || undefined}>
               <FieldLabel htmlFor="register-confirm-password">
-                পাসওয়ার্ড নিশ্চিত করুন
+                {isBn ? "পাসওয়ার্ড নিশ্চিত করুন" : "Confirm password"}
               </FieldLabel>
               <PasswordInput
                 id="register-confirm-password"
-                placeholder="পাসওয়ার্ড পুনরায় লিখুন"
+                placeholder={isBn ? "পাসওয়ার্ড পুনরায় লিখুন" : "Re-enter password"}
                 autoComplete="new-password"
                 required
                 aria-invalid={Boolean(errors.confirmPassword)}
                 {...register("confirmPassword")}
               />
-              <FieldDescription>একই পাসওয়ার্ড পুনরায় লিখুন।</FieldDescription>
+              <FieldDescription>{isBn ? "একই পাসওয়ার্ড পুনরায় লিখুন।" : "Re-enter the same password."}</FieldDescription>
               <FieldError>{errors.confirmPassword?.message}</FieldError>
             </Field>
 
@@ -190,7 +192,7 @@ export function RegisterForm({
                 htmlFor="register-remember"
                 className="font-normal text-muted-foreground"
               >
-                আমাকে সাইন ইন রাখুন
+                {isBn ? "আমাকে সাইন ইন রাখুন" : "Keep me signed in"}
               </FieldLabel>
             </Field>
 
@@ -202,16 +204,16 @@ export function RegisterForm({
                   loadingKey="register"
                   className="w-full rounded-pill font-semibold"
                 >
-                  অ্যাকাউন্ট তৈরি করুন
+                  {isBn ? "অ্যাকাউন্ট তৈরি করুন" : "Create Account"}
                 </Button>
-                <GoogleButton label="Google দিয়ে রেজিস্ট্রেশন করুন" />
+                <GoogleButton label={isBn ? "Google দিয়ে রেজিস্ট্রেশন করুন" : "Sign up with Google"} />
                 <FieldDescription className="text-center">
-                  ইতিমধ্যে অ্যাকাউন্ট আছে?{" "}
+                  {isBn ? "ইতিমধ্যে অ্যাকাউন্ট আছে? " : "Already have an account? "}
                   <Link
                     href="/login"
                     className="font-semibold !text-primary underline-offset-4 hover:underline"
                   >
-                    লগইন করুন
+                    {isBn ? "লগইন করুন" : "Sign in"}
                   </Link>
                 </FieldDescription>
               </Field>

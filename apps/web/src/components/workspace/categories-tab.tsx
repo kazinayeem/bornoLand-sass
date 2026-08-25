@@ -42,6 +42,7 @@ import { Input } from "@/components/ui/input";
 import { MediaPicker } from "@/components/media/media-picker";
 import { useStorePage } from "@/components/store-dashboard/store-page";
 import { revalidateStorefrontForStore } from "@/lib/revalidate-storefront-client";
+import { useLanguage } from "@/providers/language-provider";
 
 type TabMode = "categories" | "subcategories" | "brands";
 
@@ -51,6 +52,8 @@ type CategoriesTabProps = {
 };
 
 export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps) {
+  const { language } = useLanguage();
+  const isBn = language === "bn";
   const { store } = useStorePage();
   const [activeTab, setActiveTab] = useState<TabMode>("categories");
 
@@ -198,13 +201,19 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 pb-5">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-black tracking-tight text-zinc-900">Catalog Management</h1>
+            <h1 className="text-2xl font-black tracking-tight text-zinc-900">
+              {isBn ? "ক্যাটালগ ম্যানেজমেন্ট" : "Catalog Management"}
+            </h1>
             <Badge variant="outline" className="text-xs bg-zinc-50 border-zinc-200">
-              {rootCategories.length} Categories · {subcategories.length} Subcategories · {allBrands.length} Brands
+              {isBn
+                ? `${rootCategories.length}টি ক্যাটাগরি · ${subcategories.length}টি সাবক্যাটাগরি · ${allBrands.length}টি ব্র্যান্ড`
+                : `${rootCategories.length} Categories · ${subcategories.length} Subcategories · ${allBrands.length} Brands`}
             </Badge>
           </div>
           <p className="text-xs text-zinc-500 mt-1">
-            Organize products into hierarchical categories, subcategories, and official brand collections.
+            {isBn
+              ? "পণ্যসমূহকে ক্যাটাগরি, সাবক্যাটাগরি এবং অফিসিয়াল ব্র্যান্ড কালেকশনে সাজান।"
+              : "Organize products into hierarchical categories, subcategories, and official brand collections."}
           </p>
         </div>
 
@@ -216,7 +225,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
               className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold shadow-sm"
             >
               <Plus className="w-3.5 h-3.5 mr-1.5" />
-              Add Category
+              {isBn ? "ক্যাটাগরি যোগ করুন" : "Add Category"}
             </Button>
           )}
 
@@ -227,7 +236,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
               className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold shadow-sm"
             >
               <Plus className="w-3.5 h-3.5 mr-1.5" />
-              Add Subcategory
+              {isBn ? "সাবক্যাটাগরি যোগ করুন" : "Add Subcategory"}
             </Button>
           )}
 
@@ -238,7 +247,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
               className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold shadow-sm"
             >
               <Plus className="w-3.5 h-3.5 mr-1.5" />
-              Add Brand
+              {isBn ? "ব্র্যান্ড যোগ করুন" : "Add Brand"}
             </Button>
           )}
         </div>
@@ -260,7 +269,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
             }`}
           >
             <Layers className="w-4 h-4" />
-            Categories ({rootCategories.length})
+            {isBn ? `ক্যাটাগরি (${rootCategories.length})` : `Categories (${rootCategories.length})`}
           </button>
 
           <button
@@ -276,7 +285,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
             }`}
           >
             <FolderTree className="w-4 h-4" />
-            Subcategories ({subcategories.length})
+            {isBn ? `সাবক্যাটাগরি (${subcategories.length})` : `Subcategories (${subcategories.length})`}
           </button>
 
           <button
@@ -292,7 +301,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
             }`}
           >
             <Award className="w-4 h-4" />
-            Brands ({allBrands.length})
+            {isBn ? `ব্র্যান্ড (${allBrands.length})` : `Brands (${allBrands.length})`}
           </button>
         </div>
 
@@ -302,7 +311,7 @@ export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
             <Input
               type="text"
-              placeholder={`Search ${activeTab}...`}
+              placeholder={isBn ? "খুঁজুন..." : `Search ${activeTab}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="h-8 pl-8 text-xs bg-white"

@@ -17,6 +17,8 @@ import { SmartImage } from "@/components/ui/smart-image";
 import { revalidateStorefrontForStore } from "@/lib/revalidate-storefront-client";
 import { useStorePage } from "@/components/store-dashboard/store-page";
 
+import { useLanguage } from "@/providers/language-provider";
+
 type BrandingTabProps = {
   storeId: string;
   storeSlug: string;
@@ -28,6 +30,9 @@ function normalizeColor(value: string, fallback: string) {
 }
 
 export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
+  const { language, t } = useLanguage();
+  const isBn = language === "bn";
+
   const { store } = useStorePage();
   const { data, isLoading } = useGetStoreBrandingQuery(storeId);
   const [updateBranding] = useUpdateStoreBrandingMutation();
@@ -88,9 +93,9 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
       if (store) {
         await revalidateStorefrontForStore(store, { scope: "theme" });
       }
-      toast.success("Branding updated");
+      toast.success(isBn ? "ব্র্যান্ডিং আপডেট করা হয়েছে" : "Branding updated");
     } catch {
-      toast.error("Failed to save branding");
+      toast.error(isBn ? "ব্র্যান্ডিং সংরক্ষণ করা যায়নি" : "Failed to save branding");
     } finally {
       setSaving(false);
     }
@@ -100,9 +105,9 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
     try {
       await deleteLogo(storeId).unwrap();
       setLogo(null);
-      toast.success("Logo removed");
+      toast.success(isBn ? "লোগো মুছে ফেলা হয়েছে" : "Logo removed");
     } catch {
-      toast.error("Failed to remove logo");
+      toast.error(isBn ? "লোগো মোছা যায়নি" : "Failed to remove logo");
     }
   };
 
@@ -110,9 +115,9 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
     try {
       await deleteFavicon(storeId).unwrap();
       setFavicon(null);
-      toast.success("Favicon removed");
+      toast.success(isBn ? "ফ্যাভিকন মুছে ফেলা হয়েছে" : "Favicon removed");
     } catch {
-      toast.error("Failed to remove favicon");
+      toast.error(isBn ? "ফ্যাভিকন মোছা যায়নি" : "Failed to remove favicon");
     }
   };
 
@@ -129,23 +134,23 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
               <Palette className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-apple-ink">Brand identity</h2>
-              <p className="text-sm text-apple-ink-muted-48">Configure the visual identity for this store dashboard and storefront.</p>
+              <h2 className="text-base font-semibold text-apple-ink">{t.settings.branding.title}</h2>
+              <p className="text-sm text-apple-ink-muted-48">{t.settings.branding.subtitle}</p>
             </div>
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Store name</label>
+              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.branding.name}</label>
               <input value={name} onChange={(e) => setName(e.target.value)} className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Short name</label>
+              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.branding.shortName}</label>
               <input value={shortName} onChange={(e) => setShortName(e.target.value)} placeholder="NS" className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
             </div>
             <div className="sm:col-span-2">
-              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Tagline</label>
-              <input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="Premium home essentials for modern living" className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
+              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.branding.tagline}</label>
+              <input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder={isBn ? "আপনার স্টোরের সুন্দর একটি স্লোগান" : "Premium home essentials for modern living"} className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
             </div>
           </div>
         </section>
@@ -153,23 +158,23 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
         <section className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-semibold text-apple-ink">Store logo</h3>
-              <p className="text-sm text-apple-ink-muted-48">PNG, SVG, WEBP, JPG. Recommended 512x512 or wider transparent asset.</p>
+              <h3 className="text-base font-semibold text-apple-ink">{t.settings.branding.logo}</h3>
+              <p className="text-sm text-apple-ink-muted-48">{isBn ? "PNG, SVG, WEBP, JPG. ৫১২x৫১২ পিক্সেল ট্রান্সপারেন্ট লোগো।" : "PNG, SVG, WEBP, JPG. Recommended 512x512 transparent asset."}</p>
             </div>
             {logo?.url && (
               <button type="button" onClick={handleDeleteLogo} className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50">
-                <Trash2 className="h-4 w-4" /> Delete Logo
+                <Trash2 className="h-4 w-4" /> {isBn ? "লোগো সরান" : "Delete Logo"}
               </button>
             )}
           </div>
           <div className="mt-5 grid gap-6 lg:grid-cols-[220px_1fr]">
             <div className="rounded-apple-lg border border-apple-hairline bg-apple-canvas-parchment p-5">
-              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Current preview</p>
+              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">{t.settings.branding.preview}</p>
               <div className="flex flex-col items-start gap-3">
                 <StoreBrandMark store={previewStore} size={72} roundedClassName="rounded-apple-lg" />
                 <div>
                   <p className="text-sm font-semibold text-apple-ink">{shortName || name || "Store"}</p>
-                  <p className="text-xs text-apple-ink-muted-48">{tagline || "No tagline set"}</p>
+                  <p className="text-xs text-apple-ink-muted-48">{tagline || (isBn ? "কোনো ট্যাগলাইন নেই" : "No tagline set")}</p>
                 </div>
               </div>
             </div>
@@ -177,7 +182,7 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
               storeId={storeId}
               billingHref={billingHref}
               folder="branding"
-              label="Store logo"
+              label={t.settings.branding.logo}
               value={logo}
               onChange={(selection) => setLogo(selection)}
             />
@@ -187,28 +192,28 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
         <section className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-semibold text-apple-ink">Browser icon</h3>
-              <p className="text-sm text-apple-ink-muted-48">Used for favicon, browser tab, and PWA-style icon fallback.</p>
+              <h3 className="text-base font-semibold text-apple-ink">{t.settings.branding.favicon}</h3>
+              <p className="text-sm text-apple-ink-muted-48">{isBn ? "ব্রাউজার ট্যাব ও অ্যাপ আইকনের জন্য ফ্যাভিকন।" : "Used for favicon, browser tab, and app icon fallback."}</p>
             </div>
             {favicon?.url && (
               <button type="button" onClick={handleDeleteFavicon} className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50">
-                <Trash2 className="h-4 w-4" /> Delete Favicon
+                <Trash2 className="h-4 w-4" /> {isBn ? "ফ্যাভিকন সরান" : "Delete Favicon"}
               </button>
             )}
           </div>
           <div className="mt-5 grid gap-6 lg:grid-cols-[220px_1fr]">
             <div className="rounded-apple-lg border border-apple-hairline bg-apple-canvas-parchment p-5">
-              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">Favicon preview</p>
+              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-apple-ink-muted-48">{t.settings.branding.preview}</p>
               <div className="relative h-16 w-16 overflow-hidden rounded-apple-lg border border-apple-hairline bg-white">
                 {favicon?.url ? <SmartImage src={favicon.url} alt="Favicon" fill sizes="64px" className="object-cover" /> : <StoreBrandMark store={previewStore} size={64} roundedClassName="rounded-apple-lg" />}
               </div>
-              <p className="mt-3 text-xs text-apple-ink-muted-48">Generated sizes: 16, 32, 64, 128, 256</p>
+              <p className="mt-3 text-xs text-apple-ink-muted-48">Sizes: 16, 32, 64, 128, 256</p>
             </div>
             <MediaPicker
               storeId={storeId}
               billingHref={billingHref}
               folder="branding"
-              label="Store favicon"
+              label={t.settings.branding.favicon}
               value={favicon}
               onChange={(selection) => setFavicon(selection)}
             />
@@ -216,17 +221,17 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
         </section>
 
         <section className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
-          <h3 className="text-base font-semibold text-apple-ink">Brand colors</h3>
+          <h3 className="text-base font-semibold text-apple-ink">{isBn ? "ব্র্যান্ডের রং" : "Brand colors"}</h3>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Brand color</label>
+              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.branding.primaryColor}</label>
               <div className="flex items-center gap-2">
                 <input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="h-10 w-10 rounded-xl border border-apple-hairline bg-white p-1" />
                 <input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="h-10 flex-1 rounded-xl border border-apple-hairline bg-white px-3 text-sm font-mono" />
               </div>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Accent color</label>
+              <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.branding.accentColor}</label>
               <div className="flex items-center gap-2">
                 <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="h-10 w-10 rounded-xl border border-apple-hairline bg-white p-1" />
                 <input value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="h-10 flex-1 rounded-xl border border-apple-hairline bg-white px-3 text-sm font-mono" />
@@ -238,13 +243,13 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
 
       <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
         <div className="rounded-apple-lg border border-apple-hairline bg-white p-6 ">
-          <h3 className="text-sm font-semibold text-apple-ink">Live preview</h3>
+          <h3 className="text-sm font-semibold text-apple-ink">{t.settings.branding.preview}</h3>
           <div className="mt-4 overflow-hidden rounded-apple-lg border border-apple-hairline">
             <div className="flex items-center gap-3 px-4 py-3" style={{ background: `linear-gradient(90deg, ${brandColor}, ${accentColor})` }}>
               <StoreBrandMark store={previewStore} size={40} roundedClassName="rounded-xl" />
               <div>
                 <p className="text-sm font-semibold text-white">{shortName || name || "Store"}</p>
-                <p className="text-xs text-white/80">{tagline || "Your store tagline"}</p>
+                <p className="text-xs text-white/80">{tagline || (isBn ? "স্টোর ট্যাগলাইন" : "Your store tagline")}</p>
               </div>
             </div>
             <div className="space-y-3 bg-white p-4">
@@ -259,11 +264,11 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
           <div className="flex items-start gap-3">
             <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-600" />
             <div>
-              <h3 className="text-sm font-semibold text-apple-ink">Branding notes</h3>
+              <h3 className="text-sm font-semibold text-apple-ink">{isBn ? "ব্র্যান্ডিং সহায়িকা" : "Branding notes"}</h3>
               <ul className="mt-2 space-y-1 text-xs text-apple-ink-muted-48">
-                <li>Use transparent PNG or SVG for best dashboard rendering.</li>
-                <li>Use a square image for favicon and browser icon consistency.</li>
-                <li>Changes update navbar, sidebar, switcher, and favicon immediately.</li>
+                <li>{isBn ? "স্বচ্ছ লোগোর জন্য PNG বা SVG ব্যবহার করুন।" : "Use transparent PNG or SVG for best rendering."}</li>
+                <li>{isBn ? "ফ্যাভিকনের জন্য বর্গাকার ছবি ব্যবহার করা শ্রেয়।" : "Use a square image for favicon consistency."}</li>
+                <li>{isBn ? "পরিবর্তনগুলো সাথে সাথে অ্যাপ্ল্যাই হয়।" : "Changes update navbar and favicon immediately."}</li>
               </ul>
             </div>
           </div>
@@ -271,7 +276,7 @@ export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
 
         <button onClick={handleSave} disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl bg-apple-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-apple-ink-muted-80 disabled:opacity-50">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-          Save Branding
+          {t.settings.branding.save}
         </button>
       </aside>
     </div>

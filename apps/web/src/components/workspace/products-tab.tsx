@@ -27,6 +27,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useStaleWhileFetching } from "@/hooks/use-stale-while-fetching";
 import type { ProductsListQuery } from "@/redux/api/product-api";
 import { genSlug } from "@/components/products/product-form";
+import { useLanguage } from "@/providers/language-provider";
 
 type ViewMode = "table" | "grid";
 
@@ -80,6 +81,9 @@ function parseJsonArray<T>(value: string | undefined, fallback: T[]): T[] {
 }
 
 export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsTabProps) {
+  const { language, t } = useLanguage();
+  const isBn = language === "bn";
+
   const router = useRouter();
   const editorBase = storeSlug ? `/store/${storeSlug}/products` : null;
 
@@ -148,25 +152,25 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
 
   const hasActiveFilters = !!(status || categoryFilter || stockFilter || featuredFilter || priceMin || priceMax);
 
-  const openCreate = () => {
+  const openCreate = useCallback(() => {
     if (editorBase) router.push(`${editorBase}/new`);
-  };
+  }, [editorBase, router]);
 
-  const openEdit = (p: Product) => {
+  const openEdit = useCallback((p: Product) => {
     if (editorBase) router.push(`${editorBase}/${p._id}/edit`);
-  };
+  }, [editorBase, router]);
 
-  const openDuplicate = (p: Product) => {
+  const handleDuplicate = useCallback((p: Product) => {
     if (editorBase) router.push(`${editorBase}/${p._id}/duplicate`);
-  };
+  }, [editorBase, router]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
       await deleteProduct({ storeId, id: deleteTarget._id }).unwrap();
-      toast.success("Product deleted");
+      toast.success(isBn ? "পণ্য মুছে ফেলা হয়েছে" : "Product deleted");
       setDeleteTarget(null);
-    } catch { toast.error("Failed to delete product"); }
+    } catch { toast.error(isBn ? "পণ্য মুছতে সমস্যা হয়েছে" : "Failed to delete product"); }
   };
 
   const toggleStatus = async (p: Product) => {
@@ -180,8 +184,6 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
       await updateProduct({ storeId, id: p._id, data: { featured: !p.featured } }).unwrap();
     } catch { toast.error("Failed to update featured"); }
   };
-
-  const handleDuplicate = (p: Product) => openDuplicate(p);
 
   const handleExportCSV = useCallback(async () => {
     const headers = ["name", "slug", "productType", "sku", "price", "comparePrice", "stock", "category", "status", "description", "imageUrl", "featured", "options", "variants"];
@@ -212,8 +214,8 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
     a.download = `products-${storeId}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success(`Exported ${productsForExport.length} products`);
-  }, [fetchProduct, products, storeId]);
+    toast.success(isBn ? `${productsForExport.length}টি পণ্য এক্সপোর্ট হয়েছে` : `Exported ${productsForExport.length} products`);
+  }, [fetchProduct, products, storeId, isBn]);
 
   const handleImportCSV = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -222,7 +224,7 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
     try {
       const text = await file.text();
       const rows = parseCSV(text);
-      if (rows.length === 0) { toast.error("CSV is empty or invalid"); return; }
+      if (rows.length === 0) { toast.error(isBn ? "CSV ফাইলটি খালি বা সঠিক নয়" : "CSV is empty or invalid"); return; }
       let created = 0;
       let updated = 0;
       let errors = 0;
@@ -258,50 +260,50 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
           }
         } catch { errors++; }
       }
-      toast.success(`Import complete: ${created} created, ${updated} updated, ${errors} errors`);
-    } catch { toast.error("Failed to import CSV"); }
+      toast.success(isBn ? `ইমপোর্ট সম্পন্ন: ${created}টি নতুন, ${updated}টি আপডেট, ${errors}টি ত্রুটি` : `Import complete: ${created} created, ${updated} updated, ${errors} errors`);
+    } catch { toast.error(isBn ? "CSV ইমপোর্ট করতে সমস্যা হয়েছে" : "Failed to import CSV"); }
     finally { setImporting(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
-  }, [products, storeId, createProduct, updateProduct]);
+  }, [products, storeId, createProduct, updateProduct, isBn]);
 
   const bulkActions: BulkAction<Product>[] = [
     {
-      label: "Delete",
+      label: isBn ? "মুছুন" : "Delete",
       icon: Trash2,
       variant: "danger",
       onClick: async (selected) => {
         for (const p of selected) {
           try { await deleteProduct({ storeId, id: p._id }).unwrap(); } catch { }
         }
-        toast.success(`${selected.length} products deleted`);
+        toast.success(isBn ? `${selected.length}টি পণ্য মুছে ফেলা হয়েছে` : `${selected.length} products deleted`);
       },
     },
     {
-      label: "Publish",
+      label: isBn ? "সক্রিয় করুন" : "Publish",
       onClick: async (selected) => {
         for (const p of selected) {
           try { await updateProduct({ storeId, id: p._id, data: { status: "active" } }).unwrap(); } catch { }
         }
-        toast.success(`${selected.length} products published`);
+        toast.success(isBn ? `${selected.length}টি পণ্য সক্রিয় করা হয়েছে` : `${selected.length} products published`);
       },
     },
     {
-      label: "Unpublish",
+      label: isBn ? "নিষ্ক্রিয় করুন" : "Unpublish",
       onClick: async (selected) => {
         for (const p of selected) {
           try { await updateProduct({ storeId, id: p._id, data: { status: "inactive" } }).unwrap(); } catch { }
         }
-        toast.success(`${selected.length} products unpublished`);
+        toast.success(isBn ? `${selected.length}টি পণ্য নিষ্ক্রিয় করা হয়েছে` : `${selected.length} products unpublished`);
       },
     },
   ];
 
-  const productFilters: FilterConfig[] = [
-    { key: "status", label: "Status", type: "select", options: [{ label: "Active", value: "active" }, { label: "Inactive", value: "inactive" }] },
-  ];
+  const productFilters: FilterConfig[] = useMemo(() => [
+    { key: "status", label: isBn ? "স্ট্যাটাস" : "Status", type: "select", options: [{ label: isBn ? "সক্রিয়" : "Active", value: "active" }, { label: isBn ? "নিষ্ক্রিয়" : "Inactive", value: "inactive" }] },
+  ], [isBn]);
 
   const columns: Column<Product>[] = [
     {
-      key: "name", label: "Product", sortable: true,
+      key: "name", label: isBn ? "পণ্যের নাম" : "Product", sortable: true,
       render: (p) => (
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 shrink-0 rounded-lg bg-apple-canvas-parchment flex items-center justify-center overflow-hidden">
@@ -319,7 +321,7 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
       render: (p) => <span className="text-xs text-apple-ink-muted-48">{p.sku || "—"}</span>,
     },
     {
-      key: "price", label: "Price", sortable: true,
+      key: "price", label: isBn ? "মূল্য" : "Price", sortable: true,
       render: (p) => (
         <div>
           <span className="text-sm font-medium text-apple-ink">{fmt(p.price)}</span>
@@ -330,20 +332,20 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
       ),
     },
     {
-      key: "stock", label: "Stock", sortable: true,
+      key: "stock", label: isBn ? "স্টক" : "Stock", sortable: true,
       render: (p) => (
         <span className={`text-xs font-medium ${p.stock > 0 ? "text-emerald-600" : "text-red-500"}`}>
-          {p.stock > 0 ? `${p.stock} in stock` : "Out of stock"}
+          {p.stock > 0 ? (isBn ? `${p.stock} টি স্টক আছে` : `${p.stock} in stock`) : (isBn ? "স্টক শেষ" : "Out of stock")}
         </span>
       ),
     },
     {
-      key: "status", label: "Status", sortable: true,
+      key: "status", label: isBn ? "স্ট্যাটাস" : "Status", sortable: true,
       render: (p) => {
         const badge = statusBadge(p.status);
         return (
           <button onClick={() => toggleStatus(p)} className="hover:opacity-80 transition-opacity">
-            <Badge variant={badge.variant}>{badge.label}</Badge>
+            <Badge variant={badge.variant}>{isBn ? (p.status === "active" ? "সক্রিয়" : "নিষ্ক্রিয়") : badge.label}</Badge>
           </button>
         );
       },
@@ -354,12 +356,12 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
         <div className="flex items-center justify-end gap-1">
           <button onClick={() => toggleFeatured(p)}
             className={`rounded-lg p-1.5 transition-colors ${p.featured ? "text-amber-500 hover:bg-amber-50" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment"}`}
-            title={p.featured ? "Unfeature" : "Feature"}>
+            title={p.featured ? (isBn ? "আনফিচার" : "Unfeature") : (isBn ? "ফিচার" : "Feature")}>
             <Star className="h-3.5 w-3.5" fill={p.featured ? "currentColor" : "none"} />
           </button>
           <button onClick={() => handleDuplicate(p)}
             className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80 transition-colors"
-            title="Duplicate">
+            title={isBn ? "ডুপ্লিকেট" : "Duplicate"}>
             <Copy className="h-3.5 w-3.5" />
           </button>
           <button onClick={() => openEdit(p)}
@@ -379,7 +381,6 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <FilterPanel
@@ -395,7 +396,7 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
                 : "border-apple-hairline bg-white text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
             }`}>
             <Filter className="h-3.5 w-3.5" />
-            Advanced
+            {isBn ? "অ্যাডভান্সড" : "Advanced"}
             {advancedFilterCount > 0 && (
               <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
                 {advancedFilterCount}
@@ -407,29 +408,29 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
           <div className="flex overflow-hidden rounded-xl border border-apple-hairline bg-white">
             <button onClick={() => setViewMode("table")}
               className={`p-2 transition-colors ${viewMode === "table" ? "bg-apple-canvas-parchment text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"}`}
-              title="Table view">
+              title={isBn ? "টেবিল ভিউ" : "Table view"}>
               <List className="h-4 w-4" />
             </button>
             <button onClick={() => setViewMode("grid")}
               className={`p-2 transition-colors ${viewMode === "grid" ? "bg-apple-canvas-parchment text-apple-ink" : "text-apple-ink-muted-48 hover:text-apple-ink-muted-80"}`}
-              title="Grid view">
+              title={isBn ? "গ্রিড ভিউ" : "Grid view"}>
               <LayoutGrid className="h-4 w-4" />
             </button>
           </div>
           <button onClick={handleExportCSV}
             className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors"
-            title="Export CSV">
-            <Download className="h-3.5 w-3.5" /> Export
+            title={isBn ? "CSV এক্সপোর্ট" : "Export CSV"}>
+            <Download className="h-3.5 w-3.5" /> {isBn ? "এক্সপোর্ট" : "Export"}
           </button>
           <button onClick={() => fileInputRef.current?.click()} disabled={importing}
             className="inline-flex items-center gap-1.5 rounded-xl border border-apple-hairline bg-white px-3 py-2 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment transition-colors disabled:opacity-50"
-            title="Import CSV">
-            <Upload className="h-3.5 w-3.5" /> {importing ? "Importing..." : "Import"}
+            title={isBn ? "CSV ইমপোর্ট" : "Import CSV"}>
+            <Upload className="h-3.5 w-3.5" /> {importing ? (isBn ? "ইমপোর্ট হচ্ছে..." : "Importing...") : (isBn ? "ইমপোর্ট" : "Import")}
           </button>
           <input ref={fileInputRef} type="file" accept=".csv" onChange={handleImportCSV} className="hidden" />
           <button onClick={openCreate}
             className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
-            <Plus className="h-3.5 w-3.5" /> Add Product
+            <Plus className="h-3.5 w-3.5" /> {isBn ? "নতুন পণ্য যোগ করুন" : "Add Product"}
           </button>
         </div>
       </div>

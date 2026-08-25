@@ -47,6 +47,8 @@ import { useGetStoreFeatureAccessQuery, getFeatureByKey } from "@/redux/api/feat
 import { FeatureLocked } from "@/components/features/feature-gate";
 import { StorePageHeader } from "@/components/store-dashboard/store-page-header";
 
+import { useLanguage, type Dictionary } from "@/providers/language-provider";
+
 /* ── Section definitions ──────────────────────────────────────────── */
 
 type SectionId =
@@ -84,50 +86,56 @@ type SectionDef = {
   keywords?: string[];
 };
 
-const SETTINGS_GROUPS: Record<SettingsGroupKey, { label: string; description: string }> = {
-  GENERAL: { label: "General", description: "Basic store identity, branding, and contact details" },
-  STORE: { label: "Store", description: "Localization, currency, search engine, and domain" },
-  COMMERCE: { label: "Commerce", description: "Checkout rules, payments, shipping, taxes, and invoicing" },
-  CONTENT: { label: "Content", description: "Storefront menus, static pages, legal policies, and FAQ" },
-  COMMUNICATION: { label: "Communication", description: "Email notifications and customer message settings" },
-  ADVANCED: { label: "Advanced", description: "Store security, developer tools, and advanced options" },
-};
+function getSettingsGroups(t: Dictionary): Record<SettingsGroupKey, { label: string; description: string }> {
+  const g = t.settings.groups;
+  return {
+    GENERAL: { label: g.GENERAL, description: g.GENERALDesc },
+    STORE: { label: g.STORE, description: g.STOREDesc },
+    COMMERCE: { label: g.COMMERCE, description: g.COMMERCEDesc },
+    CONTENT: { label: g.CONTENT, description: g.CONTENTDesc },
+    COMMUNICATION: { label: g.COMMUNICATION, description: g.COMMUNICATIONDesc },
+    ADVANCED: { label: g.ADVANCED, description: g.ADVANCEDDesc },
+  };
+}
 
-const SETTINGS_SECTIONS: SectionDef[] = [
-  // GENERAL
-  { id: "general", label: "General", description: "Store name, slug, description, and status", icon: Settings2, group: "GENERAL", keywords: ["store name", "slug", "about", "status"] },
-  { id: "branding", label: "Branding", description: "Logo, favicon, brand colors, and visual mark", icon: Sparkles, group: "GENERAL", keywords: ["logo", "color", "favicon", "brand"] },
-  { id: "contact", label: "Contact", description: "Public phone, email, address, and operating hours", icon: MapPin, group: "GENERAL", keywords: ["phone", "email", "support", "address"] },
+function getSettingsSections(t: Dictionary): SectionDef[] {
+  const s = t.settings.sections;
+  return [
+    // GENERAL
+    { id: "general", label: s.general, description: s.generalDesc, icon: Settings2, group: "GENERAL", keywords: ["store name", "slug", "about", "status", "সাধারণ", "নাম"] },
+    { id: "branding", label: s.branding, description: s.brandingDesc, icon: Sparkles, group: "GENERAL", keywords: ["logo", "color", "favicon", "brand", "লোগো", "রং", "ব্র্যান্ডিং"] },
+    { id: "contact", label: s.contact, description: s.contactDesc, icon: MapPin, group: "GENERAL", keywords: ["phone", "email", "support", "address", "ফোন", "ইমেইল", "ঠিকানা", "যোগাযোগ"] },
 
-  // STORE
-  { id: "localization", label: "Localization", description: "Timezone, date format, and language", icon: Globe, group: "STORE", keywords: ["timezone", "date", "language", "locale"] },
-  { id: "currency", label: "Currency", description: "Default currency code, symbol, and formatting", icon: DollarSign, group: "STORE", keywords: ["bdt", "usd", "symbol", "money", "pricing"] },
-  { id: "seo", label: "SEO", description: "Search engine title, meta tags, and robots.txt", icon: Search, group: "STORE", keywords: ["meta", "google", "sitemap", "keywords"] },
-  { id: "domain", label: "Domain", description: "Custom domain connection and SSL configuration", icon: Globe2, group: "STORE", keywords: ["cname", "dns", "ssl", "subdomain"] },
+    // STORE
+    { id: "localization", label: s.localization, description: s.localizationDesc, icon: Globe, group: "STORE", keywords: ["timezone", "date", "language", "locale", "সময়", "তারিখ", "ভাষা", "স্থানীয়করণ"] },
+    { id: "currency", label: s.currency, description: s.currencyDesc, icon: DollarSign, group: "STORE", keywords: ["bdt", "usd", "symbol", "money", "pricing", "টাকা", "মুদ্রা", "প্রতীক"] },
+    { id: "seo", label: s.seo, description: s.seoDesc, icon: Search, group: "STORE", keywords: ["meta", "google", "sitemap", "keywords", "মেটা", "সার্চ"] },
+    { id: "domain", label: s.domain, description: s.domainDesc, icon: Globe2, group: "STORE", keywords: ["cname", "dns", "ssl", "subdomain", "ডোমেইন"] },
 
-  // COMMERCE
-  { id: "checkout", label: "Checkout", description: "Guest checkout, required fields, and minimum order", icon: ShoppingCart, group: "COMMERCE", keywords: ["cart", "guest", "order limit", "fields"] },
-  { id: "payments", label: "Payments", description: "Cash on delivery, bKash, Nagad, and payment gateways", icon: CreditCard, group: "COMMERCE", keywords: ["cod", "bkash", "nagad", "gateway", "bank"] },
-  { id: "shipping", label: "Shipping", description: "Delivery zones, rates, and free shipping thresholds", icon: Truck, group: "COMMERCE", keywords: ["delivery", "charge", "free shipping", "zone"] },
-  { id: "courier", label: "Courier", description: "Steadfast, Pathao, and RedX logistics integration", icon: Package, group: "COMMERCE", keywords: ["steadfast", "pathao", "redx", "tracking"] },
-  { id: "taxes", label: "Taxes", description: "Default tax rate and tax-inclusive pricing toggle", icon: Percent, group: "COMMERCE", keywords: ["tax", "vat", "gst", "percentage"] },
-  { id: "invoice", label: "Invoice", description: "Invoice numbering format, prefix, and PDF template", icon: FileText, group: "COMMERCE", keywords: ["pdf", "receipt", "order bill", "numbering"] },
+    // COMMERCE
+    { id: "checkout", label: s.checkout, description: s.checkoutDesc, icon: ShoppingCart, group: "COMMERCE", keywords: ["cart", "guest", "order limit", "fields", "চেকআউট"] },
+    { id: "payments", label: s.payments, description: s.paymentsDesc, icon: CreditCard, group: "COMMERCE", keywords: ["cod", "bkash", "nagad", "gateway", "bank", "পেমেন্ট", "বিকাশ", "নগদ"] },
+    { id: "shipping", label: s.shipping, description: s.shippingDesc, icon: Truck, group: "COMMERCE", keywords: ["delivery", "charge", "free shipping", "zone", "শিপিং", "ডেলিভারি"] },
+    { id: "courier", label: s.courier, description: s.courierDesc, icon: Package, group: "COMMERCE", keywords: ["steadfast", "pathao", "redx", "tracking", "কুরিয়ার", "পাঠাও", "স্টিডফাস্ট"] },
+    { id: "taxes", label: s.taxes, description: s.taxesDesc, icon: Percent, group: "COMMERCE", keywords: ["tax", "vat", "gst", "percentage", "ট্যাক্স", "ভ্যাট"] },
+    { id: "invoice", label: s.invoice, description: s.invoiceDesc, icon: FileText, group: "COMMERCE", keywords: ["pdf", "receipt", "order bill", "numbering", "ইনভয়েস", "বিল"] },
 
-  // CONTENT
-  { id: "navigation", label: "Navigation", description: "Header menus, footer menus, and navigation links", icon: Menu, group: "CONTENT", keywords: ["menu", "header", "footer", "links"] },
-  { id: "cms-pages", label: "CMS Pages", description: "About us, custom content pages, and rich editors", icon: BookOpen, group: "CONTENT", keywords: ["about", "terms", "custom page"] },
-  { id: "policies", label: "Policies", description: "Privacy policy, refund rules, and terms of service", icon: ShieldCheck, group: "CONTENT", keywords: ["privacy", "refund", "terms", "return"] },
-  { id: "faq", label: "FAQ", description: "Frequently asked questions and accordion answers", icon: HelpCircle, group: "CONTENT", keywords: ["help", "questions", "answers"] },
-  { id: "social-links", label: "Social Links", description: "Facebook, Instagram, YouTube, and WhatsApp links", icon: Share2, group: "CONTENT", keywords: ["facebook", "instagram", "whatsapp", "tiktok"] },
+    // CONTENT
+    { id: "navigation", label: s.navigation, description: s.navigationDesc, icon: Menu, group: "CONTENT", keywords: ["menu", "header", "footer", "links", "নেভিগেশন", "মেনু"] },
+    { id: "cms-pages", label: s.cmsPages, description: s.cmsPagesDesc, icon: BookOpen, group: "CONTENT", keywords: ["about", "terms", "custom page", "পেজ"] },
+    { id: "policies", label: s.policies, description: s.policiesDesc, icon: ShieldCheck, group: "CONTENT", keywords: ["privacy", "refund", "terms", "return", "নীতিমালা"] },
+    { id: "faq", label: s.faq, description: s.faqDesc, icon: HelpCircle, group: "CONTENT", keywords: ["help", "questions", "answers", "প্রশ্ন"] },
+    { id: "social-links", label: s.socialLinks, description: s.socialLinksDesc, icon: Share2, group: "CONTENT", keywords: ["facebook", "instagram", "whatsapp", "tiktok", "সোশ্যাল"] },
 
-  // COMMUNICATION
-  { id: "email", label: "Email Notifications", description: "Order confirmation, shipment, and customer templates", icon: Mail, group: "COMMUNICATION", keywords: ["smtp", "notifications", "alerts", "mail"] },
-  { id: "messages", label: "Customer Messages", description: "Contact form inbox and customer inquiry settings", icon: MessageSquare, group: "COMMUNICATION", keywords: ["inbox", "inquiries", "contact"] },
+    // COMMUNICATION
+    { id: "email", label: s.email, description: s.emailDesc, icon: Mail, group: "COMMUNICATION", keywords: ["smtp", "notifications", "alerts", "mail", "ইমেইল"] },
+    { id: "messages", label: s.messages, description: s.messagesDesc, icon: MessageSquare, group: "COMMUNICATION", keywords: ["inbox", "inquiries", "contact", "বার্তা"] },
 
-  // ADVANCED
-  { id: "security", label: "Security", description: "Store password protection and session management", icon: Lock, group: "ADVANCED", keywords: ["password", "protect", "auth", "session"] },
-  { id: "advanced", label: "Advanced", description: "Developer API keys, webhooks, and store deletion", icon: Cpu, group: "ADVANCED", keywords: ["api", "webhook", "developer", "danger"] },
-];
+    // ADVANCED
+    { id: "security", label: s.security, description: s.securityDesc, icon: Lock, group: "ADVANCED", keywords: ["password", "protect", "auth", "session", "নিরাপত্তা"] },
+    { id: "advanced", label: s.advanced, description: s.advancedDesc, icon: Cpu, group: "ADVANCED", keywords: ["api", "webhook", "developer", "danger", "অ্যাডভান্সড"] },
+  ];
+}
 
 const SETTINGS_GROUP_ORDER: SettingsGroupKey[] = ["GENERAL", "STORE", "COMMERCE", "CONTENT", "COMMUNICATION", "ADVANCED"];
 
@@ -162,6 +170,7 @@ function LoadingShell() {
 /* ── Main Settings Hub Page ───────────────────────────────────────── */
 
 function StoreSettingsHubContent() {
+  const { t } = useLanguage();
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -176,9 +185,12 @@ function StoreSettingsHubContent() {
   const activeSectionId = (searchParams.get("section") || "general") as SectionId;
   const [searchQuery, setSearchQuery] = useState("");
 
+  const settingsGroups = useMemo(() => getSettingsGroups(t), [t]);
+  const settingsSections = useMemo(() => getSettingsSections(t), [t]);
+
   const currentSection = useMemo(() => {
-    return SETTINGS_SECTIONS.find((s) => s.id === activeSectionId) || SETTINGS_SECTIONS[0];
-  }, [activeSectionId]);
+    return settingsSections.find((s) => s.id === activeSectionId) || settingsSections[0];
+  }, [activeSectionId, settingsSections]);
 
   const setSection = useCallback(
     (id: SectionId) => {
@@ -187,18 +199,21 @@ function StoreSettingsHubContent() {
     [router, storeSlug]
   );
 
-  // Search filter across sections
+  // Search filter across sections (searches both BN & EN labels, descriptions, and keywords)
   const filteredSections = useMemo(() => {
-    if (!searchQuery.trim()) return SETTINGS_SECTIONS;
+    if (!searchQuery.trim()) return settingsSections;
     const q = searchQuery.toLowerCase().trim();
-    return SETTINGS_SECTIONS.filter(
-      (s) =>
+    return settingsSections.filter((s) => {
+      const groupInfo = settingsGroups[s.group];
+      return (
         s.label.toLowerCase().includes(q) ||
         s.description.toLowerCase().includes(q) ||
         s.group.toLowerCase().includes(q) ||
+        (groupInfo && groupInfo.label.toLowerCase().includes(q)) ||
         (s.keywords && s.keywords.some((k) => k.toLowerCase().includes(q)))
-    );
-  }, [searchQuery]);
+      );
+    });
+  }, [searchQuery, settingsSections, settingsGroups]);
 
   /* ── Tab Content Renderer ────────────────────────────────────────── */
 
@@ -220,8 +235,8 @@ function StoreSettingsHubContent() {
         return (
           <StorePageCard>
             <div className="mb-4 space-y-1">
-              <h2 className="text-base font-semibold text-apple-ink">Localization</h2>
-              <p className="text-xs text-apple-ink-muted-48">Configure timezone, country standard, and regional defaults.</p>
+              <h2 className="text-base font-semibold text-apple-ink">{t.settings.localization.title}</h2>
+              <p className="text-xs text-apple-ink-muted-48">{t.settings.localization.subtitle}</p>
             </div>
             <SettingsTab storeId={storeId} />
           </StorePageCard>
@@ -230,8 +245,8 @@ function StoreSettingsHubContent() {
         return (
           <StorePageCard>
             <div className="mb-4 space-y-1">
-              <h2 className="text-base font-semibold text-apple-ink">Currency & Formatting</h2>
-              <p className="text-xs text-apple-ink-muted-48">Configure base transaction currency (BDT, USD) and decimal rules.</p>
+              <h2 className="text-base font-semibold text-apple-ink">{t.settings.currency.title}</h2>
+              <p className="text-xs text-apple-ink-muted-48">{t.settings.currency.subtitle}</p>
             </div>
             <SettingsTab storeId={storeId} />
           </StorePageCard>
@@ -253,8 +268,8 @@ function StoreSettingsHubContent() {
         return (
           <StorePageCard>
             <div className="mb-4 space-y-1">
-              <h2 className="text-base font-semibold text-apple-ink">Taxes & VAT</h2>
-              <p className="text-xs text-apple-ink-muted-48">Set default product tax percentage and tax-included pricing rules.</p>
+              <h2 className="text-base font-semibold text-apple-ink">{t.settings.tax.title}</h2>
+              <p className="text-xs text-apple-ink-muted-48">{t.settings.tax.subtitle}</p>
             </div>
             <SettingsTab storeId={storeId} />
           </StorePageCard>
@@ -269,13 +284,9 @@ function StoreSettingsHubContent() {
         return (
           <StorePageCard>
             <div className="mb-4 space-y-1">
-              <h2 className="text-base font-semibold text-apple-ink">Customer Message Settings</h2>
+              <h2 className="text-base font-semibold text-apple-ink">{t.settings.sections.messages}</h2>
               <p className="text-xs text-apple-ink-muted-48">
-                Manage contact form inquiries directly from the{" "}
-                <Link href={`/store/${storeSlug}/customer-messages`} className="text-apple-primary font-semibold underline">
-                  Messages Inbox
-                </Link>
-                .
+                {t.settings.sections.messagesDesc}
               </p>
             </div>
             <StoreContactTab storeId={storeId} storeSlug={storeSlug} />
@@ -284,23 +295,23 @@ function StoreSettingsHubContent() {
       case "invoice":
         return (
           <PlaceholderTab
-            title="Invoice Configuration"
-            description="Automatic invoice numbering, custom tax invoice prefixes, and printable templates."
+            title={t.settings.sections.invoice}
+            description={t.settings.sections.invoiceDesc}
           />
         );
       case "navigation":
         return (
           <PlaceholderTab
-            title="Storefront Navigation"
-            description="Configure header menus, mega menus, footer links, and category shortcuts."
+            title={t.settings.sections.navigation}
+            description={t.settings.sections.navigationDesc}
           />
         );
       case "social-links":
         return (
           <StorePageCard>
             <div className="mb-4 space-y-1">
-              <h2 className="text-base font-semibold text-apple-ink">Social Media Links</h2>
-              <p className="text-xs text-apple-ink-muted-48">Links to your Facebook, Instagram, YouTube, and WhatsApp.</p>
+              <h2 className="text-base font-semibold text-apple-ink">{t.settings.sections.socialLinks}</h2>
+              <p className="text-xs text-apple-ink-muted-48">{t.settings.sections.socialLinksDesc}</p>
             </div>
             <StoreContactTab storeId={storeId} storeSlug={storeSlug} />
           </StorePageCard>
@@ -308,15 +319,15 @@ function StoreSettingsHubContent() {
       case "seo":
         return (
           <PlaceholderTab
-            title="Search Engine Optimization (SEO)"
-            description="Configure homepage title, meta description, Open Graph share image, and sitemap settings."
+            title={t.settings.sections.seo}
+            description={t.settings.sections.seoDesc}
           />
         );
       case "domain":
         return (
           <PlaceholderTab
-            title="Custom Domain Connection"
-            description="Connect your own domain (e.g. yourstore.com) with automatic free SSL certification."
+            title={t.settings.sections.domain}
+            description={t.settings.sections.domainDesc}
           />
         );
       case "cms-pages":
@@ -329,8 +340,8 @@ function StoreSettingsHubContent() {
         return (
           <StorePageCard>
             <div className="mb-4 space-y-1">
-              <h2 className="text-base font-semibold text-apple-ink">Legal & Store Policies</h2>
-              <p className="text-xs text-apple-ink-muted-48">Privacy Policy, Terms of Service, and Refund Policy pages.</p>
+              <h2 className="text-base font-semibold text-apple-ink">{t.settings.sections.policies}</h2>
+              <p className="text-xs text-apple-ink-muted-48">{t.settings.sections.policiesDesc}</p>
             </div>
             <CmsTab storeId={storeId} storeSlug={storeSlug} />
           </StorePageCard>
@@ -340,34 +351,34 @@ function StoreSettingsHubContent() {
       case "security":
         return (
           <PlaceholderTab
-            title="Store Security"
-            description="Password-protect your storefront during development, IP restriction, and session controls."
+            title={t.settings.sections.security}
+            description={t.settings.sections.securityDesc}
           />
         );
       case "advanced":
         return (
           <PlaceholderTab
-            title="Advanced & Developer"
-            description="API access keys, webhook endpoints, and advanced shop configuration."
+            title={t.settings.sections.advanced}
+            description={t.settings.sections.advancedDesc}
           />
         );
       default:
-        return <PlaceholderTab title="Settings" description="Select a setting from the menu on the left." />;
+        return <PlaceholderTab title={t.settings.title} description={t.settings.subtitle} />;
     }
-  }, [activeSectionId, isLoading, storeId, storeSlug, courierLocked, courierFeature, billingHref, accessData?.data?.currentPlan?.name]);
+  }, [activeSectionId, isLoading, storeId, storeSlug, courierLocked, courierFeature, billingHref, accessData?.data?.currentPlan?.name, t]);
 
   /* ── Header Breadcrumbs ──────────────────────────────────────────── */
 
-  const groupLabel = SETTINGS_GROUPS[currentSection.group]?.label || "General";
+  const groupLabel = settingsGroups[currentSection.group]?.label || t.settings.groups.GENERAL;
 
   return (
     <div className="space-y-6">
       <StorePageHeader
-        title="Store Settings"
-        description="Configure branding, commerce operations, localization, content, and communications."
+        title={t.settings.title}
+        description={t.settings.subtitle}
         breadcrumbs={[
-          { label: "Dashboard", href: `/store/${storeSlug}/dashboard` },
-          { label: "Settings", href: `/store/${storeSlug}/settings?section=general` },
+          { label: t.storeNav.dashboard, href: `/store/${storeSlug}/dashboard` },
+          { label: t.storeNav.settings, href: `/store/${storeSlug}/settings?section=general` },
           { label: groupLabel },
           { label: currentSection.label },
         ]}
@@ -385,7 +396,7 @@ function StoreSettingsHubContent() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search settings..."
+                placeholder={t.settings.searchPlaceholder}
                 className="h-9 w-full rounded-xl border border-apple-hairline bg-apple-canvas-parchment/60 pl-8 pr-3 text-xs text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-apple-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all"
               />
             </div>
@@ -396,17 +407,18 @@ function StoreSettingsHubContent() {
                 // Filtered search results
                 <div>
                   <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-wider text-apple-ink-muted-48">
-                    Matching Settings ({filteredSections.length})
+                    {t.settings.matchingSettings(filteredSections.length)}
                   </p>
                   {filteredSections.length === 0 ? (
                     <p className="px-2 py-4 text-center text-xs text-apple-ink-muted-48">
-                      No settings found for &quot;{searchQuery}&quot;
+                      {t.settings.noSettingsFound(searchQuery)}
                     </p>
                   ) : (
                     <ul className="space-y-0.5">
                       {filteredSections.map((section) => {
                         const Icon = section.icon;
                         const isActive = activeSectionId === section.id;
+                        const sGroupLabel = settingsGroups[section.group]?.label || section.group;
                         return (
                           <li key={section.id}>
                             <button
@@ -425,7 +437,7 @@ function StoreSettingsHubContent() {
                               <Icon className="h-4 w-4 shrink-0" />
                               <div className="min-w-0 flex-1">
                                 <p className="truncate">{section.label}</p>
-                                <p className="truncate text-[10px] text-apple-ink-muted-48">{section.group}</p>
+                                <p className="truncate text-[10px] text-apple-ink-muted-48">{sGroupLabel}</p>
                               </div>
                               <ChevronRight className="h-3 w-3 shrink-0 text-apple-ink-muted-48/50" />
                             </button>
@@ -438,8 +450,8 @@ function StoreSettingsHubContent() {
               ) : (
                 // Grouped full list
                 SETTINGS_GROUP_ORDER.map((groupKey) => {
-                  const groupConfig = SETTINGS_GROUPS[groupKey];
-                  const groupSections = SETTINGS_SECTIONS.filter((s) => s.group === groupKey);
+                  const groupConfig = settingsGroups[groupKey];
+                  const groupSections = settingsSections.filter((s) => s.group === groupKey);
                   if (groupSections.length === 0) return null;
 
                   return (

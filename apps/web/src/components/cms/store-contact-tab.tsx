@@ -13,6 +13,8 @@ import { getMutationErrorMessage } from "@/lib/api/envelope";
 import { revalidateStorefrontForStore } from "@/lib/revalidate-storefront-client";
 import { useStorePage } from "@/components/store-dashboard/store-page";
 
+import { useLanguage } from "@/providers/language-provider";
+
 type StoreContactTabProps = {
   storeId: string;
   storeSlug: string;
@@ -88,6 +90,8 @@ function Field({
 }
 
 export function StoreContactTab({ storeId }: StoreContactTabProps) {
+  const { language, t } = useLanguage();
+  const isBn = language === "bn";
   const { store } = useStorePage();
   const { data: contact, isLoading } = useGetStoreContactQuery(storeId);
   const [updateContact] = useUpdateStoreContactMutation();
@@ -128,17 +132,17 @@ export function StoreContactTab({ storeId }: StoreContactTabProps) {
     try {
       const saved = await updateContact({ storeId, data: formToPayload(form) }).unwrap();
       setForm(contactToForm(saved, storeId));
-      toast.success("Contact information saved");
+      toast.success(isBn ? "যোগাযোগের তথ্য সফলভাবে সংরক্ষণ করা হয়েছে" : "Contact information saved");
 
       if (store) {
         try {
           await revalidateStorefrontForStore(store, { scope: "cms" });
         } catch {
-          toast.warning("Saved, but the public contact page may take a moment to refresh.");
+          toast.warning(isBn ? "সংরক্ষিত হয়েছে, পাবলিক পেজ রিফ্রেশ হতে সামান্য সময় লাগতে পারে।" : "Saved, but the public contact page may take a moment to refresh.");
         }
       }
     } catch (error) {
-      toast.error(getMutationErrorMessage(error, "Failed to save contact information"));
+      toast.error(getMutationErrorMessage(error, isBn ? "যোগাযোগের তথ্য সংরক্ষণ করা যায়নি" : "Failed to save contact information"));
     } finally {
       setSaving(false);
     }
@@ -160,42 +164,42 @@ export function StoreContactTab({ storeId }: StoreContactTabProps) {
             <MapPin className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-body-strong text-apple-ink">Contact information</h2>
+            <h2 className="text-body-strong text-apple-ink">{t.settings.contact.title}</h2>
             <p className="mt-1 text-caption text-apple-ink-muted-48">
-              This appears on your public contact page. Changes sync automatically.
+              {t.settings.contact.subtitle}
             </p>
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Business name" value={form.businessName} onChange={(v) => setField("businessName", v)} placeholder="Your store name" />
-          <Field label="Contact email" value={form.email} onChange={(v) => setField("email", v)} type="email" placeholder="hello@yourstore.com" />
-          <Field label="Phone" value={form.phone} onChange={(v) => setField("phone", v)} placeholder="+1 555 123 4567" />
-          <Field label="WhatsApp" value={form.whatsapp} onChange={(v) => setField("whatsapp", v)} placeholder="+1 555 123 4567" />
+          <Field label={isBn ? "ব্যবসার নাম" : "Business name"} value={form.businessName} onChange={(v) => setField("businessName", v)} placeholder={isBn ? "আপনার স্টোরের নাম" : "Your store name"} />
+          <Field label={t.settings.contact.email} value={form.email} onChange={(v) => setField("email", v)} type="email" placeholder="hello@yourstore.com" />
+          <Field label={t.settings.contact.phone} value={form.phone} onChange={(v) => setField("phone", v)} placeholder="+880 1700 000000" />
+          <Field label="WhatsApp" value={form.whatsapp} onChange={(v) => setField("whatsapp", v)} placeholder="+880 1700 000000" />
           <div className="sm:col-span-2">
-            <Field label="Street address" value={form.address} onChange={(v) => setField("address", v)} placeholder="123 Main Street" />
+            <Field label={t.settings.contact.address} value={form.address} onChange={(v) => setField("address", v)} placeholder={isBn ? "ধানমন্ডি, ঢাকা, বাংলাদেশ" : "123 Main Street"} />
           </div>
-          <Field label="City" value={form.city} onChange={(v) => setField("city", v)} />
-          <Field label="Country" value={form.country} onChange={(v) => setField("country", v)} />
-          <Field label="Postal code" value={form.postalCode} onChange={(v) => setField("postalCode", v)} />
-          <Field label="Google Maps embed URL" value={form.googleMapsEmbedUrl} onChange={(v) => setField("googleMapsEmbedUrl", v)} placeholder="https://www.google.com/maps/embed?..." />
-          <Field label="Latitude" value={form.latitude} onChange={(v) => setField("latitude", v)} />
-          <Field label="Longitude" value={form.longitude} onChange={(v) => setField("longitude", v)} />
+          <Field label={isBn ? "শহর" : "City"} value={form.city} onChange={(v) => setField("city", v)} placeholder={isBn ? "ঢাকা" : "Dhaka"} />
+          <Field label={isBn ? "দেশ" : "Country"} value={form.country} onChange={(v) => setField("country", v)} placeholder={isBn ? "বাংলাদেশ" : "Bangladesh"} />
+          <Field label={isBn ? "পোস্টাল কোড" : "Postal code"} value={form.postalCode} onChange={(v) => setField("postalCode", v)} placeholder="1205" />
+          <Field label={isBn ? "গুগল ম্যাপস এমবেড URL" : "Google Maps embed URL"} value={form.googleMapsEmbedUrl} onChange={(v) => setField("googleMapsEmbedUrl", v)} placeholder="https://www.google.com/maps/embed?..." />
+          <Field label={isBn ? "অক্ষাংশ (Latitude)" : "Latitude"} value={form.latitude} onChange={(v) => setField("latitude", v)} />
+          <Field label={isBn ? "দ্রাঘিমাংশ (Longitude)" : "Longitude"} value={form.longitude} onChange={(v) => setField("longitude", v)} />
           <div className="sm:col-span-2">
             <Field
-              label="Business hours"
+              label={t.settings.contact.businessHours}
               value={form.businessHours}
               onChange={(v) => setField("businessHours", v)}
               multiline
-              placeholder={"Mon–Fri: 9:00 AM – 6:00 PM\nSat: 10:00 AM – 4:00 PM\nSun: Closed"}
+              placeholder={isBn ? "সোম–শুক্র: সকাল ৯:০০ – সন্ধ্যা ৬:০০\nশনি: সকাল ১০:০০ – বিকেল ৪:০০\nরবি: বন্ধ" : "Mon–Fri: 9:00 AM – 6:00 PM\nSat: 10:00 AM – 4:00 PM\nSun: Closed"}
             />
           </div>
         </div>
       </div>
 
       <div className="rounded-apple-lg border border-apple-hairline bg-apple-canvas p-6">
-        <h3 className="text-body-strong text-apple-ink">Social links</h3>
-        <p className="mt-1 text-caption text-apple-ink-muted-48">Shown on your contact page when filled in.</p>
+        <h3 className="text-body-strong text-apple-ink">{isBn ? "সোশ্যাল লিংক" : "Social links"}</h3>
+        <p className="mt-1 text-caption text-apple-ink-muted-48">{isBn ? "আপনার যোগাযোগের পেজে লিংকগুলো প্রদর্শন করা হবে।" : "Shown on your contact page when filled in."}</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Field label="Facebook" value={form.socialLinks.facebook ?? ""} onChange={(v) => setSocial("facebook", v)} placeholder="https://facebook.com/..." />
           <Field label="Instagram" value={form.socialLinks.instagram ?? ""} onChange={(v) => setSocial("instagram", v)} placeholder="https://instagram.com/..." />
@@ -214,7 +218,7 @@ export function StoreContactTab({ storeId }: StoreContactTabProps) {
           className="btn-press inline-flex items-center gap-2 rounded-apple-pill bg-apple-primary px-6 py-2.5 text-body font-medium text-apple-on-primary disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Save changes
+          {t.common.save}
         </button>
       </div>
     </div>

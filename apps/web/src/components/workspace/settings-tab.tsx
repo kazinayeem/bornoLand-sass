@@ -1,16 +1,16 @@
-"use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   useGetStoreSettingsQuery, useUpdateStoreSettingsMutation,
 } from "@/redux/api/store-settings-api";
 import { Loader2, Check, DollarSign, Globe, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage, type Language } from "@/providers/language-provider";
 
 type SettingsTabProps = { storeId: string };
 
 export function SettingsTab({ storeId }: SettingsTabProps) {
+  const { language: currentGlobalLang, setLanguage: setGlobalLanguage, t } = useLanguage();
   const { data, isLoading } = useGetStoreSettingsQuery(storeId);
   const [updateStoreSettings] = useUpdateStoreSettingsMutation();
 
@@ -24,10 +24,10 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
   const [taxRate, setTaxRate] = useState(0);
   const [dateFormat, setDateFormat] = useState("MM/DD/YYYY");
   const [timezone, setTimezone] = useState("UTC");
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState<string>(currentGlobalLang);
   const [saving, setSaving] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     if (settings) {
       setCurrencyCode(settings.currencyCode || "BDT");
       setCurrencySymbol(settings.currencySymbol || "৳");
@@ -37,9 +37,9 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
       setTaxRate(settings.taxRate ?? 0);
       setDateFormat(settings.dateFormat || "MM/DD/YYYY");
       setTimezone(settings.timezone || "UTC");
-      setLanguage(settings.language || "en");
+      setLanguage(settings.language || currentGlobalLang);
     }
-  });
+  }, [settings, currentGlobalLang]);
 
   const handleCurrencyChange = (code: string) => {
     setCurrencyCode(code);
@@ -62,6 +62,13 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
     }
   };
 
+  const handleLanguageSelect = (selectedLang: string) => {
+    setLanguage(selectedLang);
+    if (selectedLang === "bn" || selectedLang === "en") {
+      setGlobalLanguage(selectedLang as Language);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -73,9 +80,9 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
           dateFormat, timezone, language,
         },
       }).unwrap();
-      toast.success("Settings saved");
+      toast.success(currentGlobalLang === "bn" ? "সেটিংস সফলভাবে সংরক্ষণ করা হয়েছে" : "Settings saved successfully");
     } catch {
-      toast.error("Failed to save settings");
+      toast.error(currentGlobalLang === "bn" ? "সেটিংস সংরক্ষণ করা যায়নি" : "Failed to save settings");
     } finally {
       setSaving(false);
     }
@@ -95,13 +102,13 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             <DollarSign className="h-5 w-5 text-emerald-600" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-apple-ink">Currency</h3>
-            <p className="text-sm text-apple-ink-muted-48">Manage store currency and localization.</p>
+            <h3 className="text-base font-semibold text-apple-ink">{t.settings.currency.title}</h3>
+            <p className="text-sm text-apple-ink-muted-48">{t.settings.currency.subtitle}</p>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Currency Code</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.currency.code}</label>
             <select value={currencyCode} onChange={(e) => handleCurrencyChange(e.target.value)}
               className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
               <option value="BDT">BDT (৳)</option>
@@ -111,28 +118,28 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Symbol</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.currency.symbol}</label>
             <input type="text" value={currencySymbol} onChange={(e) => setCurrencySymbol(e.target.value)}
               className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Position</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.currency.position}</label>
             <select value={currencyPosition} onChange={(e) => setCurrencyPosition(e.target.value as "before" | "after")}
               className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
-              <option value="before">Before ({currencySymbol}100)</option>
-              <option value="after">After (100{currencySymbol})</option>
+              <option value="before">{t.settings.currency.before}</option>
+              <option value="after">{t.settings.currency.after}</option>
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Decimal Places</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.currency.decimalPlaces}</label>
             <input type="number" min={0} max={4} value={decimalPlaces}
               onChange={(e) => setDecimalPlaces(Number(e.target.value))}
               className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm" />
           </div>
         </div>
         <div className="mt-4 p-3 rounded-xl bg-apple-canvas-parchment">
-          <p className="text-xs text-apple-ink-muted-48">Preview:</p>
-          <p className="text-xl font-bold text-apple-ink">
+          <p className="text-xs text-apple-ink-muted-48">{t.settings.currency.preview}</p>
+          <p className="text-xl font-bold text-apple-ink font-mono">
             {currencyPosition === "before" ? `${currencySymbol}1,234${decimalPlaces > 0 ? "." + "0".repeat(decimalPlaces) : ""}` : `1,234${decimalPlaces > 0 ? "." + "0".repeat(decimalPlaces) : ""}${currencySymbol}`}
           </p>
         </div>
@@ -146,13 +153,13 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             <Globe className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-apple-ink">Localization</h3>
-            <p className="text-sm text-apple-ink-muted-48">Date format, timezone, and language settings.</p>
+            <h3 className="text-base font-semibold text-apple-ink">{t.settings.localization.title}</h3>
+            <p className="text-sm text-apple-ink-muted-48">{t.settings.localization.subtitle}</p>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Date Format</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.localization.dateFormat}</label>
             <select value={dateFormat} onChange={(e) => setDateFormat(e.target.value)}
               className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
               <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -161,7 +168,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Timezone</label>
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.localization.timezone}</label>
             <select value={timezone} onChange={(e) => setTimezone(e.target.value)}
               className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
               <option value="UTC">UTC</option>
@@ -172,12 +179,11 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Language</label>
-            <select value={language} onChange={(e) => setLanguage(e.target.value)}
-              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm">
+            <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.localization.language}</label>
+            <select value={language} onChange={(e) => handleLanguageSelect(e.target.value)}
+              className="h-10 w-full rounded-xl border border-apple-hairline bg-white px-3 text-sm font-semibold">
+              <option value="bn">বাংলা (Bengali)</option>
               <option value="en">English</option>
-              <option value="bn">Bengali</option>
-              <option value="hi">Hindi</option>
             </select>
           </div>
         </div>
@@ -191,12 +197,12 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
             <Clock className="h-5 w-5 text-amber-600" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-apple-ink">Tax</h3>
-            <p className="text-sm text-apple-ink-muted-48">Default tax rate for products.</p>
+            <h3 className="text-base font-semibold text-apple-ink">{t.settings.tax.title}</h3>
+            <p className="text-sm text-apple-ink-muted-48">{t.settings.tax.subtitle}</p>
           </div>
         </div>
         <div className="max-w-xs">
-          <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">Tax Rate (%)</label>
+          <label className="mb-1.5 block text-xs font-medium text-apple-ink-muted-80">{t.settings.tax.rate}</label>
           <div className="flex items-center gap-2">
             <input type="number" min={0} max={100} step="0.1" value={taxRate}
               onChange={(e) => setTaxRate(Number(e.target.value))}
@@ -209,7 +215,7 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
       <button onClick={handleSave} disabled={saving}
         className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-6 py-2.5 text-sm font-semibold text-white hover:bg-apple-ink-muted-80 disabled:opacity-50 transition-colors">
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-        Save Settings
+        {t.common.save}
       </button>
     </div>
   );

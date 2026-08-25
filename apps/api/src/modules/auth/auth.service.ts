@@ -12,6 +12,7 @@ import {
 import { TenantModel } from "../workspaces/tenant.model.js";
 import { UserModel } from "../users/user.model.js";
 import { TeamMemberModel } from "../team/team-member.model.js";
+import { StoreModel } from "../stores/store.model.js";
 import { SubscriptionModel } from "../subscriptions/subscription.model.js";
 import { VerificationTokenModel } from "./verification-token.model.js";
 import { RefreshTokenModel } from "./refresh-token.model.js";
@@ -212,6 +213,31 @@ export async function loginUser(payload: unknown) {
     actorRole: user.role,
   });
 
+  let userStores: Array<{ _id: unknown; slug?: string; name?: string }> = [];
+  try {
+    const teamTenantIds = await TeamMemberModel.find({ userId: user._id }).distinct("tenantId");
+    const foundStores = (await StoreModel.find({
+      $or: [
+        { userId: user._id },
+        ...(user.tenantId ? [{ tenantId: user.tenantId }] : []),
+        ...(teamTenantIds.length ? [{ tenantId: { $in: teamTenantIds } }] : []),
+      ],
+      status: { $ne: "archived" },
+    })
+      .select("_id slug name")
+      .lean()) as Array<{ _id: unknown; slug?: string; name?: string }>;
+    userStores = foundStores || [];
+  } catch {
+    // Non-critical
+  }
+
+  const storesPayload = userStores.map((s) => ({
+    id: String(s._id),
+    slug: s.slug || "",
+    name: s.name || "",
+  }));
+  const defaultStoreSlug = storesPayload[0]?.slug ?? null;
+
   return {
     ok: true as const,
     data: {
@@ -222,12 +248,16 @@ export async function loginUser(payload: unknown) {
       refreshTokenExpiresAt: rtExpiresAt.toISOString(),
       sessionMaxAge,
       session,
+      stores: storesPayload,
+      defaultStoreSlug,
       user: {
         id: String(user._id),
         name: user.name,
         email: user.email,
         role: user.role,
         tenantId: String(user.tenantId ?? ""),
+        stores: storesPayload,
+        defaultStoreSlug,
       },
     },
   };
@@ -441,6 +471,31 @@ export async function getSessionByEmail(email: string, loginType: "user" | "admi
 
   const session = buildSessionPayload(user, loginType);
 
+  let userStores: Array<{ _id: unknown; slug?: string; name?: string }> = [];
+  try {
+    const teamTenantIds = await TeamMemberModel.find({ userId: user._id }).distinct("tenantId");
+    const foundStores = (await StoreModel.find({
+      $or: [
+        { userId: user._id },
+        ...(user.tenantId ? [{ tenantId: user.tenantId }] : []),
+        ...(teamTenantIds.length ? [{ tenantId: { $in: teamTenantIds } }] : []),
+      ],
+      status: { $ne: "archived" },
+    })
+      .select("_id slug name")
+      .lean()) as Array<{ _id: unknown; slug?: string; name?: string }>;
+    userStores = foundStores || [];
+  } catch {
+    // Non-critical
+  }
+
+  const storesPayload = userStores.map((s) => ({
+    id: String(s._id),
+    slug: s.slug || "",
+    name: s.name || "",
+  }));
+  const defaultStoreSlug = storesPayload[0]?.slug ?? null;
+
   return {
     user: {
       id: String(user._id),
@@ -448,7 +503,11 @@ export async function getSessionByEmail(email: string, loginType: "user" | "admi
       email: user.email,
       role: user.role,
       tenantId: String(user.tenantId ?? ""),
+      stores: storesPayload,
+      defaultStoreSlug,
     },
+    stores: storesPayload,
+    defaultStoreSlug,
     session,
   };
 }

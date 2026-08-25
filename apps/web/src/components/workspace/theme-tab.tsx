@@ -40,6 +40,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/providers/language-provider";
 import { AiShopBuilderModal } from "@/components/ai-builder/ai-shop-builder-modal";
+import { StorefrontFrame } from "@/components/storefront/storefront-frame";
+import { StorefrontCanvas } from "@/components/storefront/storefront-canvas";
 import type { ThemeCategory } from "@/themes/types";
 
 type ThemeTabProps = { storeId: string };
@@ -563,123 +565,99 @@ export function ThemeTab({ storeId }: ThemeTabProps) {
                 </span>
               </div>
 
-              {/* Theme Preview Content */}
-              <div className="relative h-[calc(100%-32px)] overflow-y-auto bg-zinc-50 p-4 space-y-4">
-                {/* Header Mock */}
-                <div
-                  className="rounded-xl p-3 flex items-center justify-between text-xs text-white shadow-xs"
-                  style={{ backgroundColor: previewDef.tokens.colors.primary }}
+              {/* Theme Preview Content — Live Storefront Renderer */}
+              <div className="relative h-[calc(100%-32px)] overflow-y-auto bg-white">
+                <StorefrontFrame
+                  store={{
+                    _id: storeId,
+                    name: store?.name || previewDef.name,
+                    slug: store?.slug || "store",
+                    subdomain: store?.subdomain || store?.slug || "store",
+                    logoUrl: store?.logoUrl || "",
+                  } as any}
+                  theme={{
+                    themeId: previewDef.id,
+                    primaryColor: previewDef.tokens.colors.primary,
+                    secondaryColor: previewDef.tokens.colors.secondary,
+                    accentColor: previewDef.tokens.colors.accent,
+                    backgroundColor: previewDef.tokens.colors.background,
+                    textColor: previewDef.tokens.colors.text,
+                    mutedTextColor: previewDef.tokens.colors.textMuted,
+                    borderColor: previewDef.tokens.colors.border,
+                    font: previewDef.tokens.typography.fontFamily,
+                    buttonStyle: "rounded-lg",
+                    layoutWidth: previewDef.tokens.layout.containerWidth || "1280px",
+                    darkMode: false,
+                    navbarStyle: "sticky",
+                  } as any}
+                  products={[]}
+                  categories={[]}
+                  settings={{} as any}
+                  sliders={[]}
+                  pageSections={previewDef.defaultSections}
+                  builderMode={false}
                 >
-                  <div className="flex items-center gap-2">
-                    <PreviewIcon className="w-4 h-4" />
-                    <span className="font-bold">{store?.name || previewDef.name}</span>
-                  </div>
-                  <span className="text-[11px] opacity-90">
-                    {previewDef.header.showAnnouncement ? (isBn ? "ফ্রি ডেলিভারি সারা দেশে" : "Free Delivery") : ""}
-                  </span>
-                </div>
-
-                {/* Hero Showcase */}
-                <div className="relative h-44 w-full rounded-2xl overflow-hidden shadow-sm border border-zinc-200/60">
-                  <SmartImage
-                    src={previewDef.previewImage}
-                    alt={previewDef.name}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-4 flex flex-col justify-end text-white">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
-                      {previewDef.category.toUpperCase()} THEME
-                    </span>
-                    <h4 className="text-base font-bold leading-tight">{previewDef.name}</h4>
-                    <p className="text-xs text-zinc-200 line-clamp-1 mt-0.5">{previewDef.description}</p>
-                  </div>
-                </div>
-
-                {/* Color & Typography Specs */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl border border-zinc-200 bg-white p-2.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
-                      {isBn ? "কালার প্যালেট" : "Color System"}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="h-4 w-4 rounded-md border border-black/10"
-                        style={{ backgroundColor: previewDef.tokens.colors.primary }}
-                        title="Primary"
-                      />
-                      <span
-                        className="h-4 w-4 rounded-md border border-black/10"
-                        style={{ backgroundColor: previewDef.tokens.colors.secondary }}
-                        title="Secondary"
-                      />
-                      <span
-                        className="h-4 w-4 rounded-md border border-black/10"
-                        style={{ backgroundColor: previewDef.tokens.colors.accent }}
-                        title="Accent"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-zinc-200 bg-white p-2.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
-                      {isBn ? "টাইপোগ্রাফি" : "Typography"}
-                    </span>
-                    <span className="text-xs font-semibold text-zinc-700 truncate block">
-                      {previewDef.tokens.typography.fontFamily.split(",")[0].replace(/'/g, "")}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Default Sections Summary */}
-                <div className="rounded-xl border border-zinc-200 bg-white p-3 space-y-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-                    {isBn ? "হোমপেজ সেকশনসমূহ" : "Homepage Sections"} ({previewDef.defaultSections.length})
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {previewDef.defaultSections.map((sec) => (
-                      <span
-                        key={sec.id}
-                        className="inline-flex items-center px-2 py-0.5 rounded-md bg-zinc-100 text-[11px] font-medium text-zinc-700"
-                      >
-                        {sec.label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Bottom Action */}
-                <div className="pt-2 flex items-center justify-between border-t border-zinc-200">
-                  <span className="text-xs font-semibold text-zinc-700">
-                    {activeThemeId === previewDef.id
-                      ? (isBn ? "বর্তমানে সক্রিয় আছে" : "Currently active")
-                      : (isBn ? "চালু করতে প্রস্তুত" : "Ready to apply")}
-                  </span>
-                  {activeThemeId !== previewDef.id ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={saving}
-                      onClick={() => handleApplyTheme(previewDef.id)}
-                      className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold shadow-xs"
-                    >
-                      {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Check className="w-3.5 h-3.5 mr-1" />}
-                      {isBn ? `সক্রিয় করুন: ${previewDef.name}` : `Apply ${previewDef.name}`}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleOpenBuilder}
-                      className="text-xs font-semibold"
-                    >
-                      <Wand2 className="w-3.5 h-3.5 mr-1" />
-                      {isBn ? "বিল্ডারে সাজান" : "Open Builder"}
-                    </Button>
-                  )}
-                </div>
+                  <StorefrontCanvas sections={previewDef.defaultSections} />
+                </StorefrontFrame>
               </div>
+            </div>
+          </div>
+
+          {/* Bottom Theme Specs Card & Apply Button */}
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-zinc-900">{previewDef.name}</h4>
+                <p className="text-xs text-zinc-500 mt-0.5">{previewDef.description}</p>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span
+                  className="h-4 w-4 rounded-full border border-black/10 shadow-2xs"
+                  style={{ backgroundColor: previewDef.tokens.colors.primary }}
+                  title="Primary"
+                />
+                <span
+                  className="h-4 w-4 rounded-full border border-black/10 shadow-2xs"
+                  style={{ backgroundColor: previewDef.tokens.colors.secondary }}
+                  title="Secondary"
+                />
+                <span
+                  className="h-4 w-4 rounded-full border border-black/10 shadow-2xs"
+                  style={{ backgroundColor: previewDef.tokens.colors.accent }}
+                  title="Accent"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-between border-t border-zinc-100">
+              <span className="text-xs font-semibold text-zinc-600">
+                {activeThemeId === previewDef.id
+                  ? (isBn ? "বর্তমানে সক্রিয় আছে" : "Currently active theme")
+                  : (isBn ? "চালু করতে প্রস্তুত" : "Ready to activate")}
+              </span>
+              {activeThemeId !== previewDef.id ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={saving}
+                  onClick={() => handleApplyTheme(previewDef.id)}
+                  className="bg-zinc-900 hover:bg-black text-white text-xs font-semibold shadow-xs"
+                >
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Check className="w-3.5 h-3.5 mr-1" />}
+                  {isBn ? `সক্রিয় করুন: ${previewDef.name}` : `Apply ${previewDef.name}`}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenBuilder}
+                  className="text-xs font-semibold"
+                >
+                  <Wand2 className="w-3.5 h-3.5 mr-1" />
+                  {isBn ? "বিল্ডারে সাজান" : "Open Builder"}
+                </Button>
+              )}
             </div>
           </div>
         </div>

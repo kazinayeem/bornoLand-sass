@@ -267,7 +267,7 @@ function StoreDashboardHeader({
   const quickActions: QuickAction[] = [
     { label: isBn ? "নতুন পণ্য" : "New Product", href: `${storeBase}/products/new`, icon: Package },
     { label: isBn ? "অর্ডার দেখুন" : "View Orders", href: `${storeBase}/orders`, icon: ShoppingBag },
-    { label: t.navigation.allStores, href: "/dashboard/stores", icon: Store },
+    { label: isBn ? "ওয়ার্কস্পেস" : "Workspace", href: "/dashboard", icon: Store },
     { label: t.navigation.billing, href: `${storeBase}/billing`, icon: CreditCard },
   ];
 
@@ -280,18 +280,30 @@ function StoreDashboardHeader({
       onMenuClick={onMenuClick}
       compactNotifications
       showWorkspaceSwitcher
-      breadcrumb={breadcrumbs.map((item, index) => (
-        <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1">
-          {index > 0 ? <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden /> : null}
-          {item.href ? (
-            <Link href={item.href} className="transition-colors hover:text-foreground">
-              {item.label}
+      breadcrumb={
+        <>
+          <li className="inline-flex items-center gap-1">
+            <Link href="/dashboard" className="transition-colors text-muted-foreground hover:text-foreground font-medium">
+              {isBn ? "ওয়ার্কস্পেস" : "Workspace"}
             </Link>
-          ) : (
-            <span className="text-foreground">{item.label}</span>
-          )}
-        </li>
-      ))}
+          </li>
+          <li className="inline-flex items-center">
+            <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden />
+          </li>
+          {breadcrumbs.map((item, index) => (
+            <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1">
+              {index > 0 ? <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden /> : null}
+              {item.href ? (
+                <Link href={item.href} className="transition-colors hover:text-foreground">
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="text-foreground">{item.label}</span>
+              )}
+            </li>
+          ))}
+        </>
+      }
     />
   );
 }

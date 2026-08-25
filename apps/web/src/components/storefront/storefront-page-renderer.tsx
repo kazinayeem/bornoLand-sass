@@ -45,15 +45,20 @@ export async function StorefrontPageRenderer({ storeSlug, pageSlug }: Props) {
   const footerSections = (page?.footerSections as any[]) ?? [];
   const headerSettings = (page?.headerSettings as Record<string, unknown>) ?? store.headerSettings ?? {};
   const footerSettings = (page?.footerSettings as Record<string, unknown>) ?? store.footerSettings ?? {};
-  const theme: ThemeData = store.theme ?? {
+  const theme: ThemeData = {
     themeId: activeTheme.id,
-    primaryColor: activeTheme.tokens.colors.primary,
-    secondaryColor: activeTheme.tokens.colors.secondary,
-    font: activeTheme.tokens.typography.fontFamily,
-    buttonStyle: "rounded-lg",
-    layoutWidth: "1280px",
-    darkMode: false,
-    navbarStyle: "fixed",
+    primaryColor: store.theme?.primaryColor || activeTheme.tokens.colors.primary,
+    secondaryColor: store.theme?.secondaryColor || activeTheme.tokens.colors.secondary,
+    accentColor: (store.theme as any)?.accentColor || activeTheme.tokens.colors.accent,
+    backgroundColor: (store.theme as any)?.backgroundColor || activeTheme.tokens.colors.background,
+    textColor: (store.theme as any)?.textColor || activeTheme.tokens.colors.text,
+    mutedTextColor: (store.theme as any)?.mutedTextColor || activeTheme.tokens.colors.textMuted,
+    borderColor: (store.theme as any)?.borderColor || activeTheme.tokens.colors.border,
+    font: store.theme?.font || activeTheme.tokens.typography.fontFamily,
+    buttonStyle: store.theme?.buttonStyle || "rounded-lg",
+    layoutWidth: store.theme?.layoutWidth || activeTheme.tokens.layout.containerWidth || "1280px",
+    darkMode: store.theme?.darkMode || false,
+    navbarStyle: store.theme?.navbarStyle || "sticky",
   };
   const currencySettings = settings ?? {
     currencyCode: "USD",

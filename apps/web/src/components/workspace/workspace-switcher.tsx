@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Check, ChevronsUpDown, Plus, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
@@ -12,6 +12,11 @@ import { useLanguage } from "@/providers/language-provider";
 
 export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const router = useRouter();
+  const params = useParams();
+  const routeSlug = typeof params?.storeSlug === "string" ? params.storeSlug : "";
+  const currentStore = useAppSelector((s) => s.currentStore);
+  const currentStoreSlug = routeSlug || currentStore?.storeSlug;
+  const currentStoreId = currentStore?.storeId;
   const { language, t } = useLanguage();
   const user = useAppSelector((s) => s.user.profile);
   const { data } = useGetMyStoresQuery();
@@ -74,26 +79,39 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
             {stores.length === 0 ? (
               <p className="px-2 py-3 text-xs text-apple-ink-muted-48">{t.dropdowns.noNotifications}</p>
             ) : (
-              stores.map((store) => (
-                <button
-                  key={store._id}
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    router.push(`/store/${store.slug}/dashboard`);
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
-                >
-                  <StoreBrandMark store={store} size={28} roundedClassName="rounded-md" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{store.shortName || store.name}</p>
-                    <p className="truncate text-xs text-apple-ink-muted-48">
-                      {typeof store.planId === "object" && store.planId ? store.planId.name : store.plan}
-                    </p>
-                  </div>
-                  <Check className="h-3.5 w-3.5 shrink-0 text-transparent" />
-                </button>
-              ))
+              stores.map((store) => {
+                const isCurrent = store.slug === currentStoreSlug || store._id === currentStoreId;
+                return (
+                  <button
+                    key={store._id}
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      try {
+                        localStorage.setItem("bornoland_last_store_slug", store.slug);
+                      } catch {
+                        // Ignore
+                      }
+                      router.push(`/store/${store.slug}/dashboard`);
+                    }}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
+                      isCurrent
+                        ? "bg-apple-primary/10 text-apple-primary font-semibold"
+                        : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                    )}
+                  >
+                    <StoreBrandMark store={store} size={28} roundedClassName="rounded-md" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{store.shortName || store.name}</p>
+                      <p className="truncate text-xs text-apple-ink-muted-48">
+                        {typeof store.planId === "object" && store.planId ? store.planId.name : store.plan}
+                      </p>
+                    </div>
+                    {isCurrent && <Check className="h-3.5 w-3.5 shrink-0 text-apple-primary" />}
+                  </button>
+                );
+              })
             )}
           </div>
 

@@ -60,7 +60,28 @@ export function QuickLoginButton({ label, email, password, loginType, callbackUr
         dispatch(setUserProfile(payload.user));
         dispatch(setTenantContext({ tenantId: payload.user.tenantId }));
         const queryRedirect = new URLSearchParams(window.location.search).get("redirect");
-        window.location.replace(consumeRedirectAfterLogin(queryRedirect, callbackUrl));
+        let fallbackDestination = callbackUrl || "/dashboard";
+        if (loginType !== "admin") {
+          const stores = (payload as { stores?: Array<{ slug?: string }>; user?: { defaultStoreSlug?: string } }).stores ?? [];
+          const defaultSlug =
+            (payload as { defaultStoreSlug?: string }).defaultStoreSlug ||
+            payload.user?.defaultStoreSlug ||
+            stores[0]?.slug;
+
+          let lastSelectedSlug: string | null = null;
+          try {
+            lastSelectedSlug = localStorage.getItem("bornoland_last_store_slug");
+          } catch {
+            // Ignore local storage error
+          }
+
+          if (lastSelectedSlug && (stores.length === 0 || stores.some((s) => s.slug === lastSelectedSlug))) {
+            fallbackDestination = `/store/${lastSelectedSlug}/dashboard`;
+          } else if (defaultSlug) {
+            fallbackDestination = `/store/${defaultSlug}/dashboard`;
+          }
+        }
+        window.location.replace(consumeRedirectAfterLogin(queryRedirect, fallbackDestination));
       }}
     >
       {!loading && <Sparkles className="h-4 w-4" />}

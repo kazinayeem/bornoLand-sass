@@ -29,6 +29,29 @@ interface InventorySort {
   order: "asc" | "desc";
 }
 
+export async function resolveStoreObjectId(storeIdOrSlug: string): Promise<mongoose.Types.ObjectId | null> {
+  if (!storeIdOrSlug) return null;
+  if (mongoose.Types.ObjectId.isValid(storeIdOrSlug) && String(new mongoose.Types.ObjectId(storeIdOrSlug)) === storeIdOrSlug) {
+    return new mongoose.Types.ObjectId(storeIdOrSlug);
+  }
+  try {
+    const { StoreModel } = await import("../stores/store.model.js");
+    const store = (await StoreModel.findOne({
+      $or: [
+        { slug: storeIdOrSlug },
+        { slug: storeIdOrSlug.toLowerCase() },
+        { subdomain: storeIdOrSlug },
+        { subdomain: storeIdOrSlug.toLowerCase() },
+      ],
+    }).select("_id").lean()) as { _id?: unknown } | null;
+
+    if (store?._id) return new mongoose.Types.ObjectId(String(store._id));
+  } catch {
+    // Non-critical
+  }
+  return null;
+}
+
 export async function getInventoryList(
   storeId: string,
   options: {
@@ -40,12 +63,28 @@ export async function getInventoryList(
   } = {}
 ) {
   await connectDatabase();
+  const resolvedStoreId = await resolveStoreObjectId(storeId);
+  if (!resolvedStoreId) {
+    return {
+      items: [],
+      pagination: {
+        page: 1,
+        perPage: options.perPage ?? DEFAULT_PER_PAGE,
+        total: 0,
+        totalFiltered: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+    };
+  }
+
   const page = Math.max(1, options.page ?? 1);
   const perPage = Math.min(500, Math.max(10, options.perPage ?? DEFAULT_PER_PAGE));
   const skip = (page - 1) * perPage;
 
   // Build product match stage
-  const productMatch: Record<string, unknown> = { storeId: new mongoose.Types.ObjectId(storeId) };
+  const productMatch: Record<string, unknown> = { storeId: resolvedStoreId };
 
   const f = options.filter ?? {};
   if (f.search) {
@@ -369,10 +408,24 @@ export async function getInventoryList(
 
 export async function getInventoryStats(storeId: string) {
   await connectDatabase();
+  const resolvedStoreId = await resolveStoreObjectId(storeId);
+  if (!resolvedStoreId) {
+    return {
+      totalProducts: 0,
+      totalVariants: 0,
+      totalStock: 0,
+      lowStockCount: 0,
+      outOfStockCount: 0,
+      totalInventoryValue: 0,
+      potentialRevenue: 0,
+      potentialProfit: 0,
+      avgProductPrice: 0,
+    };
+  }
 
   const [productStats, variantStats, lowStockCount, outOfStockCount, valueAgg] = await Promise.all([
     ProductModel.aggregate([
-      { $match: { storeId: new mongoose.Types.ObjectId(storeId), status: { $ne: "archived" } } },
+      { $match: { storeId: resolvedStoreId, status: { $ne: "archived" } } },
       {
         $group: {
           _id: null,
@@ -384,7 +437,7 @@ export async function getInventoryStats(storeId: string) {
       },
     ]),
     VariantInventoryModel.aggregate([
-      { $match: { storeId: new mongoose.Types.ObjectId(storeId) } },
+      { $match: { storeId: resolvedStoreId } },
       {
         $group: {
           _id: null,
@@ -394,7 +447,7 @@ export async function getInventoryStats(storeId: string) {
       },
     ]),
     ProductModel.countDocuments({
-      storeId,
+      storeId: resolvedStoreId,
       status: { $ne: "archived" },
       $expr: {
         $and: [
@@ -404,7 +457,7 @@ export async function getInventoryStats(storeId: string) {
       },
     }),
     ProductModel.countDocuments({
-      storeId,
+      storeId: resolvedStoreId,
       status: { $ne: "archived" },
       stock: { $lte: 0 },
     }),
@@ -586,13 +639,31 @@ export async function getStockHistory(
   } = {}
 ) {
   await connectDatabase();
+  const resolvedStoreId = await resolveStoreObjectId(storeId);
+  if (!resolvedStoreId) {
+    return {
+      items: [],
+      pagination: {
+        page: 1,
+        perPage: options.perPage ?? 25,
+        total: 0,
+        totalPages: 1,
+        hasNextPage: false,
+      },
+    };
+  }
+
   const page = Math.max(1, options.page ?? 1);
   const perPage = Math.min(100, Math.max(10, options.perPage ?? 25));
   const skip = (page - 1) * perPage;
 
-  const match: Record<string, unknown> = { storeId: new mongoose.Types.ObjectId(storeId) };
-  if (options.productId) match.productId = new mongoose.Types.ObjectId(options.productId);
-  if (options.variantId) match.variantId = new mongoose.Types.ObjectId(options.variantId);
+  const match: Record<string, unknown> = { storeId: resolvedStoreId };
+  if (options.productId && mongoose.Types.ObjectId.isValid(options.productId)) {
+    match.productId = new mongoose.Types.ObjectId(options.productId);
+  }
+  if (options.variantId && mongoose.Types.ObjectId.isValid(options.variantId)) {
+    match.variantId = new mongoose.Types.ObjectId(options.variantId);
+  }
 
   const [logs, total] = await Promise.all([
     StockLogModel.find(match).sort({ createdAt: -1 }).skip(skip).limit(perPage).lean(),
@@ -613,13 +684,21 @@ export async function getStockHistory(
 
 export async function getInventoryAnalytics(storeId: string) {
   await connectDatabase();
+  const resolvedStoreId = await resolveStoreObjectId(storeId);
+  if (!resolvedStoreId) {
+    return {
+      mostSold: [],
+      slowMoving: [],
+      deadStock: [],
+    };
+  }
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
   // Most sold (by stock history — items with most deductions)
   const mostSold = await StockLogModel.aggregate([
-    { $match: { storeId: new mongoose.Types.ObjectId(storeId), reason: "order_placed", createdAt: { $gte: thirtyDaysAgo } } },
+    { $match: { storeId: resolvedStoreId, reason: "order_placed", createdAt: { $gte: thirtyDaysAgo } } },
     { $group: { _id: "$productId", totalSold: { $sum: { $abs: "$quantityChange" } }, changes: { $sum: 1 } } },
     { $sort: { totalSold: -1 } },
     { $limit: 10 },
@@ -637,7 +716,7 @@ export async function getInventoryAnalytics(storeId: string) {
 
   // Slow moving (products with low or no sales in 90 days)
   const productsWithSales = await StockLogModel.distinct("productId", {
-    storeId: new mongoose.Types.ObjectId(storeId),
+    storeId: resolvedStoreId,
     reason: "order_placed",
     createdAt: { $gte: ninetyDaysAgo },
   });
@@ -645,7 +724,7 @@ export async function getInventoryAnalytics(storeId: string) {
   const slowMoving = await ProductModel.aggregate([
     {
       $match: {
-        storeId: new mongoose.Types.ObjectId(storeId),
+        storeId: resolvedStoreId,
         status: { $ne: "archived" },
         _id: { $nin: productsWithSales },
         stock: { $gt: 0 },
@@ -660,7 +739,7 @@ export async function getInventoryAnalytics(storeId: string) {
   const deadStock = await ProductModel.aggregate([
     {
       $match: {
-        storeId: new mongoose.Types.ObjectId(storeId),
+        storeId: resolvedStoreId,
         status: { $ne: "archived" },
         _id: { $nin: productsWithSales },
         updatedAt: { $lte: ninetyDaysAgo },

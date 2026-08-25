@@ -12,6 +12,8 @@ export type SessionUser = {
   role: string;
   tenantId: string;
   avatarUrl?: string;
+  stores?: Array<{ id: string; slug: string; name: string }>;
+  defaultStoreSlug?: string | null;
 };
 
 export type SessionPayload = {

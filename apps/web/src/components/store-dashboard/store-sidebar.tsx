@@ -50,6 +50,7 @@ import {
   Plus,
   Store as StoreIcon,
   ChevronsUpDown,
+  ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
@@ -355,7 +356,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 /* ── Store Switcher Dropdown (Inside Sidebar) ─────────────────── */
 
 function SidebarStoreSwitcher({ store, collapsed }: { store: Store; collapsed: boolean }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { data } = useGetMyStoresQuery();
   const stores = data?.data?.stores ?? [];
   const [open, setOpen] = useState(false);
@@ -451,7 +452,15 @@ function SidebarStoreSwitcher({ store, collapsed }: { store: Store; collapsed: b
             })}
           </div>
 
-          <div className="border-t border-apple-divider-soft p-1.5">
+          <div className="border-t border-apple-divider-soft p-1.5 space-y-0.5">
+            <Link
+              href="/dashboard"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-apple-primary transition-colors hover:bg-apple-primary/10"
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              <span>{language === "bn" ? "ওয়ার্কস্পেস ড্যাশবোর্ড" : "Back to Workspace"}</span>
+            </Link>
             <Link
               href="/dashboard/stores/create"
               onClick={() => setOpen(false)}
@@ -484,7 +493,7 @@ export function StoreSidebar({
   store: Store;
   onNavigate?: () => void;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const basePath = `/store/${store.slug}`;
   const pathname = usePathname();
 
@@ -560,6 +569,26 @@ export function StoreSidebar({
 
         {/* ── Scrollable Navigation Groups ───────────────────── */}
         <nav className="sidebar-scroll flex-1 overflow-y-auto px-2.5 py-2 space-y-1" aria-label="Main navigation">
+          {/* Back to Workspace Action */}
+          <div className="mb-2">
+            <Link
+              href="/dashboard"
+              onClick={onNavigate}
+              className={cn(
+                "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-semibold text-apple-ink-muted-80 hover:bg-apple-primary/10 hover:text-apple-primary transition-all duration-150 border border-apple-hairline/60 bg-apple-canvas-parchment/60",
+                collapsed ? "justify-center px-0" : ""
+              )}
+              title={language === "bn" ? "ওয়ার্কস্পেসে ফিরে যান" : "Back to Workspace"}
+            >
+              <ArrowLeft className="h-4 w-4 shrink-0 text-apple-primary transition-transform group-hover:-translate-x-0.5" />
+              {!collapsed && (
+                <span className="truncate">
+                  {language === "bn" ? "ওয়ার্কস্পেসে ফিরে যান" : "Back to Workspace"}
+                </span>
+              )}
+            </Link>
+          </div>
+
           {/* Dashboard Direct Top Link */}
           <div>
             <NavItem

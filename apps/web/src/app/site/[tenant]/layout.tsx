@@ -13,6 +13,7 @@ import type {
 import type { StoreContact } from "@/redux/api/store-contact-api";
 import { fetchTenantSite } from "@/lib/server/tenant-site";
 import { generateTenantMetadata } from "@/lib/server/page-metadata";
+import { getThemeById } from "@/themes/registry";
 
 /** ISR — public storefront shell (store, theme, products, categories, navigation) */
 export const revalidate = 60;
@@ -69,9 +70,21 @@ export default async function TenantLayout({ params, children }: { params: Promi
     faviconUrl: (store as StoreData & { faviconUrl?: string }).faviconUrl,
   };
   const pageSections = (data.page?.sections as { id: string; type: string; visible?: boolean; props?: Record<string, string> }[] | undefined) ?? [];
-  const theme: ThemeData = store.theme ?? {
-    primaryColor: "#2563eb", secondaryColor: "#0f172a", font: "Inter",
-    buttonStyle: "rounded-lg", layoutWidth: "1200px", darkMode: false, navbarStyle: "fixed",
+  const activeTheme = getThemeById(store.theme?.themeId || "grocery");
+  const theme: ThemeData = {
+    themeId: activeTheme.id,
+    primaryColor: store.theme?.primaryColor || activeTheme.tokens.colors.primary,
+    secondaryColor: store.theme?.secondaryColor || activeTheme.tokens.colors.secondary,
+    accentColor: (store.theme as any)?.accentColor || activeTheme.tokens.colors.accent,
+    backgroundColor: (store.theme as any)?.backgroundColor || activeTheme.tokens.colors.background,
+    textColor: (store.theme as any)?.textColor || activeTheme.tokens.colors.text,
+    mutedTextColor: (store.theme as any)?.mutedTextColor || activeTheme.tokens.colors.textMuted,
+    borderColor: (store.theme as any)?.borderColor || activeTheme.tokens.colors.border,
+    font: store.theme?.font || activeTheme.tokens.typography.fontFamily,
+    buttonStyle: store.theme?.buttonStyle || "rounded-lg",
+    layoutWidth: store.theme?.layoutWidth || activeTheme.tokens.layout.containerWidth || "1280px",
+    darkMode: store.theme?.darkMode || false,
+    navbarStyle: store.theme?.navbarStyle || "sticky",
   };
   const currencySettings = settings ?? {
     currencyCode: "USD",

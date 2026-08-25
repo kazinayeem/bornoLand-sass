@@ -17,12 +17,21 @@ import { CostHistoryModel } from "./cost-history.model.js";
 import { InventoryAuditModel } from "./inventory-audit.model.js";
 import { ProductTimelineModel } from "./product-timeline.model.js";
 
-function oid(id: string | mongoose.Types.ObjectId) {
-  return typeof id === "string" ? new mongoose.Types.ObjectId(id) : id;
+function oid(id: string | mongoose.Types.ObjectId | null | undefined): mongoose.Types.ObjectId | null {
+  if (!id) return null;
+  if (typeof id !== "string") return id as mongoose.Types.ObjectId;
+  if (mongoose.Types.ObjectId.isValid(id) && String(new mongoose.Types.ObjectId(id)) === id) {
+    return new mongoose.Types.ObjectId(id);
+  }
+  return null;
 }
 
-function storeOid(storeId: string) {
-  return new mongoose.Types.ObjectId(storeId);
+function storeOid(storeId: string | mongoose.Types.ObjectId): mongoose.Types.ObjectId {
+  if (typeof storeId !== "string") return storeId as mongoose.Types.ObjectId;
+  if (mongoose.Types.ObjectId.isValid(storeId) && String(new mongoose.Types.ObjectId(storeId)) === storeId) {
+    return new mongoose.Types.ObjectId(storeId);
+  }
+  return new mongoose.Types.ObjectId("000000000000000000000000");
 }
 
 function genCode(prefix: string) {

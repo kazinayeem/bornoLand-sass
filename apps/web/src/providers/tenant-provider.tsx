@@ -7,8 +7,23 @@ import type { StoreContact } from "@/redux/api/store-contact-api";
 import type { PublicStoreTracking } from "@/lib/tracking/types";
 
 export type ThemeData = {
-  primaryColor: string; secondaryColor: string; font: string;
-  buttonStyle: string; layoutWidth: string; darkMode: boolean; navbarStyle: string;
+  themeId?: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  mutedTextColor?: string;
+  borderColor?: string;
+  borderRadius?: number;
+  shadowSize?: string;
+  headingFont?: string;
+  bodyFont?: string;
+  font: string;
+  buttonStyle: string;
+  layoutWidth: string;
+  darkMode: boolean;
+  navbarStyle: string;
 };
 
 export type BrandData = {

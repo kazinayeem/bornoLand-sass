@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { landingContainer } from "./landing-ui";
 import { LandingButton } from "./landing-button";
 import { Check, ArrowRight } from "lucide-react";
@@ -12,90 +11,87 @@ export function StoryPricing() {
 
   const PLANS = [
     {
-      name: "Free",
-      priceMonthly: "৳ 0",
-      priceYearly: "৳ 0",
-      desc: "For new entrepreneurs exploring online selling.",
+      name: "Starter",
+      priceMonthly: "৳৯৯৯",
+      priceYearly: "৳৭৯৯",
+      desc: "নতুন অনলাইন শপ ও ফেসবুক সেলারদের জন্য আদর্শ।",
       badge: null,
-      cta: "Get Started Free",
+      cta: "শুরু করুন",
       popular: false,
       features: [
-        "1 Online Store",
-        "Up to 25 Products",
-        "Standard Storefront Theme",
-        "Cash on Delivery Support",
-        "Email Order Invoices",
-        "Community Support",
+        "১টি অনলাইন শপ",
+        "সর্বোচ্চ ৫০০টি পণ্য",
+        "কাস্টম ডোমেইন কানেক্ট",
+        "বিকাশ, নগদ ও ক্যাশ অন ডেলিভারি",
+        "অটোমেটিক A4 PDF ইনভয়েস",
+        "স্ট্যান্ডার্ড সাপোর্ট",
       ],
     },
     {
-      name: "Starter",
-      priceMonthly: "৳ 999",
-      priceYearly: "৳ 799",
-      desc: "Essential features for growing boutique brands.",
-      badge: null,
-      cta: "Start 7-Day Trial",
-      popular: false,
+      name: "Growth",
+      priceMonthly: "৳১,৯৯০",
+      priceYearly: "৳১,৫৯০",
+      desc: "ক্রমবর্ধমান ব্যবসা ও ফ্যাশন ব্র্যান্ডের জন্য সবচেয়ে উপযোগী।",
+      badge: "সবচেয়ে জনপ্রিয়",
+      cta: "প্ল্যান বেছে নিন",
+      popular: true,
       features: [
-        "1 Online Store",
-        "Up to 500 Products",
-        "Connect Custom Apex Domain",
-        "bKash, Nagad & COD",
-        "Local Delivery Zones",
-        "Automated A4 PDF Invoices",
-        "Standard Support",
+        "৩টি অনলাইন শপ",
+        "আনলিমিটেড পণ্য ও ক্যাটাগরি",
+        "ভিজুয়াল ড্র্যাগ অ্যান্ড ড্রপ বিল্ডার",
+        "পাঠাও ও স্টেডফাস্ট কুরিয়ার সিঙ্ক",
+        "রিয়েল-টাইম সেলস অ্যানালিটিক্স",
+        "২৪/৭ প্রিমিয়াম সাপোর্ট",
       ],
     },
     {
       name: "Business",
-      priceMonthly: "৳ 2,499",
-      priceYearly: "৳ 1,999",
-      desc: "Full power for scaling retail brands and agencies.",
-      badge: "MOST POPULAR",
-      cta: "Start 7-Day Trial",
-      popular: true,
+      priceMonthly: "৳২,৪৯০",
+      priceYearly: "৳১,৯৯০",
+      desc: "বড় শপ, এজেন্সি ও একাধিক দোকান পরিচালনাকারীদের জন্য।",
+      badge: null,
+      cta: "প্ল্যান বেছে নিন",
+      popular: false,
       features: [
-        "Up to 3 Online Stores",
-        "Unlimited Products & Variants",
-        "Visual Drag & Drop Builder",
-        "Steadfast & Pathao Courier Sync",
-        "Real-Time Analytics & Funnels",
-        "Staff Accounts & Roles",
-        "Priority 24/7 Support",
+        "আনলিমিটেড অনলাইন শপ",
+        "টিম অ্যাক্সেস ও স্টাফ রোল",
+        "অটোমেটিক ইনভেন্টরি অ্যালার্ট",
+        "অ্যাডভান্সড কুরিয়ার ও পেমেন্ট ইন্টিগ্রেশন",
+        "ডেডিকেটেড একাউন্ট ম্যানেজার",
+        "priority সাপোর্ট",
       ],
     },
     {
-      name: "Enterprise",
-      priceMonthly: "Custom",
-      priceYearly: "Custom",
-      desc: "Custom architecture for large multi-brand operations.",
+      name: "Custom",
+      priceMonthly: "যোগাযোগ করুন",
+      priceYearly: "যোগাযোগ করুন",
+      desc: "বড় প্রতিষ্ঠান ও কাস্টম প্রয়োজনের জন্য ডেডিকেটেড সমাধান।",
       badge: null,
-      cta: "Contact Sales",
+      cta: "যোগাযোগ করুন",
       popular: false,
       features: [
-        "Unlimited Online Stores",
-        "Dedicated Cloud Infrastructure",
-        "REST API & Webhooks Access",
-        "Custom ERP Integrations",
-        "Dedicated Account Manager",
-        "99.9% Uptime SLA",
+        "কাস্টম ক্লাউড ইনফ্রাস্ট্রাকচার",
+        "REST API ও Webhooks অ্যাক্সেস",
+        "ERP ও সফটওয়্যার ইন্টিগ্রেশন",
+        "ডেডিকেটেড সার্ভার ও SLA",
+        "২৪/৭ ফোন ও ইমেইল সাপোর্ট",
       ],
     },
   ];
 
   const COMPARISON_ROWS = [
-    { name: "Online Stores", free: "1", starter: "1", biz: "3", ent: "Unlimited" },
-    { name: "Products Catalog", free: "25", starter: "500", biz: "Unlimited", ent: "Unlimited" },
-    { name: "Custom Apex Domain", free: "—", starter: "✓", biz: "✓", ent: "✓" },
-    { name: "Visual Storefront Builder", free: "Basic", starter: "Standard", biz: "Advanced", ent: "Custom" },
-    { name: "bKash & Nagad Payments", free: "—", starter: "✓", biz: "✓", ent: "✓" },
-    { name: "Cash on Delivery Rules", free: "✓", starter: "✓", biz: "✓", ent: "✓" },
-    { name: "Automated A4 PDF Invoices", free: "Standard", starter: "✓", biz: "✓", ent: "✓" },
-    { name: "Courier Integrations", free: "—", starter: "—", biz: "✓", ent: "✓" },
-    { name: "Real-Time Analytics", free: "Basic", starter: "Standard", biz: "Advanced", ent: "Full BI" },
-    { name: "Staff Roles & Permissions", free: "1 Admin", starter: "2 Staff", biz: "5 Staff", ent: "Unlimited" },
-    { name: "Developer API Access", free: "—", starter: "—", biz: "✓", ent: "Dedicated" },
-    { name: "Support SLA", free: "Community", starter: "Standard", biz: "Priority 24/7", ent: "Dedicated Mgr" },
+    { name: "অনলাইন দোকান", starter: "১টি", growth: "৩টি", biz: "আনলিমিটেড", custom: "কাস্টম" },
+    { name: "পণ্য সংখ্যা", starter: "৫০০টি", growth: "আনলিমিটেড", biz: "আনলিমিটেড", custom: "আনলিমিটেড" },
+    { name: "কাস্টম ডোমেইন", starter: "✓", growth: "✓", biz: "✓", custom: "✓" },
+    { name: "ভিজুয়াল স্টোর বিল্ডার", starter: "স্ট্যান্ডার্ড", growth: "অ্যাডভান্সড", biz: "প্রিমিয়াম", custom: "কাস্টম" },
+    { name: "বিকাশ ও নগদ পেমেন্ট", starter: "✓", growth: "✓", biz: "✓", custom: "✓" },
+    { name: "ক্যাশ অন ডেলিভারি (COD)", starter: "✓", growth: "✓", biz: "✓", custom: "✓" },
+    { name: "অটো PDF ইনভয়েস", starter: "✓", growth: "✓", biz: "✓", custom: "✓" },
+    { name: "কুরিয়ার ইন্টিগ্রেশন", starter: "—", growth: "✓", biz: "✓", custom: "✓" },
+    { name: "সেলস অ্যানালিটিক্স", starter: "বেসিক", growth: "অ্যাডভান্সড", biz: "প্রিমিয়াম", custom: "কাস্টম BI" },
+    { name: "টিম অ্যাক্সেস (স্টাফ)", starter: "১ জন", growth: "৩ জন", biz: "১০ জন", custom: "আনলিমিটেড" },
+    { name: "API ও Webhooks", starter: "—", growth: "—", biz: "✓", custom: "ডেডিকেটেড" },
+    { name: "সাপোর্ট", starter: "ইমেইল", growth: "২৪/৭ চ্যাট", biz: "priority ২৪/৭", custom: "ডেডিকেটেড ম্যানেজার" },
   ];
 
   return (
@@ -103,20 +99,20 @@ export function StoryPricing() {
       <div className={landingContainer}>
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-3 mb-12">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 font-bold">
-            TRANSPARENT PRICING
+          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+            মূল্য তালিকা
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-950">
-            Choose the plan that fits your business.
+            আপনার ব্যবসার জন্য সঠিক প্ল্যানটি বেছে নিন।
           </h2>
           <p className="text-base sm:text-lg text-zinc-600 leading-relaxed font-normal">
-            Start free. Upgrade when you need more. No hidden transaction percentage fees.
+            আজকের দরকার অনুযায়ী প্ল্যান নিন। ব্যবসা বাড়লে সহজেই আপগ্রেড করুন। কোনো লুকানো চার্জ নেই।
           </p>
 
           {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-3 pt-4">
             <span className={`text-xs font-semibold ${!isYearly ? "text-zinc-950" : "text-zinc-400"}`}>
-              Monthly
+              মাসিক
             </span>
             <button
               type="button"
@@ -133,10 +129,10 @@ export function StoryPricing() {
               />
             </button>
             <span className={`text-xs font-semibold ${isYearly ? "text-zinc-950" : "text-zinc-400"}`}>
-              Yearly
+              বার্ষিক
             </span>
             <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-800">
-              Save 20%
+              ২০% ছাড়
             </span>
           </div>
         </div>
@@ -168,8 +164,8 @@ export function StoryPricing() {
                   <span className="text-3xl font-extrabold text-zinc-950">
                     {isYearly ? plan.priceYearly : plan.priceMonthly}
                   </span>
-                  {plan.priceMonthly !== "Custom" && (
-                    <span className="text-xs text-zinc-500 font-medium ml-1">/ month</span>
+                  {plan.priceMonthly !== "যোগাযোগ করুন" && (
+                    <span className="text-xs text-zinc-500 font-medium ml-1">/ মাস</span>
                   )}
                 </div>
 
@@ -203,32 +199,32 @@ export function StoryPricing() {
           <button
             type="button"
             onClick={() => setShowComparison(!showComparison)}
-            className="inline-flex items-center gap-2 text-xs font-bold text-zinc-800 hover:text-zinc-950 transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-bold text-zinc-800 hover:text-blue-600 transition-colors"
           >
-            <span>{showComparison ? "Hide full plan comparison" : "Compare all plan features"}</span>
+            <span>{showComparison ? "প্ল্যান তুলনা গোপন করুন" : "সকল প্ল্যানের বিস্তারিত তুলনা দেখুন"}</span>
             <ArrowRight className={`h-3.5 w-3.5 transition-transform ${showComparison ? "-rotate-90" : "rotate-90"}`} />
           </button>
 
           {showComparison && (
-            <div className="rounded-3xl border border-zinc-200/90 bg-white p-6 shadow-xl overflow-x-auto text-left text-xs animate-fadeIn">
+            <div className="rounded-3xl border border-zinc-200/90 bg-white p-6 shadow-xl overflow-x-auto text-left text-xs">
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-zinc-200 bg-zinc-50/80 text-[10px] font-bold uppercase text-zinc-500">
-                    <th className="py-3 px-4">Feature</th>
-                    <th className="py-3 px-3 text-center">Free</th>
+                    <th className="py-3 px-4">ফিচারসমূহ</th>
                     <th className="py-3 px-3 text-center">Starter</th>
-                    <th className="py-3 px-3 text-center font-bold text-blue-600">Business</th>
-                    <th className="py-3 px-3 text-center">Enterprise</th>
+                    <th className="py-3 px-3 text-center font-bold text-blue-600">Growth</th>
+                    <th className="py-3 px-3 text-center">Business</th>
+                    <th className="py-3 px-3 text-center">Custom</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
                   {COMPARISON_ROWS.map((row, rIdx) => (
                     <tr key={rIdx} className="hover:bg-zinc-50/50">
                       <td className="py-3 px-4 font-semibold text-zinc-800">{row.name}</td>
-                      <td className="py-3 px-3 text-center text-zinc-600">{row.free}</td>
                       <td className="py-3 px-3 text-center text-zinc-600">{row.starter}</td>
-                      <td className="py-3 px-3 text-center font-bold text-blue-600">{row.biz}</td>
-                      <td className="py-3 px-3 text-center text-zinc-600">{row.ent}</td>
+                      <td className="py-3 px-3 text-center font-bold text-blue-600">{row.growth}</td>
+                      <td className="py-3 px-3 text-center text-zinc-600">{row.biz}</td>
+                      <td className="py-3 px-3 text-center text-zinc-600">{row.custom}</td>
                     </tr>
                   ))}
                 </tbody>

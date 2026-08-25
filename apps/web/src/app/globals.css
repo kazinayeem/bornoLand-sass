@@ -113,8 +113,8 @@
   --spacing-apple-section: 80px;
 
   /* Typography families */
-  --font-display: "Neue Haas Grotesk Display", "Inter Display", "Inter", system-ui, -apple-system, sans-serif;
-  --font-body: var(--font-inter), "Inter Variable", "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-bengali), var(--font-inter), "Hind Siliguri", "Inter", system-ui, -apple-system, sans-serif;
+  --font-body: var(--font-bengali), var(--font-inter), "Hind Siliguri", "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Elevation Shadows (DESIGN.md) */

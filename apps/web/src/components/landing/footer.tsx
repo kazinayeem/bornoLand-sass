@@ -7,46 +7,42 @@ import { landingContainer } from "./landing-ui";
 export function Footer() {
   const FOOTER_COLS = [
     {
-      title: "PRODUCT",
+      title: "প্ল্যাটফর্ম",
       links: [
-        { label: "Storefront", href: "#product" },
-        { label: "Visual Builder", href: "#builder" },
-        { label: "Inventory Catalog", href: "#product" },
-        { label: "Order Pipeline", href: "#features" },
-        { label: "PDF Invoicing", href: "#commerce" },
-        { label: "Pricing", href: "#pricing" },
+        { label: "ফিচারসমূহ", href: "#features" },
+        { label: "স্টোর বিল্ডার", href: "#builder" },
+        { label: "পণ্য ক্যাটালগ", href: "#features" },
+        { label: "পেমেন্ট ও কুরিয়ার", href: "#payments" },
+        { label: "মূল্য তালিকা", href: "#pricing" },
       ],
     },
     {
-      title: "SOLUTIONS",
+      title: "সলিউশন",
       links: [
-        { label: "Small Businesses", href: "/register" },
-        { label: "Boutique Brands", href: "/register" },
-        { label: "Creators & Influencers", href: "/register" },
-        { label: "Retail Agencies", href: "/register" },
-        { label: "Multi-Store Operations", href: "/register" },
+        { label: "অনলাইন শপ", href: "/register" },
+        { label: "বুটিক ও ফ্যাশন", href: "/register" },
+        { label: "ফেসবুক ও ইনস্টাগ্রাম সেলার", href: "/register" },
+        { label: "রিটেইল ব্যবসা", href: "/register" },
       ],
     },
     {
-      title: "DEVELOPERS",
+      title: "ডেভেলপার",
       links: [
         { label: "REST API", href: "#developers" },
         { label: "Webhooks", href: "#developers" },
-        { label: "Documentation", href: "#developers" },
-        { label: "API Reference", href: "#developers" },
+        { label: "ডকুমেন্টেশন", href: "#developers" },
       ],
     },
     {
-      title: "COMPANY",
+      title: "কোম্পানি",
       links: [
-        { label: "About BornoLand", href: "/about" },
-        { label: "Contact Us", href: "/contact" },
-        { label: "Merchant Stories", href: "#pricing" },
-        { label: "Support Center", href: "/contact" },
+        { label: "আমাদের সম্পর্কে", href: "/about" },
+        { label: "যোগাযোগ", href: "/contact" },
+        { label: "সাপোর্ট সেন্টার", href: "/contact" },
       ],
     },
     {
-      title: "LEGAL",
+      title: "আইনি",
       links: [
         { label: "Privacy Policy", href: "/privacy" },
         { label: "Terms of Service", href: "/terms" },
@@ -58,7 +54,7 @@ export function Footer() {
   return (
     <footer className="border-t border-zinc-200/80 bg-zinc-50/70 pt-16 pb-12 text-zinc-600">
       <div className={landingContainer}>
-        {/* Top 5-Column Grid + Brand Summary */}
+        {/* Top Grid + Brand Summary */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8 pb-12 border-b border-zinc-200/80">
           {/* Brand Info Column */}
           <div className="col-span-2 space-y-4">
@@ -77,7 +73,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-xs text-zinc-500 leading-relaxed max-w-sm">
-              The modern multi-store e-commerce SaaS platform for Bangladesh and global retail brands. Build, sell, and grow without limits.
+              আপনার অনলাইন ব্যবসা শুরু করা, চালানো এবং বড় করা — সবকিছু এক জায়গায়।
             </p>
           </div>
 
@@ -105,8 +101,8 @@ export function Footer() {
 
         {/* Bottom Copyright */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
-          <p>© {new Date().getFullYear()} BornoLand Technologies Inc. All rights reserved.</p>
-          <p className="font-medium text-zinc-600">Made for modern commerce.</p>
+          <p>© {new Date().getFullYear()} BornoLand Technologies. সর্বস্বত্ব সংরক্ষিত।</p>
+          <p className="font-medium text-zinc-600">বাংলাদেশের আধুনিক ই-কমার্সের জন্য তৈরি।</p>
         </div>
       </div>
     </footer>

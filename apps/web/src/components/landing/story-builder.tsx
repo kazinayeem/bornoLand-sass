@@ -40,12 +40,12 @@ export interface SectionItem {
 }
 
 const INITIAL_SECTIONS: SectionItem[] = [
-  { id: "hero", name: "Hero Banner Slider" },
-  { id: "categories", name: "Category Carousels" },
-  { id: "products", name: "Popular Products (Grid)" },
-  { id: "deals", name: "Flash Deal of Day" },
-  { id: "testimonials", name: "Customer Testimonials" },
-  { id: "footer", name: "Footer & Social Links" },
+  { id: "hero", name: "হিরো ব্যানার স্লাইডার" },
+  { id: "categories", name: "ক্যাটাগরি গ্যালারি" },
+  { id: "products", name: "জনপ্রিয় পণ্য (গ্রিড)" },
+  { id: "deals", name: "বিশেষ ডিসকাউন্ট অফার" },
+  { id: "testimonials", name: "গ্রাহকদের রিভিউ" },
+  { id: "footer", name: "ফুটার ও সোশ্যাল লিংক" },
 ];
 
 const COLOR_SWATCHES = [
@@ -178,18 +178,18 @@ export function StoryBuilder() {
   const cardBg = isDark ? "bg-zinc-800/90 border-zinc-700/70" : "bg-slate-50 border-zinc-200";
 
   return (
-    <section className="py-20 sm:py-24 bg-white border-b border-zinc-200/80 overflow-hidden">
+    <section id="builder" className="py-20 sm:py-24 bg-white border-b border-zinc-200/80 overflow-hidden">
       <div className={landingContainer}>
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-3 mb-12">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
-            STEP 01 · BUILD
+          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+            স্টোর বিল্ডার
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-950">
-            Build a store that feels like yours.
+            নিজের মতো করে সাজান আপনার অনলাইন দোকান।
           </h2>
           <p className="text-base sm:text-lg text-zinc-600 leading-relaxed font-normal">
-            Watch BornoLand Visual Builder in action below: Drag sections, customize brand colors & layouts, reflow for mobile, and publish live.
+            কোডিং ছাড়াই আপনার ব্র্যান্ডের জন্য সুন্দর, দ্রুত ও পেশাদার অনলাইন স্টোর তৈরি করুন।
           </p>
         </div>
 

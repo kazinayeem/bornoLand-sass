@@ -3,39 +3,37 @@
 import { landingContainer } from "./landing-ui";
 import {
   Store,
-  Package,
+  PackagePlus,
   ShoppingCart,
   Users,
-  Layers,
-  ArrowRight,
   Sparkles,
 } from "lucide-react";
 
 export function StoryGrowth() {
   const STAGES = [
     {
-      stage: "Stage 01",
-      title: "1 Online Store",
-      unlocked: "Launch free, upload first 25 products, accept Cash on Delivery.",
-      icon: Store,
+      stage: "ধাপ ০১",
+      title: "আরও পণ্য যোগ করুন",
+      unlocked: "প্রথম ২৫টি পণ্য দিয়ে শুরু করে হাজার হাজার ক্যাটাগরি ও পণ্য অবাধে আপলোড করুন।",
+      icon: PackagePlus,
     },
     {
-      stage: "Stage 02",
-      title: "100+ Products",
-      unlocked: "Connect custom apex domain, bKash merchant gateway, automated invoices.",
-      icon: Package,
-    },
-    {
-      stage: "Stage 03",
-      title: "1,000+ Orders",
-      unlocked: "Steadfast & Pathao courier sync, automated inventory alerts.",
+      stage: "ধাপ ০২",
+      title: "আরও অর্ডার নিন",
+      unlocked: "দৈনিক ১০টি থেকে শত শত অর্ডার কোনো ঝামেলা ছাড়াই স্বয়ংক্রিয়ভাবে গ্রহণ ও প্রসেস করুন।",
       icon: ShoppingCart,
     },
     {
-      stage: "Stage 04",
-      title: "Multi-Store Scale",
-      unlocked: "Multiple storefronts, staff role permissions, REST API & Webhooks.",
-      icon: Layers,
+      stage: "ধাপ ০৩",
+      title: "আরও কাস্টমার পান",
+      unlocked: "গ্রাহকদের সমস্ত অর্ডার হিস্ট্রি, ফোন নম্বর ও ইমেইল সংরক্ষণ করে কাস্টমার ধরে রাখুন।",
+      icon: Users,
+    },
+    {
+      stage: "ধাপ ০৪",
+      title: "বিক্রি ও রিপোর্ট বুঝুন",
+      unlocked: "ব্যবসায়ের প্রতিটি স্তরের লাভ-ক্ষতি, গ্রোথ ও বিক্রি নিয়ে স্পষ্ট সিদ্ধান্ত নিন।",
+      icon: Store,
     },
   ];
 
@@ -44,15 +42,14 @@ export function StoryGrowth() {
       <div className={landingContainer}>
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-3 mb-14">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 font-bold">
-            SCALABILITY
+          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+            ব্যবসার প্রসারণ
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-950">
-            Start small. <br className="hidden sm:inline" />
-            Grow without rebuilding everything.
+            আজ ছোট, কাল আরও বড়।
           </h2>
           <p className="text-base sm:text-lg text-zinc-600 leading-relaxed font-normal">
-            As your sales volume surges from your first customer to multi-store retail empire, Bornoland scales with you effortlessly.
+            আপনার ব্যবসা যত বড় হবে, আপনার প্ল্যাটফর্মও তত সহজে আপনার সাথে বড় হবে।
           </p>
         </div>
 
@@ -80,7 +77,7 @@ export function StoryGrowth() {
                 </div>
 
                 <div className="pt-3 border-t border-zinc-200/60 text-[10px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" /> Fully Scalable
+                  <Sparkles className="h-3 w-3" /> শতভাগ স্কেলযোগ্য
                 </div>
               </div>
             );

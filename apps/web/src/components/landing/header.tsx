@@ -17,17 +17,15 @@ import {
 } from "@/components/ui/sheet";
 
 const NAV_LINKS = [
-  { label: "Product", href: "#product" },
-  { label: "Features", href: "#features" },
-  { label: "Builder", href: "#builder" },
-  { label: "Local Commerce", href: "#bangladesh" },
-  { label: "Developers", href: "#developers" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+  { label: "ফিচার", href: "#features" },
+  { label: "কীভাবে কাজ করে", href: "#how-it-works" },
+  { label: "দোকান ডিজাইন", href: "#builder" },
+  { label: "মূল্য", href: "#pricing" },
+  { label: "প্রশ্ন উত্তর", href: "#faq" },
 ];
 
 export function Header() {
-  const { locale, setLocale } = useLandingLocale();
+  const { locale, setLocale, t } = useLandingLocale();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -104,14 +102,14 @@ export function Header() {
               size="sm"
               href="/login"
             >
-              Log in
+              {t.nav.login || "লগইন"}
             </LandingButton>
             <LandingButton
               variant="primary"
               size="sm"
               href="/register"
             >
-              Get started
+              {t.nav.startFree || "ফ্রি শুরু করুন"}
               <ArrowRight className="h-3.5 w-3.5" />
             </LandingButton>
           </div>
@@ -165,7 +163,7 @@ export function Header() {
 
           <div className="space-y-3 pt-6 border-t border-zinc-100">
             <div className="flex items-center justify-between pb-2">
-              <span className="text-xs text-zinc-500 font-medium">Language</span>
+              <span className="text-xs text-zinc-500 font-medium">ভাষা</span>
               <button
                 type="button"
                 onClick={() => setLocale(locale === "bn" ? "en" : "bn")}
@@ -181,7 +179,7 @@ export function Header() {
               className="w-full"
               onClick={closeMenu}
             >
-              Log in
+              {t.nav.login || "লগইন"}
             </LandingButton>
             <LandingButton
               variant="primary"
@@ -190,7 +188,7 @@ export function Header() {
               className="w-full"
               onClick={closeMenu}
             >
-              Get started
+              {t.nav.startFree || "ফ্রি শুরু করুন"}
               <ArrowRight className="h-3.5 w-3.5" />
             </LandingButton>
           </div>

@@ -34,12 +34,15 @@ import { setAuthState } from "@/redux/slices/auth-slice";
 import { setUserProfile } from "@/redux/slices/user-slice";
 import { setTenantContext } from "@/redux/slices/tenant-slice";
 import { consumeRedirectAfterLogin } from "@/lib/auth-redirect-client";
+import { useLanguage } from "@/providers/language-provider";
 
 export function LoginForm({
   className,
   loginType = "user",
   ...props
 }: React.ComponentProps<"div"> & { loginType?: "user" | "admin" }) {
+  const { language } = useLanguage();
+  const isBn = language === "bn";
   const [loading, setLoading] = useState(false);
   const [login] = useLoginMutation();
   const dispatch = useAppDispatch();
@@ -75,14 +78,14 @@ export function LoginForm({
         typeof response.error.data === "object" &&
         "message" in response.error.data
           ? String((response.error.data as { message?: string }).message)
-          : "Login failed") || "Login failed";
+          : isBn ? "লগইন ব্যর্থ হয়েছে" : "Login failed") || (isBn ? "লগইন ব্যর্থ হয়েছে" : "Login failed");
       toast.error(message);
       return;
     }
 
     const payload = response.data?.data;
     if (!payload?.user || !payload?.session) {
-      toast.error("Invalid login response");
+      toast.error(isBn ? "অকার্যকর লগইন রেসপন্স" : "Invalid login response");
       return;
     }
 
@@ -106,21 +109,23 @@ export function LoginForm({
       <Card className="rounded-apple-xl border-border bg-card shadow-xl">
         <CardHeader className="space-y-1.5">
           <CardTitle className="text-2xl font-bold tracking-tight">
-            {loginType === "admin" ? "এডমিন সাইন ইন" : "আপনার অ্যাকাউন্টে লগইন করুন"}
+            {loginType === "admin"
+              ? isBn ? "এডমিন সাইন ইন" : "Admin Sign In"
+              : isBn ? "আপনার অ্যাকাউন্টে লগইন করুন" : "Sign in to your account"}
           </CardTitle>
           <CardDescription>
-            লগইন করতে আপনার নিবন্ধিত ইমেইল ও পাসওয়ার্ড লিখুন
+            {isBn ? "লগইন করতে আপনার নিবন্ধিত ইমেইল ও পাসওয়ার্ড লিখুন" : "Enter your email and password to sign in"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} noValidate>
             <FieldGroup>
               <Field data-invalid={Boolean(errors.email) || undefined}>
-                <FieldLabel htmlFor="login-email">ইমেইল ঠিকানা</FieldLabel>
+                <FieldLabel htmlFor="login-email">{isBn ? "ইমেইল ঠিকানা" : "Email address"}</FieldLabel>
                 <Input
                   id="login-email"
                   type="email"
-                  placeholder="আপনার ইমেইল লিখুন"
+                  placeholder={isBn ? "আপনার ইমেইল লিখুন" : "Enter your email"}
                   autoComplete="email"
                   required
                   aria-invalid={Boolean(errors.email)}
@@ -131,12 +136,12 @@ export function LoginForm({
 
               <Field data-invalid={Boolean(errors.password) || undefined}>
                 <div className="flex items-center gap-2">
-                  <FieldLabel htmlFor="login-password">পাসওয়ার্ড</FieldLabel>
+                  <FieldLabel htmlFor="login-password">{isBn ? "পাসওয়ার্ড" : "Password"}</FieldLabel>
                   <Link
                     href="/forgot-password"
                     className="ml-auto inline-block text-sm font-medium !text-primary underline-offset-4 hover:underline"
                   >
-                    পাসওয়ার্ড ভুলে গেছেন?
+                    {isBn ? "পাসওয়ার্ড ভুলে গেছেন?" : "Forgot password?"}
                   </Link>
                 </div>
                 <PasswordInput
@@ -164,7 +169,7 @@ export function LoginForm({
                   htmlFor="login-remember"
                   className="font-normal text-muted-foreground"
                 >
-                  মনে রাখুন
+                  {isBn ? "মনে রাখুন" : "Remember me"}
                 </FieldLabel>
               </Field>
 
@@ -175,33 +180,35 @@ export function LoginForm({
                   loadingKey="login"
                   className="w-full rounded-pill font-semibold"
                 >
-                  {loginType === "admin" ? "এডমিন লগইন" : "লগইন করুন"}
+                  {loginType === "admin"
+                    ? isBn ? "এডমিন লগইন" : "Admin Login"
+                    : isBn ? "লগইন করুন" : "Sign In"}
                 </Button>
-                <GoogleButton label="Google দিয়ে লগইন করুন" />
+                <GoogleButton label={isBn ? "Google দিয়ে লগইন করুন" : "Sign in with Google"} />
                 <FieldDescription className="text-center">
-                  কোনো অ্যাকাউন্ট নেই?{" "}
+                  {isBn ? "কোনো অ্যাকাউন্ট নেই? " : "Don't have an account? "}
                   <Link
                     href="/register"
                     className="font-semibold !text-primary underline-offset-4 hover:underline"
                   >
-                    রেজিস্ট্রেশন করুন
+                    {isBn ? "রেজিস্ট্রেশন করুন" : "Sign up"}
                   </Link>
                 </FieldDescription>
               </Field>
 
-              <FieldSeparator>অথবা ডেমো লগইন করুন</FieldSeparator>
+              <FieldSeparator>{isBn ? "অথবা ডেমো লগইন করুন" : "Or try demo login"}</FieldSeparator>
 
               <Field>
                 <div className="grid gap-2.5 sm:grid-cols-2">
                   <QuickLoginButton
-                    label="ডেমো মার্চেন্ট লগইন"
+                    label={isBn ? "ডেমো মার্চেন্ট লগইন" : "Demo Merchant Login"}
                     email="demo@bornoland.com"
                     password="Demo@123"
                     loginType="user"
                     callbackUrl="/dashboard"
                   />
                   <QuickLoginButton
-                    label="ডেমো এডমিন লগইন"
+                    label={isBn ? "ডেমো এডমিন লগইন" : "Demo Admin Login"}
                     email="admin@bornoland.com"
                     password="Admin@123"
                     loginType="admin"

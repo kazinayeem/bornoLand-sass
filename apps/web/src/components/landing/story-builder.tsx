@@ -178,7 +178,7 @@ export function StoryBuilder() {
   const cardBg = isDark ? "bg-zinc-800/90 border-zinc-700/70" : "bg-slate-50 border-zinc-200";
 
   return (
-    <section id="builder" className="py-20 sm:py-24 bg-white border-b border-zinc-200/80 overflow-hidden">
+    <section id="store-builder" className="py-20 sm:py-24 bg-white border-b border-zinc-200/80 overflow-hidden scroll-mt-20">
       <div className={landingContainer}>
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-3 mb-12">

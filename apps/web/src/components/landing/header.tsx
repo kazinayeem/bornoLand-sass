@@ -5,9 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Menu, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useLandingLocale, type LandingLocale } from "./landing-locale";
+import { useLandingLocale } from "./landing-locale";
 import { landingContainer } from "./landing-ui";
 import { LandingButton } from "./landing-button";
+import { scrollToSection } from "@/lib/scroll-utils";
+import { useGetProfileQuery } from "@/redux/api/profile-api";
 import {
   Sheet,
   SheetContent,
@@ -16,18 +18,13 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 
-const NAV_LINKS = [
-  { label: "ফিচার", href: "#features" },
-  { label: "কীভাবে কাজ করে", href: "#how-it-works" },
-  { label: "দোকান ডিজাইন", href: "#builder" },
-  { label: "মূল্য", href: "#pricing" },
-  { label: "প্রশ্ন উত্তর", href: "#faq" },
-];
-
 export function Header() {
   const { locale, setLocale, t } = useLandingLocale();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const { data: profileData } = useGetProfileQuery();
+  const isAuthenticated = Boolean(profileData?.data?.profile);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -36,7 +33,31 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Handle hash scrolling on initial mount
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash) {
+      const hash = window.location.hash.slice(1);
+      setTimeout(() => {
+        scrollToSection(hash);
+      }, 100);
+    }
+  }, []);
+
   const closeMenu = useCallback(() => setMobileOpen(false), []);
+
+  const navLinks = [
+    { label: t.nav.features || (locale === "bn" ? "ফিচার" : "Features"), href: "features" },
+    { label: locale === "bn" ? "কীভাবে কাজ করে" : "How it works", href: "how-it-works" },
+    { label: t.nav.builder || (locale === "bn" ? "দোকান ডিজাইন" : "Store Builder"), href: "store-builder" },
+    { label: t.nav.pricing || (locale === "bn" ? "মূল্য" : "Pricing"), href: "pricing" },
+    { label: t.nav.faq || (locale === "bn" ? "প্রশ্ন উত্তর" : "FAQ"), href: "faq" },
+  ];
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+    e.preventDefault();
+    scrollToSection(sectionId);
+    closeMenu();
+  };
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 transition-all duration-300">
@@ -77,14 +98,15 @@ export function Header() {
 
           {/* Desktop Nav Items */}
           <div className="hidden lg:flex items-center gap-1 rounded-full border border-zinc-200/70 bg-white/70 px-4 py-1.5 shadow-2xs backdrop-blur-md">
-            {NAV_LINKS.map((link) => (
-              <Link
+            {navLinks.map((link) => (
+              <a
                 key={link.href}
-                href={link.href}
+                href={`#${link.href}`}
+                onClick={(e) => handleNavClick(e, link.href)}
                 className="rounded-full px-3.5 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:text-zinc-950 hover:bg-zinc-100/70"
               >
                 {link.label}
-              </Link>
+              </a>
             ))}
           </div>
 
@@ -93,25 +115,40 @@ export function Header() {
             <button
               type="button"
               onClick={() => setLocale(locale === "bn" ? "en" : "bn")}
-              className="text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors px-2 py-1 rounded-md"
+              className="text-xs font-semibold text-zinc-700 hover:text-blue-600 transition-colors px-2.5 py-1 rounded-md border border-zinc-200 bg-zinc-50"
+              aria-label={locale === "bn" ? "Switch to English" : "বাংলা ভাষা বেছে নিন"}
             >
               {locale === "bn" ? "English" : "বাংলা"}
             </button>
-            <LandingButton
-              variant="ghost"
-              size="sm"
-              href="/login"
-            >
-              {t.nav.login || "লগইন"}
-            </LandingButton>
-            <LandingButton
-              variant="primary"
-              size="sm"
-              href="/register"
-            >
-              {t.nav.startFree || "ফ্রি শুরু করুন"}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </LandingButton>
+
+            {isAuthenticated ? (
+              <LandingButton
+                variant="primary"
+                size="sm"
+                href="/dashboard"
+              >
+                {locale === "bn" ? "ড্যাশবোর্ডে যান" : "Go to Dashboard"}
+                <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </LandingButton>
+            ) : (
+              <>
+                <LandingButton
+                  variant="ghost"
+                  size="sm"
+                  href="/login"
+                >
+                  {t.nav.login || (locale === "bn" ? "লগইন" : "Log In")}
+                </LandingButton>
+                <LandingButton
+                  variant="primary"
+                  size="sm"
+                  href="/register"
+                >
+                  {t.nav.startFree || (locale === "bn" ? "ফ্রি শুরু করুন" : "Start Free")}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </LandingButton>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Trigger */}
@@ -120,7 +157,7 @@ export function Header() {
               type="button"
               onClick={() => setMobileOpen(true)}
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white/80 text-zinc-700 backdrop-blur-md transition-colors hover:bg-zinc-100"
-              aria-label="Open mobile menu"
+              aria-label={locale === "bn" ? "মেনু খুলুন" : "Open mobile menu"}
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -146,16 +183,16 @@ export function Header() {
             </SheetHeader>
 
             <div className="flex flex-col gap-1 py-6">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <SheetClose asChild key={link.href}>
-                  <Link
-                    href={link.href}
-                    onClick={closeMenu}
+                  <a
+                    href={`#${link.href}`}
+                    onClick={(e) => handleNavClick(e, link.href)}
                     className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 transition-colors"
                   >
                     {link.label}
                     <ArrowRight className="h-4 w-4 text-zinc-400" />
-                  </Link>
+                  </a>
                 </SheetClose>
               ))}
             </div>
@@ -163,34 +200,49 @@ export function Header() {
 
           <div className="space-y-3 pt-6 border-t border-zinc-100">
             <div className="flex items-center justify-between pb-2">
-              <span className="text-xs text-zinc-500 font-medium">ভাষা</span>
+              <span className="text-xs text-zinc-500 font-medium">{locale === "bn" ? "ভাষা" : "Language"}</span>
               <button
                 type="button"
                 onClick={() => setLocale(locale === "bn" ? "en" : "bn")}
-                className="text-xs font-semibold text-zinc-900 px-2 py-1 rounded-md bg-zinc-100"
+                className="text-xs font-semibold text-zinc-900 px-2.5 py-1 rounded-md bg-zinc-100 border border-zinc-200"
               >
                 {locale === "bn" ? "English" : "বাংলা"}
               </button>
             </div>
-            <LandingButton
-              variant="secondary"
-              size="default"
-              href="/login"
-              className="w-full"
-              onClick={closeMenu}
-            >
-              {t.nav.login || "লগইন"}
-            </LandingButton>
-            <LandingButton
-              variant="primary"
-              size="default"
-              href="/register"
-              className="w-full"
-              onClick={closeMenu}
-            >
-              {t.nav.startFree || "ফ্রি শুরু করুন"}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </LandingButton>
+            {isAuthenticated ? (
+              <LandingButton
+                variant="primary"
+                size="default"
+                href="/dashboard"
+                className="w-full"
+                onClick={closeMenu}
+              >
+                {locale === "bn" ? "ড্যাশবোর্ডে যান" : "Go to Dashboard"}
+                <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </LandingButton>
+            ) : (
+              <>
+                <LandingButton
+                  variant="secondary"
+                  size="default"
+                  href="/login"
+                  className="w-full"
+                  onClick={closeMenu}
+                >
+                  {t.nav.login || (locale === "bn" ? "লগইন" : "Log In")}
+                </LandingButton>
+                <LandingButton
+                  variant="primary"
+                  size="default"
+                  href="/register"
+                  className="w-full"
+                  onClick={closeMenu}
+                >
+                  {t.nav.startFree || (locale === "bn" ? "ফ্রি শুরু করুন" : "Start Free")}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </LandingButton>
+              </>
+            )}
           </div>
         </SheetContent>
       </Sheet>

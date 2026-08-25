@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useLanguage } from "@/providers/language-provider";
 
 export type LandingLocale = "en" | "bn";
 
@@ -700,33 +701,15 @@ type LandingLocaleContextValue = {
 const LandingLocaleContext = createContext<LandingLocaleContextValue | null>(null);
 
 export function LandingLocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<LandingLocale>("bn");
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY) as LandingLocale | null;
-      if (saved === "en" || saved === "bn") setLocaleState(saved);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.lang = locale === "bn" ? "bn" : "en";
-  }, [locale]);
-
-  const setLocale = useCallback((next: LandingLocale) => {
-    setLocaleState(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  const { language, setLanguage } = useLanguage();
 
   const value = useMemo(
-    () => ({ locale, setLocale, t: dictionaries[locale] }),
-    [locale, setLocale],
+    () => ({
+      locale: language as LandingLocale,
+      setLocale: setLanguage as (locale: LandingLocale) => void,
+      t: dictionaries[language as LandingLocale] || dictionaries.bn,
+    }),
+    [language, setLanguage]
   );
 
   return (

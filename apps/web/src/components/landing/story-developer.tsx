@@ -5,7 +5,7 @@ import { Code2, Webhook } from "lucide-react";
 
 export function StoryDeveloper() {
   return (
-    <section id="developers" className="py-20 sm:py-24 bg-zinc-950 text-white border-b border-zinc-800">
+    <section id="developer" className="py-20 sm:py-24 bg-zinc-950 text-white border-b border-zinc-800 scroll-mt-20">
       <div className={landingContainer}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-6xl mx-auto">
           {/* Left: Copy */}

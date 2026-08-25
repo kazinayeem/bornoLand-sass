@@ -106,21 +106,21 @@ export function LoginForm({
       <Card className="rounded-apple-xl border-border bg-card shadow-xl">
         <CardHeader className="space-y-1.5">
           <CardTitle className="text-2xl font-bold tracking-tight">
-            {loginType === "admin" ? "Admin login" : "Login to your account"}
+            {loginType === "admin" ? "এডমিন সাইন ইন" : "আপনার অ্যাকাউন্টে লগইন করুন"}
           </CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            লগইন করতে আপনার নিবন্ধিত ইমেইল ও পাসওয়ার্ড লিখুন
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} noValidate>
             <FieldGroup>
               <Field data-invalid={Boolean(errors.email) || undefined}>
-                <FieldLabel htmlFor="login-email">Email</FieldLabel>
+                <FieldLabel htmlFor="login-email">ইমেইল ঠিকানা</FieldLabel>
                 <Input
                   id="login-email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="আপনার ইমেইল লিখুন"
                   autoComplete="email"
                   required
                   aria-invalid={Boolean(errors.email)}
@@ -131,12 +131,12 @@ export function LoginForm({
 
               <Field data-invalid={Boolean(errors.password) || undefined}>
                 <div className="flex items-center gap-2">
-                  <FieldLabel htmlFor="login-password">Password</FieldLabel>
+                  <FieldLabel htmlFor="login-password">পাসওয়ার্ড</FieldLabel>
                   <Link
                     href="/forgot-password"
                     className="ml-auto inline-block text-sm font-medium !text-primary underline-offset-4 hover:underline"
                   >
-                    Forgot your password?
+                    পাসওয়ার্ড ভুলে গেছেন?
                   </Link>
                 </div>
                 <PasswordInput
@@ -164,7 +164,7 @@ export function LoginForm({
                   htmlFor="login-remember"
                   className="font-normal text-muted-foreground"
                 >
-                  Remember me
+                  মনে রাখুন
                 </FieldLabel>
               </Field>
 
@@ -175,33 +175,33 @@ export function LoginForm({
                   loadingKey="login"
                   className="w-full rounded-pill font-semibold"
                 >
-                  {loginType === "admin" ? "Admin Sign In" : "Login"}
+                  {loginType === "admin" ? "এডমিন লগইন" : "লগইন করুন"}
                 </Button>
-                <GoogleButton label="Login with Google" />
+                <GoogleButton label="Google দিয়ে লগইন করুন" />
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account?{" "}
+                  কোনো অ্যাকাউন্ট নেই?{" "}
                   <Link
                     href="/register"
                     className="font-semibold !text-primary underline-offset-4 hover:underline"
                   >
-                    Sign up
+                    রেজিস্ট্রেশন করুন
                   </Link>
                 </FieldDescription>
               </Field>
 
-              <FieldSeparator>Or quick demo</FieldSeparator>
+              <FieldSeparator>অথবা ডেমো লগইন করুন</FieldSeparator>
 
               <Field>
                 <div className="grid gap-2.5 sm:grid-cols-2">
                   <QuickLoginButton
-                    label="Quick user login"
+                    label="ডেমো মার্চেন্ট লগইন"
                     email="demo@bornoland.com"
                     password="Demo@123"
                     loginType="user"
                     callbackUrl="/dashboard"
                   />
                   <QuickLoginButton
-                    label="Quick admin login"
+                    label="ডেমো এডমিন লগইন"
                     email="admin@bornoland.com"
                     password="Admin@123"
                     loginType="admin"

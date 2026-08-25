@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Trash2, AlertTriangle, Loader2, X, CheckCircle2, ShieldAlert, Lock,
+  Trash2, AlertTriangle, Loader2, X, CheckCircle2, ShieldAlert,
 } from "lucide-react";
 import type { Store } from "@/redux/api/store-api";
+import { useLanguage } from "@/providers/language-provider";
 
 type DeleteStoreModalProps = {
   store: Store | null;
@@ -17,46 +18,74 @@ type DeleteStoreModalProps = {
 
 type Phase = "warning" | "confirm" | "progress" | "done";
 
-/* ── Everything this store will lose ─────────────────────── */
-const DELETION_ITEMS = [
-  "Store",
+const DELETION_ITEMS_BN = [
+  "অনলাইন দোকান",
+  "পণ্যসমূহ",
+  "ক্যাটাগরি",
+  "ইনভেন্টরি",
+  "অর্ডারসমূহ",
+  "কাস্টমার তালিকা",
+  "রিভিউ",
+  "কুপন ও ডিসকাউন্ট",
+  "CMS পেজ",
+  "বিল্ডার পেজ",
+  "নেভিগেশন মেনু",
+  "থিম ডিজাইন",
+  "মিডিয়া লাইব্রেরি",
+  "আপলোডকৃত ছবি",
+  "আপলোডকৃত ফাইল",
+  "SEO সেটিংস",
+  "সেলস অ্যানালিটিক্স",
+  "বিলিং হিস্ট্রি",
+  "কার্যক্রম লগ",
+];
+
+const DELETION_ITEMS_EN = [
+  "Online storefront",
   "Products",
   "Categories",
   "Inventory",
   "Orders",
-  "Customers",
+  "Customer list",
   "Reviews",
-  "Coupons",
-  "CMS Pages",
-  "Builder Pages",
-  "Navigation",
-  "Theme Settings",
-  "Media Library",
-  "Uploaded Images",
-  "Uploaded Files",
-  "SEO Settings",
-  "Analytics",
-  "Billing History",
-  "Activity Logs",
+  "Coupons & Discounts",
+  "CMS pages",
+  "Builder pages",
+  "Navigation menus",
+  "Theme designs",
+  "Media library",
+  "Uploaded images",
+  "Uploaded files",
+  "SEO settings",
+  "Sales analytics",
+  "Billing history",
+  "Activity logs",
 ];
 
-/* ── Simulated progress steps ────────────────────────────── */
-const PROGRESS_STEPS = [
-  "Removing Products",
-  "Removing Categories",
-  "Removing Media",
-  "Removing Builder Data",
-  "Removing Pages",
-  "Removing Navigation",
-  "Removing Theme",
-  "Removing Database Records",
-  "Cleaning Storage",
+const PROGRESS_STEPS_BN = [
+  "পণ্যসমূহ মুছে ফেলা হচ্ছে",
+  "ক্যাটাগরি মুছে ফেলা হচ্ছে",
+  "মিডিয়া ফাইল মুছে ফেলা হচ্ছে",
+  "বিল্ডার পেজ ডিলিট হচ্ছে",
+  "পেজসমূহ মোছা হচ্ছে",
+  "নেভিগেশন মোছা হচ্ছে",
+  "থিম সেটিং রিমুভ হচ্ছে",
+  "ডাটাবেস রেকর্ড মুছে ফেলা হচ্ছে",
+  "স্টোরেজ ক্লিনআপ সম্পন্ন হচ্ছে",
 ];
 
-const LEFT_COL = DELETION_ITEMS.slice(0, 10);
-const RIGHT_COL = DELETION_ITEMS.slice(10);
+const PROGRESS_STEPS_EN = [
+  "Deleting products",
+  "Deleting categories",
+  "Deleting media files",
+  "Deleting builder pages",
+  "Deleting pages",
+  "Deleting navigation",
+  "Removing theme settings",
+  "Clearing database records",
+  "Completing storage cleanup",
+];
 
-/* ─────────────────────────────────────────────────────────── */
 export function DeleteStoreModal({
   store,
   open,
@@ -64,16 +93,22 @@ export function DeleteStoreModal({
   onConfirm,
   loading,
 }: DeleteStoreModalProps) {
+  const { language } = useLanguage();
+  const isBn = language === "bn";
   const [phase, setPhase] = useState<Phase>("warning");
   const [typedText, setTypedText] = useState("");
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const animationRef = useRef<NodeJS.Timeout | null>(null);
 
-  /* ── Reset when closed ─────────────────────────────── */
+  const deletionItems = isBn ? DELETION_ITEMS_BN : DELETION_ITEMS_EN;
+  const progressSteps = isBn ? PROGRESS_STEPS_BN : PROGRESS_STEPS_EN;
+
+  const leftCol = deletionItems.slice(0, 10);
+  const rightCol = deletionItems.slice(10);
+
   useEffect(() => {
     if (!open) {
-      // Small delay so the exit animation plays
       const t = setTimeout(() => {
         setPhase("warning");
         setTypedText("");
@@ -84,7 +119,6 @@ export function DeleteStoreModal({
     }
   }, [open]);
 
-  /* ── Auto-focus input on confirm phase ─────────────── */
   useEffect(() => {
     if (open && phase === "confirm") {
       const t = setTimeout(() => inputRef.current?.focus(), 80);
@@ -92,13 +126,11 @@ export function DeleteStoreModal({
     }
   }, [open, phase]);
 
-  /* ── Animate steps while API call runs ─────────────── */
   const runStepAnimation = useCallback(async (storeId: string) => {
     setPhase("progress");
     setCompletedSteps([]);
 
-    // Stagger step completions visually (total ~2.5s budget for animation)
-    for (let i = 0; i < PROGRESS_STEPS.length; i++) {
+    for (let i = 0; i < progressSteps.length; i++) {
       await new Promise<void>((res) => {
         animationRef.current = setTimeout(() => {
           setCompletedSteps((prev) => [...prev, i]);
@@ -106,7 +138,7 @@ export function DeleteStoreModal({
         }, 240 + i * 220);
       });
     }
-  }, []);
+  }, [progressSteps.length]);
 
   const storeName = store?.name ?? "";
   const isMatch = typedText === storeName;
@@ -123,16 +155,13 @@ export function DeleteStoreModal({
   const handleFinalDelete = async () => {
     if (!store || !isMatch) return;
 
-    // Fire animation + API call concurrently
-    const [apiResult] = await Promise.allSettled([
+    await Promise.allSettled([
       onConfirm(store._id),
       runStepAnimation(store._id),
     ]);
 
-    // Brief "done" state before the parent closes the modal
     setPhase("done");
     await new Promise((r) => setTimeout(r, 900));
-    // Parent's onConfirm already handles closing + redirect
   };
 
   return (
@@ -142,7 +171,6 @@ export function DeleteStoreModal({
           className="fixed inset-0 z-[70] flex items-center justify-center p-4"
           onClick={handleOverlayClick}
         >
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -150,15 +178,13 @@ export function DeleteStoreModal({
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
 
-          {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
-            className="relative w-full max-w-lg overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas"
+            className="relative w-full max-w-lg overflow-hidden rounded-lg border border-apple-hairline bg-apple-canvas shadow-2xl"
           >
-            {/* Close button */}
             {phase !== "progress" && phase !== "done" && (
               <button
                 onClick={onClose}
@@ -169,7 +195,6 @@ export function DeleteStoreModal({
             )}
 
             <AnimatePresence mode="wait">
-              {/* ══ PHASE 1: Warning ══════════════════════════════════ */}
               {phase === "warning" && (
                 <motion.div
                   key="warning"
@@ -179,29 +204,29 @@ export function DeleteStoreModal({
                   transition={{ duration: 0.2 }}
                   className="p-6"
                 >
-                  {/* Header */}
                   <div className="flex items-start gap-4">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-red-50">
                       <Trash2 className="h-7 w-7 text-red-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-xl font-bold text-apple-ink">Delete Store?</h2>
+                      <h2 className="text-xl font-bold text-apple-ink">
+                        {isBn ? "দোকান মুছে ফেলতে চান?" : "Delete Store?"}
+                      </h2>
                       <p className="mt-1 text-sm text-apple-ink-muted-48 leading-relaxed">
-                        You are about to permanently delete{" "}
-                        <span className="font-semibold text-zinc-800">{storeName}</span>.
-                        This action cannot be undone.
+                        {isBn ? "আপনি স্থায়ীভাবে " : "You are about to permanently delete "}
+                        <span className="font-semibold text-zinc-800">{storeName}</span>
+                        {isBn ? " মুছে ফেলতে যাচ্ছেন। এই কাজটি আর বাতিল করা যাবে না।" : ". This action cannot be undone."}
                       </p>
                     </div>
                   </div>
 
-                  {/* Deletion list */}
                   <div className="mt-5 rounded-xl border border-red-100 bg-red-50/60 p-4">
                     <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-red-600">
-                      This will permanently remove:
+                      {isBn ? "যা স্থায়ীভাবে মুছে যাবে:" : "Permanently deleted items:"}
                     </p>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-1">
                       <div className="space-y-1">
-                        {LEFT_COL.map((item) => (
+                        {leftCol.map((item) => (
                           <div key={item} className="flex items-center gap-1.5">
                             <span className="h-1 w-1 shrink-0 rounded-full bg-red-400" />
                             <span className="text-xs text-red-700/80">{item}</span>
@@ -209,7 +234,7 @@ export function DeleteStoreModal({
                         ))}
                       </div>
                       <div className="space-y-1">
-                        {RIGHT_COL.map((item) => (
+                        {rightCol.map((item) => (
                           <div key={item} className="flex items-center gap-1.5">
                             <span className="h-1 w-1 shrink-0 rounded-full bg-red-400" />
                             <span className="text-xs text-red-700/80">{item}</span>
@@ -219,22 +244,22 @@ export function DeleteStoreModal({
                     </div>
                   </div>
 
-                  {/* Danger banner */}
                   <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
                     <ShieldAlert className="h-4 w-4 shrink-0 text-red-600" />
                     <p className="text-sm font-semibold text-red-700">
-                      This action is irreversible. All data will be permanently erased.
+                      {isBn
+                        ? "এই সিদ্ধান্ত চূড়ান্ত। মুছে ফেলার পর কোনো ডাটা পুনরুদ্ধার সম্ভব নয়।"
+                        : "This action is final. No data can be recovered once deleted."}
                     </p>
                   </div>
 
-                  {/* Buttons */}
                   <div className="mt-5 flex items-center justify-end gap-3">
                     <button
                       type="button"
                       onClick={onClose}
                       className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
                     >
-                      Cancel
+                      {isBn ? "বাতিল" : "Cancel"}
                     </button>
                     <button
                       type="button"
@@ -242,13 +267,12 @@ export function DeleteStoreModal({
                       className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
-                      I understand, continue
+                      {isBn ? "আমি বুঝতে পেরেছি, এগিয়ে যান" : "I understand, proceed"}
                     </button>
                   </div>
                 </motion.div>
               )}
 
-              {/* ══ PHASE 2: Type confirmation ════════════════════════ */}
               {phase === "confirm" && (
                 <motion.div
                   key="confirm"
@@ -258,38 +282,41 @@ export function DeleteStoreModal({
                   transition={{ duration: 0.2 }}
                   className="p-6"
                 >
-                  {/* Header */}
                   <div className="flex items-start gap-4">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-red-50">
                       <AlertTriangle className="h-7 w-7 text-red-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-xl font-bold text-apple-ink">Confirm Deletion</h2>
+                      <h2 className="text-xl font-bold text-apple-ink">
+                        {isBn ? "নিশ্চিত করুন" : "Confirm Deletion"}
+                      </h2>
                       <p className="mt-1 text-sm text-apple-ink-muted-48">
-                        Type the store name to confirm. This is your last chance to cancel.
+                        {isBn
+                          ? "নিশ্চিত করতে দোকানের সঠিক নাম লিখুন। এটি আপনার বাতিল করার শেষ সুযোগ।"
+                          : "Type the store name to confirm. Last chance to cancel."}
                       </p>
                     </div>
                   </div>
 
-                  {/* Store summary card */}
                   <div className="mt-5 flex items-center justify-between rounded-xl border border-zinc-200 bg-apple-canvas-parchment px-4 py-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-apple-ink">{store.name}</p>
                       <p className="text-xs text-apple-ink-muted-48">{store.subdomain || store.slug}</p>
                     </div>
                     <div className="shrink-0 rounded-md bg-red-100 px-2.5 py-1">
-                      <span className="text-[11px] font-bold tracking-wider text-red-700">PERMANENT</span>
+                      <span className="text-[11px] font-bold tracking-wider text-red-700">
+                        {isBn ? "স্থায়ী ডিলিট" : "Permanent Delete"}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Type field */}
                   <div className="mt-5">
                     <label className="block text-sm font-medium text-apple-ink-muted-80">
-                      Type{" "}
+                      {isBn ? "নিশ্চিত করতে " : "To confirm, type "}
                       <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-sm font-bold text-red-600">
                         {storeName}
                       </code>{" "}
-                      to confirm:
+                      {isBn ? "টাইপ করুন:" : ":"}
                     </label>
                     <div className="relative mt-2">
                       <input
@@ -322,20 +349,19 @@ export function DeleteStoreModal({
                     </div>
                     {typedText.length > 0 && !isMatch && (
                       <p className="mt-1.5 text-xs text-apple-ink-muted-48">
-                        Name doesn&apos;t match. Expected:{" "}
+                        {isBn ? "নাম মেলেনি। সঠিক নাম: " : "Name does not match. Exact name: "}
                         <span className="font-mono font-semibold text-apple-ink-muted-80">{storeName}</span>
                       </p>
                     )}
                   </div>
 
-                  {/* Buttons */}
                   <div className="mt-6 flex items-center justify-end gap-3">
                     <button
                       type="button"
                       onClick={() => setPhase("warning")}
                       className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
                     >
-                      ← Back
+                      {isBn ? "← পেছনে যান" : "← Back"}
                     </button>
                     <motion.button
                       type="button"
@@ -354,13 +380,12 @@ export function DeleteStoreModal({
                       ) : (
                         <Trash2 className="h-4 w-4" />
                       )}
-                      Delete Forever
+                      {isBn ? "স্থায়ীভাবে মুছে ফেলুন" : "Delete Permanently"}
                     </motion.button>
                   </div>
                 </motion.div>
               )}
 
-              {/* ══ PHASE 3: Progress ═════════════════════════════════ */}
               {phase === "progress" && (
                 <motion.div
                   key="progress"
@@ -369,10 +394,8 @@ export function DeleteStoreModal({
                   exit={{ opacity: 0 }}
                   className="p-6"
                 >
-                  {/* Header row */}
                   <div className="flex items-center gap-4">
                     <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-red-50">
-                      {/* Spinning ring */}
                       <svg className="absolute inset-0 h-full w-full animate-spin" viewBox="0 0 56 56">
                         <circle
                           cx="28" cy="28" r="24"
@@ -392,37 +415,36 @@ export function DeleteStoreModal({
                       <Trash2 className="h-6 w-6 text-red-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-bold text-apple-ink">Deleting Store…</h3>
+                      <h3 className="text-base font-bold text-apple-ink">
+                        {isBn ? "দোকান মোছা হচ্ছে…" : "Deleting Store..."}
+                      </h3>
                       <p className="text-sm text-apple-ink-muted-48">
-                        Please wait. Do not close this window.
+                        {isBn ? "অনুগ্রহ করে অপেক্ষা করুন। উইন্ডোটি বন্ধ করবেন না।" : "Please wait. Do not close this window."}
                       </p>
                     </div>
-                    {/* Step counter */}
                     <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-apple-ink-muted-48">
-                      {Math.min(completedSteps.length + 1, PROGRESS_STEPS.length)}/{PROGRESS_STEPS.length}
+                      {Math.min(completedSteps.length + 1, progressSteps.length)}/{progressSteps.length}
                     </span>
                   </div>
 
-                  {/* Overall progress bar */}
                   <div className="mt-5">
                     <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
                       <motion.div
                         className="h-full rounded-full bg-red-500"
                         initial={{ width: "0%" }}
                         animate={{
-                          width: `${Math.round((completedSteps.length / PROGRESS_STEPS.length) * 100)}%`,
+                          width: `${Math.round((completedSteps.length / progressSteps.length) * 100)}%`,
                         }}
                         transition={{ ease: "easeOut", duration: 0.3 }}
                       />
                     </div>
                     <p className="mt-1.5 text-right text-[11px] font-medium text-apple-ink-muted-48">
-                      {Math.round((completedSteps.length / PROGRESS_STEPS.length) * 100)}% complete
+                      {Math.round((completedSteps.length / progressSteps.length) * 100)}% {isBn ? "সম্পন্ন" : "complete"}
                     </p>
                   </div>
 
-                  {/* Steps */}
                   <div className="mt-3 space-y-1">
-                    {PROGRESS_STEPS.map((step, i) => {
+                    {progressSteps.map((step, i) => {
                       const done = completedSteps.includes(i);
                       const active = !done && completedSteps.length === i;
                       return (
@@ -462,27 +484,27 @@ export function DeleteStoreModal({
                             {step}
                           </span>
                           {done && (
-                            <span className="ml-auto text-[10px] font-semibold text-emerald-500">Done</span>
+                            <span className="ml-auto text-[10px] font-semibold text-emerald-500">{isBn ? "সম্পন্ন" : "Done"}</span>
                           )}
                           {active && (
-                            <span className="ml-auto text-[10px] font-semibold text-red-500">Running…</span>
+                            <span className="ml-auto text-[10px] font-semibold text-red-500">{isBn ? "চলছে…" : "Working…"}</span>
                           )}
                         </motion.div>
                       );
                     })}
                   </div>
 
-                  {/* Warning note */}
                   <div className="mt-4 flex items-center gap-2 rounded-xl border border-amber-100 bg-amber-50 px-3.5 py-2.5">
                     <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-600" />
                     <p className="text-xs text-amber-700">
-                      Deletion is in progress. Closing this page will not cancel the operation.
+                      {isBn
+                        ? "ডিলিট কার্যক্রম প্রক্রিয়াধীন রয়েছে। পেজটি রিলোড বা বন্ধ করবেন না।"
+                        : "Deletion is in progress. Do not refresh or navigate away."}
                     </p>
                   </div>
                 </motion.div>
               )}
 
-              {/* ══ PHASE 4: Done ═════════════════════════════════════ */}
               {phase === "done" && (
                 <motion.div
                   key="done"
@@ -500,9 +522,11 @@ export function DeleteStoreModal({
                     <CheckCircle2 className="h-10 w-10 text-emerald-500" />
                   </motion.div>
                   <div>
-                    <h3 className="text-xl font-bold text-apple-ink">Store Deleted</h3>
+                    <h3 className="text-xl font-bold text-apple-ink">
+                      {isBn ? "দোকান মুছে ফেলা হয়েছে" : "Store Deleted"}
+                    </h3>
                     <p className="mt-1 text-sm text-apple-ink-muted-48">
-                      <span className="font-semibold">{storeName}</span> has been permanently removed.
+                      <span className="font-semibold">{storeName}</span> {isBn ? "স্থায়ীভাবে রিমুভ করা হয়েছে।" : "has been permanently removed."}
                     </p>
                   </div>
                 </motion.div>

@@ -4,14 +4,21 @@ import { useState } from "react";
 import { landingContainer } from "./landing-ui";
 import { LandingButton } from "./landing-button";
 import { Check, ArrowRight } from "lucide-react";
+import { useGetProfileQuery } from "@/redux/api/profile-api";
+import { useLandingLocale } from "./landing-locale";
 
 export function StoryPricing() {
+  const { locale } = useLandingLocale();
   const [isYearly, setIsYearly] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
+
+  const { data: profileData } = useGetProfileQuery();
+  const isAuthenticated = Boolean(profileData?.data?.profile);
 
   const PLANS = [
     {
       name: "Starter",
+      slug: "starter",
       priceMonthly: "৳৯৯৯",
       priceYearly: "৳৭৯৯",
       desc: "নতুন অনলাইন শপ ও ফেসবুক সেলারদের জন্য আদর্শ।",
@@ -29,6 +36,7 @@ export function StoryPricing() {
     },
     {
       name: "Growth",
+      slug: "growth",
       priceMonthly: "৳১,৯৯০",
       priceYearly: "৳১,৫৯০",
       desc: "ক্রমবর্ধমান ব্যবসা ও ফ্যাশন ব্র্যান্ডের জন্য সবচেয়ে উপযোগী।",
@@ -46,6 +54,7 @@ export function StoryPricing() {
     },
     {
       name: "Business",
+      slug: "business",
       priceMonthly: "৳২,৪৯০",
       priceYearly: "৳১,৯৯০",
       desc: "বড় শপ, এজেন্সি ও একাধিক দোকান পরিচালনাকারীদের জন্য।",
@@ -63,6 +72,7 @@ export function StoryPricing() {
     },
     {
       name: "Custom",
+      slug: "custom",
       priceMonthly: "যোগাযোগ করুন",
       priceYearly: "যোগাযোগ করুন",
       desc: "বড় প্রতিষ্ঠান ও কাস্টম প্রয়োজনের জন্য ডেডিকেটেড সমাধান।",
@@ -94,8 +104,14 @@ export function StoryPricing() {
     { name: "সাপোর্ট", starter: "ইমেইল", growth: "২৪/৭ চ্যাট", biz: "priority ২৪/৭", custom: "ডেডিকেটেড ম্যানেজার" },
   ];
 
+  const getPlanHref = (slug: string) => {
+    if (slug === "custom") return "/contact";
+    if (isAuthenticated) return `/dashboard/billing`;
+    return `/register?plan=${slug}`;
+  };
+
   return (
-    <section id="pricing" className="py-20 sm:py-24 bg-white border-b border-zinc-200/80">
+    <section id="pricing" className="py-20 sm:py-24 bg-white border-b border-zinc-200/80 scroll-mt-20">
       <div className={landingContainer}>
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-3 mb-12">
@@ -183,7 +199,7 @@ export function StoryPricing() {
                 <LandingButton
                   variant={plan.popular ? "primary" : "secondary"}
                   size="default"
-                  href="/register"
+                  href={getPlanHref(plan.slug)}
                   className="w-full"
                 >
                   {plan.cta}

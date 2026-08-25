@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Sparkles, LogOut, Store, Plus,
   ShoppingBag, Package, Users, FileText, CreditCard,
-  Truck, BarChart3, Palette, Settings, ChevronLeft, Search,
+  Truck, BarChart3, Palette, Settings, ChevronLeft, Bell, Activity, ShieldCheck, HelpCircle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useCurrentStore } from "@/hooks/use-current-store";
@@ -17,22 +17,33 @@ import { getLoginUrlForCurrentPage } from "@/lib/auth-redirect-client";
 import { toast } from "sonner";
 
 const mainLinks = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/stores", label: "All Stores", icon: Store },
-  { href: "/dashboard/create-store", label: "Create Store", icon: Plus },
+  { href: "/dashboard", label: "ড্যাশবোর্ড", icon: LayoutDashboard },
+  { href: "/dashboard/stores", label: "দোকানসমূহ", icon: Store },
+  { href: "/dashboard/create-store", label: "দোকান তৈরি করুন", icon: Plus },
+  { href: "/dashboard/billing", label: "বিলিং", icon: CreditCard },
+  { href: "/dashboard/team", label: "টিম", icon: Users },
+  { href: "/dashboard/activity", label: "কার্যক্রম", icon: Activity },
+  { href: "/dashboard/notifications", label: "নোটিফিকেশন", icon: Bell },
+  { href: "/dashboard/analytics", label: "অ্যানালিটিক্স", icon: BarChart3 },
+];
+
+const accountLinks = [
+  { href: "/dashboard/settings", label: "সেটিংস", icon: Settings },
+  { href: "/dashboard/security", label: "নিরাপত্তা", icon: ShieldCheck },
+  { href: "/dashboard/help", label: "সহায়তা", icon: HelpCircle },
 ];
 
 const storeLinks = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "products", label: "Products", icon: Package },
-  { id: "orders", label: "Orders", icon: ShoppingBag },
-  { id: "customers", label: "Customers", icon: Users },
-  { id: "cms", label: "CMS", icon: FileText },
-  { id: "payments", label: "Payments", icon: CreditCard },
-  { id: "delivery", label: "Delivery", icon: Truck },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "theme", label: "Theme", icon: Palette },
-  { id: "settings", label: "Settings", icon: Settings },
+  { id: "overview", label: "ওভারভিউ", icon: LayoutDashboard },
+  { id: "products", label: "পণ্যসমূহ", icon: Package },
+  { id: "orders", label: "অর্ডারসমূহ", icon: ShoppingBag },
+  { id: "customers", label: "কাস্টমার", icon: Users },
+  { id: "cms", label: "CMS পেজ", icon: FileText },
+  { id: "payments", label: "পেমেন্ট পদ্ধতি", icon: CreditCard },
+  { id: "delivery", label: "ডেলিভারি ও কুরিয়ার", icon: Truck },
+  { id: "analytics", label: "সেলস অ্যানালিটিক্স", icon: BarChart3 },
+  { id: "theme", label: "থিম ডিজাইন", icon: Palette },
+  { id: "settings", label: "স্টোর সেটিংস", icon: Settings },
 ];
 
 export function UserSidebar() {
@@ -65,7 +76,7 @@ export function UserSidebar() {
           <Sparkles className="h-4 w-4 text-primary-foreground" />
         </div>
         {!collapsed && <span className="text-lg font-bold tracking-tight text-apple-ink">BornoLand</span>}
-        <button onClick={() => setCollapsed(!collapsed)} className={cn("ml-auto flex h-6 w-6 items-center justify-center rounded-md text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80", collapsed && "ml-0")}>
+        <button onClick={() => setCollapsed(!collapsed)} title={collapsed ? "প্রসারিত করুন" : "সংকুচিত করুন"} className={cn("ml-auto flex h-6 w-6 items-center justify-center rounded-md text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80", collapsed && "ml-0")}>
           <ChevronLeft className={cn("h-3.5 w-3.5 transition-transform", collapsed && "rotate-180")} />
         </button>
       </div>
@@ -81,8 +92,8 @@ export function UserSidebar() {
               {currentStore ? currentStore.name[0] : <Store className="h-4 w-4" />}
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-sm font-semibold text-apple-ink">{currentStore?.name || "Select Store"}</p>
-              <p className="truncate text-xs text-apple-ink-muted-48">{currentStore?.plan || "No store selected"}</p>
+              <p className="truncate text-sm font-semibold text-apple-ink">{currentStore?.name || "দোকান বেছে নিন"}</p>
+              <p className="truncate text-xs text-apple-ink-muted-48">{currentStore?.plan || "কোনো দোকান নির্বাচন করা হয়নি"}</p>
             </div>
           </button>
           {showStorePicker && (
@@ -115,17 +126,18 @@ export function UserSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <p className={cn("mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48", collapsed && "sr-only")}>General</p>
+        <p className={cn("mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48", collapsed && "sr-only")}>ওয়ার্কস্পেস</p>
         <ul className="space-y-1">
           {mainLinks.map((link) => {
             const active = pathname === link.href || (link.href === "/dashboard" && pathname === "/dashboard");
             return (
               <li key={link.href}>
                 <Link href={link.href}
+                  title={collapsed ? link.label : undefined}
                   className={cn(
                     "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                     collapsed && "justify-center px-2",
-                    active ? "bg-blue-50 text-blue-700" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink"
+                    active ? "bg-blue-50 text-blue-700 font-semibold" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink"
                   )}>
                   <link.icon className={cn("h-5 w-5 shrink-0", active ? "text-blue-600" : "text-apple-ink-muted-48")} />
                   {!collapsed && <span>{link.label}</span>}
@@ -137,7 +149,7 @@ export function UserSidebar() {
 
         {hydrated && effectiveStoreId && !collapsed && (
           <>
-            <p className="mb-2 mt-6 px-3 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">Store</p>
+            <p className="mb-2 mt-6 px-3 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">দোকান</p>
             <ul className="space-y-1">
               {storeLinks.map((link) => {
                 const href = `/dashboard/stores/${effectiveStoreId}`;
@@ -145,7 +157,6 @@ export function UserSidebar() {
                   link.id === "overview"
                     ? pathname === href
                     : pathname.includes(`/${link.id}`) || (
-                      // For store-specific routes like /dashboard/cms which aren't under /stores/[id]
                       link.id === "cms" && pathname.startsWith("/dashboard/cms")
                     )
                 );
@@ -158,7 +169,30 @@ export function UserSidebar() {
                       }}
                       className={cn(
                         "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                        active ? "bg-blue-50 text-blue-700" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink"
+                        active ? "bg-blue-50 text-blue-700 font-semibold" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink"
+                      )}>
+                      <link.icon className={cn("h-5 w-5 shrink-0", active ? "text-blue-600" : "text-apple-ink-muted-48")} />
+                      <span>{link.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+
+        {!collapsed && (
+          <>
+            <p className="mb-2 mt-6 px-3 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">অ্যাকাউন্ট</p>
+            <ul className="space-y-1">
+              {accountLinks.map((link) => {
+                const active = pathname === link.href;
+                return (
+                  <li key={link.href}>
+                    <Link href={link.href}
+                      className={cn(
+                        "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                        active ? "bg-blue-50 text-blue-700 font-semibold" : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink"
                       )}>
                       <link.icon className={cn("h-5 w-5 shrink-0", active ? "text-blue-600" : "text-apple-ink-muted-48")} />
                       <span>{link.label}</span>
@@ -176,17 +210,17 @@ export function UserSidebar() {
         <div className="border-t border-zinc-100 p-3">
           <div className="mb-3 flex items-center gap-3 rounded-xl bg-apple-canvas-parchment p-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
-              {user?.name?.split(" ").map((n) => n[0]).join("") ?? "U"}
+              {user?.name?.split(" ").map((n) => n[0]).join("") ?? "ইউ"}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-apple-ink">{user?.name ?? "User"}</p>
+              <p className="truncate text-sm font-medium text-apple-ink">{user?.name ?? "ইউজার"}</p>
               <p className="truncate text-xs text-apple-ink-muted-48">{user?.email ?? ""}</p>
             </div>
           </div>
-          <button onClick={async () => { try { await logout().unwrap(); router.replace(getLoginUrlForCurrentPage()); } catch { toast.error("Failed to sign out"); } }}
+          <button onClick={async () => { try { await logout().unwrap(); toast.success("লগআউট সম্পন্ন হয়েছে"); router.replace(getLoginUrlForCurrentPage()); } catch { toast.error("লগআউট ব্যর্থ হয়েছে"); } }}
             className="flex w-full items-center gap-2 rounded-lg p-2 text-apple-ink-muted-48 transition-colors hover:bg-red-50 hover:text-red-600">
             <LogOut className="h-4 w-4" />
-            <span className="text-sm">Sign out</span>
+            <span className="text-sm">লগআউট</span>
           </button>
         </div>
       )}

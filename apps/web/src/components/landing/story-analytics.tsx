@@ -23,7 +23,7 @@ export function StoryAnalytics() {
   const current = STATS[period];
 
   return (
-    <section className="py-20 sm:py-24 bg-zinc-50/50 border-b border-zinc-200/80">
+    <section id="analytics" className="py-20 sm:py-24 bg-zinc-50/50 border-b border-zinc-200/80 scroll-mt-20">
       <div className={landingContainer}>
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-3 mb-14">

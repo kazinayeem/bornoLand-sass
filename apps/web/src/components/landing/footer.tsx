@@ -3,53 +3,64 @@
 import Link from "next/link";
 import Image from "next/image";
 import { landingContainer } from "./landing-ui";
+import { scrollToSection } from "@/lib/scroll-utils";
+import { useLandingLocale } from "./landing-locale";
 
 export function Footer() {
-  const FOOTER_COLS = [
+  const { locale, t } = useLandingLocale();
+
+  const footerCols = [
     {
-      title: "প্ল্যাটফর্ম",
+      title: t.footer.product || (locale === "bn" ? "প্ল্যাটফর্ম" : "Platform"),
       links: [
-        { label: "ফিচারসমূহ", href: "#features" },
-        { label: "স্টোর বিল্ডার", href: "#builder" },
-        { label: "পণ্য ক্যাটালগ", href: "#features" },
-        { label: "পেমেন্ট ও কুরিয়ার", href: "#payments" },
-        { label: "মূল্য তালিকা", href: "#pricing" },
+        { label: locale === "bn" ? "ফিচারসমূহ" : "Features", href: "#features" },
+        { label: locale === "bn" ? "স্টোর বিল্ডার" : "Store Builder", href: "#store-builder" },
+        { label: locale === "bn" ? "পণ্য ক্যাটালগ" : "Products", href: "#products" },
+        { label: locale === "bn" ? "পেমেন্ট ও কুরিয়ার" : "Payments & Courier", href: "#payments" },
+        { label: locale === "bn" ? "মূল্য তালিকা" : "Pricing", href: "#pricing" },
       ],
     },
     {
-      title: "সলিউশন",
+      title: locale === "bn" ? "সলিউশন" : "Solutions",
       links: [
-        { label: "অনলাইন শপ", href: "/register" },
-        { label: "বুটিক ও ফ্যাশন", href: "/register" },
-        { label: "ফেসবুক ও ইনস্টাগ্রাম সেলার", href: "/register" },
-        { label: "রিটেইল ব্যবসা", href: "/register" },
+        { label: locale === "bn" ? "অনলাইন শপ" : "Online Shop", href: "/register" },
+        { label: locale === "bn" ? "বুটিক ও ফ্যাশন" : "Boutique & Fashion", href: "/register" },
+        { label: locale === "bn" ? "ফেসবুক ও ইনস্টাগ্রাম সেলার" : "Social Sellers", href: "/register" },
+        { label: locale === "bn" ? "রিটেইল ব্যবসা" : "Retail Business", href: "/register" },
       ],
     },
     {
-      title: "ডেভেলপার",
+      title: locale === "bn" ? "ডেভেলপার" : "Developer",
       links: [
-        { label: "REST API", href: "#developers" },
-        { label: "Webhooks", href: "#developers" },
-        { label: "ডকুমেন্টেশন", href: "#developers" },
+        { label: "REST API", href: "#developer" },
+        { label: "Webhooks", href: "#developer" },
+        { label: t.footer.links?.docs || (locale === "bn" ? "ডকুমেন্টেশন" : "Documentation"), href: "/docs" },
       ],
     },
     {
-      title: "কোম্পানি",
+      title: t.footer.company || (locale === "bn" ? "কোম্পানি" : "Company"),
       links: [
-        { label: "আমাদের সম্পর্কে", href: "/about" },
-        { label: "যোগাযোগ", href: "/contact" },
-        { label: "সাপোর্ট সেন্টার", href: "/contact" },
+        { label: t.footer.links?.about || (locale === "bn" ? "আমাদের সম্পর্কে" : "About Us"), href: "/about" },
+        { label: t.footer.links?.contact || (locale === "bn" ? "যোগাযোগ" : "Contact"), href: "/contact" },
+        { label: t.footer.links?.support || (locale === "bn" ? "সাপোর্ট সেন্টার" : "Support Center"), href: "/support" },
       ],
     },
     {
-      title: "আইনি",
+      title: t.footer.legal || (locale === "bn" ? "আইনি" : "Legal"),
       links: [
-        { label: "Privacy Policy", href: "/privacy" },
-        { label: "Terms of Service", href: "/terms" },
-        { label: "Refund Policy", href: "/refund-policy" },
+        { label: t.footer.links?.privacy || "Privacy Policy", href: "/privacy" },
+        { label: t.footer.links?.terms || "Terms of Service", href: "/terms" },
+        { label: t.footer.links?.refund || "Refund Policy", href: "/refund" },
       ],
     },
   ];
+
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith("#")) {
+      e.preventDefault();
+      scrollToSection(href);
+    }
+  };
 
   return (
     <footer className="border-t border-zinc-200/80 bg-zinc-50/70 pt-16 pb-12 text-zinc-600">
@@ -73,12 +84,14 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-xs text-zinc-500 leading-relaxed max-w-sm">
-              আপনার অনলাইন ব্যবসা শুরু করা, চালানো এবং বড় করা — সবকিছু এক জায়গায়।
+              {t.footer?.tagline || (locale === "bn"
+                ? "আপনার অনলাইন ব্যবসা শুরু করা, চালানো এবং বড় করা — সবকিছু এক জায়গায়।"
+                : "Build, manage, and grow your online store from one place.")}
             </p>
           </div>
 
           {/* Nav Columns */}
-          {FOOTER_COLS.map((col, idx) => (
+          {footerCols.map((col, idx) => (
             <div key={idx} className="space-y-3">
               <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-950">
                 {col.title}
@@ -88,6 +101,7 @@ export function Footer() {
                   <li key={lIdx}>
                     <Link
                       href={link.href}
+                      onClick={(e) => handleLinkClick(e, link.href)}
                       className="text-zinc-500 hover:text-zinc-950 transition-colors"
                     >
                       {link.label}
@@ -101,8 +115,10 @@ export function Footer() {
 
         {/* Bottom Copyright */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
-          <p>© {new Date().getFullYear()} BornoLand Technologies. সর্বস্বত্ব সংরক্ষিত।</p>
-          <p className="font-medium text-zinc-600">বাংলাদেশের আধুনিক ই-কমার্সের জন্য তৈরি।</p>
+          <p>© {new Date().getFullYear()} BornoLand Technologies. {t.footer?.rights || (locale === "bn" ? "সর্বস্বত্ব সংরক্ষিত।" : "All rights reserved.")}</p>
+          <p className="font-medium text-zinc-600">
+            {locale === "bn" ? "বাংলাদেশের আধুনিক ই-কমার্সের জন্য তৈরি।" : "Made for modern ecommerce in Bangladesh."}
+          </p>
         </div>
       </div>
     </footer>

@@ -15,27 +15,34 @@ import { landingContainer } from "./landing-ui";
 import { LiveIndicator } from "./live-indicator";
 import { LandingButton } from "./landing-button";
 import { REVENUE_DATA } from "./landing-tokens";
+import { scrollToSection } from "@/lib/scroll-utils";
+import { useGetProfileQuery } from "@/redux/api/profile-api";
+import { useLandingLocale } from "./landing-locale";
 
 export function StoryHero() {
+  const { locale, t } = useLandingLocale();
   const [period, setPeriod] = useState<"Today" | "7D" | "30D" | "90D">("Today");
   const data = REVENUE_DATA[period];
   const maxVal = Math.max(...data.map((d) => d.revenue));
 
+  const { data: profileData } = useGetProfileQuery();
+  const isAuthenticated = Boolean(profileData?.data?.profile);
+
   const periodLabels: Record<string, string> = {
-    Today: "আজ",
-    "7D": "৭ দিন",
-    "30D": "৩০ দিন",
-    "90D": "৯০ দিন",
+    Today: locale === "bn" ? "আজ" : "Today",
+    "7D": locale === "bn" ? "৭ দিন" : "7 Days",
+    "30D": locale === "bn" ? "৩০ দিন" : "30 Days",
+    "90D": locale === "bn" ? "৯০ দিন" : "90 Days",
   };
 
   return (
-    <section className="relative overflow-hidden pt-28 pb-16 sm:pt-36 sm:pb-24 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(37,99,235,0.08),rgba(255,255,255,0))]">
+    <section id="hero" className="relative overflow-hidden pt-28 pb-16 sm:pt-36 sm:pb-24 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(37,99,235,0.08),rgba(255,255,255,0))]">
       <div className={landingContainer}>
         {/* Top Tag */}
         <div className="flex justify-center mb-6">
           <LiveIndicator
-            label="অল-ইন-ওয়ান ই-কমার্স প্ল্যাটফর্ম"
-            sublabel="সম্পূর্ণ সমন্বিত সিস্টেম"
+            label={t.hero.badge || (locale === "bn" ? "অল-ইন-ওয়ান ই-কমার্স প্ল্যাটফর্ম" : "All-in-one ecommerce platform")}
+            sublabel={locale === "bn" ? "সম্পূর্ণ সমন্বিত সিস্টেম" : "Fully Integrated System"}
             className="bg-white/90 border-zinc-200/80 shadow-2xs text-zinc-800"
           />
         </div>
@@ -43,14 +50,15 @@ export function StoryHero() {
         {/* Hero Headline & Subtitle */}
         <div className="max-w-4xl mx-auto text-center space-y-4">
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-zinc-950 leading-[1.12]">
-            মাত্র কয়েক মিনিটেই আপনার <br />
+            {t.hero.titleLine1 || (locale === "bn" ? "মাত্র কয়েক মিনিটেই আপনার" : "Your online store,")}{" "}
+            <br />
             <span className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              অনলাইন দোকান চালু করুন।
+              {t.hero.titleHighlight || (locale === "bn" ? "অনলাইন দোকান চালু করুন।" : "ready in minutes.")}
             </span>
           </h1>
 
           <p className="max-w-2xl mx-auto text-base sm:text-xl text-zinc-600 leading-relaxed font-normal">
-            পণ্য যোগ করা থেকে অর্ডার, পেমেন্ট ও ডেলিভারি—আপনার পুরো অনলাইন ব্যবসা এক জায়গা থেকেই পরিচালনা করুন।
+            {t.hero.description || (locale === "bn" ? "পণ্য যোগ করা থেকে অর্ডার, পেমেন্ট ও ডেলিভারি—আপনার পুরো অনলাইন ব্যবসা এক জায়গা থেকেই পরিচালনা করুন।" : "Create a store, sell products, take payments, and manage everything from one clean dashboard.")}
           </p>
 
           {/* Action CTAs */}
@@ -58,10 +66,12 @@ export function StoryHero() {
             <LandingButton
               variant="primary"
               size="hero"
-              href="/register"
+              href={isAuthenticated ? "/dashboard" : "/register"}
               className="w-full sm:w-auto text-base font-semibold"
             >
-              ফ্রি শুরু করুন
+              {isAuthenticated
+                ? (locale === "bn" ? "ড্যাশবোর্ডে যান" : "Go to Dashboard")
+                : (t.hero.primaryCta || (locale === "bn" ? "ফ্রি শুরু করুন" : "Start Free"))}
               <ArrowRight className="h-4 w-4 ml-1" />
             </LandingButton>
 
@@ -69,15 +79,21 @@ export function StoryHero() {
               variant="secondary"
               size="hero"
               href="#how-it-works"
-              className="w-full sm:w-auto text-base font-semibold"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection("how-it-works");
+              }}
+              className="w-full sm:w-auto text-base font-semibold cursor-pointer"
             >
-              কীভাবে কাজ করে দেখুন
+              {t.hero.secondaryCta || (locale === "bn" ? "কীভাবে কাজ করে দেখুন" : "See How It Works")}
               <ExternalLink className="h-3.5 w-3.5 text-zinc-400 ml-1" />
             </LandingButton>
           </div>
 
           <p className="text-xs text-zinc-500 font-medium pt-1">
-            কোনো কোডিং লাগবে না · শুরু করতে ক্রেডিট কার্ড লাগে না
+            {locale === "bn"
+              ? "কোনো কোডিং লাগবে না · শুরু করতে ক্রেডিট কার্ড লাগে না"
+              : "No coding required · No credit card required to start"}
           </p>
         </div>
 

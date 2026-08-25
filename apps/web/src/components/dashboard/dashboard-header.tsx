@@ -26,8 +26,9 @@ import { useGetProductQuery } from "@/redux/api/product-api";
 import { NotificationDropdown } from "@/components/user/notification-dropdown";
 import { ProfileDropdown } from "@/components/user/profile-dropdown";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
+import { LanguageSwitcher } from "@/components/user/language-switcher";
+import { useLanguage } from "@/providers/language-provider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 type QuickAction = {
   label: string;
@@ -43,39 +44,53 @@ type SearchResult = {
   type: string;
 };
 
-const workspaceQuickActions: QuickAction[] = [
-  { label: "New Store", href: "/dashboard/stores/create", icon: Store },
-  { label: "Import Store", href: "/dashboard/stores", icon: Upload, disabled: true },
-  { label: "Invite Member", href: "/dashboard/team", icon: UserPlus },
-  { label: "Upgrade Plan", href: "/dashboard/billing", icon: CreditCard },
-];
-
-const workspaceRouteLabels: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/dashboard/stores": "Stores",
-  "/dashboard/stores/create": "Create Store",
-  "/dashboard/stores/archived": "Archived Stores",
-  "/dashboard/billing": "Billing",
-  "/dashboard/team": "Team",
-  "/dashboard/account": "Account",
-  "/dashboard/security": "Security",
-  "/dashboard/activity": "Activity Log",
-  "/dashboard/orders": "Orders",
-  "/dashboard/products": "Products",
-  "/dashboard/categories": "Categories",
-  "/dashboard/cms": "CMS",
-  "/dashboard/settings": "Settings",
-  "/dashboard/notifications": "Notifications",
-  "/dashboard/help": "Help",
-  "/dashboard/subscription": "Subscription",
-  "/dashboard/theme": "Theme",
-  "/dashboard/analytics/visitors": "Visitors",
-  "/dashboard/analytics/live": "Live Visitors",
-  "/dashboard/analytics/sources": "Traffic Sources",
-  "/dashboard/analytics/reports": "Reports",
+const workspaceRouteLabels: Record<string, { bn: string; en: string }> = {
+  "/dashboard": { bn: "ড্যাশবোর্ড", en: "Dashboard" },
+  "/dashboard/stores": { bn: "সব দোকান", en: "All Stores" },
+  "/dashboard/create-store": { bn: "দোকান তৈরি করুন", en: "Create Store" },
+  "/dashboard/stores/create": { bn: "দোকান তৈরি করুন", en: "Create Store" },
+  "/dashboard/stores/archived": { bn: "আর্কাইভকৃত দোকান", en: "Archived Stores" },
+  "/dashboard/billing": { bn: "বিলিং", en: "Billing" },
+  "/dashboard/team": { bn: "টিম", en: "Team" },
+  "/dashboard/account": { bn: "প্রোফাইল সেটিংস", en: "Profile Settings" },
+  "/dashboard/security": { bn: "নিরাপত্তা", en: "Security" },
+  "/dashboard/activity": { bn: "কার্যক্রম লগ", en: "Activity Log" },
+  "/dashboard/orders": { bn: "অর্ডারসমূহ", en: "Orders" },
+  "/dashboard/products": { bn: "পণ্যসমূহ", en: "Products" },
+  "/dashboard/categories": { bn: "ক্যাটাগরি", en: "Categories" },
+  "/dashboard/cms": { bn: "CMS পেজ", en: "CMS Pages" },
+  "/dashboard/settings": { bn: "সেটিংস", en: "Settings" },
+  "/dashboard/notifications": { bn: "নোটিফিকেশন", en: "Notifications" },
+  "/dashboard/help": { bn: "সহায়তা", en: "Help" },
+  "/dashboard/subscription": { bn: "সাবস্ক্রিপশন", en: "Subscription" },
+  "/dashboard/theme": { bn: "থিম ডিজাইন", en: "Theme" },
+  "/dashboard/analytics": { bn: "অ্যানালিটিক্স", en: "Analytics" },
+  "/dashboard/analytics/visitors": { bn: "ভিজিটর", en: "Visitors" },
+  "/dashboard/analytics/live": { bn: "লাইভ ভিজিটর", en: "Live Visitors" },
+  "/dashboard/analytics/sources": { bn: "ট্রাফিক সোর্স", en: "Traffic Sources" },
+  "/dashboard/analytics/reports": { bn: "রিপোর্ট", en: "Reports" },
 };
 
-function titleCase(value: string) {
+function titleCase(value: string, isBn: boolean) {
+  const bnMap: Record<string, string> = {
+    dashboard: "ড্যাশবোর্ড",
+    stores: "দোকানসমূহ",
+    create: "তৈরি করুন",
+    billing: "বিলিং",
+    team: "টিম",
+    account: "অ্যাকাউন্ট",
+    security: "নিরাপত্তা",
+    activity: "কার্যক্রম",
+    orders: "অর্ডার",
+    products: "পণ্য",
+    categories: "ক্যাটাগরি",
+    cms: "CMS",
+    settings: "সেটিংস",
+    notifications: "নোটিফিকেশন",
+    help: "সহায়তা",
+    analytics: "অ্যানালিটিক্স",
+  };
+  if (isBn && bnMap[value.toLowerCase()]) return bnMap[value.toLowerCase()];
   return value.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
@@ -92,24 +107,34 @@ export function DashboardHeader(props: DashboardHeaderProps = {}) {
 
 function WorkspaceDashboardHeader() {
   const pathname = usePathname();
+  const { language, t } = useLanguage();
   const currentStore = useAppSelector((s) => s.currentStore);
   const { data } = useGetMyStoresQuery();
   const stores = data?.data?.stores ?? [];
 
-  const segments = pathname.split("/").filter(Boolean);
+  const workspaceQuickActions: QuickAction[] = [
+    { label: t.header.newStore, href: "/dashboard/stores/create", icon: Store },
+    { label: t.header.importStore, href: "/dashboard/stores", icon: Upload, disabled: true },
+    { label: t.header.inviteMember, href: "/dashboard/team", icon: UserPlus },
+    { label: t.header.upgradePlan, href: "/dashboard/billing", icon: CreditCard },
+  ];
+
+  const isBn = language === "bn";
+  const routeObj = workspaceRouteLabels[pathname];
   const pageTitle =
-    workspaceRouteLabels[pathname] ??
+    (routeObj ? routeObj[language] : undefined) ??
     (pathname.startsWith("/dashboard/stores/")
-      ? "Store Details"
-      : segments.length > 1
-        ? titleCase(segments[segments.length - 1] ?? "Dashboard")
-        : "Dashboard");
+      ? isBn ? "দোকানের বিবরণ" : "Store Details"
+      : titleCase(pathname.split("/").filter(Boolean).slice(-1)[0] ?? "dashboard", isBn));
 
   const contextTitle =
-    currentStore.initialized && currentStore.storeName ? currentStore.storeName : "Workspace";
+    currentStore.initialized && currentStore.storeName
+      ? currentStore.storeName
+      : t.navigation.workspace;
 
+  const segments = pathname.split("/").filter(Boolean);
   const breadcrumbs = segments.map((segment, index) => ({
-    label: titleCase(segment),
+    label: titleCase(segment, isBn),
     href: index < segments.length - 1 ? `/${segments.slice(0, index + 1).join("/")}` : undefined,
   }));
 
@@ -118,13 +143,13 @@ function WorkspaceDashboardHeader() {
       label: s.name,
       sub: s.slug,
       href: `/store/${s.slug}/dashboard`,
-      type: "Store",
+      type: isBn ? "দোকান" : "Store",
     })),
-    { label: "All Stores", sub: "Workspace", href: "/dashboard/stores", type: "Page" },
-    { label: "Create Store", sub: "Workspace", href: "/dashboard/stores/create", type: "Page" },
-    { label: "Billing", sub: "Workspace", href: "/dashboard/billing", type: "Page" },
-    { label: "Team", sub: "Workspace", href: "/dashboard/team", type: "Page" },
-    { label: "Settings", sub: "Workspace", href: "/dashboard/account", type: "Page" },
+    { label: t.navigation.allStores, sub: t.navigation.workspace, href: "/dashboard/stores", type: isBn ? "পেজ" : "Page" },
+    { label: t.navigation.createStore, sub: t.navigation.workspace, href: "/dashboard/stores/create", type: isBn ? "পেজ" : "Page" },
+    { label: t.navigation.billing, sub: t.navigation.workspace, href: "/dashboard/billing", type: isBn ? "পেজ" : "Page" },
+    { label: t.navigation.team, sub: t.navigation.workspace, href: "/dashboard/team", type: isBn ? "পেজ" : "Page" },
+    { label: t.navigation.settings, sub: t.navigation.workspace, href: "/dashboard/settings", type: isBn ? "পেজ" : "Page" },
   ];
 
   return (
@@ -132,7 +157,7 @@ function WorkspaceDashboardHeader() {
       pageTitle={pageTitle}
       quickActions={workspaceQuickActions}
       searchResults={searchResults}
-      searchPlaceholder="Search stores, pages..."
+      searchPlaceholder={t.header.searchPlaceholder}
       useWorkspaceMobileSidebar
       breadcrumb={
         <>
@@ -165,6 +190,7 @@ function StoreDashboardHeader({
   onMenuClick?: () => void;
 }) {
   const pathname = usePathname();
+  const { language, t } = useLanguage();
   const params = useParams();
   const productId = typeof params.productId === "string" ? params.productId : "";
   const { data: productData } = useGetProductQuery(productId, { skip: !productId });
@@ -172,76 +198,77 @@ function StoreDashboardHeader({
 
   const storeBase = `/store/${store.slug}`;
   const dashboardHref = `${storeBase}/dashboard`;
+  const isBn = language === "bn";
 
   const { pageTitle, breadcrumbs, searchResults } = useMemo(() => {
-    const crumbs = [{ label: "Dashboard", href: dashboardHref }] as Array<{
+    const defaultDashTitle = t.navigation.dashboard;
+    const crumbs = [{ label: defaultDashTitle, href: dashboardHref }] as Array<{
       label: string;
       href?: string;
     }>;
-    let title = "Dashboard";
+    let title = defaultDashTitle;
 
     if (pathname.startsWith(`${storeBase}/products/new`)) {
-      title = "Create Product";
-      crumbs.push({ label: "Products", href: `${storeBase}/products` }, { label: "Create Product" });
+      title = isBn ? "নতুন পণ্য যোগ করুন" : "Add New Product";
+      crumbs.push({ label: isBn ? "পণ্যসমূহ" : "Products", href: `${storeBase}/products` }, { label: isBn ? "নতুন পণ্য" : "New Product" });
     } else if (pathname.startsWith(`${storeBase}/products/`) && pathname.endsWith("/edit")) {
-      title = productName || "Edit Product";
-      crumbs.push({ label: "Products", href: `${storeBase}/products` }, { label: title });
+      title = productName || (isBn ? "পণ্য এডিট করুন" : "Edit Product");
+      crumbs.push({ label: isBn ? "পণ্যসমূহ" : "Products", href: `${storeBase}/products` }, { label: title });
     } else if (pathname.startsWith(`${storeBase}/products/`) && pathname.endsWith("/duplicate")) {
-      title = productName ? `Duplicate ${productName}` : "Duplicate Product";
-      crumbs.push({ label: "Products", href: `${storeBase}/products` }, { label: title });
+      title = productName ? (isBn ? `${productName} কপি করুন` : `Duplicate ${productName}`) : (isBn ? "পণ্য কপি" : "Duplicate Product");
+      crumbs.push({ label: isBn ? "পণ্যসমূহ" : "Products", href: `${storeBase}/products` }, { label: title });
     } else if (pathname !== dashboardHref && !pathname.match(new RegExp(`^/store/${store.slug}/?$`))) {
       const segment = pathname.replace(`${storeBase}/`, "").split("/")[0] || "dashboard";
-      const labels: Record<string, string> = {
-        dashboard: "Dashboard",
-        products: "Products",
-        orders: "Orders",
-        customers: "Customers",
-        cms: "CMS",
-        "customer-messages": "Customer Messages",
-        pages: "Pages",
-        media: "Media Library",
-        theme: "Theme",
-        settings: "Settings",
-        analytics: "Analytics",
-        categories: "Categories",
-        inventory: "Inventory",
-        reviews: "Reviews",
-        coupons: "Coupons",
-        reports: "Reports",
-        marketing: "Marketing",
-        billing: "Billing",
-        builder: "Builder",
-        appearance: "Appearance",
-        apps: "Apps",
-        activity: "Activity",
+      const labels: Record<string, { bn: string; en: string }> = {
+        dashboard: { bn: "ড্যাশবোর্ড", en: "Dashboard" },
+        products: { bn: "পণ্যসমূহ", en: "Products" },
+        orders: { bn: "অর্ডারসমূহ", en: "Orders" },
+        customers: { bn: "কাস্টমার", en: "Customers" },
+        cms: { bn: "CMS পেজ", en: "CMS Pages" },
+        "customer-messages": { bn: "মেসেজ", en: "Messages" },
+        pages: { bn: "পেজসমূহ", en: "Pages" },
+        media: { bn: "মিডিয়া লাইব্রেরি", en: "Media Library" },
+        theme: { bn: "থিম", en: "Theme" },
+        settings: { bn: "সেটিংস", en: "Settings" },
+        analytics: { bn: "অ্যানালিটিক্স", en: "Analytics" },
+        categories: { bn: "ক্যাটাগরি", en: "Categories" },
+        inventory: { bn: "ইনভেন্টরি", en: "Inventory" },
+        reviews: { bn: "রিভিউ", en: "Reviews" },
+        coupons: { bn: "কুপন", en: "Coupons" },
+        reports: { bn: "রিপোর্ট", en: "Reports" },
+        marketing: { bn: "মার্কেটিং", en: "Marketing" },
+        billing: { bn: "বিলিং", en: "Billing" },
+        builder: { bn: "বিল্ডার", en: "Builder" },
+        appearance: { bn: "অ্যাপিয়ারেন্স", en: "Appearance" },
+        apps: { bn: "অ্যাপস", en: "Apps" },
+        activity: { bn: "কার্যক্রম", en: "Activity" },
       };
-      title = labels[segment] ?? titleCase(segment);
+      title = labels[segment] ? labels[segment][language] : titleCase(segment, isBn);
       crumbs.push({ label: title });
     }
 
+    const pageType = isBn ? "পেজ" : "Page";
     const results: SearchResult[] = [
-      { label: "Dashboard", sub: store.name, href: dashboardHref, type: "Page" },
-      { label: "Products", sub: store.name, href: `${storeBase}/products`, type: "Page" },
-      { label: "Orders", sub: store.name, href: `${storeBase}/orders`, type: "Page" },
-      { label: "Customers", sub: store.name, href: `${storeBase}/customers`, type: "Page" },
-      { label: "Analytics", sub: store.name, href: `${storeBase}/analytics`, type: "Page" },
-      { label: "Marketing", sub: store.name, href: `${storeBase}/marketing`, type: "Page" },
-      { label: "Media", sub: store.name, href: `${storeBase}/media`, type: "Page" },
-      { label: "Settings", sub: store.name, href: `${storeBase}/settings`, type: "Page" },
-      { label: "Billing", sub: store.name, href: `${storeBase}/billing`, type: "Page" },
-      { label: "Design", sub: store.name, href: `${storeBase}/design`, type: "Page" },
-      { label: "Apps", sub: store.name, href: `${storeBase}/apps`, type: "Page" },
-      { label: "Domain", sub: store.name, href: `${storeBase}/appearance/domain`, type: "Page" },
+      { label: t.navigation.dashboard, sub: store.name, href: dashboardHref, type: pageType },
+      { label: isBn ? "পণ্যসমূহ" : "Products", sub: store.name, href: `${storeBase}/products`, type: pageType },
+      { label: isBn ? "অর্ডারসমূহ" : "Orders", sub: store.name, href: `${storeBase}/orders`, type: pageType },
+      { label: isBn ? "কাস্টমার" : "Customers", sub: store.name, href: `${storeBase}/customers`, type: pageType },
+      { label: t.navigation.analytics, sub: store.name, href: `${storeBase}/analytics`, type: pageType },
+      { label: isBn ? "মার্কেটিং" : "Marketing", sub: store.name, href: `${storeBase}/marketing`, type: pageType },
+      { label: isBn ? "মিডিয়া" : "Media", sub: store.name, href: `${storeBase}/media`, type: pageType },
+      { label: t.navigation.settings, sub: store.name, href: `${storeBase}/settings`, type: pageType },
+      { label: t.navigation.billing, sub: store.name, href: `${storeBase}/billing`, type: pageType },
+      { label: isBn ? "ডিজাইন" : "Design", sub: store.name, href: `${storeBase}/design`, type: pageType },
     ];
 
     return { pageTitle: title, breadcrumbs: crumbs, searchResults: results };
-  }, [pathname, store, dashboardHref, storeBase, productName]);
+  }, [pathname, store, dashboardHref, storeBase, productName, language, t, isBn]);
 
   const quickActions: QuickAction[] = [
-    { label: "New Product", href: `${storeBase}/products/new`, icon: Package },
-    { label: "Orders", href: `${storeBase}/orders`, icon: ShoppingBag },
-    { label: "All Stores", href: "/dashboard/stores", icon: Store },
-    { label: "Billing", href: `${storeBase}/billing`, icon: CreditCard },
+    { label: isBn ? "নতুন পণ্য" : "New Product", href: `${storeBase}/products/new`, icon: Package },
+    { label: isBn ? "অর্ডার দেখুন" : "View Orders", href: `${storeBase}/orders`, icon: ShoppingBag },
+    { label: t.navigation.allStores, href: "/dashboard/stores", icon: Store },
+    { label: t.navigation.billing, href: `${storeBase}/billing`, icon: CreditCard },
   ];
 
   return (
@@ -249,7 +276,7 @@ function StoreDashboardHeader({
       pageTitle={pageTitle}
       quickActions={quickActions}
       searchResults={searchResults}
-      searchPlaceholder="Search store pages..."
+      searchPlaceholder={isBn ? "দোকানের পেজ বা ফিচার খুঁজুন..." : "Search store pages..."}
       onMenuClick={onMenuClick}
       compactNotifications
       showWorkspaceSwitcher
@@ -292,6 +319,7 @@ function DashboardHeaderChrome({
 }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { language, t } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -343,7 +371,7 @@ function DashboardHeaderChrome({
             type="button"
             onClick={openMobileSidebar}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground lg:hidden hover:bg-muted"
-            aria-label="Open menu"
+            aria-label={language === "bn" ? "মেনু খুলুন" : "Open menu"}
           >
             <Menu className="h-4 w-4" />
           </button>
@@ -356,14 +384,14 @@ function DashboardHeaderChrome({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="hidden h-9 w-52 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3.5 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card sm:inline-flex lg:w-64"
+            className="hidden h-9 w-44 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card md:inline-flex lg:w-56"
           >
             <Search className="h-4 w-4 shrink-0" aria-hidden />
-            <span className="flex-1 text-left">Search...</span>
+            <span className="flex-1 text-left truncate">{searchPlaceholder}</span>
             <kbd className="flex h-5 items-center gap-0.5 rounded border border-border bg-card px-1.5 text-[10px] font-semibold text-muted-foreground">
               <Command className="h-2.5 w-2.5" aria-hidden />K
             </kbd>
@@ -372,11 +400,14 @@ function DashboardHeaderChrome({
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground sm:hidden hover:bg-muted"
-            aria-label="Search"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground md:hidden hover:bg-muted"
+            aria-label={t.header.searchPlaceholder}
           >
             <Search className="h-4 w-4" />
           </button>
+
+          {/* Language Switcher */}
+          <LanguageSwitcher />
 
           <div className="relative">
             <Button
@@ -384,10 +415,10 @@ function DashboardHeaderChrome({
               onClick={() => setQuickOpen((open) => !open)}
               aria-expanded={quickOpen}
               aria-haspopup="menu"
-              className="h-9 rounded-full px-3.5 text-xs font-semibold shadow-sm"
+              className="h-9 rounded-xl px-3 text-xs font-semibold shadow-xs"
             >
               <Plus className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Quick Create</span>
+              <span className="hidden sm:inline">{t.header.quickCreate}</span>
             </Button>
             {quickOpen ? (
               <>
@@ -395,7 +426,7 @@ function DashboardHeaderChrome({
                   type="button"
                   className="fixed inset-0 z-40"
                   onClick={() => setQuickOpen(false)}
-                  aria-label="Close menu"
+                  aria-label={language === "bn" ? "মেনু বন্ধ করুন" : "Close menu"}
                 />
                 <div
                   role="menu"
@@ -432,7 +463,7 @@ function DashboardHeaderChrome({
 
           <NotificationDropdown compact={compactNotifications} />
           {showWorkspaceSwitcher ? (
-            <div className="hidden w-44 sm:block xl:w-48">
+            <div className="hidden w-40 sm:block xl:w-44">
               <WorkspaceSwitcher />
             </div>
           ) : null}
@@ -476,7 +507,7 @@ function DashboardHeaderChrome({
               </div>
               <div className="max-h-72 overflow-y-auto p-2">
                 {filteredResults.length === 0 ? (
-                  <p className="px-3 py-8 text-center text-xs text-muted-foreground">No results found</p>
+                  <p className="px-3 py-8 text-center text-xs text-muted-foreground">{t.header.noResultsFound}</p>
                 ) : (
                   filteredResults.map((item) => (
                     <button

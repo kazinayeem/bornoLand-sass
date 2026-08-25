@@ -41,6 +41,7 @@ import {
 import { STORE_TYPES } from "@/lib/store-types";
 import { useUpdateStoreMutation } from "@/redux/api/store-api";
 import { DropdownMenu, type DropdownItem } from "@/components/ui/dropdown-menu";
+import { useLanguage } from "@/providers/language-provider";
 
 type StoreCardProps = {
   store: StoreType;
@@ -55,9 +56,9 @@ function getPlanName(plan: StoreType["planId"] | undefined, fallback: string) {
   return fallback;
 }
 
-function formatDate(value?: string | null) {
+function formatDate(value?: string | null, isBn = true) {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString("en-US", {
+  return new Date(value).toLocaleDateString(isBn ? "bn-BD" : "en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -73,15 +74,15 @@ function formatBytes(usedBytes: number, limitBytes: number) {
   return { text: `${usedText} / ${limitText}`, percent };
 }
 
-function getStoreTypeLabel(storeType?: string) {
-  return STORE_TYPES.find((t) => t.id === storeType)?.label ?? "Ecommerce";
+function getStoreTypeLabel(storeType?: string, isBn = true) {
+  return STORE_TYPES.find((t) => t.id === storeType)?.label ?? (isBn ? "ই-কমার্স" : "E-Commerce");
 }
 
-function getDaysRemainingText(store: StoreType): { text: string; urgent: boolean; expired: boolean } {
+function getDaysRemainingText(store: StoreType, isBn = true): { text: string; urgent: boolean; expired: boolean } {
   const status = resolveStoreStatus(store);
 
   if (status === "pending_payment" || status === "pending_approval") {
-    return { text: "Awaiting Approval", urgent: false, expired: false };
+    return { text: isBn ? "অনুমোদনের অপেক্ষায়" : "Awaiting Approval", urgent: false, expired: false };
   }
 
   if (status === "expired") {
@@ -89,47 +90,47 @@ function getDaysRemainingText(store: StoreType): { text: string; urgent: boolean
     if (endsAt) {
       const diff = Date.now() - new Date(endsAt).getTime();
       const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-      if (days <= 0) return { text: "Expired Today", urgent: true, expired: true };
-      return { text: `Expired ${days}d ago`, urgent: true, expired: true };
+      if (days <= 0) return { text: isBn ? "আজ মেয়াদ শেষ" : "Expired today", urgent: true, expired: true };
+      return { text: isBn ? `${days} দিন আগে মেয়াদ শেষ` : `Expired ${days}d ago`, urgent: true, expired: true };
     }
-    return { text: "Expired", urgent: true, expired: true };
+    return { text: isBn ? "মেয়াদ শেষ" : "Expired", urgent: true, expired: true };
   }
 
   if (status === "suspended") {
-    return { text: "Suspended", urgent: true, expired: true };
+    return { text: isBn ? "স্থগিত" : "Suspended", urgent: true, expired: true };
   }
 
   if (status === "active") {
     if (store.renewalDate) {
       const diff = new Date(store.renewalDate).getTime() - Date.now();
       const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-      if (days <= 0) return { text: "Renewal Due", urgent: true, expired: false };
-      if (days <= 7) return { text: `${days}d to renew`, urgent: true, expired: false };
-      return { text: `${days} days left`, urgent: false, expired: false };
+      if (days <= 0) return { text: isBn ? "নবায়ন সময় হয়েছে" : "Renewal due", urgent: true, expired: false };
+      if (days <= 7) return { text: isBn ? `নবায়নে ${days} দিন বাকি` : `${days}d to renewal`, urgent: true, expired: false };
+      return { text: isBn ? `${days} দিন বাকি` : `${days} days left`, urgent: false, expired: false };
     }
-    return { text: "Active", urgent: false, expired: false };
+    return { text: isBn ? "সক্রিয়" : "Active", urgent: false, expired: false };
   }
 
   if (status === "trial") {
     const days = getTrialDaysRemaining(store.trialEndsAt);
-    if (days === null) return { text: "Trial", urgent: false, expired: false };
-    if (days <= 0) return { text: "Trial Expired", urgent: true, expired: true };
-    if (days <= 3) return { text: `${days}d left`, urgent: true, expired: false };
-    return { text: `${days} days left`, urgent: false, expired: false };
+    if (days === null) return { text: isBn ? "ট্রায়াল" : "Trial", urgent: false, expired: false };
+    if (days <= 0) return { text: isBn ? "ট্রায়াল শেষ" : "Trial ended", urgent: true, expired: true };
+    if (days <= 3) return { text: isBn ? `ট্রায়ালে ${days} দিন বাকি` : `${days}d trial left`, urgent: true, expired: false };
+    return { text: isBn ? `ট্রায়ালে ${days} দিন বাকি` : `${days}d trial left`, urgent: false, expired: false };
   }
 
   return { text: "—", urgent: false, expired: false };
 }
 
 /* ── Status pill in card header ─────────────────────────── */
-function ExpiryPill({ store }: { store: StoreType }) {
+function ExpiryPill({ store, isBn }: { store: StoreType; isBn: boolean }) {
   const status = resolveStoreStatus(store);
-  const info = getDaysRemainingText(store);
+  const info = getDaysRemainingText(store, isBn);
 
   if (status === "pending_payment" || status === "pending_approval") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-semibold text-amber-300 ring-1 ring-amber-400/30">
-        <Clock className="h-2.5 w-2.5" /> Awaiting
+        <Clock className="h-2.5 w-2.5" /> {isBn ? "অপেক্ষায়" : "Pending"}
       </span>
     );
   }
@@ -190,11 +191,10 @@ function headerGradient(status: StoreStatus) {
   }
 }
 
-/* ─────────────────────────────────────────────────────────── */
-/*  Main component                                              */
-/* ─────────────────────────────────────────────────────────── */
 export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCardProps) {
   const router = useRouter();
+  const { language, t } = useLanguage();
+  const isBn = language === "bn";
   const [updateStore] = useUpdateStoreMutation();
 
   const planName = getPlanName(store.planId, store.plan);
@@ -206,7 +206,6 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
   );
   const subsPlan = plans.find((p) => p.slug === store.plan) ?? selectedPlan;
   const isExpired = status === "expired";
-  const isPending = status === "pending_payment" || status === "pending_approval";
   const domain = getStoreDisplayDomain(store.subdomain || store.slug);
   const limitBytes = store.storageLimitBytes ?? 0;
   const storage = formatBytes(store.storageUsedBytes ?? 0, limitBytes);
@@ -214,28 +213,28 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
 
   const copyUrl = () => {
     navigator.clipboard.writeText(storeUrl);
-    toast.success("Store URL copied to clipboard");
+    toast.success(isBn ? "দোকানের URL ক্লিপবোর্ডে কপি করা হয়েছে" : "Store URL copied to clipboard");
   };
 
   const handleArchive = async () => {
     try {
       await updateStore({ id: store._id, data: { status: "archived" } }).unwrap();
-      toast.success(`"${store.name}" has been archived`);
+      toast.success(isBn ? `"${store.name}" দোকানটি আর্কাইভ করা হয়েছে` : `"${store.name}" archived`);
     } catch {
-      toast.error("Failed to archive store");
+      toast.error(isBn ? "দোকান আর্কাইভ করা সম্ভব হয়নি" : "Could not archive store");
     }
   };
 
   const menuItems: DropdownItem[] = [
-    { icon: ExternalLink, label: "Open Storefront", onClick: () => window.open(storeUrl, "_blank") },
-    { icon: Copy,        label: "Copy URL",        onClick: copyUrl },
-    { icon: Pencil,      label: "Edit Store",      onClick: () => onManage(store, "overview") },
-    { icon: CreditCard,  label: "Billing",         onClick: () => router.push(`/store/${store.slug}/billing`) },
-    { icon: BarChart3,   label: "Analytics",       onClick: () => router.push(`/store/${store.slug}/analytics`) },
-    { icon: Layers,      label: "Duplicate Store", onClick: () => toast.info("Duplicate Store — coming soon") },
+    { icon: ExternalLink, label: isBn ? "দোকান খুলুন (Storefront)" : "Open Storefront", onClick: () => window.open(storeUrl, "_blank") },
+    { icon: Copy,        label: isBn ? "URL কপি করুন" : "Copy URL",                  onClick: copyUrl },
+    { icon: Pencil,      label: isBn ? "এডিট করুন" : "Edit Store",                  onClick: () => onManage(store, "overview") },
+    { icon: CreditCard,  label: isBn ? "বিলিং সেটিংস" : "Billing Settings",          onClick: () => router.push(`/store/${store.slug}/billing`) },
+    { icon: BarChart3,   label: isBn ? "সেলস অ্যানালিটিক্স" : "Sales Analytics",       onClick: () => router.push(`/store/${store.slug}/analytics`) },
+    { icon: Layers,      label: isBn ? "দোকান কপি করুন" : "Duplicate Store",         onClick: () => toast.info(isBn ? "দোকান কপি করার সুবিধা শীঘ্রই আসছে" : "Duplicate coming soon") },
     { divider: true },
-    { icon: Archive,     label: "Archive Store",   onClick: handleArchive,              warning: true },
-    { icon: Trash2,      label: "Delete Store",    onClick: () => onDelete(store),      danger: true },
+    { icon: Archive,     label: isBn ? "আর্কাইভ করুন" : "Archive Store",             onClick: handleArchive,              warning: true },
+    { icon: Trash2,      label: isBn ? "মুছে ফেলুন" : "Delete Store",                onClick: () => onDelete(store),      danger: true },
   ];
 
   return (
@@ -248,13 +247,10 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
     >
       {/* ── Glossy header ──────────────────────────────────── */}
       <div className={`relative overflow-hidden bg-gradient-to-br ${headerGradient(status)} p-5`}>
-        {/* Decorative blobs */}
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/5 blur-2xl" />
         <div className="pointer-events-none absolute -left-6 bottom-0 h-28 w-28 rounded-full bg-white/3 blur-xl" />
 
-        {/* Top row: logo + name + menu */}
         <div className="relative flex items-start justify-between gap-3">
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white/10 ring-2 ring-white/20 shadow-lg">
               {store.logoUrl ? (
@@ -270,12 +266,11 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
                 {store.name}
               </h3>
               <p className="mt-0.5 truncate text-xs text-white/60">
-                {getStoreTypeLabel(store.storeType)}
+                {getStoreTypeLabel(store.storeType, isBn)}
               </p>
             </div>
           </div>
 
-          {/* More menu — portal-based, never clipped by overflow:hidden header */}
           <DropdownMenu
             placement="bottom-end"
             trigger={
@@ -291,35 +286,31 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
           />
         </div>
 
-        {/* Status + Plan badges */}
         <div className="relative mt-3.5 flex flex-wrap items-center gap-1.5">
           <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-white bg-white/15 ring-1 ring-white/20`}>
             <span className={`h-1.5 w-1.5 rounded-full ${statusDotClass(status)}`} />
-            {statusConfig.label}
+            {isBn ? statusConfig.label : (status === "active" ? "Active" : status === "trial" ? "Trial" : "Expired")}
           </span>
           <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-semibold text-white ring-1 ring-white/20">
             {subsPlan?.name ?? planName}
           </span>
-          <ExpiryPill store={store} />
+          <ExpiryPill store={store} isBn={isBn} />
         </div>
       </div>
 
       {/* ── Body ──────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col gap-3 p-4">
-
-        {/* Domain */}
         <div className="flex items-center gap-2 rounded-lg bg-apple-canvas-parchment px-3 py-2">
           <Globe className="h-3.5 w-3.5 shrink-0 text-apple-ink-muted-48" />
           <span className="truncate text-xs font-medium text-apple-ink-muted-80">{domain}</span>
         </div>
 
-        {/* Stats grid: Products · Orders · Revenue · Customers */}
         <div className="grid grid-cols-4 gap-1.5">
           {[
-            { label: "Products", value: store.productCount ?? 0,            icon: Box,          color: "text-violet-500" },
-            { label: "Orders",   value: store.orderCount ?? 0,              icon: ShoppingCart,  color: "text-blue-500"   },
-            { label: "Revenue",  value: formatBDT(store.revenueBDT ?? 0),   icon: TrendingUp,    color: "text-emerald-500" },
-            { label: "Staff",    value: store.staffCount ?? 0,              icon: Users,         color: "text-amber-500"  },
+            { label: isBn ? "পণ্য" : "Products",  value: store.productCount ?? 0,            icon: Box,          color: "text-violet-500" },
+            { label: isBn ? "অর্ডার" : "Orders",    value: store.orderCount ?? 0,              icon: ShoppingCart,  color: "text-blue-500"   },
+            { label: isBn ? "বিক্রি" : "Sales",     value: formatBDT(store.revenueBDT ?? 0),   icon: TrendingUp,    color: "text-emerald-500" },
+            { label: isBn ? "কর্মী" : "Staff",     value: store.staffCount ?? 0,              icon: Users,         color: "text-amber-500"  },
           ].map((stat) => (
             <div key={stat.label} className="flex flex-col items-center gap-0.5 rounded-xl bg-apple-canvas-parchment px-1.5 py-2.5 text-center">
               <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
@@ -331,12 +322,11 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
           ))}
         </div>
 
-        {/* Storage bar */}
         {showStorage && (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-[11px] font-medium text-apple-ink-muted-48">
-                <HardDrive className="h-3 w-3" /> Storage
+                <HardDrive className="h-3 w-3" /> {isBn ? "স্টোরেজ" : "Storage"}
               </span>
               <span className="text-[11px] font-semibold text-apple-ink-muted-80">{storage.text}</span>
             </div>
@@ -354,19 +344,18 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
           </div>
         )}
 
-        {/* Date info */}
         <div className="grid grid-cols-2 gap-x-2 gap-y-1">
           {[
-            { icon: Calendar,     label: "Created",  value: formatDate(store.createdAt) },
-            { icon: Clock,        label: "Updated",  value: formatDate(store.updatedAt) },
+            { icon: Calendar,     label: isBn ? "তৈরি" : "Created",     value: formatDate(store.createdAt, isBn) },
+            { icon: Clock,        label: isBn ? "আপডেট" : "Updated",    value: formatDate(store.updatedAt, isBn) },
             {
               icon: isExpired ? AlertTriangle : RefreshCcw,
-              label: isExpired ? "Expired" : "Renews",
-              value: formatDate(store.renewalDate ?? store.trialEndsAt),
+              label: isExpired ? (isBn ? "মেয়াদ শেষ" : "Expired") : (isBn ? "নবায়ন" : "Renewal"),
+              value: formatDate(store.renewalDate ?? store.trialEndsAt, isBn),
             },
           ].map((row) => (
             <div key={row.label} className="flex items-center gap-1.5">
-              <row.icon className={`h-3 w-3 shrink-0 ${row.label === "Expired" ? "text-red-400" : "text-apple-ink-muted-48"}`} />
+              <row.icon className={`h-3 w-3 shrink-0 ${row.label.includes("মেয়াদ") || row.label.includes("Expired") ? "text-red-400" : "text-apple-ink-muted-48"}`} />
               <span className="truncate text-[10px] text-apple-ink-muted-48">
                 <span className="font-medium text-apple-ink-muted-80">{row.label}: </span>{row.value}
               </span>
@@ -374,38 +363,34 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
           ))}
         </div>
 
-        {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Quick action buttons */}
         <div className="border-t border-apple-hairline/80 pt-3">
-          {/* Primary & Secondary main actions */}
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => window.open(storeUrl, "_blank")}
               className="inline-flex items-center justify-center gap-1.5 rounded-apple-pill bg-apple-ink px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-apple-ink/90 active:scale-[0.98]"
             >
-              <ExternalLink className="h-3.5 w-3.5" /> Open Store
+              <ExternalLink className="h-3.5 w-3.5" /> {isBn ? "দোকান খুলুন" : "Open Store"}
             </button>
             <button
               type="button"
               onClick={() => router.push(`/store/${store.slug}/dashboard`)}
               className="inline-flex items-center justify-center gap-1.5 rounded-apple-pill border border-apple-hairline bg-white px-4 py-2 text-xs font-semibold text-apple-ink transition-all hover:bg-apple-canvas-parchment active:scale-[0.98]"
             >
-              <LayoutGrid className="h-3.5 w-3.5" /> Dashboard
+              <LayoutGrid className="h-3.5 w-3.5" /> {isBn ? "ড্যাশবোর্ড" : "Dashboard"}
             </button>
           </div>
 
-          {/* Secondary icon action strip */}
           <div className="mt-2.5 grid grid-cols-6 gap-1.5">
             {[
-              { id: "edit",     Icon: Pencil,      label: "Edit store",     action: () => onManage(store, "overview"),                    cls: "hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200" },
-              { id: "billing",  Icon: CreditCard,   label: "Billing settings",action: () => router.push(`/store/${store.slug}/billing`),    cls: "hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200" },
-              { id: "analytics",Icon: BarChart3,    label: "View analytics", action: () => router.push(`/store/${store.slug}/analytics`),  cls: "hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200" },
-              { id: "duplicate",Icon: Layers,       label: "Duplicate store",action: () => toast.info("Duplicate Store — coming soon"),    cls: "hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200" },
-              { id: "archive",  Icon: Archive,      label: "Archive store",  action: handleArchive,                                        cls: "hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200" },
-              { id: "delete",   Icon: Trash2,       label: "Delete store",   action: () => onDelete(store),                                cls: "hover:bg-red-50 hover:text-red-600 hover:border-red-200" },
+              { id: "edit",     Icon: Pencil,      label: isBn ? "এডিট করুন" : "Edit",          action: () => onManage(store, "overview"),                    cls: "hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200" },
+              { id: "billing",  Icon: CreditCard,   label: isBn ? "বিলিং সেটিংস" : "Billing",    action: () => router.push(`/store/${store.slug}/billing`),    cls: "hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200" },
+              { id: "analytics",Icon: BarChart3,    label: isBn ? "অ্যানালিটিক্স" : "Analytics",  action: () => router.push(`/store/${store.slug}/analytics`),  cls: "hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200" },
+              { id: "duplicate",Icon: Layers,       label: isBn ? "কপি করুন" : "Duplicate",      action: () => toast.info(isBn ? "দোকান কপি করার সুবিধা শীঘ্রই আসছে" : "Duplicate coming soon"), cls: "hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200" },
+              { id: "archive",  Icon: Archive,      label: isBn ? "আর্কাইভ করুন" : "Archive",    action: handleArchive,                                        cls: "hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200" },
+              { id: "delete",   Icon: Trash2,       label: isBn ? "মুছে ফেলুন" : "Delete",       action: () => onDelete(store),                                cls: "hover:bg-red-50 hover:text-red-600 hover:border-red-200" },
             ].map(({ id, Icon, label, action, cls }) => (
               <button
                 key={id}
@@ -423,7 +408,6 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
             ))}
           </div>
         </div>
-
       </div>
     </motion.article>
   );

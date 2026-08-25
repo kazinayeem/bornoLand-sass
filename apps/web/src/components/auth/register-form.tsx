@@ -92,21 +92,21 @@ export function RegisterForm({
     >
       <CardHeader className="space-y-1.5">
         <CardTitle className="text-2xl font-bold tracking-tight">
-          Create an account
+          নতুন অ্যাকাউন্ট তৈরি করুন
         </CardTitle>
         <CardDescription>
-          Enter your information below to create your account
+          আপনার ই-কমার্স ব্যবসা শুরু করতে নিজের তথ্য লিখুন
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} noValidate>
           <FieldGroup>
             <Field data-invalid={Boolean(errors.name) || undefined}>
-              <FieldLabel htmlFor="register-name">Full Name</FieldLabel>
+              <FieldLabel htmlFor="register-name">আপনার পূর্ণ নাম</FieldLabel>
               <Input
                 id="register-name"
                 type="text"
-                placeholder="John Doe"
+                placeholder="যেমন: মোঃ তামিম রহমান"
                 autoComplete="name"
                 required
                 aria-invalid={Boolean(errors.name)}
@@ -116,64 +116,65 @@ export function RegisterForm({
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="register-tenant-name">Workspace name</FieldLabel>
+              <FieldLabel htmlFor="register-tenant-name">ওয়ার্কস্পেসের নাম</FieldLabel>
               <Input
                 id="register-tenant-name"
                 type="text"
-                placeholder="My Store Workspace"
+                placeholder="যেমন: ফ্যাশন হাউজ ওয়ার্কস্পেস"
                 autoComplete="organization"
                 {...register("tenantName")}
               />
               <FieldDescription>
-                Optional — you can rename your workspace later.
+                ঐচ্ছিক — আপনি পরবর্তীতে ওয়ার্কস্পেসের নাম পরিবর্তন করতে পারবেন।
               </FieldDescription>
             </Field>
 
             <Field data-invalid={Boolean(errors.email) || undefined}>
-              <FieldLabel htmlFor="register-email">Email</FieldLabel>
+              <FieldLabel htmlFor="register-email">ইমেইল ঠিকানা</FieldLabel>
               <Input
                 id="register-email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="যেমন: name@example.com"
                 autoComplete="email"
                 required
                 aria-invalid={Boolean(errors.email)}
                 {...register("email")}
               />
               <FieldDescription>
-                We&apos;ll use this to contact you. We will not share your email
-                with anyone else.
+                আপনার অ্যাকাউন্টের তথ্যাদি প্রেরণের জন্য ব্যবহার করা হবে।
               </FieldDescription>
               <FieldError>{errors.email?.message}</FieldError>
             </Field>
 
             <Field data-invalid={Boolean(errors.password) || undefined}>
-              <FieldLabel htmlFor="register-password">Password</FieldLabel>
+              <FieldLabel htmlFor="register-password">পাসওয়ার্ড</FieldLabel>
               <PasswordInput
                 id="register-password"
+                placeholder="পাসওয়ার্ড লিখুন"
                 autoComplete="new-password"
                 required
                 aria-invalid={Boolean(errors.password)}
                 {...register("password")}
               />
               <FieldDescription>
-                Must be at least 8 characters long.
+                কমপক্ষে ৮ অক্ষরের শক্তিশালী পাসওয়ার্ড দিন।
               </FieldDescription>
               <FieldError>{errors.password?.message}</FieldError>
             </Field>
 
             <Field data-invalid={Boolean(errors.confirmPassword) || undefined}>
               <FieldLabel htmlFor="register-confirm-password">
-                Confirm Password
+                পাসওয়ার্ড নিশ্চিত করুন
               </FieldLabel>
               <PasswordInput
                 id="register-confirm-password"
+                placeholder="পাসওয়ার্ড পুনরায় লিখুন"
                 autoComplete="new-password"
                 required
                 aria-invalid={Boolean(errors.confirmPassword)}
                 {...register("confirmPassword")}
               />
-              <FieldDescription>Please confirm your password.</FieldDescription>
+              <FieldDescription>একই পাসওয়ার্ড পুনরায় লিখুন।</FieldDescription>
               <FieldError>{errors.confirmPassword?.message}</FieldError>
             </Field>
 
@@ -189,7 +190,7 @@ export function RegisterForm({
                 htmlFor="register-remember"
                 className="font-normal text-muted-foreground"
               >
-                Keep me signed in
+                আমাকে সাইন ইন রাখুন
               </FieldLabel>
             </Field>
 
@@ -201,16 +202,16 @@ export function RegisterForm({
                   loadingKey="register"
                   className="w-full rounded-pill font-semibold"
                 >
-                  Create Account
+                  অ্যাকাউন্ট তৈরি করুন
                 </Button>
-                <GoogleButton label="Sign up with Google" />
+                <GoogleButton label="Google দিয়ে রেজিস্ট্রেশন করুন" />
                 <FieldDescription className="text-center">
-                  Already have an account?{" "}
+                  ইতিমধ্যে অ্যাকাউন্ট আছে?{" "}
                   <Link
                     href="/login"
                     className="font-semibold !text-primary underline-offset-4 hover:underline"
                   >
-                    Sign in
+                    লগইন করুন
                   </Link>
                 </FieldDescription>
               </Field>

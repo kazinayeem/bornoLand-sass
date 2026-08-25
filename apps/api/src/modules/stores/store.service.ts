@@ -684,7 +684,11 @@ export async function deleteStore(
   };
 }
 
-export async function changeStoreTheme(storeId: string, userId: string, payload: { templateId?: string; theme?: Record<string, unknown> }) {
+export async function changeStoreTheme(
+  storeId: string,
+  userId: string,
+  payload: { templateId?: string; theme?: Record<string, unknown>; sections?: unknown[] }
+) {
   const id = safeId(storeId);
   if (!id) return { ok: false as const, message: "Invalid store ID" };
   await connectDatabase();
@@ -693,7 +697,7 @@ export async function changeStoreTheme(storeId: string, userId: string, payload:
 
   if (payload.templateId) {
     const { BuilderTemplateModel } = await import("../builder/builder-template.model.js");
-    const template = await BuilderTemplateModel.findById(payload.templateId).lean() as any;
+    const template = (await BuilderTemplateModel.findById(payload.templateId).lean()) as any;
     if (!template) return { ok: false as const, message: "Template not found" };
 
     if (template.theme) {
@@ -717,6 +721,16 @@ export async function changeStoreTheme(storeId: string, userId: string, payload:
   }
 
   await store.save();
+
+  // If sections are provided (e.g. from theme default sections / migration), sync the home page!
+  if (payload.sections && Array.isArray(payload.sections) && payload.sections.length > 0) {
+    const { StorePageModel } = await import("../pages/store-page.model.js");
+    await StorePageModel.updateMany(
+      { storeId: store._id, slug: "/" },
+      { $set: { sections: payload.sections, status: "published" } }
+    );
+  }
+
   const updated = await StoreModel.findById(store._id).lean();
   return { ok: true as const, data: { store: updated } };
 }

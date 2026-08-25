@@ -1,10 +1,49 @@
 import type { ReactNode } from "react";
 import type { BuilderSection } from "@/redux/slices/builder-slice";
 
-export type ThemeCategory = "grocery" | "electronics" | "fashion" | "general" | "restaurant" | "beauty";
+export type ThemeCategory =
+  | "grocery"
+  | "electronics"
+  | "fashion"
+  | "beauty"
+  | "restaurant"
+  | "furniture"
+  | "sports"
+  | "books"
+  | "kids"
+  | "marketplace"
+  | "general";
 
-export type ProductCardVariant = "default" | "grocery" | "electronics" | "minimal" | "bordered" | "elevated";
-export type CategoryCardVariant = "default" | "grocery-pill" | "electronics-tile" | "card" | "circle";
+export type ProductCardVariant =
+  | "default"
+  | "grocery"
+  | "electronics"
+  | "minimal"
+  | "bordered"
+  | "elevated"
+  | "fashion"
+  | "beauty"
+  | "food"
+  | "furniture"
+  | "sports"
+  | "books"
+  | "kids"
+  | "marketplace";
+
+export type CategoryCardVariant =
+  | "default"
+  | "grocery-pill"
+  | "electronics-tile"
+  | "card"
+  | "circle"
+  | "fashion-look"
+  | "beauty-circle"
+  | "food-round"
+  | "furniture-box"
+  | "sports-badge"
+  | "book-spine"
+  | "kids-fun"
+  | "marketplace-grid";
 
 export interface ThemeTokens {
   colors: {

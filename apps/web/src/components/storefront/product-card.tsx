@@ -19,6 +19,7 @@ import { getContrastColor } from "@/lib/color-utils";
 import { useStorefrontSurface } from "./storefront-ui";
 import { cn } from "@/lib/utils";
 import { useStorefrontTracking } from "@/hooks/use-storefront-tracking";
+import { getThemeById } from "@/themes/registry";
 
 export type ProductCardProduct = {
   _id: string;
@@ -71,8 +72,9 @@ export function ProductCard({
   const dispatch = useDispatch();
   const { theme, settings, store } = useTenant();
   const themeId = (theme as { themeId?: string; preset?: string }).themeId || (theme as { preset?: string }).preset || "grocery";
+  const activeThemeDef = getThemeById(themeId);
   const variant =
-    variantProp || (themeId === "electronics" ? "electronics" : themeId === "grocery" ? "grocery" : "default");
+    variantProp || activeThemeDef.productCardVariant || "default";
 
   const { primaryColor } = useStorefrontSurface();
   const [addToCartRemote] = useAddToCartMutation();

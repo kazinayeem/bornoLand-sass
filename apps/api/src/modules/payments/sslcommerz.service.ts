@@ -1,4 +1,6 @@
-import SSLCommerzPayment from "sslcommerz-lts";
+import https from "https";
+import http from "http";
+import querystring from "querystring";
 import { connectDatabase } from "../../common/database/connection.js";
 import { StoreModel } from "../../models/store.model.js";
 import { OrderModel } from "../../models/order.model.js";
@@ -18,13 +20,133 @@ import {
 
 const SSLCOMMERZ_API_TIMEOUT_MS = 15_000;
 
-function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`SSLCommerz API timeout after ${ms}ms (${label})`)), ms)
-    ),
-  ]);
+function sslczBaseUrl(isLive: boolean): string {
+  return isLive ? "https://securepay.sslcommerz.com" : "https://sandbox.sslcommerz.com";
+}
+
+function sslczPost(url: string, body: Record<string, unknown>, timeoutMs = SSLCOMMERZ_API_TIMEOUT_MS): Promise<Record<string, unknown>> {
+  return new Promise((resolve, reject) => {
+    const stringBody: Record<string, string> = {};
+    for (const [key, value] of Object.entries(body)) {
+      stringBody[key] = value != null ? String(value) : "";
+    }
+    const postData = querystring.stringify(stringBody);
+    const parsedUrl = new URL(url);
+    const transport = parsedUrl.protocol === "https:" ? https : http;
+
+    const req = transport.request(
+      {
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port || (parsedUrl.protocol === "https:" ? 443 : 80),
+        path: parsedUrl.pathname + parsedUrl.search,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Length": Buffer.byteLength(postData),
+        },
+        timeout: timeoutMs,
+      },
+      (res) => {
+        let data = "";
+        res.on("data", (chunk: string) => (data += chunk));
+        res.on("end", () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch {
+            reject(new Error(`SSLCommerz returned invalid JSON: ${data.slice(0, 200)}`));
+          }
+        });
+      },
+    );
+
+    req.on("timeout", () => {
+      req.destroy();
+      reject(new Error(`SSLCommerz API timeout after ${timeoutMs}ms`));
+    });
+    req.on("error", reject);
+    req.write(postData);
+    req.end();
+  });
+}
+
+function sslczGet(url: string, timeoutMs = SSLCOMMERZ_API_TIMEOUT_MS): Promise<Record<string, unknown>> {
+  return new Promise((resolve, reject) => {
+    const parsedUrl = new URL(url);
+    const transport = parsedUrl.protocol === "https:" ? https : http;
+
+    const req = transport.get(
+      {
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port || (parsedUrl.protocol === "https:" ? 443 : 80),
+        path: parsedUrl.pathname + parsedUrl.search,
+        timeout: timeoutMs,
+      },
+      (res) => {
+        let data = "";
+        res.on("data", (chunk: string) => (data += chunk));
+        res.on("end", () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch {
+            reject(new Error(`SSLCommerz returned invalid JSON: ${data.slice(0, 200)}`));
+          }
+        });
+      },
+    );
+
+    req.on("timeout", () => {
+      req.destroy();
+      reject(new Error(`SSLCommerz API timeout after ${timeoutMs}ms`));
+    });
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+async function sslczInit(
+  storeId: string,
+  storePassword: string,
+  isLive: boolean,
+  data: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const url = `${sslczBaseUrl(isLive)}/gwprocess/v4/api.php`;
+  const body: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    body[key] = value != null ? value : "";
+  }
+  body.store_id = storeId;
+  body.store_passwd = storePassword;
+  return sslczPost(url, body);
+}
+
+async function sslczValidate(
+  storeId: string,
+  storePassword: string,
+  isLive: boolean,
+  valId: string,
+): Promise<Record<string, unknown>> {
+  const url = `${sslczBaseUrl(isLive)}/validator/api/validationserverAPI.php?val_id=${encodeURIComponent(valId)}&store_id=${encodeURIComponent(storeId)}&store_passwd=${encodeURIComponent(storePassword)}&v=1&format=json`;
+  return sslczGet(url);
+}
+
+async function sslczRefund(
+  storeId: string,
+  storePassword: string,
+  isLive: boolean,
+  data: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const params = new URLSearchParams({
+    refund_amount: String(data.refund_amount ?? ""),
+    refund_remarks: String(data.refund_remarks ?? ""),
+    bank_tran_id: String(data.bank_tran_id ?? ""),
+    refe_id: String(data.refl_id ?? data.refe_id ?? ""),
+    store_id: storeId,
+    store_passwd: storePassword,
+    v: "1",
+    format: "json",
+  });
+  const url = `${sslczBaseUrl(isLive)}/validator/api/merchantTransIDvalidationAPI.php?${params.toString()}`;
+  return sslczGet(url);
 }
 
 export const SSLCOMMERZ_FEATURE_KEY = "sslcommerz_payment";
@@ -296,7 +418,6 @@ export async function testSSLCommerzConnection(
 
   try {
     const isLive = environment === "live";
-    const sslcz = new SSLCommerzPayment(storeIdValue, storePassword, isLive);
 
     const testTranId = `TEST_PING_${Date.now()}`;
     const testUrls = getSSLCommerzCallbackUrls({
@@ -325,7 +446,7 @@ export async function testSSLCommerzConnection(
       cus_phone: "01700000000",
     };
 
-    const responseData = await withTimeout(sslcz.init(testData), SSLCOMMERZ_API_TIMEOUT_MS, "test-connection");
+    const responseData = await sslczInit(storeIdValue, storePassword, isLive, testData);
 
     if (responseData?.status === "SUCCESS") {
       if (gateway) {
@@ -337,7 +458,7 @@ export async function testSSLCommerzConnection(
       }
       return { ok: true, verified: true, message: "SSLCommerz configuration verified successfully." };
     } else {
-      const errorMsg = responseData?.failedreason || "Authentication failed with SSLCommerz. Please check Store ID, Store Password, and Environment.";
+      const errorMsg = String(responseData?.failedreason || "Authentication failed with SSLCommerz. Please check Store ID, Store Password, and Environment.");
       if (gateway) {
         gateway.isVerified = false;
         gateway.lastTestedAt = new Date();
@@ -470,8 +591,6 @@ export async function initiateSSLCommerzPayment(
     apiBaseUrl: appBaseUrl,
   });
 
-  const sslcz = new SSLCommerzPayment(gateway.storeIdValue, storePassword, isLive);
-
   const initData = {
     total_amount: Number(order.total).toFixed(2),
     currency: order.currencyCode || "BDT",
@@ -501,7 +620,7 @@ export async function initiateSSLCommerzPayment(
   try {
     console.info("[SSL] sslcz.init starting", { tranId, environment, orderId });
 
-    const data = await withTimeout(sslcz.init(initData), SSLCOMMERZ_API_TIMEOUT_MS, "sslcz.init");
+    const data = await sslczInit(gateway.storeIdValue, storePassword, isLive, initData);
 
     console.info("[SSL] sslcz.init completed", { tranId, status: data?.status, hasGatewayUrl: Boolean(data?.GatewayPageURL) });
 
@@ -510,7 +629,7 @@ export async function initiateSSLCommerzPayment(
       order.paymentDetails = {
         ...(order.paymentDetails || {}),
         transactionId: tranId,
-        sessionKey: data.sessionkey || "",
+        sessionKey: String(data.sessionkey || ""),
         environment,
       };
       order.timeline.push({
@@ -525,13 +644,13 @@ export async function initiateSSLCommerzPayment(
       return {
         ok: true,
         data: {
-          gatewayUrl: data.GatewayPageURL,
-          sessionKey: data.sessionkey || "",
+          gatewayUrl: String(data.GatewayPageURL),
+          sessionKey: String(data.sessionkey || ""),
           tranId,
         },
       };
     } else {
-      const errorMsg = data?.failedreason || "Failed to initiate SSLCommerz payment session.";
+      const errorMsg = String(data?.failedreason || "Failed to initiate SSLCommerz payment session.");
       console.error("[SSL] sslcz.init failed", { tranId, errorMsg, status: data?.status });
       return { ok: false, status: 502, message: errorMsg };
     }
@@ -673,8 +792,7 @@ export async function verifyAndHandleSSLCommerzCallback(
   }
 
   try {
-    const sslcz = new SSLCommerzPayment(gateway.storeIdValue, storePassword, isLive);
-    const valData = await withTimeout(sslcz.validate({ val_id: valId }), SSLCOMMERZ_API_TIMEOUT_MS, "validate-payment");
+    const valData = await sslczValidate(gateway.storeIdValue, storePassword, isLive, valId);
 
     if (!valData || (valData.status !== "VALID" && valData.status !== "VALIDATED")) {
       order.paymentStatus = "failed";
@@ -817,7 +935,6 @@ export async function refundSSLCommerzPayment(
   const amountToRefund = refundAmount && refundAmount > 0 ? refundAmount : order.total;
 
   try {
-    const sslcz = new SSLCommerzPayment(gateway.storeIdValue, storePassword, isLive);
     const refundData = {
       bank_tran_id: String(bankTranId),
       refund_amount: amountToRefund,
@@ -825,7 +942,7 @@ export async function refundSSLCommerzPayment(
       refl_id: `REF_${order._id}_${Date.now()}`,
     };
 
-    const refundRes = await withTimeout(sslcz.initiateRefund(refundData), SSLCOMMERZ_API_TIMEOUT_MS, "refund");
+    const refundRes = await sslczRefund(gateway.storeIdValue, storePassword, isLive, refundData);
 
     if (refundRes?.status === "success" || refundRes?.status === "SUCCESS") {
       order.paymentStatus = "refunded";
@@ -845,7 +962,7 @@ export async function refundSSLCommerzPayment(
         data: refundRes as Record<string, unknown>,
       };
     } else {
-      const errorReason = refundRes?.errorReason || "Failed to initiate refund with SSLCommerz.";
+      const errorReason = String(refundRes?.errorReason || "Failed to initiate refund with SSLCommerz.");
       return { ok: false, status: 400, message: errorReason };
     }
   } catch (err: unknown) {

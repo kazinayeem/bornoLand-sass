@@ -22,6 +22,7 @@ import {
   Check,
   RotateCcw,
   RefreshCw,
+  Globe,
 } from "lucide-react";
 import type { RootState } from "@/store/store";
 import { clearCart, setCartItems } from "@/redux/slices/cart-slice";
@@ -263,9 +264,11 @@ function CheckoutForm() {
   const codAllowed = (settings as any).cashOnDelivery !== false && (settings.paymentSettings as any)?.codEnabled !== false;
   const bkashAllowed = (settings.paymentSettings as any)?.bkash?.enabled ?? true;
   const nagadAllowed = (settings.paymentSettings as any)?.nagad?.enabled ?? true;
+  const sslcommerzAllowed = paymentMethods.some((pm) => pm.type === "sslcommerz" && pm.enabled);
 
   const availablePaymentMethods = [
     ...(codAllowed ? [{ id: "cod", label: "Cash on Delivery (COD)", type: "cod", icon: Banknote }] : []),
+    ...(sslcommerzAllowed ? [{ id: "sslcommerz", label: "SSLCommerz (Cards / Mobile Banking / Net Banking)", type: "sslcommerz", icon: Globe }] : []),
     ...(bkashAllowed ? [{ id: "bkash", label: "bKash Mobile Banking", type: "bkash", icon: Smartphone }] : []),
     ...(nagadAllowed ? [{ id: "nagad", label: "Nagad Mobile Banking", type: "nagad", icon: Smartphone }] : []),
   ];
@@ -526,6 +529,12 @@ function CheckoutForm() {
         });
 
         dispatch(clearCart());
+
+        if ((result.data as any).gatewayUrl) {
+          window.location.href = (result.data as any).gatewayUrl;
+          return;
+        }
+
         setOrderSuccess({
           orderNumber: result.data.order.orderNumber,
           orderId: result.data.order._id,
@@ -961,6 +970,7 @@ function CheckoutForm() {
                       <div className="flex-1">
                         <p className="text-xs font-bold text-apple-ink">{pm.label}</p>
                         {pm.id === "cod" && <p className="text-[11px] text-zinc-500">Pay cash upon product delivery</p>}
+                        {pm.id === "sslcommerz" && <p className="text-[11px] text-zinc-500">Instant online payment via Cards, Mobile Banking, or Net Banking</p>}
                         {(pm.id === "bkash" || pm.id === "nagad") && (
                           <p className="text-[11px] text-zinc-500">Send money & provide Transaction ID</p>
                         )}
@@ -969,6 +979,19 @@ function CheckoutForm() {
                   );
                 })}
               </div>
+
+              {/* SSLCommerz Automated Gateway Banner */}
+              {selectedPayment === "sslcommerz" && (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4 space-y-1.5">
+                  <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
+                    <Globe className="h-4 w-4 text-amber-600" />
+                    <span>Automated SSLCommerz Gateway</span>
+                  </div>
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    You will be securely redirected to SSLCommerz to pay with your Visa, Mastercard, bKash, Nagad, or Internet Banking. Your order will be verified automatically.
+                  </p>
+                </div>
+              )}
 
               {/* bKash / Nagad Payment Instructions & Verification Form */}
               {(selectedPayment === "bkash" || selectedPayment === "nagad") && (

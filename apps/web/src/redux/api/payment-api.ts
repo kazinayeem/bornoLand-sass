@@ -110,7 +110,7 @@ export const paymentApi = baseApi.injectEndpoints({
       query: (storeId) => ({
         url: `/stores/${storeId}/payment-gateways/sslcommerz`,
       }),
-      providesTags: ["PaymentMethods", "Store"],
+      providesTags: ["PaymentMethods", "Stores"],
     }),
     updateStoreSSLCommerzConfig: builder.mutation<
       ApiResponse<SSLCommerzGatewayConfig>,
@@ -129,7 +129,7 @@ export const paymentApi = baseApi.injectEndpoints({
         method: "PUT",
         body: data,
       }),
-      invalidatesTags: ["PaymentMethods", "Store"],
+      invalidatesTags: ["PaymentMethods", "Stores"],
     }),
     testStoreSSLCommerzConnection: builder.mutation<
       ApiResponse<{ verified: boolean }>,
@@ -147,7 +147,7 @@ export const paymentApi = baseApi.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["PaymentMethods", "Store"],
+      invalidatesTags: ["PaymentMethods", "Stores"],
     }),
     toggleStoreSSLCommerz: builder.mutation<
       ApiResponse<{ isEnabled: boolean }>,
@@ -158,7 +158,7 @@ export const paymentApi = baseApi.injectEndpoints({
         method: "POST",
         body: { enabled },
       }),
-      invalidatesTags: ["PaymentMethods", "Store"],
+      invalidatesTags: ["PaymentMethods", "Stores"],
     }),
 
     /* ── Public (checkout) endpoints ── */

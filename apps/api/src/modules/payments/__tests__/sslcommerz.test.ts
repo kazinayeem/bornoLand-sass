@@ -74,6 +74,7 @@ describe("Multi-Tenant SSLCommerz Payment Gateway System", () => {
 
     // Create Store A (owned by User A, starter plan)
     const storeA = await StoreModel.create({
+      tenantId: new mongoose.Types.ObjectId(),
       userId: userAId,
       name: "Store Alpha",
       slug: `store-alpha-${Date.now()}`,
@@ -85,6 +86,7 @@ describe("Multi-Tenant SSLCommerz Payment Gateway System", () => {
 
     // Create Store B (owned by User B, starter plan)
     const storeB = await StoreModel.create({
+      tenantId: new mongoose.Types.ObjectId(),
       userId: userBId,
       name: "Store Beta",
       slug: `store-beta-${Date.now()}`,
@@ -102,6 +104,7 @@ describe("Multi-Tenant SSLCommerz Payment Gateway System", () => {
     await StoreModel.deleteMany({ _id: { $in: [storeAId, storeBId] } });
     await PlanFeatureModel.deleteMany({ planId: { $in: [freePlanId, starterPlanId] } });
     await PlanModel.deleteMany({ _id: { $in: [freePlanId, starterPlanId] } });
+    await mongoose.disconnect();
   });
 
   it("1. Shop A can configure SSLCommerz credentials with AES encryption", async () => {
@@ -297,5 +300,44 @@ describe("Multi-Tenant SSLCommerz Payment Gateway System", () => {
     const res = await verifyAndHandleSSLCommerzCallback(ipnCallback, "ipn");
     assert.equal(res.ok, true);
     assert.match(res.message, /already verified and paid/i);
+  });
+
+  it("11. Refund on unpaid order is rejected", async () => {
+    const { refundSSLCommerzPayment } = await import("../sslcommerz.service.js");
+    const order = await OrderModel.create({
+      storeId: storeAId,
+      orderNumber: `ORD-UNPAID-REF-${Date.now()}`,
+      items: [{ name: "Item 1", price: 500, quantity: 1, productId: new mongoose.Types.ObjectId() }],
+      subtotal: 500,
+      total: 500,
+      paymentMethod: "sslcommerz",
+      paymentStatus: "pending",
+      shippingAddress: { fullName: "Unpaid Test", phone: "01700000000", street: "Dhaka", city: "Dhaka" },
+    });
+
+    const res = await refundSSLCommerzPayment(storeAId, String(order._id), userAId, "merchant", 500);
+    assert.equal(res.ok, false);
+    assert.equal(res.status, 400);
+    assert.match(res.message, /only paid orders can be refunded/i);
+  });
+
+  it("12. Refund from unauthorized shop owner is rejected (IDOR protection)", async () => {
+    const { refundSSLCommerzPayment } = await import("../sslcommerz.service.js");
+    const order = await OrderModel.create({
+      storeId: storeAId,
+      orderNumber: `ORD-IDOR-REF-${Date.now()}`,
+      items: [{ name: "Item 1", price: 500, quantity: 1, productId: new mongoose.Types.ObjectId() }],
+      subtotal: 500,
+      total: 500,
+      paymentMethod: "sslcommerz",
+      paymentStatus: "paid",
+      shippingAddress: { fullName: "IDOR Test", phone: "01700000000", street: "Dhaka", city: "Dhaka" },
+    });
+
+    // User B tries to refund Store A's order
+    const res = await refundSSLCommerzPayment(storeAId, String(order._id), userBId, "merchant", 500);
+    assert.equal(res.ok, false);
+    assert.equal(res.status, 404);
+    assert.match(res.message, /store not found/i);
   });
 });

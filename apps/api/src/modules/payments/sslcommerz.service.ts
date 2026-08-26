@@ -1,3 +1,4 @@
+import SSLCommerzPayment from "sslcommerz-lts";
 import { connectDatabase } from "../../common/database/connection.js";
 import { StoreModel } from "../../models/store.model.js";
 import { OrderModel } from "../../models/order.model.js";
@@ -11,17 +12,6 @@ import {
 } from "./sslcommerz.credentials.js";
 
 export const SSLCOMMERZ_FEATURE_KEY = "sslcommerz_payment";
-
-const SSLCOMMERZ_ENDPOINTS = {
-  sandbox: {
-    session: "https://sandbox.sslcommerz.com/gwprocess/v4/api.php",
-    validation: "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php",
-  },
-  live: {
-    session: "https://securepay.sslcommerz.com/gwprocess/v4/api.php",
-    validation: "https://securepay.sslcommerz.com/validator/api/validationserverAPI.php",
-  },
-};
 
 type LeanGateway = StorePaymentGatewayDocument & { _id: unknown; createdAt?: Date; updatedAt?: Date };
 
@@ -245,7 +235,7 @@ export async function updateStoreSSLCommerzConfig(
 }
 
 /**
- * Test SSLCommerz connection safely
+ * Test SSLCommerz connection safely using sslcommerz-lts
  */
 export async function testSSLCommerzConnection(
   storeId: string,
@@ -288,20 +278,23 @@ export async function testSSLCommerzConnection(
     return { ok: false, message: "Store ID and Store Password are required to test connection." };
   }
 
-  const sessionEndpoint = SSLCOMMERZ_ENDPOINTS[environment].session;
-
   try {
+    const isLive = environment === "live";
+    const sslcz = new SSLCommerzPayment(storeIdValue, storePassword, isLive);
+
     const testTranId = `TEST_PING_${Date.now()}`;
-    const testParams = new URLSearchParams({
-      store_id: storeIdValue,
-      store_passwd: storePassword,
-      total_amount: "10.00",
+    const testData = {
+      total_amount: 10,
       currency: "BDT",
       tran_id: testTranId,
-      success_url: "https://bornoland.com/payment/success",
-      fail_url: "https://bornoland.com/payment/fail",
-      cancel_url: "https://bornoland.com/payment/cancel",
-      ipn_url: "https://bornoland.com/payment/ipn",
+      success_url: "https://bornoland.com/payments/sslcommerz/success",
+      fail_url: "https://bornoland.com/payments/sslcommerz/fail",
+      cancel_url: "https://bornoland.com/payments/sslcommerz/cancel",
+      ipn_url: "https://bornoland.com/payments/sslcommerz/ipn",
+      shipping_method: "NO",
+      product_name: "Test Connection",
+      product_category: "Test",
+      product_profile: "general",
       cus_name: "Connection Test",
       cus_email: "test@bornoland.com",
       cus_add1: "Dhaka",
@@ -309,24 +302,9 @@ export async function testSSLCommerzConnection(
       cus_postcode: "1000",
       cus_country: "Bangladesh",
       cus_phone: "01700000000",
-      shipping_method: "NO",
-      num_of_item: "1",
-      product_name: "Test Connection",
-      product_category: "Test",
-      product_profile: "general",
-    });
+    };
 
-    const response = await fetch(sessionEndpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: testParams.toString(),
-    });
-
-    const responseData = (await response.json().catch(() => null)) as {
-      status?: string;
-      failedreason?: string;
-      GatewayPageURL?: string;
-    } | null;
+    const responseData = await sslcz.init(testData);
 
     if (responseData?.status === "SUCCESS") {
       if (gateway) {
@@ -408,7 +386,7 @@ export async function toggleStoreSSLCommerz(
 }
 
 /**
- * Initiate SSLCommerz transaction for a store checkout order
+ * Initiate SSLCommerz transaction using sslcommerz-lts
  */
 export async function initiateSSLCommerzPayment(
   storeId: string,
@@ -460,7 +438,7 @@ export async function initiateSSLCommerzPayment(
   }
 
   const environment: "sandbox" | "live" = gateway.environment === "live" ? "live" : "sandbox";
-  const sessionEndpoint = SSLCOMMERZ_ENDPOINTS[environment].session;
+  const isLive = environment === "live";
 
   const resolvedBaseUrl =
     process.env.API_PUBLIC_URL ||
@@ -470,9 +448,9 @@ export async function initiateSSLCommerzPayment(
 
   const tranId = order.orderNumber || `TXN_${order._id}_${Date.now()}`;
 
-  const payload = new URLSearchParams({
-    store_id: gateway.storeIdValue,
-    store_passwd: storePassword,
+  const sslcz = new SSLCommerzPayment(gateway.storeIdValue, storePassword, isLive);
+
+  const initData = {
     total_amount: Number(order.total).toFixed(2),
     currency: order.currencyCode || "BDT",
     tran_id: tranId,
@@ -488,7 +466,7 @@ export async function initiateSSLCommerzPayment(
     cus_country: order.shippingAddress?.country || "Bangladesh",
     cus_phone: order.shippingAddress?.phone || order.customerSnapshot?.phone || "01700000000",
     shipping_method: "YES",
-    num_of_item: String(order.items?.length || 1),
+    num_of_item: order.items?.length || 1,
     product_name: order.items?.map((i: { name?: string }) => i.name).filter(Boolean).slice(0, 3).join(", ") || `Order ${tranId}`,
     product_category: "General",
     product_profile: "general",
@@ -496,21 +474,10 @@ export async function initiateSSLCommerzPayment(
     value_b: String(order._id),
     value_c: String(order.orderNumber),
     value_d: String(storeSlug),
-  });
+  };
 
   try {
-    const response = await fetch(sessionEndpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: payload.toString(),
-    });
-
-    const data = (await response.json().catch(() => null)) as {
-      status?: string;
-      failedreason?: string;
-      GatewayPageURL?: string;
-      sessionkey?: string;
-    } | null;
+    const data = await sslcz.init(initData);
 
     if (data?.status === "SUCCESS" && data.GatewayPageURL) {
       order.paymentMethod = "sslcommerz";
@@ -548,7 +515,7 @@ export async function initiateSSLCommerzPayment(
 }
 
 /**
- * Handle SSLCommerz Callbacks (Success, Fail, Cancel, IPN)
+ * Handle SSLCommerz Callbacks (Success, Fail, Cancel, IPN) using sslcommerz-lts validation
  */
 export async function verifyAndHandleSSLCommerzCallback(
   callbackData: Record<string, unknown>,
@@ -672,7 +639,7 @@ export async function verifyAndHandleSSLCommerzCallback(
 
   const storePassword = decryptSSLCommerzSecret(gateway.encryptedStorePassword);
   const environment: "sandbox" | "live" = gateway.environment === "live" ? "live" : "sandbox";
-  const validationEndpoint = SSLCOMMERZ_ENDPOINTS[environment].validation;
+  const isLive = environment === "live";
 
   if (!valId) {
     return {
@@ -683,26 +650,8 @@ export async function verifyAndHandleSSLCommerzCallback(
   }
 
   try {
-    const valUrl = new URL(validationEndpoint);
-    valUrl.searchParams.set("val_id", valId);
-    valUrl.searchParams.set("store_id", gateway.storeIdValue);
-    valUrl.searchParams.set("store_passwd", storePassword);
-    valUrl.searchParams.set("format", "json");
-
-    const valResponse = await fetch(valUrl.toString());
-    const valData = (await valResponse.json().catch(() => null)) as {
-      status?: string;
-      tran_id?: string;
-      amount?: string | number;
-      currency?: string;
-      card_type?: string;
-      card_brand?: string;
-      card_issuer?: string;
-      bank_tran_id?: string;
-      tran_date?: string;
-      val_id?: string;
-      error?: string;
-    } | null;
+    const sslcz = new SSLCommerzPayment(gateway.storeIdValue, storePassword, isLive);
+    const valData = await sslcz.validate({ val_id: valId });
 
     if (!valData || (valData.status !== "VALID" && valData.status !== "VALIDATED")) {
       order.paymentStatus = "failed";
@@ -796,6 +745,89 @@ export async function verifyAndHandleSSLCommerzCallback(
       message: errorMsg,
       redirectUrl: `${webBaseUrl}/site/${canonicalSlug}/checkout?payment=error&orderNumber=${order.orderNumber}`,
     };
+  }
+}
+
+/**
+ * Process SSLCommerz Refund using sslcommerz-lts
+ */
+export async function refundSSLCommerzPayment(
+  storeId: string,
+  orderId: string,
+  userId: string | undefined,
+  role: string | undefined,
+  refundAmount?: number,
+  remarks?: string
+): Promise<{ ok: boolean; status: number; message: string; data?: Record<string, unknown> }> {
+  await connectDatabase();
+  const store = await ensureOwnedStore(storeId, userId, role);
+  if (!store) {
+    return { ok: false, status: 404, message: "Store not found" };
+  }
+
+  const order = await OrderModel.findOne({ _id: orderId, storeId });
+  if (!order) {
+    return { ok: false, status: 404, message: "Order not found." };
+  }
+
+  if (order.paymentStatus !== "paid") {
+    return { ok: false, status: 400, message: "Only paid orders can be refunded." };
+  }
+
+  const gateway = (await StorePaymentGatewayModel.findOne({
+    storeId,
+    provider: "sslcommerz",
+  }).lean()) as LeanGateway | null;
+
+  if (!gateway || !gateway.storeIdValue || !gateway.encryptedStorePassword) {
+    return { ok: false, status: 400, message: "SSLCommerz gateway configuration not found for store." };
+  }
+
+  const storePassword = decryptSSLCommerzSecret(gateway.encryptedStorePassword);
+  const isLive = gateway.environment === "live";
+
+  const bankTranId = (order.paymentDetails as Record<string, unknown>)?.bankTranId || (order.paymentVerification as Record<string, unknown>)?.transactionId;
+  if (!bankTranId) {
+    return { ok: false, status: 400, message: "Missing Bank Transaction ID required for SSLCommerz refund." };
+  }
+
+  const amountToRefund = refundAmount && refundAmount > 0 ? refundAmount : order.total;
+
+  try {
+    const sslcz = new SSLCommerzPayment(gateway.storeIdValue, storePassword, isLive);
+    const refundData = {
+      bank_tran_id: String(bankTranId),
+      refund_amount: amountToRefund,
+      refund_remarks: remarks || `Refund for order ${order.orderNumber}`,
+      refl_id: `REF_${order._id}_${Date.now()}`,
+    };
+
+    const refundRes = await sslcz.initiateRefund(refundData);
+
+    if (refundRes?.status === "success" || refundRes?.status === "SUCCESS") {
+      order.paymentStatus = "refunded";
+      order.refundAmount = amountToRefund;
+      order.timeline.push({
+        status: "refunded",
+        note: `Refund of ৳${amountToRefund} initiated successfully via SSLCommerz (RefundRef: ${refundRes.refund_ref_id || ""})`,
+        createdBy: userId || "merchant",
+        createdAt: new Date(),
+      } as never);
+      await order.save();
+
+      return {
+        ok: true,
+        status: 200,
+        message: "SSLCommerz refund initiated successfully.",
+        data: refundRes as Record<string, unknown>,
+      };
+    } else {
+      const errorReason = refundRes?.errorReason || "Failed to initiate refund with SSLCommerz.";
+      return { ok: false, status: 400, message: errorReason };
+    }
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Error initiating SSLCommerz refund";
+    return { ok: false, status: 500, message: errorMsg };
   }
 }
 

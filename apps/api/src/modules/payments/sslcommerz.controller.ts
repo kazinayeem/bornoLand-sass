@@ -124,3 +124,27 @@ export async function adminListStoreGatewaysController(req: AuthRequest, res: Re
   const result = await listAdminStorePaymentGateways(req.query as Record<string, unknown>);
   return sendSuccess(res, result.data);
 }
+
+export async function refundStoreSSLCommerzController(req: AuthRequest, res: Response) {
+  const storeId = getStoreId(req);
+  const orderId = String(req.body?.orderId || req.params?.orderId || "");
+  const refundAmount = req.body?.refundAmount ? Number(req.body.refundAmount) : undefined;
+  const remarks = typeof req.body?.remarks === "string" ? req.body.remarks : undefined;
+
+  if (!storeId || !orderId) {
+    return sendFailure(res, "Store ID and Order ID are required to process refund.", 400);
+  }
+
+  const { refundSSLCommerzPayment } = await import("./sslcommerz.service.js");
+  const result = await refundSSLCommerzPayment(
+    storeId,
+    orderId,
+    getUserId(req),
+    getRole(req),
+    refundAmount,
+    remarks
+  );
+
+  if (!result.ok) return sendFailure(res, result.message, result.status);
+  return sendSuccess(res, result.data, result.message);
+}

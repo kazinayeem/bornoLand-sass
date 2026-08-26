@@ -11,6 +11,7 @@ import {
   sslcommerzCancelCallbackController,
   sslcommerzIpnController,
   adminListStoreGatewaysController,
+  refundStoreSSLCommerzController,
 } from "./sslcommerz.controller.js";
 
 /** Store-scoped router for dashboard management */
@@ -21,6 +22,7 @@ storeSSLCommerzRouter.get("/", getStoreSSLCommerzController);
 storeSSLCommerzRouter.put("/", updateStoreSSLCommerzController);
 storeSSLCommerzRouter.post("/test", testStoreSSLCommerzController);
 storeSSLCommerzRouter.post("/toggle", toggleStoreSSLCommerzController);
+storeSSLCommerzRouter.post("/refund", refundStoreSSLCommerzController);
 
 /** Public payment session and callback router */
 export const publicSSLCommerzRouter: Router = Router();

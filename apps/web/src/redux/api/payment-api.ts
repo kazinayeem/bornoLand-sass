@@ -18,6 +18,27 @@ export type PaymentMethodData = {
   sortOrder: number;
 };
 
+export type SSLCommerzGatewayConfig = {
+  provider: "sslcommerz";
+  storeId: string;
+  storeIdValue: string;
+  hasPassword: boolean;
+  maskedPassword: string;
+  environment: "sandbox" | "live";
+  isEnabled: boolean;
+  isVerified: boolean;
+  verifiedAt: string | null;
+  lastTestedAt: string | null;
+  lastError: string;
+  updatedAt: string | null;
+  featureAccess: {
+    allowed: boolean;
+    reason?: string;
+    message?: string;
+    currentPlan?: { slug: string; name: string };
+  };
+};
+
 type ApiResponse<T> = {
   success: boolean;
   data?: T;
@@ -81,6 +102,65 @@ export const paymentApi = baseApi.injectEndpoints({
       invalidatesTags: ["PaymentMethods"],
     }),
 
+    /* ── Store Payment Gateway (SSLCommerz) endpoints ── */
+    getStoreSSLCommerzConfig: builder.query<
+      ApiResponse<SSLCommerzGatewayConfig>,
+      string
+    >({
+      query: (storeId) => ({
+        url: `/stores/${storeId}/payment-gateways/sslcommerz`,
+      }),
+      providesTags: ["PaymentMethods", "Store"],
+    }),
+    updateStoreSSLCommerzConfig: builder.mutation<
+      ApiResponse<SSLCommerzGatewayConfig>,
+      {
+        storeId: string;
+        data: {
+          storeIdValue?: string;
+          storePassword?: string;
+          environment?: "sandbox" | "live";
+          isEnabled?: boolean;
+        };
+      }
+    >({
+      query: ({ storeId, data }) => ({
+        url: `/stores/${storeId}/payment-gateways/sslcommerz`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["PaymentMethods", "Store"],
+    }),
+    testStoreSSLCommerzConnection: builder.mutation<
+      ApiResponse<{ verified: boolean }>,
+      {
+        storeId: string;
+        data?: {
+          storeIdValue?: string;
+          storePassword?: string;
+          environment?: "sandbox" | "live";
+        };
+      }
+    >({
+      query: ({ storeId, data }) => ({
+        url: `/stores/${storeId}/payment-gateways/sslcommerz/test`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["PaymentMethods", "Store"],
+    }),
+    toggleStoreSSLCommerz: builder.mutation<
+      ApiResponse<{ isEnabled: boolean }>,
+      { storeId: string; enabled: boolean }
+    >({
+      query: ({ storeId, enabled }) => ({
+        url: `/stores/${storeId}/payment-gateways/sslcommerz/toggle`,
+        method: "POST",
+        body: { enabled },
+      }),
+      invalidatesTags: ["PaymentMethods", "Store"],
+    }),
+
     /* ── Public (checkout) endpoints ── */
     getPublicPaymentMethods: builder.query<
       ApiResponse<{ paymentMethods: PaymentMethodData[] }>,
@@ -89,6 +169,7 @@ export const paymentApi = baseApi.injectEndpoints({
       query: () => ({
         url: "/public/payment-methods",
       }),
+      providesTags: ["PaymentMethods"],
     }),
   }),
 });
@@ -98,5 +179,9 @@ export const {
   useCreatePaymentMethodMutation,
   useUpdatePaymentMethodMutation,
   useDeletePaymentMethodMutation,
+  useGetStoreSSLCommerzConfigQuery,
+  useUpdateStoreSSLCommerzConfigMutation,
+  useTestStoreSSLCommerzConnectionMutation,
+  useToggleStoreSSLCommerzMutation,
   useGetPublicPaymentMethodsQuery,
 } = paymentApi;

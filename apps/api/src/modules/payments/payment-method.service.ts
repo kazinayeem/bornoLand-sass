@@ -75,5 +75,55 @@ export async function getEnabledPaymentMethods(storeId: string) {
   const methods = await PaymentMethodModel.find({ storeId, enabled: true })
     .sort({ sortOrder: 1, createdAt: 1 })
     .lean();
-  return { ok: true as const, data: { paymentMethods: methods } };
+
+  const { StorePaymentGatewayModel } = await import("./store-payment-gateway.model.js");
+  const { checkFeature } = await import("../features/feature-access.service.js");
+
+  const gateway = (await StorePaymentGatewayModel.findOne({
+    storeId,
+    provider: "sslcommerz",
+  }).lean()) as any;
+
+  const entitlement = await checkFeature(storeId, "sslcommerz_payment");
+
+  const isGatewayActive = Boolean(
+    gateway &&
+    gateway.isEnabled &&
+    gateway.storeIdValue &&
+    gateway.encryptedStorePassword &&
+    entitlement.allowed
+  );
+
+  const filteredMethods = methods.filter((m) => {
+    if (m.type === "sslcommerz") {
+      return isGatewayActive;
+    }
+    return true;
+  });
+
+  // If SSLCommerz gateway is active and not explicitly in PaymentMethod collection, add it automatically
+  if (isGatewayActive && !filteredMethods.some((m) => m.type === "sslcommerz")) {
+    filteredMethods.push({
+      _id: `sslcommerz_${storeId}` as never,
+      storeId: storeId as never,
+      type: "sslcommerz",
+      label: "SSLCommerz (Cards / Mobile Banking / Net Banking)",
+      accountNumber: "",
+      accountType: "",
+      instructions: "Pay securely via SSLCommerz gateway with Visa, Mastercard, bKash, Nagad, or Internet Banking.",
+      logoUrl: "",
+      bankName: "",
+      branch: "",
+      accountName: "",
+      routingNumber: "",
+      swift: "",
+      enabled: true,
+      sortOrder: 10,
+      createdAt: new Date() as never,
+      updatedAt: new Date() as never,
+    } as never);
+  }
+
+  return { ok: true as const, data: { paymentMethods: filteredMethods } };
 }
+

@@ -14,7 +14,10 @@ import { toast } from "sonner";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Badge } from "@/components/ui/badge";
+import { SSLCommerzSettingsCard } from "@/components/workspace/sslcommerz-settings-card";
+import { useGetStoreFeatureAccessQuery, getFeatureByKey } from "@/redux/api/feature-api";
+import { FeatureLocked } from "@/components/features/feature-gate";
+import { useGetStoreQuery } from "@/redux/api/store-api";
 
 type PaymentsTabProps = { storeId: string };
 
@@ -36,10 +39,16 @@ const methodColors: Record<string, string> = {
 };
 
 export function PaymentsTab({ storeId }: PaymentsTabProps) {
-  const { data, isLoading } = useGetPaymentMethodsQuery(storeId);
+  const { data: storeData } = useGetStoreQuery(storeId, { skip: !storeId });
+  const { data: accessData } = useGetStoreFeatureAccessQuery(storeId, { skip: !storeId });
+  const { data, isLoading } = useGetPaymentMethodsQuery(storeId, { skip: !storeId });
   const [createPayment] = useCreatePaymentMethodMutation();
   const [updatePayment] = useUpdatePaymentMethodMutation();
   const [deletePayment] = useDeletePaymentMethodMutation();
+
+  const store = storeData?.data?.store;
+  const feature = getFeatureByKey(accessData?.data?.features ?? [], "sslcommerz_payment");
+  const billingHref = store ? `/store/${store.slug}/billing` : "#";
 
   const methods = data?.data?.paymentMethods ?? [];
 

@@ -321,7 +321,19 @@ export async function createOrder(
       senderNumber: senderNumber.trim(),
       receiverNumber,
     };
+  } else if (paymentMethod === "sslcommerz") {
+    const { StorePaymentGatewayModel } = await import("../payments/store-payment-gateway.model.js");
+    const { checkFeature } = await import("../features/feature-access.service.js");
+    const entitlement = await checkFeature(storeId, "sslcommerz_payment");
+    if (!entitlement.allowed) {
+      return { ok: false as const, message: entitlement.message || "SSLCommerz payment is not available on this store's plan." };
+    }
+    const gateway = (await StorePaymentGatewayModel.findOne({ storeId, provider: "sslcommerz" }).lean()) as any;
+    if (!gateway || !gateway.isEnabled || !gateway.storeIdValue || !gateway.encryptedStorePassword) {
+      return { ok: false as const, message: "SSLCommerz is not configured or enabled for this store." };
+    }
   }
+
 
   const orderNumber = generateOrderNumber(storeSettings?.orderPrefix ?? "ORD");
   const invoiceNumber = generateOrderNumber(storeSettings?.invoicePrefix ?? "INV");
@@ -470,8 +482,30 @@ export async function createOrder(
     console.error("[notifications] Failed to create customer order notification", error);
   }
 
+  if (paymentMethod === "sslcommerz") {
+    const { initiateSSLCommerzPayment } = await import("../payments/sslcommerz.service.js");
+    const sslResult = await initiateSSLCommerzPayment(storeId, String(order._id));
+    if (sslResult.ok) {
+      return {
+        ok: true as const,
+        data: {
+          order: order.toObject(),
+          gatewayUrl: sslResult.data.gatewayUrl,
+          sessionKey: sslResult.data.sessionKey,
+          tranId: sslResult.data.tranId,
+        },
+      };
+    } else {
+      return {
+        ok: false as const,
+        message: sslResult.message || "Failed to initialize SSLCommerz gateway session.",
+      };
+    }
+  }
+
   return { ok: true as const, data: { order: order.toObject() } };
 }
+
 
 async function autoSaveCustomerAddressFromOrder(
   storeId: string,

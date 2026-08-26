@@ -281,6 +281,36 @@ export const adminApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Dashboard"],
     }),
+    getAdminStorePaymentGateways: builder.query<
+      ApiResponse<{
+        items: Array<{
+          _id: string;
+          storeId: string;
+          storeName: string;
+          storeSlug: string;
+          provider: string;
+          storeIdValue: string;
+          environment: string;
+          isEnabled: boolean;
+          isVerified: boolean;
+          verifiedAt: string | null;
+          lastTestedAt: string | null;
+          lastError: string;
+          hasPassword: boolean;
+          maskedPassword: string;
+          createdAt: string;
+          updatedAt: string;
+        }>;
+        pagination: { page: number; limit: number; total: number; pages: number };
+      }>,
+      { page?: number; limit?: number; search?: string; status?: string } | void
+    >({
+      query: (params) => ({
+        url: "/admin/payment-gateways/stores",
+        params: params || {},
+      }),
+      providesTags: ["Dashboard", "Store"],
+    }),
   })
 });
 
@@ -320,4 +350,5 @@ export const {
   useGetPlatformPaymentDashboardQuery,
   useGetPlatformFinanceQuery,
   useGetPlatformReportsQuery,
+  useGetAdminStorePaymentGatewaysQuery,
 } = adminApi;

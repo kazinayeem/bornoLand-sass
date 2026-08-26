@@ -39,6 +39,7 @@ import { storeAuditRouter } from "../audit/audit.route.js";
 import { contactMessageRouter } from "../notifications/contact-message.route.js";
 import { storeTrackingRouter } from "./store-tracking.route.js";
 import { incompleteCheckoutRouter } from "../orders/incomplete-checkout.route.js";
+import { storeSSLCommerzRouter } from "../payments/sslcommerz.route.js";
 
 export const storeRouter: Router = Router();
 
@@ -99,3 +100,5 @@ storeRouter.use("/:storeId/tracking", storeTrackingRouter);
 storeRouter.use("/:id/tracking", storeTrackingRouter);
 storeRouter.use("/:storeId/incomplete-checkouts", incompleteCheckoutRouter);
 storeRouter.use("/:id/incomplete-checkouts", incompleteCheckoutRouter);
+storeRouter.use("/:storeId/payment-gateways/sslcommerz", storeSSLCommerzRouter);
+storeRouter.use("/:id/payment-gateways/sslcommerz", storeSSLCommerzRouter);

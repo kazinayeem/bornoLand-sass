@@ -124,12 +124,27 @@ export async function enrichCategoriesWithCounts<T extends Record<string, unknow
 ): Promise<Array<T & { productCount: number; subcategoryCount: number }>> {
   if (categories.length === 0) return [];
 
+  const { cacheService } = await import("../../common/cache/cache.service.js");
+  const cacheKey = `category:counts:${storeId}`;
+  const cachedCounts = await cacheService.get<{
+    products: Record<string, number>;
+    subcategories: Record<string, number>;
+  }>(cacheKey);
+
+  if (cachedCounts) {
+    return categories.map((c) => ({
+      ...c,
+      productCount: cachedCounts.products[String(c._id)] ?? Number(c.productCount || 0),
+      subcategoryCount: cachedCounts.subcategories[String(c._id)] ?? Number(c.subcategoryCount || 0),
+    }));
+  }
+
   await connectDatabase();
   const storeObjectId = new mongoose.Types.ObjectId(storeId);
 
   const [productCounts, subcategoryCounts] = await Promise.all([
     ProductModel.aggregate([
-      { $match: { storeId: storeObjectId } },
+      { $match: { storeId: storeObjectId, status: "active" } },
       { $unwind: "$categoryIds" },
       { $group: { _id: "$categoryIds", count: { $sum: 1 } } },
     ]),
@@ -139,20 +154,22 @@ export async function enrichCategoriesWithCounts<T extends Record<string, unknow
     ]),
   ]);
 
-  const productCountMap = new Map<string, number>();
+  const productCountMap: Record<string, number> = {};
   for (const item of productCounts) {
-    if (item._id) productCountMap.set(String(item._id), item.count);
+    if (item._id) productCountMap[String(item._id)] = item.count;
   }
 
-  const subcategoryCountMap = new Map<string, number>();
+  const subcategoryCountMap: Record<string, number> = {};
   for (const item of subcategoryCounts) {
-    if (item._id) subcategoryCountMap.set(String(item._id), item.count);
+    if (item._id) subcategoryCountMap[String(item._id)] = item.count;
   }
+
+  await cacheService.set(cacheKey, { products: productCountMap, subcategories: subcategoryCountMap }, 300);
 
   return categories.map((c) => ({
     ...c,
-    productCount: productCountMap.get(String(c._id)) ?? 0,
-    subcategoryCount: subcategoryCountMap.get(String(c._id)) ?? 0,
+    productCount: productCountMap[String(c._id)] ?? Number(c.productCount || 0),
+    subcategoryCount: subcategoryCountMap[String(c._id)] ?? Number(c.subcategoryCount || 0),
   }));
 }
 

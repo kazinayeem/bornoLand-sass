@@ -455,15 +455,28 @@ export function ProductDetailClient({ product }: { product: Product }) {
           </section>
         )}
 
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur-xl lg:hidden">
-          <div className="mx-auto flex max-w-7xl items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-apple-ink-muted-48">Total</p>
-              <p className="truncate text-sm font-semibold text-apple-ink">{formatCurrency(totalPrice, settings)}</p>
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl lg:hidden">
+          <div className="mx-auto flex max-w-7xl items-center gap-2.5">
+            <div className="min-w-0 flex-shrink-0">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-apple-ink-muted-48">Total</p>
+              <p className="truncate text-xs font-bold text-apple-ink">{formatCurrency(totalPrice, settings)}</p>
             </div>
-            <button onClick={() => handleAddToCart()} disabled={!enableAddToCart}
-              className="rounded-2xl px-4 py-3 text-sm font-semibold disabled:opacity-50" style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}>
+            <button
+              type="button"
+              onClick={() => handleAddToCart()}
+              disabled={!enableAddToCart}
+              className="flex-1 rounded-2xl px-3 py-3 text-xs font-semibold transition-opacity disabled:opacity-50"
+              style={{ backgroundColor: primaryColor, color: getContrastColor(primaryColor) }}
+            >
               Add to Cart
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBuyNow()}
+              disabled={!enableAddToCart}
+              className="flex-1 rounded-2xl border border-zinc-950 bg-zinc-950 px-3 py-3 text-xs font-semibold text-white transition-opacity disabled:opacity-50"
+            >
+              Buy Now
             </button>
           </div>
         </div>

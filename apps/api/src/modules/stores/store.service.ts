@@ -431,6 +431,10 @@ export async function updateStore(storeId: string, userId: string, payload: unkn
     { new: true }
   ).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
+
+  const { invalidateStoreTenantCache } = await import("../../common/cache/cache.service.js");
+  invalidateStoreTenantCache(String(id)).catch(() => {});
+
   return { ok: true as const, data: { store } };
 }
 
@@ -463,6 +467,10 @@ export async function updateStoreBranding(storeId: string, userId: string, paylo
     .populate("planId", "name slug")
     .lean();
   if (!store) return { ok: false as const, message: "Store not found" };
+
+  const { invalidateStoreTenantCache } = await import("../../common/cache/cache.service.js");
+  invalidateStoreTenantCache(String(id)).catch(() => {});
+
   return { ok: true as const, data: { branding: store, store } };
 }
 
@@ -483,6 +491,10 @@ export async function clearStoreBrandAsset(
     .populate("planId", "name slug")
     .lean();
   if (!store) return { ok: false as const, message: "Store not found" };
+
+  const { invalidateStoreTenantCache } = await import("../../common/cache/cache.service.js");
+  invalidateStoreTenantCache(String(id)).catch(() => {});
+
   return { ok: true as const, data: { branding: store, store } };
 }
 

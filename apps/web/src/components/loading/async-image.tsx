@@ -34,8 +34,7 @@ export function AsyncImage({
 
   if (!src || error) return <>{fallback}</>;
 
-  const isRelative = src.startsWith("/");
-  const shouldBeUnoptimized = unoptimized ?? (!isRelative && !src.includes("res.cloudinary.com"));
+  const shouldBeUnoptimized = unoptimized ?? false;
 
   return (
     <span className={cn("relative block h-full w-full overflow-hidden", fill && "absolute inset-0")}>

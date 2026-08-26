@@ -191,12 +191,12 @@ export function ProductCard({
             </div>
           )}
 
-          <div className="pointer-events-none absolute left-2.5 top-2.5 z-10 flex flex-col gap-1.5">
+          <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-1 sm:left-2.5 sm:top-2.5 sm:gap-1.5">
             {badge ? <div className="pointer-events-auto">{badge}</div> : null}
             {showBadges && discount > 0 && (
               <span
                 className={cn(
-                  "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold tracking-tight text-white shadow-sm",
+                  "inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold tracking-tight text-white shadow-sm sm:px-2 sm:text-[11px]",
                   variant === "grocery" ? "bg-[#e05a00]" : variant === "electronics" ? "bg-[#e2136e]" : "bg-rose-600",
                 )}
               >
@@ -206,7 +206,7 @@ export function ProductCard({
               </span>
             )}
             {isOutOfStock && (
-              <span className="inline-flex items-center rounded-md bg-zinc-900/90 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm backdrop-blur-sm">
+              <span className="inline-flex items-center rounded-md bg-zinc-900/90 px-1.5 py-0.5 text-[10px] font-medium text-white shadow-sm backdrop-blur-sm sm:px-2 sm:text-[11px]">
                 Sold Out
               </span>
             )}

@@ -83,7 +83,10 @@ export function StoreHero({ section }: { section?: StorefrontSectionLike }) {
                       <img
                         src={slide.imageUrl}
                         alt={slide.title || store.name}
-                        loading={active ? "eager" : "lazy"}
+                        loading={index === 0 ? "eager" : "lazy"}
+                        // @ts-expect-error fetchpriority attribute
+                        fetchpriority={index === 0 ? "high" : "auto"}
+                        decoding={index === 0 ? "sync" : "async"}
                         className="absolute inset-0 h-full w-full object-cover"
                       />
                     </picture>

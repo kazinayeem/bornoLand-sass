@@ -635,9 +635,9 @@ function CheckoutForm() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed";
+    "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-base sm:text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed";
   const textareaClass =
-    "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed resize-none";
+    "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-base sm:text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed resize-none";
 
   return (
     <div className="relative mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">

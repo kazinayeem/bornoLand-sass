@@ -164,10 +164,10 @@ export const paymentApi = baseApi.injectEndpoints({
     /* ── Public (checkout) endpoints ── */
     getPublicPaymentMethods: builder.query<
       ApiResponse<{ paymentMethods: PaymentMethodData[] }>,
-      void
+      string | void
     >({
-      query: () => ({
-        url: "/public/payment-methods",
+      query: (storeId) => ({
+        url: storeId ? `/public/payment-methods?storeId=${storeId}` : "/public/payment-methods",
       }),
       providesTags: ["PaymentMethods"],
     }),

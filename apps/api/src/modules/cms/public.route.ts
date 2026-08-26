@@ -133,6 +133,11 @@ publicRouter.get("/product/:storeSlug/:productSlug", resolveProductBySlugControl
 publicRouter.get("/reviews", getPublicReviewsController);
 publicRouter.post("/reviews", submitPublicReviewController);
 
+publicRouter.get("/payment-methods", paymentMethodsController);
+publicRouter.get("/stores/:storeId/payment-methods", paymentMethodsController);
+publicRouter.get("/delivery-zones", deliveryZonesController);
+publicRouter.get("/stores/:storeId/delivery-zones", deliveryZonesController);
+
 publicRouter.use(resolveStoreFromSubdomain);
 publicRouter.get("/tracking", getPublicStoreTrackingController);
 publicRouter.post("/tracking/events", publicLogStoreTrackingEventController);

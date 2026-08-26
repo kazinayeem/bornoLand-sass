@@ -6,6 +6,11 @@ import { StorePaymentGatewayModel, type StorePaymentGatewayDocument } from "./st
 import { checkFeature } from "../features/feature-access.service.js";
 import { recordAudit } from "../audit/audit.service.js";
 import {
+  getStorePublicUrl,
+  getSSLCommerzCallbackUrls,
+  getApiBaseUrl,
+} from "../stores/store-url.service.js";
+import {
   decryptSSLCommerzSecret,
   encryptSSLCommerzSecret,
   maskSecret,
@@ -283,14 +288,19 @@ export async function testSSLCommerzConnection(
     const sslcz = new SSLCommerzPayment(storeIdValue, storePassword, isLive);
 
     const testTranId = `TEST_PING_${Date.now()}`;
+    const testUrls = getSSLCommerzCallbackUrls({
+      store: (store as any) || { _id: storeId },
+      transactionId: testTranId,
+    });
+
     const testData = {
       total_amount: 10,
       currency: "BDT",
       tran_id: testTranId,
-      success_url: "https://bornoland.com/payments/sslcommerz/success",
-      fail_url: "https://bornoland.com/payments/sslcommerz/fail",
-      cancel_url: "https://bornoland.com/payments/sslcommerz/cancel",
-      ipn_url: "https://bornoland.com/payments/sslcommerz/ipn",
+      success_url: testUrls.successUrl,
+      fail_url: testUrls.failUrl,
+      cancel_url: testUrls.cancelUrl,
+      ipn_url: testUrls.ipnUrl,
       shipping_method: "NO",
       product_name: "Test Connection",
       product_category: "Test",
@@ -440,13 +450,14 @@ export async function initiateSSLCommerzPayment(
   const environment: "sandbox" | "live" = gateway.environment === "live" ? "live" : "sandbox";
   const isLive = environment === "live";
 
-  const resolvedBaseUrl =
-    process.env.API_PUBLIC_URL ||
-    process.env.APP_URL ||
-    appBaseUrl ||
-    "https://api.bornoland.com";
-
   const tranId = order.orderNumber || `TXN_${order._id}_${Date.now()}`;
+
+  const callbackUrls = getSSLCommerzCallbackUrls({
+    store: (store as any) || { _id: storeId, slug: storeSlug },
+    order: { _id: order._id, orderNumber: order.orderNumber },
+    transactionId: tranId,
+    apiBaseUrl: appBaseUrl,
+  });
 
   const sslcz = new SSLCommerzPayment(gateway.storeIdValue, storePassword, isLive);
 
@@ -454,10 +465,10 @@ export async function initiateSSLCommerzPayment(
     total_amount: Number(order.total).toFixed(2),
     currency: order.currencyCode || "BDT",
     tran_id: tranId,
-    success_url: `${resolvedBaseUrl}/payments/sslcommerz/success`,
-    fail_url: `${resolvedBaseUrl}/payments/sslcommerz/fail`,
-    cancel_url: `${resolvedBaseUrl}/payments/sslcommerz/cancel`,
-    ipn_url: `${resolvedBaseUrl}/payments/sslcommerz/ipn`,
+    success_url: callbackUrls.successUrl,
+    fail_url: callbackUrls.failUrl,
+    cancel_url: callbackUrls.cancelUrl,
+    ipn_url: callbackUrls.ipnUrl,
     cus_name: order.shippingAddress?.fullName || order.customerSnapshot?.name || "Customer",
     cus_email: order.shippingAddress?.email || order.customerSnapshot?.email || "customer@store.com",
     cus_add1: order.shippingAddress?.street || "Address",
@@ -563,14 +574,8 @@ export async function verifyAndHandleSSLCommerzCallback(
     };
   }
 
-  const store = (await StoreModel.findById(storeId).lean()) as { slug?: string; subdomain?: string } | null;
-  const canonicalSlug = store?.subdomain || store?.slug || storeSlug || "store";
-
-  const webBaseUrl =
-    process.env.NEXT_PUBLIC_WEB_URL ||
-    process.env.WEB_URL ||
-    process.env.APP_URL ||
-    "https://bornoland.com";
+  const store = (await StoreModel.findById(storeId).lean()) as any;
+  const storePublicUrl = getStorePublicUrl(store);
 
   // Handle Cancel
   if (actionType === "cancel" || callbackData.status === "CANCELLED") {
@@ -588,17 +593,18 @@ export async function verifyAndHandleSSLCommerzCallback(
       ok: true,
       status: 200,
       message: "Payment cancelled by customer.",
-      redirectUrl: `${webBaseUrl}/site/${canonicalSlug}/checkout?payment=cancelled&orderNumber=${order.orderNumber}`,
+      redirectUrl: `${storePublicUrl}/checkout/payment/cancel?orderNumber=${order.orderNumber}&tran_id=${tranId}`,
     };
   }
 
   // Handle Fail
   if (actionType === "fail" || callbackData.status === "FAILED") {
+    const errorReason = String(callbackData.failedreason || callbackData.error || "Payment failed");
     if (order.paymentStatus !== "paid") {
       order.paymentStatus = "failed";
       order.timeline.push({
         status: "payment_failed",
-        note: `SSLCommerz payment failed: ${String(callbackData.failedreason || callbackData.error || "Unknown reason")}`,
+        note: `SSLCommerz payment failed: ${errorReason}`,
         createdBy: "sslcommerz_gateway",
         createdAt: new Date(),
       } as never);
@@ -608,7 +614,7 @@ export async function verifyAndHandleSSLCommerzCallback(
       ok: true,
       status: 200,
       message: "Payment failed.",
-      redirectUrl: `${webBaseUrl}/site/${canonicalSlug}/checkout?payment=failed&orderNumber=${order.orderNumber}`,
+      redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=${encodeURIComponent(errorReason)}`,
     };
   }
 
@@ -620,7 +626,7 @@ export async function verifyAndHandleSSLCommerzCallback(
       status: 200,
       message: "Payment already verified and paid.",
       order: order.toObject(),
-      redirectUrl: `${webBaseUrl}/site/${canonicalSlug}/orders/${order._id}?payment=success`,
+      redirectUrl: `${storePublicUrl}/checkout/payment/success?orderNumber=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
     };
   }
 
@@ -667,7 +673,7 @@ export async function verifyAndHandleSSLCommerzCallback(
         ok: false,
         status: 400,
         message: "SSLCommerz transaction validation failed.",
-        redirectUrl: `${webBaseUrl}/site/${canonicalSlug}/checkout?payment=verification_failed&orderNumber=${order.orderNumber}`,
+        redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=verification_failed`,
       };
     }
 
@@ -687,7 +693,7 @@ export async function verifyAndHandleSSLCommerzCallback(
         ok: false,
         status: 400,
         message: `Payment amount mismatch. Expected ৳${order.total}, got ৳${paidAmount}.`,
-        redirectUrl: `${webBaseUrl}/site/${canonicalSlug}/checkout?payment=amount_mismatch&orderNumber=${order.orderNumber}`,
+        redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=amount_mismatch`,
       };
     }
 
@@ -735,7 +741,7 @@ export async function verifyAndHandleSSLCommerzCallback(
       status: 200,
       message: "SSLCommerz payment verified and order updated.",
       order: order.toObject(),
-      redirectUrl: `${webBaseUrl}/site/${canonicalSlug}/orders/${order._id}?payment=success`,
+      redirectUrl: `${storePublicUrl}/checkout/payment/success?orderNumber=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
     };
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Error validating SSLCommerz payment";
@@ -743,7 +749,7 @@ export async function verifyAndHandleSSLCommerzCallback(
       ok: false,
       status: 500,
       message: errorMsg,
-      redirectUrl: `${webBaseUrl}/site/${canonicalSlug}/checkout?payment=error&orderNumber=${order.orderNumber}`,
+      redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=system_error`,
     };
   }
 }

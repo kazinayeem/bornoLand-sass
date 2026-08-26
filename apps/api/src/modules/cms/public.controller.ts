@@ -144,11 +144,37 @@ export async function getPublicProductsController(
   return sendSuccess(response, result.data);
 }
 
+async function resolveTargetStoreId(request: SubdomainRequest): Promise<string | null> {
+  if (request.store?._id) return request.store._id.toString();
+
+  const storeIdParam =
+    (request.query?.storeId as string) ||
+    (request.params?.storeId as string) ||
+    (request.headers["x-store-id"] as string);
+
+  if (storeIdParam) return storeIdParam;
+
+  const slugParam =
+    (request.query?.storeSlug as string) ||
+    (request.query?.tenant as string) ||
+    (request.params?.storeSlug as string) ||
+    (request.headers["x-store-slug"] as string) ||
+    request.subdomain;
+
+  if (slugParam) {
+    const { findStoreByHostKey } = await import("../stores/tenant-resolver.service.js");
+    const store = (await findStoreByHostKey(slugParam)) as any;
+    if (store?._id) return store._id.toString();
+  }
+
+  return null;
+}
+
 export async function paymentMethodsController(
   request: SubdomainRequest,
   response: Response
 ) {
-  const storeId = request.store?._id?.toString();
+  const storeId = await resolveTargetStoreId(request);
   if (!storeId) return sendFailure(response, "Store not found", 404);
 
   const result = await getEnabledPaymentMethods(storeId);
@@ -159,7 +185,7 @@ export async function deliveryZonesController(
   request: SubdomainRequest,
   response: Response
 ) {
-  const storeId = request.store?._id?.toString();
+  const storeId = await resolveTargetStoreId(request);
   if (!storeId) return sendFailure(response, "Store not found", 404);
 
   const result = await getEnabledDeliveryZones(storeId);

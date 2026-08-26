@@ -94,13 +94,17 @@ function CheckoutForm() {
   const [isInitTimedOut, setIsInitTimedOut] = useState(false);
   const [isAutosaving, setIsAutosaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "dirty" | "saving" | "saved" | "error">("idle");
+  const isSavingRef = useRef(false);
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const AUTOSAVE_DELAY = 20_000;
 
   // Form & Checkout States
   const [errorMsg, setErrorMsg] = useState("");
   const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; orderId: string; paymentMethod: string } | null>(null);
   const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string | null>(null);
   const [recoveredBanner, setRecoveredBanner] = useState(false);
-  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Mobile Banking specific fields
   const [senderNumber, setSenderNumber] = useState("");
@@ -118,13 +122,13 @@ function CheckoutForm() {
     data: pmData,
     isLoading: pmLoading,
     refetch: refetchPm,
-  } = useGetPublicPaymentMethodsQuery();
+  } = useGetPublicPaymentMethodsQuery(store?._id, { skip: !mounted || !store?._id });
 
   const {
     data: dzData,
     isLoading: dzLoading,
     refetch: refetchDz,
-  } = useGetPublicDeliveryZonesQuery();
+  } = useGetPublicDeliveryZonesQuery(store?._id, { skip: !mounted || !store?._id });
 
   const paymentMethods = pmData?.data?.paymentMethods ?? [];
   const dbDeliveryZones = dzData?.data?.deliveryZones ?? [];

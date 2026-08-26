@@ -356,4 +356,66 @@ describe("Multi-Tenant SSLCommerz Payment Gateway System", () => {
     assert.equal(res.status, 404);
     assert.match(res.message, /store not found/i);
   });
+
+  it("13. Dynamic URL Resolver: Shop A vs Shop B vs Custom Domain vs Localhost", async () => {
+    const { getStorePublicUrl, getSSLCommerzCallbackUrls } = await import("../../stores/store-url.service.js");
+
+    const storeA = (await StoreModel.findById(storeAId).lean()) as any;
+    const storeB = (await StoreModel.findById(storeBId).lean()) as any;
+
+    const urlA = getStorePublicUrl(storeA);
+    const urlB = getStorePublicUrl(storeB);
+
+    assert.match(urlA, new RegExp(String(storeA?.slug || storeA?.subdomain)));
+    assert.match(urlB, new RegExp(String(storeB?.slug || storeB?.subdomain)));
+    assert.notEqual(urlA, urlB);
+
+    // Custom domain store
+    const customStore = {
+      _id: new mongoose.Types.ObjectId(),
+      slug: "brand-store",
+      customDomains: ["brandstore.com"],
+    };
+    const customUrl = getStorePublicUrl(customStore);
+    assert.equal(customUrl, "https://brandstore.com");
+
+    const urls = getSSLCommerzCallbackUrls({
+      store: customStore,
+      order: { orderNumber: "ORD-999" },
+      transactionId: "TXN-999",
+    });
+
+    assert.equal(urls.storefrontSuccessUrl, "https://brandstore.com/checkout/payment/success?orderNumber=ORD-999&tran_id=TXN-999");
+    assert.equal(urls.storefrontFailUrl, "https://brandstore.com/checkout/payment/fail?orderNumber=ORD-999&tran_id=TXN-999");
+    assert.equal(urls.storefrontCancelUrl, "https://brandstore.com/checkout/payment/cancel?orderNumber=ORD-999&tran_id=TXN-999");
+  });
+
+  it("14. Cross-Shop Isolation: Shop A cancel returns to Shop A domain, not Shop B", async () => {
+    const { getStorePublicUrl } = await import("../../stores/store-url.service.js");
+    const storeA = (await StoreModel.findById(storeAId).lean()) as any;
+    const storePublicUrlA = getStorePublicUrl(storeA);
+
+    const order = await OrderModel.create({
+      storeId: storeAId,
+      orderNumber: `ORD-ISO-CANCEL-${Date.now()}`,
+      items: [{ name: "Item 1", price: 1000, quantity: 1, productId: new mongoose.Types.ObjectId() }],
+      subtotal: 1000,
+      total: 1000,
+      paymentMethod: "sslcommerz",
+      paymentStatus: "pending",
+      shippingAddress: { fullName: "Iso User", phone: "01700000000", street: "Dhaka", city: "Dhaka" },
+    });
+
+    const cancelCallback = {
+      tran_id: order.orderNumber,
+      value_a: storeAId,
+      value_b: String(order._id),
+      status: "CANCELLED",
+    };
+
+    const res = await verifyAndHandleSSLCommerzCallback(cancelCallback, "cancel");
+    assert.equal(res.ok, true);
+    assert.ok(res.redirectUrl?.startsWith(storePublicUrlA));
+    assert.match(res.redirectUrl || "", /checkout\/payment\/cancel/);
+  });
 });

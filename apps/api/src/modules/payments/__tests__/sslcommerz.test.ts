@@ -6,6 +6,7 @@ import { StoreModel } from "../../stores/store.model.js";
 import { PlanModel } from "../../plans/plan.model.js";
 import { PlanFeatureModel } from "../../features/plan-feature.model.js";
 import { OrderModel } from "../../orders/order.model.js";
+import { FeatureModel } from "../../features/feature.model.js";
 import { StorePaymentGatewayModel } from "../store-payment-gateway.model.js";
 import {
   getStoreSSLCommerzConfig,
@@ -30,6 +31,21 @@ describe("Multi-Tenant SSLCommerz Payment Gateway System", () => {
 
     userAId = new mongoose.Types.ObjectId().toString();
     userBId = new mongoose.Types.ObjectId().toString();
+
+    // Ensure feature exists
+    await FeatureModel.findOneAndUpdate(
+      { key: "sslcommerz_payment" },
+      {
+        $set: {
+          key: "sslcommerz_payment",
+          name: "SSLCommerz Payment Gateway",
+          type: "boolean",
+          category: "payments",
+          isActive: true,
+        },
+      },
+      { upsert: true }
+    );
 
     // Create Free plan (sslcommerz_payment disabled)
     const freePlan = await PlanModel.findOneAndUpdate(
@@ -79,7 +95,7 @@ describe("Multi-Tenant SSLCommerz Payment Gateway System", () => {
       name: "Store Alpha",
       slug: `store-alpha-${Date.now()}`,
       planId: starterPlanId,
-      plan: "test-starter-plan",
+      plan: "starter",
       status: "active",
     });
     storeAId = String(storeA._id);
@@ -91,7 +107,7 @@ describe("Multi-Tenant SSLCommerz Payment Gateway System", () => {
       name: "Store Beta",
       slug: `store-beta-${Date.now()}`,
       planId: starterPlanId,
-      plan: "test-starter-plan",
+      plan: "starter",
       status: "active",
     });
     storeBId = String(storeB._id);
@@ -165,7 +181,7 @@ describe("Multi-Tenant SSLCommerz Payment Gateway System", () => {
 
   it("4. Unsupported package (Free) cannot configure SSLCommerz", async () => {
     // Downgrade Store A to Free Plan
-    await StoreModel.updateOne({ _id: storeAId }, { $set: { planId: freePlanId, plan: "test-free-plan" } });
+    await StoreModel.updateOne({ _id: storeAId }, { $set: { planId: freePlanId, plan: "free" } });
 
     const res = await updateStoreSSLCommerzConfig(storeAId, userAId, "merchant", {
       storeIdValue: "free_attempt",
@@ -177,7 +193,7 @@ describe("Multi-Tenant SSLCommerz Payment Gateway System", () => {
 
   it("5. Package upgrade restores access to configure SSLCommerz", async () => {
     // Upgrade Store A back to Starter Plan
-    await StoreModel.updateOne({ _id: storeAId }, { $set: { planId: starterPlanId, plan: "test-starter-plan" } });
+    await StoreModel.updateOne({ _id: storeAId }, { $set: { planId: starterPlanId, plan: "starter" } });
 
     const res = await updateStoreSSLCommerzConfig(storeAId, userAId, "merchant", {
       storeIdValue: "store_a_restored_id",

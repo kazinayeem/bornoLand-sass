@@ -98,6 +98,7 @@ export async function createOrder(
   },
 ) {
   await connectDatabase();
+  console.info("[ORDER] request received", { storeId, customerId: customerIdInput, paymentMethod: payload.paymentMethod });
 
   const store = (await StoreModel.findById(storeId).lean()) as {
     planId?: string;
@@ -109,6 +110,7 @@ export async function createOrder(
   if (store && store.allowNewOrders === false) {
     return { ok: false as const, message: "This store is not accepting new orders. Please upgrade your subscription." };
   }
+  console.info("[ORDER] store resolved", { storeId, allowNewOrders: store?.allowNewOrders });
 
   const limitCheck = await checkLimit(storeId, "orders");
   if (!limitCheck.allowed) {
@@ -323,6 +325,7 @@ export async function createOrder(
       receiverNumber,
     };
   } else if (paymentMethod === "sslcommerz") {
+    console.info("[ORDER] SSLCommerz payment method detected", { storeId });
     const { StorePaymentGatewayModel } = await import("../payments/store-payment-gateway.model.js");
     const { checkFeature } = await import("../features/feature-access.service.js");
     const entitlement = await checkFeature(storeId, "sslcommerz_payment");
@@ -333,11 +336,14 @@ export async function createOrder(
     if (!gateway || !gateway.isEnabled || !gateway.storeIdValue || !gateway.encryptedStorePassword) {
       return { ok: false as const, message: "SSLCommerz is not configured or enabled for this store." };
     }
+    console.info("[ORDER] SSLCommerz gateway config validated", { storeId, environment: gateway.environment });
   }
 
 
   const orderNumber = generateOrderNumber(storeSettings?.orderPrefix ?? "ORD");
   const invoiceNumber = generateOrderNumber(storeSettings?.invoicePrefix ?? "INV");
+
+  console.info("[ORDER] creating order", { orderNumber, paymentMethod, total, currencyCode });
 
   const order = await OrderModel.create({
     storeId,
@@ -410,6 +416,8 @@ export async function createOrder(
       ? [{ body: payload.notes, type: "customer", createdBy: "customer" }]
       : [],
   });
+
+  console.info("[ORDER] order created successfully", { orderId: String(order._id), orderNumber });
 
   for (const item of cart.items) {
     await decrementProductStock(storeId, item, {
@@ -484,8 +492,10 @@ export async function createOrder(
   }
 
   if (paymentMethod === "sslcommerz") {
+    console.info("[ORDER] initiating SSLCommerz payment", { orderId: String(order._id), storeId });
     const { initiateSSLCommerzPayment } = await import("../payments/sslcommerz.service.js");
     const sslResult = await initiateSSLCommerzPayment(storeId, String(order._id));
+    console.info("[ORDER] SSLCommerz result received", { ok: sslResult.ok, orderId: String(order._id) });
     if (sslResult.ok) {
       return {
         ok: true as const,

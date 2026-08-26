@@ -16,6 +16,17 @@ import {
   maskSecret,
 } from "./sslcommerz.credentials.js";
 
+const SSLCOMMERZ_API_TIMEOUT_MS = 15_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`SSLCommerz API timeout after ${ms}ms (${label})`)), ms)
+    ),
+  ]);
+}
+
 export const SSLCOMMERZ_FEATURE_KEY = "sslcommerz_payment";
 
 type LeanGateway = StorePaymentGatewayDocument & { _id: unknown; createdAt?: Date; updatedAt?: Date };
@@ -314,7 +325,7 @@ export async function testSSLCommerzConnection(
       cus_phone: "01700000000",
     };
 
-    const responseData = await sslcz.init(testData);
+    const responseData = await withTimeout(sslcz.init(testData), SSLCOMMERZ_API_TIMEOUT_MS, "test-connection");
 
     if (responseData?.status === "SUCCESS") {
       if (gateway) {
@@ -488,7 +499,11 @@ export async function initiateSSLCommerzPayment(
   };
 
   try {
-    const data = await sslcz.init(initData);
+    console.info("[SSL] sslcz.init starting", { tranId, environment, orderId });
+
+    const data = await withTimeout(sslcz.init(initData), SSLCOMMERZ_API_TIMEOUT_MS, "sslcz.init");
+
+    console.info("[SSL] sslcz.init completed", { tranId, status: data?.status, hasGatewayUrl: Boolean(data?.GatewayPageURL) });
 
     if (data?.status === "SUCCESS" && data.GatewayPageURL) {
       order.paymentMethod = "sslcommerz";
@@ -517,10 +532,12 @@ export async function initiateSSLCommerzPayment(
       };
     } else {
       const errorMsg = data?.failedreason || "Failed to initiate SSLCommerz payment session.";
+      console.error("[SSL] sslcz.init failed", { tranId, errorMsg, status: data?.status });
       return { ok: false, status: 502, message: errorMsg };
     }
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Error contacting SSLCommerz gateway";
+    console.error("[SSL] sslcz.init error", { tranId, errorMsg });
     return { ok: false, status: 500, message: errorMsg };
   }
 }
@@ -657,7 +674,7 @@ export async function verifyAndHandleSSLCommerzCallback(
 
   try {
     const sslcz = new SSLCommerzPayment(gateway.storeIdValue, storePassword, isLive);
-    const valData = await sslcz.validate({ val_id: valId });
+    const valData = await withTimeout(sslcz.validate({ val_id: valId }), SSLCOMMERZ_API_TIMEOUT_MS, "validate-payment");
 
     if (!valData || (valData.status !== "VALID" && valData.status !== "VALIDATED")) {
       order.paymentStatus = "failed";
@@ -808,7 +825,7 @@ export async function refundSSLCommerzPayment(
       refl_id: `REF_${order._id}_${Date.now()}`,
     };
 
-    const refundRes = await sslcz.initiateRefund(refundData);
+    const refundRes = await withTimeout(sslcz.initiateRefund(refundData), SSLCOMMERZ_API_TIMEOUT_MS, "refund");
 
     if (refundRes?.status === "success" || refundRes?.status === "SUCCESS") {
       order.paymentStatus = "refunded";

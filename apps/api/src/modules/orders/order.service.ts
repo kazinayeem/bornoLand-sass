@@ -162,6 +162,7 @@ export async function createOrder(
         name: payload.shippingAddress.fullName,
         email: email || `guest_${Date.now()}@store.com`,
         phone,
+        passwordHash: "",
         isGuest: true,
         status: "active",
       });

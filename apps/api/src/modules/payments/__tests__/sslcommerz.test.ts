@@ -418,4 +418,28 @@ describe("Multi-Tenant SSLCommerz Payment Gateway System", () => {
     assert.ok(res.redirectUrl?.startsWith(storePublicUrlA));
     assert.match(res.redirectUrl || "", /checkout\/payment\/cancel/);
   });
+
+  it("15. getEnabledPaymentMethods: Returns SSLCommerz for configured Shop A with safe metadata", async () => {
+    const { getEnabledPaymentMethods } = await import("../payment-method.service.js");
+    const res = await getEnabledPaymentMethods(storeAId);
+    assert.equal(res.ok, true);
+    const sslMethod = res.data.paymentMethods.find((m: any) => m.type === "sslcommerz");
+    assert.ok(sslMethod, "SSLCommerz should be present in public payment methods for Store A");
+    assert.equal(sslMethod?.enabled, true);
+    assert.equal((sslMethod as any).encryptedStorePassword, undefined);
+    assert.equal((sslMethod as any).storePassword, undefined);
+  });
+
+  it("16. getEnabledPaymentMethods: Shop B with disabled SSLCommerz does not return SSLCommerz", async () => {
+    const { toggleStoreSSLCommerz } = await import("../sslcommerz.service.js");
+    const { getEnabledPaymentMethods } = await import("../payment-method.service.js");
+
+    // Disable SSLCommerz on Store B
+    await toggleStoreSSLCommerz(storeBId, userBId, "merchant", false);
+
+    const res = await getEnabledPaymentMethods(storeBId);
+    assert.equal(res.ok, true);
+    const sslMethod = res.data.paymentMethods.find((m: any) => m.type === "sslcommerz");
+    assert.equal(sslMethod, undefined, "SSLCommerz should NOT appear if disabled or not configured");
+  });
 });

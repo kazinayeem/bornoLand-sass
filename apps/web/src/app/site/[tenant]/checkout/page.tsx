@@ -256,6 +256,8 @@ function CheckoutForm() {
       landmark: address.landmark ?? "",
       notes: address.orderNotes ?? "",
     });
+    setIsDirty(true);
+    setSaveStatus("dirty");
   };
 
   const selectedZone = deliveryZones.find((z) => z._id === selectedZoneId);
@@ -318,9 +320,9 @@ function CheckoutForm() {
     }
   }, [selectedPayment, total, settings.currencyCode, trackAddPaymentInfo]);
 
-  // Progressive Checkout Autosave (Debounced in background - never locks UI)
+  // Progressive Checkout Autosave (20-second idle strategy - never locks UI)
   useEffect(() => {
-    if (!mounted || !store?._id) return;
+    if (!mounted || !store?._id || !isDirty) return;
 
     const hasCustomerInfo = Boolean(
       (form.phone && form.phone.trim().length >= 6) ||
@@ -332,85 +334,83 @@ function CheckoutForm() {
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
 
-    saveTimerRef.current = setTimeout(() => {
-      const sessionId = getOrCreateCartSessionId();
+    saveTimerRef.current = setTimeout(async () => {
+      if (isSavingRef.current) return;
+      isSavingRef.current = true;
       setIsAutosaving(true);
+      setSaveStatus("saving");
 
-      trackProgress({
-        storeId: store._id,
-        sessionId,
-        customerId: (customer as any)?._id || null,
-        customerName: form.fullName,
-        phone: form.phone,
-        email: form.email,
-        address: [form.street, form.apartment, form.area].filter(Boolean).join(", "),
-        street: form.street,
-        apartment: form.apartment,
-        city: form.city,
-        area: form.area,
-        state: form.state,
-        zip: form.zip,
-        country: form.country,
-        landmark: form.landmark,
-        notes: form.notes,
-        items: items.map((i) => ({
-          productId: i.productId,
-          variantId: i.variantId || undefined,
-          variantTitle: i.variantTitle || "",
-          name: i.name,
-          price: i.price,
-          quantity: i.quantity,
-          image: i.image || "",
-        })),
-        subtotal,
-        discount,
-        shippingFee: deliveryCharge,
-        tax: taxAmount,
-        total,
-        couponCode: backendCart?.couponCode || "",
-        deliveryZoneId: selectedZoneId,
-        deliveryZoneName: selectedZone?.name || "",
-        paymentMethod: selectedPayment,
-        step: selectedPayment ? "payment" : selectedZoneId ? "shipping" : "customer_info",
-      })
-        .then(() => {
-          setIsAutosaving(false);
-          setLastSavedAt(Date.now());
-        })
-        .catch(() => {
-          setIsAutosaving(false);
-        });
-    }, 700);
+      const sessionId = getOrCreateCartSessionId();
+
+      try {
+        await trackProgress({
+          storeId: store._id,
+          sessionId,
+          customerId: (customer as any)?._id || null,
+          customerName: form.fullName,
+          phone: form.phone,
+          email: form.email,
+          address: [form.street, form.apartment, form.area].filter(Boolean).join(", "),
+          street: form.street,
+          apartment: form.apartment,
+          city: form.city,
+          area: form.area,
+          state: form.state,
+          zip: form.zip,
+          country: form.country,
+          landmark: form.landmark,
+          notes: form.notes,
+          items: items.map((i) => ({
+            productId: i.productId,
+            variantId: i.variantId || undefined,
+            variantTitle: i.variantTitle || "",
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+            image: i.image || "",
+          })),
+          subtotal,
+          discount,
+          shippingFee: deliveryCharge,
+          tax: taxAmount,
+          total,
+          couponCode: backendCart?.couponCode || "",
+          deliveryZoneId: selectedZoneId,
+          deliveryZoneName: selectedZone?.name || "",
+          paymentMethod: selectedPayment,
+          step: selectedPayment ? "payment" : selectedZoneId ? "shipping" : "customer_info",
+        }).unwrap();
+
+        setIsDirty(false);
+        setSaveStatus("saved");
+        setLastSavedAt(Date.now());
+      } catch {
+        setSaveStatus("error");
+      } finally {
+        isSavingRef.current = false;
+        setIsAutosaving(false);
+      }
+    }, AUTOSAVE_DELAY);
 
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, [
+    isDirty,
     mounted,
     store?._id,
     customer,
-    form.fullName,
-    form.phone,
-    form.email,
-    form.city,
-    form.area,
-    form.street,
-    form.apartment,
-    form.state,
-    form.zip,
-    form.country,
-    form.landmark,
-    form.notes,
+    form,
     items,
     subtotal,
     discount,
     deliveryCharge,
     taxAmount,
     total,
-    backendCart?.couponCode,
     selectedZoneId,
-    selectedZone?.name,
     selectedPayment,
+    backendCart?.couponCode,
+    selectedZone?.name,
     trackProgress,
   ]);
 
@@ -421,6 +421,8 @@ function CheckoutForm() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       setSelectedSavedAddressId(null);
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
+      setIsDirty(true);
+      setSaveStatus("dirty");
     };
 
   const handleRetry = () => {
@@ -435,6 +437,7 @@ function CheckoutForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     if (isSubmittingOrder || isSyncing || isCheckoutInitializing || items.length === 0) return;
     setErrorMsg("");
 
@@ -661,10 +664,18 @@ function CheckoutForm() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-extrabold text-apple-ink">Checkout</h1>
-              {/* Autosave subtle indicator */}
-              {isAutosaving ? (
+              {/* Autosave clear status indicator */}
+              {saveStatus === "saving" ? (
+                <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium animate-pulse">
+                  <Loader2 className="h-3 w-3 animate-spin text-apple-primary" /> Saving...
+                </span>
+              ) : saveStatus === "dirty" ? (
                 <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
-                  <Loader2 className="h-3 w-3 animate-spin text-apple-primary" /> Autosaving...
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Unsaved changes
+                </span>
+              ) : saveStatus === "error" ? (
+                <span className="flex items-center gap-1 text-[11px] text-rose-500 font-medium">
+                  <AlertCircle className="h-3 w-3 text-rose-500" /> Unable to save
                 </span>
               ) : lastSavedAt ? (
                 <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
@@ -910,7 +921,13 @@ function CheckoutForm() {
                   {deliveryZones.map((zone) => (
                     <label
                       key={zone._id}
-                      onClick={() => !isSubmittingOrder && setSelectedZoneId(zone._id)}
+                      onClick={() => {
+                        if (!isSubmittingOrder) {
+                          setSelectedZoneId(zone._id);
+                          setIsDirty(true);
+                          setSaveStatus("dirty");
+                        }
+                      }}
                       className={cn(
                         "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all",
                         selectedZoneId === zone._id ? "border-apple-primary bg-apple-primary/5 shadow-xs" : "border-zinc-200 hover:border-zinc-300",
@@ -921,7 +938,11 @@ function CheckoutForm() {
                         type="radio"
                         name="zone"
                         checked={selectedZoneId === zone._id}
-                        onChange={() => setSelectedZoneId(zone._id)}
+                        onChange={() => {
+                          setSelectedZoneId(zone._id);
+                          setIsDirty(true);
+                          setSaveStatus("dirty");
+                        }}
                         disabled={isSubmittingOrder}
                         className="sr-only"
                       />
@@ -953,7 +974,13 @@ function CheckoutForm() {
                   return (
                     <label
                       key={pm.id}
-                      onClick={() => !isSubmittingOrder && setSelectedPayment(pm.id)}
+                      onClick={() => {
+                        if (!isSubmittingOrder) {
+                          setSelectedPayment(pm.id);
+                          setIsDirty(true);
+                          setSaveStatus("dirty");
+                        }
+                      }}
                       className={cn(
                         "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all",
                         active ? "border-apple-primary bg-apple-primary/5 shadow-xs" : "border-zinc-200 hover:border-zinc-300",
@@ -964,7 +991,11 @@ function CheckoutForm() {
                         type="radio"
                         name="payment"
                         checked={active}
-                        onChange={() => setSelectedPayment(pm.id)}
+                        onChange={() => {
+                          setSelectedPayment(pm.id);
+                          setIsDirty(true);
+                          setSaveStatus("dirty");
+                        }}
                         disabled={isSubmittingOrder}
                         className="sr-only"
                       />
@@ -1027,7 +1058,11 @@ function CheckoutForm() {
                         type="tel"
                         required
                         value={senderNumber}
-                        onChange={(e) => setSenderNumber(e.target.value)}
+                        onChange={(e) => {
+                          setSenderNumber(e.target.value);
+                          setIsDirty(true);
+                          setSaveStatus("dirty");
+                        }}
                         placeholder="e.g. 017XXXXXXXX"
                         disabled={isSubmittingOrder}
                         className={inputClass}
@@ -1038,7 +1073,11 @@ function CheckoutForm() {
                         type="text"
                         required
                         value={transactionId}
-                        onChange={(e) => setTransactionId(e.target.value.toUpperCase())}
+                        onChange={(e) => {
+                          setTransactionId(e.target.value.toUpperCase());
+                          setIsDirty(true);
+                          setSaveStatus("dirty");
+                        }}
                         placeholder="e.g. ABC123XYZ"
                         disabled={isSubmittingOrder}
                         className={cn(inputClass, "font-mono uppercase font-bold")}

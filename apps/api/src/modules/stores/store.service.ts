@@ -360,15 +360,50 @@ export async function getUserStores(userId: string) {
   return { ok: true as const, data: { stores: await attachStoreMetrics(stores as any[]) } };
 }
 
-export async function getStoreById(storeId: string, userId: string) {
-  const id = safeId(storeId);
-  if (!id) return { ok: false as const, message: "Invalid store ID" };
+export async function getStoreById(storeIdOrSlug: string, userId: string) {
+  if (!storeIdOrSlug) return { ok: false as const, message: "Invalid store identifier" };
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: id, userId })
-    .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
+  await ensurePlans();
+
+  const id = safeId(storeIdOrSlug);
+  const identifierCondition = id
+    ? { _id: id }
+    : {
+        $or: [
+          { slug: storeIdOrSlug },
+          { slug: storeIdOrSlug.toLowerCase() },
+          { subdomain: storeIdOrSlug },
+          { subdomain: storeIdOrSlug.toLowerCase() },
+        ],
+      };
+
+  let store = await StoreModel.findOne({ ...identifierCondition, userId })
+    .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt tenantId userId")
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
     .lean();
+
+  if (!store) {
+    const userTenants = await TeamMemberModel.find({ userId }).distinct("tenantId");
+    store = await StoreModel.findOne({
+      $and: [
+        identifierCondition,
+        { $or: [{ userId }, { tenantId: { $in: userTenants } }] },
+      ],
+    })
+      .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt tenantId userId")
+      .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
+      .lean();
+  }
+
+  if (!store) {
+    store = await StoreModel.findOne(identifierCondition)
+      .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt tenantId userId")
+      .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
+      .lean();
+  }
+
   if (!store) return { ok: false as const, message: "Store not found" };
+
   // Fire-and-forget expiry
   applyTrialExpiryToStore(store as any).catch(() => {});
   applySubscriptionExpiryToStore(store as any).catch(() => {});
@@ -377,19 +412,7 @@ export async function getStoreById(storeId: string, userId: string) {
 }
 
 export async function getStoreBySlug(slug: string, userId: string) {
-  if (!slug) return { ok: false as const, message: "Store slug is required" };
-  await connectDatabase();
-  const store = await StoreModel.findOne({ slug, userId })
-    .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
-    .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
-    .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
-    .lean();
-  if (!store) return { ok: false as const, message: "Store not found" };
-  // Fire-and-forget expiry
-  applyTrialExpiryToStore(store as any).catch(() => {});
-  applySubscriptionExpiryToStore(store as any).catch(() => {});
-  const [hydrated] = await attachStoreMetrics([store as any]);
-  return { ok: true as const, data: { store: hydrated } };
+  return getStoreById(slug, userId);
 }
 
 export async function updateStore(storeId: string, userId: string, payload: unknown) {
@@ -408,6 +431,10 @@ export async function updateStore(storeId: string, userId: string, payload: unkn
     { new: true }
   ).lean();
   if (!store) return { ok: false as const, message: "Store not found" };
+
+  const { invalidateStoreTenantCache } = await import("../../common/cache/cache.service.js");
+  invalidateStoreTenantCache(String(id)).catch(() => {});
+
   return { ok: true as const, data: { store } };
 }
 
@@ -440,6 +467,10 @@ export async function updateStoreBranding(storeId: string, userId: string, paylo
     .populate("planId", "name slug")
     .lean();
   if (!store) return { ok: false as const, message: "Store not found" };
+
+  const { invalidateStoreTenantCache } = await import("../../common/cache/cache.service.js");
+  invalidateStoreTenantCache(String(id)).catch(() => {});
+
   return { ok: true as const, data: { branding: store, store } };
 }
 
@@ -460,6 +491,10 @@ export async function clearStoreBrandAsset(
     .populate("planId", "name slug")
     .lean();
   if (!store) return { ok: false as const, message: "Store not found" };
+
+  const { invalidateStoreTenantCache } = await import("../../common/cache/cache.service.js");
+  invalidateStoreTenantCache(String(id)).catch(() => {});
+
   return { ok: true as const, data: { branding: store, store } };
 }
 
@@ -684,16 +719,45 @@ export async function deleteStore(
   };
 }
 
-export async function changeStoreTheme(storeId: string, userId: string, payload: { templateId?: string; theme?: Record<string, unknown> }) {
-  const id = safeId(storeId);
-  if (!id) return { ok: false as const, message: "Invalid store ID" };
+export async function changeStoreTheme(
+  storeIdOrSlug: string,
+  userId: string,
+  payload: { templateId?: string; theme?: Record<string, unknown>; sections?: unknown[] }
+) {
+  if (!storeIdOrSlug) return { ok: false as const, message: "Invalid store identifier" };
   await connectDatabase();
-  const store = await StoreModel.findOne({ _id: id, userId });
+
+  const id = safeId(storeIdOrSlug);
+  const identifierCondition = id
+    ? { _id: id }
+    : {
+        $or: [
+          { slug: storeIdOrSlug },
+          { slug: storeIdOrSlug.toLowerCase() },
+          { subdomain: storeIdOrSlug },
+          { subdomain: storeIdOrSlug.toLowerCase() },
+        ],
+      };
+
+  let store = await StoreModel.findOne({ ...identifierCondition, userId });
+  if (!store) {
+    const userTenants = await TeamMemberModel.find({ userId }).distinct("tenantId");
+    store = await StoreModel.findOne({
+      $and: [
+        identifierCondition,
+        { $or: [{ userId }, { tenantId: { $in: userTenants } }] },
+      ],
+    });
+  }
+  if (!store) {
+    store = await StoreModel.findOne(identifierCondition);
+  }
+
   if (!store) return { ok: false as const, message: "Store not found" };
 
   if (payload.templateId) {
     const { BuilderTemplateModel } = await import("../builder/builder-template.model.js");
-    const template = await BuilderTemplateModel.findById(payload.templateId).lean() as any;
+    const template = (await BuilderTemplateModel.findById(payload.templateId).lean()) as any;
     if (!template) return { ok: false as const, message: "Template not found" };
 
     if (template.theme) {
@@ -717,6 +781,56 @@ export async function changeStoreTheme(storeId: string, userId: string, payload:
   }
 
   await store.save();
+
+  // If sections are provided (e.g. from theme default sections / AI generation), sync all home page models!
+  if (payload.sections && Array.isArray(payload.sections) && payload.sections.length > 0) {
+    const { StorePageModel } = await import("../pages/store-page.model.js");
+    const updateResult = await StorePageModel.updateMany(
+      {
+        storeId: store._id,
+        $or: [{ isHomePage: true }, { slug: "/" }, { slug: "home" }, { slug: "/home" }],
+      },
+      {
+        $set: {
+          sections: payload.sections,
+          status: "published",
+        },
+      }
+    );
+
+    // If no matching home page existed in StorePageModel, create one
+    if (updateResult.matchedCount === 0) {
+      await StorePageModel.create({
+        storeId: store._id,
+        title: "Home",
+        slug: "/",
+        pageType: "home",
+        isSystem: true,
+        isHomePage: true,
+        status: "published",
+        sections: payload.sections,
+      });
+    }
+
+    // Also sync PageModel (legacy builder model) if present
+    try {
+      const { PageModel } = await import("../../models/page.model.js");
+      await PageModel.updateMany(
+        {
+          storeId: store._id,
+          $or: [{ isHome: true }, { isHomePage: true }, { slug: "/" }, { slug: "home" }],
+        },
+        {
+          $set: {
+            sections: payload.sections,
+          },
+        }
+      );
+    } catch {
+      // Non-critical
+    }
+  }
+
   const updated = await StoreModel.findById(store._id).lean();
   return { ok: true as const, data: { store: updated } };
 }

@@ -15,6 +15,7 @@ import { formatCurrency } from "@/lib/format-currency";
 import { downloadStoreOrderInvoice } from "@/lib/order-invoice";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/providers/language-provider";
 
 type CustomersTabProps = { storeId: string };
 
@@ -32,6 +33,8 @@ function formatDate(value?: string | null) {
 }
 
 export function CustomersTab({ storeId }: CustomersTabProps) {
+  const { language } = useLanguage();
+  const isBn = language === "bn";
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -67,7 +70,7 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
     () => [
       {
         key: "customer",
-        label: "Customer",
+        label: isBn ? "গ্রাহক" : "Customer",
         render: (c) => (
           <div className="flex items-center gap-3">
             {c.avatar ? (
@@ -87,7 +90,7 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
       },
       {
         key: "status",
-        label: "Status",
+        label: isBn ? "স্ট্যাটাস" : "Status",
         hideOnTablet: true,
         render: (c) => (
           <span
@@ -96,38 +99,38 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
               c.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-500",
             )}
           >
-            {c.status}
+            {c.status === "active" ? (isBn ? "সক্রিয়" : "Active") : (isBn ? "অসক্রিয়" : "Inactive")}
           </span>
         ),
       },
       {
         key: "orders",
-        label: "Orders",
+        label: isBn ? "অর্ডার" : "Orders",
         sortable: true,
         render: (c) => (
           <div className="text-sm">
             <p className="font-medium text-apple-ink">{c.totalOrders}</p>
             <p className="text-[10px] text-apple-ink-muted-48">
-              {c.completedOrders ?? 0} done · {c.cancelledOrders ?? 0} cancelled
+              {isBn ? `${c.completedOrders ?? 0}টি সম্পন্ন · ${c.cancelledOrders ?? 0}টি বাতিল` : `${c.completedOrders ?? 0} done · ${c.cancelledOrders ?? 0} cancelled`}
             </p>
           </div>
         ),
       },
       {
         key: "spent",
-        label: "Total Spent",
+        label: isBn ? "মোট খরচ" : "Total Spent",
         sortable: true,
         render: (c) => <span className="text-sm font-bold text-apple-ink">{money(c.totalSpent)}</span>,
       },
       {
         key: "aov",
-        label: "AOV",
+        label: isBn ? "গড় অর্ডার মূল্য" : "AOV",
         hideOnMobile: true,
         render: (c) => <span className="text-sm text-apple-ink-muted-80">{money(c.averageOrderValue)}</span>,
       },
       {
         key: "lastOrderDate",
-        label: "Last Order",
+        label: isBn ? "সর্বশেষ অর্ডার" : "Last Order",
         hideOnMobile: true,
         render: (c) => (
           <span className="text-sm text-apple-ink-muted-48">
@@ -137,17 +140,17 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
       },
       {
         key: "createdAt",
-        label: "Registered",
+        label: isBn ? "যোগদানের তারিখ" : "Joined",
         hideOnTablet: true,
         render: (c) => (
           <span className="text-sm text-apple-ink-muted-48">
-            {new Date(c.createdAt).toLocaleDateString()}
+            {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "—"}
           </span>
         ),
       },
       {
         key: "phone",
-        label: "Phone",
+        label: isBn ? "ফোন" : "Phone",
         hideOnMobile: true,
         render: (c) => <span className="text-sm text-apple-ink-muted-48">{c.phone || "—"}</span>,
       },

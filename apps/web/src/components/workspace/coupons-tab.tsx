@@ -30,10 +30,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/providers/language-provider";
 
 type StatusTab = "all" | "active" | "draft" | "expired";
 
 export function CouponsTab({ storeId }: { storeId: string }) {
+  const { language } = useLanguage();
+  const isBn = language === "bn";
   const [activeTab, setActiveTab] = useState<StatusTab>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -75,18 +78,18 @@ export function CouponsTab({ storeId }: { storeId: string }) {
       if (editingCoupon) {
         const res = await updateCoupon({ storeId, id: editingCoupon._id, data: formData }).unwrap();
         if (res.success) {
-          toast.success("Coupon updated successfully");
+          toast.success(isBn ? "কুপন সফলভাবে হালনাগাদ করা হয়েছে" : "Coupon updated successfully");
           setFormOpen(false);
         }
       } else {
         const res = await createCoupon({ storeId, data: formData }).unwrap();
         if (res.success) {
-          toast.success("Coupon created successfully");
+          toast.success(isBn ? "কুপন সফলভাবে তৈরি করা হয়েছে" : "Coupon created successfully");
           setFormOpen(false);
         }
       }
     } catch (err: any) {
-      toast.error(err?.data?.message || "Failed to save coupon");
+      toast.error(err?.data?.message || (isBn ? "কুপন সংরক্ষণ করা যায়নি" : "Failed to save coupon"));
     }
   };
 
@@ -94,24 +97,24 @@ export function CouponsTab({ storeId }: { storeId: string }) {
     try {
       const res = await deleteCoupon({ storeId, id: couponId }).unwrap();
       if (res.success) {
-        toast.success("Coupon deleted");
+        toast.success(isBn ? "কুপন মুছে ফেলা হয়েছে" : "Coupon deleted");
         setConfirmDeleteId(null);
       }
     } catch (err: any) {
-      toast.error(err?.data?.message || "Failed to delete coupon");
+      toast.error(err?.data?.message || (isBn ? "কুপন মোছা যায়নি" : "Failed to delete coupon"));
     }
   };
 
   const getTypeBadge = (type: Coupon["type"]) => {
     switch (type) {
       case "percentage":
-        return { label: "Percentage", icon: Percent, color: "bg-blue-50 text-blue-700 border-blue-200" };
+        return { label: isBn ? "শতকরা ছাড়" : "Percentage", icon: Percent, color: "bg-blue-50 text-blue-700 border-blue-200" };
       case "fixed":
-        return { label: "Fixed Amount", icon: DollarSign, color: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+        return { label: isBn ? "নির্দিষ্ট ছাড়" : "Fixed Amount", icon: DollarSign, color: "bg-emerald-50 text-emerald-700 border-emerald-200" };
       case "free_shipping":
-        return { label: "Free Shipping", icon: Truck, color: "bg-purple-50 text-purple-700 border-purple-200" };
+        return { label: isBn ? "ফ্রি শিপিং" : "Free Shipping", icon: Truck, color: "bg-purple-50 text-purple-700 border-purple-200" };
       case "buy_x_get_y":
-        return { label: "Buy X Get Y", icon: Gift, color: "bg-amber-50 text-amber-700 border-amber-200" };
+        return { label: isBn ? "Buy X Get Y" : "Buy X Get Y", icon: Gift, color: "bg-amber-50 text-amber-700 border-amber-200" };
       default:
         return { label: type, icon: Tag, color: "bg-zinc-50 text-zinc-700 border-zinc-200" };
     }
@@ -125,13 +128,25 @@ export function CouponsTab({ storeId }: { storeId: string }) {
     );
   }
 
+  const getTabLabel = (tab: StatusTab) => {
+    if (!isBn) return tab;
+    switch (tab) {
+      case "all": return "সব";
+      case "active": return "সক্রিয়";
+      case "draft": return "খসড়া";
+      case "expired": return "মেয়াদোত্তীর্ণ";
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between text-zinc-500">
-            <span className="text-xs font-semibold uppercase tracking-wider">Total Coupons</span>
+            <span className="text-xs font-semibold uppercase tracking-wider">
+              {isBn ? "মোট কুপন" : "Total Coupons"}
+            </span>
             <Ticket className="h-4 w-4 text-zinc-400" />
           </div>
           <p className="mt-2 text-2xl font-bold text-apple-ink">{total}</p>
@@ -139,7 +154,9 @@ export function CouponsTab({ storeId }: { storeId: string }) {
 
         <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/30 p-4 shadow-xs">
           <div className="flex items-center justify-between text-emerald-700">
-            <span className="text-xs font-semibold uppercase tracking-wider">Active Promotions</span>
+            <span className="text-xs font-semibold uppercase tracking-wider">
+              {isBn ? "সক্রিয় প্রোমোশন" : "Active Promotions"}
+            </span>
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
           </div>
           <p className="mt-2 text-2xl font-bold text-emerald-900">{activeCount}</p>
@@ -147,7 +164,9 @@ export function CouponsTab({ storeId }: { storeId: string }) {
 
         <div className="col-span-2 sm:col-span-1 rounded-2xl border border-zinc-200 bg-white p-4 shadow-xs">
           <div className="flex items-center justify-between text-zinc-500">
-            <span className="text-xs font-semibold uppercase tracking-wider">Total Redemptions</span>
+            <span className="text-xs font-semibold uppercase tracking-wider">
+              {isBn ? "মোট ব্যবহার" : "Total Redemptions"}
+            </span>
             <Tag className="h-4 w-4 text-zinc-400" />
           </div>
           <p className="mt-2 text-2xl font-bold text-apple-ink">{totalUsage}</p>
@@ -175,7 +194,7 @@ export function CouponsTab({ storeId }: { storeId: string }) {
                     : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200/50"
                 )}
               >
-                {tab}
+                {getTabLabel(tab)}
               </button>
             );
           })}
@@ -192,7 +211,7 @@ export function CouponsTab({ storeId }: { storeId: string }) {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              placeholder="Search code or name…"
+              placeholder={isBn ? "কুপন কোড বা নাম খুঁজুন..." : "Search code or name…"}
               className="w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-3 py-1.5 text-xs text-apple-ink focus:outline-none focus:ring-2 focus:ring-apple-primary/20"
             />
           </div>

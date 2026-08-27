@@ -8,6 +8,7 @@ import { updateQuantity, removeFromCart } from "@/redux/slices/cart-slice";
 import { useUpdateCartItemMutation, useRemoveFromCartMutation } from "@/redux/api/cart-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
+import { SmartImage } from "@/components/ui/smart-image";
 import {
   StorefrontPage,
   StorefrontPageHeader,
@@ -27,9 +28,9 @@ export default function CartPage() {
   const [removeRemote] = useRemoveFromCartMutation();
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const freeThreshold = settings.currencyCode === "BDT" ? 5000 : 100;
-  const shippingRate = settings.currencyCode === "BDT" ? 99 : 9.99;
-  const shipping = subtotal >= freeThreshold ? 0 : shippingRate;
+  const freeThreshold = settings.freeShippingEnabled ? (settings.freeShippingMin ?? 0) : (settings.currencyCode === "BDT" ? 5000 : 100);
+  const defaultShippingRate = settings.currencyCode === "BDT" ? 99 : 9.99;
+  const shipping = settings.freeShippingEnabled && subtotal >= freeThreshold ? 0 : defaultShippingRate;
   const taxRate = settings.taxEnabled ? (settings.taxRate ?? 0) : 0;
   const taxAmount = taxRate > 0 && !settings.taxIncluded ? subtotal * (taxRate / 100) : 0;
   const total = subtotal + taxAmount + shipping;
@@ -78,9 +79,9 @@ export default function CartPage() {
               transition={{ delay: idx * 0.05 }}
             >
               <StorefrontCard className="flex gap-4 !p-4">
-                <div className={cn("flex h-20 w-20 items-center justify-center rounded-apple-sm", classes.imageWell)}>
+                <div className={cn("relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-apple-sm", classes.imageWell)}>
                   {item.image ? (
-                    <img src={item.image} alt={item.name} className="h-full w-full rounded-apple-sm object-cover" />
+                    <SmartImage src={item.image} alt={item.name} fill sizes="80px" className="object-cover" />
                   ) : (
                     <ShoppingBag className="h-8 w-8 text-apple-ink-muted-48/40" />
                   )}
@@ -149,9 +150,9 @@ export default function CartPage() {
                 <span>{formatCurrency(taxAmount, settings)}</span>
               </div>
             )}
-            {subtotal < 100 && (
+            {settings.freeShippingEnabled && subtotal < freeThreshold && (
               <p className="text-fine-print text-apple-ink-muted-48">
-                Free shipping on orders over {formatCurrency(100, settings)}
+                Free shipping on orders over {formatCurrency(freeThreshold, settings)}
               </p>
             )}
             <div className={cn("border-t pt-2", classes.divider)}>

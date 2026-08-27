@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -26,12 +26,14 @@ import { Badge } from "@/components/ui/badge";
 import { formatBDT, resolveStoreStatus, storeStatusConfig } from "@/lib/store-status";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { useLanguage } from "@/providers/language-provider";
 
 export default function WorkspaceDashboardPage() {
   const router = useRouter();
+  const { language, t } = useLanguage();
   const { data, isLoading, refetch } = useGetMyStoresQuery();
   const stores = data?.data?.stores ?? [];
+  const isBn = language === "bn";
 
   const primaryStoreId = stores[0]?._id ?? "";
   const { data: visitorStatsData } = useGetStoreAnalyticsStatsQuery(primaryStoreId, { skip: !primaryStoreId });
@@ -70,11 +72,11 @@ export default function WorkspaceDashboardPage() {
       recentStores.map((store) => ({
         id: store._id,
         title: store.name,
-        description: `Store updated`,
-        time: new Date(store.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        description: isBn ? "দোকান আপডেট করা হয়েছে" : "Store updated",
+        time: new Date(store.updatedAt).toLocaleDateString(isBn ? "bn-BD" : "en-US", { month: "short", day: "numeric" }),
         meta: formatBDT(store.revenueBDT ?? 0),
       })),
-    [recentStores]
+    [recentStores, isBn]
   );
 
   if (isLoading) {
@@ -88,8 +90,8 @@ export default function WorkspaceDashboardPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Workspace Dashboard"
-        description="Overview of your stores, revenue, and workspace activity."
+        title={isBn ? "ওয়ার্কস্পেস ড্যাশবোর্ড" : "Workspace Dashboard"}
+        description={isBn ? "আপনার সব অনলাইন দোকান, মোট বিক্রয়, অর্ডার ও ব্যবসায়িক গতিবিধি এক নজরে দেখুন।" : "Overview of all your online stores, total sales, orders, and business activity."}
         actions={
           <>
             <button
@@ -98,51 +100,51 @@ export default function WorkspaceDashboardPage() {
               className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
             >
               <RefreshCw className="h-4 w-4" />
-              Refresh
+              {t.common.refresh}
             </button>
             <Link
               href="/dashboard/stores/create"
-              className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
+              className="inline-flex items-center gap-2 rounded-xl bg-apple-ink px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-black"
             >
               <Plus className="h-4 w-4" />
-              Create Store
+              {t.navigation.createStore}
             </Link>
           </>
         }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Active Stores" value={metrics.active} icon={Store} iconClassName="text-emerald-600" />
-        <StatCard label="Trial Stores" value={metrics.trial} icon={Clock} iconClassName="text-blue-600" />
+        <StatCard label="সক্রিয় দোকান" value={metrics.active} icon={Store} iconClassName="text-emerald-600" />
+        <StatCard label="ট্রায়াল দোকান" value={metrics.trial} icon={Clock} iconClassName="text-blue-600" />
         <StatCard
-          label="Pending Approval"
+          label="অপেক্ষমাণ দোকান"
           value={metrics.pendingApproval}
           icon={Store}
           iconClassName="text-violet-600"
         />
-        <StatCard label="Expired Stores" value={metrics.expired} icon={Store} iconClassName="text-red-600" />
+        <StatCard label="মেয়াদ শেষ দোকান" value={metrics.expired} icon={Store} iconClassName="text-red-600" />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total Revenue" value={formatBDT(metrics.revenue)} icon={CreditCard} />
-        <StatCard label="Total Orders" value={metrics.orders} icon={ShoppingBag} />
-        <StatCard label="Storage Usage" value="—" icon={HardDrive} trend="Coming in Phase 4" />
+        <StatCard label="মোট বিক্রয়" value={formatBDT(metrics.revenue)} icon={CreditCard} />
+        <StatCard label="মোট অর্ডার" value={metrics.orders} icon={ShoppingBag} />
+        <StatCard label="স্টোরেজ ব্যবহার" value="—" icon={HardDrive} trend="প্রস্তুত হচ্ছে" />
         <StatCard
-          label="Subscription Status"
-          value={stores.length > 0 ? `${metrics.active + metrics.trial} active` : "No stores"}
+          label="সাবস্ক্রিপশন স্ট্যাটাস"
+          value={stores.length > 0 ? `${metrics.active + metrics.trial}টি সক্রিয়` : "কোনো দোকান নেই"}
           icon={CreditCard}
         />
       </div>
 
       {/* Visitor Analytics Section */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-apple-ink-muted-80">Visitor Analytics</h3>
+        <h3 className="mb-3 text-sm font-semibold text-apple-ink-muted-80">ভিজিটর অ্যানালিটিক্স</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Visitors Today", value: String(visitorStats?.today ?? 0), icon: Activity, color: "blue", href: "/dashboard/analytics/visitors" },
-            { label: "This Week", value: String(visitorStats?.week ?? 0), icon: TrendingUp, color: "emerald", href: "/dashboard/analytics/visitors" },
-            { label: "This Month", value: String(visitorStats?.month ?? 0), icon: Eye, color: "purple", href: "/dashboard/analytics/visitors" },
-            { label: "Live Now", value: String(visitorStats?.liveVisitors ?? 0), icon: Activity, color: "emerald", href: "/dashboard/analytics/live" },
+            { label: "আজকের ভিজিটর", value: String(visitorStats?.today ?? 0), icon: Activity, color: "blue", href: "/dashboard/analytics" },
+            { label: "এই সপ্তাহে", value: String(visitorStats?.week ?? 0), icon: TrendingUp, color: "emerald", href: "/dashboard/analytics" },
+            { label: "এই মাসে", value: String(visitorStats?.month ?? 0), icon: Eye, color: "purple", href: "/dashboard/analytics" },
+            { label: "লাইভ ভিজিটর", value: String(visitorStats?.liveVisitors ?? 0), icon: Activity, color: "emerald", href: "/dashboard/analytics" },
           ].map((card, i) => {
             const colorMap: Record<string, string> = {
               blue: "border-blue-100 bg-blue-50 text-blue-700",
@@ -170,12 +172,12 @@ export default function WorkspaceDashboardPage() {
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Stores</CardTitle>
-            <CardDescription>Your most recently updated stores.</CardDescription>
+            <CardTitle>সাম্প্রতিক দোকানসমূহ</CardTitle>
+            <CardDescription>আপনার সম্প্রতি আপডেট হওয়া অনলাইন দোকানসমূহ।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {recentStores.length === 0 ? (
-              <p className="py-8 text-center text-sm text-apple-ink-muted-48">No stores yet. Create your first store to get started.</p>
+              <p className="py-8 text-center text-sm text-apple-ink-muted-48">এখনও কোনো দোকান তৈরি করা হয়নি। শুরু করতে আপনার প্রথম দোকানটি তৈরি করুন।</p>
             ) : (
               recentStores.map((store) => {
                 const status = resolveStoreStatus(store);
@@ -204,12 +206,12 @@ export default function WorkspaceDashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest workspace events.</CardDescription>
+            <CardTitle>সাম্প্রতিক কার্যক্রম</CardTitle>
+            <CardDescription>ওয়ার্কস্পেসের সাম্প্রতিক আপডেটসমূহ।</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {recentActivity.length === 0 ? (
-              <p className="py-8 text-center text-sm text-apple-ink-muted-48">No activity yet.</p>
+              <p className="py-8 text-center text-sm text-apple-ink-muted-48">এখনও কোনো কার্যক্রম রেকর্ড হয়নি।</p>
             ) : (
               recentActivity.map((item) => (
                 <div
@@ -232,15 +234,15 @@ export default function WorkspaceDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common workspace tasks.</CardDescription>
+          <CardTitle>দ্রুত কাজ</CardTitle>
+          <CardDescription>আপনার ব্যবসার প্রয়োজনীয় কাজগুলো দ্রুত সম্পন্ন করুন।</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-3">
             {[
-              { label: "Create Store", href: "/dashboard/stores/create", icon: Plus },
-              { label: "Manage Billing", href: "/dashboard/billing", icon: CreditCard },
-              { label: "Invite Team", href: "/dashboard/team", icon: Users },
+              { label: "দোকান তৈরি করুন", href: "/dashboard/stores/create", icon: Plus },
+              { label: "বিলিং ও প্ল্যান", href: "/dashboard/billing", icon: CreditCard },
+              { label: "টিম সদস্য আমন্ত্রণ", href: "/dashboard/team", icon: Users },
             ].map((action) => (
               <Link
                 key={action.href}

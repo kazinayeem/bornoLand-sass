@@ -6,8 +6,10 @@ import { StorePageHeader } from "@/components/store-dashboard/store-page-header"
 import { useGetStoreFeatureAccessQuery, getFeatureByKey } from "@/redux/api/feature-api";
 import { FeatureLocked } from "@/components/features/feature-gate";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "@/providers/language-provider";
 
 export default function StoreIncompleteOrdersPage() {
+  const { t } = useLanguage();
   const { storeId, store, isLoading } = useStorePage();
   const { data: accessData, isLoading: isAccessLoading } = useGetStoreFeatureAccessQuery(storeId ?? "", {
     skip: !storeId,
@@ -28,12 +30,12 @@ export default function StoreIncompleteOrdersPage() {
   return (
     <div className="space-y-6">
       <StorePageHeader
-        title="Incomplete Orders"
-        description="Track and recover abandoned checkout sessions when customers enter their details but do not complete order placement."
+        title={t.incompleteOrders.title}
+        description={t.incompleteOrders.subtitle}
         breadcrumbs={[
-          { label: "Dashboard", href: `/store/${store.slug}/dashboard` },
-          { label: "Sales" },
-          { label: "Incomplete Orders" },
+          { label: t.storeNav.dashboard, href: `/store/${store.slug}/dashboard` },
+          { label: t.storeNav.sales },
+          { label: t.incompleteOrders.title },
         ]}
       />
       <StorePageCard>

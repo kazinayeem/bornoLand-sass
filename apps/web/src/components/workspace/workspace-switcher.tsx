@@ -2,22 +2,34 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Check, ChevronsUpDown, Plus, Store } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
 import { useAppSelector } from "@/hooks/redux";
 import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
+import { useLanguage } from "@/providers/language-provider";
 
 export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const router = useRouter();
+  const params = useParams();
+  const routeSlug = typeof params?.storeSlug === "string" ? params.storeSlug : "";
+  const currentStore = useAppSelector((s) => s.currentStore);
+  const currentStoreSlug = routeSlug || currentStore?.storeSlug;
+  const currentStoreId = currentStore?.storeId;
+  const { language, t } = useLanguage();
   const user = useAppSelector((s) => s.user.profile);
   const { data } = useGetMyStoresQuery();
   const stores = data?.data?.stores ?? [];
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const workspaceName = user?.name ? `${user.name.split(" ")[0]}'s Workspace` : "My Workspace";
+  const firstName = user?.name ? user.name.split(" ")[0] : "";
+  const workspaceName = firstName
+    ? language === "bn"
+      ? `${firstName}-এর ওয়ার্কস্পেস`
+      : `${firstName}'s Workspace`
+    : t.navigation.myWorkspace;
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -48,7 +60,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
           <>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-apple-ink">{workspaceName}</p>
-              <p className="truncate text-xs text-apple-ink-muted-48">{stores.length} store{stores.length !== 1 ? "s" : ""}</p>
+              <p className="truncate text-xs text-apple-ink-muted-48">{t.navigation.storesCount(stores.length)}</p>
             </div>
             <ChevronsUpDown className="h-4 w-4 shrink-0 text-apple-ink-muted-48" />
           </>
@@ -58,35 +70,48 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
       {open && (
         <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 overflow-hidden rounded-xl border border-apple-hairline bg-white shadow-xl">
           <div className="border-b border-apple-divider-soft px-3 py-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Workspace</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">{t.navigation.workspace}</p>
             <p className="truncate text-sm font-medium text-apple-ink">{workspaceName}</p>
           </div>
 
           <div className="max-h-52 overflow-y-auto p-1.5">
-            <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">Stores</p>
+            <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">{t.navigation.stores}</p>
             {stores.length === 0 ? (
-              <p className="px-2 py-3 text-xs text-apple-ink-muted-48">No stores yet</p>
+              <p className="px-2 py-3 text-xs text-apple-ink-muted-48">{t.dropdowns.noNotifications}</p>
             ) : (
-              stores.map((store) => (
-                <button
-                  key={store._id}
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    router.push(`/store/${store.slug}/dashboard`);
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
-                >
-                  <StoreBrandMark store={store} size={28} roundedClassName="rounded-md" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{store.shortName || store.name}</p>
-                    <p className="truncate text-xs text-apple-ink-muted-48">
-                      {typeof store.planId === "object" && store.planId ? store.planId.name : store.plan}
-                    </p>
-                  </div>
-                  <Check className="h-3.5 w-3.5 shrink-0 text-transparent" />
-                </button>
-              ))
+              stores.map((store) => {
+                const isCurrent = store.slug === currentStoreSlug || store._id === currentStoreId;
+                return (
+                  <button
+                    key={store._id}
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      try {
+                        localStorage.setItem("bornoland_last_store_slug", store.slug);
+                      } catch {
+                        // Ignore
+                      }
+                      router.push(`/store/${store.slug}/dashboard`);
+                    }}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
+                      isCurrent
+                        ? "bg-apple-primary/10 text-apple-primary font-semibold"
+                        : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                    )}
+                  >
+                    <StoreBrandMark store={store} size={28} roundedClassName="rounded-md" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{store.shortName || store.name}</p>
+                      <p className="truncate text-xs text-apple-ink-muted-48">
+                        {typeof store.planId === "object" && store.planId ? store.planId.name : store.plan}
+                      </p>
+                    </div>
+                    {isCurrent && <Check className="h-3.5 w-3.5 shrink-0 text-apple-primary" />}
+                  </button>
+                );
+              })
             )}
           </div>
 
@@ -97,7 +122,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
             >
               <Plus className="h-4 w-4" />
-              Create Store
+              {t.navigation.createStore}
             </Link>
             <Link
               href="/dashboard/stores"
@@ -105,7 +130,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
             >
               <Store className="h-4 w-4" />
-              All Stores
+              {t.navigation.allStores}
             </Link>
           </div>
         </div>

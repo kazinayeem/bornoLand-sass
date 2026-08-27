@@ -314,7 +314,10 @@ export const storeApi = baseApi.injectEndpoints({
       query: ({ id, data }) => ({ url: `/stores/${id}`, method: "PUT", body: data }),
       invalidatesTags: (_result, _error, { id }) => ["Stores", { type: "Stores", id }]
     }),
-    changeStoreTheme: builder.mutation<ApiEnvelope<{ store: Store }>, { id: string; data: { templateId?: string; theme?: Partial<ThemeSettings> } }>({
+    changeStoreTheme: builder.mutation<
+      ApiEnvelope<{ store: Store }>,
+      { id: string; data: { templateId?: string; theme?: Partial<ThemeSettings>; sections?: unknown[] } }
+    >({
       query: ({ id, data }) => ({ url: `/stores/${id}/theme`, method: "PUT", body: data }),
       transformResponse: (response: SharedApiEnvelope<{ store: Store }>) => {
         if (process.env.NODE_ENV === "development") {
@@ -323,7 +326,14 @@ export const storeApi = baseApi.injectEndpoints({
         assertApiSuccess(response, "Failed to update store theme");
         return response;
       },
-      invalidatesTags: (_result, _error, { id }) => ["Stores", { type: "Stores", id }]
+      invalidatesTags: (_result, _error, { id }) => [
+        "Stores",
+        { type: "Stores", id },
+        "StorePages",
+        { type: "StorePages", id },
+        { type: "BuilderPages", id },
+        { type: "BuilderPage", id: `${id}-home` },
+      ],
     }),
     getStoreBranding: builder.query<ApiEnvelope<{ branding: StoreBranding }>, string>({
       query: (id) => ({ url: `/stores/${id}/branding` }),

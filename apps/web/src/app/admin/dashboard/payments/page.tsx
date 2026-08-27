@@ -5,11 +5,12 @@ import { motion } from "framer-motion";
 import {
   useGetPlatformPaymentDashboardQuery,
   useGetPlatformOverviewQuery,
+  useGetAdminStorePaymentGatewaysQuery,
 } from "@/redux/api/admin-api";
 import {
   Loader2, DollarSign, TrendingUp, AlertTriangle, Ban,
   CheckCircle, Clock, CreditCard, ArrowUpRight, ArrowDownRight,
-  Search, ShieldCheck, Wallet,
+  Search, ShieldCheck, Wallet, Globe,
 } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { PaymentReviewTable } from "@/components/admin/payment-review/payment-review-table";
@@ -31,7 +32,8 @@ const METHOD_COLORS: Record<string, string> = {
 const TABS = [
   { id: "overview", label: "Dashboard", icon: DollarSign },
   { id: "review", label: "Subscription Payments", icon: ShieldCheck },
-  { id: "methods", label: "Payment Methods", icon: Wallet },
+  { id: "store_gateways", label: "Store Gateways", icon: Globe },
+  { id: "methods", label: "Platform Payment Methods", icon: Wallet },
 ];
 
 export default function PaymentsPage() {
@@ -173,6 +175,10 @@ export default function PaymentsPage() {
         </div>
       )}
 
+      {activeTab === "store_gateways" && (
+        <StoreGatewaysAdminPanel />
+      )}
+
       {activeTab === "methods" && (
         <div className="rounded-2xl border border-zinc-200 bg-white p-6">
           <h2 className="text-lg font-semibold text-apple-ink mb-1">Platform Payment Methods</h2>
@@ -180,6 +186,153 @@ export default function PaymentsPage() {
           <PaymentMethodsPanel />
         </div>
       )}
+    </div>
+  );
+}
+
+function StoreGatewaysAdminPanel() {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const { data, isLoading } = useGetAdminStorePaymentGatewaysQuery({
+    search: search || undefined,
+    status: statusFilter === "all" ? undefined : statusFilter,
+  });
+
+  const items = data?.data?.items ?? [];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-apple-ink">Store Payment Gateways (SSLCommerz)</h2>
+          <p className="text-sm text-apple-ink-muted-48">
+            Overview of store-level SSLCommerz gateway configurations across all tenant shops. Credentials are encrypted and masked.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+            <input
+              type="text"
+              placeholder="Search store name or store ID..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 w-60 rounded-xl border border-zinc-200 bg-white pl-8 pr-3 text-xs focus:border-zinc-900 focus:outline-none"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-xs focus:border-zinc-900 focus:outline-none"
+          >
+            <option value="all">All Gateways</option>
+            <option value="enabled">Enabled Only</option>
+            <option value="disabled">Disabled Only</option>
+            <option value="verified">Verified Only</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="border-b border-zinc-100 bg-zinc-50/70 uppercase text-[10px] font-semibold tracking-wider text-zinc-500">
+              <tr>
+                <th className="px-5 py-3.5">Store / Shop</th>
+                <th className="px-5 py-3.5">Provider</th>
+                <th className="px-5 py-3.5">Store ID</th>
+                <th className="px-5 py-3.5">Password</th>
+                <th className="px-5 py-3.5">Environment</th>
+                <th className="px-5 py-3.5">Status</th>
+                <th className="px-5 py-3.5">Verification</th>
+                <th className="px-5 py-3.5">Last Updated</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100 font-medium text-zinc-800">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-zinc-400">
+                    <Loader2 className="mx-auto h-5 w-5 animate-spin text-zinc-400 mb-2" />
+                    Loading store payment gateways...
+                  </td>
+                </tr>
+              ) : items.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-zinc-400">
+                    No store payment gateways configured yet.
+                  </td>
+                </tr>
+              ) : (
+                items.map((g: any) => (
+                  <tr key={g._id} className="hover:bg-zinc-50/50 transition-colors">
+                    <td className="px-5 py-3.5">
+                      <p className="font-semibold text-zinc-900">{g.storeName}</p>
+                      <p className="text-[10px] text-zinc-400 font-mono">/{g.storeSlug}</p>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="inline-flex items-center gap-1 font-semibold text-zinc-700 uppercase tracking-wider text-[10px]">
+                        <Globe className="h-3 w-3 text-amber-500" />
+                        {g.provider}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 font-mono text-zinc-700">
+                      {g.storeIdValue || <span className="text-zinc-400 italic">Not set</span>}
+                    </td>
+                    <td className="px-5 py-3.5 font-mono text-zinc-400">
+                      {g.hasPassword ? "••••••••••••" : <span className="text-zinc-300">None</span>}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span
+                        className={cn(
+                          "rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase",
+                          g.environment === "live"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                        )}
+                      >
+                        {g.environment}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold",
+                          g.isEnabled
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-zinc-100 text-zinc-600"
+                        )}
+                      >
+                        <span className={cn("h-1.5 w-1.5 rounded-full", g.isEnabled ? "bg-emerald-500" : "bg-zinc-400")} />
+                        {g.isEnabled ? "Enabled" : "Disabled"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {g.isVerified ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-600">
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          Verified
+                        </span>
+                      ) : g.lastError ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600" title={g.lastError}>
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          Failed
+                        </span>
+                      ) : (
+                        <span className="text-zinc-400 text-[11px]">Unverified</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 text-zinc-500 text-[11px]">
+                      {g.updatedAt ? new Date(g.updatedAt).toLocaleDateString() : "—"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
@@ -200,3 +353,4 @@ function PaymentMethodsPanel() {
     </div>
   );
 }
+

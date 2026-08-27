@@ -10,7 +10,6 @@
     "seed:products": "tsx src/seed/nayeem-products.cli.ts",
     "seed:nayeem": "tsx src/scripts/seed-nayeem-store.ts",
     "migrate": "tsx src/bootstrap/cli.ts",
-
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
@@ -34,6 +33,7 @@
     "pino-http": "^10.5.0",
     "qrcode": "^1.5.4",
     "sharp": "^0.35.2",
+    "sslcommerz-lts": "^1.2.0",
     "stripe": "^18.5.0",
     "zod": "^4.1.5"
   },

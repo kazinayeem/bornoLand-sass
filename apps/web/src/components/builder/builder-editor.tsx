@@ -436,13 +436,14 @@ function sanitizeHomepageSections(rawSections: unknown[] | undefined, themeId?: 
       return;
     }
 
-    const loadKey = `${storeId}:${homePage._id}`;
+    const activeThemeId = (store.theme as any)?.themeId || "grocery";
+    const loadKey = `${storeId}:${homePage._id}:${activeThemeId}`;
     if (loadedRef.current === loadKey) return;
     loadedRef.current = loadKey;
 
     const sanitizedSections = sanitizeHomepageSections(
       homePage.sections,
-      (store.theme as any)?.themeId
+      activeThemeId
     );
 
     dispatch(loadPage({
@@ -462,7 +463,7 @@ function sanitizeHomepageSections(rawSections: unknown[] | undefined, themeId?: 
       footerSettings: (homePage.footerSettings as any) ?? {},
     }));
 
-  }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug]);
+  }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug, store.theme]);
 
   // ─── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {

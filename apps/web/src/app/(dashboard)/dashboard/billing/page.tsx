@@ -8,8 +8,11 @@ import { PageHeader } from "@/components/workspace/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatBDT, resolveStoreStatus, storeStatusConfig } from "@/lib/store-status";
+import { useLanguage } from "@/providers/language-provider";
 
 export default function WorkspaceBillingPage() {
+  const { language } = useLanguage();
+  const isBn = language === "bn";
   const { data, isLoading } = useGetMyStoresQuery();
   const { data: plansData } = useGetPlansQuery();
   const stores = data?.data?.stores ?? [];
@@ -34,18 +37,18 @@ export default function WorkspaceBillingPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Billing"
-        description="Subscription overview across all stores in your workspace."
+        title={isBn ? "বিলিং ও সাবস্ক্রিপশন" : "Billing & Subscription"}
+        description={isBn ? "আপনার ওয়ার্কস্পেসের সকল দোকানের সাবস্ক্রিপশন ও বিলিং ওভারভিউ।" : "Subscription and billing overview for all stores in your workspace."}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Store Subscriptions</CardTitle>
-          <CardDescription>Each store has its own plan and billing cycle.</CardDescription>
+          <CardTitle>{isBn ? "দোকানের সাবস্ক্রিপশনসমূহ" : "Store Subscriptions"}</CardTitle>
+          <CardDescription>{isBn ? "প্রতিটি অনলাইন দোকানের জন্য নিজস্ব প্ল্যান ও বিলিং সময়সীমা রয়েছে।" : "Each online store has its own plan and billing period."}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {summary.length === 0 ? (
-            <p className="py-8 text-center text-sm text-apple-ink-muted-48">No stores yet.</p>
+            <p className="py-8 text-center text-sm text-apple-ink-muted-48">{isBn ? "এখনও কোনো দোকান নেই।" : "No stores yet."}</p>
           ) : (
             summary.map(({ store, plan, status }) => {
               const config = storeStatusConfig[status];
@@ -57,17 +60,17 @@ export default function WorkspaceBillingPage() {
                   <div className="min-w-0">
                     <p className="font-medium text-apple-ink">{store.name}</p>
                     <p className="text-sm text-apple-ink-muted-48">
-                      {plan?.name ?? store.plan} · {formatBDT(plan?.priceBDT ?? 0)}/mo
+                      {plan?.name ?? store.plan} · {formatBDT(plan?.priceBDT ?? 0)}/{isBn ? "মাস" : "mo"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={config.variant}>{config.label}</Badge>
+                    <Badge variant={config.variant}>{isBn ? config.label : (status === "active" ? "Active" : status === "trial" ? "Trial" : "Expired")}</Badge>
                     <Link
                       href={`/store/${store.slug}/billing`}
                       className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
                     >
                       <CreditCard className="h-3.5 w-3.5" />
-                      Manage
+                      {isBn ? "বিলিং ম্যানেজ করুন" : "Manage Billing"}
                     </Link>
                   </div>
                 </div>

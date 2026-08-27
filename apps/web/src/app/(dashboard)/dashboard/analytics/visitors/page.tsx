@@ -88,18 +88,18 @@ export default function VisitorsAnalyticsPage() {
   const visitorsByHour = (charts?.visitorsByHour as Array<Record<string, unknown>>) ?? [];
 
   const statCards = [
-    { label: "Today", value: String(stats?.today ?? 0), sub: `${String(stats?.todayUnique ?? 0)} unique`, icon: Activity, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Yesterday", value: String(stats?.yesterday ?? 0), sub: `${String(stats?.yesterdayUnique ?? 0)} unique`, icon: Clock, color: "text-apple-ink-muted-80", bg: "bg-apple-canvas-parchment" },
-    { label: "This Week", value: String(stats?.week ?? 0), icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "This Month", value: String(stats?.month ?? 0), sub: `${String(stats?.monthUnique ?? 0)} unique`, icon: Users, color: "text-purple-600", bg: "bg-purple-50" },
-    { label: "Last Month", value: String(stats?.lastMonth ?? 0), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "This Year", value: String(stats?.year ?? 0), icon: Eye, color: "text-rose-600", bg: "bg-rose-50" },
-    { label: "Unique Visitors", value: String(stats?.uniqueVisitors ?? 0), icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Returning", value: String(stats?.returningVisitors ?? 0), icon: RefreshCw, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { label: "Avg Session", value: formatDuration(Number(stats?.avgSessionDuration ?? 0)), icon: Clock, color: "text-teal-600", bg: "bg-teal-50" },
-    { label: "Bounce Rate", value: `${String(stats?.bounceRate ?? 0)}%`, icon: Activity, color: "text-red-600", bg: "bg-red-50" },
-    { label: "Total Visitors", value: formatNumber(Number(stats?.totalVisitors ?? 0)), icon: Users, color: "text-apple-ink-muted-80", bg: "bg-apple-canvas-parchment" },
-    { label: "Live Now", value: String(liveCount), icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "আজকে", value: String(stats?.today ?? 0), sub: `${String(stats?.todayUnique ?? 0)}জন অনন্য`, icon: Activity, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "গতকাল", value: String(stats?.yesterday ?? 0), sub: `${String(stats?.yesterdayUnique ?? 0)}জন অনন্য`, icon: Clock, color: "text-apple-ink-muted-80", bg: "bg-apple-canvas-parchment" },
+    { label: "এই সপ্তাহে", value: String(stats?.week ?? 0), icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "এই মাসে", value: String(stats?.month ?? 0), sub: `${String(stats?.monthUnique ?? 0)}জন অনন্য`, icon: Users, color: "text-purple-600", bg: "bg-purple-50" },
+    { label: "গত মাসে", value: String(stats?.lastMonth ?? 0), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+    { label: "এই বছরে", value: String(stats?.year ?? 0), icon: Eye, color: "text-rose-600", bg: "bg-rose-50" },
+    { label: "অনন্য ভিজিটর", value: String(stats?.uniqueVisitors ?? 0), icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "পুনরায় আগমনকারী", value: String(stats?.returningVisitors ?? 0), icon: RefreshCw, color: "text-indigo-600", bg: "bg-indigo-50" },
+    { label: "গড় অবস্থান সময়", value: formatDuration(Number(stats?.avgSessionDuration ?? 0)), icon: Clock, color: "text-teal-600", bg: "bg-teal-50" },
+    { label: "বাউন্স রেট", value: `${String(stats?.bounceRate ?? 0)}%`, icon: Activity, color: "text-red-600", bg: "bg-red-50" },
+    { label: "সর্বমোট ভিজিটর", value: formatNumber(Number(stats?.totalVisitors ?? 0)), icon: Users, color: "text-apple-ink-muted-80", bg: "bg-apple-canvas-parchment" },
+    { label: "লাইভ অনলাইন", value: String(liveCount), icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
   ];
 
   const topProducts = (topContent?.topProducts as Array<Record<string, unknown>>) ?? (charts?.topProducts as Array<Record<string, unknown>>) ?? [];
@@ -111,8 +111,8 @@ export default function VisitorsAnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-apple-ink">Visitor Analytics</h1>
-        <p className="text-sm text-apple-ink-muted-48">Track visitors, page views, and engagement</p>
+        <h1 className="text-xl font-bold text-apple-ink">ভিজিটর অ্যানালিটিক্স</h1>
+        <p className="text-sm text-apple-ink-muted-48">দোকানের ট্রাফিক, পেজ ভিউ এবং কাস্টমার ইনসাইট ট্র্যাক করুন</p>
       </div>
 
       {/* Stat cards */}
@@ -139,7 +139,7 @@ export default function VisitorsAnalyticsPage() {
         {/* Visitors by Day */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-1 text-sm font-semibold text-apple-ink">Visitors by Day (This Month)</h3>
+          <h3 className="mb-1 text-sm font-semibold text-apple-ink">দৈনিক ভিজিটর (এই মাস)</h3>
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={visitorsByDay}>
@@ -153,8 +153,8 @@ export default function VisitorsAnalyticsPage() {
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#71717a" }} tickFormatter={(v) => v?.split("-")[2] ?? ""} />
                 <YAxis tick={{ fontSize: 10, fill: "#71717a" }} />
                 <Tooltip contentStyle={{ background: "#fff", border: "1px solid #e4e4e7", borderRadius: "8px", fontSize: "12px" }} />
-                <Area type="monotone" dataKey="visitors" stroke="#2563eb" strokeWidth={2} fill="url(#vdGrad)" name="Visitors" />
-                <Line type="monotone" dataKey="pageViews" stroke="#10b981" strokeWidth={1.5} dot={false} name="Page Views" />
+                <Area type="monotone" dataKey="visitors" stroke="#2563eb" strokeWidth={2} fill="url(#vdGrad)" name="ভিজিটর" />
+                <Line type="monotone" dataKey="pageViews" stroke="#10b981" strokeWidth={1.5} dot={false} name="পেজ ভিউ" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -163,7 +163,7 @@ export default function VisitorsAnalyticsPage() {
         {/* Visitors by Month */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-1 text-sm font-semibold text-apple-ink">Visitors by Month</h3>
+          <h3 className="mb-1 text-sm font-semibold text-apple-ink">মাসিক ভিজিটর হিস্ট্রি</h3>
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={visitorsByMonth}>
@@ -171,8 +171,8 @@ export default function VisitorsAnalyticsPage() {
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#71717a" }} />
                 <YAxis tick={{ fontSize: 10, fill: "#71717a" }} />
                 <Tooltip contentStyle={{ background: "#fff", border: "1px solid #e4e4e7", borderRadius: "8px", fontSize: "12px" }} />
-                <Bar dataKey="visitors" fill="#2563eb" radius={[2, 2, 0, 0]} name="Visitors" />
-                <Bar dataKey="sessions" fill="#10b981" radius={[2, 2, 0, 0]} name="Sessions" />
+                <Bar dataKey="visitors" fill="#2563eb" radius={[2, 2, 0, 0]} name="ভিজিটর" />
+                <Bar dataKey="sessions" fill="#10b981" radius={[2, 2, 0, 0]} name="সেশন" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -182,7 +182,7 @@ export default function VisitorsAnalyticsPage() {
       {/* Hourly chart */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h3 className="mb-1 text-sm font-semibold text-apple-ink">Visitors by Hour (Today)</h3>
+        <h3 className="mb-1 text-sm font-semibold text-apple-ink">আজকের ঘণ্টাওয়াড়ি ভিজিটর</h3>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={visitorsByHour}>
@@ -190,8 +190,8 @@ export default function VisitorsAnalyticsPage() {
               <XAxis dataKey="hour" tick={{ fontSize: 10, fill: "#71717a" }} tickFormatter={(v) => `${v}:00`} />
               <YAxis tick={{ fontSize: 10, fill: "#71717a" }} />
               <Tooltip contentStyle={{ background: "#fff", border: "1px solid #e4e4e7", borderRadius: "8px", fontSize: "12px" }}
-                formatter={((value: number) => [value, "Visitors"]) as any} />
-              <Bar dataKey="visitors" fill="#2563eb" radius={[2, 2, 0, 0]} name="Visitors" />
+                formatter={((value: number) => [value, "ভিজিটর"]) as any} />
+              <Bar dataKey="visitors" fill="#2563eb" radius={[2, 2, 0, 0]} name="ভিজিটর" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -202,7 +202,7 @@ export default function VisitorsAnalyticsPage() {
         {/* Devices */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-apple-ink">Devices</h3>
+          <h3 className="mb-3 text-sm font-semibold text-apple-ink">ডিভাইস ব্যবহার</h3>
           <div className="space-y-3">
             {(devices?.devices as Array<Record<string, unknown>>)?.map((d: Record<string, unknown>) => (
               <div key={String(d.name)} className="flex items-center gap-3">
@@ -219,35 +219,35 @@ export default function VisitorsAnalyticsPage() {
                   </div>
                 </div>
               </div>
-            )) ?? <p className="text-xs text-apple-ink-muted-48">No data yet</p>}
+            )) ?? <p className="text-xs text-apple-ink-muted-48">কোনো ডাটা পাওয়া যায়নি</p>}
           </div>
         </motion.div>
 
         {/* Browsers */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-apple-ink">Browsers</h3>
+          <h3 className="mb-3 text-sm font-semibold text-apple-ink">ব্রাউজারসমূহ</h3>
           <div className="space-y-2">
             {(devices?.browsers as Array<Record<string, unknown>>)?.slice(0, 6).map((b: Record<string, unknown>) => (
               <div key={String(b.name)} className="flex items-center justify-between text-xs">
                 <span className="text-apple-ink-muted-80">{String(b.name)}</span>
                 <span className="text-apple-ink-muted-48">{String(b.percentage)}%</span>
               </div>
-            )) ?? <p className="text-xs text-apple-ink-muted-48">No data yet</p>}
+            )) ?? <p className="text-xs text-apple-ink-muted-48">কোনো ডাটা পাওয়া যায়নি</p>}
           </div>
         </motion.div>
 
         {/* OS */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-apple-ink">Operating Systems</h3>
+          <h3 className="mb-3 text-sm font-semibold text-apple-ink">অপারেটিং সিস্টেম</h3>
           <div className="space-y-2">
             {(devices?.operatingSystems as Array<Record<string, unknown>>)?.slice(0, 6).map((o: Record<string, unknown>) => (
               <div key={String(o.name)} className="flex items-center justify-between text-xs">
                 <span className="text-apple-ink-muted-80">{String(o.name)}</span>
                 <span className="text-apple-ink-muted-48">{String(o.percentage)}%</span>
               </div>
-            )) ?? <p className="text-xs text-apple-ink-muted-48">No data yet</p>}
+            )) ?? <p className="text-xs text-apple-ink-muted-48">কোনো ডাটা পাওয়া যায়নি</p>}
           </div>
         </motion.div>
       </div>
@@ -255,16 +255,16 @@ export default function VisitorsAnalyticsPage() {
       {/* Traffic Sources */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
         className="rounded-xl border border-zinc-200 bg-white p-5">
-        <h3 className="mb-3 text-sm font-semibold text-apple-ink">Traffic Sources</h3>
+        <h3 className="mb-3 text-sm font-semibold text-apple-ink">ট্রাফিক সোর্স (কোথা থেকে ভিজিটর এসেছে)</h3>
         {sourcesList.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-zinc-100 text-left text-apple-ink-muted-48">
-                  <th className="px-3 py-2 font-medium">Source</th>
-                  <th className="px-3 py-2 font-medium">Type</th>
-                  <th className="px-3 py-2 font-medium">Visits</th>
-                  <th className="px-3 py-2 font-medium">Page Views</th>
+                  <th className="px-3 py-2 font-medium">সোর্স</th>
+                  <th className="px-3 py-2 font-medium">টাইপ</th>
+                  <th className="px-3 py-2 font-medium">ভিজিট সংখ্যা</th>
+                  <th className="px-3 py-2 font-medium">পেজ ভিউ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-50">
@@ -280,7 +280,7 @@ export default function VisitorsAnalyticsPage() {
             </table>
           </div>
         ) : (
-          <p className="text-xs text-apple-ink-muted-48">No traffic data yet</p>
+          <p className="text-xs text-apple-ink-muted-48">কোনো ট্রাফিক ডাটা পাওয়া যায়নি</p>
         )}
       </motion.div>
 
@@ -288,22 +288,22 @@ export default function VisitorsAnalyticsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-apple-ink">Most Viewed Products</h3>
+          <h3 className="mb-3 text-sm font-semibold text-apple-ink">সবচেয়ে বেশি দেখা পণ্যসমূহ</h3>
           {topProducts.length > 0 ? (
             <div className="space-y-2">
               {topProducts.slice(0, 8).map((p: Record<string, unknown>, i: number) => (
                 <div key={String(p.productId ?? i)} className="flex items-center justify-between text-xs">
-                  <span className="truncate text-apple-ink-muted-80">{String(p.name ?? "Unknown")}</span>
-                  <span className="ml-2 shrink-0 font-medium text-apple-ink">{String(p.views ?? 0)} views</span>
+                  <span className="truncate text-apple-ink-muted-80">{String(p.name ?? "অজানা পণ্য")}</span>
+                  <span className="ml-2 shrink-0 font-medium text-apple-ink">{String(p.views ?? 0)} বার দেখা হয়েছে</span>
                 </div>
               ))}
             </div>
-          ) : <p className="text-xs text-apple-ink-muted-48">No product view data yet</p>}
+          ) : <p className="text-xs text-apple-ink-muted-48">কোনো প্রোডাক্ট ভিউ ডাটা পাওয়া যায়নি</p>}
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
           className="rounded-xl border border-zinc-200 bg-white p-5">
-          <h3 className="mb-3 text-sm font-semibold text-apple-ink">Top Search Queries</h3>
+          <h3 className="mb-3 text-sm font-semibold text-apple-ink">জনপ্রিয় সার্চ কোয়েরি</h3>
           {topSearchesList.length > 0 ? (
             <div className="space-y-2">
               {topSearchesList.slice(0, 8).map((q: Record<string, unknown>, i: number) => (
@@ -316,7 +316,7 @@ export default function VisitorsAnalyticsPage() {
                 </div>
               ))}
             </div>
-          ) : <p className="text-xs text-apple-ink-muted-48">No search data yet</p>}
+          ) : <p className="text-xs text-apple-ink-muted-48">কোনো সার্চ ডাটা পাওয়া যায়নি</p>}
         </motion.div>
       </div>
 
@@ -326,16 +326,16 @@ export default function VisitorsAnalyticsPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <h3 className="text-sm font-semibold text-apple-ink">Live Visitors</h3>
+            <h3 className="text-sm font-semibold text-apple-ink">লাইভ অনলাইন ভিজিটর</h3>
             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
-              {String(liveCount)} online
+              {String(liveCount)}জন অনলাইনে আছেন
             </span>
           </div>
           <button onClick={() => refetchLive()} className="rounded-lg p-1.5 text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink-muted-80">
             <RefreshCw className="h-3.5 w-3.5" />
           </button>
         </div>
-        <p className="mt-1 text-xs text-apple-ink-muted-48">Auto-refreshes every 10 seconds</p>
+        <p className="mt-1 text-xs text-apple-ink-muted-48">প্রতি ১০ সেকেন্ড পর পর স্বয়ংক্রিয় রিফ্রেশ হয়</p>
       </motion.div>
     </div>
   );

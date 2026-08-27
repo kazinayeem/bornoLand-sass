@@ -288,7 +288,7 @@ export function NavbarRenderer({
                 type="button"
                 onClick={() => setSearchOpen(true)}
                 aria-label="Open search"
-                className={cn(iconBtn, "hidden sm:flex")}
+                className={cn(iconBtn, "flex")}
                 style={{ width: iconTapSize, height: iconTapSize, minWidth: 44, minHeight: 44 }}
               >
                 <Search style={{ width: iconSize, height: iconSize }} />

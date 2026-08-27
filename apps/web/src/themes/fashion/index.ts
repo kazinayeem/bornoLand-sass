@@ -1,0 +1,203 @@
+import type { ThemeDefinition } from "../types";
+
+export const FASHION_THEME: ThemeDefinition = {
+  id: "fashion",
+  name: "Fashion & Lifestyle",
+  slug: "fashion",
+  description: "An elegant, editorial high-fashion theme crafted for clothing brands, boutiques, and lifestyle labels with curated lookbooks, large imagery, and chic aesthetics.",
+  category: "fashion",
+  previewImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&q=80",
+  mobilePreviewImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80",
+  version: "2.0.0",
+  author: "BornoLand",
+  tags: ["Fashion", "Clothing", "Boutique", "Lifestyle", "Luxury", "Apparel"],
+
+  tokens: {
+    colors: {
+      primary: "#18181b", // Luxe noir
+      secondary: "#be185d", // Deep rose magenta
+      background: "#ffffff",
+      surface: "#fafafa",
+      text: "#18181b",
+      textMuted: "#71717a",
+      border: "#f4f4f5",
+      accent: "#f43f5e",
+      accentHover: "#e11d48",
+      badgeBg: "#ffe4e6",
+      badgeText: "#be185d",
+      headerBg: "#ffffff",
+      headerText: "#18181b",
+      footerBg: "#09090b", // Deep onyx
+      footerText: "#f4f4f5",
+    },
+    typography: {
+      fontFamily: "'Playfair Display', 'Hind Siliguri', serif",
+      headingFont: "'Playfair Display', 'Hind Siliguri', serif",
+      bodyFont: "Inter, 'Hind Siliguri', sans-serif",
+      headingWeight: "700",
+      baseFontSize: "15px",
+    },
+    layout: {
+      containerWidth: "1320px",
+      borderRadius: 4, // Sharp editorial luxury corners
+      shadowSize: "none",
+      spacing: 32,
+      gridGap: "24px",
+    },
+    cards: {
+      productCardStyle: "fashion",
+      categoryCardStyle: "fashion-look",
+      showBadges: true,
+      showRatings: false,
+      showAddToCart: true,
+      showWishlist: true,
+      showQuickView: true,
+    },
+  },
+
+  header: {
+    layout: "centered",
+    showAnnouncement: true,
+    announcementText: "✨ নতুন সিজন কালেকশনে ৩০% পর্যন্ত ছাড় | ফ্রি ডেলিভারি সারা বাংলাদেশে",
+    announcementBg: "#18181b",
+    announcementTextColor: "#ffffff",
+    showSearch: true,
+    searchPlaceholder: "পাঞ্জাবি, শাড়ি, কুর্তি কিংবা প্রিমিয়াম পোশাক খুঁজুন...",
+    showWishlist: true,
+    showCart: true,
+    showAccount: true,
+    showCategoryBar: true,
+    sticky: true,
+    logoHeight: 40,
+    mobileMenuType: "drawer",
+    quickLinks: [
+      { label: "নতুন কালেকশন", href: "/new-arrivals", icon: "Sparkles" },
+      { label: "সিজন সেল", href: "/sale", icon: "Tag" },
+      { label: "লুকবুক", href: "/lookbook", icon: "BookOpen" },
+    ],
+  },
+
+  footer: {
+    layout: "multi-column",
+    columns: 4,
+    aboutText: "আমরা ফ্যাশন ও ঐতিহ্যকে আধুনিক ট্রেন্ডের সাথে যুক্ত করে আপনার জন্য সেরা আউটফিট তৈরি করি। প্রতিটি ফেব্রিক সর্বোচ্চ গুণগত মানসম্পন্ন।",
+    hotline: "09613-889900",
+    email: "style@bornoland-fashion.com",
+    address: "লেভেল ৪, গুলশান এভিনিউ, ঢাকা-১২১২",
+    showSocial: true,
+    showNewsletter: true,
+    showPaymentIcons: true,
+    showAppLinks: true,
+    showCopyright: true,
+    copyrightText: `© ${new Date().getFullYear()} BornoLand Fashion. All rights reserved.`,
+  },
+
+  defaultSections: [
+    {
+      id: "fashion-hero",
+      type: "image-hero",
+      label: "Editorial Lookbook Hero",
+      visible: true,
+      props: {
+        headline: "নতুন সিজন এক্সক্লুসিভ কালেকশন",
+        subheadline: "ঐতিহ্য আর আভিজাত্যের মেলবন্ধনে প্রিমিয়াম আউটফিট",
+        buttonText: "কালেকশন দেখুন",
+        buttonLink: "/shop",
+        secondaryButtonText: "লুকবুক ব্রাউজ করুন",
+        secondaryButtonLink: "/categories",
+        heroHeight: "lg",
+        imageUrl: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80",
+        overlayColor: "rgba(0, 0, 0, 0.35)",
+        textAlignment: "center",
+      },
+    },
+    {
+      id: "fashion-categories",
+      type: "category-grid",
+      label: "Fashion Categories",
+      visible: true,
+      props: {
+        title: "কালেকশন অনুযায়ী বাছাই করুন",
+        subtitle: "পুরুষ, নারী ও উৎসবের সেরা ফ্যাশন কালেকশন",
+        gridColumns: "4",
+        cardStyle: "card",
+        showProductCount: "true",
+      },
+    },
+    {
+      id: "fashion-new-arrivals",
+      type: "new-arrivals",
+      label: "New Arrivals",
+      visible: true,
+      props: {
+        title: "নতুন আগমন",
+        subtitle: "এই সপ্তাহের ট্রেন্ডিং ও লেটেস্ট ডিজাইন",
+        gridColumns: "4",
+        productCount: "8",
+        showBadges: "true",
+        showViewAll: "true",
+        viewAllLink: "/shop",
+      },
+    },
+    {
+      id: "fashion-promo-banner",
+      type: "discount-banner",
+      label: "Limited Season Sale",
+      visible: true,
+      props: {
+        headline: "স্পেশাল সিজন ডিসকাউন্ট — ৪০% পর্যন্ত ছাড়!",
+        subheadline: "নির্দিষ্ট ডিজাইনের পোশাকের ওপর সীমিত সময়ের জন্য বিশেষ ছাড়",
+        badge: "HOT OFFER",
+        buttonText: "এখনই কিনুন",
+        buttonLink: "/shop",
+        discountPercent: "40%",
+        couponCode: "FASHION40",
+      },
+    },
+    {
+      id: "fashion-trending",
+      type: "trending-products",
+      label: "Trending Looks",
+      visible: true,
+      props: {
+        title: "গ্রাহকদের সবচেয়ে পছন্দের ট্রেন্ড",
+        subtitle: "যেসব পোশাক প্রতিনিয়ত গ্রাহকদের নজর কাড়ছে",
+        gridColumns: "4",
+        productCount: "4",
+        showBadges: "true",
+        showViewAll: "true",
+        viewAllLink: "/shop",
+      },
+    },
+    {
+      id: "fashion-testimonials",
+      type: "testimonials",
+      label: "Style Reviews",
+      visible: true,
+      props: {
+        title: "গ্রাহকদের ফ্যাশন অভিজ্ঞতা",
+        subtitle: "আমাদের ফ্যাব্রিক ও ফিটিং নিয়ে গ্রাহকদের রিভিউ",
+      },
+    },
+    {
+      id: "fashion-newsletter",
+      type: "newsletter",
+      label: "VIP Style Club",
+      visible: true,
+      props: {
+        headline: "আমাদের VIP স্টাইল ক্লাবে যুক্ত হোন",
+        subheadline: "নতুন কালেকশন ও প্রাইভেট সেলের আপডেট সবার আগে পেতে সাবস্ক্রাইব করুন।",
+        buttonText: "যুক্ত হোন",
+        placeholder: "আপনার ইমেইল ঠিকানা লিখুন...",
+      },
+    },
+  ],
+
+  supportedSections: [
+    "image-hero", "slider-hero", "split-hero", "category-grid", "new-arrivals",
+    "trending-products", "discount-banner", "testimonials", "newsletter", "trust-badges"
+  ],
+
+  productCardVariant: "fashion",
+  categoryCardVariant: "fashion-look",
+};

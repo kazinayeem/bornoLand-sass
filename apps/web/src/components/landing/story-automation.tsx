@@ -9,57 +9,55 @@ import {
   Truck,
   ArrowDown,
   CheckCircle2,
-  Sparkles,
 } from "lucide-react";
 
 export function StoryAutomation() {
   const WORKFLOW = [
     {
-      step: "01",
-      title: "ORDER RECEIVED",
-      desc: "Customer completes checkout on your storefront.",
+      step: "০১",
+      title: "নতুন অর্ডার এসেছে",
+      desc: "গ্রাহক আপনার অনলাইন শপে সহজ চেকআউটের মাধ্যমে অর্ডার প্লেস করেছে।",
       icon: ShoppingCart,
     },
     {
-      step: "02",
-      title: "PAYMENT CONFIRMED",
-      desc: "bKash / Nagad TrxID verified or COD rules validated.",
+      step: "০২",
+      title: "পেমেন্ট সফল হয়েছে",
+      desc: "বিকাশ বা নগদের TrxID ও ক্যাশ অন ডেলিভারির তথ্য সিস্টেম সাথে সাথে ভেরিফাই করেছে।",
       icon: CreditCard,
     },
     {
-      step: "03",
-      title: "INVENTORY UPDATED",
-      desc: "Product variant stock deducted across all channels in real-time.",
+      step: "০৩",
+      title: "স্টক অটোমেটিক আপডেট",
+      desc: "বিক্রি হওয়া পণ্যের ইনভেন্টরি স্টক স্বয়ংক্রিয়ভাবে হিসাব থেকে কমে গেছে।",
       icon: Boxes,
     },
     {
-      step: "04",
-      title: "CUSTOMER NOTIFIED",
-      desc: "Automated SMS/Email sent with verified A4 PDF invoice download.",
+      step: "০৪",
+      title: "অটো SMS ও PDF ইনভয়েস",
+      desc: "গ্রাহকের মোবাইলে SMS অ্যালার্ট ও সাথে সাথে পিডিএফ ইনভয়েস জেনারেট হয়েছে।",
       icon: Bell,
     },
     {
-      step: "05",
-      title: "COURIER CREATED",
-      desc: "Consignment automatically registered with Steadfast or Pathao.",
+      step: "০৫",
+      title: "কুরিয়ারের পিকআপ কনফার্মড",
+      desc: "পাঠাও বা স্টেডফাস্টের পিকআপ রিকোয়েস্ট অটোমেটিক সিস্টেমে বুক হয়ে গেছে।",
       icon: Truck,
     },
   ];
 
   return (
-    <section className="py-20 sm:py-24 bg-white border-b border-zinc-200/80">
+    <section id="automation" className="py-20 sm:py-24 bg-white border-b border-zinc-200/80 scroll-mt-20">
       <div className={landingContainer}>
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-3 mb-16">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 font-bold">
-            THE MAGIC MOMENT · AUTOMATION
+          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+            অটোমেশন ও অ্যাক্টিভিটি
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-950">
-            Your store keeps working, <br className="hidden sm:inline" />
-            even when you&apos;re not.
+            আপনি ব্যস্ত থাকলেও ব্যবসা চলবে।
           </h2>
           <p className="text-base sm:text-lg text-zinc-600 leading-relaxed font-normal">
-            No more manual spreadsheet copying, manual stock counting, or late-night courier portal bookings.
+            অর্ডার, কাস্টমার ও ব্যবসার গুরুত্বপূর্ণ কাজগুলো সহজভাবে ম্যানেজ করুন—যেখান থেকেই হোক।
           </p>
         </div>
 
@@ -77,7 +75,7 @@ export function StoryAutomation() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] font-bold text-zinc-400">STEP {w.step}</span>
+                        <span className="font-mono text-[10px] font-bold text-zinc-400">ধাপ {w.step}</span>
                         <span className="text-zinc-300">·</span>
                         <h4 className="text-xs sm:text-sm font-bold text-zinc-950">{w.title}</h4>
                       </div>
@@ -86,7 +84,7 @@ export function StoryAutomation() {
                   </div>
 
                   <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-bold text-emerald-700">
-                    <CheckCircle2 className="h-3 w-3" /> Completed
+                    <CheckCircle2 className="h-3 w-3" /> সম্পন্ন
                   </span>
                 </div>
 

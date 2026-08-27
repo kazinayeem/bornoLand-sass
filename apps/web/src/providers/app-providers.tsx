@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { ReduxProvider } from "@/providers/redux-provider";
 import { ApiErrorListener } from "@/providers/api-error-listener";
 import { LoadingProvider } from "@/providers/loading-provider";
+import { LanguageProvider } from "@/providers/language-provider";
 import {
   NavigationProgressBar,
   NavigationProgressListener,
@@ -23,15 +24,17 @@ function LoadingInstrumentation() {
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <ReduxProvider>
-      <LoadingProvider>
-        <ApiErrorListener />
-        <SessionInit />
-        <NavigationProgressBar />
-        <Suspense fallback={null}>
-          <LoadingInstrumentation />
-        </Suspense>
-        {children}
-      </LoadingProvider>
+      <LanguageProvider>
+        <LoadingProvider>
+          <ApiErrorListener />
+          <SessionInit />
+          <NavigationProgressBar />
+          <Suspense fallback={null}>
+            <LoadingInstrumentation />
+          </Suspense>
+          {children}
+        </LoadingProvider>
+      </LanguageProvider>
     </ReduxProvider>
   );
 }

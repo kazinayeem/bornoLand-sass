@@ -26,6 +26,7 @@ import { newsletterRouter } from "./modules/notifications/newsletter.route.js";
 import { contactRouter } from "./modules/notifications/contact.route.js";
 import { wishlistRouter } from "./modules/cart/wishlist.route.js";
 import { paymentMethodRouter } from "./modules/payments/payment-method.route.js";
+import { publicSSLCommerzRouter, adminPaymentGatewaysRouter } from "./modules/payments/sslcommerz.route.js";
 import { deliveryZoneRouter } from "./modules/delivery/delivery-zone.route.js";
 import { cmsRouter } from "./modules/cms/cms.route.js";
 import { categoryRouter } from "./modules/categories/category.route.js";
@@ -50,6 +51,7 @@ import { getUploadRoot } from "./modules/media/providers/local-storage.provider.
 import { subdomainDetector } from "./common/middleware/subdomain.middleware.js";
 import { globalRateLimit, authRateLimit, analyticsTrackRateLimit, newsletterRateLimit } from "./common/middleware/rate-limit.middleware.js";
 import { storeEmailRouter } from "./modules/email/store-email.route.js";
+import { aiRouter } from "./modules/ai/ai.route.js";
 import { errorHandler, notFoundHandler } from "./common/middleware/error.middleware.js";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -236,6 +238,9 @@ app.use("/newsletter", newsletterRateLimit, newsletterRouter);
 app.use("/contact", newsletterRateLimit, contactRouter);
 app.use("/wishlist", wishlistRouter);
 app.use("/payment-methods", paymentMethodRouter);
+app.use("/payments/sslcommerz", publicSSLCommerzRouter);
+app.use("/api/payments/sslcommerz", publicSSLCommerzRouter);
+app.use("/admin/payment-gateways", adminPaymentGatewaysRouter);
 app.use("/delivery-zones", deliveryZoneRouter);
 app.use("/cms", cmsRouter);
 app.use("/categories", categoryRouter);
@@ -256,6 +261,7 @@ app.use("/analytics", analyticsRouter);
 app.use("/admin/analytics", adminAnalyticsRouter);
 app.use("/reports", reportRouter);
 app.use("/stores", storeEmailRouter);
+app.use("/ai", aiRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

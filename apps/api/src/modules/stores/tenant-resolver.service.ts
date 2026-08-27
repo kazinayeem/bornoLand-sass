@@ -33,11 +33,15 @@ export async function findStoreByHostKey(key: string): Promise<Record<string, un
   const normalized = key.trim().toLowerCase();
   if (!normalized) return null;
 
+  const validStatus = { status: { $ne: "archived" } };
+
+  // 1. Check customDomains
   let store = (await StoreModel.findOne({
     customDomains: normalized,
-    status: "active",
+    ...validStatus,
   }).lean()) as Record<string, unknown> | null;
 
+  // 2. Check tenant customDomain
   if (!store) {
     const tenant = (await TenantModel.findOne({
       customDomain: normalized,
@@ -46,23 +50,40 @@ export async function findStoreByHostKey(key: string): Promise<Record<string, un
     if (tenant?._id) {
       store = (await StoreModel.findOne({
         tenantId: tenant._id,
-        status: "active",
+        ...validStatus,
       }).lean()) as Record<string, unknown> | null;
     }
   }
 
+  // 3. Check subdomain (case-insensitive)
   if (!store) {
     store = (await StoreModel.findOne({
-      subdomain: normalized,
-      status: "active",
+      $or: [{ subdomain: normalized }, { subdomain: key.trim() }],
+      ...validStatus,
     }).lean()) as Record<string, unknown> | null;
   }
 
+  // 4. Check slug (case-insensitive)
   if (!store) {
     store = (await StoreModel.findOne({
-      slug: normalized,
-      status: "active",
+      $or: [{ slug: normalized }, { slug: key.trim() }],
+      ...validStatus,
     }).lean()) as Record<string, unknown> | null;
+  }
+
+  // 5. Fallback: check by _id if key is valid ObjectId
+  if (!store) {
+    try {
+      const { requireObjectId } = await import("../../common/utils/object-id.js");
+      if (requireObjectId(key).ok) {
+        store = (await StoreModel.findOne({
+          _id: key,
+          ...validStatus,
+        }).lean()) as Record<string, unknown> | null;
+      }
+    } catch {
+      // Ignored
+    }
   }
 
   return store;
@@ -98,6 +119,16 @@ export async function resolveBySubdomain(
   data?: TenantStoreResponse;
   message?: string;
 }> {
+  const normalizedKey = slug.trim().toLowerCase();
+  const normalizedPage = (pageSlug || "home").trim().toLowerCase();
+  const cacheKey = `tenant:${normalizedKey}:${normalizedPage}`;
+
+  const { cacheService } = await import("../../common/cache/cache.service.js");
+  const cached = await cacheService.get<TenantStoreResponse>(cacheKey);
+  if (cached) {
+    return { ok: true, data: cached };
+  }
+
   await connectDatabase();
 
   const store = (await findStoreByHostKey(slug)) as any;
@@ -105,7 +136,7 @@ export async function resolveBySubdomain(
     return { ok: false, message: "Store not found" };
   }
 
-  const tenant = await TenantModel.findById(store.tenantId).lean() as any;
+  const tenant = (await TenantModel.findById(store.tenantId).lean()) as any;
   // StorePageModel uses "/" for home, "/shop" for shop, etc.
   let normalizedSlug: string;
   if (pageSlug === "home" || pageSlug === "/") {
@@ -113,22 +144,22 @@ export async function resolveBySubdomain(
   } else {
     normalizedSlug = pageSlug.startsWith("/") ? pageSlug : `/${pageSlug}`;
   }
-  const page = await StorePageModel.findOne({
+  const page = (await StorePageModel.findOne({
     storeId: store._id,
     slug: normalizedSlug.toLowerCase(),
     status: "published",
     deletedAt: null,
-  }).lean() as any;
+  }).lean()) as any;
 
   let resolvedPage = page;
   if (!resolvedPage && normalizedSlug !== "/") {
     // If specific CMS page is not found as a custom StorePage, fetch the home page's layout configuration
-    const homePage = await StorePageModel.findOne({
+    const homePage = (await StorePageModel.findOne({
       storeId: store._id,
       slug: "/",
       status: "published",
       deletedAt: null,
-    }).lean() as any;
+    }).lean()) as any;
     if (homePage) {
       resolvedPage = {
         _id: "global-shell",
@@ -143,12 +174,12 @@ export async function resolveBySubdomain(
     }
   } else if (resolvedPage && normalizedSlug !== "/") {
     // Merge home page global header/footer as base; sub-page overrides win when set
-    const homePage = await StorePageModel.findOne({
+    const homePage = (await StorePageModel.findOne({
       storeId: store._id,
       slug: "/",
       status: "published",
       deletedAt: null,
-    }).lean() as any;
+    }).lean()) as any;
     if (homePage) {
       resolvedPage.headerSettings = {
         ...(homePage.headerSettings || store.headerSettings || {}),
@@ -161,43 +192,68 @@ export async function resolveBySubdomain(
     }
   }
 
-  const products = await ProductModel.find({ storeId: store._id, status: "active" }).sort({ createdAt: -1 }).limit(20).lean() as any[];
-  const rawCategories = await CategoryModel.find({ storeId: store._id, active: true }).sort({ sortOrder: 1, name: 1 }).lean() as any[];
+  // Embed initial products (limit 12 to reduce RSC payload weight)
+  const products = (await ProductModel.find({ storeId: store._id, status: "active" })
+    .select("_id name slug description price comparePrice category stock sku imageUrl thumbnailUrl galleryImageUrls images featured options variants tags rating averageRating reviewCount createdAt")
+    .sort({ featured: -1, createdAt: -1 })
+    .limit(12)
+    .lean()) as any[];
+
+  const rawCategories = (await CategoryModel.find({ storeId: store._id, active: true })
+    .select("_id name nameBn nameEn slug iconUrl imageUrl bannerUrl description sortOrder parentId productCount active featured")
+    .sort({ sortOrder: 1, name: 1 })
+    .lean()) as any[];
+
   const { enrichCategoriesWithCounts } = await import("../categories/category.service.js");
   const categories = await enrichCategoriesWithCounts(String(store._id), rawCategories);
-  const settings = await StoreSettingsModel.findOne({ storeId: store._id }).lean() as any;
-  const sliders = await HomepageSliderModel.find({ storeId: store._id, isActive: true }).sort({ sortOrder: 1, createdAt: 1 }).lean() as any[];
-  const navigations = await NavigationModel.find({ storeId: store._id, isActive: true }).sort({ sortOrder: 1 }).lean() as any[];
+
+  const settings = (await StoreSettingsModel.findOne({ storeId: store._id }).lean()) as any;
+  const sliders = (await HomepageSliderModel.find({ storeId: store._id, isActive: true })
+    .sort({ sortOrder: 1, createdAt: 1 })
+    .lean()) as any[];
+  const navigations = (await NavigationModel.find({ storeId: store._id, isActive: true })
+    .sort({ sortOrder: 1 })
+    .lean()) as any[];
+
   const navigationTrees = await Promise.all(
     navigations.map(async (navigation) => {
-      const items = await MenuItemModel.find({
+      const items = (await MenuItemModel.find({
         navigationId: navigation._id,
         isVisible: { $ne: false },
       })
         .sort({ sortOrder: 1 })
-        .lean() as any[];
+        .lean()) as any[];
       return { ...navigation, items: buildMenuItemTree(items) };
     }),
   );
+
   const [contactResult, trackingResult] = await Promise.all([
     getPublicStoreContact(String(store._id)),
     getPublicStoreTracking(String(store._id)),
   ]);
 
+  const responseData: TenantStoreResponse = {
+    store: store ?? null,
+    tenant: tenant ?? null,
+    page: resolvedPage ?? null,
+    products: products ?? [],
+    categories: categories ?? [],
+    settings: settings ?? null,
+    sliders: sliders ?? [],
+    navigations: navigationTrees ?? [],
+    contact: contactResult.data?.contact ?? null,
+    tracking: trackingResult ?? null,
+  };
+
+  // Cache for 120s
+  await Promise.all([
+    cacheService.set(cacheKey, responseData, 120),
+    cacheService.set(`tenant:store:${store._id}:${normalizedPage}`, responseData, 120),
+  ]);
+
   return {
     ok: true,
-    data: {
-      store: store ?? null,
-      tenant: tenant ?? null,
-      page: resolvedPage ?? null,
-      products: products ?? [],
-      categories: categories ?? [],
-      settings: settings ?? null,
-      sliders: sliders ?? [],
-      navigations: navigationTrees ?? [],
-      contact: contactResult.data?.contact ?? null,
-      tracking: trackingResult ?? null,
-    },
+    data: responseData,
   };
 }
 

@@ -2,99 +2,123 @@
 
 import { landingContainer } from "./landing-ui";
 import {
-  Globe,
-  Package,
-  CreditCard,
-  Boxes,
-  ShoppingCart,
-  Truck,
-  LineChart,
+  MessageSquareX,
+  PackageX,
+  UserX,
   ArrowRight,
   AlertCircle,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 
 export function StoryProblem() {
-  const SCATTERED_TOOLS = [
-    { name: "Website Builder", tool: "Fragmented Tool #1", icon: Globe, issue: "Separate monthly fee" },
-    { name: "Inventory Sheets", tool: "Fragmented Tool #2", icon: Boxes, issue: "Manual stock errors" },
-    { name: "Payment Gateways", tool: "Fragmented Tool #3", icon: CreditCard, issue: "Disconnected TrxIDs" },
-    { name: "Order Spreadsheets", tool: "Fragmented Tool #4", icon: ShoppingCart, issue: "Lost customer notes" },
-    { name: "Courier Portals", tool: "Fragmented Tool #5", icon: Truck, issue: "Manual address typing" },
-    { name: "Analytics Plugins", tool: "Fragmented Tool #6", icon: LineChart, issue: "Delayed metrics" },
+  const PROBLEMS = [
+    {
+      title: "অর্ডার হারিয়ে যাচ্ছে",
+      description: "ফেসবুক ও ইনস্টাগ্রাম ইনবক্সের শত শত মেসেজের ভিড়ে গ্রাহকের গুরুত্বপূর্ণ অর্ডার মিস হয়ে যায়।",
+      icon: MessageSquareX,
+      tag: "অর্ডার ট্র্যাকিং নাই",
+    },
+    {
+      title: "স্টক ঠিকমতো ম্যানেজ হচ্ছে না",
+      description: "কোন পণ্য কতটি অবশিষ্ঠ আছে বা স্টক শেষ হয়ে গেল কিনা—তা না জানা থাকলে খাতা বা স্প্রেডশিটে ভুল হয়।",
+      icon: PackageX,
+      tag: "ইনভেন্টরি এলোমেলো",
+    },
+    {
+      title: "কাস্টমারের তথ্য খুঁজে পাওয়া কঠিন",
+      description: "গ্রাহকের ডেলিভারি ঠিকানা, ফোন নম্বর ও পূর্বের অর্ডারের হিস্ট্রি বারবার মেসেজে খুঁজতে সময় নষ্ট হয়।",
+      icon: UserX,
+      tag: "কাস্টমার হিস্ট্রি নাই",
+    },
   ];
 
   return (
-    <section className="py-20 sm:py-24 bg-white border-b border-zinc-200/80">
+    <section id="how-it-works" className="py-20 sm:py-24 bg-white border-b border-zinc-200/80 scroll-mt-20">
       <div className={landingContainer}>
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-3 mb-14">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-red-600">
-            THE FRAGMENTATION PROBLEM
+          <span className="text-[11px] font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
+            সমস্যা ও সমাধান
           </span>
-          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-950">
-            Running an online store shouldn&apos;t mean running five different tools.
+          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-950 leading-tight">
+            অনলাইন ব্যবসা চালাতে এতগুলো টুল কেন?
           </h2>
           <p className="text-base sm:text-lg text-zinc-600 leading-relaxed font-normal">
-            Merchants lose hours every day copying customer data between disconnected spreadsheets, courier portals, and payment apps.
+            পণ্য, অর্ডার, কাস্টমার, পেমেন্ট আর ডেলিভারি—সব আলাদা জায়গায় থাকলে ব্যবসা সামলানো কঠিন হয়ে যায়।
           </p>
         </div>
 
         {/* Visual Storytelling Comparison */}
-        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Left: Scattered Broken Tools */}
-          <div className="lg:col-span-6 rounded-3xl border border-red-200/80 bg-red-50/20 p-6 sm:p-7 space-y-4">
-            <div className="flex items-center justify-between border-b border-red-100 pb-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-red-700">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          {/* Left: 3 Painful Problems */}
+          <div className="lg:col-span-7 rounded-3xl border border-rose-200/80 bg-rose-50/20 p-6 sm:p-7 space-y-4 flex flex-col justify-between">
+            <div className="flex items-center justify-between border-b border-rose-100 pb-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-rose-700">
                 <AlertCircle className="h-4 w-4" />
-                <span>BEFORE BORNO LAND (DISCONNECTED)</span>
+                <span>আলাদা আলাদা পেপার ও মেসেঞ্জারের ঝামেলা</span>
               </div>
-              <span className="text-[10px] text-red-500 font-bold">5+ Subscriptions</span>
+              <span className="text-[10px] text-rose-600 font-bold bg-rose-100/80 px-2 py-0.5 rounded-full">
+                সতর্কতা
+              </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 text-xs">
-              {SCATTERED_TOOLS.map((t, idx) => {
-                const Icon = t.icon;
+            <div className="space-y-3">
+              {PROBLEMS.map((p, idx) => {
+                const Icon = p.icon;
                 return (
                   <div
                     key={idx}
-                    className="p-3 rounded-2xl bg-white border border-red-100/90 shadow-2xs space-y-1"
+                    className="p-4 rounded-2xl bg-white border border-rose-100 shadow-2xs flex items-start gap-3.5 transition-all hover:border-rose-300"
                   >
-                    <div className="flex items-center gap-2 text-zinc-700 font-bold text-[11px]">
-                      <Icon className="h-3.5 w-3.5 text-red-500" />
-                      <span>{t.name}</span>
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
+                      <Icon className="h-4 w-4" />
                     </div>
-                    <p className="text-[10px] text-red-600/80 font-medium">{t.issue}</p>
+                    <div className="space-y-0.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="font-bold text-zinc-900 text-sm">{p.title}</h4>
+                        <span className="text-[10px] font-semibold text-rose-500 bg-rose-50 px-2 py-0.5 rounded">
+                          {p.tag}
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-600 leading-relaxed font-normal">{p.description}</p>
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Right: The Transformation to Bornoland Unified OS */}
-          <div className="lg:col-span-6 rounded-3xl border border-blue-200/80 bg-blue-50/20 p-6 sm:p-7 space-y-5">
-            <div className="flex items-center justify-between border-b border-blue-100 pb-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-blue-700">
-                <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                <span>WITH BORNO LAND (ONE UNIFIED OS)</span>
+          {/* Right: Bornoland One OS Solution */}
+          <div className="lg:col-span-5 rounded-3xl border border-blue-200/80 bg-gradient-to-br from-blue-50/60 to-indigo-50/40 p-6 sm:p-7 space-y-5 flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-blue-100 pb-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-blue-700">
+                  <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                  <span>BORNO LAND সমাধান</span>
+                </div>
+                <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-bold">
+                  ১০০% সহজ
+                </span>
               </div>
-              <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-bold">
-                100% Unified
-              </span>
+
+              <div className="rounded-2xl bg-white border border-blue-100 p-5 shadow-sm space-y-3.5 text-xs">
+                <div className="flex items-center gap-2 text-blue-600 font-bold text-xs">
+                  <Sparkles className="h-4 w-4" />
+                  <span>একটি প্ল্যাটফর্মেই সব কাজ</span>
+                </div>
+                <h4 className="font-bold text-zinc-950 text-base leading-snug">
+                  গ্রাহক অর্ডার করবে, পেমেন্ট ও ডেলিভারি হবে স্বয়ংক্রিয়ভাবে।
+                </h4>
+                <p className="text-zinc-600 leading-relaxed text-xs">
+                  আপনার দোকানে অর্ডার আসার সাথে সাথেই বিকাশ বা ক্যাশ অন ডেলিভারি নিশ্চিত হবে, স্টক আপডেট হবে এবং ইনভয়েস সাথে সাথে গ্রাহকের কাছে পৌঁছে যাবে।
+                </p>
+              </div>
             </div>
 
-            <div className="rounded-2xl bg-white border border-blue-100 p-5 shadow-sm space-y-3 text-xs">
-              <h4 className="font-bold text-zinc-950 text-sm">
-                One platform handles everything automatically.
-              </h4>
-              <p className="text-zinc-600 leading-relaxed text-[11px]">
-                When an order is placed on your storefront, payment is verified via bKash, inventory is decremented instantly, an A4 PDF invoice is generated, and a courier pickup is booked with Steadfast without manual intervention.
-              </p>
-
-              <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px] font-semibold text-blue-600">
-                <span>Save 15+ hours every single week</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </div>
+            <div className="pt-3 border-t border-blue-100/80 flex items-center justify-between text-xs font-semibold text-blue-700">
+              <span>প্রতি সপ্তাহে ১০+ ঘণ্টা সময় বাঁচান</span>
+              <ArrowRight className="h-4 w-4" />
             </div>
           </div>
         </div>

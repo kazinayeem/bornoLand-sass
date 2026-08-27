@@ -31,36 +31,9 @@ import { useAppSelector, useAppDispatch } from "@/hooks/redux";
 import { toggleSidebarCollapsed, setMobileSidebarOpen } from "@/redux/slices/ui-slice";
 import { useLogoutMutation } from "@/redux/api/auth-api";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
+import { useLanguage } from "@/providers/language-provider";
 import { toast } from "sonner";
 import { getLoginUrlForCurrentPage } from "@/lib/auth-redirect-client";
-
-const mainNav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/stores", label: "Stores", icon: Store },
-  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
-  { href: "/dashboard/team", label: "Team", icon: Users },
-  { href: "/dashboard/activity", label: "Activity", icon: ScrollText },
-  { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
-];
-
-const accountNav = [
-  { href: "/dashboard/account", label: "Settings", icon: Settings },
-  { href: "/dashboard/security", label: "Security", icon: ShieldCheck },
-  { href: "/dashboard/help", label: "Help", icon: HelpCircle },
-];
-
-const analyticsSubLinks = [
-  { href: "/dashboard/analytics/visitors", label: "Visitors", icon: Eye },
-  { href: "/dashboard/analytics/live", label: "Live Visitors", icon: Activity },
-  { href: "/dashboard/analytics/sources", label: "Traffic Sources", icon: Globe },
-  { href: "/dashboard/analytics/reports", label: "Reports", icon: FileText },
-];
-
-const storeNav = [
-  { href: "/dashboard/stores", label: "All Stores", icon: Store, exact: true },
-  { href: "/dashboard/stores/create", label: "Create Store", icon: Plus },
-  { href: "/dashboard/stores/archived", label: "Archived", icon: Archive },
-];
 
 function NavItem({
   href,
@@ -127,6 +100,7 @@ export function PlatformSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { language, t } = useLanguage();
   const collapsed = useAppSelector((s) => s.ui.sidebarCollapsed);
   const mobileOpen = useAppSelector((s) => s.ui.mobileSidebarOpen);
   const user = useAppSelector((s) => s.user.profile);
@@ -142,16 +116,44 @@ export function PlatformSidebar() {
       await logout().unwrap();
       router.replace(getLoginUrlForCurrentPage());
     } catch {
-      toast.error("Failed to sign out");
+      toast.error(language === "bn" ? "সাইন আউট করতে ব্যর্থ হয়েছে" : "Failed to sign out");
     }
   };
+
+  const mainNav = [
+    { href: "/dashboard", label: t.navigation.dashboard, icon: LayoutDashboard, exact: true },
+    { href: "/dashboard/stores", label: t.navigation.stores, icon: Store },
+    { href: "/dashboard/billing", label: t.navigation.billing, icon: CreditCard },
+    { href: "/dashboard/team", label: t.navigation.team, icon: Users },
+    { href: "/dashboard/activity", label: t.navigation.activity, icon: ScrollText },
+    { href: "/dashboard/notifications", label: t.navigation.notifications, icon: Bell },
+  ];
+
+  const accountNav = [
+    { href: "/dashboard/account", label: t.navigation.settings, icon: Settings },
+    { href: "/dashboard/security", label: t.navigation.security, icon: ShieldCheck },
+    { href: "/dashboard/help", label: t.navigation.help, icon: HelpCircle },
+  ];
+
+  const analyticsSubLinks = [
+    { href: "/dashboard/analytics/visitors", label: t.navigation.visitors, icon: Eye },
+    { href: "/dashboard/analytics/live", label: t.navigation.liveVisitors, icon: Activity },
+    { href: "/dashboard/analytics/sources", label: t.navigation.trafficSources, icon: Globe },
+    { href: "/dashboard/analytics/reports", label: t.navigation.reports, icon: FileText },
+  ];
+
+  const storeNav = [
+    { href: "/dashboard/stores", label: t.navigation.allStores, icon: Store, exact: true },
+    { href: "/dashboard/stores/create", label: t.navigation.createStore, icon: Plus },
+    { href: "/dashboard/stores/archived", label: t.navigation.archived, icon: Archive },
+  ];
 
   const initials = user?.name
     ?.split(" ")
     .map((n) => n[0])
     .slice(0, 2)
     .join("")
-    .toUpperCase() ?? "U";
+    .toUpperCase() ?? (language === "bn" ? "ইউ" : "U");
 
   const sidebarContent = (
     <>
@@ -179,7 +181,7 @@ export function PlatformSidebar() {
             "hidden lg:flex h-7 w-7 items-center justify-center rounded-md text-apple-ink-muted-48 transition-colors hover:bg-apple-ink/[0.05] hover:text-apple-ink dark:hover:bg-white/10 dark:hover:text-white",
             collapsed && "lg:mx-auto mt-0"
           )}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? t.navigation.expandSidebar : t.navigation.collapseSidebar}
         >
           {collapsed ? (
             <PanelLeft className="h-3.5 w-3.5" />
@@ -196,7 +198,7 @@ export function PlatformSidebar() {
 
       {/* ── Navigation ──────────────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto px-2.5 py-3">
-        <NavSection label="Workspace" collapsed={collapsed} />
+        <NavSection label={t.navigation.workspace} collapsed={collapsed} />
         <ul className="space-y-0.5">
           {mainNav.map((item) => (
             <li key={item.href}>
@@ -210,7 +212,7 @@ export function PlatformSidebar() {
           {collapsed ? (
             <NavItem
               href="/dashboard/analytics/visitors"
-              label="Analytics"
+              label={t.navigation.analytics}
               icon={BarChart3}
               collapsed={true}
               onNavigate={closeMobile}
@@ -233,7 +235,7 @@ export function PlatformSidebar() {
                   <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-apple-ink dark:bg-white" />
                 )}
                 <BarChart3 className={cn("h-4 w-4 shrink-0", isAnalyticsSection ? "text-apple-ink dark:text-white" : "text-apple-ink-muted-48 group-hover:text-apple-ink-muted-80")} />
-                <span className="flex-1 text-left">Analytics</span>
+                <span className="flex-1 text-left">{t.navigation.analytics}</span>
                 <ChevronDown className={cn("h-3 w-3 text-apple-ink-muted-48 transition-transform", isAnalyticsSection && "rotate-180")} />
               </button>
               {isAnalyticsSection && (
@@ -252,7 +254,7 @@ export function PlatformSidebar() {
         {/* Stores sub-nav */}
         {isStoresSection && !collapsed && (
           <>
-            <NavSection label="Stores" collapsed={collapsed} />
+            <NavSection label={t.navigation.store} collapsed={collapsed} />
             <ul className="space-y-0.5">
               {storeNav.map((item) => (
                 <li key={item.href}>
@@ -264,7 +266,7 @@ export function PlatformSidebar() {
         )}
 
         {/* Account nav */}
-        <NavSection label="Account" collapsed={collapsed} />
+        <NavSection label={t.navigation.account} collapsed={collapsed} />
         <ul className="space-y-0.5">
           {accountNav.map((item) => (
             <li key={item.href}>
@@ -280,7 +282,7 @@ export function PlatformSidebar() {
           <button
             type="button"
             onClick={handleLogout}
-            title="Sign out"
+            title={t.navigation.signOut}
             className="flex w-full items-center justify-center rounded-md p-2 text-apple-ink-muted-48 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
           >
             <LogOut className="h-4 w-4" />
@@ -292,7 +294,7 @@ export function PlatformSidebar() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px] font-medium text-apple-ink dark:text-white">
-                {user?.name ?? "User"}
+                {user?.name ?? (language === "bn" ? "ইউজার" : "User")}
               </p>
               <p className="truncate text-[11px] text-apple-ink-muted-48 dark:text-apple-body-muted">
                 {user?.email ?? ""}
@@ -301,7 +303,7 @@ export function PlatformSidebar() {
             <button
               type="button"
               onClick={handleLogout}
-              title="Sign out"
+              title={t.navigation.signOut}
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-apple-ink-muted-48 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -320,7 +322,7 @@ export function PlatformSidebar() {
           type="button"
           className="fixed inset-0 z-40 bg-apple-surface-black/50 backdrop-blur-sm lg:hidden"
           onClick={closeMobile}
-          aria-label="Close sidebar"
+          aria-label={t.navigation.collapseSidebar}
         />
       )}
 

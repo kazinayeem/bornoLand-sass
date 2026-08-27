@@ -7,7 +7,7 @@ const customerSchema = new Schema(
     storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, index: true },
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, default: "" },
     emailVerifiedAt: { type: Date, default: null },
     phone: { type: String, default: "", trim: true },
     avatar: { type: String, default: "" },

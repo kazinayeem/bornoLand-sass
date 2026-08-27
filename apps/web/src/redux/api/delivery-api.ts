@@ -69,10 +69,10 @@ export const deliveryApi = baseApi.injectEndpoints({
     /* ── Public (checkout) endpoints ── */
     getPublicDeliveryZones: builder.query<
       ApiResponse<{ deliveryZones: DeliveryZoneData[] }>,
-      void
+      string | void
     >({
-      query: () => ({
-        url: "/public/delivery-zones",
+      query: (storeId) => ({
+        url: storeId ? `/public/delivery-zones?storeId=${storeId}` : "/public/delivery-zones",
       }),
     }),
   }),

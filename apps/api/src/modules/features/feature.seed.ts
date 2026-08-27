@@ -85,6 +85,7 @@ export const SEED_FEATURES: SeedFeature[] = [
   { key: "checkout_recovery", name: "Checkout Recovery", description: "Generate secure checkout recovery links and recover sessions", type: "boolean", groupKey: "commerce", sortOrder: 10, defaultEnabled: false },
   { key: "recovery_analytics", name: "Recovery Analytics", description: "Advanced checkout abandonment and recovery analytics", type: "boolean", groupKey: "commerce", sortOrder: 11, defaultEnabled: false },
   { key: "courier", name: "Courier Management", description: "Third-party courier integrations (Pathao, RedX, Steadfast, Paperfly, Sundarban)", type: "boolean", groupKey: "commerce", sortOrder: 7, defaultEnabled: false },
+  { key: "sslcommerz_payment", name: "SSLCommerz Payment Gateway", description: "Per-shop multi-tenant SSLCommerz payment gateway integration", type: "boolean", groupKey: "commerce", sortOrder: 12, defaultEnabled: false },
 ];
 
 // ── Tiers (only for tier-type features) ─────────────────────────────────────

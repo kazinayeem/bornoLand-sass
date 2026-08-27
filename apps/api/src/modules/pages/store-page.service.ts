@@ -26,6 +26,9 @@ async function recordHistory(
     slug: opts?.slug ?? "",
     metadata: opts?.metadata ?? {},
   });
+
+  const { invalidateStoreTenantCache } = await import("../../common/cache/cache.service.js");
+  invalidateStoreTenantCache(storeId).catch(() => {});
 }
 
 async function createVersion(

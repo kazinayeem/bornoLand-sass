@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Tag, Check, X, Loader2 } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { closeCart, updateQuantity, removeFromCart } from "@/redux/slices/cart-slice";
@@ -10,6 +10,7 @@ import { useUpdateCartItemMutation, useRemoveFromCartMutation } from "@/redux/ap
 import { useValidateCouponMutation, type ValidateCouponResponse } from "@/redux/api/coupon-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
+import { resolveStoreHref } from "@/lib/store-href";
 import { useStorefrontSurface, StorefrontButton } from "./storefront-ui";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ type CartDrawerProps = {
 export function CartDrawer({ primaryColor }: CartDrawerProps) {
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname() || "";
   const { store, settings } = useTenant();
   const { classes } = useStorefrontSurface();
   const { items, isOpen } = useSelector((state: RootState) => state.cart);
@@ -35,6 +37,8 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  const getStorefrontLink = (href: string) => resolveStoreHref(href, pathname);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,12 +100,17 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
 
   const handleViewCart = () => {
     dispatch(closeCart());
-    router.push("/cart");
+    router.push(getStorefrontLink("/cart"));
+  };
+
+  const handleCheckout = () => {
+    dispatch(closeCart());
+    router.push(getStorefrontLink("/checkout"));
   };
 
   const handleContinueShopping = () => {
     dispatch(closeCart());
-    router.push("/shop");
+    router.push(getStorefrontLink("/shop"));
   };
 
   const discountAmount = appliedCoupon?.discount ?? 0;
@@ -243,9 +252,14 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
                 </div>
               </div>
 
-              <StorefrontButton className="w-full" onClick={handleViewCart}>
-                View Cart <ArrowRight className="h-4 w-4" />
-              </StorefrontButton>
+              <div className="flex flex-col gap-2">
+                <StorefrontButton className="w-full" onClick={handleCheckout}>
+                  Proceed to Checkout <ArrowRight className="h-4 w-4" />
+                </StorefrontButton>
+                <StorefrontButton variant="secondary" className="w-full" onClick={handleViewCart}>
+                  View Cart
+                </StorefrontButton>
+              </div>
             </div>
           </>
         )}

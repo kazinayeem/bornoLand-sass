@@ -15,6 +15,10 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
+import { SSLCommerzSettingsCard } from "@/components/workspace/sslcommerz-settings-card";
+import { useGetStoreFeatureAccessQuery, getFeatureByKey } from "@/redux/api/feature-api";
+import { FeatureLocked } from "@/components/features/feature-gate";
+import { useGetStoreQuery } from "@/redux/api/store-api";
 
 type PaymentsTabProps = { storeId: string };
 
@@ -36,10 +40,16 @@ const methodColors: Record<string, string> = {
 };
 
 export function PaymentsTab({ storeId }: PaymentsTabProps) {
-  const { data, isLoading } = useGetPaymentMethodsQuery(storeId);
+  const { data: storeData } = useGetStoreQuery(storeId, { skip: !storeId });
+  const { data: accessData } = useGetStoreFeatureAccessQuery(storeId, { skip: !storeId });
+  const { data, isLoading } = useGetPaymentMethodsQuery(storeId, { skip: !storeId });
   const [createPayment] = useCreatePaymentMethodMutation();
   const [updatePayment] = useUpdatePaymentMethodMutation();
   const [deletePayment] = useDeletePaymentMethodMutation();
+
+  const store = storeData?.data?.store;
+  const feature = getFeatureByKey(accessData?.data?.features ?? [], "sslcommerz_payment");
+  const billingHref = store ? `/store/${store.slug}/billing` : "#";
 
   const methods = data?.data?.paymentMethods ?? [];
 
@@ -161,14 +171,43 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-apple-ink-muted-48">{methods.length} method{methods.length !== 1 ? "s" : ""}</p>
-        <button onClick={() => { resetForm(); setShowForm(true); }}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors">
-          <Plus className="h-3.5 w-3.5" /> Add Method
-        </button>
-      </div>
+    <div className="space-y-8">
+      {/* ── Section 1: Automated Payment Gateway (SSLCommerz) ── */}
+      <section className="space-y-3">
+        <div>
+          <h3 className="text-sm font-semibold text-apple-ink">Payment Gateway (Automated)</h3>
+          <p className="text-xs text-apple-ink-muted-48">
+            Accept credit cards, debit cards, mobile banking, and internet banking with instant verification.
+          </p>
+        </div>
+
+        {feature?.locked ? (
+          <FeatureLocked
+            feature={feature}
+            billingHref={billingHref}
+            currentPlan={accessData?.data?.currentPlan?.name}
+          />
+        ) : (
+          <SSLCommerzSettingsCard storeId={storeId} />
+        )}
+      </section>
+
+      {/* ── Section 2: Manual / Custom Payment Methods ── */}
+      <section className="space-y-4 pt-4 border-t border-zinc-100">
+        <div>
+          <h3 className="text-sm font-semibold text-apple-ink">Manual & Offline Payment Methods</h3>
+          <p className="text-xs text-apple-ink-muted-48">
+            Accept Cash on Delivery, manual bKash/Nagad/Rocket transfers, and direct bank deposits.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium text-apple-ink-muted-48">{methods.length} manual method{methods.length !== 1 ? "s" : ""}</p>
+          <button onClick={() => { resetForm(); setShowForm(true); }}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-zinc-800 transition-colors shadow-xs">
+            <Plus className="h-3.5 w-3.5" /> Add Manual Method
+          </button>
+        </div>
 
       <DataTable
         data={methods}
@@ -185,6 +224,7 @@ export function PaymentsTab({ storeId }: PaymentsTabProps) {
           </button>
         }
       />
+      </section>
 
       <Modal open={showForm} onClose={resetForm}
         title={editMethod ? "Edit Payment Method" : "Add Payment Method"} size="md">

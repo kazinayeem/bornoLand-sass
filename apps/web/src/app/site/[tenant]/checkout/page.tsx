@@ -22,6 +22,7 @@ import {
   Check,
   RotateCcw,
   RefreshCw,
+  Globe,
 } from "lucide-react";
 import type { RootState } from "@/store/store";
 import { clearCart, setCartItems } from "@/redux/slices/cart-slice";
@@ -93,13 +94,17 @@ function CheckoutForm() {
   const [isInitTimedOut, setIsInitTimedOut] = useState(false);
   const [isAutosaving, setIsAutosaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "dirty" | "saving" | "saved" | "error">("idle");
+  const isSavingRef = useRef(false);
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const AUTOSAVE_DELAY = 20_000;
 
   // Form & Checkout States
   const [errorMsg, setErrorMsg] = useState("");
   const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; orderId: string; paymentMethod: string } | null>(null);
   const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string | null>(null);
   const [recoveredBanner, setRecoveredBanner] = useState(false);
-  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Mobile Banking specific fields
   const [senderNumber, setSenderNumber] = useState("");
@@ -117,13 +122,13 @@ function CheckoutForm() {
     data: pmData,
     isLoading: pmLoading,
     refetch: refetchPm,
-  } = useGetPublicPaymentMethodsQuery();
+  } = useGetPublicPaymentMethodsQuery(store?._id, { skip: !mounted || !store?._id });
 
   const {
     data: dzData,
     isLoading: dzLoading,
     refetch: refetchDz,
-  } = useGetPublicDeliveryZonesQuery();
+  } = useGetPublicDeliveryZonesQuery(store?._id, { skip: !mounted || !store?._id });
 
   const paymentMethods = pmData?.data?.paymentMethods ?? [];
   const dbDeliveryZones = dzData?.data?.deliveryZones ?? [];
@@ -251,6 +256,8 @@ function CheckoutForm() {
       landmark: address.landmark ?? "",
       notes: address.orderNotes ?? "",
     });
+    setIsDirty(true);
+    setSaveStatus("dirty");
   };
 
   const selectedZone = deliveryZones.find((z) => z._id === selectedZoneId);
@@ -263,9 +270,11 @@ function CheckoutForm() {
   const codAllowed = (settings as any).cashOnDelivery !== false && (settings.paymentSettings as any)?.codEnabled !== false;
   const bkashAllowed = (settings.paymentSettings as any)?.bkash?.enabled ?? true;
   const nagadAllowed = (settings.paymentSettings as any)?.nagad?.enabled ?? true;
+  const sslcommerzAllowed = paymentMethods.some((pm) => pm.type === "sslcommerz" && pm.enabled);
 
   const availablePaymentMethods = [
     ...(codAllowed ? [{ id: "cod", label: "Cash on Delivery (COD)", type: "cod", icon: Banknote }] : []),
+    ...(sslcommerzAllowed ? [{ id: "sslcommerz", label: "SSLCommerz (Cards / Mobile Banking / Net Banking)", type: "sslcommerz", icon: Globe }] : []),
     ...(bkashAllowed ? [{ id: "bkash", label: "bKash Mobile Banking", type: "bkash", icon: Smartphone }] : []),
     ...(nagadAllowed ? [{ id: "nagad", label: "Nagad Mobile Banking", type: "nagad", icon: Smartphone }] : []),
   ];
@@ -311,9 +320,9 @@ function CheckoutForm() {
     }
   }, [selectedPayment, total, settings.currencyCode, trackAddPaymentInfo]);
 
-  // Progressive Checkout Autosave (Debounced in background - never locks UI)
+  // Progressive Checkout Autosave (20-second idle strategy - never locks UI)
   useEffect(() => {
-    if (!mounted || !store?._id) return;
+    if (!mounted || !store?._id || !isDirty) return;
 
     const hasCustomerInfo = Boolean(
       (form.phone && form.phone.trim().length >= 6) ||
@@ -325,85 +334,83 @@ function CheckoutForm() {
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
 
-    saveTimerRef.current = setTimeout(() => {
-      const sessionId = getOrCreateCartSessionId();
+    saveTimerRef.current = setTimeout(async () => {
+      if (isSavingRef.current) return;
+      isSavingRef.current = true;
       setIsAutosaving(true);
+      setSaveStatus("saving");
 
-      trackProgress({
-        storeId: store._id,
-        sessionId,
-        customerId: (customer as any)?._id || null,
-        customerName: form.fullName,
-        phone: form.phone,
-        email: form.email,
-        address: [form.street, form.apartment, form.area].filter(Boolean).join(", "),
-        street: form.street,
-        apartment: form.apartment,
-        city: form.city,
-        area: form.area,
-        state: form.state,
-        zip: form.zip,
-        country: form.country,
-        landmark: form.landmark,
-        notes: form.notes,
-        items: items.map((i) => ({
-          productId: i.productId,
-          variantId: i.variantId || undefined,
-          variantTitle: i.variantTitle || "",
-          name: i.name,
-          price: i.price,
-          quantity: i.quantity,
-          image: i.image || "",
-        })),
-        subtotal,
-        discount,
-        shippingFee: deliveryCharge,
-        tax: taxAmount,
-        total,
-        couponCode: backendCart?.couponCode || "",
-        deliveryZoneId: selectedZoneId,
-        deliveryZoneName: selectedZone?.name || "",
-        paymentMethod: selectedPayment,
-        step: selectedPayment ? "payment" : selectedZoneId ? "shipping" : "customer_info",
-      })
-        .then(() => {
-          setIsAutosaving(false);
-          setLastSavedAt(Date.now());
-        })
-        .catch(() => {
-          setIsAutosaving(false);
-        });
-    }, 700);
+      const sessionId = getOrCreateCartSessionId();
+
+      try {
+        await trackProgress({
+          storeId: store._id,
+          sessionId,
+          customerId: (customer as any)?._id || null,
+          customerName: form.fullName,
+          phone: form.phone,
+          email: form.email,
+          address: [form.street, form.apartment, form.area].filter(Boolean).join(", "),
+          street: form.street,
+          apartment: form.apartment,
+          city: form.city,
+          area: form.area,
+          state: form.state,
+          zip: form.zip,
+          country: form.country,
+          landmark: form.landmark,
+          notes: form.notes,
+          items: items.map((i) => ({
+            productId: i.productId,
+            variantId: i.variantId || undefined,
+            variantTitle: i.variantTitle || "",
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+            image: i.image || "",
+          })),
+          subtotal,
+          discount,
+          shippingFee: deliveryCharge,
+          tax: taxAmount,
+          total,
+          couponCode: backendCart?.couponCode || "",
+          deliveryZoneId: selectedZoneId,
+          deliveryZoneName: selectedZone?.name || "",
+          paymentMethod: selectedPayment,
+          step: selectedPayment ? "payment" : selectedZoneId ? "shipping" : "customer_info",
+        }).unwrap();
+
+        setIsDirty(false);
+        setSaveStatus("saved");
+        setLastSavedAt(Date.now());
+      } catch {
+        setSaveStatus("error");
+      } finally {
+        isSavingRef.current = false;
+        setIsAutosaving(false);
+      }
+    }, AUTOSAVE_DELAY);
 
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, [
+    isDirty,
     mounted,
     store?._id,
     customer,
-    form.fullName,
-    form.phone,
-    form.email,
-    form.city,
-    form.area,
-    form.street,
-    form.apartment,
-    form.state,
-    form.zip,
-    form.country,
-    form.landmark,
-    form.notes,
+    form,
     items,
     subtotal,
     discount,
     deliveryCharge,
     taxAmount,
     total,
-    backendCart?.couponCode,
     selectedZoneId,
-    selectedZone?.name,
     selectedPayment,
+    backendCart?.couponCode,
+    selectedZone?.name,
     trackProgress,
   ]);
 
@@ -414,6 +421,8 @@ function CheckoutForm() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       setSelectedSavedAddressId(null);
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
+      setIsDirty(true);
+      setSaveStatus("dirty");
     };
 
   const handleRetry = () => {
@@ -428,6 +437,7 @@ function CheckoutForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     if (isSubmittingOrder || isSyncing || isCheckoutInitializing || items.length === 0) return;
     setErrorMsg("");
 
@@ -526,6 +536,12 @@ function CheckoutForm() {
         });
 
         dispatch(clearCart());
+
+        if ((result.data as any).gatewayUrl) {
+          window.location.href = (result.data as any).gatewayUrl;
+          return;
+        }
+
         setOrderSuccess({
           orderNumber: result.data.order.orderNumber,
           orderId: result.data.order._id,
@@ -626,9 +642,9 @@ function CheckoutForm() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed";
+    "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-base sm:text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed";
   const textareaClass =
-    "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed resize-none";
+    "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-base sm:text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed resize-none";
 
   return (
     <div className="relative mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
@@ -648,10 +664,18 @@ function CheckoutForm() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-extrabold text-apple-ink">Checkout</h1>
-              {/* Autosave subtle indicator */}
-              {isAutosaving ? (
+              {/* Autosave clear status indicator */}
+              {saveStatus === "saving" ? (
+                <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium animate-pulse">
+                  <Loader2 className="h-3 w-3 animate-spin text-apple-primary" /> Saving...
+                </span>
+              ) : saveStatus === "dirty" ? (
                 <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
-                  <Loader2 className="h-3 w-3 animate-spin text-apple-primary" /> Autosaving...
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Unsaved changes
+                </span>
+              ) : saveStatus === "error" ? (
+                <span className="flex items-center gap-1 text-[11px] text-rose-500 font-medium">
+                  <AlertCircle className="h-3 w-3 text-rose-500" /> Unable to save
                 </span>
               ) : lastSavedAt ? (
                 <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
@@ -897,7 +921,13 @@ function CheckoutForm() {
                   {deliveryZones.map((zone) => (
                     <label
                       key={zone._id}
-                      onClick={() => !isSubmittingOrder && setSelectedZoneId(zone._id)}
+                      onClick={() => {
+                        if (!isSubmittingOrder) {
+                          setSelectedZoneId(zone._id);
+                          setIsDirty(true);
+                          setSaveStatus("dirty");
+                        }
+                      }}
                       className={cn(
                         "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all",
                         selectedZoneId === zone._id ? "border-apple-primary bg-apple-primary/5 shadow-xs" : "border-zinc-200 hover:border-zinc-300",
@@ -908,7 +938,11 @@ function CheckoutForm() {
                         type="radio"
                         name="zone"
                         checked={selectedZoneId === zone._id}
-                        onChange={() => setSelectedZoneId(zone._id)}
+                        onChange={() => {
+                          setSelectedZoneId(zone._id);
+                          setIsDirty(true);
+                          setSaveStatus("dirty");
+                        }}
                         disabled={isSubmittingOrder}
                         className="sr-only"
                       />
@@ -940,7 +974,13 @@ function CheckoutForm() {
                   return (
                     <label
                       key={pm.id}
-                      onClick={() => !isSubmittingOrder && setSelectedPayment(pm.id)}
+                      onClick={() => {
+                        if (!isSubmittingOrder) {
+                          setSelectedPayment(pm.id);
+                          setIsDirty(true);
+                          setSaveStatus("dirty");
+                        }
+                      }}
                       className={cn(
                         "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all",
                         active ? "border-apple-primary bg-apple-primary/5 shadow-xs" : "border-zinc-200 hover:border-zinc-300",
@@ -951,7 +991,11 @@ function CheckoutForm() {
                         type="radio"
                         name="payment"
                         checked={active}
-                        onChange={() => setSelectedPayment(pm.id)}
+                        onChange={() => {
+                          setSelectedPayment(pm.id);
+                          setIsDirty(true);
+                          setSaveStatus("dirty");
+                        }}
                         disabled={isSubmittingOrder}
                         className="sr-only"
                       />
@@ -961,6 +1005,7 @@ function CheckoutForm() {
                       <div className="flex-1">
                         <p className="text-xs font-bold text-apple-ink">{pm.label}</p>
                         {pm.id === "cod" && <p className="text-[11px] text-zinc-500">Pay cash upon product delivery</p>}
+                        {pm.id === "sslcommerz" && <p className="text-[11px] text-zinc-500">Instant online payment via Cards, Mobile Banking, or Net Banking</p>}
                         {(pm.id === "bkash" || pm.id === "nagad") && (
                           <p className="text-[11px] text-zinc-500">Send money & provide Transaction ID</p>
                         )}
@@ -969,6 +1014,19 @@ function CheckoutForm() {
                   );
                 })}
               </div>
+
+              {/* SSLCommerz Automated Gateway Banner */}
+              {selectedPayment === "sslcommerz" && (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4 space-y-1.5">
+                  <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
+                    <Globe className="h-4 w-4 text-amber-600" />
+                    <span>Automated SSLCommerz Gateway</span>
+                  </div>
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    You will be securely redirected to SSLCommerz to pay with your Visa, Mastercard, bKash, Nagad, or Internet Banking. Your order will be verified automatically.
+                  </p>
+                </div>
+              )}
 
               {/* bKash / Nagad Payment Instructions & Verification Form */}
               {(selectedPayment === "bkash" || selectedPayment === "nagad") && (
@@ -1000,7 +1058,11 @@ function CheckoutForm() {
                         type="tel"
                         required
                         value={senderNumber}
-                        onChange={(e) => setSenderNumber(e.target.value)}
+                        onChange={(e) => {
+                          setSenderNumber(e.target.value);
+                          setIsDirty(true);
+                          setSaveStatus("dirty");
+                        }}
                         placeholder="e.g. 017XXXXXXXX"
                         disabled={isSubmittingOrder}
                         className={inputClass}
@@ -1011,7 +1073,11 @@ function CheckoutForm() {
                         type="text"
                         required
                         value={transactionId}
-                        onChange={(e) => setTransactionId(e.target.value.toUpperCase())}
+                        onChange={(e) => {
+                          setTransactionId(e.target.value.toUpperCase());
+                          setIsDirty(true);
+                          setSaveStatus("dirty");
+                        }}
                         placeholder="e.g. ABC123XYZ"
                         disabled={isSubmittingOrder}
                         className={cn(inputClass, "font-mono uppercase font-bold")}

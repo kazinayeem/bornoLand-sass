@@ -47,6 +47,11 @@ export function StoreProvider({ children, initialStore }: { children: ReactNode;
           storeSlug: store.slug,
         }),
       );
+      try {
+        localStorage.setItem("bornoland_last_store_slug", store.slug);
+      } catch {
+        // Ignore local storage errors
+      }
     }
   }, [store, dispatch]);
 
@@ -65,7 +70,7 @@ export function StoreProvider({ children, initialStore }: { children: ReactNode;
             trialEndsAt: store.trialEndsAt,
           }
         : null,
-      isLoading: (!store && !initialStore) || query.isLoading || query.isFetching,
+      isLoading: !store && !initialStore && !query.isError && (query.isLoading || query.isFetching),
       isError: query.isError,
       isReady: !!store && !!store._id,
     }),

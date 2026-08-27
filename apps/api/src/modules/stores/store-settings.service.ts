@@ -78,6 +78,9 @@ export async function updateStoreSettings(storeId: string, userId: string, paylo
     { upsert: true, new: true }
   ).lean();
 
+  const { invalidateStoreTenantCache } = await import("../../common/cache/cache.service.js");
+  invalidateStoreTenantCache(storeId).catch(() => {});
+
   return { ok: true as const, data: { settings } };
 }
 

@@ -141,6 +141,7 @@ const planFeatureSchema = new Schema({
   analyticsExport: { type: Boolean, default: true },
   reports: { type: Boolean, default: false },
   courier: { type: Boolean, default: false },
+  sslcommerzPayment: { type: Boolean, default: false },
   metaPixel: { type: Boolean, default: false },
   tiktokPixel: { type: Boolean, default: false },
   customTracking: { type: Boolean, default: false },

@@ -98,6 +98,7 @@ export async function createOrder(
   },
 ) {
   await connectDatabase();
+  console.info("[ORDER] request received", { storeId, customerId: customerIdInput, paymentMethod: payload.paymentMethod });
 
   const store = (await StoreModel.findById(storeId).lean()) as {
     planId?: string;
@@ -109,6 +110,7 @@ export async function createOrder(
   if (store && store.allowNewOrders === false) {
     return { ok: false as const, message: "This store is not accepting new orders. Please upgrade your subscription." };
   }
+  console.info("[ORDER] store resolved", { storeId, allowNewOrders: store?.allowNewOrders });
 
   const limitCheck = await checkLimit(storeId, "orders");
   if (!limitCheck.allowed) {
@@ -162,6 +164,7 @@ export async function createOrder(
         name: payload.shippingAddress.fullName,
         email: email || `guest_${Date.now()}@store.com`,
         phone,
+        passwordHash: "",
         isGuest: true,
         status: "active",
       });
@@ -321,10 +324,26 @@ export async function createOrder(
       senderNumber: senderNumber.trim(),
       receiverNumber,
     };
+  } else if (paymentMethod === "sslcommerz") {
+    console.info("[ORDER] SSLCommerz payment method detected", { storeId });
+    const { StorePaymentGatewayModel } = await import("../payments/store-payment-gateway.model.js");
+    const { checkFeature } = await import("../features/feature-access.service.js");
+    const entitlement = await checkFeature(storeId, "sslcommerz_payment");
+    if (!entitlement.allowed) {
+      return { ok: false as const, message: entitlement.message || "SSLCommerz payment is not available on this store's plan." };
+    }
+    const gateway = (await StorePaymentGatewayModel.findOne({ storeId, provider: "sslcommerz" }).lean()) as any;
+    if (!gateway || !gateway.isEnabled || !gateway.storeIdValue || !gateway.encryptedStorePassword) {
+      return { ok: false as const, message: "SSLCommerz is not configured or enabled for this store." };
+    }
+    console.info("[ORDER] SSLCommerz gateway config validated", { storeId, environment: gateway.environment });
   }
+
 
   const orderNumber = generateOrderNumber(storeSettings?.orderPrefix ?? "ORD");
   const invoiceNumber = generateOrderNumber(storeSettings?.invoicePrefix ?? "INV");
+
+  console.info("[ORDER] creating order", { orderNumber, paymentMethod, total, currencyCode });
 
   const order = await OrderModel.create({
     storeId,
@@ -398,6 +417,8 @@ export async function createOrder(
       : [],
   });
 
+  console.info("[ORDER] order created successfully", { orderId: String(order._id), orderNumber });
+
   for (const item of cart.items) {
     await decrementProductStock(storeId, item, {
       orderId: String(order._id),
@@ -470,8 +491,32 @@ export async function createOrder(
     console.error("[notifications] Failed to create customer order notification", error);
   }
 
+  if (paymentMethod === "sslcommerz") {
+    console.info("[ORDER] initiating SSLCommerz payment", { orderId: String(order._id), storeId });
+    const { initiateSSLCommerzPayment } = await import("../payments/sslcommerz.service.js");
+    const sslResult = await initiateSSLCommerzPayment(storeId, String(order._id));
+    console.info("[ORDER] SSLCommerz result received", { ok: sslResult.ok, orderId: String(order._id) });
+    if (sslResult.ok) {
+      return {
+        ok: true as const,
+        data: {
+          order: order.toObject(),
+          gatewayUrl: sslResult.data.gatewayUrl,
+          sessionKey: sslResult.data.sessionKey,
+          tranId: sslResult.data.tranId,
+        },
+      };
+    } else {
+      return {
+        ok: false as const,
+        message: sslResult.message || "Failed to initialize SSLCommerz gateway session.",
+      };
+    }
+  }
+
   return { ok: true as const, data: { order: order.toObject() } };
 }
+
 
 async function autoSaveCustomerAddressFromOrder(
   storeId: string,

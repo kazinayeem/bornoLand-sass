@@ -105,11 +105,11 @@ function AllInventoryTab({ storeId, enableHistory = true }: { storeId: string; e
   if (brandFilter) params.brand = brandFilter;
   if (vendorFilter) params.vendor = vendorFilter;
 
-  const { data, isLoading, isFetching } = useGetInventoryQuery({ storeId, params });
-  const { data: statsData } = useGetInventoryStatsQuery(storeId);
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetInventoryQuery({ storeId, params });
+  const { data: statsData } = useGetInventoryStatsQuery(storeId, { skip: !storeId });
   const { data: historyData } = useGetStockHistoryQuery(
     { storeId, params: { productId: historyTarget?.productId ?? "", limit: 50, page: 1 } },
-    { skip: !historyTarget || !enableHistory }
+    { skip: !historyTarget || !enableHistory || !storeId }
   );
 
   const [adjustStock] = useAdjustStockMutation();
@@ -372,6 +372,27 @@ function AllInventoryTab({ storeId, enableHistory = true }: { storeId: string; e
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Error state */}
+      {isError && (
+        <div className="rounded-apple-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">Failed to load inventory data.</span>
+              <span className="text-xs text-red-600">
+                {String((error as { data?: { message?: string } })?.data?.message || "Please check your network or permissions.")}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="rounded-lg bg-red-100 px-3 py-1 text-xs font-semibold text-red-800 hover:bg-red-200 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Inventory Table */}
       <DataTable

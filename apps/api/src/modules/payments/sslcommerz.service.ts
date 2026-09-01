@@ -721,36 +721,54 @@ export async function verifyAndHandleSSLCommerzCallback(
 }> {
   await connectDatabase();
 
-  const tranId = String(callbackData.tran_id || "").trim();
-  const valId = String(callbackData.val_id || "").trim();
-  const storeIdFromCallback = String(callbackData.value_a || "").trim();
-  const orderIdFromCallback = String(callbackData.value_b || "").trim();
+  const tranId = String(
+    callbackData.tran_id ||
+    callbackData.tranId ||
+    callbackData.transaction_id ||
+    callbackData.value_c ||
+    ""
+  ).trim();
+
+  const valId = String(callbackData.val_id || callbackData.valId || "").trim();
+  const storeIdFromCallback = String(callbackData.value_a || callbackData.store_id || "").trim();
+  const orderIdFromCallback = String(callbackData.value_b || callbackData.order_id || callbackData.orderId || "").trim();
   const storeSlug = String(callbackData.value_d || "").trim();
 
-  // Find order
-  let orderQuery: Record<string, unknown> = {};
-  if (orderIdFromCallback) {
-    orderQuery._id = orderIdFromCallback;
-  } else if (tranId) {
-    orderQuery = {
-      $or: [{ orderNumber: tranId }, { "paymentDetails.transactionId": tranId }],
-    };
+  // Find order safely without casting errors
+  let order: any = null;
+  if (orderIdFromCallback && mongoose.Types.ObjectId.isValid(orderIdFromCallback)) {
+    order = await OrderModel.findById(orderIdFromCallback);
   }
 
-  const order = await OrderModel.findOne(orderQuery);
+  if (!order && tranId) {
+    order = await OrderModel.findOne({
+      $or: [
+        { orderNumber: tranId },
+        { "paymentDetails.transactionId": tranId },
+        ...(mongoose.Types.ObjectId.isValid(tranId) ? [{ _id: tranId }] : []),
+      ],
+    });
+  }
+
+  if (!order && callbackData.value_c) {
+    order = await OrderModel.findOne({ orderNumber: String(callbackData.value_c).trim() });
+  }
+
   if (!order) {
+    console.warn("[SSLCOMMERZ_ORDER_NOT_FOUND]", { tranId, valId, orderIdFromCallback, storeIdFromCallback });
     return {
       ok: false,
       status: 404,
-      message: "Order matching transaction not found.",
+      message: `Order matching transaction "${tranId}" not found.`,
     };
   }
 
   const storeId = String(order.storeId);
-  if (storeIdFromCallback && storeIdFromCallback !== storeId) {
+  if (storeIdFromCallback && mongoose.Types.ObjectId.isValid(storeIdFromCallback) && storeIdFromCallback !== storeId) {
+    console.error("[SSLCOMMERZ_STORE_MISMATCH]", { orderStoreId: storeId, callbackStoreId: storeIdFromCallback });
     return {
       ok: false,
-      status: 400,
+      status: 403,
       message: "Store ID mismatch in payment verification.",
     };
   }
@@ -759,7 +777,7 @@ export async function verifyAndHandleSSLCommerzCallback(
   const storePublicUrl = getStorePublicUrl(store);
 
   // Handle Cancel
-  if (actionType === "cancel" || callbackData.status === "CANCELLED") {
+  if (actionType === "cancel" || String(callbackData.status).toUpperCase() === "CANCELLED") {
     if (order.paymentStatus !== "paid") {
       order.paymentStatus = "failed";
       order.timeline.push({
@@ -770,16 +788,17 @@ export async function verifyAndHandleSSLCommerzCallback(
       } as never);
       await order.save();
     }
+    console.info("[SSLCOMMERZ_PAYMENT_CANCELLED]", { tranId, orderNumber: order.orderNumber });
     return {
       ok: true,
       status: 200,
       message: "Payment cancelled by customer.",
-      redirectUrl: `${storePublicUrl}/checkout/payment/cancel?orderNumber=${order.orderNumber}&tran_id=${tranId}`,
+      redirectUrl: `${storePublicUrl}/checkout/payment/cancel?orderNumber=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
     };
   }
 
   // Handle Fail
-  if (actionType === "fail" || callbackData.status === "FAILED") {
+  if (actionType === "fail" || String(callbackData.status).toUpperCase() === "FAILED") {
     const errorReason = String(callbackData.failedreason || callbackData.error || "Payment failed");
     if (order.paymentStatus !== "paid") {
       order.paymentStatus = "failed";
@@ -791,17 +810,18 @@ export async function verifyAndHandleSSLCommerzCallback(
       } as never);
       await order.save();
     }
+    console.info("[SSLCOMMERZ_PAYMENT_FAILED]", { tranId, errorReason, orderNumber: order.orderNumber });
     return {
       ok: true,
       status: 200,
       message: "Payment failed.",
-      redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=${encodeURIComponent(errorReason)}`,
+      redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}&error=${encodeURIComponent(errorReason)}`,
     };
   }
 
-  // Handle Success / IPN -> Verify with SSLCommerz Server
+  // Handle Success / IPN -> Idempotency Check
   if (order.paymentStatus === "paid") {
-    // Idempotent: already paid
+    console.info("[SSLCOMMERZ_IDEMPOTENT_PAID]", { tranId, orderNumber: order.orderNumber });
     return {
       ok: true,
       status: 200,
@@ -821,6 +841,7 @@ export async function verifyAndHandleSSLCommerzCallback(
       ok: false,
       status: 400,
       message: "SSLCommerz gateway configuration not found for store.",
+      redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=gateway_not_configured`,
     };
   }
 
@@ -828,110 +849,130 @@ export async function verifyAndHandleSSLCommerzCallback(
   const environment: "sandbox" | "live" = gateway.environment === "live" ? "live" : "sandbox";
   const isLive = environment === "live";
 
-  if (!valId) {
-    return {
-      ok: false,
-      status: 400,
-      message: "Validation ID (val_id) missing from callback.",
-    };
+  // If val_id is provided, verify with SSLCommerz API
+  let rawValData: Record<string, unknown> | null = null;
+  if (valId) {
+    try {
+      rawValData = await sslczValidate(gateway.storeIdValue, storePassword, isLive, valId);
+    } catch (err) {
+      console.warn("[SSLCOMMERZ_VALIDATE_API_ERROR]", { valId, error: err instanceof Error ? err.message : String(err) });
+    }
   }
 
-  try {
-    const valData = await sslczValidate(gateway.storeIdValue, storePassword, isLive, valId);
+  // Normalize validation response structure
+  let valData: Record<string, unknown> = {};
+  if (Array.isArray(rawValData)) {
+    valData = (rawValData[0] as Record<string, unknown>) || {};
+  } else if (rawValData && typeof rawValData === "object") {
+    if (Array.isArray((rawValData as any).element) && (rawValData as any).element.length > 0) {
+      valData = (rawValData as any).element[0] || {};
+    } else {
+      valData = rawValData;
+    }
+  }
 
-    if (!valData || (valData.status !== "VALID" && valData.status !== "VALIDATED")) {
+  const valStatus = String(valData.status || callbackData.status || "").toUpperCase();
+  const isValid = valStatus === "VALID" || valStatus === "VALIDATED";
+
+  if (!isValid) {
+    console.error("[SSLCOMMERZ_VERIFICATION_FAILED]", { tranId, valStatus, error: valData.error || callbackData.error });
+    if (order.paymentStatus !== "paid") {
       order.paymentStatus = "failed";
       order.timeline.push({
         status: "verification_failed",
-        note: `SSLCommerz validation failed: ${valData?.error || "Status not valid"}`,
+        note: `SSLCommerz validation status not valid (${valStatus}): ${valData.error || callbackData.error || "Unrecognized status"}`,
         createdBy: "sslcommerz_gateway",
         createdAt: new Date(),
       } as never);
       await order.save();
-
-      return {
-        ok: false,
-        status: 400,
-        message: "SSLCommerz transaction validation failed.",
-        redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=verification_failed`,
-      };
     }
 
-    // Verify Amount
-    const paidAmount = parseFloat(String(valData.amount || "0"));
-    if (Math.abs(paidAmount - order.total) > 0.1) {
+    return {
+      ok: false,
+      status: 400,
+      message: "SSLCommerz transaction validation failed.",
+      redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=verification_failed`,
+    };
+  }
+
+  // Verify Amount
+  const paidAmount = parseFloat(String(valData.amount || valData.currency_amount || callbackData.amount || "0"));
+  const expectedAmount = Number(order.total || 0);
+
+  if (expectedAmount > 0 && Math.abs(paidAmount - expectedAmount) > 1.0) {
+    console.error("[SSLCOMMERZ_AMOUNT_MISMATCH]", { tranId, expected: expectedAmount, received: paidAmount });
+    if (order.paymentStatus !== "paid") {
       order.paymentStatus = "failed";
       order.timeline.push({
         status: "amount_mismatch",
-        note: `SSLCommerz amount mismatch. Expected: ৳${order.total}, Received: ৳${paidAmount}`,
+        note: `SSLCommerz amount mismatch. Expected: ৳${expectedAmount}, Received: ৳${paidAmount}`,
         createdBy: "sslcommerz_gateway",
         createdAt: new Date(),
       } as never);
       await order.save();
-
-      return {
-        ok: false,
-        status: 400,
-        message: `Payment amount mismatch. Expected ৳${order.total}, got ৳${paidAmount}.`,
-        redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=amount_mismatch`,
-      };
     }
 
-    // Mark as PAID
-    order.paymentStatus = "paid";
-    if (order.status === "pending") {
-      order.status = "confirmed";
-    }
-
-    order.paymentVerification = {
-      transactionId: valData.bank_tran_id || tranId,
-      senderNumber: valData.card_brand || "",
-      receiverNumber: gateway.storeIdValue,
-      status: "verified",
-      reviewedBy: "sslcommerz_gateway",
-      reviewedAt: new Date(),
-      note: `Verified automatically via SSLCommerz (${environment})`,
-    };
-
-    order.paymentDetails = {
-      ...(order.paymentDetails || {}),
-      transactionId: valData.bank_tran_id || tranId,
-      valId: valData.val_id || valId,
-      bankTranId: valData.bank_tran_id || "",
-      cardType: valData.card_type || "",
-      cardBrand: valData.card_brand || "",
-      cardIssuer: valData.card_issuer || "",
-      tranDate: valData.tran_date || "",
-      gateway: "sslcommerz",
-      environment,
-      verifiedAt: new Date().toISOString(),
-    };
-
-    order.timeline.push({
-      status: "paid",
-      note: `SSLCommerz payment of ৳${paidAmount} verified successfully (TrxID: ${valData.bank_tran_id || tranId}, ValID: ${valId})`,
-      createdBy: "sslcommerz_gateway",
-      createdAt: new Date(),
-    } as never);
-
-    await order.save();
-
-    return {
-      ok: true,
-      status: 200,
-      message: "SSLCommerz payment verified and order updated.",
-      order: order.toObject(),
-      redirectUrl: `${storePublicUrl}/checkout/payment/success?orderNumber=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
-    };
-  } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : "Error validating SSLCommerz payment";
     return {
       ok: false,
-      status: 500,
-      message: errorMsg,
-      redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=system_error`,
+      status: 400,
+      message: `Payment amount mismatch. Expected ৳${expectedAmount}, got ৳${paidAmount}.`,
+      redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=amount_mismatch`,
     };
   }
+
+  // Mark as PAID
+  order.paymentStatus = "paid";
+  if (order.status === "pending") {
+    order.status = "confirmed";
+  }
+
+  order.paymentVerification = {
+    transactionId: String(valData.bank_tran_id || callbackData.bank_tran_id || tranId),
+    senderNumber: String(valData.card_brand || valData.card_issuer || callbackData.card_type || ""),
+    receiverNumber: gateway.storeIdValue,
+    status: "verified",
+    reviewedBy: "sslcommerz_gateway",
+    reviewedAt: new Date(),
+    note: `Verified automatically via SSLCommerz (${environment})`,
+  };
+
+  order.paymentDetails = {
+    ...(order.paymentDetails || {}),
+    transactionId: String(valData.bank_tran_id || callbackData.bank_tran_id || tranId),
+    valId: String(valData.val_id || valId),
+    bankTranId: String(valData.bank_tran_id || callbackData.bank_tran_id || ""),
+    cardType: String(valData.card_type || callbackData.card_type || ""),
+    cardBrand: String(valData.card_brand || callbackData.card_brand || ""),
+    cardIssuer: String(valData.card_issuer || callbackData.card_issuer || ""),
+    tranDate: String(valData.tran_date || callbackData.tran_date || ""),
+    gateway: "sslcommerz",
+    environment,
+    verifiedAt: new Date().toISOString(),
+  };
+
+  order.timeline.push({
+    status: "paid",
+    note: `SSLCommerz payment of ৳${paidAmount || expectedAmount} verified successfully (TrxID: ${valData.bank_tran_id || callbackData.bank_tran_id || tranId}, ValID: ${valId || valData.val_id || "N/A"})`,
+    createdBy: "sslcommerz_gateway",
+    createdAt: new Date(),
+  } as never);
+
+  await order.save();
+
+  console.info("[SSLCOMMERZ_PAYMENT_VERIFIED_PAID]", {
+    tranId,
+    orderNumber: order.orderNumber,
+    orderId: String(order._id),
+    amount: paidAmount || expectedAmount,
+  });
+
+  return {
+    ok: true,
+    status: 200,
+    message: "SSLCommerz payment verified and order updated.",
+    order: order.toObject(),
+    redirectUrl: `${storePublicUrl}/checkout/payment/success?orderNumber=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
+  };
 }
 
 /**

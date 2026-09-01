@@ -81,43 +81,110 @@ export async function initiateSSLCommerzPaymentController(req: Request, res: Res
   return sendSuccess(res, result.data, "SSLCommerz payment session initiated.");
 }
 
+function extractSafeCallbackKeys(params: Record<string, unknown>): string[] {
+  return Object.keys(params).filter(
+    (k) => !k.toLowerCase().includes("passwd") && !k.toLowerCase().includes("secret") && !k.toLowerCase().includes("pass")
+  );
+}
+
 export async function sslcommerzSuccessCallbackController(req: Request, res: Response) {
   const params = { ...(req.query as Record<string, unknown>), ...(req.body as Record<string, unknown>) };
-  const result = await verifyAndHandleSSLCommerzCallback(params, "success");
+  console.info("[SSLCOMMERZ_SUCCESS_RECEIVED]", {
+    method: req.method,
+    url: req.originalUrl,
+    contentType: req.get("content-type") || "",
+    userAgent: req.get("user-agent") || "",
+    bodyKeys: extractSafeCallbackKeys(params),
+    tran_id: params.tran_id,
+    val_id: params.val_id,
+    status: params.status,
+    amount: params.amount,
+    bank_tran_id: params.bank_tran_id,
+  });
 
-  if (result.redirectUrl) {
-    return res.redirect(result.redirectUrl);
+  try {
+    const result = await verifyAndHandleSSLCommerzCallback(params, "success");
+    if (result.redirectUrl) {
+      return res.redirect(result.redirectUrl);
+    }
+    return res.status(result.status || 200).json(result);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("[SSLCOMMERZ_SUCCESS_CONTROLLER_ERROR]", { error: errorMsg, tran_id: params.tran_id });
+    return res.status(500).json({ success: false, message: "Payment verification failed: " + errorMsg });
   }
-  return res.status(result.status).json(result);
 }
 
 export async function sslcommerzFailCallbackController(req: Request, res: Response) {
   const params = { ...(req.query as Record<string, unknown>), ...(req.body as Record<string, unknown>) };
-  const result = await verifyAndHandleSSLCommerzCallback(params, "fail");
+  console.info("[SSLCOMMERZ_FAIL_RECEIVED]", {
+    method: req.method,
+    url: req.originalUrl,
+    contentType: req.get("content-type") || "",
+    bodyKeys: extractSafeCallbackKeys(params),
+    tran_id: params.tran_id,
+    error: params.error || params.failedreason,
+  });
 
-  if (result.redirectUrl) {
-    return res.redirect(result.redirectUrl);
+  try {
+    const result = await verifyAndHandleSSLCommerzCallback(params, "fail");
+    if (result.redirectUrl) {
+      return res.redirect(result.redirectUrl);
+    }
+    return res.status(result.status || 200).json(result);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("[SSLCOMMERZ_FAIL_CONTROLLER_ERROR]", { error: errorMsg, tran_id: params.tran_id });
+    return res.status(500).json({ success: false, message: "Payment fail processing error: " + errorMsg });
   }
-  return res.status(result.status).json(result);
 }
 
 export async function sslcommerzCancelCallbackController(req: Request, res: Response) {
   const params = { ...(req.query as Record<string, unknown>), ...(req.body as Record<string, unknown>) };
-  const result = await verifyAndHandleSSLCommerzCallback(params, "cancel");
+  console.info("[SSLCOMMERZ_CANCEL_RECEIVED]", {
+    method: req.method,
+    url: req.originalUrl,
+    contentType: req.get("content-type") || "",
+    bodyKeys: extractSafeCallbackKeys(params),
+    tran_id: params.tran_id,
+  });
 
-  if (result.redirectUrl) {
-    return res.redirect(result.redirectUrl);
+  try {
+    const result = await verifyAndHandleSSLCommerzCallback(params, "cancel");
+    if (result.redirectUrl) {
+      return res.redirect(result.redirectUrl);
+    }
+    return res.status(result.status || 200).json(result);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("[SSLCOMMERZ_CANCEL_CONTROLLER_ERROR]", { error: errorMsg, tran_id: params.tran_id });
+    return res.status(500).json({ success: false, message: "Payment cancellation error: " + errorMsg });
   }
-  return res.status(result.status).json(result);
 }
 
 export async function sslcommerzIpnController(req: Request, res: Response) {
   const params = { ...(req.query as Record<string, unknown>), ...(req.body as Record<string, unknown>) };
-  const result = await verifyAndHandleSSLCommerzCallback(params, "ipn");
-  return res.status(result.status).json({
-    status: result.ok ? "SUCCESS" : "FAILED",
-    message: result.message,
+  console.info("[SSLCOMMERZ_IPN_RECEIVED]", {
+    method: req.method,
+    url: req.originalUrl,
+    contentType: req.get("content-type") || "",
+    bodyKeys: extractSafeCallbackKeys(params),
+    tran_id: params.tran_id,
+    val_id: params.val_id,
+    status: params.status,
   });
+
+  try {
+    const result = await verifyAndHandleSSLCommerzCallback(params, "ipn");
+    return res.status(result.status || 200).json({
+      status: result.ok ? "SUCCESS" : "FAILED",
+      message: result.message,
+    });
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("[SSLCOMMERZ_IPN_CONTROLLER_ERROR]", { error: errorMsg, tran_id: params.tran_id });
+    return res.status(500).json({ status: "FAILED", message: errorMsg });
+  }
 }
 
 export async function adminListStoreGatewaysController(req: AuthRequest, res: Response) {

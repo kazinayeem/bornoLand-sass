@@ -187,6 +187,7 @@ app.use(helmet({
 }));
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(globalRateLimit);
 app.use(subdomainDetector);
 

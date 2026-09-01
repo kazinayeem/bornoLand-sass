@@ -26,7 +26,6 @@ import {
 import type { RootState } from "@/store/store";
 import { clearCart, setCartItems } from "@/redux/slices/cart-slice";
 import { useCreateOrderMutation } from "@/redux/api/order-api";
-import { useGetCartQuery, useSyncCartMutation } from "@/redux/api/cart-api";
 import { useGetPublicPaymentMethodsQuery } from "@/redux/api/payment-api";
 import { useGetPublicDeliveryZonesQuery } from "@/redux/api/delivery-api";
 import {
@@ -118,7 +117,6 @@ function CheckoutForm() {
   const localCart = useSelector((state: RootState) => state.cart);
   const customer = useSelector((state: RootState) => state.customer.customer);
   const [createOrder, { isLoading: isSubmittingOrder }] = useCreateOrderMutation();
-  const [syncCart, { isLoading: isSyncing }] = useSyncCartMutation();
   const [trackProgress] = useTrackCheckoutProgressMutation();
   const [triggerRecover, { isFetching: isRecovering }] = useLazyRecoverCheckoutQuery();
   const { store, settings } = useTenant();
@@ -144,14 +142,6 @@ function CheckoutForm() {
   // Mobile Banking specific fields
   const [senderNumber, setSenderNumber] = useState("");
   const [transactionId, setTransactionId] = useState("");
-
-  const {
-    data: cartData,
-    isLoading: cartLoading,
-    isFetching: cartFetching,
-    isError: cartError,
-    refetch: refetchCart,
-  } = useGetCartQuery(undefined, { skip: !mounted });
 
   const {
     data: pmData,
@@ -345,18 +335,7 @@ function CheckoutForm() {
     }
   }, [recoverToken, mounted, recoveryAttempted, triggerRecover, dispatch]);
 
-  const backendCart = cartData?.data?.cart;
-  const backendItems = (backendCart?.items ?? []).map((item) => ({
-    productId: typeof item.productId === "object" ? String((item.productId as { _id?: string })._id ?? item.productId) : String(item.productId),
-    variantId: item.variantId,
-    variantTitle: item.variantTitle,
-    name: item.name,
-    price: item.price,
-    quantity: item.quantity,
-    image: item.image,
-  }));
-
-  const items = backendItems.length > 0 ? backendItems : localCart.items;
+  const items = localCart.items;
 
   useEffect(() => {
     if (deliveryZones.length > 0 && !selectedZoneId) {
@@ -576,17 +555,16 @@ function CheckoutForm() {
 
   const handleRetry = () => {
     setIsInitTimedOut(false);
-    refetchCart();
     refetchPm();
     refetchDz();
   };
 
   const requireLogin = Boolean(settings.requireLoginEnabled && !customer);
-  const isCheckoutInitializing = !mounted || ((cartLoading || pmLoading || dzLoading) && !isInitTimedOut);
+  const isCheckoutInitializing = !mounted || ((pmLoading || dzLoading) && !isInitTimedOut);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmittingOrder || isSyncing || cartFetching) return;
+    if (isSubmittingOrder) return;
 
     setErrorMsg("");
 

@@ -8,7 +8,6 @@ import { useTenant } from "@/providers/tenant-provider";
 import { useIsBuilder } from "@/lib/device-context";
 import { formatCurrency } from "@/lib/format-currency";
 import { addToCart } from "@/redux/slices/cart-slice";
-import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { toast } from "sonner";
 import { Package, ShoppingBag, Tag } from "lucide-react";
 import { SmartImage } from "@/components/ui/smart-image";
@@ -29,7 +28,6 @@ export function ComboDeals({ section }: { section: SectionData }) {
   const p = section.props;
   const { settings } = useTenant();
   const { products } = useSectionProducts({ sectionType: section.type, props: p });
-  const [addToCartRemote] = useAddToCartMutation();
 
   const count = Number(p.productCount) || 3;
   const gridColumns = p.gridColumns || "3";
@@ -66,26 +64,21 @@ export function ComboDeals({ section }: { section: SectionData }) {
     return [];
   }, [p.comboItems, products, count]);
 
-  const handleAddCombo = async (combo: (typeof comboPacks)[0]) => {
+  const handleAddCombo = (combo: (typeof comboPacks)[0]) => {
     if (isBuilder) return;
-    try {
-      const prod = combo.productRef || products[0];
-      if (prod) {
-        dispatch(
-          addToCart({
-            productId: prod._id,
-            name: combo.title,
-            price: combo.price,
-            quantity: 1,
-            image: combo.image,
-          }),
-        );
-        await addToCartRemote({ productId: prod._id, quantity: 1 }).unwrap();
-      }
-      toast.success(`${combo.title} added to cart!`);
-    } catch {
-      toast.success(`${combo.title} added to cart!`);
+    const prod = combo.productRef || products[0];
+    if (prod) {
+      dispatch(
+        addToCart({
+          productId: prod._id,
+          name: combo.title,
+          price: combo.price,
+          quantity: 1,
+          image: combo.image,
+        }),
+      );
     }
+    toast.success(`${combo.title} added to cart!`);
   };
 
   return (

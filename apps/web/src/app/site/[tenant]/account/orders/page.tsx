@@ -13,7 +13,6 @@ import { formatCurrency } from "@/lib/format-currency";
 import { downloadCustomerOrderInvoice } from "@/lib/order-invoice";
 
 import { useGetOrdersQuery } from "@/redux/api/order-api";
-import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { addToCart } from "@/redux/slices/cart-slice";
 import { cn } from "@/lib/utils";
 import { useTenant } from "@/providers/tenant-provider";
@@ -57,29 +56,21 @@ export default function OrdersAccountPage() {
   const orders = data?.data?.orders ?? [];
   const filtered = useMemo(() => orders.filter((o) => matchesFilter(o, filter)), [orders, filter]);
 
-  const [addToCartRemote] = useAddToCartMutation();
-
-  const buyAgain = async (order: any) => {
-    try {
-      for (const item of order.items ?? []) {
-        await addToCartRemote({ productId: item.productId, variantId: item.variantId, quantity: item.quantity }).unwrap();
-        dispatch(
-          addToCart({
-            productId: item.productId,
-            variantId: item.variantId,
-            name: item.name,
-            price: item.price,
-            image: item.image,
-            quantity: item.quantity,
-          } as any),
-        );
-      }
-
-      toast.success("Added to cart");
-      router.push(resolveStoreHref("/cart", pathname));
-    } catch {
-      toast.error("Could not add items to cart");
+  const buyAgain = (order: any) => {
+    for (const item of order.items ?? []) {
+      dispatch(
+        addToCart({
+          productId: item.productId,
+          variantId: item.variantId,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+          quantity: item.quantity || 1,
+        } as any),
+      );
     }
+    toast.success("Added to cart");
+    router.push(resolveStoreHref("/cart", pathname));
   };
 
   return (

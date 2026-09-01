@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCmsPageForTenant } from "@/lib/server/cms-page";
+import { generateTenantMetadata } from "@/lib/server/page-metadata";
 import {
   StorefrontPage,
   StorefrontPageHeader,
@@ -7,6 +9,22 @@ import {
 import { StoreLink as Link } from "@/components/storefront/store-link";
 
 export const revalidate = 60;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ tenant: string; slug: string }>;
+}): Promise<Metadata> {
+  const { tenant, slug } = await params;
+  const page = await getCmsPageForTenant(tenant, `post/${slug}`);
+  const title = page?.title || slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return generateTenantMetadata({
+    tenant,
+    pageTitle: title,
+    canonicalPath: `/blog/${slug}`,
+    description: page?.seoDescription,
+  });
+}
 
 export default async function BlogPostPage({
   params,

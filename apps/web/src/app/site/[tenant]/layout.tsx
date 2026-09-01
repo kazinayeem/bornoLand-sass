@@ -12,7 +12,7 @@ import type {
 } from "@/providers/tenant-provider";
 import type { StoreContact } from "@/redux/api/store-contact-api";
 import { fetchTenantSite } from "@/lib/server/tenant-site";
-import { generateTenantMetadata } from "@/lib/server/page-metadata";
+import { generateTenantLayoutMetadata } from "@/lib/server/page-metadata";
 import { getThemeById } from "@/themes/registry";
 
 /** ISR — public storefront shell (store, theme, products, categories, navigation) */
@@ -27,11 +27,7 @@ export const dynamicParams = true;
 
 export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }): Promise<Metadata> {
   const { tenant } = await params;
-  return generateTenantMetadata({
-    tenant,
-    pageTitle: "Home",
-    canonicalPath: `/site/${tenant}`,
-  });
+  return generateTenantLayoutMetadata(tenant);
 }
 
 import type { PublicStoreTracking } from "@/lib/tracking/types";

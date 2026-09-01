@@ -430,21 +430,6 @@ function CheckoutForm() {
   const taxAmount = (subtotal * taxRate) / 100;
   const total = Math.max(0, subtotal - discount + deliveryCharge + taxAmount);
 
-  // Sync cart from Redux to backend
-  useEffect(() => {
-    if (mounted && localCart.items.length > 0) {
-      syncCart({
-        items: localCart.items.map((i) => ({
-          productId: i.productId,
-          variantId: i.variantId,
-          quantity: i.quantity,
-        })),
-      }).catch((err) => {
-        console.warn("[checkout] syncCart background failure:", err);
-      });
-    }
-  }, [mounted, localCart.items, syncCart]);
-
   // Initiate Checkout Analytics tracking
   useEffect(() => {
     if (mounted && items.length > 0) {
@@ -702,7 +687,7 @@ function CheckoutForm() {
           },
         });
 
-        dispatch(clearCart());
+        dispatch(clearCart({ tenantSlug: store?.slug }));
 
         const redirectUrl =
           (result.data as any).redirectUrl ||
@@ -1382,7 +1367,7 @@ function CheckoutForm() {
                 {/* Place Order CTA Button */}
                 <button
                   type="submit"
-                  disabled={isSubmittingOrder || isSyncing || cartFetching || requireLogin || items.length === 0}
+                  disabled={isSubmittingOrder || requireLogin || items.length === 0}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-zinc-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSubmittingOrder ? (

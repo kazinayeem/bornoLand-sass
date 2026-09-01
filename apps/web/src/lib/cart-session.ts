@@ -41,7 +41,9 @@ export function logCartDebug(phase: string, detail: Record<string, unknown>) {
   authLog("debug", `[cart] ${phase}`, detail);
 }
 
-export function readLocalCartItems(): Array<{
+import { getCartStorageKey } from "@/redux/slices/cart-slice";
+
+export function readLocalCartItems(tenantSlug?: string): Array<{
   productId: string;
   variantId?: string;
   variantTitle?: string;
@@ -52,7 +54,8 @@ export function readLocalCartItems(): Array<{
 }> {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    const key = getCartStorageKey(tenantSlug);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];

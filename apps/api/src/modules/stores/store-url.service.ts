@@ -124,7 +124,10 @@ export function getSSLCommerzCallbackUrls(params: {
   const apiBase = params.apiBaseUrl || getApiBaseUrl();
 
   const queryParams = new URLSearchParams();
-  if (order?.orderNumber) queryParams.set("orderNumber", String(order.orderNumber));
+  if (order?.orderNumber) {
+    queryParams.set("orderNumber", String(order.orderNumber));
+    queryParams.set("order", String(order.orderNumber));
+  }
   if (order?._id) queryParams.set("orderId", String(order._id));
   if (transactionId) queryParams.set("tran_id", String(transactionId));
 

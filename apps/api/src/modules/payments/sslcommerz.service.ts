@@ -794,7 +794,7 @@ export async function verifyAndHandleSSLCommerzCallback(
       ok: true,
       status: 200,
       message: "Payment cancelled by customer.",
-      redirectUrl: `${storePublicUrl}/checkout/payment/cancel?orderNumber=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
+      redirectUrl: `${storePublicUrl}/checkout/payment/cancel?orderNumber=${order.orderNumber}&order=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
     };
   }
 
@@ -816,7 +816,7 @@ export async function verifyAndHandleSSLCommerzCallback(
       ok: true,
       status: 200,
       message: "Payment failed.",
-      redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}&error=${encodeURIComponent(errorReason)}`,
+      redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&order=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}&error=${encodeURIComponent(errorReason)}`,
     };
   }
 
@@ -828,7 +828,7 @@ export async function verifyAndHandleSSLCommerzCallback(
       status: 200,
       message: "Payment already verified and paid.",
       order: order.toObject(),
-      redirectUrl: `${storePublicUrl}/checkout/payment/success?orderNumber=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
+      redirectUrl: `${storePublicUrl}/checkout/payment/success?orderNumber=${order.orderNumber}&order=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
     };
   }
 
@@ -972,7 +972,7 @@ export async function verifyAndHandleSSLCommerzCallback(
     status: 200,
     message: "SSLCommerz payment verified and order updated.",
     order: order.toObject(),
-    redirectUrl: `${storePublicUrl}/checkout/payment/success?orderNumber=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
+    redirectUrl: `${storePublicUrl}/checkout/payment/success?orderNumber=${order.orderNumber}&order=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
   };
 }
 

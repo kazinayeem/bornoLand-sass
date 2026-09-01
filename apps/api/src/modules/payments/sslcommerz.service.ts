@@ -967,6 +967,49 @@ export async function verifyAndHandleSSLCommerzCallback(
     amount: paidAmount || expectedAmount,
   });
 
+  // Post-payment notification to store owner (isolated)
+  if (store?.userId) {
+    try {
+      const { createBillingNotification } = await import("../notifications/billing-notification.service.js");
+      await createBillingNotification({
+        userId: String(store.userId),
+        storeId,
+        type: "payment_received",
+        title: `Payment received: ${order.orderNumber}`,
+        message: `Payment of ৳${paidAmount || expectedAmount} received via SSLCommerz for order ${order.orderNumber}.`,
+        actionUrl: store.slug ? `/store/${store.slug}/orders` : "/dashboard/orders",
+        metadata: { orderId: String(order._id), orderNumber: order.orderNumber, total: paidAmount || expectedAmount },
+      });
+    } catch (err) {
+      console.warn("[notifications] Failed to create store payment notification:", err);
+    }
+  }
+
+  // Post-payment notification to customer (isolated)
+  if (order.customerId && mongoose.Types.ObjectId.isValid(String(order.customerId))) {
+    try {
+      const { CustomerNotificationModel } = await import("../customers/customer-notification.model.js");
+      await CustomerNotificationModel.create({
+        customerId: order.customerId,
+        storeId,
+        type: "payment",
+        icon: "credit-card",
+        priority: "high",
+        title: `Payment verified: ${order.orderNumber}`,
+        message: `Your payment of ৳${paidAmount || expectedAmount} has been verified successfully.`,
+        link: `/orders/${String(order._id)}`,
+        metadata: {
+          orderId: String(order._id),
+          orderNumber: order.orderNumber,
+          paymentStatus: "paid",
+          total: paidAmount || expectedAmount,
+        },
+      });
+    } catch (err) {
+      console.warn("[notifications] Failed to create customer payment notification:", err);
+    }
+  }
+
   return {
     ok: true,
     status: 200,

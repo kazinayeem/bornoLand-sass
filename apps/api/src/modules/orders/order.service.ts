@@ -10,8 +10,8 @@ import { incrementCouponUsage } from "../coupons/coupon.service.js";
 import { calculateTax } from "../../common/utils/tax.js";
 import { checkLimit } from "../features/feature-access.service.js";
 import { createBillingNotification } from "../notifications/billing-notification.service.js";
-
-import { NotificationModel } from "../notifications/notification.model.js";
+import mongoose from "mongoose";
+import { CustomerNotificationModel } from "../customers/customer-notification.model.js";
 import {
   validateLocationHierarchy,
   findDivision,
@@ -533,27 +533,29 @@ export async function createOrder(
     }
   }
 
-  try {
-    await NotificationModel.create({
-      customerId,
-      storeId,
-      type: "order",
-      icon: "package",
-      priority: "medium",
-      title: `Order placed: ${orderNumber}`,
-      message: `Your order has been placed successfully. Total ${currencyCode} ${total.toFixed(2)}.`,
-      link: `/orders/${String(order._id)}`,
-      metadata: {
-        orderId: String(order._id),
-        orderNumber,
-        status: "pending",
-        paymentStatus: order.paymentStatus,
-        total,
-        currencyCode,
-      },
-    });
-  } catch (error) {
-    console.error("[notifications] Failed to create customer order notification", error);
+  if (customerId && mongoose.Types.ObjectId.isValid(String(customerId))) {
+    try {
+      await CustomerNotificationModel.create({
+        customerId,
+        storeId,
+        type: "order",
+        icon: "package",
+        priority: "medium",
+        title: `Order placed: ${orderNumber}`,
+        message: `Your order has been placed successfully. Total ${currencyCode} ${total.toFixed(2)}.`,
+        link: `/orders/${String(order._id)}`,
+        metadata: {
+          orderId: String(order._id),
+          orderNumber,
+          status: "pending",
+          paymentStatus: order.paymentStatus,
+          total,
+          currencyCode,
+        },
+      });
+    } catch (error) {
+      console.warn("[notifications] Failed to create customer order notification:", error);
+    }
   }
 
   if (paymentMethod === "sslcommerz") {
@@ -588,7 +590,6 @@ export async function createOrder(
   return { ok: true as const, data: { order: order.toObject() } };
 }
 
-
 async function autoSaveCustomerAddressFromOrder(
   storeId: string,
   customerId: string,
@@ -607,35 +608,43 @@ async function autoSaveCustomerAddressFromOrder(
     landmark?: string;
   },
 ) {
-  const cust: any = await CustomerModel.findOne({ _id: customerId, storeId });
-  if (!cust) return;
+  if (!customerId || !mongoose.Types.ObjectId.isValid(String(customerId))) return;
+  try {
+    const cust: any = await CustomerModel.findOne({ _id: customerId, storeId });
+    if (!cust) return;
 
-  const existingAddresses = cust.addresses ?? [];
-  const exists = existingAddresses.some(
-    (a: any) =>
-      a.city?.toLowerCase() === address.city.toLowerCase() &&
-      a.street?.toLowerCase() === address.street.toLowerCase() &&
-      a.phone === address.phone,
-  );
+    if (!Array.isArray(cust.addresses)) {
+      cust.addresses = [];
+    }
 
+    const existingAddresses = cust.addresses;
+    const exists = existingAddresses.some(
+      (a: any) =>
+        a.city?.toLowerCase() === address.city?.toLowerCase() &&
+        a.street?.toLowerCase() === address.street?.toLowerCase() &&
+        a.phone === address.phone,
+    );
 
-  if (!exists) {
-    cust.addresses.push({
-      label: address.label || "Home",
-      fullName: address.fullName,
-      phone: address.phone,
-      email: address.email || "",
-      street: address.street,
-      apartment: address.apartment || "",
-      city: address.city,
-      state: address.state || "",
-      zip: address.zip || "",
-      country: address.country || "Bangladesh",
-      area: address.area || "",
-      landmark: address.landmark || "",
-      isDefault: existingAddresses.length === 0,
-    });
-    await cust.save();
+    if (!exists) {
+      cust.addresses.push({
+        label: address.label || "Home",
+        fullName: address.fullName,
+        phone: address.phone,
+        email: address.email || "",
+        street: address.street,
+        apartment: address.apartment || "",
+        city: address.city,
+        state: address.state || "",
+        zip: address.zip || "",
+        country: address.country || "Bangladesh",
+        area: address.area || "",
+        landmark: address.landmark || "",
+        isDefault: existingAddresses.length === 0,
+      });
+      await cust.save();
+    }
+  } catch (err) {
+    console.warn("[customer-address] autoSaveCustomerAddressFromOrder safe catch:", err);
   }
 }
 

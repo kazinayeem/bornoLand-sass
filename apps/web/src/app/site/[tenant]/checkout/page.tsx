@@ -724,7 +724,7 @@ function CheckoutForm() {
   }
 
   // 2. Initialization Timeout Screen
-  if (isInitTimedOut && items.length === 0 && cartError) {
+  if (isInitTimedOut && items.length === 0) {
     return (
       <div className="mx-auto max-w-xl px-4 py-20 text-center">
         <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 text-rose-600">

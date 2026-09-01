@@ -97,6 +97,8 @@ const allowedOriginPatterns: RegExp[] = [
     String.raw`^https?://(?:${DNS_LABEL}\.)?${IPV4_DASHED}\.[a-z0-9.-]+(?::\d+)?$`,
     "i",
   ),
+  // Payment Gateways (SSLCommerz sandbox, live, and subdomains)
+  new RegExp(String.raw`^https?://(?:[a-z0-9-]+\.)*sslcommerz\.com(?::\d+)?$`, "i"),
 ];
 
 // Env-configured platform bases (PLATFORM_BASES) → allow http(s)://{base} and http(s)://*.{base}
@@ -150,8 +152,8 @@ const corsOptions: CorsOptions = {
       }
     }
 
-    console.warn(`[CORS] Blocked origin: ${origin}`);
-    callback(new Error(`CORS origin blocked: ${origin}`));
+    console.warn(`[CORS] Disallowed origin: ${origin}`);
+    callback(null, false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

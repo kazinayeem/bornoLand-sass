@@ -1,4 +1,5 @@
 import { Router, urlencoded } from "express";
+import cors from "cors";
 import { requireAuth } from "../../common/middleware/auth.middleware.js";
 import {
   getStoreSSLCommerzController,
@@ -27,7 +28,8 @@ storeSSLCommerzRouter.post("/refund", refundStoreSSLCommerzController);
 /** Public payment session and callback router */
 export const publicSSLCommerzRouter: Router = Router();
 
-// Allow urlencoded payloads from SSLCommerz POST callbacks
+// Allow external origins and urlencoded payloads from SSLCommerz POST callbacks
+publicSSLCommerzRouter.use(cors({ origin: true, credentials: true }));
 publicSSLCommerzRouter.use(urlencoded({ extended: true }));
 
 publicSSLCommerzRouter.post("/initiate", initiateSSLCommerzPaymentController);

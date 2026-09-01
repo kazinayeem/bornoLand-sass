@@ -722,6 +722,8 @@ export async function verifyAndHandleSSLCommerzCallback(
 }> {
   await connectDatabase();
 
+  const logPrefix = `[SSLCOMMERZ_${actionType.toUpperCase()}]`;
+
   const tranId = String(
     callbackData.tran_id ||
     callbackData.tranId ||
@@ -734,6 +736,23 @@ export async function verifyAndHandleSSLCommerzCallback(
   const storeIdFromCallback = String(callbackData.value_a || callbackData.store_id || "").trim();
   const orderIdFromCallback = String(callbackData.value_b || callbackData.order_id || callbackData.orderId || "").trim();
   const storeSlug = String(callbackData.value_d || "").trim();
+
+  console.info(`${logPrefix} request received`, {
+    actionType,
+    tran_id: tranId,
+    val_id: valId,
+    status: callbackData.status,
+    amount: callbackData.amount,
+    currency: callbackData.currency || callbackData.currency_type,
+    card_type: callbackData.card_type,
+    bank_tran_id: callbackData.bank_tran_id,
+  });
+
+  console.info(`${logPrefix} transaction/order identifier`, {
+    tran_id: tranId,
+    orderId: orderIdFromCallback,
+    orderNumber: callbackData.value_c,
+  });
 
   // Find order safely without casting errors
   let order: any = null;
@@ -755,27 +774,48 @@ export async function verifyAndHandleSSLCommerzCallback(
     order = await OrderModel.findOne({ orderNumber: String(callbackData.value_c).trim() });
   }
 
+  // Attempt fallback store lookup if order is missing
+  let fallbackStore: any = null;
+  if (storeIdFromCallback && mongoose.Types.ObjectId.isValid(storeIdFromCallback)) {
+    fallbackStore = await StoreModel.findById(storeIdFromCallback).lean();
+  } else if (storeSlug) {
+    fallbackStore = await StoreModel.findOne({ slug: storeSlug }).lean();
+  }
+  const fallbackStorePublicUrl = getStorePublicUrl(fallbackStore);
+
   if (!order) {
-    console.warn("[SSLCOMMERZ_ORDER_NOT_FOUND]", { tranId, valId, orderIdFromCallback, storeIdFromCallback });
+    console.warn(`${logPrefix} [SSLCOMMERZ_ORDER_NOT_FOUND]`, { tranId, valId, orderIdFromCallback, storeIdFromCallback });
     return {
       ok: false,
       status: 404,
       message: `Order matching transaction "${tranId}" not found.`,
+      redirectUrl: `${fallbackStorePublicUrl}/checkout/payment/fail?tran_id=${tranId}&error=order_not_found`,
     };
   }
 
   const storeId = String(order.storeId);
+  console.info(`${logPrefix} store/tenant`, { storeId, storeSlug: storeSlug || order.storeId });
+
   if (storeIdFromCallback && mongoose.Types.ObjectId.isValid(storeIdFromCallback) && storeIdFromCallback !== storeId) {
-    console.error("[SSLCOMMERZ_STORE_MISMATCH]", { orderStoreId: storeId, callbackStoreId: storeIdFromCallback });
+    console.error(`${logPrefix} [SSLCOMMERZ_STORE_MISMATCH]`, { orderStoreId: storeId, callbackStoreId: storeIdFromCallback });
     return {
       ok: false,
       status: 400,
       message: "Store ID mismatch in payment verification.",
+      redirectUrl: `${fallbackStorePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=store_mismatch`,
     };
   }
 
   const store = (await StoreModel.findById(storeId).lean()) as any;
   const storePublicUrl = getStorePublicUrl(store);
+
+  console.info(`${logPrefix} database lookup`, {
+    orderFound: Boolean(order),
+    orderNumber: order.orderNumber,
+    orderId: String(order._id),
+    currentPaymentStatus: order.paymentStatus,
+    total: order.total,
+  });
 
   // Handle Cancel
   if (actionType === "cancel" || String(callbackData.status).toUpperCase() === "CANCELLED") {
@@ -789,12 +829,13 @@ export async function verifyAndHandleSSLCommerzCallback(
       } as never);
       await order.save();
     }
-    console.info("[SSLCOMMERZ_PAYMENT_CANCELLED]", { tranId, orderNumber: order.orderNumber });
+    const cancelRedirect = `${storePublicUrl}/checkout/payment/cancel?orderNumber=${order.orderNumber}&order=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`;
+    console.info(`${logPrefix} [SSLCOMMERZ_PAYMENT_CANCELLED]`, { tranId, orderNumber: order.orderNumber, redirect: cancelRedirect });
     return {
       ok: true,
       status: 200,
       message: "Payment cancelled by customer.",
-      redirectUrl: `${storePublicUrl}/checkout/payment/cancel?orderNumber=${order.orderNumber}&order=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
+      redirectUrl: cancelRedirect,
     };
   }
 
@@ -811,24 +852,26 @@ export async function verifyAndHandleSSLCommerzCallback(
       } as never);
       await order.save();
     }
-    console.info("[SSLCOMMERZ_PAYMENT_FAILED]", { tranId, errorReason, orderNumber: order.orderNumber });
+    const failRedirect = `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&order=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}&error=${encodeURIComponent(errorReason)}`;
+    console.info(`${logPrefix} [SSLCOMMERZ_PAYMENT_FAILED]`, { tranId, errorReason, orderNumber: order.orderNumber, redirect: failRedirect });
     return {
       ok: true,
       status: 200,
       message: "Payment failed.",
-      redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&order=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}&error=${encodeURIComponent(errorReason)}`,
+      redirectUrl: failRedirect,
     };
   }
 
   // Handle Success / IPN -> Idempotency Check
   if (order.paymentStatus === "paid") {
-    console.info("[SSLCOMMERZ_IDEMPOTENT_PAID]", { tranId, orderNumber: order.orderNumber });
+    const successRedirect = `${storePublicUrl}/checkout/payment/success?orderNumber=${order.orderNumber}&order=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`;
+    console.info(`${logPrefix} [SSLCOMMERZ_IDEMPOTENT_PAID]`, { tranId, orderNumber: order.orderNumber, redirect: successRedirect });
     return {
       ok: true,
       status: 200,
       message: "Payment already verified and paid.",
       order: order.toObject(),
-      redirectUrl: `${storePublicUrl}/checkout/payment/success?orderNumber=${order.orderNumber}&order=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
+      redirectUrl: successRedirect,
     };
   }
 
@@ -850,13 +893,13 @@ export async function verifyAndHandleSSLCommerzCallback(
   const environment: "sandbox" | "live" = gateway.environment === "live" ? "live" : "sandbox";
   const isLive = environment === "live";
 
-  // If val_id is provided, verify with SSLCommerz API
+  // If val_id is provided, verify with SSLCommerz Server API
   let rawValData: Record<string, unknown> | null = null;
   if (valId) {
     try {
       rawValData = await sslczValidate(gateway.storeIdValue, storePassword, isLive, valId);
     } catch (err) {
-      console.warn("[SSLCOMMERZ_VALIDATE_API_ERROR]", { valId, error: err instanceof Error ? err.message : String(err) });
+      console.warn(`${logPrefix} [SSLCOMMERZ_VALIDATE_API_ERROR]`, { valId, error: err instanceof Error ? err.message : String(err) });
     }
   }
 
@@ -873,10 +916,19 @@ export async function verifyAndHandleSSLCommerzCallback(
   }
 
   const valStatus = String(valData.status || callbackData.status || "").toUpperCase();
-  const isValid = valStatus === "VALID" || valStatus === "VALIDATED";
+  console.info(`${logPrefix} validation response`, {
+    val_id: valId,
+    valStatus,
+    valDataStatus: valData.status,
+    callbackStatus: callbackData.status,
+    amount: valData.amount || callbackData.amount,
+    currency: valData.currency || callbackData.currency,
+  });
+
+  const isValid = ["VALID", "VALIDATED", "SUCCESS", "COMPLETED"].includes(valStatus);
 
   if (!isValid) {
-    console.error("[SSLCOMMERZ_VERIFICATION_FAILED]", { tranId, valStatus, error: valData.error || callbackData.error });
+    console.error(`${logPrefix} [SSLCOMMERZ_VERIFICATION_FAILED]`, { tranId, valStatus, error: valData.error || callbackData.error });
     if (order.paymentStatus !== "paid") {
       order.paymentStatus = "failed";
       order.timeline.push({
@@ -896,12 +948,36 @@ export async function verifyAndHandleSSLCommerzCallback(
     };
   }
 
+  // Verify Currency if provided
+  const paidCurrency = String(valData.currency_type || valData.currency || callbackData.currency || "").toUpperCase();
+  const expectedCurrency = String(order.currencyCode || "BDT").toUpperCase();
+  if (paidCurrency && expectedCurrency && paidCurrency !== expectedCurrency) {
+    console.error(`${logPrefix} [SSLCOMMERZ_CURRENCY_MISMATCH]`, { tranId, expected: expectedCurrency, received: paidCurrency });
+    if (order.paymentStatus !== "paid") {
+      order.paymentStatus = "failed";
+      order.timeline.push({
+        status: "currency_mismatch",
+        note: `SSLCommerz currency mismatch. Expected: ${expectedCurrency}, Received: ${paidCurrency}`,
+        createdBy: "sslcommerz_gateway",
+        createdAt: new Date(),
+      } as never);
+      await order.save();
+    }
+
+    return {
+      ok: false,
+      status: 400,
+      message: `Payment currency mismatch. Expected ${expectedCurrency}, got ${paidCurrency}.`,
+      redirectUrl: `${storePublicUrl}/checkout/payment/fail?orderNumber=${order.orderNumber}&tran_id=${tranId}&error=currency_mismatch`,
+    };
+  }
+
   // Verify Amount
   const paidAmount = parseFloat(String(valData.amount || valData.currency_amount || callbackData.amount || "0"));
   const expectedAmount = Number(order.total || 0);
 
   if (expectedAmount > 0 && Math.abs(paidAmount - expectedAmount) > 1.0) {
-    console.error("[SSLCOMMERZ_AMOUNT_MISMATCH]", { tranId, expected: expectedAmount, received: paidAmount });
+    console.error(`${logPrefix} [SSLCOMMERZ_AMOUNT_MISMATCH]`, { tranId, expected: expectedAmount, received: paidAmount });
     if (order.paymentStatus !== "paid") {
       order.paymentStatus = "failed";
       order.timeline.push({
@@ -960,11 +1036,13 @@ export async function verifyAndHandleSSLCommerzCallback(
 
   await order.save();
 
-  console.info("[SSLCOMMERZ_PAYMENT_VERIFIED_PAID]", {
+  console.info(`${logPrefix} order update`, {
     tranId,
     orderNumber: order.orderNumber,
     orderId: String(order._id),
     amount: paidAmount || expectedAmount,
+    paymentStatus: order.paymentStatus,
+    orderStatus: order.status,
   });
 
   // Post-payment notification to store owner (isolated)
@@ -1010,12 +1088,15 @@ export async function verifyAndHandleSSLCommerzCallback(
     }
   }
 
+  const finalSuccessRedirect = `${storePublicUrl}/checkout/payment/success?orderNumber=${order.orderNumber}&order=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`;
+  console.info(`${logPrefix} redirect target`, { redirectUrl: finalSuccessRedirect });
+
   return {
     ok: true,
     status: 200,
     message: "SSLCommerz payment verified and order updated.",
     order: order.toObject(),
-    redirectUrl: `${storePublicUrl}/checkout/payment/success?orderNumber=${order.orderNumber}&order=${order.orderNumber}&tran_id=${tranId}&orderId=${order._id}`,
+    redirectUrl: finalSuccessRedirect,
   };
 }
 

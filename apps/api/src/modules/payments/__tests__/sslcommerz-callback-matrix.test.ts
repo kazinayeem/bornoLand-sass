@@ -20,19 +20,26 @@ describe("SSLCommerz End-to-End Callback Matrix Tests", () => {
   before(async () => {
     await connectDatabase();
 
+    const userId = new mongoose.Types.ObjectId();
+    const tenantId = new mongoose.Types.ObjectId();
+
     const store = await StoreModel.create({
+      tenantId,
+      userId,
       name: "Matrix Test Store",
       slug: `matrix-store-${Date.now()}`,
       currency: "BDT",
-      plan: "pro",
+      plan: "starter",
     });
     storeId = String(store._id);
 
     const otherStore = await StoreModel.create({
+      tenantId: new mongoose.Types.ObjectId(),
+      userId: new mongoose.Types.ObjectId(),
       name: "Other Store",
       slug: `other-store-${Date.now()}`,
       currency: "BDT",
-      plan: "pro",
+      plan: "starter",
     });
     otherStoreId = String(otherStore._id);
 
@@ -84,7 +91,6 @@ describe("SSLCommerz End-to-End Callback Matrix Tests", () => {
 
     const callbackPayload = {
       tran_id: order.orderNumber,
-      val_id: "VALID_MATRIX_001",
       amount: "800.00",
       card_type: "VISA-Dutch Bangla Bank",
       bank_tran_id: "BANK_TRX_9999",
@@ -214,8 +220,7 @@ describe("SSLCommerz End-to-End Callback Matrix Tests", () => {
 
     const mismatchCallback = {
       tran_id: order.orderNumber,
-      val_id: "VAL_MISMATCH_999",
-      amount: "100.00", // Mismatched amount
+      amount: "100.00", // Mismatched amount (Order is 5000)
       status: "VALID",
       value_a: storeId,
       value_b: String(order._id),

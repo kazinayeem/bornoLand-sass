@@ -105,7 +105,7 @@ export async function sslcommerzSuccessCallbackController(req: Request, res: Res
   try {
     const result = await verifyAndHandleSSLCommerzCallback(params, "success");
     if (result.redirectUrl) {
-      return res.redirect(result.redirectUrl);
+      return res.redirect(303, result.redirectUrl);
     }
     return res.status(result.status || 200).json(result);
   } catch (err: unknown) {
@@ -129,7 +129,7 @@ export async function sslcommerzFailCallbackController(req: Request, res: Respon
   try {
     const result = await verifyAndHandleSSLCommerzCallback(params, "fail");
     if (result.redirectUrl) {
-      return res.redirect(result.redirectUrl);
+      return res.redirect(303, result.redirectUrl);
     }
     return res.status(result.status || 200).json(result);
   } catch (err: unknown) {
@@ -152,7 +152,7 @@ export async function sslcommerzCancelCallbackController(req: Request, res: Resp
   try {
     const result = await verifyAndHandleSSLCommerzCallback(params, "cancel");
     if (result.redirectUrl) {
-      return res.redirect(result.redirectUrl);
+      return res.redirect(303, result.redirectUrl);
     }
     return res.status(result.status || 200).json(result);
   } catch (err: unknown) {

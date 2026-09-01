@@ -40,7 +40,6 @@ export const CheckoutOrderSummary = React.memo(function CheckoutOrderSummary({
         productId: item.productId,
         variantId: item.variantId,
         quantity: item.quantity + 1,
-        tenantSlug,
       }),
     );
   };
@@ -51,7 +50,6 @@ export const CheckoutOrderSummary = React.memo(function CheckoutOrderSummary({
         productId: item.productId,
         variantId: item.variantId,
         quantity: Math.max(0, item.quantity - 1),
-        tenantSlug,
       }),
     );
   };
@@ -61,10 +59,11 @@ export const CheckoutOrderSummary = React.memo(function CheckoutOrderSummary({
       removeFromCart({
         productId: item.productId,
         variantId: item.variantId,
-        tenantSlug,
       }),
     );
   };
+
+  const curr = (currencyCode as any) || "BDT";
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
@@ -100,7 +99,7 @@ export const CheckoutOrderSummary = React.memo(function CheckoutOrderSummary({
                   <p className="text-xs text-zinc-500">{item.variantTitle}</p>
                 )}
                 <p className="text-xs font-semibold text-zinc-900">
-                  {formatCurrency(item.price, currencyCode)}
+                  {formatCurrency(item.price, curr)}
                 </p>
               </div>
 
@@ -145,14 +144,14 @@ export const CheckoutOrderSummary = React.memo(function CheckoutOrderSummary({
         <div className="flex justify-between text-zinc-600">
           <span>Subtotal</span>
           <span className="font-semibold text-zinc-900">
-            {formatCurrency(subtotal, currencyCode)}
+            {formatCurrency(subtotal, curr)}
           </span>
         </div>
 
         <div className="flex justify-between text-zinc-600">
           <span>Delivery Charge</span>
           <span className="font-semibold text-zinc-900">
-            {deliveryCharge > 0 ? formatCurrency(deliveryCharge, currencyCode) : "Calculated at next step"}
+            {deliveryCharge > 0 ? formatCurrency(deliveryCharge, curr) : "Calculated at next step"}
           </span>
         </div>
 
@@ -160,7 +159,7 @@ export const CheckoutOrderSummary = React.memo(function CheckoutOrderSummary({
           <div className="flex justify-between text-zinc-600">
             <span>Estimated Tax / VAT</span>
             <span className="font-semibold text-zinc-900">
-              {formatCurrency(taxAmount, currencyCode)}
+              {formatCurrency(taxAmount, curr)}
             </span>
           </div>
         )}
@@ -168,13 +167,13 @@ export const CheckoutOrderSummary = React.memo(function CheckoutOrderSummary({
         {discount > 0 && (
           <div className="flex justify-between text-emerald-600">
             <span>Discount</span>
-            <span className="font-semibold">-{formatCurrency(discount, currencyCode)}</span>
+            <span className="font-semibold">-{formatCurrency(discount, curr)}</span>
           </div>
         )}
 
         <div className="flex justify-between border-t border-zinc-200 pt-3 text-base font-extrabold text-zinc-900">
           <span>Total Payable</span>
-          <span className="font-mono text-lg">{formatCurrency(total, currencyCode)}</span>
+          <span className="font-mono text-lg">{formatCurrency(total, curr)}</span>
         </div>
       </div>
 

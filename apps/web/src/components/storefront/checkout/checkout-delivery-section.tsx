@@ -64,7 +64,7 @@ export const CheckoutDeliverySection = React.memo(function CheckoutDeliverySecti
                 </div>
               </div>
               <p className="text-sm font-bold text-zinc-900">
-                {zone.charge > 0 ? formatCurrency(zone.charge, currencyCode) : "Free"}
+                {zone.charge > 0 ? formatCurrency(zone.charge, (currencyCode as any) || "BDT") : "Free"}
               </p>
             </div>
           );

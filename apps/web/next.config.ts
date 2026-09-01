@@ -3,7 +3,25 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Required for optimized multi-stage Docker images (copies only the standalone server).
   output: "standalone",
-  experimental: {},
+  compress: true,
+  poweredByHeader: false,
+  reactStrictMode: true,
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "recharts",
+      "framer-motion",
+      "sonner",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-popover",
+      "@radix-ui/react-select",
+      "@radix-ui/react-tooltip",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-accordion",
+      "@radix-ui/react-scroll-area",
+    ],
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60,

@@ -99,7 +99,7 @@ describe("SSLCommerz End-to-End Callback Matrix Tests", () => {
     assert.equal(res.status, 200);
     assert.ok(res.redirectUrl?.includes("/checkout/payment/success"));
 
-    const updated = await OrderModel.findById(order._id).lean();
+    const updated = (await OrderModel.findById(order._id).lean()) as any;
     assert.equal(updated?.paymentStatus, "paid");
     assert.equal(updated?.status, "confirmed");
     assert.equal(updated?.paymentVerification?.status, "verified");
@@ -158,7 +158,7 @@ describe("SSLCommerz End-to-End Callback Matrix Tests", () => {
     assert.equal(res.ok, true);
     assert.ok(res.redirectUrl?.includes("/checkout/payment/fail"));
 
-    const updated = await OrderModel.findById(order._id).lean();
+    const updated = (await OrderModel.findById(order._id).lean()) as any;
     assert.equal(updated?.paymentStatus, "failed");
   });
 
@@ -185,7 +185,7 @@ describe("SSLCommerz End-to-End Callback Matrix Tests", () => {
     assert.equal(res.ok, true);
     assert.ok(res.redirectUrl?.includes("/checkout/payment/cancel"));
 
-    const updated = await OrderModel.findById(order._id).lean();
+    const updated = (await OrderModel.findById(order._id).lean()) as any;
     assert.equal(updated?.paymentStatus, "failed");
   });
 
@@ -226,7 +226,7 @@ describe("SSLCommerz End-to-End Callback Matrix Tests", () => {
     assert.equal(res.status, 400);
     assert.match(res.message, /amount mismatch/i);
 
-    const updated = await OrderModel.findById(order._id).lean();
+    const updated = (await OrderModel.findById(order._id).lean()) as any;
     assert.equal(updated?.paymentStatus, "failed");
   });
 

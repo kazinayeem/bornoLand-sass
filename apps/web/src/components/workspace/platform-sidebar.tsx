@@ -35,6 +35,13 @@ import { useLanguage } from "@/providers/language-provider";
 import { toast } from "sonner";
 import { getLoginUrlForCurrentPage } from "@/lib/auth-redirect-client";
 
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+
 function NavItem({
   href,
   label,
@@ -45,7 +52,7 @@ function NavItem({
 }: {
   href: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   exact?: boolean;
   collapsed: boolean;
   onNavigate?: () => void;
@@ -53,44 +60,54 @@ function NavItem({
   const pathname = usePathname();
   const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
-  return (
+  const item = (
     <Link
       href={href}
       onClick={onNavigate}
-      title={collapsed ? label : undefined}
       className={cn(
-        "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-all duration-150",
-        collapsed && "justify-center px-2",
+        "group relative flex items-center gap-3 rounded-lg px-2.5 h-10 min-h-[40px] text-[13px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:focus-visible:ring-white/20",
+        collapsed && "justify-center px-0",
         active
-          ? "bg-apple-ink/[0.07] text-apple-ink dark:bg-white/10 dark:text-white"
-          : "text-apple-ink-muted-48 hover:bg-apple-ink/[0.04] hover:text-apple-ink dark:text-apple-body-muted dark:hover:bg-white/8 dark:hover:text-white"
+          ? "bg-zinc-100 text-zinc-950 font-medium dark:bg-white/[0.08] dark:text-white"
+          : "text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-zinc-100"
       )}
+      aria-label={label}
     >
       {/* Active indicator strip */}
       {active && (
-        <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-apple-ink dark:bg-white" />
+        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-zinc-900 dark:bg-white" />
       )}
       <Icon
+        strokeWidth={1.75}
         className={cn(
-          "h-4 w-4 shrink-0 transition-colors",
+          "h-[18px] w-[18px] shrink-0 transition-colors duration-150",
           active
-            ? "text-apple-ink dark:text-white"
-            : "text-apple-ink-muted-48 group-hover:text-apple-ink-muted-80 dark:group-hover:text-apple-body-muted"
+            ? "text-zinc-950 dark:text-white"
+            : "text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300"
         )}
       />
       {!collapsed && <span className="truncate">{label}</span>}
     </Link>
   );
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{item}</TooltipTrigger>
+        <TooltipContent side="right" sideOffset={10} className="py-1 px-2.5 shadow-md">
+          {label}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return item;
 }
 
 function NavSection({ label, collapsed }: { label: string; collapsed: boolean }) {
+  if (collapsed) return <div className="mx-3 my-2.5 h-px bg-zinc-200/60 dark:bg-zinc-800" />;
   return (
-    <p
-      className={cn(
-        "mb-1 mt-4 px-2.5 text-[10px] font-semibold uppercase tracking-widest text-apple-ink-muted-48/70 dark:text-apple-body-muted/50",
-        collapsed && "sr-only"
-      )}
-    >
+    <p className="px-2.5 pt-4 pb-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
       {label}
     </p>
   );
@@ -315,7 +332,7 @@ export function PlatformSidebar() {
   );
 
   return (
-    <>
+    <TooltipProvider delayDuration={120}>
       {/* Mobile overlay */}
       {mobileOpen && (
         <button
@@ -335,7 +352,7 @@ export function PlatformSidebar() {
       >
         {sidebarContent}
       </aside>
-    </>
+    </TooltipProvider>
   );
 }
 

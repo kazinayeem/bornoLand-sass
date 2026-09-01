@@ -388,29 +388,29 @@ function StoreSettingsHubContent() {
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         {/* Left Settings Sidebar Navigation */}
         <aside className="shrink-0 lg:w-64">
-          <div className="sticky top-4 space-y-4 rounded-2xl border border-apple-hairline bg-apple-canvas p-3 shadow-xs">
+          <div className="sticky top-4 space-y-3 rounded-2xl border border-zinc-200/80 bg-white p-3 shadow-2xs dark:border-zinc-800 dark:bg-zinc-950">
             {/* Search Settings Input */}
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-apple-ink-muted-48" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.settings.searchPlaceholder}
-                className="h-9 w-full rounded-xl border border-apple-hairline bg-apple-canvas-parchment/60 pl-8 pr-3 text-xs text-apple-ink placeholder:text-apple-ink-muted-48 focus:border-apple-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all"
+                className="h-9 w-full rounded-lg border border-zinc-200 bg-zinc-50/50 pl-8.5 pr-3 text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/10 transition-colors dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-700"
               />
             </div>
 
             {/* Navigation Groups List */}
-            <nav className="max-h-[calc(100vh-200px)] overflow-y-auto space-y-4 pr-1" aria-label="Settings navigation">
+            <nav className="max-h-[calc(100vh-200px)] overflow-y-auto space-y-3.5 pr-1 sidebar-scroll" aria-label="Settings navigation">
               {searchQuery.trim() ? (
                 // Filtered search results
                 <div>
-                  <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-wider text-apple-ink-muted-48">
+                  <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
                     {t.settings.matchingSettings(filteredSections.length)}
                   </p>
                   {filteredSections.length === 0 ? (
-                    <p className="px-2 py-4 text-center text-xs text-apple-ink-muted-48">
+                    <p className="px-2 py-6 text-center text-xs text-zinc-400">
                       {t.settings.noSettingsFound(searchQuery)}
                     </p>
                   ) : (
@@ -428,18 +428,21 @@ function StoreSettingsHubContent() {
                                 setSearchQuery("");
                               }}
                               className={cn(
-                                "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition-colors",
+                                "group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 h-9 text-left text-xs font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20",
                                 isActive
-                                  ? "bg-apple-primary/10 text-apple-primary font-semibold"
-                                  : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment hover:text-apple-ink"
+                                  ? "bg-zinc-100 text-zinc-950 font-medium dark:bg-white/[0.08] dark:text-white"
+                                  : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
                               )}
                             >
-                              <Icon className="h-4 w-4 shrink-0" />
+                              {isActive && (
+                                <span className="absolute left-0 top-1/2 h-4 w-[2.5px] -translate-y-1/2 rounded-r-full bg-zinc-900 dark:bg-white" />
+                              )}
+                              <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-zinc-950 dark:text-white" : "text-zinc-400 group-hover:text-zinc-600")} />
                               <div className="min-w-0 flex-1">
                                 <p className="truncate">{section.label}</p>
-                                <p className="truncate text-[10px] text-apple-ink-muted-48">{sGroupLabel}</p>
+                                <p className="truncate text-[10px] text-zinc-400">{sGroupLabel}</p>
                               </div>
-                              <ChevronRight className="h-3 w-3 shrink-0 text-apple-ink-muted-48/50" />
+                              <ChevronRight className="h-3 w-3 shrink-0 text-zinc-300 dark:text-zinc-600" />
                             </button>
                           </li>
                         );
@@ -456,7 +459,7 @@ function StoreSettingsHubContent() {
 
                   return (
                     <div key={groupKey} className="space-y-0.5">
-                      <p className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-apple-ink-muted-48">
+                      <p className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                         {groupConfig.label}
                       </p>
                       <ul className="space-y-0.5">
@@ -469,18 +472,21 @@ function StoreSettingsHubContent() {
                                 type="button"
                                 onClick={() => setSection(section.id)}
                                 className={cn(
-                                  "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-all duration-150",
+                                  "group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 h-8.5 text-left text-xs font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20",
                                   isActive
-                                    ? "bg-apple-primary/10 text-apple-primary font-semibold"
-                                    : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment hover:text-apple-ink"
+                                    ? "bg-zinc-100 text-zinc-950 font-medium dark:bg-white/[0.08] dark:text-white"
+                                    : "text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.04] dark:hover:text-zinc-100"
                                 )}
                               >
+                                {isActive && (
+                                  <span className="absolute left-0 top-1/2 h-4 w-[2.5px] -translate-y-1/2 rounded-r-full bg-zinc-900 dark:bg-white" />
+                                )}
                                 <Icon
                                   className={cn(
-                                    "h-4 w-4 shrink-0 transition-colors",
+                                    "h-3.5 w-3.5 shrink-0 transition-colors duration-150",
                                     isActive
-                                      ? "text-apple-primary"
-                                      : "text-apple-ink-muted-48 group-hover:text-apple-ink-muted-80"
+                                      ? "text-zinc-950 dark:text-white"
+                                      : "text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300"
                                   )}
                                 />
                                 <span className="flex-1 truncate">{section.label}</span>
@@ -499,13 +505,13 @@ function StoreSettingsHubContent() {
 
         {/* Right Content Area */}
         <div className="min-w-0 flex-1 space-y-4">
-          <div className="rounded-2xl border border-apple-hairline bg-apple-canvas p-4 sm:p-5 shadow-xs">
-            <div className="flex items-center justify-between border-b border-apple-hairline pb-3">
+          <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 sm:p-5 shadow-2xs dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800">
               <div>
-                <h2 className="text-base font-semibold text-apple-ink">{currentSection.label}</h2>
-                <p className="text-xs text-apple-ink-muted-48">{currentSection.description}</p>
+                <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{currentSection.label}</h2>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">{currentSection.description}</p>
               </div>
-              <span className="rounded-full bg-apple-canvas-parchment px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">
+              <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
                 {groupLabel}
               </span>
             </div>

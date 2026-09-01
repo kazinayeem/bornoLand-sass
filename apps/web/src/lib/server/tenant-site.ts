@@ -116,7 +116,14 @@ const getCachedTenantSite = (slug: string, pageSlug?: string) =>
  */
 export const fetchTenantSite = cache(async (slug: string, pageSlug?: string): Promise<TenantSiteData | null> => {
   try {
-    return await getCachedTenantSite(slug, pageSlug);
+    try {
+      return await getCachedTenantSite(slug, pageSlug);
+    } catch (cacheErr: any) {
+      if (cacheErr?.message?.includes("incrementalCache missing")) {
+        return await fetchTenantSiteRemote(slug, pageSlug);
+      }
+      throw cacheErr;
+    }
   } catch (error) {
     if (error instanceof TenantNotFoundError) return null;
     throw error;

@@ -1,23 +1,37 @@
-import Module from "node:module";
+import { createRequire } from "node:module";
+import { describe, it, before } from "node:test";
+import assert from "node:assert/strict";
 
-// Mock 'server-only' package for Node test runner
-const origRequire = (Module.prototype as any).require;
-(Module.prototype as any).require = function (id: string, ...args: any[]) {
-  if (id === "server-only") return {};
-  return origRequire.call(this, id, ...args);
+const require = createRequire(import.meta.url);
+const serverOnlyPath = require.resolve("server-only");
+require.cache[serverOnlyPath] = {
+  id: serverOnlyPath,
+  filename: serverOnlyPath,
+  loaded: true,
+  exports: {},
+  children: [],
+  paths: [],
+  path: "",
+  isPreloading: false,
+  require,
 };
 
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
-import {
-  resolveStoreFavicon,
-  resolveStoreOgImage,
-  generateTenantLayoutMetadata,
-  generateTenantMetadata,
-  generateStorefrontProductMetadata,
-} from "../page-metadata.js";
+let resolveStoreFavicon: any;
+let resolveStoreOgImage: any;
+let generateTenantLayoutMetadata: any;
+let generateTenantMetadata: any;
+let generateStorefrontProductMetadata: any;
 
 describe("Tenant Metadata & Favicon Architecture", () => {
+  before(async () => {
+    const mod = await import("../page-metadata.js");
+    resolveStoreFavicon = mod.resolveStoreFavicon;
+    resolveStoreOgImage = mod.resolveStoreOgImage;
+    generateTenantLayoutMetadata = mod.generateTenantLayoutMetadata;
+    generateTenantMetadata = mod.generateTenantMetadata;
+    generateStorefrontProductMetadata = mod.generateStorefrontProductMetadata;
+  });
+
   it("Test 1: Resolves valid store favicon from faviconUrl or logoUrl", () => {
     const storeWithFavicon = {
       faviconUrl: "/uploads/stores/nayeem/branding/favicon.png",

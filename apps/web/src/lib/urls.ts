@@ -94,13 +94,13 @@ export function getAppOrigin(): string {
   if (fromAppUrl) return stripTrailingSlash(fromAppUrl);
 
   const { protocol, rootDomain } = readAppUrlConfig();
-  if (!rootDomain) return "";
-  return `${protocol}://${rootDomain}`;
+  const domain = rootDomain || "localhost:3000";
+  return `${protocol}://${domain}`;
 }
 
 /** Canonical origin for metadataBase and Open Graph URLs. */
 export function getMetadataBaseUrl(): string {
-  return getAppOrigin() || "http://localhost:3000";
+  return getAppOrigin();
 }
 
 export function joinUrl(origin: string, path = "/"): string {
@@ -112,8 +112,9 @@ export function joinUrl(origin: string, path = "/"): string {
 export function getStoreHost(storeSlug: string): string {
   const slug = storeSlug.trim().toLowerCase();
   const { rootDomain } = readAppUrlConfig();
-  if (!slug || !rootDomain) return rootDomain;
-  return `${slug}.${rootDomain}`;
+  const baseDomain = rootDomain || "localhost:3000";
+  if (!slug) return baseDomain;
+  return `${slug}.${baseDomain}`;
 }
 
 export function getStoreDisplayDomain(storeSlug: string): string {
@@ -123,7 +124,6 @@ export function getStoreDisplayDomain(storeSlug: string): string {
 export function getStoreUrl(storeSlug: string, path = "/"): string {
   const { protocol } = readAppUrlConfig();
   const host = getStoreHost(storeSlug);
-  if (!host) return joinUrl(getAppOrigin(), path);
   return joinUrl(`${protocol}://${host}`, path);
 }
 

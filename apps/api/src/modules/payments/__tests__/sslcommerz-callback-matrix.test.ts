@@ -1,4 +1,4 @@
-import test, { describe, it, before, after } from "node:test";
+import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import mongoose from "mongoose";
 import { connectDatabase } from "../../../common/database/connection.js";
@@ -54,9 +54,15 @@ describe("SSLCommerz End-to-End Callback Matrix Tests", () => {
   });
 
   after(async () => {
-    await StoreModel.deleteMany({ _id: { $in: [storeId, otherStoreId] } });
-    await OrderModel.deleteMany({ storeId: { $in: [storeId, otherStoreId] } });
-    await StorePaymentGatewayModel.deleteMany({ storeId: { $in: [storeId, otherStoreId] } });
+    try {
+      if (storeId && otherStoreId) {
+        await StoreModel.deleteMany({ _id: { $in: [new mongoose.Types.ObjectId(storeId), new mongoose.Types.ObjectId(otherStoreId)] } });
+        await OrderModel.deleteMany({ storeId: { $in: [new mongoose.Types.ObjectId(storeId), new mongoose.Types.ObjectId(otherStoreId)] } });
+        await StorePaymentGatewayModel.deleteMany({ storeId: { $in: [storeId, otherStoreId] } });
+      }
+    } catch {
+      // Ignore test cleanup errors
+    }
   });
 
   it("Test A & B: Order creation & SSLCommerz init creates pending order and transaction ID", async () => {

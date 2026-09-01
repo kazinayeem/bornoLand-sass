@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 
 const require = createRequire(import.meta.url);
 const serverOnlyPath = require.resolve("server-only");
-require.cache[serverOnlyPath] = {
+(require.cache as any)[serverOnlyPath] = {
   id: serverOnlyPath,
   filename: serverOnlyPath,
   loaded: true,

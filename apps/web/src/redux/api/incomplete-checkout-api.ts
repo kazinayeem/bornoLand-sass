@@ -136,6 +136,13 @@ export type TrackCheckoutProgressPayload = {
   landmark?: string;
   notes?: string;
   step?: string;
+  divisionId?: string;
+  districtId?: string;
+  upazilaId?: string;
+  unionId?: string;
+  union?: string;
+  village?: string;
+  deliveryCharge?: number;
   items?: Array<{
     productId: string;
     variantId?: string | null;

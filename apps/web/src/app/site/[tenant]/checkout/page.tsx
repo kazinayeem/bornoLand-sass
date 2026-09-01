@@ -10,19 +10,18 @@ import {
   ArrowLeft,
   CreditCard,
   Truck,
-  Shield,
+  ShieldCheck,
   CheckCircle,
   Banknote,
   Smartphone,
-  Landmark,
   Loader2,
   AlertCircle,
   Lock,
   Tag,
   Check,
   RotateCcw,
-  RefreshCw,
   Globe,
+  HelpCircle,
 } from "lucide-react";
 import type { RootState } from "@/store/store";
 import { clearCart, setCartItems } from "@/redux/slices/cart-slice";
@@ -233,20 +232,14 @@ function CheckoutForm() {
     setIsDirty(true);
     setSaveStatus("dirty");
 
-    // Smart Delivery Zone Auto-Matching
-    if (distId && deliveryZones.length > 0) {
-      const isDhaka = distId.toLowerCase() === "dhaka" || (distObj?.name || "").toLowerCase() === "dhaka";
-      const matchedZone = deliveryZones.find((z) => {
+    // Auto-match delivery zone if Dhaka vs Outside Dhaka
+    if (distObj?.id && deliveryZones.length > 0) {
+      const isDhaka = distObj.id.toLowerCase() === "dhaka";
+      const matched = deliveryZones.find((z) => {
         const n = z.name.toLowerCase();
-        if (isDhaka) {
-          return n.includes("inside") || n.includes("dhaka city") || n.includes("ঢাকা");
-        } else {
-          return n.includes("outside") || n.includes("ঢাকার বাইরে") || (!n.includes("inside") && !n.includes("dhaka"));
-        }
+        return isDhaka ? n.includes("inside") || n.includes("dhaka") : n.includes("outside") || !n.includes("dhaka");
       });
-      if (matchedZone) {
-        setSelectedZoneId(matchedZone._id);
-      }
+      if (matched) setSelectedZoneId(matched._id);
     }
   };
 
@@ -439,157 +432,147 @@ function CheckoutForm() {
   const sslcommerzAllowed = paymentMethods.some((pm) => pm.type === "sslcommerz" && pm.enabled);
 
   const availablePaymentMethods = [
-    ...(codAllowed ? [{ id: "cod", label: "Cash on Delivery (COD)", type: "cod", icon: Banknote }] : []),
-    ...(sslcommerzAllowed ? [{ id: "sslcommerz", label: "SSLCommerz (Cards / Mobile Banking / Net Banking)", type: "sslcommerz", icon: Globe }] : []),
-    ...(bkashAllowed ? [{ id: "bkash", label: "bKash Mobile Banking", type: "bkash", icon: Smartphone }] : []),
-    ...(nagadAllowed ? [{ id: "nagad", label: "Nagad Mobile Banking", type: "nagad", icon: Smartphone }] : []),
+    ...(codAllowed ? [{ id: "cod", label: "Cash on Delivery (COD)", type: "cod", icon: Banknote, desc: "Pay cash upon receiving your order" }] : []),
+    ...(sslcommerzAllowed ? [{ id: "sslcommerz", label: "SSLCommerz Online Payment", type: "sslcommerz", icon: Globe, desc: "Pay securely via Cards, Mobile Banking or Net Banking" }] : []),
+    ...(bkashAllowed ? [{ id: "bkash", label: "bKash Mobile Banking", type: "bkash", icon: Smartphone, desc: "Send money & verify with Transaction ID" }] : []),
+    ...(nagadAllowed ? [{ id: "nagad", label: "Nagad Mobile Banking", type: "nagad", icon: Smartphone, desc: "Send money & verify with Transaction ID" }] : []),
   ];
 
   useEffect(() => {
     if (availablePaymentMethods.length > 0 && (!selectedPayment || !availablePaymentMethods.some((pm) => pm.id === selectedPayment))) {
       setSelectedPayment(availablePaymentMethods[0].id);
     }
-  }, [availablePaymentMethods.length, selectedPayment]);
+  }, [availablePaymentMethods, selectedPayment]);
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const discount = backendCart?.discount ?? 0;
-  const shippingEnabled = settings.shippingEnabled !== false;
-  const freeShipping =
-    shippingEnabled &&
-    Boolean(settings.freeShippingEnabled) &&
-    (settings.freeShippingMin ?? 0) > 0 &&
-    subtotal >= (settings.freeShippingMin ?? 0);
-  const baseDelivery = shippingEnabled ? (selectedZone?.charge ?? 0) : 0;
-  const deliveryCharge = freeShipping ? 0 : baseDelivery;
-  const taxRate = settings.taxEnabled || (settings.taxRate && settings.taxRate > 0) ? (settings.taxRate ?? 0) : 0;
-  const taxAmount = taxRate > 0 && !settings.taxIncluded ? (subtotal - discount) * (taxRate / 100) : 0;
-  const total = Math.max(0, subtotal - discount + taxAmount + deliveryCharge);
+  const deliveryCharge = Number(selectedZone?.charge ?? 0);
+  const discount = 0;
+  const taxRate = Number(settings.taxRate ?? 0);
+  const taxAmount = (subtotal * taxRate) / 100;
+  const total = Math.max(0, subtotal - discount + deliveryCharge + taxAmount);
 
+  // Sync cart from Redux to backend
   useEffect(() => {
-    if (items.length > 0 && total > 0) {
+    if (mounted && localCart.items.length > 0) {
+      syncCart({
+        items: localCart.items.map((i) => ({
+          productId: i.productId,
+          variantId: i.variantId,
+          quantity: i.quantity,
+        })),
+      }).catch((err) => {
+        console.warn("[checkout] syncCart background failure:", err);
+      });
+    }
+  }, [mounted, localCart.items, syncCart]);
+
+  // Initiate Checkout Analytics tracking
+  useEffect(() => {
+    if (mounted && items.length > 0) {
       trackInitiateCheckout({
-        items: items.map((i) => ({ id: i.productId, name: i.name, price: i.price, quantity: i.quantity })),
-        totalValue: total,
-        numItems: items.length,
-        currency: settings.currencyCode || "BDT",
-      });
-    }
-  }, [items.length, total, settings.currencyCode, trackInitiateCheckout]);
-
-  useEffect(() => {
-    if (selectedPayment && total > 0) {
-      trackAddPaymentInfo({
-        paymentMethod: selectedPayment,
+        items: items.map((item) => ({
+          id: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
         totalValue: total,
         currency: settings.currencyCode || "BDT",
       });
     }
-  }, [selectedPayment, total, settings.currencyCode, trackAddPaymentInfo]);
+  }, [mounted]);
 
-  // Progressive Checkout Autosave (20-second idle strategy - never locks UI)
-  useEffect(() => {
-    if (!mounted || !store?._id || !isDirty) return;
+  // Autosave Checkout Progress
+  const performAutosave = useCallback(async () => {
+    if (!mounted || isSavingRef.current || (!form.phone && !form.email && !form.fullName)) {
+      return;
+    }
 
-    const hasCustomerInfo = Boolean(
-      (form.phone && form.phone.trim().length >= 6) ||
-      (form.fullName && form.fullName.trim().length >= 2) ||
-      (form.email && form.email.trim().length >= 5)
-    );
-
-    if (!hasCustomerInfo && items.length === 0) return;
-
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-
-    saveTimerRef.current = setTimeout(async () => {
-      if (isSavingRef.current) return;
+    try {
       isSavingRef.current = true;
       setIsAutosaving(true);
       setSaveStatus("saving");
 
       const sessionId = getOrCreateCartSessionId();
+      await trackProgress({
+        storeId: store?._id,
+        sessionId,
+        customerName: form.fullName || undefined,
+        phone: form.phone || undefined,
+        email: form.email || undefined,
+        country: form.country || "Bangladesh",
+        state: form.divisionName || form.state || undefined,
+        city: form.districtName || form.city || undefined,
+        area: form.upazilaName || form.area || undefined,
+        union: form.unionName || undefined,
+        village: form.village || undefined,
+        street: form.street || undefined,
+        apartment: form.apartment || undefined,
+        zip: form.zip || undefined,
+        landmark: form.landmark || undefined,
+        notes: form.notes || undefined,
+        divisionId: form.divisionId || undefined,
+        districtId: form.districtId || undefined,
+        upazilaId: form.upazilaId || undefined,
+        unionId: form.unionId || undefined,
+        deliveryZoneId: selectedZoneId || undefined,
+        deliveryZoneName: selectedZone?.name || undefined,
+        deliveryCharge: selectedZone?.charge,
+        paymentMethod: selectedPayment || undefined,
+        step: "2",
+        subtotal,
+        discount,
+        total,
+      }).unwrap();
 
-      try {
-        await trackProgress({
-          storeId: store._id,
-          sessionId,
-          customerId: (customer as any)?._id || null,
-          customerName: form.fullName,
-          phone: form.phone,
-          email: form.email,
-          address: [form.street, form.apartment, form.area].filter(Boolean).join(", "),
-          street: form.street,
-          apartment: form.apartment,
-          city: form.city,
-          area: form.area,
-          state: form.state,
-          zip: form.zip,
-          country: form.country,
-          landmark: form.landmark,
-          notes: form.notes,
-          items: items.map((i) => ({
-            productId: i.productId,
-            variantId: i.variantId || undefined,
-            variantTitle: i.variantTitle || "",
-            name: i.name,
-            price: i.price,
-            quantity: i.quantity,
-            image: i.image || "",
-          })),
-          subtotal,
-          discount,
-          shippingFee: deliveryCharge,
-          tax: taxAmount,
-          total,
-          couponCode: backendCart?.couponCode || "",
-          deliveryZoneId: selectedZoneId,
-          deliveryZoneName: selectedZone?.name || "",
-          paymentMethod: selectedPayment,
-          step: selectedPayment ? "payment" : selectedZoneId ? "shipping" : "customer_info",
-        }).unwrap();
+      setLastSavedAt(Date.now());
+      setIsDirty(false);
+      setSaveStatus("saved");
+    } catch {
+      setSaveStatus("error");
+    } finally {
+      isSavingRef.current = false;
+      setIsAutosaving(false);
+    }
+  }, [
+    mounted,
+    form,
+    selectedZoneId,
+    selectedZone,
+    selectedPayment,
+    subtotal,
+    discount,
+    total,
+    store?._id,
+    trackProgress,
+  ]);
 
-        setIsDirty(false);
-        setSaveStatus("saved");
-        setLastSavedAt(Date.now());
-      } catch {
-        setSaveStatus("error");
-      } finally {
-        isSavingRef.current = false;
-        setIsAutosaving(false);
-      }
+  useEffect(() => {
+    if (!isDirty || !mounted) return;
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      performAutosave();
     }, AUTOSAVE_DELAY);
 
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [
-    isDirty,
-    mounted,
-    store?._id,
-    customer,
-    form,
-    items,
-    subtotal,
-    discount,
-    deliveryCharge,
-    taxAmount,
-    total,
-    selectedZoneId,
-    selectedPayment,
-    backendCart?.couponCode,
-    selectedZone?.name,
-    trackProgress,
-  ]);
+  }, [isDirty, mounted, performAutosave]);
 
-  const requireLogin = Boolean(settings.requireLoginEnabled || (settings as any).requireLogin) && !customer;
+  const handleChange = (field: keyof CheckoutFormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setForm((prev) => ({ ...prev, [field]: val }));
+    setIsDirty(true);
+    setSaveStatus("dirty");
+  };
 
-  const handleChange =
-    (field: keyof CheckoutFormState) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-      setSelectedSavedAddressId(null);
-      setForm((prev) => ({ ...prev, [field]: e.target.value }));
-      setIsDirty(true);
-      setSaveStatus("dirty");
-    };
+  const handleBlur = () => {
+    if (isDirty && !isSavingRef.current) {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      performAutosave();
+    }
+  };
 
   const handleRetry = () => {
     setIsInitTimedOut(false);
@@ -598,13 +581,13 @@ function CheckoutForm() {
     refetchDz();
   };
 
-  const isCheckingRecovery = Boolean(recoverToken && !recoveryAttempted && isRecovering);
-  const isCheckoutInitializing = !mounted || (!isInitTimedOut && (cartLoading || isCheckingRecovery));
+  const requireLogin = Boolean(settings.requireLoginEnabled && !customer);
+  const isCheckoutInitializing = !mounted || ((cartLoading || pmLoading || dzLoading) && !isInitTimedOut);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    if (isSubmittingOrder || isSyncing || isCheckoutInitializing || items.length === 0) return;
+    if (isSubmittingOrder || isSyncing || cartFetching) return;
+
     setErrorMsg("");
 
     if (requireLogin) {
@@ -613,90 +596,114 @@ function CheckoutForm() {
       return;
     }
 
-    if (items.length === 0) {
-      setErrorMsg("Your cart is empty. Please add items before checking out.");
+    if (!form.fullName.trim()) {
+      setErrorMsg("Please enter your full name.");
+      toast.error("Please enter your full name.");
+      return;
+    }
+    if (!form.phone.trim()) {
+      setErrorMsg("Please enter your mobile phone number.");
+      toast.error("Please enter your mobile phone number.");
+      return;
+    }
+    if (!form.divisionName && !form.state) {
+      setErrorMsg("Please select your division.");
+      toast.error("Please select your division.");
+      return;
+    }
+    if (!form.districtName && !form.city) {
+      setErrorMsg("Please select your district / zila.");
+      toast.error("Please select your district / zila.");
+      return;
+    }
+    if (!form.street.trim()) {
+      setErrorMsg("Please enter your delivery street address.");
+      toast.error("Please enter your delivery street address.");
       return;
     }
 
-    const minOrder = Number((settings as any).minimumOrderAmount ?? (settings as any).minOrderAmount ?? 0);
-    if (minOrder > 0 && subtotal < minOrder) {
-      setErrorMsg(`Minimum order amount for this store is ${formatCurrency(minOrder, settings)}.`);
-      return;
-    }
-
-    const payType = (selectedPm?.type || selectedPayment || "cod").toLowerCase();
+    const payType = selectedPm.type || selectedPayment;
 
     if (payType === "bkash" || payType === "nagad") {
       if (!senderNumber.trim()) {
-        setErrorMsg(`Please enter your ${payType.toUpperCase()} sender phone number.`);
+        setErrorMsg(`Please enter your ${payType.toUpperCase()} sender mobile number.`);
+        toast.error(`Please enter your ${payType.toUpperCase()} sender number.`);
         return;
       }
       if (!transactionId.trim()) {
-        setErrorMsg(`Please enter your ${payType.toUpperCase()} Transaction ID (TrxID).`);
+        setErrorMsg(`Please enter the ${payType.toUpperCase()} Transaction ID (TrxID).`);
+        toast.error(`Please enter the Transaction ID.`);
         return;
       }
     }
 
     try {
-      const payload = {
+      trackAddPaymentInfo({
+        paymentMethod: payType,
+        totalValue: total,
+        currency: settings.currencyCode || "BDT",
+      });
+
+      const payload: any = {
+        storeId: store?._id,
+        items: items.map((i) => ({
+          productId: i.productId,
+          variantId: i.variantId || undefined,
+          variantTitle: i.variantTitle || undefined,
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+          image: i.image,
+        })),
         shippingAddress: {
+          fullName: form.fullName.trim(),
+          phone: form.phone.trim(),
+          email: form.email.trim() || undefined,
           label: form.label,
-          fullName: form.fullName,
-          phone: form.phone,
-          email: form.email || undefined,
           country: form.country || "Bangladesh",
-          countryCode: "BD",
-          division: form.divisionName || form.state || undefined,
+          countryCode: form.countryCode || "BD",
+          division: form.divisionName || form.state,
           divisionId: form.divisionId || undefined,
-          divisionName: form.divisionName || form.state || undefined,
+          divisionName: form.divisionName || undefined,
           divisionNameBn: form.divisionNameBn || undefined,
-          district: form.districtName || form.city || undefined,
+          district: form.districtName || form.city,
           districtId: form.districtId || undefined,
-          districtName: form.districtName || form.city || undefined,
+          districtName: form.districtName || undefined,
           districtNameBn: form.districtNameBn || undefined,
           upazila: form.upazilaName || form.area || undefined,
           upazilaId: form.upazilaId || undefined,
-          upazilaName: form.upazilaName || form.area || undefined,
+          upazilaName: form.upazilaName || undefined,
           upazilaNameBn: form.upazilaNameBn || undefined,
-          union: form.unionName || form.unionId || undefined,
+          union: form.unionName || undefined,
           unionId: form.unionId || undefined,
           village: form.village || undefined,
-          state: form.divisionName || form.state || undefined,
+          state: form.divisionName || form.state,
           city: form.districtName || form.city,
-          area: form.upazilaName || form.area || undefined,
-          street: form.street,
-          apartment: form.apartment || undefined,
-          zip: form.zip || undefined,
-          landmark: form.landmark || undefined,
-          orderNotes: form.notes || undefined,
+          area: form.upazilaName || form.area,
+          street: form.street.trim(),
+          apartment: form.apartment.trim() || undefined,
+          zip: form.zip.trim() || undefined,
+          landmark: form.landmark.trim() || undefined,
+          orderNotes: form.notes.trim() || undefined,
         },
         paymentMethod: payType,
         deliveryZoneId: selectedZoneId || undefined,
-        notes: form.notes || undefined,
-        cartId: backendCart?._id,
-        storeId: store._id || undefined,
-        customerId: customer?._id || undefined,
-        senderNumber: senderNumber.trim() || undefined,
-        transactionId: transactionId.trim() || undefined,
-        paymentDetails: {
-          senderNumber: senderNumber.trim() || undefined,
-          transactionId: transactionId.trim() || undefined,
-          receiverNumber: (settings.paymentSettings as any)?.[payType]?.number || "",
-        },
-        items: items.map((item) => ({
-          productId: item.productId,
-          variantId: item.variantId,
-          quantity: item.quantity,
-          price: item.price,
-          name: item.name,
-        })),
+        deliveryCharge,
       };
+
+      if (payType === "bkash" || payType === "nagad") {
+        payload.paymentDetails = {
+          senderNumber: senderNumber.trim(),
+          receiverNumber: (settings.paymentSettings as any)?.[payType]?.number || "",
+          transactionId: transactionId.trim().toUpperCase(),
+        };
+      }
 
       const result = await createOrder(payload).unwrap();
 
-      if (result.success && result.data) {
+      if (result.success && result.data?.order) {
         trackPurchase({
-          orderId: result.data.order._id,
+          orderId: result.data.order._id || result.data.order.orderNumber,
           items: items.map((item) => ({
             id: item.productId,
             name: item.name,
@@ -748,40 +755,36 @@ function CheckoutForm() {
     }
   };
 
-  // 1. Initial Full-Page Loading Skeleton (Critical Data Initialization)
+  // 1. Initial Full-Page Loading Skeleton
   if (isCheckoutInitializing) {
     return <CheckoutStorefrontSkeleton />;
   }
 
-  // 2. Initialization Timeout / Critical Failure Screen
+  // 2. Initialization Timeout Screen
   if (isInitTimedOut && items.length === 0 && cartError) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
-            <AlertCircle className="h-8 w-8" />
-          </div>
-          <div className="space-y-1">
-            <h2 className="text-xl font-bold text-apple-ink">Unable to load checkout</h2>
-            <p className="text-xs text-zinc-500 max-w-sm">
-              We couldn't load your checkout details. Please check your connection and try again.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleRetry}
-              className="flex items-center gap-2 rounded-xl bg-apple-primary px-5 py-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
-            >
-              <RotateCcw className="h-3.5 w-3.5" /> Try Again
-            </button>
-            <Link
-              href="/cart"
-              className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-2.5 text-xs font-semibold text-apple-ink hover:bg-zinc-50"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> Back to Cart
-            </Link>
-          </div>
+      <div className="mx-auto max-w-xl px-4 py-20 text-center">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+          <AlertCircle className="h-8 w-8" />
+        </div>
+        <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Unable to load checkout</h2>
+        <p className="mt-2 text-sm text-zinc-500 max-w-sm mx-auto">
+          We couldn't connect to your cart. Please check your internet connection and try again.
+        </p>
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-semibold text-white transition-opacity hover:bg-zinc-800"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Try Again
+          </button>
+          <Link
+            href="/cart"
+            className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-2.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to Cart
+          </Link>
         </div>
       </div>
     );
@@ -792,27 +795,27 @@ function CheckoutForm() {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"
         >
-          <CheckCircle className="h-10 w-10 text-emerald-600" />
+          <CheckCircle className="h-10 w-10" />
         </motion.div>
-        <h1 className="text-3xl font-bold text-apple-ink">Order Placed Successfully!</h1>
-        <p className="mt-2 text-apple-ink-muted-48 text-sm">
+        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900">Thank You For Your Order!</h1>
+        <p className="mt-2 text-sm text-zinc-500">
           {orderSuccess.paymentMethod === "cod"
-            ? "Pay when you receive your package."
-            : "Your payment verification is pending. Our shop manager will review your Transaction ID."}
+            ? "Your order has been confirmed. You will pay cash upon delivery."
+            : "Your payment verification is pending. Our team will verify your Transaction ID shortly."}
         </p>
-        <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-5 space-y-1">
-          <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Order Reference Number</p>
-          <p className="text-xl font-mono font-extrabold text-apple-primary">{orderSuccess.orderNumber}</p>
+        <div className="mt-6 rounded-2xl border border-zinc-100 bg-zinc-50/70 p-5 space-y-1">
+          <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Order Reference Number</p>
+          <p className="text-2xl font-mono font-extrabold text-zinc-900">{orderSuccess.orderNumber}</p>
         </div>
         <div className="mt-8 flex justify-center gap-3">
-          <Link href={`/orders/${orderSuccess.orderId}`} className="rounded-xl bg-apple-primary px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90">
-            View Order Details
+          <Link href={`/orders/${orderSuccess.orderId}`} className="rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-zinc-800">
+            View Order Status
           </Link>
-          <Link href="/" className="rounded-xl border border-zinc-200 bg-white px-6 py-2.5 text-sm font-semibold text-apple-ink hover:bg-zinc-50">
+          <Link href="/" className="rounded-xl border border-zinc-200 bg-white px-6 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50">
             Continue Shopping
           </Link>
         </div>
@@ -820,601 +823,637 @@ function CheckoutForm() {
     );
   }
 
-  // 4. Empty Cart State (Rendered only after initialization settles)
+  // 4. Empty Cart State
   if (items.length === 0) {
     return (
-      <div className="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center gap-4 px-4 text-center">
-        <ShoppingBag className="h-16 w-16 text-zinc-300" />
-        <h2 className="text-xl font-bold text-apple-ink">Your cart is empty</h2>
-        <p className="text-xs text-zinc-500 max-w-sm">Please add products to your cart before proceeding to checkout.</p>
-        <Link href="/" className="flex items-center gap-2 rounded-xl bg-apple-primary px-5 py-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-90">
-          <ArrowLeft className="h-4 w-4" /> Continue Shopping
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+          <ShoppingBag className="h-8 w-8" />
+        </div>
+        <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Your Cart is Empty</h2>
+        <p className="text-sm text-zinc-500 max-w-sm">Please add items from the store before proceeding to checkout.</p>
+        <Link href="/shop" className="flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-semibold text-white hover:bg-zinc-800 transition-all">
+          <ArrowLeft className="h-4 w-4" /> Explore Products
         </Link>
       </div>
     );
   }
 
   const inputClass =
-    "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-base sm:text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed";
+    "w-full rounded-xl border border-zinc-200/90 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-zinc-50/50";
   const textareaClass =
-    "w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-base sm:text-xs text-apple-ink placeholder:text-zinc-400 focus:border-apple-primary focus:outline-none focus:ring-2 focus:ring-apple-primary/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed resize-none";
+    "w-full rounded-xl border border-zinc-200/90 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-zinc-50/50 resize-none";
 
   return (
-    <div className="relative mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/cart"
-            aria-disabled={isSubmittingOrder}
-            className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100",
-              isSubmittingOrder && "pointer-events-none opacity-50"
-            )}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold text-apple-ink">Checkout</h1>
-              {/* Autosave clear status indicator */}
-              {saveStatus === "saving" ? (
-                <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium animate-pulse">
-                  <Loader2 className="h-3 w-3 animate-spin text-apple-primary" /> Saving...
-                </span>
-              ) : saveStatus === "dirty" ? (
-                <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Unsaved changes
-                </span>
-              ) : saveStatus === "error" ? (
-                <span className="flex items-center gap-1 text-[11px] text-rose-500 font-medium">
-                  <AlertCircle className="h-3 w-3 text-rose-500" /> Unable to save
-                </span>
-              ) : lastSavedAt ? (
-                <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
-                  <Check className="h-3 w-3 text-emerald-500" /> Saved
-                </span>
-              ) : null}
-            </div>
-            <p className="text-xs text-zinc-500">{items.length} item(s) in your order</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {customer ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
-              <Check className="h-3.5 w-3.5" /> Logged in as {customer.email}
-            </span>
-          ) : settings.requireLoginEnabled ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-800">
-              <Lock className="h-3.5 w-3.5" /> Login Required
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 border border-zinc-200 px-3 py-1 text-xs font-semibold text-zinc-700">
-              Guest Checkout Enabled
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Recovered Checkout Notice */}
-      {recoveredBanner && (
-        <div className="mb-6 flex items-center justify-between rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sky-900">
-          <div className="flex items-center gap-2.5">
-            <RotateCcw className="h-4 w-4 text-sky-600 shrink-0" />
-            <p className="text-xs font-medium">
-              We restored your previous checkout attempt with current prices and inventory. Please review details and complete your order.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setRecoveredBanner(false)}
-            className="text-xs text-sky-600 hover:text-sky-800 font-semibold underline shrink-0 ml-2"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {/* Require Login Warning Card */}
-      {requireLogin && (
-        <div className="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
+    <div className="min-h-screen bg-white pb-20 pt-6">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        {/* Top Header */}
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-100 pb-5">
           <div className="flex items-center gap-3">
-            <Lock className="h-6 w-6 text-amber-600 shrink-0" />
+            <Link
+              href="/cart"
+              aria-disabled={isSubmittingOrder}
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition-colors hover:bg-zinc-50",
+                isSubmittingOrder && "pointer-events-none opacity-50"
+              )}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
             <div>
-              <h4 className="text-sm font-bold">Login Required for Checkout</h4>
-              <p className="text-xs text-amber-800">This store requires customer login before completing purchases.</p>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900">Checkout</h1>
+                {saveStatus === "saving" ? (
+                  <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium animate-pulse">
+                    <Loader2 className="h-3 w-3 animate-spin text-zinc-700" /> Saving...
+                  </span>
+                ) : saveStatus === "dirty" ? (
+                  <span className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Unsaved changes
+                  </span>
+                ) : lastSavedAt ? (
+                  <span className="flex items-center gap-1 text-[11px] text-emerald-600 font-medium">
+                    <Check className="h-3 w-3" /> Saved
+                  </span>
+                ) : null}
+              </div>
+              <p className="text-xs text-zinc-500 font-medium mt-0.5">{items.length} {items.length === 1 ? "item" : "items"} in your order</p>
             </div>
           </div>
-          <Link
-            href={`/login?redirect=${encodeURIComponent("/checkout")}`}
-            className="rounded-xl bg-amber-900 px-4 py-2 text-xs font-bold text-white hover:bg-amber-800 whitespace-nowrap"
-          >
-            Login to Continue
-          </Link>
-        </div>
-      )}
 
-      {/* Checkout Form & Grid */}
-      <form onSubmit={handleSubmit} aria-busy={isSubmittingOrder}>
-        <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-5">
-          {/* Form Submission Interaction Overlay */}
-          {isSubmittingOrder && (
-            <div
-              className="absolute inset-0 z-30 flex flex-col items-center justify-center rounded-3xl bg-white/75 backdrop-blur-[2px] transition-all"
-              aria-hidden="true"
+          <div className="flex items-center gap-2">
+            {customer ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50/80 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-100">
+                <Check className="h-3.5 w-3.5" /> Logged in as {customer.email}
+              </span>
+            ) : settings.requireLoginEnabled ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 border border-amber-200">
+                <Lock className="h-3.5 w-3.5" /> Login Required
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 px-3 py-1 text-xs font-medium text-zinc-600 border border-zinc-200/60">
+                Guest Checkout
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Recovered Checkout Notice */}
+        {recoveredBanner && (
+          <div className="mb-6 flex items-center justify-between rounded-xl border border-sky-100 bg-sky-50/60 px-4 py-3 text-sky-900">
+            <div className="flex items-center gap-2.5">
+              <RotateCcw className="h-4 w-4 text-sky-600 shrink-0" />
+              <p className="text-xs font-medium">
+                We restored your previous checkout attempt with current prices and inventory.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setRecoveredBanner(false)}
+              className="text-xs text-sky-700 hover:underline font-semibold shrink-0 ml-2"
             >
-              <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-6 py-4 shadow-xl">
-                <Loader2 className="h-5 w-5 animate-spin text-apple-primary" />
-                <div className="space-y-0.5">
-                  <p className="text-xs font-bold text-apple-ink">Placing your order...</p>
-                  <p className="text-[10px] text-zinc-500">Please do not refresh or close this window.</p>
-                </div>
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* Require Login Warning Card */}
+        {requireLogin && (
+          <div className="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-amber-900">
+            <div className="flex items-center gap-3">
+              <Lock className="h-5 w-5 text-amber-700 shrink-0" />
+              <div>
+                <h4 className="text-sm font-bold">Login Required</h4>
+                <p className="text-xs text-amber-800">This store requires customer login before completing purchases.</p>
               </div>
             </div>
-          )}
+            <Link
+              href={`/login?redirect=${encodeURIComponent("/checkout")}`}
+              className="rounded-xl bg-zinc-900 px-4 py-2 text-xs font-bold text-white hover:bg-zinc-800 whitespace-nowrap"
+            >
+              Login to Continue
+            </Link>
+          </div>
+        )}
 
-          {/* Left Form (3 cols) */}
-          <div className="space-y-6 lg:col-span-3">
-            {/* Customer Saved Address Book (if logged in) */}
-            {customer && (
-              <CustomerAddressBook
-                selectedAddressId={selectedSavedAddressId}
-                onSelectAddress={applySavedAddress}
-              />
-            )}
-
-            {/* Step 1: Customer & Delivery Address */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-zinc-100 pb-3">
-                <Shield className="h-5 w-5 text-apple-primary" />
-                <h2 className="font-bold text-apple-ink text-sm">1. Customer & Delivery Address</h2>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <Field label="Full Name *">
-                    <input
-                      type="text"
-                      required
-                      value={form.fullName}
-                      onChange={handleChange("fullName")}
-                      placeholder="e.g. Rahim Ahmed"
-                      disabled={isSubmittingOrder}
-                      className={inputClass}
-                    />
-                  </Field>
-                </div>
-
-                <Field label="Mobile Phone Number *">
-                  <input
-                    type="tel"
-                    required
-                    value={form.phone}
-                    onChange={handleChange("phone")}
-                    placeholder="e.g. 017XXXXXXXX"
-                    disabled={isSubmittingOrder}
-                    className={inputClass}
-                  />
-                </Field>
-
-                <Field label="Email Address">
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={handleChange("email")}
-                    placeholder="e.g. rahim@example.com"
-                    disabled={isSubmittingOrder}
-                    className={inputClass}
-                  />
-                </Field>
-
-                {/* Country Display */}
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">
-                    Country
-                  </label>
-                  <div className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm dark:border-zinc-800 dark:bg-zinc-800/40">
-                    <span className="flex items-center gap-2 font-medium text-zinc-900 dark:text-zinc-100">
-                      <span className="text-base">🇧🇩</span> Bangladesh
-                    </span>
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                      Domestic Shipping
-                    </span>
-                  </div>
-                </div>
-
-                {/* Division Selector */}
-                <LocationSelect
-                  label="Division"
-                  required
-                  placeholder="Select division..."
-                  searchPlaceholder="Search division (e.g. Dhaka, চট্টগ্রাম)..."
-                  options={divisions}
-                  value={form.divisionId}
-                  onChange={handleDivisionChange}
-                  disabled={isSubmittingOrder}
+        {/* Checkout Form Grid */}
+        <form onSubmit={handleSubmit} aria-busy={isSubmittingOrder}>
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
+            {/* Left Form: Customer, Delivery, Payment (7 cols) */}
+            <div className="space-y-10 lg:col-span-7">
+              {/* Customer Saved Address Book */}
+              {customer && (
+                <CustomerAddressBook
+                  selectedAddressId={selectedSavedAddressId}
+                  onSelectAddress={applySavedAddress}
                 />
-
-                {/* District / Zila Selector */}
-                <LocationSelect
-                  label="District / Zila"
-                  required
-                  placeholder={form.divisionId ? "Select district..." : "Select division first"}
-                  searchPlaceholder="Search district (e.g. Gazipur, কুমিল্লা)..."
-                  options={districts}
-                  value={form.districtId}
-                  onChange={handleDistrictChange}
-                  disabled={!form.divisionId || isSubmittingOrder}
-                />
-
-                {/* Upazila / Thana Selector */}
-                <LocationSelect
-                  label="Upazila / Thana"
-                  required
-                  placeholder={form.districtId ? "Select upazila/thana..." : "Select district first"}
-                  searchPlaceholder="Search upazila (e.g. Savar, ধানমন্ডি)..."
-                  options={upazilas}
-                  value={form.upazilaId}
-                  onChange={handleUpazilaChange}
-                  disabled={!form.districtId || isSubmittingOrder}
-                />
-
-                {/* Union / Pourashava Selector or Input */}
-                {unions.length > 0 ? (
-                  <LocationSelect
-                    label="Union / Pourashava"
-                    placeholder="Select union..."
-                    searchPlaceholder="Search union..."
-                    options={unions}
-                    value={form.unionId || ""}
-                    onChange={(val, opt) => setForm((p) => ({ ...p, unionId: val, unionName: opt?.name || val }))}
-                    disabled={!form.upazilaId || isSubmittingOrder}
-                  />
-                ) : (
-                  <Field label="Union / Pourashava (Optional)">
-                    <input
-                      type="text"
-                      value={form.unionName || ""}
-                      onChange={(e) => setForm((p) => ({ ...p, unionName: e.target.value, unionId: e.target.value }))}
-                      placeholder="e.g. Ward / Pourashava"
-                      disabled={!form.upazilaId || isSubmittingOrder}
-                      className={inputClass}
-                    />
-                  </Field>
-                )}
-
-                {/* Village / Area */}
-                <Field label="Village / Local Area (Optional)">
-                  <input
-                    type="text"
-                    value={form.village || ""}
-                    onChange={(e) => setForm((p) => ({ ...p, village: e.target.value }))}
-                    placeholder="e.g. Sector 4, Block C, Village..."
-                    disabled={isSubmittingOrder}
-                    className={inputClass}
-                  />
-                </Field>
-
-                {/* Postal / ZIP Code */}
-                <Field label="Postal / ZIP Code">
-                  <input
-                    type="text"
-                    value={form.zip}
-                    onChange={handleChange("zip")}
-                    placeholder="e.g. 1209"
-                    disabled={isSubmittingOrder}
-                    className={inputClass}
-                  />
-                </Field>
-
-                {/* Street / House & Road Address */}
-                <div className="sm:col-span-2">
-                  <Field label="Street / House & Road Address *">
-                    <input
-                      type="text"
-                      required
-                      value={form.street}
-                      onChange={handleChange("street")}
-                      placeholder="e.g. House 12, Road 4, Sector 7"
-                      disabled={isSubmittingOrder}
-                      className={inputClass}
-                    />
-                  </Field>
-                </div>
-
-                {/* Apartment / Suite */}
-                <div className="sm:col-span-2">
-                  <Field label="Apartment / Suite / Flat (Optional)">
-                    <input
-                      type="text"
-                      value={form.apartment}
-                      onChange={handleChange("apartment")}
-                      placeholder="e.g. Flat 4B, 3rd Floor"
-                      disabled={isSubmittingOrder}
-                      className={inputClass}
-                    />
-                  </Field>
-                </div>
-              </div>
-
-              <Field label="Special Delivery Instructions / Notes">
-                <textarea
-                  value={form.notes}
-                  onChange={handleChange("notes")}
-                  rows={2}
-                  placeholder="Optional instructions for courier delivery"
-                  disabled={isSubmittingOrder}
-                  className={textareaClass}
-                />
-              </Field>
-            </motion.div>
-
-            {/* Step 2: Delivery Area & Zones */}
-            {deliveryZones.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-zinc-100 pb-3">
-                  <Truck className="h-5 w-5 text-apple-primary" />
-                  <h2 className="font-bold text-apple-ink text-sm">2. Delivery Method & Zone</h2>
-                </div>
-
-                <div className="grid gap-2.5 sm:grid-cols-2">
-                  {deliveryZones.map((zone) => (
-                    <label
-                      key={zone._id}
-                      onClick={() => {
-                        if (!isSubmittingOrder) {
-                          setSelectedZoneId(zone._id);
-                          setIsDirty(true);
-                          setSaveStatus("dirty");
-                        }
-                      }}
-                      className={cn(
-                        "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all",
-                        selectedZoneId === zone._id ? "border-apple-primary bg-apple-primary/5 shadow-xs" : "border-zinc-200 hover:border-zinc-300",
-                        isSubmittingOrder && "pointer-events-none opacity-60"
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="zone"
-                        checked={selectedZoneId === zone._id}
-                        onChange={() => {
-                          setSelectedZoneId(zone._id);
-                          setIsDirty(true);
-                          setSaveStatus("dirty");
-                        }}
-                        disabled={isSubmittingOrder}
-                        className="sr-only"
-                      />
-                      <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold", selectedZoneId === zone._id ? "bg-apple-primary text-white" : "bg-zinc-100 text-zinc-500")}>
-                        <Truck className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs font-bold text-apple-ink">{zone.name}</p>
-                        <p className="text-[11px] text-zinc-500">{formatCurrency(zone.charge, settings)} • {zone.estimatedDays}</p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 3: Payment Method & Mobile Banking Fields */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-zinc-100 pb-3">
-                <CreditCard className="h-5 w-5 text-apple-primary" />
-                <h2 className="font-bold text-apple-ink text-sm">3. Payment Method</h2>
-              </div>
-
-              <div className="grid gap-2.5">
-                {availablePaymentMethods.map((pm) => {
-                  const Icon = pm.icon;
-                  const active = selectedPayment === pm.id;
-
-                  return (
-                    <label
-                      key={pm.id}
-                      onClick={() => {
-                        if (!isSubmittingOrder) {
-                          setSelectedPayment(pm.id);
-                          setIsDirty(true);
-                          setSaveStatus("dirty");
-                        }
-                      }}
-                      className={cn(
-                        "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all",
-                        active ? "border-apple-primary bg-apple-primary/5 shadow-xs" : "border-zinc-200 hover:border-zinc-300",
-                        isSubmittingOrder && "pointer-events-none opacity-60"
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="payment"
-                        checked={active}
-                        onChange={() => {
-                          setSelectedPayment(pm.id);
-                          setIsDirty(true);
-                          setSaveStatus("dirty");
-                        }}
-                        disabled={isSubmittingOrder}
-                        className="sr-only"
-                      />
-                      <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold", active ? "bg-apple-primary text-white" : "bg-zinc-100 text-zinc-500")}>
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs font-bold text-apple-ink">{pm.label}</p>
-                        {pm.id === "cod" && <p className="text-[11px] text-zinc-500">Pay cash upon product delivery</p>}
-                        {pm.id === "sslcommerz" && <p className="text-[11px] text-zinc-500">Instant online payment via Cards, Mobile Banking, or Net Banking</p>}
-                        {(pm.id === "bkash" || pm.id === "nagad") && (
-                          <p className="text-[11px] text-zinc-500">Send money & provide Transaction ID</p>
-                        )}
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-
-              {/* SSLCommerz Automated Gateway Banner */}
-              {selectedPayment === "sslcommerz" && (
-                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4 space-y-1.5">
-                  <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
-                    <Globe className="h-4 w-4 text-amber-600" />
-                    <span>Automated SSLCommerz Gateway</span>
-                  </div>
-                  <p className="text-xs text-amber-800 leading-relaxed">
-                    You will be securely redirected to SSLCommerz to pay with your Visa, Mastercard, bKash, Nagad, or Internet Banking. Your order will be verified automatically.
-                  </p>
-                </div>
               )}
 
-              {/* bKash / Nagad Payment Instructions & Verification Form */}
-              {(selectedPayment === "bkash" || selectedPayment === "nagad") && (
-                <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/60 p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-blue-900 font-bold text-xs">
-                    <Smartphone className="h-4 w-4 text-blue-600" />
-                    <span>{selectedPayment.toUpperCase()} Payment Instructions</span>
-                  </div>
+              {/* Section 1: Customer & Delivery Address */}
+              <div className="space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-zinc-100">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-white text-xs font-bold">
+                    1
+                  </span>
+                  <h2 className="font-bold text-zinc-900 text-base">Customer & Delivery Address</h2>
+                </div>
 
-                  <p className="text-xs text-blue-800">
-                    Send <strong>{formatCurrency(total, settings)}</strong> to the shop's {selectedPayment.toUpperCase()} number below:
-                  </p>
-
-                  <div className="flex items-center justify-between rounded-lg bg-white p-3 border border-blue-200">
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-zinc-400">Shop {selectedPayment.toUpperCase()} Number</p>
-                      <p className="text-sm font-mono font-extrabold text-blue-900">
-                        {(settings.paymentSettings as any)?.[selectedPayment]?.number || "01711000000"}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-bold text-blue-800 uppercase">
-                      {(settings.paymentSettings as any)?.[selectedPayment]?.type || "Personal"}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                    <Field label="Your Sender Mobile Number *">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <Field label="Full Name *">
                       <input
-                        type="tel"
+                        type="text"
                         required
-                        value={senderNumber}
-                        onChange={(e) => {
-                          setSenderNumber(e.target.value);
-                          setIsDirty(true);
-                          setSaveStatus("dirty");
-                        }}
-                        placeholder="e.g. 017XXXXXXXX"
+                        value={form.fullName}
+                        onChange={handleChange("fullName")}
+                        onBlur={handleBlur}
+                        placeholder="e.g. Rahim Ahmed"
                         disabled={isSubmittingOrder}
                         className={inputClass}
                       />
                     </Field>
-                    <Field label="Transaction ID (TrxID) *">
+                  </div>
+
+                  <Field label="Mobile Phone Number *">
+                    <input
+                      type="tel"
+                      required
+                      value={form.phone}
+                      onChange={handleChange("phone")}
+                      onBlur={handleBlur}
+                      placeholder="e.g. 017XXXXXXXX"
+                      disabled={isSubmittingOrder}
+                      className={inputClass}
+                    />
+                  </Field>
+
+                  <Field label="Email Address">
+                    <input
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange("email")}
+                      onBlur={handleBlur}
+                      placeholder="e.g. rahim@example.com"
+                      disabled={isSubmittingOrder}
+                      className={inputClass}
+                    />
+                  </Field>
+
+                  {/* Country Selector */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-zinc-700 mb-1.5">
+                      Country
+                    </label>
+                    <div className="flex items-center justify-between rounded-xl border border-zinc-200/80 bg-zinc-50/60 px-3.5 py-2.5 text-sm">
+                      <span className="flex items-center gap-2 font-medium text-zinc-900">
+                        <span className="text-base">🇧🇩</span> Bangladesh
+                      </span>
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-100/80">
+                        Domestic Delivery
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Cascading Bangladesh Locations */}
+                  <LocationSelect
+                    label="Division *"
+                    required
+                    placeholder="Select division..."
+                    searchPlaceholder="Search division (e.g. Dhaka, Chittagong)..."
+                    options={divisions}
+                    value={form.divisionId}
+                    onChange={handleDivisionChange}
+                    disabled={isSubmittingOrder}
+                  />
+
+                  <LocationSelect
+                    label="District / Zila *"
+                    required
+                    placeholder={form.divisionId ? "Select district..." : "Select division first"}
+                    searchPlaceholder="Search district (e.g. Gazipur, Cumilla)..."
+                    options={districts}
+                    value={form.districtId}
+                    onChange={handleDistrictChange}
+                    disabled={!form.divisionId || isSubmittingOrder}
+                  />
+
+                  <LocationSelect
+                    label="Upazila / Thana *"
+                    required
+                    placeholder={form.districtId ? "Select upazila/thana..." : "Select district first"}
+                    searchPlaceholder="Search upazila (e.g. Dhanmondi, Mirpur)..."
+                    options={upazilas}
+                    value={form.upazilaId}
+                    onChange={handleUpazilaChange}
+                    disabled={!form.districtId || isSubmittingOrder}
+                  />
+
+                  {unions.length > 0 ? (
+                    <LocationSelect
+                      label="Union / Pourashava"
+                      placeholder="Select union..."
+                      searchPlaceholder="Search union..."
+                      options={unions}
+                      value={form.unionId || ""}
+                      onChange={(val, opt) => setForm((p) => ({ ...p, unionId: val, unionName: opt?.name || val }))}
+                      disabled={!form.upazilaId || isSubmittingOrder}
+                    />
+                  ) : (
+                    <Field label="Union / Pourashava (Optional)">
+                      <input
+                        type="text"
+                        value={form.unionName || ""}
+                        onChange={(e) => setForm((p) => ({ ...p, unionName: e.target.value, unionId: e.target.value }))}
+                        onBlur={handleBlur}
+                        placeholder="e.g. Ward / Pourashava"
+                        disabled={!form.upazilaId || isSubmittingOrder}
+                        className={inputClass}
+                      />
+                    </Field>
+                  )}
+
+                  <Field label="Village / Local Area (Optional)">
+                    <input
+                      type="text"
+                      value={form.village || ""}
+                      onChange={(e) => setForm((p) => ({ ...p, village: e.target.value }))}
+                      onBlur={handleBlur}
+                      placeholder="e.g. Sector 4, Block C"
+                      disabled={isSubmittingOrder}
+                      className={inputClass}
+                    />
+                  </Field>
+
+                  <Field label="Postal / ZIP Code">
+                    <input
+                      type="text"
+                      value={form.zip}
+                      onChange={handleChange("zip")}
+                      onBlur={handleBlur}
+                      placeholder="e.g. 1209"
+                      disabled={isSubmittingOrder}
+                      className={inputClass}
+                    />
+                  </Field>
+
+                  <div className="sm:col-span-2">
+                    <Field label="Street / House & Road Address *">
                       <input
                         type="text"
                         required
-                        value={transactionId}
-                        onChange={(e) => {
-                          setTransactionId(e.target.value.toUpperCase());
-                          setIsDirty(true);
-                          setSaveStatus("dirty");
-                        }}
-                        placeholder="e.g. ABC123XYZ"
+                        value={form.street}
+                        onChange={handleChange("street")}
+                        onBlur={handleBlur}
+                        placeholder="e.g. House 12, Road 4, Sector 7"
                         disabled={isSubmittingOrder}
-                        className={cn(inputClass, "font-mono uppercase font-bold")}
+                        className={inputClass}
+                      />
+                    </Field>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <Field label="Apartment / Suite / Flat (Optional)">
+                      <input
+                        type="text"
+                        value={form.apartment}
+                        onChange={handleChange("apartment")}
+                        onBlur={handleBlur}
+                        placeholder="e.g. Flat 4B, 3rd Floor"
+                        disabled={isSubmittingOrder}
+                        className={inputClass}
                       />
                     </Field>
                   </div>
                 </div>
-              )}
-            </motion.div>
-          </div>
 
-          {/* Right Summary Panel (2 cols) */}
-          <div className="lg:col-span-2">
-            <div className="sticky top-20 rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs space-y-4">
-              <h2 className="font-bold text-apple-ink text-sm border-b border-zinc-100 pb-3">Order Summary</h2>
-
-              <div className="space-y-3 max-h-60 overflow-y-auto divide-y divide-zinc-100">
-                {items.map((item, idx) => (
-                  <div key={`${item.productId}-${idx}`} className="flex items-center gap-3 pt-2 first:pt-0">
-                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50">
-                      {item.image ? <img src={item.image} alt={item.name} className="h-full w-full object-cover" /> : <ShoppingBag className="h-4 w-4 text-zinc-300" />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-bold text-apple-ink">{item.name}</p>
-                      {item.variantTitle && <p className="text-[10px] text-zinc-400">{item.variantTitle}</p>}
-                      <p className="text-[11px] text-zinc-500">Qty: {item.quantity}</p>
-                    </div>
-                    <span className="shrink-0 text-xs font-bold text-apple-ink">{formatCurrency(item.price * item.quantity, settings)}</span>
-                  </div>
-                ))}
+                <Field label="Special Delivery Instructions (Optional)">
+                  <textarea
+                    value={form.notes}
+                    onChange={handleChange("notes")}
+                    onBlur={handleBlur}
+                    rows={2}
+                    placeholder="e.g. Call before delivery / Leave with security guard"
+                    disabled={isSubmittingOrder}
+                    className={textareaClass}
+                  />
+                </Field>
               </div>
 
-              <div className="space-y-2 border-t border-zinc-100 pt-3 text-xs">
-                <div className="flex justify-between text-zinc-500">
-                  <span>Subtotal</span>
-                  <span>{formatCurrency(subtotal, settings)}</span>
-                </div>
-
-                {discount > 0 && (
-                  <div className="flex justify-between font-bold text-emerald-600">
-                    <span>Discount</span>
-                    <span>-{formatCurrency(discount, settings)}</span>
+              {/* Section 2: Delivery Method */}
+              {deliveryZones.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 pb-3 border-b border-zinc-100">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-white text-xs font-bold">
+                      2
+                    </span>
+                    <h2 className="font-bold text-zinc-900 text-base">Delivery Method</h2>
                   </div>
-                )}
 
-                <div className="flex justify-between text-zinc-500">
-                  <span>Shipping {selectedZone ? `(${selectedZone.name})` : ""}</span>
-                  <span>{deliveryCharge === 0 ? "Free" : formatCurrency(deliveryCharge, settings)}</span>
-                </div>
-
-                {taxAmount > 0 && (
-                  <div className="flex justify-between text-zinc-500">
-                    <span>Tax ({taxRate}%)</span>
-                    <span>{formatCurrency(taxAmount, settings)}</span>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {deliveryZones.map((zone) => {
+                      const isSelected = selectedZoneId === zone._id;
+                      return (
+                        <label
+                          key={zone._id}
+                          onClick={() => {
+                            if (!isSubmittingOrder) {
+                              setSelectedZoneId(zone._id);
+                              setIsDirty(true);
+                              setSaveStatus("dirty");
+                            }
+                          }}
+                          className={cn(
+                            "flex cursor-pointer items-center justify-between rounded-xl border p-4 transition-all",
+                            isSelected
+                              ? "border-zinc-900 bg-zinc-50/60 ring-1 ring-zinc-900/10 shadow-xs"
+                              : "border-zinc-200/80 bg-white hover:border-zinc-300",
+                            isSubmittingOrder && "pointer-events-none opacity-60"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={cn(
+                                "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all",
+                                isSelected
+                                  ? "border-zinc-900 bg-zinc-900 text-white"
+                                  : "border-zinc-300 bg-white"
+                              )}
+                            >
+                              {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-zinc-900">{zone.name}</p>
+                              <p className="text-xs text-zinc-500">{zone.estimatedDays || "1–3 business days"}</p>
+                            </div>
+                          </div>
+                          <span className="text-sm font-bold text-zinc-900">
+                            {zone.charge === 0 ? "Free" : formatCurrency(zone.charge, settings)}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
-                )}
-
-                <div className="flex justify-between border-t border-zinc-200 pt-2 text-sm font-extrabold text-apple-ink">
-                  <span>Grand Total</span>
-                  <span className="text-apple-primary">{formatCurrency(total, settings)}</span>
-                </div>
-              </div>
-
-              {errorMsg && (
-                <div className="flex items-start gap-2 rounded-xl bg-red-50 p-3 text-xs text-red-700 border border-red-200">
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                  <span>{errorMsg}</span>
                 </div>
               )}
 
-              <button
-                type="submit"
-                disabled={isSubmittingOrder || isSyncing || cartFetching || requireLogin || items.length === 0}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-apple-primary py-3.5 text-xs font-bold text-white shadow-md transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isSubmittingOrder ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Processing Order…</span>
-                  </>
-                ) : (
-                  `Place Order • ${formatCurrency(total, settings)}`
+              {/* Section 3: Payment Method */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 pb-3 border-b border-zinc-100">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-white text-xs font-bold">
+                    3
+                  </span>
+                  <h2 className="font-bold text-zinc-900 text-base">Payment Method</h2>
+                </div>
+
+                <div className="grid gap-3">
+                  {availablePaymentMethods.map((pm) => {
+                    const Icon = pm.icon;
+                    const isSelected = selectedPayment === pm.id;
+
+                    return (
+                      <label
+                        key={pm.id}
+                        onClick={() => {
+                          if (!isSubmittingOrder) {
+                            setSelectedPayment(pm.id);
+                            setIsDirty(true);
+                            setSaveStatus("dirty");
+                          }
+                        }}
+                        className={cn(
+                          "flex cursor-pointer items-center justify-between rounded-xl border p-4 transition-all",
+                          isSelected
+                            ? "border-zinc-900 bg-zinc-50/60 ring-1 ring-zinc-900/10 shadow-xs"
+                            : "border-zinc-200/80 bg-white hover:border-zinc-300",
+                          isSubmittingOrder && "pointer-events-none opacity-60"
+                        )}
+                      >
+                        <div className="flex items-center gap-3.5">
+                          <div
+                            className={cn(
+                              "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all",
+                              isSelected
+                                ? "border-zinc-900 bg-zinc-900 text-white"
+                                : "border-zinc-300 bg-white"
+                            )}
+                          >
+                            {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-zinc-900">{pm.label}</p>
+                            <p className="text-xs text-zinc-500">{pm.desc}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                {/* SSLCommerz Details Card */}
+                {selectedPayment === "sslcommerz" && (
+                  <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-4 space-y-2 text-xs text-zinc-600">
+                    <div className="flex items-center gap-2 font-semibold text-zinc-900">
+                      <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                      <span>SSLCommerz Hosted Secure Gateway</span>
+                    </div>
+                    <p className="leading-relaxed">
+                      You will be redirected to the secure SSLCommerz payment page to pay with Visa, Mastercard, bKash, Nagad, Rocket, or Internet Banking. Upon completion, you will be automatically returned to this store.
+                    </p>
+                  </div>
                 )}
-              </button>
+
+                {/* bKash / Nagad Manual Instructions Card */}
+                {(selectedPayment === "bkash" || selectedPayment === "nagad") && (
+                  <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-zinc-900 font-semibold text-xs">
+                      <Smartphone className="h-4 w-4 text-zinc-700" />
+                      <span>{selectedPayment.toUpperCase()} Payment Instructions</span>
+                    </div>
+
+                    <p className="text-xs text-zinc-600">
+                      Please send <strong>{formatCurrency(total, settings)}</strong> via &quot;Send Money&quot; to the shop number below:
+                    </p>
+
+                    <div className="flex items-center justify-between rounded-xl bg-white p-3.5 border border-zinc-200/80">
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
+                          Shop {selectedPayment.toUpperCase()} Number
+                        </p>
+                        <p className="text-sm font-mono font-bold text-zinc-900 mt-0.5">
+                          {(settings.paymentSettings as any)?.[selectedPayment]?.number || "017XXXXXXXX"}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-700 uppercase">
+                        {(settings.paymentSettings as any)?.[selectedPayment]?.type || "Personal"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <Field label="Your Sender Mobile Number *">
+                        <input
+                          type="tel"
+                          required
+                          value={senderNumber}
+                          onChange={(e) => {
+                            setSenderNumber(e.target.value);
+                            setIsDirty(true);
+                            setSaveStatus("dirty");
+                          }}
+                          placeholder="e.g. 017XXXXXXXX"
+                          disabled={isSubmittingOrder}
+                          className={inputClass}
+                        />
+                      </Field>
+                      <Field label="Transaction ID (TrxID) *">
+                        <input
+                          type="text"
+                          required
+                          value={transactionId}
+                          onChange={(e) => {
+                            setTransactionId(e.target.value.toUpperCase());
+                            setIsDirty(true);
+                            setSaveStatus("dirty");
+                          }}
+                          placeholder="e.g. ABC123XYZ"
+                          disabled={isSubmittingOrder}
+                          className={cn(inputClass, "font-mono font-bold uppercase")}
+                        />
+                      </Field>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Sticky Order Summary (5 cols) */}
+            <div className="lg:col-span-5">
+              <div className="sticky top-24 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)] space-y-6">
+                <h2 className="font-bold text-zinc-900 text-base pb-3 border-b border-zinc-100">
+                  Order Summary
+                </h2>
+
+                {/* Items List */}
+                <div className="max-h-64 overflow-y-auto divide-y divide-zinc-100 pr-1 space-y-3">
+                  {items.map((item, idx) => (
+                    <div key={`${item.productId}-${idx}`} className="flex items-center gap-3.5 pt-3 first:pt-0">
+                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 flex items-center justify-center">
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <ShoppingBag className="h-5 w-5 text-zinc-300" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-zinc-900">{item.name}</p>
+                        {item.variantTitle && <p className="text-[11px] text-zinc-400">{item.variantTitle}</p>}
+                        <p className="text-[11px] text-zinc-500 font-medium">Qty: {item.quantity}</p>
+                      </div>
+                      <span className="shrink-0 text-xs font-bold text-zinc-900">
+                        {formatCurrency(item.price * item.quantity, settings)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Calculation Breakdown */}
+                <div className="space-y-2.5 border-t border-zinc-100 pt-4 text-xs">
+                  <div className="flex justify-between text-zinc-600">
+                    <span>Subtotal</span>
+                    <span className="font-medium text-zinc-900">{formatCurrency(subtotal, settings)}</span>
+                  </div>
+
+                  {discount > 0 && (
+                    <div className="flex justify-between font-semibold text-emerald-600">
+                      <span>Discount</span>
+                      <span>-{formatCurrency(discount, settings)}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between text-zinc-600">
+                    <span>Shipping {selectedZone ? `(${selectedZone.name})` : ""}</span>
+                    <span className="font-medium text-zinc-900">
+                      {deliveryCharge === 0 ? "Free" : formatCurrency(deliveryCharge, settings)}
+                    </span>
+                  </div>
+
+                  {taxAmount > 0 && (
+                    <div className="flex justify-between text-zinc-600">
+                      <span>Estimated Tax ({taxRate}%)</span>
+                      <span className="font-medium text-zinc-900">{formatCurrency(taxAmount, settings)}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between border-t border-zinc-200/80 pt-3 text-base font-extrabold text-zinc-900">
+                    <span>Total</span>
+                    <span>{formatCurrency(total, settings)}</span>
+                  </div>
+                </div>
+
+                {/* Error Banner */}
+                {errorMsg && (
+                  <div className="flex items-start gap-2.5 rounded-xl bg-rose-50/80 border border-rose-100 p-3.5 text-xs text-rose-700">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
+                    <span>{errorMsg}</span>
+                  </div>
+                )}
+
+                {/* Place Order CTA Button */}
+                <button
+                  type="submit"
+                  disabled={isSubmittingOrder || isSyncing || cartFetching || requireLogin || items.length === 0}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-zinc-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSubmittingOrder ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Placing Order…</span>
+                    </>
+                  ) : (
+                    `Place Order • ${formatCurrency(total, settings)}`
+                  )}
+                </button>
+
+                {/* Trust and Assurance Indicators */}
+                <div className="border-t border-zinc-100 pt-4 text-center space-y-2">
+                  <p className="text-[11px] text-zinc-400 flex items-center justify-center gap-1.5 font-medium">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> 256-Bit SSL Encrypted Checkout
+                  </p>
+                  <p className="text-[11px] text-zinc-400">
+                    Guaranteed Safe & Secure Checkout
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
+        </form>
+      </div>
+
+      {/* Modern Clean Submission Modal Backdrop */}
+      {isSubmittingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/30 backdrop-blur-xs p-4 animate-in fade-in-0">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl border border-zinc-100 space-y-3 animate-in zoom-in-95">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-900">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+            <h3 className="text-base font-bold text-zinc-900">Placing your order...</h3>
+            <p className="text-xs text-zinc-500">
+              Please do not refresh or close this window while we securely confirm your order details.
+            </p>
+          </div>
         </div>
-      </form>
+      )}
     </div>
   );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-1">
-      <label className="block text-xs font-semibold text-zinc-700">{label}</label>
+    <div className="space-y-1.5">
+      <label className="block text-xs font-medium text-zinc-700">{label}</label>
       {children}
     </div>
   );

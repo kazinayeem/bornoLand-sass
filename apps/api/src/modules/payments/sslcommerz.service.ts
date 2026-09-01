@@ -18,89 +18,124 @@ import {
   maskSecret,
 } from "./sslcommerz.credentials.js";
 
-const SSLCOMMERZ_API_TIMEOUT_MS = 15_000;
+const SSLCOMMERZ_API_TIMEOUT_MS = 8_000;
 
 function sslczBaseUrl(isLive: boolean): string {
   return isLive ? "https://securepay.sslcommerz.com" : "https://sandbox.sslcommerz.com";
 }
 
-function sslczPost(url: string, body: Record<string, unknown>, timeoutMs = SSLCOMMERZ_API_TIMEOUT_MS): Promise<Record<string, unknown>> {
-  return new Promise((resolve, reject) => {
-    const stringBody: Record<string, string> = {};
-    for (const [key, value] of Object.entries(body)) {
-      stringBody[key] = value != null ? String(value) : "";
+async function sslczPost(url: string, body: Record<string, unknown>, timeoutMs = SSLCOMMERZ_API_TIMEOUT_MS): Promise<Record<string, unknown>> {
+  const startTime = Date.now();
+  const formData = new URLSearchParams();
+  for (const [key, value] of Object.entries(body)) {
+    if (value != null) {
+      formData.append(key, String(value));
     }
-    const postData = querystring.stringify(stringBody);
-    const parsedUrl = new URL(url);
-    const transport = parsedUrl.protocol === "https:" ? https : http;
+  }
 
-    const req = transport.request(
-      {
-        hostname: parsedUrl.hostname,
-        port: parsedUrl.port || (parsedUrl.protocol === "https:" ? 443 : 80),
-        path: parsedUrl.pathname + parsedUrl.search,
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Content-Length": Buffer.byteLength(postData),
-        },
-        timeout: timeoutMs,
-      },
-      (res) => {
-        let data = "";
-        res.on("data", (chunk: string) => (data += chunk));
-        res.on("end", () => {
-          try {
-            resolve(JSON.parse(data));
-          } catch {
-            reject(new Error(`SSLCommerz returned invalid JSON: ${data.slice(0, 200)}`));
-          }
-        });
-      },
-    );
-
-    req.on("timeout", () => {
-      req.destroy();
-      reject(new Error(`SSLCommerz API timeout after ${timeoutMs}ms`));
-    });
-    req.on("error", reject);
-    req.write(postData);
-    req.end();
+  const endpointLog = url.replace(/store_passwd=[^&]*/gi, "store_passwd=***");
+  console.info("[SSLCOMMERZ_REQUEST_START]", {
+    url: endpointLog,
+    tran_id: body.tran_id,
+    store_id: body.store_id,
+    timeoutMs,
   });
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json",
+      },
+      signal: controller.signal,
+    });
+
+    const durationMs = Date.now() - startTime;
+    const text = await response.text();
+
+    let jsonResult: Record<string, unknown>;
+    try {
+      jsonResult = JSON.parse(text);
+    } catch {
+      console.error("[SSLCOMMERZ_RESPONSE_INVALID_JSON]", {
+        url: endpointLog,
+        status: response.status,
+        durationMs,
+        rawSnippet: text.slice(0, 300),
+      });
+      throw new Error(`SSLCommerz returned non-JSON response (HTTP ${response.status}): ${text.slice(0, 150)}`);
+    }
+
+    console.info("[SSLCOMMERZ_RESPONSE]", {
+      url: endpointLog,
+      status: jsonResult.status,
+      httpStatus: response.status,
+      durationMs,
+      hasGatewayPageURL: Boolean(jsonResult.GatewayPageURL),
+      failedreason: jsonResult.failedreason,
+    });
+
+    return jsonResult;
+  } catch (err: unknown) {
+    const durationMs = Date.now() - startTime;
+    if (err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"))) {
+      console.error("[SSLCOMMERZ_TIMEOUT]", { url: endpointLog, durationMs, timeoutMs });
+      throw new Error(`SSLCommerz API timeout after ${timeoutMs}ms`);
+    }
+    console.error("[SSLCOMMERZ_REQUEST_ERROR]", { url: endpointLog, durationMs, error: err instanceof Error ? err.message : String(err) });
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-function sslczGet(url: string, timeoutMs = SSLCOMMERZ_API_TIMEOUT_MS): Promise<Record<string, unknown>> {
-  return new Promise((resolve, reject) => {
-    const parsedUrl = new URL(url);
-    const transport = parsedUrl.protocol === "https:" ? https : http;
+async function sslczGet(url: string, timeoutMs = SSLCOMMERZ_API_TIMEOUT_MS): Promise<Record<string, unknown>> {
+  const startTime = Date.now();
+  const endpointLog = url.replace(/store_passwd=[^&]*/gi, "store_passwd=***");
+  console.info("[SSLCOMMERZ_GET_REQUEST_START]", { url: endpointLog, timeoutMs });
 
-    const req = transport.get(
-      {
-        hostname: parsedUrl.hostname,
-        port: parsedUrl.port || (parsedUrl.protocol === "https:" ? 443 : 80),
-        path: parsedUrl.pathname + parsedUrl.search,
-        timeout: timeoutMs,
-      },
-      (res) => {
-        let data = "";
-        res.on("data", (chunk: string) => (data += chunk));
-        res.on("end", () => {
-          try {
-            resolve(JSON.parse(data));
-          } catch {
-            reject(new Error(`SSLCommerz returned invalid JSON: ${data.slice(0, 200)}`));
-          }
-        });
-      },
-    );
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    req.on("timeout", () => {
-      req.destroy();
-      reject(new Error(`SSLCommerz API timeout after ${timeoutMs}ms`));
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
     });
-    req.on("error", reject);
-    req.end();
-  });
+
+    const durationMs = Date.now() - startTime;
+    const text = await response.text();
+
+    let jsonResult: Record<string, unknown>;
+    try {
+      jsonResult = JSON.parse(text);
+    } catch {
+      throw new Error(`SSLCommerz validation returned non-JSON (HTTP ${response.status}): ${text.slice(0, 150)}`);
+    }
+
+    console.info("[SSLCOMMERZ_GET_RESPONSE]", {
+      url: endpointLog,
+      status: jsonResult.status,
+      httpStatus: response.status,
+      durationMs,
+    });
+
+    return jsonResult;
+  } catch (err: unknown) {
+    const durationMs = Date.now() - startTime;
+    if (err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"))) {
+      throw new Error(`SSLCommerz API timeout after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function sslczInit(
@@ -607,6 +642,11 @@ export async function initiateSSLCommerzPayment(
     cus_country: order.shippingAddress?.country || "Bangladesh",
     cus_phone: order.shippingAddress?.phone || order.customerSnapshot?.phone || "01700000000",
     shipping_method: "YES",
+    ship_name: order.shippingAddress?.fullName || order.customerSnapshot?.name || "Customer",
+    ship_add1: order.shippingAddress?.street || "Address",
+    ship_city: order.shippingAddress?.city || "Dhaka",
+    ship_postcode: order.shippingAddress?.zip || "1000",
+    ship_country: order.shippingAddress?.country || "Bangladesh",
     num_of_item: order.items?.length || 1,
     product_name: order.items?.map((i: { name?: string }) => i.name).filter(Boolean).slice(0, 3).join(", ") || `Order ${tranId}`,
     product_category: "General",
@@ -618,13 +658,17 @@ export async function initiateSSLCommerzPayment(
   };
 
   try {
-    console.info("[SSL] sslcz.init starting", { tranId, environment, orderId });
+    console.info("[PAYMENT_SESSION_START]", { tranId, environment, orderId: String(order._id), total: order.total });
 
     const data = await sslczInit(gateway.storeIdValue, storePassword, isLive, initData);
 
-    console.info("[SSL] sslcz.init completed", { tranId, status: data?.status, hasGatewayUrl: Boolean(data?.GatewayPageURL) });
-
     if (data?.status === "SUCCESS" && data.GatewayPageURL) {
+      console.info("[GATEWAY_URL_RECEIVED]", {
+        tranId,
+        gatewayUrl: String(data.GatewayPageURL),
+        sessionKey: String(data.sessionkey || ""),
+      });
+
       order.paymentMethod = "sslcommerz";
       order.paymentDetails = {
         ...(order.paymentDetails || {}),
@@ -645,18 +689,19 @@ export async function initiateSSLCommerzPayment(
         ok: true,
         data: {
           gatewayUrl: String(data.GatewayPageURL),
+          redirectUrl: String(data.GatewayPageURL),
           sessionKey: String(data.sessionkey || ""),
           tranId,
         },
       };
     } else {
       const errorMsg = String(data?.failedreason || "Failed to initiate SSLCommerz payment session.");
-      console.error("[SSL] sslcz.init failed", { tranId, errorMsg, status: data?.status });
+      console.error("[PAYMENT_SESSION_FAILED]", { tranId, errorMsg, status: data?.status });
       return { ok: false, status: 502, message: errorMsg };
     }
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Error contacting SSLCommerz gateway";
-    console.error("[SSL] sslcz.init error", { tranId, errorMsg });
+    console.error("[PAYMENT_SESSION_ERROR]", { tranId, errorMsg });
     return { ok: false, status: 500, message: errorMsg };
   }
 }

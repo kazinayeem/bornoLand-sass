@@ -43,6 +43,16 @@ import { CheckoutStorefrontSkeleton } from "@/components/loading/storefront-skel
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useStorefrontTracking } from "@/hooks/use-storefront-tracking";
+import { LocationSelect, type LocationOption } from "@/components/ui/location-select";
+import {
+  getDivisions,
+  getDistricts,
+  getUpazilas,
+  getUnions,
+  findDivision,
+  findDistrict,
+  findUpazila,
+} from "@/lib/bangladesh-locations";
 
 type CheckoutFormState = {
   label: "Home" | "Office" | "Other";
@@ -50,6 +60,19 @@ type CheckoutFormState = {
   phone: string;
   email: string;
   country: string;
+  countryCode: string;
+  divisionId: string;
+  divisionName: string;
+  divisionNameBn?: string;
+  districtId: string;
+  districtName: string;
+  districtNameBn?: string;
+  upazilaId: string;
+  upazilaName: string;
+  upazilaNameBn?: string;
+  unionId?: string;
+  unionName?: string;
+  village?: string;
   state: string;
   city: string;
   area: string;
@@ -66,6 +89,19 @@ const EMPTY_FORM: CheckoutFormState = {
   phone: "",
   email: "",
   country: "Bangladesh",
+  countryCode: "BD",
+  divisionId: "",
+  divisionName: "",
+  divisionNameBn: "",
+  districtId: "",
+  districtName: "",
+  districtNameBn: "",
+  upazilaId: "",
+  upazilaName: "",
+  upazilaNameBn: "",
+  unionId: "",
+  unionName: "",
+  village: "",
   state: "",
   city: "",
   area: "",
@@ -145,6 +181,92 @@ function CheckoutForm() {
   const [selectedZoneId, setSelectedZoneId] = useState("");
   const [selectedPayment, setSelectedPayment] = useState("cod");
 
+  // Bangladesh Location Options & Hierarchy
+  const divisions = useMemo(() => getDivisions(), []);
+  const districts = useMemo(() => getDistricts(form.divisionId), [form.divisionId]);
+  const upazilas = useMemo(() => getUpazilas(form.districtId), [form.districtId]);
+  const unions = useMemo(() => getUnions(form.upazilaId), [form.upazilaId]);
+
+  const handleDivisionChange = (divId: string, item?: LocationOption) => {
+    const divObj = item || findDivision(divId);
+    setForm((prev) => ({
+      ...prev,
+      divisionId: divId,
+      divisionName: divObj?.name || "",
+      divisionNameBn: divObj?.nameBn || "",
+      state: divObj?.name || "",
+      // Clear downstream selections
+      districtId: "",
+      districtName: "",
+      districtNameBn: "",
+      city: "",
+      upazilaId: "",
+      upazilaName: "",
+      upazilaNameBn: "",
+      area: "",
+      unionId: "",
+      unionName: "",
+      village: "",
+    }));
+    setIsDirty(true);
+    setSaveStatus("dirty");
+  };
+
+  const handleDistrictChange = (distId: string, item?: LocationOption) => {
+    const distObj = item || findDistrict(distId);
+    setForm((prev) => ({
+      ...prev,
+      districtId: distId,
+      districtName: distObj?.name || "",
+      districtNameBn: distObj?.nameBn || "",
+      city: distObj?.name || "",
+      zip: (distObj as any)?.defaultPostalCode || prev.zip,
+      // Clear downstream selections
+      upazilaId: "",
+      upazilaName: "",
+      upazilaNameBn: "",
+      area: "",
+      unionId: "",
+      unionName: "",
+      village: "",
+    }));
+    setIsDirty(true);
+    setSaveStatus("dirty");
+
+    // Smart Delivery Zone Auto-Matching
+    if (distId && deliveryZones.length > 0) {
+      const isDhaka = distId.toLowerCase() === "dhaka" || (distObj?.name || "").toLowerCase() === "dhaka";
+      const matchedZone = deliveryZones.find((z) => {
+        const n = z.name.toLowerCase();
+        if (isDhaka) {
+          return n.includes("inside") || n.includes("dhaka city") || n.includes("ঢাকা");
+        } else {
+          return n.includes("outside") || n.includes("ঢাকার বাইরে") || (!n.includes("inside") && !n.includes("dhaka"));
+        }
+      });
+      if (matchedZone) {
+        setSelectedZoneId(matchedZone._id);
+      }
+    }
+  };
+
+  const handleUpazilaChange = (upzId: string, item?: LocationOption) => {
+    const upzObj = item || findUpazila(upzId);
+    setForm((prev) => ({
+      ...prev,
+      upazilaId: upzId,
+      upazilaName: upzObj?.name || "",
+      upazilaNameBn: upzObj?.nameBn || "",
+      area: upzObj?.name || "",
+      zip: (upzObj as any)?.postalCodes?.[0] || prev.zip,
+      unionId: "",
+      unionName: "",
+      village: "",
+    }));
+    setIsDirty(true);
+    setSaveStatus("dirty");
+  };
+
   const recoverToken = searchParams?.get("recover");
   const [recoveryAttempted, setRecoveryAttempted] = useState(!recoverToken);
 
@@ -166,18 +288,35 @@ function CheckoutForm() {
           setRecoveryAttempted(true);
           if (res.data?.checkout) {
             const c = res.data.checkout;
+            const divObj = findDivision((c as any).divisionId || c.state);
+            const distObj = findDistrict((c as any).districtId || c.city);
+            const upzObj = findUpazila((c as any).upazilaId || c.area);
+
             setForm((prev) => ({
               ...prev,
               fullName: c.customerName || prev.fullName,
               phone: c.phone || prev.phone,
               email: c.email || prev.email,
+              country: c.country || "Bangladesh",
+              countryCode: "BD",
+              divisionId: divObj?.id || (c as any).divisionId || prev.divisionId,
+              divisionName: divObj?.name || c.state || prev.divisionName,
+              divisionNameBn: divObj?.nameBn || prev.divisionNameBn,
+              districtId: distObj?.id || (c as any).districtId || prev.districtId,
+              districtName: distObj?.name || c.city || prev.districtName,
+              districtNameBn: distObj?.nameBn || prev.districtNameBn,
+              upazilaId: upzObj?.id || (c as any).upazilaId || prev.upazilaId,
+              upazilaName: upzObj?.name || c.area || prev.upazilaName,
+              upazilaNameBn: upzObj?.nameBn || prev.upazilaNameBn,
+              unionId: (c as any).unionId || prev.unionId,
+              unionName: (c as any).union || prev.unionName,
+              village: (c as any).village || prev.village,
               street: c.street || c.address || prev.street,
               apartment: c.apartment || prev.apartment,
-              city: c.city || prev.city,
-              area: c.area || prev.area,
-              state: c.state || prev.state,
-              zip: c.zip || prev.zip,
-              country: c.country || prev.country,
+              city: distObj?.name || c.city || prev.city,
+              area: upzObj?.name || c.area || prev.area,
+              state: divObj?.name || c.state || prev.state,
+              zip: c.zip || distObj?.defaultPostalCode || prev.zip,
               landmark: c.landmark || prev.landmark,
               notes: c.notes || prev.notes,
             }));
@@ -241,23 +380,50 @@ function CheckoutForm() {
 
   const applySavedAddress = (address: CustomerAddress) => {
     setSelectedSavedAddressId(address._id);
+    const divObj = findDivision((address as any).divisionId || address.state);
+    const distObj = findDistrict((address as any).districtId || address.city);
+    const upzObj = findUpazila((address as any).upazilaId || address.area);
+
     setForm({
-      label: address.label,
+      label: address.label || "Home",
       fullName: address.fullName,
       phone: address.phone,
       email: address.email ?? "",
       country: address.country || "Bangladesh",
-      state: address.state,
-      city: address.city,
-      area: address.area ?? "",
+      countryCode: "BD",
+      divisionId: divObj?.id || (address as any).divisionId || "",
+      divisionName: divObj?.name || address.state || "",
+      divisionNameBn: divObj?.nameBn || "",
+      districtId: distObj?.id || (address as any).districtId || "",
+      districtName: distObj?.name || address.city || "",
+      districtNameBn: distObj?.nameBn || "",
+      upazilaId: upzObj?.id || (address as any).upazilaId || "",
+      upazilaName: upzObj?.name || address.area || "",
+      upazilaNameBn: upzObj?.nameBn || "",
+      unionId: (address as any).unionId || "",
+      unionName: (address as any).union || "",
+      village: (address as any).village || "",
+      state: divObj?.name || address.state || "",
+      city: distObj?.name || address.city || "",
+      area: upzObj?.name || address.area || "",
       street: address.street,
       apartment: address.apartment ?? "",
-      zip: address.zip ?? "",
+      zip: address.zip ?? distObj?.defaultPostalCode ?? "",
       landmark: address.landmark ?? "",
       notes: address.orderNotes ?? "",
     });
     setIsDirty(true);
     setSaveStatus("dirty");
+
+    // Auto-match delivery zone if available
+    if (distObj?.id && deliveryZones.length > 0) {
+      const isDhaka = distObj.id.toLowerCase() === "dhaka";
+      const matched = deliveryZones.find((z) => {
+        const n = z.name.toLowerCase();
+        return isDhaka ? n.includes("inside") || n.includes("dhaka") : n.includes("outside") || !n.includes("dhaka");
+      });
+      if (matched) setSelectedZoneId(matched._id);
+    }
   };
 
   const selectedZone = deliveryZones.find((z) => z._id === selectedZoneId);
@@ -478,10 +644,26 @@ function CheckoutForm() {
           fullName: form.fullName,
           phone: form.phone,
           email: form.email || undefined,
-          country: form.country || undefined,
-          state: form.state || undefined,
-          city: form.city,
-          area: form.area || undefined,
+          country: form.country || "Bangladesh",
+          countryCode: "BD",
+          division: form.divisionName || form.state || undefined,
+          divisionId: form.divisionId || undefined,
+          divisionName: form.divisionName || form.state || undefined,
+          divisionNameBn: form.divisionNameBn || undefined,
+          district: form.districtName || form.city || undefined,
+          districtId: form.districtId || undefined,
+          districtName: form.districtName || form.city || undefined,
+          districtNameBn: form.districtNameBn || undefined,
+          upazila: form.upazilaName || form.area || undefined,
+          upazilaId: form.upazilaId || undefined,
+          upazilaName: form.upazilaName || form.area || undefined,
+          upazilaNameBn: form.upazilaNameBn || undefined,
+          union: form.unionName || form.unionId || undefined,
+          unionId: form.unionId || undefined,
+          village: form.village || undefined,
+          state: form.divisionName || form.state || undefined,
+          city: form.districtName || form.city,
+          area: form.upazilaName || form.area || undefined,
           street: form.street,
           apartment: form.apartment || undefined,
           zip: form.zip || undefined,
@@ -537,8 +719,14 @@ function CheckoutForm() {
 
         dispatch(clearCart());
 
-        if ((result.data as any).gatewayUrl) {
-          window.location.href = (result.data as any).gatewayUrl;
+        const redirectUrl =
+          (result.data as any).redirectUrl ||
+          (result.data as any).gatewayUrl ||
+          (result.data as any).payment?.redirectUrl;
+
+        if (redirectUrl) {
+          console.info("[REDIRECT_START]", { redirectUrl, orderNumber: result.data.order.orderNumber });
+          window.location.assign(redirectUrl);
           return;
         }
 
@@ -551,7 +739,12 @@ function CheckoutForm() {
         setErrorMsg(result.message ?? "Checkout failed. Please try again.");
       }
     } catch (err: any) {
-      setErrorMsg(err?.data?.message ?? "Checkout failed. Please try again.");
+      const backendErr = err?.data?.message || err?.message;
+      if (err?.status === "TIMEOUT_ERROR") {
+        setErrorMsg("Payment gateway request timed out. Please try again.");
+      } else {
+        setErrorMsg(backendErr ?? "Checkout failed. Please try again.");
+      }
     }
   };
 
@@ -816,50 +1009,106 @@ function CheckoutForm() {
                   />
                 </Field>
 
-                <Field label="Country">
+                {/* Country Display */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">
+                    Country
+                  </label>
+                  <div className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm dark:border-zinc-800 dark:bg-zinc-800/40">
+                    <span className="flex items-center gap-2 font-medium text-zinc-900 dark:text-zinc-100">
+                      <span className="text-base">🇧🇩</span> Bangladesh
+                    </span>
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                      Domestic Shipping
+                    </span>
+                  </div>
+                </div>
+
+                {/* Division Selector */}
+                <LocationSelect
+                  label="Division"
+                  required
+                  placeholder="Select division..."
+                  searchPlaceholder="Search division (e.g. Dhaka, চট্টগ্রাম)..."
+                  options={divisions}
+                  value={form.divisionId}
+                  onChange={handleDivisionChange}
+                  disabled={isSubmittingOrder}
+                />
+
+                {/* District / Zila Selector */}
+                <LocationSelect
+                  label="District / Zila"
+                  required
+                  placeholder={form.divisionId ? "Select district..." : "Select division first"}
+                  searchPlaceholder="Search district (e.g. Gazipur, কুমিল্লা)..."
+                  options={districts}
+                  value={form.districtId}
+                  onChange={handleDistrictChange}
+                  disabled={!form.divisionId || isSubmittingOrder}
+                />
+
+                {/* Upazila / Thana Selector */}
+                <LocationSelect
+                  label="Upazila / Thana"
+                  required
+                  placeholder={form.districtId ? "Select upazila/thana..." : "Select district first"}
+                  searchPlaceholder="Search upazila (e.g. Savar, ধানমন্ডি)..."
+                  options={upazilas}
+                  value={form.upazilaId}
+                  onChange={handleUpazilaChange}
+                  disabled={!form.districtId || isSubmittingOrder}
+                />
+
+                {/* Union / Pourashava Selector or Input */}
+                {unions.length > 0 ? (
+                  <LocationSelect
+                    label="Union / Pourashava"
+                    placeholder="Select union..."
+                    searchPlaceholder="Search union..."
+                    options={unions}
+                    value={form.unionId || ""}
+                    onChange={(val, opt) => setForm((p) => ({ ...p, unionId: val, unionName: opt?.name || val }))}
+                    disabled={!form.upazilaId || isSubmittingOrder}
+                  />
+                ) : (
+                  <Field label="Union / Pourashava (Optional)">
+                    <input
+                      type="text"
+                      value={form.unionName || ""}
+                      onChange={(e) => setForm((p) => ({ ...p, unionName: e.target.value, unionId: e.target.value }))}
+                      placeholder="e.g. Ward / Pourashava"
+                      disabled={!form.upazilaId || isSubmittingOrder}
+                      className={inputClass}
+                    />
+                  </Field>
+                )}
+
+                {/* Village / Area */}
+                <Field label="Village / Local Area (Optional)">
                   <input
                     type="text"
-                    value={form.country}
-                    onChange={handleChange("country")}
+                    value={form.village || ""}
+                    onChange={(e) => setForm((p) => ({ ...p, village: e.target.value }))}
+                    placeholder="e.g. Sector 4, Block C, Village..."
                     disabled={isSubmittingOrder}
                     className={inputClass}
                   />
                 </Field>
 
-                <Field label="Division / State">
+                {/* Postal / ZIP Code */}
+                <Field label="Postal / ZIP Code">
                   <input
                     type="text"
-                    value={form.state}
-                    onChange={handleChange("state")}
-                    placeholder="e.g. Dhaka Division"
+                    value={form.zip}
+                    onChange={handleChange("zip")}
+                    placeholder="e.g. 1209"
                     disabled={isSubmittingOrder}
                     className={inputClass}
                   />
                 </Field>
 
-                <Field label="City / District *">
-                  <input
-                    type="text"
-                    required
-                    value={form.city}
-                    onChange={handleChange("city")}
-                    placeholder="e.g. Dhaka"
-                    disabled={isSubmittingOrder}
-                    className={inputClass}
-                  />
-                </Field>
-
-                <Field label="Area / Thana">
-                  <input
-                    type="text"
-                    value={form.area}
-                    onChange={handleChange("area")}
-                    placeholder="e.g. Dhanmondi / Gulshan"
-                    disabled={isSubmittingOrder}
-                    className={inputClass}
-                  />
-                </Field>
-
+                {/* Street / House & Road Address */}
                 <div className="sm:col-span-2">
                   <Field label="Street / House & Road Address *">
                     <input
@@ -874,27 +1123,19 @@ function CheckoutForm() {
                   </Field>
                 </div>
 
-                <Field label="Apartment / Suite / Flat (Optional)">
-                  <input
-                    type="text"
-                    value={form.apartment}
-                    onChange={handleChange("apartment")}
-                    placeholder="e.g. Flat 4B"
-                    disabled={isSubmittingOrder}
-                    className={inputClass}
-                  />
-                </Field>
-
-                <Field label="Postal / ZIP Code">
-                  <input
-                    type="text"
-                    value={form.zip}
-                    onChange={handleChange("zip")}
-                    placeholder="e.g. 1209"
-                    disabled={isSubmittingOrder}
-                    className={inputClass}
-                  />
-                </Field>
+                {/* Apartment / Suite */}
+                <div className="sm:col-span-2">
+                  <Field label="Apartment / Suite / Flat (Optional)">
+                    <input
+                      type="text"
+                      value={form.apartment}
+                      onChange={handleChange("apartment")}
+                      placeholder="e.g. Flat 4B, 3rd Floor"
+                      disabled={isSubmittingOrder}
+                      className={inputClass}
+                    />
+                  </Field>
+                </div>
               </div>
 
               <Field label="Special Delivery Instructions / Notes">

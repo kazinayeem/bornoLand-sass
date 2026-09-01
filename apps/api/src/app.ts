@@ -31,6 +31,7 @@ import { deliveryZoneRouter } from "./modules/delivery/delivery-zone.route.js";
 import { cmsRouter } from "./modules/cms/cms.route.js";
 import { categoryRouter } from "./modules/categories/category.route.js";
 import { brandRouter } from "./modules/brands/brand.route.js";
+import { locationRouter } from "./modules/locations/location.route.js";
 
 import { subscriptionPaymentRouter } from "./modules/payments/subscription-payment.route.js";
 import { subscriptionRouter } from "./modules/subscriptions/subscription.route.js";
@@ -242,6 +243,8 @@ app.use("/payments/sslcommerz", publicSSLCommerzRouter);
 app.use("/api/payments/sslcommerz", publicSSLCommerzRouter);
 app.use("/admin/payment-gateways", adminPaymentGatewaysRouter);
 app.use("/delivery-zones", deliveryZoneRouter);
+app.use("/locations", locationRouter);
+app.use("/api/locations", locationRouter);
 app.use("/cms", cmsRouter);
 app.use("/categories", categoryRouter);
 app.use("/brands", brandRouter);

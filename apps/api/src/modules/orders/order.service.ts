@@ -12,6 +12,13 @@ import { checkLimit } from "../features/feature-access.service.js";
 import { createBillingNotification } from "../notifications/billing-notification.service.js";
 
 import { NotificationModel } from "../notifications/notification.model.js";
+import {
+  validateLocationHierarchy,
+  findDivision,
+  findDistrict,
+  findUpazila,
+  matchStoreDeliveryZone,
+} from "../locations/location.service.js";
 
 function generateOrderNumber(prefix = "ORD"): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -235,6 +242,29 @@ export async function createOrder(
     }
   }
 
+  // ── Smart Location Validation & Resolution ──
+  const divCandidate = (payload.shippingAddress as any)?.divisionId || (payload.shippingAddress as any)?.division || payload.shippingAddress.state;
+  const distCandidate = (payload.shippingAddress as any)?.districtId || (payload.shippingAddress as any)?.district || payload.shippingAddress.city;
+  const upzCandidate = (payload.shippingAddress as any)?.upazilaId || (payload.shippingAddress as any)?.upazila || payload.shippingAddress.area;
+  const unionCandidate = (payload.shippingAddress as any)?.unionId || (payload.shippingAddress as any)?.union || "";
+  const villageCandidate = (payload.shippingAddress as any)?.village || "";
+
+  const divObj = divCandidate ? findDivision(divCandidate) : undefined;
+  const distObj = distCandidate ? findDistrict(distCandidate) : undefined;
+  const upzObj = upzCandidate ? findUpazila(upzCandidate) : undefined;
+
+  if (divObj || distObj || upzObj) {
+    const validation = validateLocationHierarchy({
+      divisionId: divObj?.id,
+      districtId: distObj?.id,
+      upazilaId: upzObj?.id,
+      unionId: unionCandidate || undefined,
+    });
+    if (!validation.valid) {
+      return { ok: false as const, message: validation.error || "Invalid location selection." };
+    }
+  }
+
   let deliveryCharge = 0;
   let deliveryZoneName = "";
   let deliveryZoneEta = "";
@@ -259,6 +289,18 @@ export async function createOrder(
         deliveryZoneEta = configuredZone.estimatedDays ?? "";
       }
     }
+  } else if (distObj || divObj) {
+    // Auto-match delivery zone from location
+    const matchedZone = await matchStoreDeliveryZone(storeId, {
+      divisionId: divObj?.id,
+      districtId: distObj?.id,
+      upazilaId: upzObj?.id,
+      divisionName: divObj?.name,
+      districtName: distObj?.name,
+    });
+    deliveryCharge = matchedZone.charge;
+    deliveryZoneName = matchedZone.deliveryZoneName || "";
+    deliveryZoneEta = matchedZone.estimatedDays || "";
   }
 
   if (storeSettings?.shippingEnabled === false) {
@@ -281,13 +323,28 @@ export async function createOrder(
     phone: payload.shippingAddress.phone,
     email: payload.shippingAddress.email ?? "",
     label: payload.shippingAddress.label ?? "Home",
-    area: payload.shippingAddress.area ?? "",
+    area: upzObj?.name || payload.shippingAddress.area || "",
     street: payload.shippingAddress.street,
     apartment: payload.shippingAddress.apartment ?? "",
-    city: payload.shippingAddress.city,
-    state: payload.shippingAddress.state ?? "",
-    zip: payload.shippingAddress.zip ?? "",
+    city: distObj?.name || payload.shippingAddress.city,
+    state: divObj?.name || payload.shippingAddress.state || "",
+    zip: payload.shippingAddress.zip || distObj?.defaultPostalCode || "",
     country: payload.shippingAddress.country ?? "Bangladesh",
+    countryCode: "BD",
+    division: divObj?.name || payload.shippingAddress.state || "",
+    divisionId: divObj?.id || "",
+    divisionName: divObj?.name || payload.shippingAddress.state || "",
+    divisionNameBn: divObj?.nameBn || "",
+    district: distObj?.name || payload.shippingAddress.city,
+    districtId: distObj?.id || "",
+    districtName: distObj?.name || payload.shippingAddress.city,
+    districtNameBn: distObj?.nameBn || "",
+    upazila: upzObj?.name || payload.shippingAddress.area || "",
+    upazilaId: upzObj?.id || "",
+    upazilaName: upzObj?.name || payload.shippingAddress.area || "",
+    upazilaNameBn: upzObj?.nameBn || "",
+    union: unionCandidate || "",
+    village: villageCandidate || "",
     landmark: payload.shippingAddress.landmark ?? "",
     orderNotes: payload.shippingAddress.orderNotes ?? payload.notes ?? "",
   };
@@ -339,11 +396,10 @@ export async function createOrder(
     console.info("[ORDER] SSLCommerz gateway config validated", { storeId, environment: gateway.environment });
   }
 
-
   const orderNumber = generateOrderNumber(storeSettings?.orderPrefix ?? "ORD");
   const invoiceNumber = generateOrderNumber(storeSettings?.invoicePrefix ?? "INV");
 
-  console.info("[ORDER] creating order", { orderNumber, paymentMethod, total, currencyCode });
+  console.info("[CHECKOUT_START]", { storeId, orderNumber, paymentMethod, total, currencyCode });
 
   const order = await OrderModel.create({
     storeId,
@@ -353,8 +409,17 @@ export async function createOrder(
       name: normalizedShippingAddress.fullName,
       email: normalizedShippingAddress.email,
       phone: normalizedShippingAddress.phone,
-      address: [normalizedShippingAddress.street, normalizedShippingAddress.apartment, normalizedShippingAddress.area].filter(Boolean).join(", "),
+      address: [normalizedShippingAddress.street, normalizedShippingAddress.apartment, normalizedShippingAddress.area, normalizedShippingAddress.city].filter(Boolean).join(", "),
       country: normalizedShippingAddress.country,
+      countryCode: "BD",
+      division: normalizedShippingAddress.division,
+      divisionId: normalizedShippingAddress.divisionId,
+      district: normalizedShippingAddress.district,
+      districtId: normalizedShippingAddress.districtId,
+      upazila: normalizedShippingAddress.upazila,
+      upazilaId: normalizedShippingAddress.upazilaId,
+      union: normalizedShippingAddress.union,
+      village: normalizedShippingAddress.village,
       state: normalizedShippingAddress.state,
       city: normalizedShippingAddress.city,
       area: normalizedShippingAddress.area,
@@ -492,16 +557,22 @@ export async function createOrder(
   }
 
   if (paymentMethod === "sslcommerz") {
-    console.info("[ORDER] initiating SSLCommerz payment", { orderId: String(order._id), storeId });
+    console.info("[PAYMENT_SESSION_START]", { orderId: String(order._id), storeId });
     const { initiateSSLCommerzPayment } = await import("../payments/sslcommerz.service.js");
     const sslResult = await initiateSSLCommerzPayment(storeId, String(order._id));
-    console.info("[ORDER] SSLCommerz result received", { ok: sslResult.ok, orderId: String(order._id) });
+    console.info("[CHECKOUT] SSLCommerz result received", { ok: sslResult.ok, orderId: String(order._id) });
     if (sslResult.ok) {
+      console.info("[CHECKOUT_RESPONSE_SENT]", {
+        orderId: String(order._id),
+        orderNumber: order.orderNumber,
+        gatewayUrl: sslResult.data.gatewayUrl,
+      });
       return {
         ok: true as const,
         data: {
           order: order.toObject(),
           gatewayUrl: sslResult.data.gatewayUrl,
+          redirectUrl: sslResult.data.gatewayUrl,
           sessionKey: sslResult.data.sessionKey,
           tranId: sslResult.data.tranId,
         },

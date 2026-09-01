@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import https from "https";
 import http from "http";
 import querystring from "querystring";
@@ -768,7 +769,7 @@ export async function verifyAndHandleSSLCommerzCallback(
     console.error("[SSLCOMMERZ_STORE_MISMATCH]", { orderStoreId: storeId, callbackStoreId: storeIdFromCallback });
     return {
       ok: false,
-      status: 403,
+      status: 400,
       message: "Store ID mismatch in payment verification.",
     };
   }

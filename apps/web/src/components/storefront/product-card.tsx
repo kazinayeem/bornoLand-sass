@@ -8,7 +8,6 @@ import { ProductRatingRow } from "./product-rating-row";
 import { ShoppingCart } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { addToCart } from "@/redux/slices/cart-slice";
-import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { useIsBuilder } from "@/lib/device-context";
 import { toast } from "sonner";
@@ -77,10 +76,8 @@ export function ProductCard({
     variantProp || activeThemeDef.productCardVariant || "default";
 
   const { primaryColor } = useStorefrontSurface();
-  const [addToCartRemote] = useAddToCartMutation();
   const { trackAddToCart } = useStorefrontTracking();
   const [imageFailed, setImageFailed] = useState(false);
-  const [adding, setAdding] = useState(false);
 
   const isOutOfStock = product.stock <= 0;
   const ratingStoreId = product.storeId || store._id;
@@ -110,36 +107,28 @@ export function ProductCard({
   const displayCategory = categoryLabel ?? product.brand ?? product.category ?? "";
   const showActions = showViewNow || (showAddToCart && !isOutOfStock);
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
+  const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (isOutOfStock || isBuilder || adding) return;
-    setAdding(true);
-    try {
-      dispatch(
-        addToCart({
-          productId: product._id,
-          name: product.name,
-          price: product.price,
-          quantity: 1,
-          image: getProductImageUrl(product),
-        }),
-      );
-      trackAddToCart({
-        id: product._id,
+    if (isOutOfStock || isBuilder) return;
+    dispatch(
+      addToCart({
+        productId: product._id,
         name: product.name,
         price: product.price,
         quantity: 1,
-        category: displayCategory,
-        currency: settings?.currencyCode || "BDT",
-      });
-      await addToCartRemote({ productId: product._id, quantity: 1 }).unwrap();
-      toast.success(`${product.name} added to cart`);
-    } catch {
-      toast.error("Could not add to cart");
-    } finally {
-      setAdding(false);
-    }
+        image: getProductImageUrl(product),
+      }),
+    );
+    trackAddToCart({
+      id: product._id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      category: displayCategory,
+      currency: settings?.currencyCode || "BDT",
+    });
+    toast.success(`${product.name} added to cart`);
   };
 
   return (
@@ -263,7 +252,7 @@ export function ProductCard({
                   <button
                     type="button"
                     onClick={handleAddToCart}
-                    disabled={adding || isBuilder}
+                    disabled={isBuilder}
                     className={cn(
                       "relative z-10 flex h-9 w-full items-center justify-center gap-2 rounded-xl text-xs font-bold text-white shadow-sm transition-all duration-200 hover:opacity-95 active:scale-[0.98] disabled:opacity-50 sm:text-sm",
                       variant === "grocery" ? "bg-[#e05a00] hover:bg-[#c2410c]" : variant === "electronics" ? "bg-[#081621] hover:bg-[#0071dc]" : "",
@@ -277,8 +266,8 @@ export function ProductCard({
                         : undefined
                     }
                   >
-                    <ShoppingCart className={cn("h-3.5 w-3.5", adding && "animate-pulse")} />
-                    <span>{adding ? "Adding…" : "Add to Cart"}</span>
+                    <ShoppingCart className="h-3.5 w-3.5" />
+                    <span>Add to Cart</span>
                   </button>
                 ) : null}
               </div>

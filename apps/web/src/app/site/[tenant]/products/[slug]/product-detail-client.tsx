@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 import { ShoppingCart, Heart, Star, Minus, Plus, Truck, Shield, ArrowLeft, ChevronRight, Check, RefreshCcw, MessageSquare, Award, ZoomIn } from "lucide-react";
 import { addToCart, openCart } from "@/redux/slices/cart-slice";
 import { toggleWishlist } from "@/redux/slices/wishlist-slice";
-import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { ProductCard } from "@/components/storefront/product-card";
 import { getContrastColor } from "@/lib/color-utils";
 import { useTenant } from "@/providers/tenant-provider";
@@ -64,7 +63,6 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const { store, theme, products, settings } = useTenant();
 
   const { primaryColor } = theme;
-  const [addToCartRemote] = useAddToCartMutation();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [activeTab, setActiveTab] = useState<"description" | "features" | "specs" | "reviews" | "shipping" | "refund">("description");
@@ -139,7 +137,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
     ["Stock", `${displayStock} units`],
   ].filter(([, value]) => Boolean(value));
 
-  const handleAddToCart = async (showToast = true) => {
+  const handleAddToCart = (showToast = true) => {
     dispatch(addToCart({
       productId: product._id,
       variantId: activeVariant?._id,
@@ -157,13 +155,6 @@ export function ProductDetailClient({ product }: { product: Product }) {
       category: product.category,
       currency: settings?.currencyCode || "BDT",
     });
-    try {
-      await addToCartRemote({
-        productId: product._id,
-        quantity,
-        variantId: activeVariant?._id
-      }).unwrap();
-    } catch {}
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
     if (showToast) {
@@ -171,8 +162,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
     }
   };
 
-  const handleBuyNow = async () => {
-    await handleAddToCart(false);
+  const handleBuyNow = () => {
+    handleAddToCart(false);
     dispatch(openCart());
     toast.success("Added to cart and ready to checkout");
   };

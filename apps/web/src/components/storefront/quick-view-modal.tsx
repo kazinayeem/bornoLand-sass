@@ -12,7 +12,6 @@ import { getContrastColor } from "@/lib/color-utils";
 import { StoreLink } from "./store-link";
 import { addToCart, openCart } from "@/redux/slices/cart-slice";
 import { toggleWishlist } from "@/redux/slices/wishlist-slice";
-import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { useGetPublicProductQuery } from "@/redux/api/product-api";
 import type { Product, ProductVariant } from "@/redux/api/product-api";
 import { useTenant } from "@/providers/tenant-provider";
@@ -59,7 +58,6 @@ export function QuickViewModal({ product: initialProduct, onClose }: Props) {
 
   const { theme, settings, products } = useTenant();
   const { primaryColor, buttonStyle } = theme;
-  const [addToCartRemote] = useAddToCartMutation();
   const { trackAddToCart } = useStorefrontTracking();
 
   const { data: publicData, isLoading: loadingDetails } = useGetPublicProductQuery(initialProduct.slug, {

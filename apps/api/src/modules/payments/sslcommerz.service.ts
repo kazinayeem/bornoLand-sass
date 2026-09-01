@@ -570,7 +570,7 @@ export async function initiateSSLCommerzPayment(
   orderId: string,
   appBaseUrl?: string
 ): Promise<
-  | { ok: true; data: { gatewayUrl: string; sessionKey: string; tranId: string } }
+  | { ok: true; data: { gatewayUrl: string; redirectUrl?: string; sessionKey: string; tranId: string } }
   | { ok: false; status: number; message: string }
 > {
   await connectDatabase();

@@ -180,6 +180,26 @@ export const generateStorePageMetadata = generateStoreMetadata;
  */
 export async function generateTenantLayoutMetadata(tenant: string): Promise<Metadata> {
   const store = await getTenantMetadataContext(tenant);
+  if (!store) {
+    const defaultOrigin = getMetadataBaseUrl();
+    return {
+      metadataBase: new URL(defaultOrigin),
+      title: {
+        absolute: "Store Not Found | BornoLand",
+      },
+      description: "This store does not exist on BornoLand.",
+      icons: {
+        icon: [{ url: DEFAULT_FAVICON }],
+        shortcut: [{ url: DEFAULT_FAVICON }],
+        apple: [{ url: DEFAULT_FAVICON }],
+      },
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
   const storeName = store?.shortName || store?.name || "Store";
   const description = store?.description || `${storeName} — Online Store.`;
   const canonicalUrl = getTenantCanonicalUrl(tenant, "/");
@@ -228,6 +248,26 @@ export async function generateTenantMetadata(args: {
   ogImage?: string;
 }): Promise<Metadata> {
   const store = await getTenantMetadataContext(args.tenant);
+  if (!store) {
+    const defaultOrigin = getMetadataBaseUrl();
+    return {
+      metadataBase: new URL(defaultOrigin),
+      title: {
+        absolute: "Store Not Found | BornoLand",
+      },
+      description: "This store does not exist on BornoLand.",
+      icons: {
+        icon: [{ url: DEFAULT_FAVICON }],
+        shortcut: [{ url: DEFAULT_FAVICON }],
+        apple: [{ url: DEFAULT_FAVICON }],
+      },
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
   const storeName = store?.shortName || store?.name || "Store";
   const storefrontPath = args.canonicalPath.replace(/^\/site\/[^/]+/, "") || "/";
   const canonicalUrl = getTenantCanonicalUrl(args.tenant, storefrontPath);

@@ -118,4 +118,13 @@ describe("Tenant Metadata & Favicon Architecture", () => {
     assert.equal(productMeta.description, "Cold pressed pure mustard oil");
     assert.ok((productMeta.openGraph as any)?.images?.[0]?.url?.includes("oil.jpg"));
   });
+
+  it("Test 7: Returns Store Not Found metadata for non-existent / unregistered tenants", async () => {
+    const unknownMeta = await generateTenantLayoutMetadata("non-existent-tenant-9999");
+    assert.ok(unknownMeta);
+    assert.equal((unknownMeta.title as any)?.absolute, "Store Not Found | BornoLand");
+    assert.equal(unknownMeta.description, "This store does not exist on BornoLand.");
+    assert.equal((unknownMeta.robots as any)?.index, false);
+    assert.equal((unknownMeta.robots as any)?.follow, false);
+  });
 });

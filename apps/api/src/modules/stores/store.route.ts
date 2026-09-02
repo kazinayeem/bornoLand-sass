@@ -43,6 +43,12 @@ import { contactMessageRouter } from "../notifications/contact-message.route.js"
 import { storeTrackingRouter } from "./store-tracking.route.js";
 import { incompleteCheckoutRouter } from "../orders/incomplete-checkout.route.js";
 import { storeSSLCommerzRouter } from "../payments/sslcommerz.route.js";
+import { posRouter } from "../orders/pos.route.js";
+import { hrmRouter } from "../hrm/hrm.route.js";
+import { accountingRouter } from "../accounting/accounting.route.js";
+import { crmRouter } from "../crm/crm.route.js";
+import { supportRouter } from "../support/support.route.js";
+import { operationsRouter } from "../operations/operations.route.js";
 
 export const storeRouter: Router = Router();
 
@@ -110,3 +116,9 @@ storeRouter.use("/:storeId/incomplete-checkouts", requireStorePermission("orders
 storeRouter.use("/:id/incomplete-checkouts", requireStorePermission("orders:read"), incompleteCheckoutRouter);
 storeRouter.use("/:storeId/payment-gateways/sslcommerz", requireStorePermission("payments:read"), storeSSLCommerzRouter);
 storeRouter.use("/:id/payment-gateways/sslcommerz", requireStorePermission("payments:read"), storeSSLCommerzRouter);
+storeRouter.use("/:storeId/pos", requireStoreAccess, posRouter);
+storeRouter.use("/:storeId/hrm", requireStoreAccess, hrmRouter);
+storeRouter.use("/:storeId/accounting", requireStoreAccess, accountingRouter);
+storeRouter.use("/:storeId/crm", requireStoreAccess, crmRouter);
+storeRouter.use("/:storeId/support", requireStoreAccess, supportRouter);
+storeRouter.use("/:storeId/operations", requireStoreAccess, operationsRouter);

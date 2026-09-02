@@ -16,6 +16,7 @@ import { PriceHistoryModel } from "./price-history.model.js";
 import { CostHistoryModel } from "./cost-history.model.js";
 import { InventoryAuditModel } from "./inventory-audit.model.js";
 import { ProductTimelineModel } from "./product-timeline.model.js";
+import { WasteLogModel } from "./waste-log.model.js";
 
 function oid(id: string | mongoose.Types.ObjectId | null | undefined): mongoose.Types.ObjectId | null {
   if (!id) return null;
@@ -1451,3 +1452,276 @@ export async function inventoryAgingReport(storeId: string) {
 
   return { buckets: summary, batchCount: batches.length };
 }
+
+// ── Waste & Loss Management ─────────────────────────────────────────────────
+
+export async function recordWasteLoss(
+  storeId: string,
+  payload: {
+    productId: string;
+    variantId?: string | null;
+    warehouseId?: string | null;
+    branchId?: string | null;
+    batchId?: string | null;
+    quantity: number;
+    unitCost?: number;
+    reason: string;
+    reference?: string;
+    notes?: string;
+    reportedBy?: string;
+    reportedById?: string | null;
+  }
+) {
+  await connectDatabase();
+  const sid = storeOid(storeId);
+  const pid = oid(payload.productId);
+  if (!pid) throw new Error("Valid productId is required");
+
+  const qty = Number(payload.quantity);
+  if (!qty || qty <= 0) throw new Error("Quantity must be greater than 0");
+
+  const product = await ProductModel.findOne({ _id: pid, storeId: sid });
+  if (!product) throw new Error("Product not found");
+
+  // Determine unit cost: provided > product.trueCost > product.buyPrice > product.price
+  const unitCost =
+    typeof payload.unitCost === "number" && payload.unitCost >= 0
+      ? payload.unitCost
+      : (product as any).trueCost || (product as any).buyPrice || (product as any).lastPurchaseCost || product.price || 0;
+
+  const totalCost = qty * unitCost;
+
+  // 1. Decrement inventory
+  const prevStock = product.stock ?? 0;
+  const newStock = Math.max(0, prevStock - qty);
+  product.stock = newStock;
+  await product.save();
+
+  // 2. Create StockLog entry with reason="waste"
+  await writeStockLog({
+    storeId: sid,
+    productId: pid,
+    variantId: payload.variantId ? oid(payload.variantId) : null,
+    warehouseId: payload.warehouseId ? oid(payload.warehouseId) : null,
+    batchId: payload.batchId ? oid(payload.batchId) : null,
+    previousStock: prevStock,
+    newStock,
+    quantityChange: -qty,
+    reason: "waste",
+    note: `Waste/Loss: ${payload.reason} - ${payload.notes ?? ""}`,
+    updatedBy: payload.reportedBy ?? "system",
+    updatedById: payload.reportedById ? oid(payload.reportedById) : null,
+    source: "manual",
+    reference: payload.reference ?? "",
+  });
+
+  // 3. Create WasteLog record
+  const waste = await WasteLogModel.create({
+    storeId: sid,
+    productId: pid,
+    variantId: payload.variantId ? oid(payload.variantId) : null,
+    warehouseId: payload.warehouseId ? oid(payload.warehouseId) : null,
+    branchId: payload.branchId ? oid(payload.branchId) : null,
+    batchId: payload.batchId ? oid(payload.batchId) : null,
+    quantity: qty,
+    unitCost,
+    totalCost,
+    reason: payload.reason,
+    reference: payload.reference ?? "",
+    notes: payload.notes ?? "",
+    reportedBy: payload.reportedBy ?? "system",
+    reportedById: payload.reportedById ? oid(payload.reportedById) : null,
+    status: "approved",
+    approvedBy: payload.reportedBy ?? "system",
+    approvedAt: new Date(),
+  });
+
+  return {
+    waste,
+    product: {
+      _id: product._id,
+      name: product.name,
+      previousStock: prevStock,
+      currentStock: newStock,
+      wasteValue: totalCost,
+    },
+  };
+}
+
+export async function listWasteLoss(
+  storeId: string,
+  query: {
+    page?: number;
+    limit?: number;
+    productId?: string;
+    warehouseId?: string;
+    reason?: string;
+    startDate?: string;
+    endDate?: string;
+  }
+) {
+  await connectDatabase();
+  const sid = storeOid(storeId);
+  const page = Math.max(1, Number(query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
+  const skip = (page - 1) * limit;
+
+  const filter: Record<string, any> = { storeId: sid };
+  if (query.productId && oid(query.productId)) filter.productId = oid(query.productId);
+  if (query.warehouseId && oid(query.warehouseId)) filter.warehouseId = oid(query.warehouseId);
+  if (query.reason) filter.reason = query.reason;
+  if (query.startDate || query.endDate) {
+    filter.createdAt = {};
+    if (query.startDate) filter.createdAt.$gte = new Date(query.startDate);
+    if (query.endDate) filter.createdAt.$lte = new Date(query.endDate);
+  }
+
+  const [records, total, agg] = await Promise.all([
+    WasteLogModel.find(filter)
+      .populate("productId", "name sku imageUrl price trueCost buyPrice")
+      .populate("warehouseId", "name code")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    WasteLogModel.countDocuments(filter),
+    WasteLogModel.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          totalUnits: { $sum: "$quantity" },
+          totalValue: { $sum: "$totalCost" },
+        },
+      },
+    ]),
+  ]);
+
+  const summary = agg[0] || { totalUnits: 0, totalValue: 0 };
+
+  return {
+    records,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    summary: {
+      totalUnits: summary.totalUnits,
+      totalLossValue: summary.totalValue,
+    },
+  };
+}
+
+// ── Stock Movement Ledger ───────────────────────────────────────────────────
+
+export async function getStockMovementLedger(
+  storeId: string,
+  query: {
+    page?: number;
+    limit?: number;
+    productId?: string;
+    warehouseId?: string;
+    reason?: string;
+    startDate?: string;
+    endDate?: string;
+  }
+) {
+  await connectDatabase();
+  const sid = storeOid(storeId);
+  const page = Math.max(1, Number(query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(query.limit) || 25));
+  const skip = (page - 1) * limit;
+
+  const filter: Record<string, any> = { storeId: sid };
+  if (query.productId && oid(query.productId)) filter.productId = oid(query.productId);
+  if (query.warehouseId && oid(query.warehouseId)) filter.warehouseId = oid(query.warehouseId);
+  if (query.reason) filter.reason = query.reason;
+  if (query.startDate || query.endDate) {
+    filter.createdAt = {};
+    if (query.startDate) filter.createdAt.$gte = new Date(query.startDate);
+    if (query.endDate) filter.createdAt.$lte = new Date(query.endDate);
+  }
+
+  const [logs, total] = await Promise.all([
+    StockLogModel.find(filter)
+      .populate("productId", "name sku imageUrl price stock trueCost")
+      .populate("warehouseId", "name code")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    StockLogModel.countDocuments(filter),
+  ]);
+
+  return {
+    logs,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
+// ── Product True Cost & Margins ─────────────────────────────────────────────
+
+export async function updateProductTrueCost(
+  storeId: string,
+  productId: string,
+  payload: {
+    buyPrice?: number;
+    landedCost?: number;
+    packagingCost?: number;
+    wasteCost?: number;
+    otherCost?: number;
+    minSellingPrice?: number;
+    targetGrossMarginPercent?: number;
+    supplierId?: string | null;
+  }
+) {
+  await connectDatabase();
+  const sid = storeOid(storeId);
+  const pid = oid(productId);
+  if (!pid) throw new Error("Invalid productId");
+
+  const product = await ProductModel.findOne({ _id: pid, storeId: sid });
+  if (!product) throw new Error("Product not found");
+
+  if (typeof payload.buyPrice === "number") product.set("buyPrice", Math.max(0, payload.buyPrice));
+  if (typeof payload.landedCost === "number") product.set("landedCost", Math.max(0, payload.landedCost));
+  if (typeof payload.packagingCost === "number") product.set("packagingCost", Math.max(0, payload.packagingCost));
+  if (typeof payload.wasteCost === "number") product.set("wasteCost", Math.max(0, payload.wasteCost));
+  if (typeof payload.otherCost === "number") product.set("otherCost", Math.max(0, payload.otherCost));
+  if (typeof payload.minSellingPrice === "number") product.set("minSellingPrice", Math.max(0, payload.minSellingPrice));
+  if (typeof payload.targetGrossMarginPercent === "number") product.set("targetGrossMarginPercent", payload.targetGrossMarginPercent);
+  if (payload.supplierId !== undefined) product.set("supplierId", payload.supplierId ? oid(payload.supplierId) : null);
+
+  const buy = Number(product.get("buyPrice") || 0);
+  const landed = Number(product.get("landedCost") || 0);
+  const pkg = Number(product.get("packagingCost") || 0);
+  const wst = Number(product.get("wasteCost") || 0);
+  const oth = Number(product.get("otherCost") || 0);
+
+  const trueCost = buy + landed + pkg + wst + oth;
+  product.set("trueCost", trueCost);
+
+  const sellingPrice = Number(product.price || 0);
+  const grossProfit = sellingPrice - trueCost;
+  const grossMargin = sellingPrice > 0 ? (grossProfit / sellingPrice) * 100 : 0;
+
+  await product.save();
+
+  return {
+    productId: product._id,
+    name: product.name,
+    buyPrice: buy,
+    landedCost: landed,
+    packagingCost: pkg,
+    wasteCost: wst,
+    otherCost: oth,
+    trueCost,
+    sellingPrice,
+    grossProfit,
+    grossMarginPercent: Number(grossMargin.toFixed(2)),
+  };
+}
+

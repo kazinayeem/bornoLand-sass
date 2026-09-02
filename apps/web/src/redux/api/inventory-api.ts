@@ -455,6 +455,118 @@ export const inventoryApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, { storeId }) => [{ type: "Inventory", id: `${storeId}-alerts` }],
     }),
+
+    getWasteLoss: builder.query<
+      ApiEnvelope<{
+        records: Array<{
+          _id: string;
+          productId: { _id: string; name: string; sku?: string; imageUrl?: string; price?: number; trueCost?: number };
+          warehouseId?: { _id: string; name: string; code?: string };
+          quantity: number;
+          unitCost: number;
+          totalCost: number;
+          reason: string;
+          reference?: string;
+          notes?: string;
+          reportedBy?: string;
+          createdAt: string;
+        }>;
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+        summary: { totalUnits: number; totalLossValue: number };
+      }>,
+      { storeId: string; page?: number; limit?: number; reason?: string; productId?: string; warehouseId?: string }
+    >({
+      query: ({ storeId, ...params }) => ({
+        url: `/stores/${storeId}/inventory/waste`,
+        params,
+      }),
+      providesTags: (_r, _e, { storeId }) => [{ type: "Inventory", id: `${storeId}-waste` }],
+    }),
+
+    recordWasteLoss: builder.mutation<
+      ApiEnvelope<unknown>,
+      {
+        storeId: string;
+        productId: string;
+        variantId?: string | null;
+        warehouseId?: string | null;
+        quantity: number;
+        unitCost?: number;
+        reason: string;
+        reference?: string;
+        notes?: string;
+      }
+    >({
+      query: ({ storeId, ...body }) => ({
+        url: `/stores/${storeId}/inventory/waste`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_r, _e, { storeId }) => [
+        { type: "Inventory", id: storeId },
+        { type: "Inventory", id: `${storeId}-waste` },
+        "Products",
+      ],
+    }),
+
+    getStockMovementLedger: builder.query<
+      ApiEnvelope<{
+        logs: Array<{
+          _id: string;
+          productId: { _id: string; name: string; sku?: string; imageUrl?: string; price?: number; stock?: number };
+          warehouseId?: { _id: string; name: string; code?: string };
+          previousStock: number;
+          newStock: number;
+          quantityChange: number;
+          reason: string;
+          note?: string;
+          updatedBy?: string;
+          source?: string;
+          reference?: string;
+          createdAt: string;
+        }>;
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>,
+      { storeId: string; page?: number; limit?: number; reason?: string; productId?: string; warehouseId?: string }
+    >({
+      query: ({ storeId, ...params }) => ({
+        url: `/stores/${storeId}/inventory/ledger`,
+        params,
+      }),
+      providesTags: (_r, _e, { storeId }) => [{ type: "Inventory", id: `${storeId}-ledger` }],
+    }),
+
+    updateProductTrueCost: builder.mutation<
+      ApiEnvelope<unknown>,
+      {
+        storeId: string;
+        productId: string;
+        buyPrice?: number;
+        landedCost?: number;
+        packagingCost?: number;
+        wasteCost?: number;
+        otherCost?: number;
+        minSellingPrice?: number;
+        targetGrossMarginPercent?: number;
+        supplierId?: string | null;
+      }
+    >({
+      query: ({ storeId, productId, ...body }) => ({
+        url: `/stores/${storeId}/inventory/${productId}/true-cost`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (_r, _e, { storeId }) => [
+        { type: "Inventory", id: storeId },
+        "Products",
+      ],
+    }),
   }),
 });
 
@@ -494,4 +606,8 @@ export const {
   useGenerateInventoryBarcodeMutation,
   useGetInventoryAlertSettingsQuery,
   useUpdateInventoryAlertSettingsMutation,
+  useGetWasteLossQuery,
+  useRecordWasteLossMutation,
+  useGetStockMovementLedgerQuery,
+  useUpdateProductTrueCostMutation,
 } = inventoryApi;

@@ -200,8 +200,8 @@ export const CANONICAL_MODULE_REGISTRY: Record<string, PlatformModuleDefinition>
     description: "Employee records, attendance tracking, shift scheduling, and payroll management.",
     iconName: "Users",
     dependencies: [],
-    status: "planned", // Cleanly categorized as future/planned module
-    features: ["employees", "attendance", "leave_mgmt", "payroll"],
+    status: "active",
+    features: ["employees", "departments", "attendance", "leave_mgmt", "payroll", "self_service"],
     limits: ["employees"],
     permissions: [
       "hrm:read",
@@ -209,6 +209,10 @@ export const CANONICAL_MODULE_REGISTRY: Record<string, PlatformModuleDefinition>
       "hrm:update",
       "hrm:delete",
       "hrm:manage",
+      "hrm:attendance:manage",
+      "hrm:leave:approve",
+      "hrm:payroll:manage",
+      "hrm:self:read",
     ],
   },
 
@@ -238,12 +242,51 @@ export const CANONICAL_MODULE_REGISTRY: Record<string, PlatformModuleDefinition>
     iconName: "Megaphone",
     dependencies: [],
     status: "active",
-    features: ["marketing", "meta_pixel", "tiktok_pixel", "google_analytics", "custom_tracking", "campaigns"],
+    features: ["marketing", "meta_pixel", "tiktok_pixel", "google_analytics", "custom_tracking", "campaigns", "loyalty"],
     permissions: [
       "marketing:read",
       "marketing:create",
       "marketing:update",
       "marketing:delete",
+    ],
+  },
+
+  crm: {
+    key: "crm",
+    name: "CRM & Support Desk",
+    category: "growth",
+    description: "Lead management, sales pipeline deals, customer 360° timeline, and customer support tickets.",
+    iconName: "Headphones",
+    dependencies: ["commerce"],
+    status: "active",
+    features: ["crm_deals", "support_tickets", "customer_timeline", "leads"],
+    permissions: [
+      "crm:read",
+      "crm:create",
+      "crm:update",
+      "crm:delete",
+      "crm:manage",
+      "support:read",
+      "support:create",
+      "support:update",
+      "support:manage",
+    ],
+  },
+
+  // ── OPERATIONS / WORKFLOW ─────────────────────────────────────────────────
+  operations: {
+    key: "operations",
+    name: "Approvals & Operations Workflow",
+    category: "operations",
+    description: "Unified multi-step approval engine and centralized task management across all modules.",
+    iconName: "CheckSquare",
+    dependencies: [],
+    status: "active",
+    features: ["approvals", "tasks", "automation"],
+    permissions: [
+      "operations:read",
+      "approvals:manage",
+      "tasks:manage",
     ],
   },
 
@@ -293,10 +336,10 @@ export const CANONICAL_MODULE_REGISTRY: Record<string, PlatformModuleDefinition>
     ],
   },
 
-  // ── FINANCE ───────────────────────────────────────────────────────────────
+  // ── FINANCE & ACCOUNTING ──────────────────────────────────────────────────
   finance: {
     key: "finance",
-    name: "Finance & Payments",
+    name: "Finance, Payments & Invoices",
     category: "finance",
     description: "Multi-gateway payment settings, invoice management, tax engine, and billing.",
     iconName: "CreditCard",
@@ -311,6 +354,29 @@ export const CANONICAL_MODULE_REGISTRY: Record<string, PlatformModuleDefinition>
       "payments:manage",
       "finance:read",
       "finance:manage",
+    ],
+  },
+
+  accounting: {
+    key: "accounting",
+    name: "Double-Entry Accounting & Ledger",
+    category: "finance",
+    description: "Chart of Accounts, automatic business event journals, General Ledger, and financial statements (P&L, Balance Sheet).",
+    iconName: "Landmark",
+    dependencies: [],
+    status: "active",
+    features: ["chart_of_accounts", "journal_entries", "general_ledger", "financial_reports", "expenses"],
+    permissions: [
+      "accounting:read",
+      "accounting:create",
+      "accounting:update",
+      "accounting:delete",
+      "accounting:manage",
+      "accounting:journal:create",
+      "accounting:report:view",
+      "expenses:read",
+      "expenses:create",
+      "expenses:approve",
     ],
   },
 };

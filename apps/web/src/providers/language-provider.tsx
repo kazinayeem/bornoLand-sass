@@ -85,7 +85,9 @@ export type Dictionary = {
     expired: string;
     awaitingApproval: string;
   };
-  storeNav: {
+    people: string;
+    finance: string;
+    customerGrowth: string;
     catalog: string;
     sales: string;
     growth: string;
@@ -97,13 +99,35 @@ export type Dictionary = {
     products: string;
     categories: string;
     inventory: string;
+    wasteLoss: string;
+    stockLedger: string;
+    warehouses: string;
+    purchasing: string;
+    suppliers: string;
     orders: string;
+    pos: string;
+    posShifts: string;
     incompleteOrders: string;
     customers: string;
     reviews: string;
+    employees: string;
+    organization: string;
+    attendance: string;
+    leaves: string;
+    payroll: string;
+    selfService: string;
+    accounting: string;
+    chartOfAccounts: string;
+    journalEntries: string;
+    expenses: string;
+    financialReports: string;
+    crmDeals: string;
+    supportTickets: string;
     marketing: string;
     coupons: string;
     trackingPixels: string;
+    tasks: string;
+    approvals: string;
     analytics: string;
     overview: string;
     visitors: string;
@@ -380,24 +404,49 @@ const bn: Dictionary = {
     awaitingApproval: "অনুমোদনের অপেক্ষায়",
   },
   storeNav: {
+    people: "কর্মী ও মানবসম্পদ (HRM)",
+    finance: "হিসাববিজ্ঞান ও অর্থায়ন",
+    customerGrowth: "গ্রাহক ও সিআরএম",
     catalog: "ক্যাটালগ",
     sales: "বিক্রয়",
-    growth: "বৃদ্ধি",
-    store: "স্টোর",
-    operations: "অপারেশনস",
+    growth: "বৃদ্ধি ও মার্কেটিং",
+    store: "স্টোর ও ডিজাইন",
+    operations: "অপারেশনস ও টাস্ক",
     content: "কন্টেন্ট",
     system: "সিস্টেম",
     dashboard: "ড্যাশবোর্ড",
     products: "পণ্যসমূহ",
     categories: "ক্যাটাগরি",
-    inventory: "ইনভেন্টরি",
+    inventory: "ইনভেন্টরি ও স্টক",
+    wasteLoss: "ক্ষয়ক্ষতি ও অপচয় (Waste)",
+    stockLedger: "স্টক মুভমেন্ট লেজার",
+    warehouses: "মাল্টি-ওয়্যারহাউস",
+    purchasing: "ক্রয় ও পারচেজ অর্ডার",
+    suppliers: "সরবরাহকারী (Suppliers)",
     orders: "অর্ডার",
+    pos: "পয়েন্ট অব সেল (POS)",
+    posShifts: "POS ক্যাশ রেজিস্টার",
     incompleteOrders: "অসম্পূর্ণ অর্ডার",
-    customers: "গ্রাহক",
+    customers: "গ্রাহক মাস্টার",
     reviews: "রিভিউ",
-    marketing: "মার্কেটিং",
+    employees: "কর্মকর্তা-কর্মচারী",
+    organization: "বিভাগ ও পদবী",
+    attendance: "হাজিরা ও ওভারটাইম",
+    leaves: "ছুটি ব্যবস্থাপনা",
+    payroll: "বেতন ও পে-রোল",
+    selfService: "কর্মী পোর্টাল",
+    accounting: "অ্যাকাউন্টিং ড্যাশবোর্ড",
+    chartOfAccounts: "হিসাবের তালিকা (COA)",
+    journalEntries: "ডাবল-এন্ট্রি জার্নাল",
+    expenses: "ব্যয় ও খরচ (Expenses)",
+    financialReports: "আর্থিক বিবরণী (P&L / BS)",
+    crmDeals: "সিআরএম পাইপলাইন",
+    supportTickets: "সাপোর্ট টিকিট",
+    marketing: "মার্কেটিং ক্যাম্পেইন",
     coupons: "কুপন",
     trackingPixels: "ট্র্যাকিং ও পিক্সেল",
+    tasks: "টাস্ক ও কার্যতালিকা",
+    approvals: "অনুমোদন কেন্দ্র (Approvals)",
     analytics: "অ্যানালিটিক্স",
     overview: "ওভারভিউ",
     visitors: "ভিজিটর",
@@ -674,24 +723,49 @@ const en: Dictionary = {
     awaitingApproval: "Awaiting Approval",
   },
   storeNav: {
-    catalog: "CATALOG",
-    sales: "SALES",
-    growth: "GROWTH",
-    store: "STORE",
-    operations: "OPERATIONS",
-    content: "CONTENT",
-    system: "SYSTEM",
+    people: "PEOPLE & HRM",
+    finance: "FINANCE & ACCOUNTING",
+    customerGrowth: "CUSTOMER & CRM",
+    catalog: "COMMERCE & CATALOG",
+    sales: "SALES & ORDERS",
+    growth: "GROWTH & MARKETING",
+    store: "WEBSITE & CMS",
+    operations: "OPERATIONS & WORKFLOW",
+    content: "CONTENT & MEDIA",
+    system: "SYSTEM & ACCESS",
     dashboard: "Dashboard",
     products: "Products",
     categories: "Categories",
-    inventory: "Inventory",
+    inventory: "Inventory & Stock",
+    wasteLoss: "Waste & Loss Tracker",
+    stockLedger: "Stock Movement Ledger",
+    warehouses: "Multi-Warehouse",
+    purchasing: "Purchasing & POs",
+    suppliers: "Suppliers Master",
     orders: "Orders",
+    pos: "Point of Sale (POS)",
+    posShifts: "POS Register & Shifts",
     incompleteOrders: "Incomplete Orders",
-    customers: "Customers",
+    customers: "Customer Master",
     reviews: "Reviews",
-    marketing: "Marketing",
+    employees: "Employees Directory",
+    organization: "Depts & Designations",
+    attendance: "Attendance & Shifts",
+    leaves: "Leave Management",
+    payroll: "Payroll & Payslips",
+    selfService: "Employee Portal",
+    accounting: "Accounting Dashboard",
+    chartOfAccounts: "Chart of Accounts",
+    journalEntries: "Journal Entries",
+    expenses: "Business Expenses",
+    financialReports: "Financial Statements",
+    crmDeals: "CRM Pipeline & Deals",
+    supportTickets: "Support Desk",
+    marketing: "Campaigns",
     coupons: "Coupons",
     trackingPixels: "Tracking & Pixels",
+    tasks: "Tasks Management",
+    approvals: "Approvals Center",
     analytics: "Analytics",
     overview: "Overview",
     visitors: "Visitors",
@@ -706,22 +780,22 @@ const en: Dictionary = {
     campaigns: "Campaigns",
     conversion: "Conversion",
     reports: "Reports",
-    design: "Design",
+    design: "Design & Themes",
     navigation: "Navigation",
     seo: "SEO",
     domain: "Domain",
     socialLinks: "Social Links",
     shipping: "Shipping",
-    courier: "Courier",
+    courier: "Courier Logistics",
     payments: "Payments",
     taxes: "Taxes",
-    media: "Media",
+    media: "Media Library",
     messages: "Messages",
     faq: "FAQ",
     settings: "Settings",
-    apps: "Apps",
-    activity: "Activity",
-    billing: "Billing",
+    apps: "Apps & Integrations",
+    activity: "Audit Activity",
+    billing: "Billing & Plans",
     storage: "Storage",
     storageAlmostFull: "Storage almost full",
     upgrade: "Upgrade",

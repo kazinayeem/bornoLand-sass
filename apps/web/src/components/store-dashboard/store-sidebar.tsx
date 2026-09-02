@@ -53,6 +53,21 @@ import {
   ArrowLeft,
   HardDrive,
   Calculator,
+  UserCheck,
+  CalendarCheck,
+  CalendarDays,
+  Wallet,
+  Landmark,
+  BookOpen,
+  Receipt,
+  Headphones,
+  CheckSquare,
+  Building2,
+  Trash2,
+  ArrowLeftRight,
+  Clock,
+  Briefcase,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
@@ -109,6 +124,7 @@ export type NavGroupDef = {
 export function getSidebarNavGroups(t: Dictionary, isBn = false): NavGroupDef[] {
   const sn = t.storeNav;
   return [
+    // ── COMMERCE & CATALOG ──
     {
       group: sn.catalog,
       items: [
@@ -117,22 +133,79 @@ export function getSidebarNavGroups(t: Dictionary, isBn = false): NavGroupDef[] 
         { href: "/inventory", label: sn.inventory, icon: Boxes, featureKey: "inventory", permission: "inventory:read" },
       ],
     },
+    // ── INVENTORY & PROCUREMENT ──
+    {
+      group: isBn ? "ইনভেন্টরি ও প্রকিউরমেন্ট" : "INVENTORY & PROCUREMENT",
+      items: [
+        { href: "/inventory/waste", label: sn.wasteLoss, icon: Trash2, featureKey: "inventory", permission: "inventory:read" },
+        { href: "/inventory/ledger", label: sn.stockLedger, icon: ArrowLeftRight, featureKey: "inventory", permission: "inventory:read" },
+        { href: "/inventory/warehouses", label: sn.warehouses, icon: Building2, featureKey: "warehouses", permission: "warehouse:read" },
+        { href: "/inventory/purchasing", label: sn.purchasing, icon: Receipt, featureKey: "purchase_orders", permission: "procurement:read" },
+        { href: "/inventory/suppliers", label: sn.suppliers, icon: Truck, featureKey: "suppliers", permission: "procurement:read" },
+      ],
+    },
+    // ── SALES & ORDERS ──
     {
       group: sn.sales,
       items: [
         { href: "/orders", label: sn.orders, icon: ShoppingBag, exact: true, permission: "orders:read" },
-        { href: "/pos", label: isBn ? "পয়েন্ট অব সেল (POS)" : "Point of Sale (POS)", icon: Calculator, featureKey: "pos", permission: "pos:read" },
+        { href: "/pos", label: sn.pos, icon: Calculator, featureKey: "pos", permission: "pos:read" },
+        { href: "/pos/shifts", label: sn.posShifts, icon: Clock, featureKey: "pos", permission: "pos:read" },
         { href: "/orders/incomplete", label: sn.incompleteOrders, icon: ShoppingCart, featureKey: "incomplete_orders", permission: "orders:read" },
         { href: "/customers", label: sn.customers, icon: Users, permission: "customers:read" },
         { href: "/reviews", label: sn.reviews, icon: Star, featureKey: "reviews", permission: "reviews:read" },
       ],
     },
+    // ── PEOPLE & HRM ──
+    {
+      group: sn.people,
+      items: [
+        { href: "/hrm/employees", label: sn.employees, icon: Users, featureKey: "employees", permission: "hrm:read" },
+        { href: "/hrm/organization", label: sn.organization, icon: Briefcase, featureKey: "departments", permission: "hrm:read" },
+        { href: "/hrm/attendance", label: sn.attendance, icon: CalendarCheck, featureKey: "attendance", permission: "hrm:read" },
+        { href: "/hrm/leaves", label: sn.leaves, icon: CalendarDays, featureKey: "leave_mgmt", permission: "hrm:read" },
+        { href: "/hrm/payroll", label: sn.payroll, icon: Wallet, featureKey: "payroll", permission: "hrm:payroll:manage" },
+        { href: "/hrm/self-service", label: sn.selfService, icon: UserCheck, featureKey: "self_service", permission: "hrm:self:read" },
+      ],
+    },
+    // ── FINANCE & ACCOUNTING ──
+    {
+      group: sn.finance,
+      items: [
+        { href: "/finance/accounting", label: sn.accounting, icon: Landmark, featureKey: "chart_of_accounts", permission: "accounting:read" },
+        { href: "/finance/accounting/coa", label: sn.chartOfAccounts, icon: BookOpen, featureKey: "chart_of_accounts", permission: "accounting:read" },
+        { href: "/finance/accounting/journal", label: sn.journalEntries, icon: FileSpreadsheet, featureKey: "journal_entries", permission: "accounting:read" },
+        { href: "/finance/expenses", label: sn.expenses, icon: Receipt, featureKey: "expenses", permission: "expenses:read" },
+        { href: "/finance/reports", label: sn.financialReports, icon: BarChart3, featureKey: "financial_reports", permission: "accounting:report:view" },
+      ],
+    },
+    // ── CUSTOMER & CRM ──
+    {
+      group: sn.customerGrowth,
+      items: [
+        { href: "/crm/deals", label: sn.crmDeals, icon: Target, featureKey: "crm_deals", permission: "crm:read" },
+        { href: "/support/tickets", label: sn.supportTickets, icon: Headphones, featureKey: "support_tickets", permission: "support:read" },
+        { href: "/marketing", label: sn.marketing, icon: Megaphone, featureKey: "marketing", permission: "marketing:read" },
+        { href: "/coupons", label: sn.coupons, icon: Ticket, featureKey: "coupons", permission: "coupons:read" },
+        { href: "/settings/tracking", label: sn.trackingPixels, icon: Target, featureKey: "marketing", permission: "marketing:read" },
+      ],
+    },
+    // ── OPERATIONS & WORKFLOW ──
+    {
+      group: sn.operations,
+      items: [
+        { href: "/operations/approvals", label: sn.approvals, icon: CheckSquare, featureKey: "approvals", permission: "operations:read" },
+        { href: "/operations/tasks", label: sn.tasks, icon: Layers, featureKey: "tasks", permission: "operations:read" },
+        { href: "/settings/shipping", label: sn.shipping, icon: Truck, permission: "shipping:read" },
+        { href: "/settings/courier", label: sn.courier, icon: PackageCheck, featureKey: "courier", permission: "shipping:read" },
+        { href: "/settings/payments", label: sn.payments, icon: CreditCard, permission: "payments:read" },
+        { href: "/settings/taxes", label: sn.taxes, icon: Percent, permission: "settings:read" },
+      ],
+    },
+    // ── ANALYTICS & BI ──
     {
       group: sn.growth,
       items: [
-        { href: "/marketing", label: sn.marketing, icon: Megaphone, featureKey: "marketing", comingSoon: true, permission: "marketing:read" },
-        { href: "/coupons", label: sn.coupons, icon: Ticket, featureKey: "coupons", permission: "coupons:read" },
-        { href: "/settings/tracking", label: sn.trackingPixels, icon: Target, featureKey: "marketing", permission: "marketing:read" },
         {
           href: "/analytics",
           label: sn.analytics,
@@ -159,39 +232,27 @@ export function getSidebarNavGroups(t: Dictionary, isBn = false): NavGroupDef[] 
         { href: "/reports", label: sn.reports, icon: FileSpreadsheet, featureKey: "reports", permission: "reports:read" },
       ],
     },
+    // ── WEBSITE & CMS ──
     {
       group: sn.store,
       items: [
         { href: "/design", label: sn.design, icon: Palette, permission: "pages:read" },
         { href: "/settings?section=navigation", label: sn.navigation, icon: Menu, permission: "pages:read" },
         { href: "/pages", label: sn.pages, icon: FileText, permission: "pages:read" },
+        { href: "/media", label: sn.media, icon: ImageIcon, featureKey: "media", permission: "media:read" },
+        { href: "/customer-messages", label: sn.messages, icon: Mail, featureKey: "cms", permission: "settings:read" },
         { href: "/settings?section=seo", label: sn.seo, icon: Search, featureKey: "seo", permission: "settings:read" },
         { href: "/settings?section=domain", label: sn.domain, icon: Globe2, featureKey: "custom_domain", permission: "settings:read" },
         { href: "/settings?section=social-links", label: sn.socialLinks, icon: Share2, permission: "settings:read" },
-      ],
-    },
-    {
-      group: sn.operations,
-      items: [
-        { href: "/settings/shipping", label: sn.shipping, icon: Truck, permission: "shipping:read" },
-        { href: "/settings/courier", label: sn.courier, icon: PackageCheck, featureKey: "courier", permission: "shipping:read" },
-        { href: "/settings/payments", label: sn.payments, icon: CreditCard, permission: "payments:read" },
-        { href: "/settings/taxes", label: sn.taxes, icon: Percent, permission: "settings:read" },
-      ],
-    },
-    {
-      group: sn.content,
-      items: [
-        { href: "/media", label: sn.media, icon: ImageIcon, featureKey: "media", permission: "media:read" },
-        { href: "/customer-messages", label: sn.messages, icon: Mail, featureKey: "cms", permission: "settings:read" },
         { href: "/settings?section=faq", label: sn.faq, icon: HelpCircle, permission: "settings:read" },
       ],
     },
+    // ── SYSTEM & ACCESS ──
     {
       group: sn.system,
       items: [
         { href: "/settings?section=general", label: sn.settings, icon: Settings, permission: "settings:read" },
-        { href: "/members", label: isBn ? "টিম মেম্বার" : "Team Members", icon: Users, permission: "members:read" },
+        { href: "/members", label: isBn ? "টিম ও পারমিশন" : "Team & Permissions", icon: Users, permission: "members:read" },
         { href: "/apps", label: sn.apps, icon: Blocks, featureKey: "apps", comingSoon: true },
         { href: "/activity", label: sn.activity, icon: ScrollText, permission: "settings:read" },
         { href: "/billing", label: sn.billing, icon: BillingCard },

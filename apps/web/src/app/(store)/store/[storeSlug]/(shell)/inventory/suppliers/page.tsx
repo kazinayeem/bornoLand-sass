@@ -231,8 +231,8 @@ export default function SuppliersPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "ফোন নম্বর" : "Phone"}</Label>
                   <Input
                     value={phone}
@@ -240,7 +240,7 @@ export default function SuppliersPage() {
                     placeholder="017XXXXXXXX"
                   />
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "ইমেইল" : "Email"}</Label>
                   <Input
                     type="email"

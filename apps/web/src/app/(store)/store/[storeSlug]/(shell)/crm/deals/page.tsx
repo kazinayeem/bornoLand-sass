@@ -312,25 +312,25 @@ export default function DealsPipelinePage() {
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Bulk Wholesale Supply Order" required />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1 min-w-0">
                   <Label>{isBn ? "গ্রাহকের নাম *" : "Customer Name *"}</Label>
                   <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="e.g. Ahmed Trading" required />
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <Label>{isBn ? "সম্ভাব্য ডিল মূল্য (৳) *" : "Deal Value (৳) *"}</Label>
                   <Input type="number" min="1" step="100" value={value} onChange={(e) => setValue(e.target.value)} required />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1 min-w-0">
                   <Label>{isBn ? "ফোন নম্বর" : "Phone"}</Label>
                   <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="017XXXXXXXX" />
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <Label>{isBn ? "ইমেইল" : "Email"}</Label>
                   <Input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="client@domain.com" />
                 </div>

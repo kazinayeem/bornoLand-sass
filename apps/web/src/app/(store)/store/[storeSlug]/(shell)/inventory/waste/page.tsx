@@ -366,8 +366,8 @@ export default function WasteLossPage() {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "পরিমাণ *" : "Quantity *"}</Label>
                   <Input
                     type="number"
@@ -378,7 +378,7 @@ export default function WasteLossPage() {
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "একক প্রকৃত খরচ (৳)" : "Unit True Cost (৳)"}</Label>
                   <Input
                     type="number"
@@ -390,8 +390,8 @@ export default function WasteLossPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "ক্ষতির কারণ *" : "Reason *"}</Label>
                   <Select value={reason} onValueChange={setReason}>
                     <SelectTrigger>

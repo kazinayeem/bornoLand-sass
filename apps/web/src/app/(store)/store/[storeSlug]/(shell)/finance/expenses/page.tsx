@@ -316,7 +316,7 @@ export default function ExpensesPage() {
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Office Rent for Month" required />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label>{isBn ? "ক্যাটাগরি" : "Category"}</Label>
                   <Select value={category} onValueChange={setCategory}>
@@ -338,7 +338,7 @@ export default function ExpensesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label>{isBn ? "পেমেন্ট মাধ্যম" : "Payment Method"}</Label>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>

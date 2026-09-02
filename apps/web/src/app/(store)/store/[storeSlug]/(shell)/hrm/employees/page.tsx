@@ -282,8 +282,8 @@ export default function EmployeesPage() {
             </DialogHeader>
 
             <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto px-1">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "নামের প্রথম অংশ *" : "First Name *"}</Label>
                   <Input
                     value={firstName}
@@ -292,7 +292,7 @@ export default function EmployeesPage() {
                     required
                   />
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "নামের শেষ অংশ" : "Last Name"}</Label>
                   <Input
                     value={lastName}
@@ -302,8 +302,8 @@ export default function EmployeesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "ইমেইল *" : "Email *"}</Label>
                   <Input
                     type="email"
@@ -313,7 +313,7 @@ export default function EmployeesPage() {
                     required
                   />
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "ফোন নম্বর" : "Phone Number"}</Label>
                   <Input
                     value={phone}
@@ -323,8 +323,8 @@ export default function EmployeesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "বিভাগ" : "Department"}</Label>
                   <Select value={departmentId} onValueChange={setDepartmentId}>
                     <SelectTrigger>
@@ -339,7 +339,7 @@ export default function EmployeesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "পদবী" : "Designation"}</Label>
                   <Select value={designationId} onValueChange={setDesignationId}>
                     <SelectTrigger>
@@ -356,8 +356,8 @@ export default function EmployeesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "কাজের শিফট" : "Work Shift"}</Label>
                   <Select value={shiftId} onValueChange={setShiftId}>
                     <SelectTrigger>

@@ -230,8 +230,8 @@ export default function WarehousesPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "সুবিধা কোড" : "Facility Code"}</Label>
                   <Input
                     value={code}
@@ -239,7 +239,7 @@ export default function WarehousesPage() {
                     placeholder="e.g. WH-DHK-01"
                   />
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "শহর" : "City"}</Label>
                   <Input
                     value={city}

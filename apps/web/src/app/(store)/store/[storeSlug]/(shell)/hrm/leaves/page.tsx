@@ -278,8 +278,8 @@ export default function LeavesPage() {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "ছুটির ধরন" : "Leave Type"}</Label>
                   <Select value={leaveType} onValueChange={setLeaveType}>
                     <SelectTrigger>
@@ -293,7 +293,7 @@ export default function LeavesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "মোট দিন সংখ্যা *" : "Days Count *"}</Label>
                   <Input
                     type="number"
@@ -306,12 +306,12 @@ export default function LeavesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "শুরু তারিখ *" : "Start Date *"}</Label>
                   <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   <Label>{isBn ? "শেষ তারিখ *" : "End Date *"}</Label>
                   <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} required />
                 </div>

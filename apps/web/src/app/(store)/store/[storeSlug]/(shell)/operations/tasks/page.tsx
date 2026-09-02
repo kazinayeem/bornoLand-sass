@@ -349,8 +349,8 @@ export default function OperationsTasksPage() {
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Inspect damaged goods batch" required />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1 min-w-0">
                   <Label>{isBn ? "মডিউল" : "Module"}</Label>
                   <Select value={module} onValueChange={(v: any) => setModule(v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -365,7 +365,7 @@ export default function OperationsTasksPage() {
                   </Select>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <Label>{isBn ? "অগ্রাধিকার" : "Priority"}</Label>
                   <Select value={priority} onValueChange={setPriority}>
                     <SelectTrigger><SelectValue /></SelectTrigger>

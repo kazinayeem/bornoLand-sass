@@ -390,12 +390,12 @@ export default function SupportTicketsPage() {
                 <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Order Delivery Delayed" required />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1 min-w-0">
                   <Label>{isBn ? "গ্রাহকের নাম *" : "Customer Name *"}</Label>
                   <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="e.g. Farhan Ali" required />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <Label>{isBn ? "ফোন নম্বর" : "Phone"}</Label>
                   <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="017XXXXXXXX" />
                 </div>

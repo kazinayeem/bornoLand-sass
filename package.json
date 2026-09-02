@@ -10,6 +10,7 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "clean": "turbo run clean",
+    "seed:nayeem-products": "pnpm --filter @bornoland/api seed:nayeem-products",
     "docker:build": "docker compose --env-file ${ENV_FILE:-.env.production} build",
     "docker:up": "docker compose --env-file ${ENV_FILE:-.env.production} up -d",
     "docker:down": "docker compose --env-file ${ENV_FILE:-.env.production} down",

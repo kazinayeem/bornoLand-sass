@@ -9,6 +9,7 @@
     "seed": "tsx src/seed/cli.ts",
     "seed:products": "tsx src/seed/nayeem-products.cli.ts",
     "seed:nayeem": "tsx src/scripts/seed-nayeem-store.ts",
+    "seed:nayeem-products": "tsx ../../scripts/seed-nayeem-products.ts",
     "migrate": "tsx src/bootstrap/cli.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

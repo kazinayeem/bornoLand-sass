@@ -198,6 +198,7 @@ export async function getPublicProducts(storeId: string, query: Record<string, u
 
   const [products, total] = await Promise.all([
     ProductModel.find(filter)
+      .select("-buyPrice -landedCost -packagingCost -wasteCost -otherCost -trueCost -lastPurchaseCost -averageCost -supplierId")
       .sort(params.sort ?? { createdAt: -1 })
       .skip(params.skip)
       .limit(params.limit)
@@ -231,9 +232,17 @@ export async function getProduct(productId: string) {
 
 export async function getProductBySlug(storeId: string, slug: string) {
   await connectDatabase();
-  const product = await ProductModel.findOne({ storeId, slug, status: "active" }).lean();
+  const product = await ProductModel.findOne({ storeId, slug, status: "active" })
+    .select("-buyPrice -landedCost -packagingCost -wasteCost -otherCost -trueCost -lastPurchaseCost -averageCost -supplierId")
+    .lean();
   if (!product) return { ok: false as const, message: "Product not found" };
   const hydrated = await hydrateProduct(product as Record<string, unknown>);
+  if (Array.isArray(hydrated.variants)) {
+    hydrated.variants = hydrated.variants.map((v: any) => {
+      const { costPrice, ...cleanVariant } = v;
+      return cleanVariant;
+    });
+  }
   return { ok: true as const, data: { product: hydrated } };
 }
 

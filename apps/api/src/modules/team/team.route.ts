@@ -11,6 +11,7 @@ import {
   updateMemberStatusController,
   removeStoreMemberController,
   resendMemberInviteController,
+  sendMemberPasswordResetController,
   getMyStorePermissionsController,
   validateInviteTokenController,
   acceptInviteController,
@@ -70,6 +71,13 @@ teamRouter.post(
   requireAuth,
   requireStorePermission("members:manage"),
   resendMemberInviteController,
+);
+
+teamRouter.post(
+  "/stores/:storeId/members/:memberId/reset-password",
+  requireAuth,
+  requireStorePermission("members:manage"),
+  sendMemberPasswordResetController,
 );
 
 /**

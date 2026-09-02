@@ -19,6 +19,7 @@ import {
   UserCheck,
   Send,
   Loader2,
+  KeyRound,
 } from "lucide-react";
 import {
   useGetStoreMembersQuery,
@@ -26,6 +27,7 @@ import {
   useUpdateMemberStatusMutation,
   useRemoveMemberMutation,
   useResendInviteMutation,
+  useSendMemberPasswordResetMutation,
   type StoreMember,
 } from "@/redux/api/team-api";
 import { useGetStoreFeatureAccessQuery, getFeatureByKey } from "@/redux/api/feature-api";
@@ -58,6 +60,7 @@ export function MembersPage({ storeId, storeSlug }: MembersPageProps) {
   const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateMemberStatusMutation();
   const [removeMember, { isLoading: isRemoving }] = useRemoveMemberMutation();
   const [resendInvite, { isLoading: isResending }] = useResendInviteMutation();
+  const [sendPasswordReset, { isLoading: isResettingPassword }] = useSendMemberPasswordResetMutation();
 
   const members = membersRes?.data?.members ?? [];
 
@@ -124,6 +127,18 @@ export function MembersPage({ storeId, storeSlug }: MembersPageProps) {
       alert("Invitation resent successfully!");
     } catch (err: any) {
       alert(err?.data?.message || "Failed to resend invitation");
+    }
+  };
+
+  const handleResetPassword = async (member: StoreMember) => {
+    setActionMenuMemberId(null);
+    if (confirm(`Send password reset email to ${member.email}?`)) {
+      try {
+        await sendPasswordReset({ storeId, memberId: member._id }).unwrap();
+        alert("Password reset email sent to member!");
+      } catch (err: any) {
+        alert(err?.data?.message || "Failed to send password reset email");
+      }
     }
   };
 
@@ -360,6 +375,15 @@ export function MembersPage({ storeId, storeSlug }: MembersPageProps) {
                                         <span>Reactivate Member</span>
                                       </>
                                     )}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleResetPassword(member)}
+                                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                                  >
+                                    <KeyRound className="h-3.5 w-3.5 text-zinc-500" />
+                                    <span>Reset Password</span>
                                   </button>
 
                                   <div className="my-1 border-t border-zinc-100 dark:border-zinc-800" />

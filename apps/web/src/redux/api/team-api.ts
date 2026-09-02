@@ -133,6 +133,13 @@ export const teamApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_res, _err, { storeId }) => [{ type: "Members", id: `LIST-${storeId}` }],
     }),
+
+    sendMemberPasswordReset: builder.mutation<ApiEnvelope<{ ok: boolean; message: string }>, { storeId: string; memberId: string }>({
+      query: ({ storeId, memberId }) => ({
+        url: `/stores/${storeId}/members/${memberId}/reset-password`,
+        method: "POST",
+      }),
+    }),
   }),
 });
 
@@ -144,4 +151,5 @@ export const {
   useUpdateMemberStatusMutation,
   useRemoveMemberMutation,
   useResendInviteMutation,
+  useSendMemberPasswordResetMutation,
 } = teamApi;

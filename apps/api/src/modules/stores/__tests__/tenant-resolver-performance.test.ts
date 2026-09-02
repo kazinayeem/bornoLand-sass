@@ -206,13 +206,13 @@ describe("Tenant Resolver Performance & Isolation Test Suite", () => {
     assert.equal(result.data.navigations?.length, 2, "Both navigations must be returned");
 
     // Verify batched menu item trees
-    const primaryNav = result.data.navigations?.find((n: any) => n.key === "primary");
+    const primaryNav = result.data.navigations?.find((n: any) => n.key === "primary") as any;
     assert.ok(primaryNav, "Primary navigation must exist");
     assert.equal(primaryNav.items?.length, 2, "Primary nav items must be assembled into tree");
     assert.equal(primaryNav.items[0].title, "Home");
     assert.equal(primaryNav.items[1].title, "Shop");
 
-    const footerNav = result.data.navigations?.find((n: any) => n.key === "footer");
+    const footerNav = result.data.navigations?.find((n: any) => n.key === "footer") as any;
     assert.ok(footerNav, "Footer navigation must exist");
     assert.equal(footerNav.items?.length, 1, "Footer nav items must be assembled into tree");
 

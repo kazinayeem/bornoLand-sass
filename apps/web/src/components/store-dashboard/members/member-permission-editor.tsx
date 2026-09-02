@@ -22,9 +22,20 @@ export const PERMISSION_GROUPS: PermissionModuleGroup[] = [
     description: "Manage store orders, status updates, notes, and refunds",
     permissions: [
       { key: "orders:read", label: "View Orders", description: "Browse order list and details" },
-      { key: "orders:create", label: "Create Orders", description: "Create manual / POS orders" },
+      { key: "orders:create", label: "Create Orders", description: "Create manual orders" },
       { key: "orders:update", label: "Update Orders", description: "Update status, shipping, and notes" },
       { key: "orders:delete", label: "Refund / Cancel", description: "Process refunds and order cancellations" },
+    ],
+  },
+  {
+    id: "pos",
+    name: "Point of Sale (POS)",
+    description: "In-person checkout, cashier register, receipts, and shifts",
+    permissions: [
+      { key: "pos:read", label: "Access POS", description: "Open POS register and scan products" },
+      { key: "pos:create", label: "Process Sales", description: "Create orders and accept payments" },
+      { key: "pos:refund", label: "POS Refunds", description: "Process customer refunds at counter" },
+      { key: "pos:manage", label: "Manage Registers", description: "Manage POS terminals and shifts" },
     ],
   },
   {
@@ -43,10 +54,21 @@ export const PERMISSION_GROUPS: PermissionModuleGroup[] = [
   {
     id: "inventory",
     name: "Inventory & Stock",
-    description: "Manage stock counts, adjustments, and warehouse logs",
+    description: "Manage stock counts, adjustments, batches, and valuation",
     permissions: [
       { key: "inventory:read", label: "View Inventory", description: "View stock levels and logs" },
       { key: "inventory:update", label: "Adjust Stock", description: "Update stock counts and batch data" },
+      { key: "inventory:export", label: "Export Inventory", description: "Export inventory stock reports" },
+    ],
+  },
+  {
+    id: "warehouse",
+    name: "Warehouses & Transfers",
+    description: "Multi-warehouse locations, stock transfers, and receiving",
+    permissions: [
+      { key: "warehouse:read", label: "View Warehouses", description: "Browse warehouses and locations" },
+      { key: "warehouse:manage", label: "Manage Facilities", description: "Create and edit warehouses" },
+      { key: "warehouse:update", label: "Stock Transfers", description: "Initiate and approve transfers" },
     ],
   },
   {

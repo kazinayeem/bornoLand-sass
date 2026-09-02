@@ -1,6 +1,11 @@
 import type { Response } from "express";
 import type { PermissionRequest } from "../../common/middleware/store-permission.middleware.js";
-import { sendSuccess, sendFailure } from "../../common/utils/api-response.js";
+import {
+  inviteMemberSchema,
+  updateMemberSchema,
+  updateMemberStatusSchema,
+  acceptInviteSchema,
+} from "./team.validator.js";
 import {
   listStoreMembers,
   inviteStoreMember,
@@ -11,32 +16,31 @@ import {
   getEffectiveUserPermissions,
   validateInviteToken,
   acceptInvite,
+  TeamServiceError,
 } from "./team.service.js";
-import {
-  inviteMemberSchema,
-  updateMemberSchema,
-  updateMemberStatusSchema,
-  acceptInviteSchema,
-} from "./team.validator.js";
 
-// ── Helper to extract error details ──────────────────────────────────────────
-
-function handleServiceError(res: Response, err: unknown) {
-  const e = err as { message?: string; status?: number; code?: string; [k: string]: unknown };
-  const status = e.status ?? 500;
-  const extra: Record<string, unknown> = {};
-  if (e.code) extra.code = e.code;
-  if (e.requiredUpgrade) extra.requiredUpgrade = true;
-  if (e.current !== undefined) extra.current = e.current;
-  if (e.limit !== undefined) extra.limit = e.limit;
-  return res.status(status).json({ success: false, message: e.message ?? "Internal server error", ...extra });
+// Helper for consistent response envelope
+function sendSuccess(res: Response, data: unknown, message?: string) {
+  return res.json({ success: true, data, message });
 }
 
-// ─── List Store Members ───────────────────────────────────────────────────────
+function sendFailure(res: Response, message: string, status = 400, code?: string) {
+  return res.status(status).json({ success: false, message, code });
+}
+
+function handleServiceError(res: Response, err: unknown) {
+  if (err instanceof TeamServiceError) {
+    return sendFailure(res, err.message, err.statusCode, err.code);
+  }
+  const message = err instanceof Error ? err.message : "Internal server error";
+  return sendFailure(res, message, 500, "INTERNAL_ERROR");
+}
+
+// ─── List Members ─────────────────────────────────────────────────────────────
 
 export async function listStoreMembersController(req: PermissionRequest, res: Response) {
   try {
-    const storeId = req.storeContext!.storeId;
+    const { storeId } = req.storeContext!;
     const members = await listStoreMembers(storeId);
     return sendSuccess(res, { members });
   } catch (err) {
@@ -50,10 +54,10 @@ export async function inviteStoreMemberController(req: PermissionRequest, res: R
   try {
     const parsed = inviteMemberSchema.safeParse(req.body);
     if (!parsed.success) {
-      return sendFailure(res, parsed.error.errors.map((e) => e.message).join("; "), 400);
+      return sendFailure(res, parsed.error.issues.map((e) => e.message).join("; "), 400);
     }
 
-    const { storeId, tenantId, memberPermissions } = req.storeContext!;
+    const { storeId, tenantId } = req.storeContext!;
     const invitedById = req.user!.userId;
 
     const result = await inviteStoreMember({
@@ -75,11 +79,11 @@ export async function updateStoreMemberController(req: PermissionRequest, res: R
   try {
     const parsed = updateMemberSchema.safeParse(req.body);
     if (!parsed.success) {
-      return sendFailure(res, parsed.error.errors.map((e) => e.message).join("; "), 400);
+      return sendFailure(res, parsed.error.issues.map((e) => e.message).join("; "), 400);
     }
 
     const { storeId, memberPermissions } = req.storeContext!;
-    const memberId = req.params.memberId!;
+    const memberId = String(req.params.memberId);
     const currentUserId = req.user!.userId;
 
     const updated = await updateStoreMember({
@@ -102,11 +106,11 @@ export async function updateMemberStatusController(req: PermissionRequest, res: 
   try {
     const parsed = updateMemberStatusSchema.safeParse(req.body);
     if (!parsed.success) {
-      return sendFailure(res, parsed.error.errors.map((e) => e.message).join("; "), 400);
+      return sendFailure(res, parsed.error.issues.map((e) => e.message).join("; "), 400);
     }
 
     const { storeId, memberPermissions } = req.storeContext!;
-    const memberId = req.params.memberId!;
+    const memberId = String(req.params.memberId);
     const currentUserId = req.user!.userId;
 
     const updated = await updateMemberStatus({
@@ -128,7 +132,7 @@ export async function updateMemberStatusController(req: PermissionRequest, res: 
 export async function removeStoreMemberController(req: PermissionRequest, res: Response) {
   try {
     const { storeId, memberPermissions } = req.storeContext!;
-    const memberId = req.params.memberId!;
+    const memberId = String(req.params.memberId);
 
     await removeStoreMember(storeId, memberId, memberPermissions);
     return sendSuccess(res, null, "Member removed");
@@ -142,9 +146,23 @@ export async function removeStoreMemberController(req: PermissionRequest, res: R
 export async function resendMemberInviteController(req: PermissionRequest, res: Response) {
   try {
     const { storeId, memberPermissions } = req.storeContext!;
-    const memberId = req.params.memberId!;
+    const memberId = String(req.params.memberId);
 
     const result = await resendMemberInvite(storeId, memberId, memberPermissions);
+    return sendSuccess(res, result);
+  } catch (err) {
+    return handleServiceError(res, err);
+  }
+}
+
+// ─── Trigger Member Password Reset ───────────────────────────────────────────
+
+export async function sendMemberPasswordResetController(req: PermissionRequest, res: Response) {
+  try {
+    const { storeId, memberPermissions } = req.storeContext!;
+    const memberId = String(req.params.memberId);
+
+    const result = await (await import("./team.service.js")).sendMemberPasswordReset(storeId, memberId, memberPermissions);
     return sendSuccess(res, result);
   } catch (err) {
     return handleServiceError(res, err);
@@ -155,7 +173,7 @@ export async function resendMemberInviteController(req: PermissionRequest, res: 
 
 export async function getMyStorePermissionsController(req: PermissionRequest, res: Response) {
   try {
-    const storeId = req.params.storeId || req.params.id || (req.query.storeId as string);
+    const storeId = String(req.params.storeId || req.params.id || req.query.storeId);
     const userId = req.user!.userId;
     const data = await getEffectiveUserPermissions(storeId, userId);
     if (!data) return sendFailure(res, "You are not a member of this store", 403);
@@ -169,7 +187,7 @@ export async function getMyStorePermissionsController(req: PermissionRequest, re
 
 export async function validateInviteTokenController(req: PermissionRequest, res: Response) {
   try {
-    const { token } = req.params;
+    const token = String(req.params.token);
     const data = await validateInviteToken(token);
     return sendSuccess(res, data);
   } catch (err) {
@@ -183,7 +201,7 @@ export async function acceptInviteController(req: PermissionRequest, res: Respon
   try {
     const parsed = acceptInviteSchema.safeParse({ ...req.body, token: req.params.token });
     if (!parsed.success) {
-      return sendFailure(res, parsed.error.errors.map((e) => e.message).join("; "), 400);
+      return sendFailure(res, parsed.error.issues.map((e) => e.message).join("; "), 400);
     }
 
     const result = await acceptInvite(parsed.data.token, {

@@ -19,6 +19,18 @@ import {
   resolveStoreFeature,
 } from "../stores/store-override.service.js";
 
+export class TeamServiceError extends Error {
+  statusCode: number;
+  code?: string;
+
+  constructor(message: string, statusCode = 400, code?: string) {
+    super(message);
+    this.name = "TeamServiceError";
+    this.statusCode = statusCode;
+    this.code = code;
+  }
+}
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type InviteMemberInput = {
@@ -402,6 +414,24 @@ export async function resendMemberInvite(storeId: string, memberId: string, curr
 
   await sendInviteEmail({ storeId, email: member.email, name: member.name || member.email, token, role: member.role });
   return { ok: true, message: "Invitation resent" };
+}
+
+/**
+ * Trigger a secure password reset email for an active team member.
+ */
+export async function sendMemberPasswordReset(storeId: string, memberId: string, currentUserPermissions: string[]) {
+  assertCanManageMembers(currentUserPermissions);
+  await connectDatabase();
+
+  const member = await StoreMemberModel.findOne({ _id: memberId, storeId })
+    .select("email name")
+    .lean() as { email: string; name: string } | null;
+
+  if (!member) throw Object.assign(new Error("Member not found"), { status: 404 });
+
+  const { forgotPassword } = await import("../auth/auth.service.js");
+  const result = await forgotPassword({ email: member.email });
+  return { ok: true, message: result.message || "Password reset email sent" };
 }
 
 /**

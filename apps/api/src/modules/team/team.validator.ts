@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { STORE_MEMBER_ROLES, STORE_MODULES, STORE_ACTIONS } from "../../common/types/permissions.js";
+import { STORE_MODULES, STORE_ACTIONS } from "../../common/types/permissions.js";
 
 // A valid permission string: "*", "module:*", or "module:action"
 const permissionString = z.string().refine((p) => {
@@ -12,18 +12,18 @@ const permissionString = z.string().refine((p) => {
   return validMod && validAct;
 }, "Invalid permission string. Use format 'module:action' or 'module:*'");
 
-const invitableMemberRoles = STORE_MEMBER_ROLES.filter((r) => r !== "owner");
+export const INVITABLE_ROLES = ["admin", "manager", "staff", "viewer", "cashier"] as const;
 
 export const inviteMemberSchema = z.object({
   email: z.string().email("Valid email required"),
   name: z.string().max(100).optional(),
   password: z.string().min(8, "Password must be at least 8 characters").optional(),
-  role: z.enum(invitableMemberRoles as [string, ...string[]]),
+  role: z.enum(INVITABLE_ROLES),
   permissions: z.array(permissionString).optional().default([]),
 });
 
 export const updateMemberSchema = z.object({
-  role: z.enum(invitableMemberRoles as [string, ...string[]]).optional(),
+  role: z.enum(INVITABLE_ROLES).optional(),
   permissions: z.array(permissionString).optional(),
 });
 

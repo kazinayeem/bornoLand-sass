@@ -58,20 +58,18 @@ export function PosVariantModal({
   };
 
   return (
-    <AnimatePresence>
+    <div
+      key="pos-variant-backdrop"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) onClose();
-        }}
+        key="pos-variant-content"
+        className="flex flex-col w-full max-w-lg bg-white rounded-2xl border border-zinc-200 shadow-2xl overflow-hidden text-apple-ink"
+        style={{ maxHeight: "min(88vh, 700px)" }}
       >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 10 }}
-          className="flex flex-col w-full max-w-lg bg-white rounded-2xl border border-zinc-200 shadow-2xl overflow-hidden text-apple-ink"
-          style={{ maxHeight: "min(88vh, 700px)" }}
-        >
           {/* Header */}
           <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-5 bg-white shrink-0">
             <div className="flex items-center gap-2">
@@ -242,8 +240,7 @@ export function PosVariantModal({
               Add Variant to Order ({formatCurrency((activeVariant?.price ?? product.price) * quantity, settings)})
             </button>
           </div>
-        </motion.div>
+        </div>
       </div>
-    </AnimatePresence>
   );
 }

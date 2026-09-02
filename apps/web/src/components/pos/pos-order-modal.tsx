@@ -279,23 +279,22 @@ export function PosOrderModal({
     }
   };
 
-  return (
+  if (!open) return null;
 
-    <AnimatePresence>
+  return (
+    <div
+      key="pos-modal-backdrop"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-5"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isSubmittingOrder) onClose();
+      }}
+    >
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-5"
-        onClick={(e) => {
-          if (e.target === e.currentTarget && !isSubmittingOrder) onClose();
-        }}
+        key="pos-modal-content"
+        className="flex flex-col w-full max-w-6xl bg-white rounded-2xl border border-zinc-200 shadow-2xl overflow-hidden text-apple-ink"
+        style={{ height: "min(92vh, 850px)" }}
       >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.97, y: 12 }}
-          className="flex flex-col w-full max-w-6xl bg-white rounded-2xl border border-zinc-200 shadow-2xl overflow-hidden text-apple-ink"
-          style={{ height: "min(92vh, 850px)" }}
-        >
-          {/* Top POS Header Bar */}
+        {/* Top POS Header Bar */}
           <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-6 bg-zinc-900 text-white shrink-0">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-apple-primary text-white font-bold text-xs">
@@ -654,16 +653,16 @@ export function PosOrderModal({
               </div>
             </div>
           </div>
-        </motion.div>
-      </div>
+        </div>
 
-      {/* POS Variant Selector Modal */}
-      <PosVariantModal
-        open={!!variantProduct}
-        product={variantProduct}
-        onClose={() => setVariantProduct(null)}
-        onSelectVariant={handleSelectVariant}
-      />
-    </AnimatePresence>
+        {/* POS Variant Selector Modal */}
+        <PosVariantModal
+          open={!!variantProduct}
+          product={variantProduct}
+          onClose={() => setVariantProduct(null)}
+          onSelectVariant={handleSelectVariant}
+        />
+      </div>
+    </div>
   );
 }

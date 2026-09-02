@@ -26,6 +26,7 @@ export type InviteMemberInput = {
   tenantId: string;
   email: string;
   name?: string;
+  password?: string;
   role: StoreMemberRole;
   permissions?: string[];
   invitedById: string;
@@ -122,13 +123,15 @@ export async function getEffectiveUserPermissions(storeId: string, userId: strin
 }
 
 /**
- * Invite a new member to a store.
+ * Invite a new member or create member account directly with password.
  * - Checks plan staff limit and staffManagement feature.
- * - Sends invite email.
- * - If user with that email already exists, links userId immediately.
+ * - If password provided: hashes password, provisions User (if new), sets StoreMember status to active.
+ * - If user already exists: preserves their existing password, creates/activates store membership.
+ * - If password omitted: generates single-use invite token and sends invite email.
  */
 export async function inviteStoreMember(input: InviteMemberInput) {
-  const { storeId, tenantId, email, name, role, permissions = [], invitedById } = input;
+  const { storeId, tenantId, email, name, password, role, permissions = [], invitedById } = input;
+  const normalizedEmail = email.toLowerCase().trim();
 
   if (!STORE_MEMBER_ROLES.includes(role) || role === "owner") {
     throw Object.assign(new Error("Invalid member role. Allowed: admin, manager, staff, viewer"), { status: 400 });
@@ -169,56 +172,106 @@ export async function inviteStoreMember(input: InviteMemberInput) {
     }
   }
 
-  // ── Check duplicate ──
-  const existing = await StoreMemberModel.findOne({ storeId, email }).lean() as { status: string } | null;
-  if (existing) {
-    if (existing.status === "revoked") {
-      // Re-invite revoked member
-      const token = generateInviteToken();
-      await StoreMemberModel.updateOne(
-        { storeId, email },
-        {
-          $set: {
-            role,
-            permissions,
-            status: "invited",
-            inviteToken: token,
-            inviteExpiresAt: inviteTokenExpiry(),
-            invitedBy: invitedById,
-            invitedAt: new Date(),
-            name: name ?? "",
-          },
-        },
-      );
-      await sendInviteEmail({ storeId, email, name: name ?? email, token, role });
-      return { ok: true, message: "Invitation resent", status: "invited" };
+  // ── Look up existing user account ──
+  const existingUser = await UserModel.findOne({ email: normalizedEmail }).select("_id").lean() as { _id: unknown } | null;
+  let userId = existingUser ? String(existingUser._id) : null;
+
+  // ── If password is provided, ensure user account is created / active ──
+  if (password) {
+    if (password.length < 8) {
+      throw Object.assign(new Error("Password must be at least 8 characters long"), { status: 400 });
     }
-    throw Object.assign(new Error("This email is already a member or has a pending invitation"), { status: 409, code: "ALREADY_MEMBER" });
+
+    if (!existingUser) {
+      const passwordHash = await bcrypt.hash(password, 12);
+      const newUser = await UserModel.create({
+        email: normalizedEmail,
+        name: name || normalizedEmail.split("@")[0],
+        passwordHash,
+        tenantId,
+        role: "viewer", // platform role — store role is in StoreMember
+        status: "active",
+        emailVerifiedAt: new Date(),
+      });
+      userId = String(newUser._id);
+    }
   }
 
-  // ── Look up existing user account ──
-  const existingUser = await UserModel.findOne({ email }).select("_id").lean() as { _id: unknown } | null;
+  // ── Check duplicate store membership ──
+  const existingMember = await StoreMemberModel.findOne({ storeId, email: normalizedEmail }).lean() as { _id: unknown; status: string } | null;
+  if (existingMember) {
+    if (existingMember.status === "revoked" || existingMember.status === "suspended") {
+      // Re-activate member
+      const updateData: Record<string, unknown> = {
+        role,
+        permissions,
+        name: name ?? "",
+        invitedBy: invitedById,
+        invitedAt: new Date(),
+        ...(userId ? { userId } : {}),
+      };
 
+      if (password) {
+        updateData.status = "active";
+        updateData.acceptedAt = new Date();
+        updateData.inviteToken = null;
+        updateData.inviteExpiresAt = null;
+      } else {
+        const token = generateInviteToken();
+        updateData.status = "invited";
+        updateData.inviteToken = token;
+        updateData.inviteExpiresAt = inviteTokenExpiry();
+        await sendInviteEmail({ storeId, email: normalizedEmail, name: name ?? normalizedEmail, token, role });
+      }
+
+      await StoreMemberModel.updateOne({ _id: existingMember._id }, { $set: updateData });
+      return {
+        ok: true,
+        message: password ? "Member account updated and activated" : "Invitation resent",
+        status: password ? "active" : "invited",
+      };
+    }
+    throw Object.assign(new Error("This email is already an active member of this store"), { status: 409, code: "ALREADY_MEMBER" });
+  }
+
+  // ── Create membership record ──
+  if (password) {
+    // Direct account creation -> active immediately
+    await StoreMemberModel.create({
+      storeId,
+      tenantId,
+      userId,
+      email: normalizedEmail,
+      name: name ?? "",
+      role,
+      permissions,
+      status: "active",
+      acceptedAt: new Date(),
+      invitedBy: invitedById,
+      invitedAt: new Date(),
+    });
+
+    return { ok: true, message: "Member account created successfully", status: "active" };
+  }
+
+  // Email invitation flow -> status: "invited"
   const token = generateInviteToken();
-  const memberData = {
+  await StoreMemberModel.create({
     storeId,
     tenantId,
-    email,
+    userId,
+    email: normalizedEmail,
     name: name ?? "",
     role,
     permissions,
-    status: "invited" as const,
+    status: "invited",
     inviteToken: token,
     inviteExpiresAt: inviteTokenExpiry(),
     invitedBy: invitedById,
     invitedAt: new Date(),
-    userId: existingUser?._id ?? null,
-  };
+  });
 
-  await StoreMemberModel.create(memberData);
-
-  await sendInviteEmail({ storeId, email, name: name ?? email, token, role });
-
+  await sendInviteEmail({ storeId, email: normalizedEmail, name: name ?? normalizedEmail, token, role });
   return { ok: true, message: "Invitation sent", status: "invited" };
 }
 

@@ -39,6 +39,7 @@ export type InviteMemberPayload = {
   storeId: string;
   email: string;
   name?: string;
+  password?: string;
   role: "admin" | "manager" | "staff" | "viewer";
   permissions?: string[];
 };

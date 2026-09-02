@@ -17,6 +17,7 @@ const invitableMemberRoles = STORE_MEMBER_ROLES.filter((r) => r !== "owner");
 export const inviteMemberSchema = z.object({
   email: z.string().email("Valid email required"),
   name: z.string().max(100).optional(),
+  password: z.string().min(8, "Password must be at least 8 characters").optional(),
   role: z.enum(invitableMemberRoles as [string, ...string[]]),
   permissions: z.array(permissionString).optional().default([]),
 });

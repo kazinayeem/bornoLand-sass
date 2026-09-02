@@ -152,7 +152,7 @@ export function MembersPage({ storeId, storeSlug }: MembersPageProps) {
             className="flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
             <Plus className="h-4 w-4" />
-            <span>Invite Member</span>
+            <span>Add Team Member</span>
           </button>
         )}
       </div>

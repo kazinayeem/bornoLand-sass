@@ -4,6 +4,7 @@ import { StoreModel } from "../../models/store.model.js";
 import { PlanModel } from "../../models/plan.model.js";
 import { TenantModel } from "../../models/tenant.model.js";
 import { TeamMemberModel } from "../../models/team-member.model.js";
+import { StoreMemberModel } from "../team/store-member.model.js";
 import { PageModel } from "../../models/page.model.js";
 import { ensureDefaultStoreSettings } from "./store-settings.service.js";
 import { ensureDefaultStoreContact } from "./store-contact.service.js";
@@ -343,7 +344,16 @@ export async function createStore(userId: string, payload: unknown) {
 export async function getUserStores(userId: string) {
   await connectDatabase();
   await ensurePlans();
-  const stores = await StoreModel.find({ userId })
+
+  const storeMemberStoreIds = await StoreMemberModel.find({ userId, status: "active" }).distinct("storeId");
+
+  const stores = await StoreModel.find({
+    $or: [
+      { userId },
+      ...(storeMemberStoreIds.length ? [{ _id: { $in: storeMemberStoreIds } }] : []),
+    ],
+    status: { $ne: "archived" },
+  })
     .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
     .sort({ createdAt: -1 })

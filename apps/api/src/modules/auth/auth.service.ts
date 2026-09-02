@@ -12,6 +12,7 @@ import {
 import { TenantModel } from "../workspaces/tenant.model.js";
 import { UserModel } from "../users/user.model.js";
 import { TeamMemberModel } from "../team/team-member.model.js";
+import { StoreMemberModel } from "../team/store-member.model.js";
 import { StoreModel } from "../stores/store.model.js";
 import { SubscriptionModel } from "../subscriptions/subscription.model.js";
 import { VerificationTokenModel } from "./verification-token.model.js";
@@ -215,12 +216,17 @@ export async function loginUser(payload: unknown) {
 
   let userStores: Array<{ _id: unknown; slug?: string; name?: string }> = [];
   try {
-    const teamTenantIds = await TeamMemberModel.find({ userId: user._id }).distinct("tenantId");
+    const [teamTenantIds, storeMemberStoreIds] = await Promise.all([
+      TeamMemberModel.find({ userId: user._id }).distinct("tenantId"),
+      StoreMemberModel.find({ userId: user._id, status: "active" }).distinct("storeId"),
+    ]);
+
     const foundStores = (await StoreModel.find({
       $or: [
         { userId: user._id },
         ...(user.tenantId ? [{ tenantId: user.tenantId }] : []),
         ...(teamTenantIds.length ? [{ tenantId: { $in: teamTenantIds } }] : []),
+        ...(storeMemberStoreIds.length ? [{ _id: { $in: storeMemberStoreIds } }] : []),
       ],
       status: { $ne: "archived" },
     })

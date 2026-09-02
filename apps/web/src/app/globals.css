@@ -258,7 +258,7 @@ svg {
   font-weight: 600;
   line-height: 1.08;
   letter-spacing: -0.28px;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .text-display-lg {
@@ -267,7 +267,7 @@ svg {
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .text-display-md {

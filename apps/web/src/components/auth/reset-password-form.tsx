@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useResetPasswordMutation } from "@/redux/api/auth-api";
@@ -8,8 +9,11 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
 import { FormLoadingShell } from "@/components/loading/form-loading-shell";
+import { useLanguage } from "@/providers/language-provider";
 
 export function ResetPasswordForm({ token }: { token: string }) {
+  const { language } = useLanguage();
+  const isBn = language === "bn";
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [resetPassword] = useResetPasswordMutation();
@@ -18,7 +22,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
     <FormLoadingShell
       className="space-y-5"
       loading={loading}
-      loadingLabel="Resetting password"
+      loadingLabel={isBn ? "পাসওয়ার্ড পরিবর্তন করা হচ্ছে..." : "Resetting password..."}
       onSubmit={async (event) => {
         event.preventDefault();
         if (loading) return;
@@ -37,30 +41,42 @@ export function ResetPasswordForm({ token }: { token: string }) {
             typeof response.error.data === "object" &&
             "message" in response.error.data
               ? String((response.error.data as { message?: string }).message)
-              : "Could not reset password") || "Could not reset password";
+              : isBn ? "পাসওয়ার্ড রিসেট করা সম্ভব হয়নি" : "Could not reset password") ||
+            (isBn ? "পাসওয়ার্ড রিসেট করা সম্ভব হয়নি" : "Could not reset password");
           toast.error(message);
           return;
         }
-        toast.success("Password updated. You can sign in now.");
+        toast.success(
+          isBn
+            ? "পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে। এখন লগইন করুন।"
+            : "Password updated successfully. You can sign in now."
+        );
         router.push("/login");
       }}
     >
       <div className="space-y-2">
-        <Label htmlFor="reset-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">New password</Label>
-        <PasswordInput id="reset-password" name="password" placeholder="Enter a new password" />
+        <Label htmlFor="reset-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {isBn ? "নতুন পাসওয়ার্ড" : "New Password"}
+        </Label>
+        <PasswordInput
+          id="reset-password"
+          name="password"
+          required
+          placeholder={isBn ? "নতুন শক্তিশালী পাসওয়ার্ড দিন" : "Enter a strong new password"}
+        />
       </div>
       <Button
         type="submit"
         loading={loading}
         loadingKey="save"
-        className="h-11 w-full rounded-full font-semibold shadow-md transition-all hover:shadow-lg"
+        className="h-11 w-full rounded-xl font-semibold shadow-xs transition-all"
       >
-        Reset password
+        {isBn ? "পাসওয়ার্ড সংরক্ষণ করুন" : "Reset Password"}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
-        <a href="/login" className="font-semibold text-primary hover:underline">
-          Back to sign in
-        </a>
+        <Link href="/login" className="font-semibold text-primary hover:underline">
+          {isBn ? "লগইনে ফিরে যান" : "Back to sign in"}
+        </Link>
       </p>
     </FormLoadingShell>
   );

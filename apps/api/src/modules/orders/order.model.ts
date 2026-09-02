@@ -206,12 +206,14 @@ const orderSchema = new Schema(
     currencyCode: { type: String, enum: ["USD", "BDT", "EUR", "INR", "GBP"], default: "USD" },
     invoiceNumber: { type: String, default: "" },
     verificationToken: { type: String, unique: true, sparse: true },
+    idempotencyKey: { type: String, sparse: true, index: true },
   },
   { timestamps: true }
 );
 
 orderSchema.index({ storeId: 1, status: 1, createdAt: -1 });
 orderSchema.index({ storeId: 1, paymentStatus: 1 });
+orderSchema.index({ storeId: 1, idempotencyKey: 1 }, { sparse: true });
 
 export type OrderDocument = InferSchemaType<typeof orderSchema>;
 export const OrderModel = models.Order ?? model("Order", orderSchema);

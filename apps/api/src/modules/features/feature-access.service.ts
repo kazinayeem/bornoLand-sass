@@ -447,70 +447,75 @@ export async function checkTier(
 }
 
 export async function checkLimit(storeId: string, featureKey: string): Promise<FeatureAccessResult> {
-  const featureResult = await checkFeature(storeId, featureKey);
-  if (!featureResult.allowed) return featureResult;
+  try {
+    const featureResult = await checkFeature(storeId, featureKey);
+    if (!featureResult.allowed) return featureResult;
 
-  const store = (await StoreModel.findById(storeId).lean()) as { planId?: unknown } | null;
-  if (!store?.planId) return { allowed: true, featureKey };
+    const store = (await StoreModel.findById(storeId).lean()) as { planId?: unknown } | null;
+    if (!store?.planId) return { allowed: true, featureKey };
 
-  const feature = (await FeatureModel.findOne({ key: featureKey.toLowerCase() }).lean()) as {
-    name: string;
-    type: string;
-    usageCounterKey?: string;
-    unit?: string;
-  } | null;
-  if (!feature || normalizeFeatureType(feature.type) !== "limit") {
+    const feature = (await FeatureModel.findOne({ key: featureKey.toLowerCase() }).lean()) as {
+      name: string;
+      type: string;
+      usageCounterKey?: string;
+      unit?: string;
+    } | null;
+    if (!feature || normalizeFeatureType(feature.type) !== "limit") {
+      return { allowed: true, featureKey };
+    }
+
+    const assignment = await getPlanFeatureAssignment(String(store.planId), featureKey);
+    const limitMeta = (await FeatureLimitModel.findOne({ featureKey: featureKey.toLowerCase() }).lean()) as {
+      unit?: string;
+    } | null;
+    const unit = feature.unit || limitMeta?.unit || "";
+    const max = resolveLimitValue(assignment?.limit ?? 0, unit);
+    if (max === 0) {
+      if (assignment?.enabled) {
+        return { allowed: true, featureKey, featureName: feature.name, limit: 0, current: 0 };
+      }
+      const currentPlan = store?.planId
+        ? ((await PlanModel.findById(store.planId).lean()) as { slug: string; name: string } | null)
+        : null;
+      return {
+        allowed: false,
+        reason: "feature_disabled",
+        message: `${feature.name} is not available on your current plan`,
+        featureKey,
+        featureName: feature.name,
+        currentPlan: currentPlan ? { slug: currentPlan.slug, name: currentPlan.name } : undefined,
+        requiredPlan: await findMinimumPlanForFeature(featureKey),
+      };
+    }
+
+    let usage = (await StoreUsageModel.findOne({ storeId }).lean()) as Record<string, number> | null;
+    if (!usage) {
+      usage = (await syncStoreUsage(storeId)) as Record<string, number> | null;
+      if (!usage) return { allowed: true, featureKey, featureName: feature.name, limit: max };
+    }
+    const counterKey = feature.usageCounterKey || featureKey;
+    const current = resolveUsageValue(usage, counterKey, unit);
+
+    if (current >= max) {
+      const plan = (await PlanModel.findById(store.planId).lean()) as { slug: string; name: string } | null;
+      return {
+        allowed: false,
+        reason: "limit_reached",
+        message: `${feature.name} limit reached (${Math.floor(current)}/${max}). Upgrade your subscription.`,
+        featureKey,
+        featureName: feature.name,
+        current: Math.floor(current),
+        limit: max,
+        currentPlan: plan ? { slug: plan.slug, name: plan.name } : undefined,
+        requiredPlan: await findMinimumPlanForFeature(featureKey),
+      };
+    }
+
+    return { allowed: true, featureKey, featureName: feature.name, current: Math.floor(current), limit: max };
+  } catch (err) {
+    console.warn("[checkLimit] fallback safe catch:", err);
     return { allowed: true, featureKey };
   }
-
-  const assignment = await getPlanFeatureAssignment(String(store.planId), featureKey);
-  const limitMeta = (await FeatureLimitModel.findOne({ featureKey: featureKey.toLowerCase() }).lean()) as {
-    unit?: string;
-  } | null;
-  const unit = feature.unit || limitMeta?.unit || "";
-  const max = resolveLimitValue(assignment?.limit ?? 0, unit);
-  if (max === 0) {
-    if (assignment?.enabled) {
-      return { allowed: true, featureKey, featureName: feature.name, limit: 0, current: 0 };
-    }
-    const currentPlan = store?.planId
-      ? ((await PlanModel.findById(store.planId).lean()) as { slug: string; name: string } | null)
-      : null;
-    return {
-      allowed: false,
-      reason: "feature_disabled",
-      message: `${feature.name} is not available on your current plan`,
-      featureKey,
-      featureName: feature.name,
-      currentPlan: currentPlan ? { slug: currentPlan.slug, name: currentPlan.name } : undefined,
-      requiredPlan: await findMinimumPlanForFeature(featureKey),
-    };
-  }
-
-  let usage = await StoreUsageModel.findOne({ storeId }).lean() as Record<string, number> | null;
-  if (!usage) {
-    usage = await syncStoreUsage(storeId) as Record<string, number> | null;
-    if (!usage) return { allowed: true, featureKey, featureName: feature.name, limit: max };
-  }
-  const counterKey = feature.usageCounterKey || featureKey;
-  const current = resolveUsageValue(usage, counterKey, unit);
-
-  if (current >= max) {
-    const plan = (await PlanModel.findById(store.planId).lean()) as { slug: string; name: string } | null;
-    return {
-      allowed: false,
-      reason: "limit_reached",
-      message: `${feature.name} limit reached (${Math.floor(current)}/${max}). Upgrade your subscription.`,
-      featureKey,
-      featureName: feature.name,
-      current: Math.floor(current),
-      limit: max,
-      currentPlan: plan ? { slug: plan.slug, name: plan.name } : undefined,
-      requiredPlan: await findMinimumPlanForFeature(featureKey),
-    };
-  }
-
-  return { allowed: true, featureKey, featureName: feature.name, current: Math.floor(current), limit: max };
 }
 
 export async function canAddProduct(storeId: string, _planId?: string) {

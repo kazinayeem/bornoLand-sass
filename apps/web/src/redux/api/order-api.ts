@@ -89,6 +89,7 @@ export type CreateOrderPayload = {
   cartId?: string;
   storeId?: string;
   customerId?: string;
+  idempotencyKey?: string;
   senderNumber?: string;
   transactionId?: string;
   paymentDetails?: {

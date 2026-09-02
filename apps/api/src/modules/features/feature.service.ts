@@ -5,12 +5,20 @@ import { FeatureTierModel } from "./feature-tier.model.js";
 import { FeatureLimitModel } from "./feature-limit.model.js";
 import { PlanFeatureModel } from "./plan-feature.model.js";
 import { PlanModel } from "../../models/plan.model.js";
-import { LEGACY_LIMIT_MAP, normalizeFeatureType, type FeatureType } from "./feature.constants.js";
 import { SEED_FEATURES, SEED_GROUPS, SEED_LIMITS, SEED_TIERS } from "./feature.seed.js";
 import { ensureDefaultFeaturesSafe } from "../../bootstrap/safe-migrate.js";
 
+let defaultFeaturesEnsured = false;
+
 export async function ensureDefaultFeatures() {
-  await ensureDefaultFeaturesSafe();
+  if (defaultFeaturesEnsured) return;
+  try {
+    await ensureDefaultFeaturesSafe();
+    defaultFeaturesEnsured = true;
+  } catch (err) {
+    console.warn("ensureDefaultFeaturesSafe warning:", err);
+    defaultFeaturesEnsured = true;
+  }
 }
 
 export async function listFeatureGroups() {

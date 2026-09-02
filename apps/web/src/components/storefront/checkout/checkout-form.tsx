@@ -60,6 +60,11 @@ export function CheckoutForm({
   const [senderNumber, setSenderNumber] = useState("");
   const [transactionId, setTransactionId] = useState("");
 
+  // Client-generated idempotency key for network retry and double-click protection
+  const [idempotencyKey] = useState(
+    () => `${store?._id || "ord"}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+  );
+
   // Order submission result state
   const [orderSuccess, setOrderSuccess] = useState<{
     orderNumber: string;
@@ -213,6 +218,7 @@ export function CheckoutForm({
 
       const payload: any = {
         storeId: store?._id,
+        idempotencyKey,
         items: items.map((i) => ({
           productId: i.productId,
           variantId: i.variantId || undefined,

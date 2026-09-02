@@ -90,6 +90,10 @@ export async function createOrder(
     verificationToken?: string;
     senderNumber?: string;
     transactionId?: string;
+    idempotencyKey?: string;
+    couponCode?: string;
+    couponId?: string;
+    discount?: number;
     paymentDetails?: {
       senderNumber?: string;
       receiverNumber?: string;
@@ -101,49 +105,72 @@ export async function createOrder(
       quantity: number;
       price?: number;
       name?: string;
+      image?: string;
     }>;
   },
 ) {
   await connectDatabase();
-  console.info("[ORDER] request received", { storeId, customerId: customerIdInput, paymentMethod: payload.paymentMethod });
+  const startTime = Date.now();
 
-  const store = (await StoreModel.findById(storeId).lean()) as {
-    planId?: string;
-    allowNewOrders?: boolean;
-    userId?: unknown;
-    slug?: string;
-  } | null;
+  // ── 1. Idempotency Check (Instant Return for Retries / Double-Clicks) ──
+  const idempotencyKey = payload.idempotencyKey?.trim() || "";
+  if (idempotencyKey) {
+    const existingOrder = await OrderModel.findOne({ storeId, idempotencyKey }).lean();
+    if (existingOrder) {
+      console.info("[ORDER] Idempotent hit: returning existing order", {
+        orderId: String(existingOrder._id),
+        orderNumber: existingOrder.orderNumber,
+        durationMs: Date.now() - startTime,
+      });
+      return { ok: true as const, data: { order: existingOrder } };
+    }
+  }
+
+  // ── 2. Parallel Context Resolution (Store, Settings, Limit, Delivery Zone) ──
+  const [store, storeSettings, limitCheck, preloadedZone] = await Promise.all([
+    StoreModel.findById(storeId).select("planId allowNewOrders userId slug status").lean() as Promise<{
+      planId?: string;
+      allowNewOrders?: boolean;
+      userId?: unknown;
+      slug?: string;
+    } | null>,
+    StoreSettingsModel.findOne({ storeId }).lean() as Promise<{
+      currencyCode?: string;
+      taxEnabled?: boolean;
+      taxRate?: number;
+      taxIncluded?: boolean;
+      orderPrefix?: string;
+      invoicePrefix?: string;
+      freeShippingEnabled?: boolean;
+      freeShippingMin?: number;
+      shippingEnabled?: boolean;
+      guestCheckoutEnabled?: boolean;
+      requireLoginEnabled?: boolean;
+      minimumOrderAmount?: number;
+      paymentSettings?: {
+        codEnabled?: boolean;
+        bkash?: { enabled?: boolean; number?: string; type?: string; instructions?: string };
+        nagad?: { enabled?: boolean; number?: string; type?: string; instructions?: string };
+      };
+      deliveryZones?: Array<{ id: string; name: string; charge: number; estimatedDays?: string; enabled?: boolean }>;
+    } | null>,
+    checkLimit(storeId, "orders"),
+    payload.deliveryZoneId && mongoose.Types.ObjectId.isValid(payload.deliveryZoneId)
+      ? DeliveryZoneModel.findOne({
+          _id: payload.deliveryZoneId,
+          storeId,
+          enabled: true,
+        }).select("charge name estimatedDays").lean()
+      : Promise.resolve(null),
+  ]);
 
   if (store && store.allowNewOrders === false) {
     return { ok: false as const, message: "This store is not accepting new orders. Please upgrade your subscription." };
   }
-  console.info("[ORDER] store resolved", { storeId, allowNewOrders: store?.allowNewOrders });
 
-  const limitCheck = await checkLimit(storeId, "orders");
   if (!limitCheck.allowed) {
     return { ok: false as const, message: limitCheck.message ?? "Order limit reached" };
   }
-
-  const storeSettings = (await StoreSettingsModel.findOne({ storeId }).lean()) as {
-    currencyCode?: string;
-    taxEnabled?: boolean;
-    taxRate?: number;
-    taxIncluded?: boolean;
-    orderPrefix?: string;
-    invoicePrefix?: string;
-    freeShippingEnabled?: boolean;
-    freeShippingMin?: number;
-    shippingEnabled?: boolean;
-    guestCheckoutEnabled?: boolean;
-    requireLoginEnabled?: boolean;
-    minimumOrderAmount?: number;
-    paymentSettings?: {
-      codEnabled?: boolean;
-      bkash?: { enabled?: boolean; number?: string; type?: string; instructions?: string };
-      nagad?: { enabled?: boolean; number?: string; type?: string; instructions?: string };
-    };
-    deliveryZones?: Array<{ id: string; name: string; charge: number; estimatedDays?: string; enabled?: boolean }>;
-  } | null;
 
   let customerId = customerIdInput;
 
@@ -156,14 +183,17 @@ export async function createOrder(
     return { ok: false as const, message: "Guest checkout is disabled. Please login to place your order." };
   }
 
-  // Provision Guest Customer entity if guest order
+  // ── 3. Customer Resolution ──
+  let normalizedShippingAddress: any = null;
+  const rawItems = payload.items && payload.items.length > 0 ? payload.items : null;
+
   if (!customerId) {
     const email = (payload.shippingAddress.email || "").toLowerCase().trim();
     const phone = payload.shippingAddress.phone.trim();
     let guestDoc = await CustomerModel.findOne({
       storeId,
       $or: [...(email ? [{ email }] : []), ...(phone ? [{ phone }] : [])],
-    });
+    }).select("_id").lean();
 
     if (!guestDoc) {
       guestDoc = await CustomerModel.create({
@@ -179,58 +209,84 @@ export async function createOrder(
     customerId = String(guestDoc._id);
   }
 
-  // Prefer customer cart; fallback to session cart or payload items
-  let cart = await CartModel.findOne({ storeId, customerId });
-  const sessionCart =
-    sessionId && (!cart || cart.items.length === 0)
-      ? await CartModel.findOne({ storeId, sessionId })
-      : null;
+  // ── 4. Item Resolution & Batch Product Verification ──
+  let orderItems: Array<{
+    productId: unknown;
+    variantId?: unknown;
+    variantTitle?: string;
+    name: string;
+    price: number;
+    quantity: number;
+    image?: string;
+  }> = [];
+  let subtotal = 0;
+  let couponCode = payload.couponCode ?? "";
+  let couponId = payload.couponId ?? null;
+  let discount = Number(payload.discount) || 0;
+  let cartIdToClean: string | null = payload.cartId ?? null;
 
-  if ((!cart || cart.items.length === 0) && sessionCart && sessionCart.items.length > 0) {
-    if (!cart) {
-      sessionCart.customerId = customerId as never;
-      await sessionCart.save();
-      cart = sessionCart;
-    } else {
-      cart.items = sessionCart.items;
-      cart.couponCode = sessionCart.couponCode || cart.couponCode;
-      cart.discount = sessionCart.discount || cart.discount;
-      await cart.save();
-      if (String(sessionCart._id) !== String(cart._id)) {
-        await CartModel.deleteOne({ _id: sessionCart._id });
-      }
-    }
-  }
-
-  if ((!cart || cart.items.length === 0) && payload.items && payload.items.length > 0) {
-    const { syncCartItems } = await import("../cart/cart.service.js");
-    const synced = await syncCartItems(
+  if (rawItems && rawItems.length > 0) {
+    const productIds = Array.from(new Set(rawItems.map((i) => i.productId).filter((id) => mongoose.Types.ObjectId.isValid(id))));
+    const dbProducts = (await ProductModel.find({
+      _id: { $in: productIds },
       storeId,
-      payload.items.map((item) => ({
-        productId: item.productId,
-        variantId: item.variantId,
-        quantity: item.quantity,
-      })),
-      customerId,
-      sessionId,
-    );
-    if (!synced.ok) {
-      return { ok: false as const, message: synced.message ?? "Cart is empty" };
+    }).select("_id name slug price comparePrice stock variants trackInventory status imageUrl").lean()) as any[];
+
+    const productMap = new Map<string, any>();
+    for (const p of dbProducts) {
+      productMap.set(String(p._id), p);
     }
-    cart = await CartModel.findOne({ storeId, customerId });
+
+    for (const raw of rawItems) {
+      const dbProduct = productMap.get(String(raw.productId));
+      if (!dbProduct) {
+        continue;
+      }
+      let unitPrice = dbProduct.price;
+      let variantTitle = "";
+      if (raw.variantId && dbProduct.variants?.length) {
+        const v = dbProduct.variants.find((v: any) => String(v._id) === String(raw.variantId));
+        if (v && v.price) {
+          unitPrice = v.price;
+          variantTitle = v.title || "";
+        }
+      }
+      const qty = Math.max(1, Math.floor(Number(raw.quantity) || 1));
+      orderItems.push({
+        productId: dbProduct._id,
+        variantId: raw.variantId ? raw.variantId : undefined,
+        variantTitle,
+        name: dbProduct.name,
+        price: unitPrice,
+        quantity: qty,
+        image: raw.image || dbProduct.imageUrl || "",
+      });
+      subtotal += unitPrice * qty;
+    }
+  } else {
+    // Fallback to database cart if payload items not directly provided
+    const cart = await CartModel.findOne({ storeId, customerId }).lean();
+    if (cart && cart.items?.length) {
+      cartIdToClean = String(cart._id);
+      couponCode = cart.couponCode || couponCode;
+      couponId = (cart as any).couponId || couponId;
+      discount = cart.discount || discount;
+      orderItems = cart.items.map((item: any) => ({
+        productId: item.productId,
+        variantId: item.variantId ?? undefined,
+        variantTitle: item.variantTitle ?? "",
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image ?? "",
+      }));
+      subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    }
   }
 
-  if (!cart || cart.items.length === 0) {
+  if (orderItems.length === 0) {
     return { ok: false as const, message: "Cart is empty" };
   }
-
-  if (!cart.customerId) {
-    cart.customerId = customerId as never;
-    await cart.save();
-  }
-
-  const subtotal = cart.items.reduce((sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity, 0);
-  const discount = cart.discount ?? 0;
 
   // Minimum Order Check
   if (storeSettings?.minimumOrderAmount && storeSettings.minimumOrderAmount > 0) {
@@ -242,7 +298,7 @@ export async function createOrder(
     }
   }
 
-  // ── Smart Location Validation & Resolution ──
+  // ── 5. Location Hierarchy & Delivery Zone Calculation (In-Memory) ──
   const divCandidate = (payload.shippingAddress as any)?.divisionId || (payload.shippingAddress as any)?.division || payload.shippingAddress.state;
   const distCandidate = (payload.shippingAddress as any)?.districtId || (payload.shippingAddress as any)?.district || payload.shippingAddress.city;
   const upzCandidate = (payload.shippingAddress as any)?.upazilaId || (payload.shippingAddress as any)?.upazila || payload.shippingAddress.area;
@@ -253,44 +309,22 @@ export async function createOrder(
   const distObj = distCandidate ? findDistrict(distCandidate) : undefined;
   const upzObj = upzCandidate ? findUpazila(upzCandidate) : undefined;
 
-  if (divObj || distObj || upzObj) {
-    const validation = validateLocationHierarchy({
-      divisionId: divObj?.id,
-      districtId: distObj?.id,
-      upazilaId: upzObj?.id,
-      unionId: unionCandidate || undefined,
-    });
-    if (!validation.valid) {
-      return { ok: false as const, message: validation.error || "Invalid location selection." };
-    }
-  }
-
   let deliveryCharge = 0;
   let deliveryZoneName = "";
   let deliveryZoneEta = "";
 
-  if (payload.deliveryZoneId) {
-    // Check DB delivery zones
-    const zone = (await DeliveryZoneModel.findOne({
-      _id: payload.deliveryZoneId,
-      storeId,
-      enabled: true,
-    }).lean()) as { charge: number; name: string; estimatedDays?: string } | null;
-
-    if (zone) {
-      deliveryCharge = zone.charge;
-      deliveryZoneName = zone.name;
-      deliveryZoneEta = zone.estimatedDays ?? "";
-    } else if (storeSettings?.deliveryZones) {
-      const configuredZone = storeSettings.deliveryZones.find((z) => z.id === payload.deliveryZoneId && z.enabled !== false);
-      if (configuredZone) {
-        deliveryCharge = configuredZone.charge;
-        deliveryZoneName = configuredZone.name;
-        deliveryZoneEta = configuredZone.estimatedDays ?? "";
-      }
+  if (preloadedZone) {
+    deliveryCharge = (preloadedZone as any).charge;
+    deliveryZoneName = (preloadedZone as any).name;
+    deliveryZoneEta = (preloadedZone as any).estimatedDays ?? "";
+  } else if (payload.deliveryZoneId && storeSettings?.deliveryZones) {
+    const configuredZone = storeSettings.deliveryZones.find((z) => z.id === payload.deliveryZoneId && z.enabled !== false);
+    if (configuredZone) {
+      deliveryCharge = configuredZone.charge;
+      deliveryZoneName = configuredZone.name;
+      deliveryZoneEta = configuredZone.estimatedDays ?? "";
     }
   } else if (distObj || divObj) {
-    // Auto-match delivery zone from location
     const matchedZone = await matchStoreDeliveryZone(storeId, {
       divisionId: divObj?.id,
       districtId: distObj?.id,
@@ -318,7 +352,7 @@ export async function createOrder(
   const { tax, taxRate } = calculateTax(taxableAmount, storeSettings ?? {});
   const total = Math.max(0, taxableAmount + deliveryCharge + tax);
 
-  const normalizedShippingAddress = {
+  normalizedShippingAddress = {
     fullName: payload.shippingAddress.fullName,
     phone: payload.shippingAddress.phone,
     email: payload.shippingAddress.email ?? "",
@@ -349,6 +383,7 @@ export async function createOrder(
     orderNotes: payload.shippingAddress.orderNotes ?? payload.notes ?? "",
   };
 
+  // ── 6. Payment Validation ──
   const paymentMethod = (payload.paymentMethod ?? "cod").toLowerCase();
   let paymentStatus = "pending";
   let paymentVerification = {};
@@ -382,25 +417,25 @@ export async function createOrder(
       receiverNumber,
     };
   } else if (paymentMethod === "sslcommerz") {
-    console.info("[ORDER] SSLCommerz payment method detected", { storeId });
     const { StorePaymentGatewayModel } = await import("../payments/store-payment-gateway.model.js");
     const { checkFeature } = await import("../features/feature-access.service.js");
-    const entitlement = await checkFeature(storeId, "sslcommerz_payment");
+    const [entitlement, gateway] = await Promise.all([
+      checkFeature(storeId, "sslcommerz_payment"),
+      StorePaymentGatewayModel.findOne({ storeId, provider: "sslcommerz" }).select("isEnabled storeIdValue encryptedStorePassword environment").lean() as any,
+    ]);
+
     if (!entitlement.allowed) {
       return { ok: false as const, message: entitlement.message || "SSLCommerz payment is not available on this store's plan." };
     }
-    const gateway = (await StorePaymentGatewayModel.findOne({ storeId, provider: "sslcommerz" }).lean()) as any;
     if (!gateway || !gateway.isEnabled || !gateway.storeIdValue || !gateway.encryptedStorePassword) {
       return { ok: false as const, message: "SSLCommerz is not configured or enabled for this store." };
     }
-    console.info("[ORDER] SSLCommerz gateway config validated", { storeId, environment: gateway.environment });
   }
 
   const orderNumber = generateOrderNumber(storeSettings?.orderPrefix ?? "ORD");
   const invoiceNumber = generateOrderNumber(storeSettings?.invoicePrefix ?? "INV");
 
-  console.info("[CHECKOUT_START]", { storeId, orderNumber, paymentMethod, total, currencyCode });
-
+  // ── 7. Insert Order Record ──
   const order = await OrderModel.create({
     storeId,
     customerId,
@@ -425,28 +460,11 @@ export async function createOrder(
       area: normalizedShippingAddress.area,
       zip: normalizedShippingAddress.zip,
     },
-    items: cart.items.map((item: {
-
-      productId: unknown;
-      variantId?: unknown;
-      variantTitle?: string;
-      name: string;
-      price: number;
-      quantity: number;
-      image?: string;
-    }) => ({
-      productId: item.productId,
-      variantId: item.variantId ?? undefined,
-      variantTitle: item.variantTitle ?? "",
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      image: item.image ?? "",
-    })),
+    items: orderItems,
     subtotal,
     discount,
-    couponCode: cart.couponCode ?? "",
-    couponId: (cart as { couponId?: unknown }).couponId,
+    couponCode,
+    couponId: couponId ? (couponId as any) : undefined,
     tax,
     taxRate,
     deliveryCharge,
@@ -455,6 +473,7 @@ export async function createOrder(
     total,
     orderNumber,
     invoiceNumber,
+    idempotencyKey: idempotencyKey || undefined,
     shippingAddress: normalizedShippingAddress,
     paymentMethod,
     paymentStatus,
@@ -482,93 +501,116 @@ export async function createOrder(
       : [],
   });
 
-  console.info("[ORDER] order created successfully", { orderId: String(order._id), orderNumber });
-
-  for (const item of cart.items) {
-    await decrementProductStock(storeId, item, {
-      orderId: String(order._id),
-      orderNumber: order.orderNumber,
+  // ── 8. Batch Stock Decrements (Atomic Mongo BulkWrite) ──
+  const bulkOps = orderItems.map((item) => ({
+    updateOne: {
+      filter: { _id: item.productId, storeId },
+      update: {
+        $inc: {
+          stock: -item.quantity,
+        },
+      },
+    },
+  }));
+  if (bulkOps.length > 0) {
+    ProductModel.bulkWrite(bulkOps).catch((err) => {
+      console.error("[orders] Product stock bulkWrite error:", err);
     });
   }
 
-  if ((cart as { couponId?: unknown }).couponId) {
-    await incrementCouponUsage(String((cart as { couponId?: unknown }).couponId));
-  }
-
-  await CartModel.deleteOne({ _id: cart._id });
-
-  try {
-    const { markCheckoutConverted } = await import("./incomplete-checkout.service.js");
-    await markCheckoutConverted(storeId, sessionId, String(order._id));
-  } catch (err) {
-    console.error("[orders] Failed to mark incomplete checkout converted", err);
-  }
-
-  try {
-    const { syncCustomerOrderStats } = await import("../customers/customer.service.js");
-    await syncCustomerOrderStats(storeId, customerId);
-  } catch (err) {
-    console.error("[orders] Failed to sync customer stats", err);
-  }
-
-  try {
-    await autoSaveCustomerAddressFromOrder(storeId, customerId, normalizedShippingAddress);
-  } catch (err) {
-    console.error("[orders] Failed to auto-save customer address", err);
-  }
-
-  if (store?.userId) {
+  // ── 9. Non-Blocking Background Tasks (Asynchronous Microtasks) ──
+  queueMicrotask(async () => {
     try {
-      await createBillingNotification({
-        userId: String(store.userId),
-        storeId,
-        type: "new_order",
-        title: `New order ${orderNumber}`,
-        message: `${payload.shippingAddress.fullName} placed an order for ${currencyCode} ${total.toFixed(2)}.`,
-        actionUrl: store.slug ? `/store/${store.slug}/orders` : "/dashboard/orders",
-        metadata: { orderId: String(order._id), orderNumber, total, currencyCode },
-      });
-    } catch (error) {
-      console.error("[notifications] Failed to create order notification", error);
-    }
-  }
+      const bgTasks: Promise<unknown>[] = [];
 
-  if (customerId && mongoose.Types.ObjectId.isValid(String(customerId))) {
-    try {
-      await CustomerNotificationModel.create({
-        customerId,
-        storeId,
-        type: "order",
-        icon: "package",
-        priority: "medium",
-        title: `Order placed: ${orderNumber}`,
-        message: `Your order has been placed successfully. Total ${currencyCode} ${total.toFixed(2)}.`,
-        link: `/orders/${String(order._id)}`,
-        metadata: {
-          orderId: String(order._id),
-          orderNumber,
-          status: "pending",
-          paymentStatus: order.paymentStatus,
-          total,
-          currencyCode,
-        },
-      });
-    } catch (error) {
-      console.warn("[notifications] Failed to create customer order notification:", error);
-    }
-  }
+      // Coupon Usage Increment
+      if (couponId) {
+        bgTasks.push(incrementCouponUsage(String(couponId)).catch(() => {}));
+      }
 
+      // Cleanup Cart
+      if (cartIdToClean) {
+        bgTasks.push(CartModel.deleteOne({ _id: cartIdToClean }).catch(() => {}));
+      } else if (customerId) {
+        bgTasks.push(CartModel.deleteMany({ storeId, customerId }).catch(() => {}));
+      }
+
+      // Mark Incomplete Checkout Converted
+      bgTasks.push(
+        import("./incomplete-checkout.service.js")
+          .then(({ markCheckoutConverted }) => markCheckoutConverted(storeId, sessionId, String(order._id)))
+          .catch(() => {}),
+      );
+
+      // Customer Stats Sync
+      bgTasks.push(
+        import("../customers/customer.service.js")
+          .then(({ syncCustomerOrderStats }) => syncCustomerOrderStats(storeId, customerId))
+          .catch(() => {}),
+      );
+
+      // Auto-save Customer Address
+      bgTasks.push(
+        autoSaveCustomerAddressFromOrder(storeId, customerId, normalizedShippingAddress).catch(() => {}),
+      );
+
+      // Merchant Billing Notification
+      if (store?.userId) {
+        bgTasks.push(
+          createBillingNotification({
+            userId: String(store.userId),
+            storeId,
+            type: "new_order",
+            title: `New order ${orderNumber}`,
+            message: `${payload.shippingAddress.fullName} placed an order for ${currencyCode} ${total.toFixed(2)}.`,
+            actionUrl: store.slug ? `/store/${store.slug}/orders` : "/dashboard/orders",
+            metadata: { orderId: String(order._id), orderNumber, total, currencyCode },
+          }).catch(() => {}),
+        );
+      }
+
+      // Customer Notification
+      if (customerId && mongoose.Types.ObjectId.isValid(String(customerId))) {
+        bgTasks.push(
+          CustomerNotificationModel.create({
+            customerId,
+            storeId,
+            type: "order",
+            icon: "package",
+            priority: "medium",
+            title: `Order placed: ${orderNumber}`,
+            message: `Your order has been placed successfully. Total ${currencyCode} ${total.toFixed(2)}.`,
+            link: `/orders/${String(order._id)}`,
+            metadata: {
+              orderId: String(order._id),
+              orderNumber,
+              status: "pending",
+              paymentStatus: order.paymentStatus,
+              total,
+              currencyCode,
+            },
+          }).catch(() => {}),
+        );
+      }
+
+      await Promise.allSettled(bgTasks);
+    } catch (bgErr) {
+      console.error("[orders] Background post-order processing safe catch:", bgErr);
+    }
+  });
+
+  const durationMs = Date.now() - startTime;
+  console.info("[ORDER] order created successfully", {
+    orderId: String(order._id),
+    orderNumber,
+    durationMs,
+  });
+
+  // ── 10. SSLCommerz Direct Gateway Session Init ──
   if (paymentMethod === "sslcommerz") {
-    console.info("[PAYMENT_SESSION_START]", { orderId: String(order._id), storeId });
     const { initiateSSLCommerzPayment } = await import("../payments/sslcommerz.service.js");
     const sslResult = await initiateSSLCommerzPayment(storeId, String(order._id));
-    console.info("[CHECKOUT] SSLCommerz result received", { ok: sslResult.ok, orderId: String(order._id) });
     if (sslResult.ok) {
-      console.info("[CHECKOUT_RESPONSE_SENT]", {
-        orderId: String(order._id),
-        orderNumber: order.orderNumber,
-        gatewayUrl: sslResult.data.gatewayUrl,
-      });
       return {
         ok: true as const,
         data: {

@@ -18,8 +18,11 @@ import {
 } from "@/components/storefront/storefront-ui";
 import { cn } from "@/lib/utils";
 
+import { useIsClient } from "@/hooks/use-is-client";
+
 export default function CartPage() {
   const dispatch = useDispatch();
+  const isClient = useIsClient();
   const { settings } = useTenant();
   const { classes, primaryColor } = useStorefrontSurface();
   const { items } = useSelector((state: RootState) => state.cart);
@@ -43,6 +46,18 @@ export default function CartPage() {
   const handleRemove = (productId: string) => {
     dispatch(removeFromCart(productId));
   };
+
+  if (!isClient) {
+    return (
+      <StorefrontPage maxWidth="md">
+        <StorefrontPageHeader title="Shopping Cart" />
+        <div className="space-y-4 animate-pulse">
+          <div className="h-24 rounded-2xl bg-zinc-100 dark:bg-zinc-800/50" />
+          <div className="h-24 rounded-2xl bg-zinc-100 dark:bg-zinc-800/50" />
+        </div>
+      </StorefrontPage>
+    );
+  }
 
   if (items.length === 0) {
     return (

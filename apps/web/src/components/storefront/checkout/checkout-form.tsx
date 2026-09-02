@@ -10,6 +10,7 @@ import { clearCart } from "@/redux/slices/cart-slice";
 import { useCreateOrderMutation } from "@/redux/api/order-api";
 import { useStorefrontTracking } from "@/hooks/use-storefront-tracking";
 import { toast } from "sonner";
+import { useIsClient } from "@/hooks/use-is-client";
 import {
   CheckoutAddressSection,
 } from "./checkout-address-section";
@@ -31,6 +32,21 @@ import {
   EMPTY_FORM,
 } from "./checkout-types";
 
+function CheckoutSkeleton() {
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-6 space-y-2">
+        <div className="h-8 w-64 rounded-lg bg-zinc-200/70 dark:bg-zinc-800 animate-pulse" />
+        <div className="h-4 w-48 rounded bg-zinc-100 dark:bg-zinc-800/60 animate-pulse" />
+      </div>
+      <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
+        <div className="h-96 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-2xs dark:border-zinc-800 dark:bg-zinc-950 animate-pulse" />
+        <div className="h-80 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-2xs dark:border-zinc-800 dark:bg-zinc-950 animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
 export function CheckoutForm({
   initialPaymentMethods,
   initialDeliveryZones,
@@ -40,6 +56,7 @@ export function CheckoutForm({
 }: CheckoutInitialProps) {
   const router = useRouter();
   const dispatch = useDispatch();
+  const isClient = useIsClient();
   const cart = useSelector((state: RootState) => state.cart);
   const customer = useSelector((state: RootState) => state.customer.customer);
   const [createOrder, { isLoading: isSubmittingOrder }] = useCreateOrderMutation();
@@ -61,9 +78,11 @@ export function CheckoutForm({
   const [transactionId, setTransactionId] = useState("");
 
   // Client-generated idempotency key for network retry and double-click protection
-  const [idempotencyKey] = useState(
-    () => `${store?._id || "ord"}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-  );
+  const [idempotencyKey, setIdempotencyKey] = useState("");
+
+  useEffect(() => {
+    setIdempotencyKey(`${store?._id || "ord"}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
+  }, [store?._id]);
 
   // Order submission result state
   const [orderSuccess, setOrderSuccess] = useState<{
@@ -112,7 +131,7 @@ export function CheckoutForm({
 
   // Track initiate checkout once
   useEffect(() => {
-    if (items.length > 0) {
+    if (isClient && items.length > 0) {
       trackInitiateCheckout({
         items: items.map((item) => ({
           id: item.productId,
@@ -124,24 +143,29 @@ export function CheckoutForm({
         currency: currencyCode,
       });
     }
-  }, []);
+  }, [isClient]);
+
+  // Prevent hydration mismatch between server (empty cart) and client (persisted cart)
+  if (!isClient) {
+    return <CheckoutSkeleton />;
+  }
 
   // Empty Cart State
   if (items.length === 0 && !orderSuccess) {
     return (
       <div className="mx-auto flex min-h-[50vh] max-w-md flex-col items-center justify-center px-4 py-16 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500">
           <ShoppingBag className="h-8 w-8" />
         </div>
-        <h2 className="mt-4 text-2xl font-bold tracking-tight text-zinc-900">
+        <h2 className="mt-4 text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
           Your Cart is Empty
         </h2>
-        <p className="mt-2 text-sm text-zinc-500">
+        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
           Add some products to your cart before proceeding to checkout.
         </p>
         <Link
           href="/shop"
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-zinc-800"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Explore Products</span>

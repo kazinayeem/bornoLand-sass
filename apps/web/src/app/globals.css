@@ -134,6 +134,8 @@
 :root {
   color-scheme: light;
   font-feature-settings: "ss03" 1;
+  --store-header-height: 72px;
+  --store-header-offset: 0px;
 }
 
 .dark {

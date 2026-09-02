@@ -365,7 +365,7 @@ export function CheckoutForm({
         </div>
 
         {/* Right Column: Order Summary with instant line item interactions */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div className="lg:sticky lg:top-[calc(var(--store-header-height,72px)+1.5rem)] lg:self-start">
           <CheckoutOrderSummary
             items={items}
             subtotal={subtotal}

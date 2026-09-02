@@ -31,7 +31,7 @@ export function CustomerAuthShell({
   const storeInitial = (store?.name || "BornoLand").charAt(0).toUpperCase();
 
   return (
-    <div className="relative flex min-h-[calc(100vh-10rem)] items-center justify-center px-4 py-8 sm:px-6 md:py-12 lg:py-16">
+    <div className="relative flex min-h-[calc(100vh-var(--store-header-height,72px))] items-center justify-center px-4 py-8 sm:px-6 md:py-12 lg:py-16">
       {/* Background Decorative subtle gradients */}
       <div className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center overflow-hidden">
         <div

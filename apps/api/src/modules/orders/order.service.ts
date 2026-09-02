@@ -115,7 +115,7 @@ export async function createOrder(
   // ── 1. Idempotency Check (Instant Return for Retries / Double-Clicks) ──
   const idempotencyKey = payload.idempotencyKey?.trim() || "";
   if (idempotencyKey) {
-    const existingOrder = await OrderModel.findOne({ storeId, idempotencyKey }).lean();
+    const existingOrder = (await OrderModel.findOne({ storeId, idempotencyKey }).lean()) as any;
     if (existingOrder) {
       console.info("[ORDER] Idempotent hit: returning existing order", {
         orderId: String(existingOrder._id),
@@ -206,7 +206,9 @@ export async function createOrder(
         status: "active",
       });
     }
-    customerId = String(guestDoc._id);
+    if (guestDoc) {
+      customerId = String((guestDoc as any)._id);
+    }
   }
 
   // ── 4. Item Resolution & Batch Product Verification ──
@@ -265,7 +267,7 @@ export async function createOrder(
     }
   } else {
     // Fallback to database cart if payload items not directly provided
-    const cart = await CartModel.findOne({ storeId, customerId }).lean();
+    const cart = (await CartModel.findOne({ storeId, customerId }).lean()) as any;
     if (cart && cart.items?.length) {
       cartIdToClean = String(cart._id);
       couponCode = cart.couponCode || couponCode;
@@ -542,17 +544,18 @@ export async function createOrder(
           .catch(() => {}),
       );
 
-      // Customer Stats Sync
-      bgTasks.push(
-        import("../customers/customer.service.js")
-          .then(({ syncCustomerOrderStats }) => syncCustomerOrderStats(storeId, customerId))
-          .catch(() => {}),
-      );
-
-      // Auto-save Customer Address
-      bgTasks.push(
-        autoSaveCustomerAddressFromOrder(storeId, customerId, normalizedShippingAddress).catch(() => {}),
-      );
+      // Customer Stats Sync & Address Auto-Save
+      if (customerId) {
+        const resolvedCustId = String(customerId);
+        bgTasks.push(
+          import("../customers/customer.service.js")
+            .then(({ syncCustomerOrderStats }) => syncCustomerOrderStats(storeId, resolvedCustId))
+            .catch(() => {}),
+        );
+        bgTasks.push(
+          autoSaveCustomerAddressFromOrder(storeId, resolvedCustId, normalizedShippingAddress).catch(() => {}),
+        );
+      }
 
       // Merchant Billing Notification
       if (store?.userId) {

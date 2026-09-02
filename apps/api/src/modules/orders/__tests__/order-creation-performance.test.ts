@@ -194,10 +194,10 @@ describe("Order Creation Architecture & Performance Test Suite", () => {
 
   it("Test 3: Batch inventory decrement is applied correctly", async () => {
     try {
-      const [p1, p2] = await Promise.all([
+      const [p1, p2] = (await Promise.all([
         ProductModel.findById(productId1).lean(),
         ProductModel.findById(productId2).lean(),
-      ]);
+      ])) as any[];
 
       assert.ok(p1, "Product 1 exists");
       assert.ok(p2, "Product 2 exists");

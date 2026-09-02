@@ -10,6 +10,11 @@
  * In v4, max-w-lg maps to --spacing-lg (not a separate max-width scale).
  * Overriding those keys collapsed max-w-* to 12–32px and broke every layout.
  * Use --spacing-apple-* / --radius-apple-* for design-system-specific values.
+ *
+ * FIX: Removed --spacing-sm/md/lg/xl from @theme to restore Tailwind's default
+ * spacing scale. This fixes max-w-sm (24rem), max-w-md (28rem), max-w-lg (32rem),
+ * max-w-xl (36rem) and all other width utilities that depend on --spacing-*.
+ * The --spacing-apple-* tokens remain for p-apple-* / px-apple-* / py-apple-* utilities.
  */
 
 /* ── Nordic Yellow Design System Tokens ───────────────────────── */
@@ -95,15 +100,21 @@
   --color-apple-on-primary: #ffffff;
   --color-apple-on-dark: #ffffff;
 
-  /* Nordic Spacing tokens (4px base) */
+  /* Non-conflicting spacing tokens (do NOT use names: sm, md, lg, xl — they break max-w-*) */
   --spacing-xxs: 4px;
   --spacing-xs: 8px;
-  --spacing-sm: 12px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
   --spacing-xxl: 48px;
   --spacing-section: 80px;
+
+  /* Apple Design System Spacing tokens (for p-apple-* / px-apple-* / py-apple-* utilities) */
+  --spacing-apple-xxs: 4px;
+  --spacing-apple-xs: 8px;
+  --spacing-apple-sm: 12px;
+  --spacing-apple-md: 16px;
+  --spacing-apple-lg: 24px;
+  --spacing-apple-xl: 32px;
+  --spacing-apple-xxl: 48px;
+  --spacing-apple-section: 80px;
 
   /* Border radius — Nordic standard 4px */
   --radius-xs: 4px;

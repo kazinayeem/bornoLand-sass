@@ -92,7 +92,15 @@ export default function WasteLossPage() {
 
   const records = wasteData?.data?.records ?? [];
   const summary = wasteData?.data?.summary ?? { totalUnits: 0, totalLossValue: 0 };
-  const products = productsData?.data?.items ?? [];
+  const products = (() => {
+    const items = productsData?.data?.items ?? [];
+    const seen = new Set<string>();
+    return items.filter((p: any) => {
+      if (seen.has(p.productId)) return false;
+      seen.add(p.productId);
+      return true;
+    });
+  })();
   const warehouses = (warehousesData?.data as any)?.warehouses ?? [];
 
   const handleProductSelect = (pId: string) => {

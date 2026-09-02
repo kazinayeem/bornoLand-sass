@@ -97,15 +97,17 @@ async function fetchTenantSiteRemote(slug: string, pageSlug?: string): Promise<T
  * Cache successful storefront payloads only.
  * Misses and errors are NOT written to unstable_cache (throws bypass the cache).
  */
-const getCachedTenantSite = (slug: string, pageSlug?: string) =>
-  unstable_cache(
-    () => fetchTenantSiteRemote(slug, pageSlug),
-    ["tenant-site", slug, pageSlug ?? "home"],
+const getCachedTenantSite = (slug: string, pageSlug?: string) => {
+  const normSlug = slug.trim().toLowerCase();
+  return unstable_cache(
+    () => fetchTenantSiteRemote(normSlug, pageSlug),
+    ["tenant-site", normSlug, pageSlug ?? "home"],
     {
       revalidate: CACHE_REVALIDATE.storefront,
-      tags: [cacheTags.tenant(slug), cacheTags.tenantTheme(slug)],
+      tags: [cacheTags.tenant(normSlug), cacheTags.tenantTheme(normSlug)],
     },
   )();
+};
 
 /**
  * Public storefront loader — ISR via unstable_cache + request memoization.

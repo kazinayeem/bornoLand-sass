@@ -106,10 +106,57 @@ class CacheManager {
 
 export const cacheService = new CacheManager();
 
-/** Invalidate all public caches for a specific store */
-export async function invalidateStoreTenantCache(storeKeyOrId: string): Promise<void> {
-  await Promise.all([
-    cacheService.invalidatePattern(`tenant:${storeKeyOrId}`),
-    cacheService.invalidatePattern(`tenant:store:${storeKeyOrId}`),
-  ]);
+export type RevalidateScope = "all" | "home" | "products" | "cms" | "theme" | "categories" | "navigation";
+
+/** Invalidate all public caches for a specific store in Redis/Memory and trigger Next.js ISR on-demand revalidation */
+export async function invalidateStoreTenantCache(
+  storeKeyOrId: string,
+  scope: RevalidateScope = "all",
+  extra?: { productSlug?: string; categorySlug?: string; cmsSlugs?: string[] }
+): Promise<void> {
+  if (!storeKeyOrId) return;
+
+  try {
+    await Promise.all([
+      cacheService.invalidatePattern(`tenant:${storeKeyOrId}`),
+      cacheService.invalidatePattern(`tenant:store:${storeKeyOrId}`),
+    ]);
+
+    // Resolve store slug and ID
+    const { StoreModel } = await import("../../models/store.model.js");
+    let store: { _id: unknown; slug: string } | null = null;
+
+    if (storeKeyOrId.match(/^[0-9a-fA-F]{24}$/)) {
+      store = (await StoreModel.findById(storeKeyOrId).select("_id slug").lean()) as any;
+    }
+    if (!store) {
+      store = (await StoreModel.findOne({
+        $or: [{ slug: storeKeyOrId.toLowerCase() }, { subdomain: storeKeyOrId.toLowerCase() }],
+      }).select("_id slug").lean()) as any;
+    }
+
+    if (store) {
+      const secret = process.env.REVALIDATE_SECRET || "bornoland_revalidate_secret";
+      const appUrl = process.env.APP_URL || process.env.WEB_URL || "http://localhost:3000";
+
+      fetch(`${appUrl}/api/revalidate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-revalidate-secret": secret },
+        body: JSON.stringify({
+          tenantSlug: store.slug,
+          storeId: String(store._id),
+          scope,
+          ...extra,
+        }),
+        signal: AbortSignal.timeout(5000),
+      }).catch((err) => {
+        // Safe catch on network/timeout
+        if (process.env.NODE_ENV === "development") {
+          console.log(`[revalidate] Next.js revalidate notice: ${(err as Error).message}`);
+        }
+      });
+    }
+  } catch (err) {
+    console.warn("[invalidateStoreTenantCache] error:", err);
+  }
 }

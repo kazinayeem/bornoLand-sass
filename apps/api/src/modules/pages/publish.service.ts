@@ -170,10 +170,11 @@ export async function publishPage(
     metadata: { version: version.version, diff },
   });
 
-  // Asynchronously invalidate CDN cache
-  const tenantId = (store as any).tenantId;
-  const tenantSlug = String(tenantId);
-  triggerRevalidation(tenantSlug, page.slug).catch(() => {});
+  // Asynchronously invalidate CDN & ISR cache
+  const { invalidateStoreTenantCache } = await import("../../common/cache/cache.service.js");
+  invalidateStoreTenantCache(storeId, page.isHomePage || page.slug === "/" ? "home" : "cms", {
+    cmsSlugs: [page.slug],
+  }).catch(() => {});
 
   return {
     ok: true,
@@ -207,6 +208,9 @@ export async function unpublishPage(
     title: page.title,
     slug: page.slug,
   });
+
+  const { invalidateStoreTenantCache } = await import("../../common/cache/cache.service.js");
+  invalidateStoreTenantCache(storeId, "all").catch(() => {});
 
   return { ok: true, data: { page: page.toObject() } };
 }
@@ -258,6 +262,9 @@ export async function rollbackToVersion(
     slug: page.slug,
     metadata: { restoredFromVersion: versionNumber },
   });
+
+  const { invalidateStoreTenantCache } = await import("../../common/cache/cache.service.js");
+  invalidateStoreTenantCache(storeId, "all").catch(() => {});
 
   return { ok: true, data: { page: page.toObject(), restoredFromVersion: versionNumber } };
 }

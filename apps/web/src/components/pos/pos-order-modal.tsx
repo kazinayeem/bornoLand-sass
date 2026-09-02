@@ -663,6 +663,5 @@ export function PosOrderModal({
           onSelectVariant={handleSelectVariant}
         />
       </div>
-    </div>
   );
 }

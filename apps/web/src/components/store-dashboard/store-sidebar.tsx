@@ -92,8 +92,8 @@ function SidebarStoreSwitcher({
   const { t, language } = useLanguage();
   const { data: storesData } = useGetMyStoresQuery();
   const stores = storesData?.data?.stores ?? [];
-  const statusInfo = resolveStoreStatus(store);
-  const domain = getStoreDisplayDomain(store);
+  const status = resolveStoreStatus(store);
+  const domain = getStoreDisplayDomain(store.slug);
 
   return (
     <div className="relative">
@@ -123,13 +123,13 @@ function SidebarStoreSwitcher({
               <span
                 className={cn(
                   "h-1.5 w-1.5 shrink-0 rounded-full",
-                  statusInfo.status === "active"
+                  status === "active"
                     ? "bg-emerald-500"
-                    : statusInfo.status === "maintenance"
-                    ? "bg-amber-500"
+                    : status === "trial"
+                    ? "bg-indigo-500"
                     : "bg-zinc-400"
                 )}
-                title={statusInfo.label}
+                title={status}
               />
             </div>
             <span className="truncate text-[10px] text-zinc-500 font-mono">

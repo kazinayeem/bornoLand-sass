@@ -5,13 +5,11 @@ import { StoryHero } from "@/components/landing/story-hero";
 import { StoryProblem } from "@/components/landing/story-problem";
 import { StoryTransformation } from "@/components/landing/story-transformation";
 import { StoryBuilder } from "@/components/landing/story-builder";
-import { StoryProducts } from "@/components/landing/story-products";
 import { StoryOrders } from "@/components/landing/story-orders";
-import { StoryPaymentsDelivery } from "@/components/landing/story-payments-delivery";
+import { StoryProducts } from "@/components/landing/story-products";
 import { StoryAutomation } from "@/components/landing/story-automation";
-import { StoryAnalytics } from "@/components/landing/story-analytics";
-import { StoryGrowth } from "@/components/landing/story-growth";
 import { StoryDeveloper } from "@/components/landing/story-developer";
+import { StoryAnalytics } from "@/components/landing/story-analytics";
 import { StorySocialProof } from "@/components/landing/story-social-proof";
 import { StoryPricing } from "@/components/landing/story-pricing";
 import { StoryFAQ } from "@/components/landing/story-faq";
@@ -19,10 +17,19 @@ import { StoryCTA } from "@/components/landing/story-cta";
 import { Footer } from "@/components/landing/footer";
 
 export const metadata: Metadata = {
-  title: "BornoLand — The Commerce Operating System",
+  title: "BornoLand — One Powerful Platform for Your Entire Business",
   description:
-    "Your online store, ready in minutes. Visual storefront builder, live analytics, automated PDF invoices, bKash & COD payments, courier integrations, and multi-store management.",
+    "The complete Business Operating System (BOS) unifying Commerce, Cloud POS, Multi-Warehouse Inventory, Audited Payroll, Double-Entry Accounting, CRM, and Real-Time Analytics.",
   alternates: { canonical: "/" },
+  openGraph: {
+    title: "BornoLand — The Complete Business Operating System",
+    description:
+      "Unify your online storefront, retail POS, inventory, accounting, and payroll in one high-performance platform.",
+    url: "https://bornoland.com",
+    siteName: "BornoLand",
+    locale: "en_US",
+    type: "website",
+  },
 };
 
 export default function HomePage() {
@@ -38,62 +45,56 @@ export default function HomePage() {
             applicationCategory: "BusinessApplication",
             operatingSystem: "Web",
             description:
-              "The modern multi-store e-commerce operating system for building, managing, and scaling online businesses.",
+              "The modern multi-store Business Operating System (BOS) for building, managing, and scaling commerce enterprises.",
           }),
         }}
       />
 
-      {/* Translucent Navigation */}
+      {/* Sticky Translucent Navigation with Instant Language Switcher */}
       <Header />
 
       <main className="overflow-x-hidden scroll-smooth [scroll-padding-top:4.5rem] sm:[scroll-padding-top:5rem] bg-[#FAFAFA]">
-        {/* 1. THE DREAM — Hero + Large Realistic Product Dashboard */}
+        {/* 1. HERO — Value Proposition + Living Interactive Multi-Module Dashboard Mockup */}
         <StoryHero />
 
-        {/* 2. THE PROBLEM — Scattered 5+ tools before Bornoland */}
+        {/* 2. THE PROBLEM — Fragmented Tools vs. BornoLand Unified Pipeline */}
         <StoryProblem />
 
-        {/* 3. THE TRANSFORMATION — One unified platform for your entire store */}
+        {/* 3. PLATFORM ARCHITECTURE — Interconnected BOS Data Pipeline */}
         <StoryTransformation />
 
-        {/* 4. BUILD — Start with your storefront */}
+        {/* 4. COMMERCE & STOREFRONT — Drag & Drop Visual Builder with Multi-Device Preview */}
         <StoryBuilder />
 
-        {/* 5. SELL — Products catalog and live sync */}
-        <StoryProducts />
-
-        {/* 6. ORDER — The business comes alive with live streaming orders */}
+        {/* 5. RETAIL POS — High-Speed In-Store Register with Split Tender & Receipt */}
         <StoryOrders />
 
-        {/* 7. PAYMENT + DELIVERY — Connected bKash/COD + Courier fulfillment */}
-        <StoryPaymentsDelivery />
+        {/* 6. INVENTORY & WAREHOUSE — Multi-Warehouse Stock Movement & True Cost Ledger */}
+        <StoryProducts />
 
-        {/* 8. AUTOMATION — The magic moment: store runs itself */}
+        {/* 7. ACCOUNTING & FINANCE — Real-Time Double-Entry Journal & P&L Statement */}
         <StoryAutomation />
 
-        {/* 9. BUSINESS INTELLIGENCE — Real-time analytics and revenue growth */}
-        <StoryAnalytics />
-
-        {/* 10. GROWTH STORY — Scale from 1 store to retail empire */}
-        <StoryGrowth />
-
-        {/* 11. DEVELOPER / POWER USER — REST API & webhooks when ready */}
+        {/* 8. PEOPLE & HRM — Biometric Attendance, Shift Rules & 1-Click Payroll */}
         <StoryDeveloper />
 
-        {/* 12. SOCIAL PROOF & TRUST — Featured merchant story & 50K+ stats */}
+        {/* 9. BUSINESS INTELLIGENCE — Live Command Center with Interactive SVG Chart */}
+        <StoryAnalytics />
+
+        {/* 10. SOCIAL PROOF — Verified Merchants & Platform Growth Trust Bar */}
         <StorySocialProof />
 
-        {/* 13. PRICING — The decision: clean 4-tier matrix */}
+        {/* 11. PRICING — Clean 4-Tier Matrix with Monthly/Yearly Switch & 20% Discount */}
         <StoryPricing />
 
-        {/* 14. FAQ — Remove final objections */}
+        {/* 12. FAQ — Accessible & Smooth Accordion */}
         <StoryFAQ />
 
-        {/* 15. FINAL CTA — Your store is closer than you think */}
+        {/* 13. FINAL CTA — Luxury Dark Banner */}
         <StoryCTA />
       </main>
 
-      {/* 16. SaaS Footer */}
+      {/* 14. 5-Column SaaS Footer */}
       <Footer />
     </LandingLocaleProvider>
   );

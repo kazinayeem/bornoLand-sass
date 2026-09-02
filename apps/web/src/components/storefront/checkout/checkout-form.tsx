@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { ShoppingBag, ArrowLeft, AlertCircle } from "lucide-react";
+import { resolveStoreHref } from "@/lib/store-href";
 import type { RootState } from "@/store/store";
 import { clearCart } from "@/redux/slices/cart-slice";
 import { useCreateOrderMutation } from "@/redux/api/order-api";
@@ -55,6 +56,7 @@ export function CheckoutForm({
   tenantSlug,
 }: CheckoutInitialProps) {
   const router = useRouter();
+  const pathname = usePathname() || "";
   const dispatch = useDispatch();
   const isClient = useIsClient();
   const cart = useSelector((state: RootState) => state.cart);
@@ -192,7 +194,8 @@ export function CheckoutForm({
 
     if (settings?.requireLoginEnabled && !customer) {
       toast.error("Please log in to complete your order.");
-      router.push(`/login?redirect=${encodeURIComponent("/checkout")}`);
+      const loginUrl = resolveStoreHref(`/account/login?redirect=${encodeURIComponent(pathname || "/checkout")}`, pathname);
+      router.push(loginUrl);
       return;
     }
 

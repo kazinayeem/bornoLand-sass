@@ -17,6 +17,7 @@ import {
   changeStoreThemeController,
   updateStoreBrandingController
 } from "./store.controller.js";
+import { getStoreContextController } from "./store-context.controller.js";
 import { getStoreSettingsController, updateStoreSettingsController } from "./store-settings.controller.js";
 import { getStoreContactController, updateStoreContactController } from "./store-contact.controller.js";
 import { createHomepageSliderController, deleteHomepageSliderController, listHomepageSlidersController, updateHomepageSliderController } from "./homepage-slider.controller.js";
@@ -57,7 +58,9 @@ storeRouter.use(requireAuth);
 // ── Workspace-level store operations ──────────────────────────────────────────
 storeRouter.post("/create", createStoreController);
 storeRouter.get("/my-stores", getUserStoresController);
+storeRouter.get("/by-slug/:slug/context", getStoreContextController);
 storeRouter.get("/by-slug/:slug", getStoreBySlugController);
+storeRouter.get("/:id/context", requireStoreAccess, getStoreContextController);
 storeRouter.get("/:id", requireStoreAccess, getStoreController);
 storeRouter.put("/:id", requireStorePermission("settings:manage"), updateStoreController);
 storeRouter.put("/:id/theme", requireStorePermission("settings:manage"), changeStoreThemeController);

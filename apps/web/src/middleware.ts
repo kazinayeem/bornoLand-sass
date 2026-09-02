@@ -3,7 +3,7 @@ import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 import { getApiUrl, getAppOrigin } from "@/lib/urls";
 import { resolveTenantFromHost } from "@/lib/tenant-resolution";
-import { buildLoginUrl, isAuthenticationPath, validateInternalRedirect } from "@/lib/auth-redirect";
+import { buildLoginUrl, isAuthenticationPath, validateInternalRedirect, validatePlatformRedirect } from "@/lib/auth-redirect";
 
 const PUBLIC_FILE = /\.(.*)$/;
 const authSecret = process.env.JWT_SECRET ?? "bornoland-dev-secret";
@@ -86,8 +86,9 @@ export default async function middleware(request: NextRequest) {
 
     if (isAppRoute(pathname)) {
       // On platform apex (IP / localhost + default tenant), keep /dashboard|/login on this host.
-      // Only bounce subdomain / custom-domain visitors to the SaaS origin.
-      if (tenant.source === "default-tenant" || tenant.isPlatformHost) {
+      // On loopback multi-tenant domains (*.localhost), keep on current host to prevent Next.js relativizing localhost redirects into an infinite loop.
+      const isLoopbackHost = host.endsWith(".localhost") || host.includes(".localhost:") || host.startsWith("localhost");
+      if (tenant.source === "default-tenant" || tenant.isPlatformHost || isLoopbackHost) {
         // fall through to auth / app handlers below
       } else {
         const appOrigin = getAppOrigin();
@@ -160,7 +161,7 @@ export default async function middleware(request: NextRequest) {
       pathname.startsWith("/admin/login") || session?.role === "super_admin"
         ? "/admin/dashboard"
         : "/dashboard";
-    const redirectTo = validateInternalRedirect(request.nextUrl.searchParams.get("redirect")) ?? defaultDestination;
+    const redirectTo = validatePlatformRedirect(request.nextUrl.searchParams.get("redirect")) ?? defaultDestination;
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
   if (isAuthPage) return NextResponse.next();

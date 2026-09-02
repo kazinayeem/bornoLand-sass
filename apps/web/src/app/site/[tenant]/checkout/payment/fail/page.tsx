@@ -1,13 +1,15 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { XCircle, RotateCcw, ShoppingBag, ArrowLeft, AlertTriangle } from "lucide-react";
+import { XCircle, RotateCcw, ShoppingBag, AlertTriangle } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
 import { StoreLink as Link } from "@/components/storefront/store-link";
 import { StorefrontButton, StorefrontCard } from "@/components/storefront/storefront-ui";
+import PaymentReturnLoading from "../loading";
 
-export default function PaymentFailPage() {
+function PaymentFailContent() {
   const searchParams = useSearchParams();
   const { store } = useTenant();
 
@@ -76,5 +78,13 @@ export default function PaymentFailPage() {
         </StorefrontCard>
       </motion.div>
     </div>
+  );
+}
+
+export default function PaymentFailPage() {
+  return (
+    <Suspense fallback={<PaymentReturnLoading />}>
+      <PaymentFailContent />
+    </Suspense>
   );
 }

@@ -211,8 +211,11 @@ const orderSchema = new Schema(
   { timestamps: true }
 );
 
+orderSchema.index({ storeId: 1, createdAt: -1 });
 orderSchema.index({ storeId: 1, status: 1, createdAt: -1 });
+orderSchema.index({ storeId: 1, orderNumber: 1 });
 orderSchema.index({ storeId: 1, paymentStatus: 1 });
+orderSchema.index({ customerId: 1, createdAt: -1 });
 orderSchema.index({ storeId: 1, idempotencyKey: 1 }, { sparse: true });
 
 export type OrderDocument = InferSchemaType<typeof orderSchema>;

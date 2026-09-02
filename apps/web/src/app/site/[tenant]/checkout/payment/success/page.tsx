@@ -1,15 +1,17 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { CheckCircle2, ArrowRight, ShoppingBag, FileText, Sparkles } from "lucide-react";
+import { CheckCircle2, ShoppingBag, FileText, Sparkles, RefreshCw } from "lucide-react";
 import { useTenant } from "@/providers/tenant-provider";
 import { StoreLink as Link } from "@/components/storefront/store-link";
 import { StorefrontButton, StorefrontCard } from "@/components/storefront/storefront-ui";
+import PaymentReturnLoading from "../loading";
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
-  const { store, theme } = useTenant();
+  const { store } = useTenant();
 
   const orderNumber = searchParams.get("orderNumber") || searchParams.get("order") || "";
   const orderId = searchParams.get("orderId") || "";
@@ -44,7 +46,7 @@ export default function PaymentSuccessPage() {
             Your payment was verified and processed securely via SSLCommerz. We are preparing your order for fulfillment.
           </p>
 
-          {(orderNumber || tranId) && (
+          {(orderNumber || tranId) ? (
             <div className="mt-6 w-full rounded-xl bg-zinc-50 dark:bg-zinc-800/60 p-4 text-left border border-zinc-100 dark:border-zinc-800 space-y-2 text-xs">
               {orderNumber && (
                 <div className="flex justify-between">
@@ -62,6 +64,10 @@ export default function PaymentSuccessPage() {
                 <span className="text-muted-foreground font-medium">Store</span>
                 <span className="font-semibold text-foreground">{store.name}</span>
               </div>
+            </div>
+          ) : (
+            <div className="mt-6 w-full rounded-xl bg-amber-50/50 dark:bg-amber-950/20 p-4 text-left border border-amber-200/60 dark:border-amber-900/40 text-xs text-amber-800 dark:text-amber-300">
+              Your transaction was processed. If order details are not displayed above, you can review your purchase history in your account.
             </div>
           )}
 
@@ -89,5 +95,13 @@ export default function PaymentSuccessPage() {
         </StorefrontCard>
       </motion.div>
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<PaymentReturnLoading />}>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }

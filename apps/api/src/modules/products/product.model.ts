@@ -112,6 +112,7 @@ const productSchema = new Schema(
 
 productSchema.index({ storeId: 1, slug: 1 }, { unique: true });
 productSchema.index({ storeId: 1, status: 1 });
+productSchema.index({ storeId: 1, createdAt: -1 });
 productSchema.index({ storeId: 1, featured: 1 });
 productSchema.index({ storeId: 1, productType: 1 });
 productSchema.index({ storeId: 1, featured: 1, createdAt: -1 });

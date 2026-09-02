@@ -678,6 +678,13 @@ export function StoreSidebar({
   const isOwner = useIsStoreOwner();
   const permissionSet = usePermissions();
 
+  const canAccessDashboard =
+    isOwner ||
+    checkPermission(permissionSet, "analytics:read") ||
+    checkPermission(permissionSet, "orders:read") ||
+    checkPermission(permissionSet, "products:read") ||
+    checkPermission(permissionSet, "settings:read");
+
   const resolveLink = useCallback(
     (link: { label: string; featureKey?: string; permission?: string; comingSoon?: boolean }) => {
       const key = link.featureKey ?? NAV_FEATURE_MAP[link.label];
@@ -755,16 +762,36 @@ export function StoreSidebar({
               </NavTooltipWrapper>
             </div>
 
-            {/* Dashboard Direct Top Link */}
+            {/* Contextual Primary Top Link */}
             <div>
-              <NavItem
-                href="/dashboard"
-                label={t.storeNav.dashboard}
-                icon={LayoutDashboard}
-                exact={true}
-                basePath={basePath}
-                onNavigate={onNavigate}
-              />
+              {canAccessDashboard ? (
+                <NavItem
+                  href="/dashboard"
+                  label={t.storeNav.dashboard}
+                  icon={LayoutDashboard}
+                  exact={true}
+                  basePath={basePath}
+                  onNavigate={onNavigate}
+                />
+              ) : checkPermission(permissionSet, "pos:read") ? (
+                <NavItem
+                  href="/pos"
+                  label={language === "bn" ? "পিওএস টার্মিনাল" : "POS Terminal"}
+                  icon={Calculator}
+                  exact={true}
+                  basePath={basePath}
+                  onNavigate={onNavigate}
+                />
+              ) : (
+                <NavItem
+                  href="/hrm/self-service"
+                  label={language === "bn" ? "কর্মী পোর্টাল" : "Employee Portal"}
+                  icon={UserCheck}
+                  exact={true}
+                  basePath={basePath}
+                  onNavigate={onNavigate}
+                />
+              )}
             </div>
 
             {/* Grouped Information Architecture */}

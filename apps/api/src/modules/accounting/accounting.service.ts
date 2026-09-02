@@ -213,13 +213,30 @@ export async function getFinancialStatements(storeId: string) {
   const netProfit = totalRevenue - totalExpense;
 
   return {
-    trialBalance: accounts.map((a) => ({
-      code: a.code,
-      name: a.name,
-      type: a.type,
-      debit: a.type === "asset" || a.type === "expense" ? Math.max(0, a.currentBalance) : 0,
-      credit: a.type === "liability" || a.type === "equity" || a.type === "revenue" ? Math.max(0, a.currentBalance) : 0,
-    })),
+    trialBalance: accounts.map((a) => {
+      let debit = 0;
+      let credit = 0;
+      if (a.type === "asset" || a.type === "expense") {
+        if (a.currentBalance >= 0) {
+          debit = a.currentBalance;
+        } else {
+          credit = Math.abs(a.currentBalance);
+        }
+      } else {
+        if (a.currentBalance >= 0) {
+          credit = a.currentBalance;
+        } else {
+          debit = Math.abs(a.currentBalance);
+        }
+      }
+      return {
+        code: a.code,
+        name: a.name,
+        type: a.type,
+        debit,
+        credit,
+      };
+    }),
     profitAndLoss: {
       revenues,
       expenses,

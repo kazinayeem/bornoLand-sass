@@ -11,7 +11,7 @@ type PreviewState = {
 
 const initialState: PreviewState = {
   device: "desktop",
-  zoom: 100,
+  zoom: 75,
   showGuides: false,
   showGrid: false,
   fullscreen: false,

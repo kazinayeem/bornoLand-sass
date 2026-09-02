@@ -14,16 +14,5 @@ export function DelayedSkeleton({
   children: ReactNode;
   delayMs?: number;
 }) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setVisible(true), delayMs);
-    return () => window.clearTimeout(timer);
-  }, [delayMs]);
-
-  if (!visible) {
-    return <div className="min-h-[40vh]" aria-hidden />;
-  }
-
   return <>{children}</>;
 }

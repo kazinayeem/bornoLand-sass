@@ -156,7 +156,7 @@ export function MediaPicker({
   const mediaId = selectionMediaId(value);
   const { data: mediaFileData } = useGetMediaFileQuery(
     { storeId, id: mediaId ?? "" },
-    { skip: !mediaId || Boolean(typeof value === "object" && value?.file) },
+    { skip: !storeId || !mediaId || Boolean(typeof value === "object" && value?.file) },
   );
   const fetchedFile = mediaFileData?.data?.file;
   const meta = selectionMeta(value, fetchedFile);
@@ -199,7 +199,7 @@ export function MediaPicker({
     // Never filter by the Builder upload alias — show the whole store library
     folder: activeListFolder,
     ...filterQuery,
-  }, { skip: skipListQuery || !open });
+  }, { skip: !storeId || skipListQuery || !open });
 
   const remoteFiles = data?.data?.files ?? [];
   const favoriteFilesQuery = useGetMediaFilesQuery(
@@ -210,7 +210,7 @@ export function MediaPicker({
       sort: "newest",
       search: debouncedSearch || undefined,
     },
-    { skip: !open || sidebarFilter !== "favorites" },
+    { skip: !storeId || !open || sidebarFilter !== "favorites" },
   );
 
   const files = useMemo(() => {

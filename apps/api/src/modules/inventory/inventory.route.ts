@@ -43,6 +43,10 @@ import {
   barcodeGenerateController,
   getAlertSettingsController,
   putAlertSettingsController,
+  recordWasteController,
+  listWasteController,
+  stockMovementLedgerController,
+  updateProductTrueCostController,
 } from "./inventory-erp.controller.js";
 
 export const inventoryRouter: Router = Router({ mergeParams: true });
@@ -110,6 +114,16 @@ inventoryRouter.post("/barcode/generate", barcodeGuard, barcodeGenerateControlle
 
 inventoryRouter.get("/alerts/settings", alertsGuard, getAlertSettingsController);
 inventoryRouter.put("/alerts/settings", alertsGuard, putAlertSettingsController);
+
+// Waste & Loss Management
+inventoryRouter.get("/waste", featureGuard, listWasteController);
+inventoryRouter.post("/waste", featureGuard, recordWasteController);
+
+// Stock Movement Ledger
+inventoryRouter.get("/ledger", historyGuard, stockMovementLedgerController);
+
+// Product True Cost calculation update
+inventoryRouter.put("/:productId/true-cost", featureGuard, updateProductTrueCostController);
 
 // Existing mutate routes
 inventoryRouter.post("/:productId/adjust", featureGuard, adjustStockController);

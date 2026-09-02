@@ -103,7 +103,7 @@ const config: Config = {
         "apple-xxs": "4px",
         "apple-xs": "8px",
         "apple-sm": "12px",
-        "apple-md": "17px",
+        "apple-md": "16px",
         "apple-lg": "24px",
         "apple-xl": "32px",
         "apple-xxl": "48px",

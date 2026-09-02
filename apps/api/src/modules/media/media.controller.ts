@@ -3,6 +3,7 @@ import type { RequestHandler, Response } from "express";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
 import { StoreModel } from "../stores/store.model.js";
+import { verifyStoreAccess } from "../../common/middleware/store-permission.middleware.js";
 import {
   bulkDeleteMediaFiles,
   deleteMediaFile,
@@ -28,13 +29,15 @@ const upload = multer({
 
 export const mediaUploadMiddleware: RequestHandler = upload.array("files", 20) as RequestHandler;
 
-async function verifyStoreOwner(storeId: string, userId?: string) {
-  return Boolean(await StoreModel.findOne({ _id: storeId, userId }).lean());
+async function checkStoreAccess(storeId: string, userId?: string) {
+  const { ok, storeId: resolvedStoreId } = await verifyStoreAccess(storeId, userId);
+  return { ok, storeId: resolvedStoreId || storeId };
 }
 
 export async function listMediaController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const { search, folder, fileType, sort, page, limit, usage, mimeType } = request.query as Record<string, string>;
@@ -52,8 +55,9 @@ export async function listMediaController(request: AuthRequest, response: Respon
 }
 
 export async function getMediaStatsController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const stats = await getStorageStats(storeId);
@@ -61,9 +65,10 @@ export async function getMediaStatsController(request: AuthRequest, response: Re
 }
 
 export async function getMediaFileController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
   const id = String(request.params.id);
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const result = await getMediaFile(storeId, id);
@@ -71,8 +76,9 @@ export async function getMediaFileController(request: AuthRequest, response: Res
 }
 
 export async function uploadMediaController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
 
@@ -105,11 +111,12 @@ export async function uploadMediaController(request: AuthRequest, response: Resp
 }
 
 export async function renameMediaController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
   const id = String(request.params.id);
   const { displayName } = request.body as { displayName?: string };
   if (!displayName) return sendFailure(response, "Display name required");
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const result = await renameMediaFile(storeId, id, displayName);
@@ -127,10 +134,11 @@ export async function renameMediaController(request: AuthRequest, response: Resp
 }
 
 export async function deleteMediaController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
   const id = String(request.params.id);
   const force = String(request.query.force ?? "") === "true";
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const result = await deleteMediaFile(storeId, id, request.user?.userId, { force });
@@ -154,9 +162,10 @@ export async function deleteMediaController(request: AuthRequest, response: Resp
 }
 
 export async function getMediaUsageController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
   const id = String(request.params.id);
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const result = await getMediaFileUsage(storeId, id);
@@ -164,11 +173,12 @@ export async function getMediaUsageController(request: AuthRequest, response: Re
 }
 
 export async function replaceMediaController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
   const id = String(request.params.id);
   const { newMediaFileId } = request.body as { newMediaFileId?: string };
   if (!newMediaFileId) return sendFailure(response, "newMediaFileId required");
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const result = await replaceMediaFile(storeId, id, newMediaFileId);
@@ -186,9 +196,10 @@ export async function replaceMediaController(request: AuthRequest, response: Res
 }
 
 export async function downloadMediaController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
   const id = String(request.params.id);
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const result = await downloadMediaFile(storeId, id);
@@ -210,10 +221,11 @@ export async function downloadMediaController(request: AuthRequest, response: Re
 }
 
 export async function importMediaFromUrlController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
   const { url, folder, displayName } = request.body as { url?: string; folder?: string; displayName?: string };
   if (!url || typeof url !== "string") return sendFailure(response, "url is required", 400);
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const result = await importMediaFromUrl(storeId, url, { folder, displayName, uploaderId: request.user?.userId });
@@ -235,10 +247,11 @@ export async function importMediaFromUrlController(request: AuthRequest, respons
 }
 
 export async function bulkDeleteMediaController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
   const { fileIds, force } = request.body as { fileIds?: string[]; force?: boolean };
   if (!fileIds?.length) return sendFailure(response, "fileIds required");
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const result = await bulkDeleteMediaFiles(storeId, fileIds, request.user?.userId, { force });

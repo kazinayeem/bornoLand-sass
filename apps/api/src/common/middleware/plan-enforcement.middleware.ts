@@ -48,7 +48,7 @@ export async function requirePlanLimit(req: AuthRequest, res: Response, next: Ne
 
   await connectDatabase();
 
-  const store = await StoreModel.findOne({ _id: storeId, userId }).select("_id").lean() as { _id?: unknown } | null;
+  const store = await StoreModel.findById(storeId).select("_id billingStatus subscriptionStatus status").lean() as { _id?: unknown; billingStatus?: string; subscriptionStatus?: string; status?: string } | null;
   if (!store) return res.status(404).json({ success: false, message: "Store not found" });
 
   const limit = await resolveStoreLimit(String(store._id), limitKey as string);
@@ -88,7 +88,7 @@ export async function requireFeatureEnabled(req: AuthRequest, res: Response, nex
 
   await connectDatabase();
 
-  const store = await StoreModel.findOne({ _id: storeId, userId }).select("_id").lean() as { _id?: unknown } | null;
+  const store = await StoreModel.findById(storeId).select("_id billingStatus subscriptionStatus status").lean() as { _id?: unknown; billingStatus?: string; subscriptionStatus?: string; status?: string } | null;
   if (!store) return res.status(404).json({ success: false, message: "Store not found" });
 
   const enabled = await resolveStoreFeature(String(store._id), featureKey);
@@ -114,7 +114,7 @@ export async function requireStorageAvailable(req: AuthRequest, res: Response, n
 
   await connectDatabase();
 
-  const store = await StoreModel.findOne({ _id: storeId, userId }).select("_id").lean() as { _id?: unknown } | null;
+  const store = await StoreModel.findById(storeId).select("_id billingStatus subscriptionStatus status").lean() as { _id?: unknown; billingStatus?: string; subscriptionStatus?: string; status?: string } | null;
   if (!store) return res.status(404).json({ success: false, message: "Store not found" });
 
   const storage = await resolveStorageLimitMB(String(store._id));
@@ -159,7 +159,7 @@ export async function requireSubscriptionActive(req: AuthRequest, res: Response,
   // Also check override status
   const override = await StoreOverrideModel.findOne({ storeId }).lean() as Record<string, unknown> | null;
 
-  const store = await StoreModel.findOne({ _id: storeId, userId }).select("billingStatus subscriptionStatus status").lean() as { billingStatus?: string; subscriptionStatus?: string; status?: string } | null;
+  const store = await StoreModel.findById(storeId).select("billingStatus subscriptionStatus status").lean() as { billingStatus?: string; subscriptionStatus?: string; status?: string } | null;
   if (!store) return res.status(404).json({ success: false, message: "Store not found" });
 
   const effectiveStatus = (override?.subscriptionStatusOverride as string) || store.subscriptionStatus || "";

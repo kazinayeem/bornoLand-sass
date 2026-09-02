@@ -21,7 +21,6 @@ import { useTenant } from "@/providers/tenant-provider";
 import { removeFromWishlist } from "@/redux/slices/wishlist-slice";
 import { addToCart, type CartItem } from "@/redux/slices/cart-slice";
 import type { RootState } from "@/redux/store";
-import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { useRouter, usePathname } from "next/navigation";
 import { resolveStoreHref } from "@/lib/store-href";
 
@@ -33,7 +32,6 @@ export default function WishlistAccountPage() {
   const { settings } = useTenant();
   const { classes, primaryColor } = useStorefrontSurface();
   const currency = settings?.currencyCode ?? "USD";
-  const [addToCartRemote] = useAddToCartMutation();
 
   if (items.length === 0) {
     return (
@@ -107,23 +105,18 @@ export default function WishlistAccountPage() {
                 <button
                   type="button"
                   className="w-full rounded-xl bg-zinc-900 px-4 py-2 text-xs font-medium text-white transition-all hover:opacity-90 inline-flex items-center justify-center gap-2"
-                  onClick={async () => {
-                    try {
-                      await addToCartRemote({ productId: item.productId, quantity: 1 }).unwrap();
-                      dispatch(
-                        addToCart({
-                          productId: item.productId,
-                          quantity: 1,
-                          name: item.name,
-                          price: item.price,
-                          image: item.image,
-                        } as CartItem),
-                      );
-                      toast.success("Added to cart");
-                      router.push(resolveStoreHref("/cart", pathname));
-                    } catch {
-                      toast.error("Could not add to cart");
-                    }
+                  onClick={() => {
+                    dispatch(
+                      addToCart({
+                        productId: item.productId,
+                        quantity: 1,
+                        name: item.name,
+                        price: item.price,
+                        image: item.image,
+                      } as CartItem),
+                    );
+                    toast.success("Added to cart");
+                    router.push(resolveStoreHref("/cart", pathname));
                   }}
                 >
                   <ShoppingBag className="h-4 w-4" /> Add to cart

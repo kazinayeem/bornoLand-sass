@@ -5,10 +5,11 @@ import { cache } from "react";
 import { fetchTenantSite } from "@/lib/server/tenant-site";
 import { CACHE_REVALIDATE, cacheTags } from "@/lib/server/cache-tags";
 import { getApiUrl, getMetadataBaseUrl, getTenantCanonicalUrl } from "@/lib/urls";
+import { resolveMediaUrl } from "@/lib/resolve-media-url";
 
 const API_BASE = getApiUrl();
 const APP_NAME = "BornoLand";
-const DEFAULT_FAVICON = "/favicon.ico";
+const DEFAULT_FAVICON = "/logo.png";
 
 type StoreMetadata = {
   _id: string;
@@ -88,8 +89,27 @@ export async function getProductMetadataContext(productId: string) {
   return fetchPublicProduct(productId);
 }
 
+export function resolveStoreFavicon(store?: { faviconUrl?: string; logoUrl?: string } | null): string {
+  const raw = store?.faviconUrl?.trim() || store?.logoUrl?.trim();
+  if (!raw) return DEFAULT_FAVICON;
+  const resolved = resolveMediaUrl(raw);
+  return resolved || DEFAULT_FAVICON;
+}
+
+export function resolveStoreOgImage(
+  imageCandidate?: string | null,
+  store?: { logoUrl?: string; faviconUrl?: string } | null,
+): string | undefined {
+  const raw = imageCandidate?.trim() || store?.logoUrl?.trim() || store?.faviconUrl?.trim();
+  if (!raw) return undefined;
+  const resolved = resolveMediaUrl(raw);
+  return resolved || undefined;
+}
+
 function resolveIconUrl(iconUrl?: string) {
-  return iconUrl || DEFAULT_FAVICON;
+  if (!iconUrl || !iconUrl.trim()) return DEFAULT_FAVICON;
+  const resolved = resolveMediaUrl(iconUrl.trim());
+  return resolved || DEFAULT_FAVICON;
 }
 
 export function buildPageMetadata(args: {
@@ -106,7 +126,7 @@ export function buildPageMetadata(args: {
     ? canonicalPath
     : `${siteUrl}${canonicalPath.startsWith("/") ? canonicalPath : `/${canonicalPath}`}`;
   const icon = resolveIconUrl(args.iconUrl);
-  const ogImage = args.ogImage || (args.iconUrl && args.iconUrl !== DEFAULT_FAVICON ? args.iconUrl : undefined);
+  const ogImage = resolveStoreOgImage(args.ogImage, { logoUrl: args.iconUrl });
   return {
     title: { absolute: args.title },
     description: args.description,
@@ -127,9 +147,9 @@ export function buildPageMetadata(args: {
       images: ogImage ? [ogImage] : undefined,
     },
     icons: {
-      icon,
-      shortcut: icon,
-      apple: icon,
+      icon: [{ url: icon }],
+      shortcut: [{ url: icon }],
+      apple: [{ url: icon }],
     },
   };
 }
@@ -154,24 +174,140 @@ export async function generateStoreMetadata(args: {
 
 export const generateStorePageMetadata = generateStoreMetadata;
 
+/**
+ * Root customer storefront metadata generator for `app/site/[tenant]/layout.tsx`.
+ * Configures the base metadata, tenant title template, dynamic favicon, and OpenGraph defaults.
+ */
+export async function generateTenantLayoutMetadata(tenant: string): Promise<Metadata> {
+  const store = await getTenantMetadataContext(tenant);
+  if (!store) {
+    const defaultOrigin = getMetadataBaseUrl();
+    return {
+      metadataBase: new URL(defaultOrigin),
+      title: {
+        absolute: "Store Not Found | BornoLand",
+      },
+      description: "This store does not exist on BornoLand.",
+      icons: {
+        icon: [{ url: DEFAULT_FAVICON }],
+        shortcut: [{ url: DEFAULT_FAVICON }],
+        apple: [{ url: DEFAULT_FAVICON }],
+      },
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const storeName = store?.shortName || store?.name || "Store";
+  const description = store?.description || `${storeName} — Online Store.`;
+  const canonicalUrl = getTenantCanonicalUrl(tenant, "/");
+  const iconUrl = resolveStoreFavicon(store);
+  const ogImage = resolveStoreOgImage(store?.logoUrl || store?.faviconUrl, store);
+  const metadataBaseOrigin = getTenantCanonicalUrl(tenant, "/");
+
+  return {
+    metadataBase: new URL(metadataBaseOrigin),
+    title: {
+      default: storeName,
+      template: `%s | ${storeName}`,
+      absolute: storeName,
+    },
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    icons: {
+      icon: [{ url: iconUrl }],
+      shortcut: [{ url: iconUrl }],
+      apple: [{ url: iconUrl }],
+    },
+    openGraph: {
+      title: storeName,
+      description,
+      url: canonicalUrl,
+      siteName: storeName,
+      type: "website",
+      images: ogImage ? [{ url: ogImage }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: storeName,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
+  };
+}
+
 export async function generateTenantMetadata(args: {
   tenant: string;
   pageTitle: string;
   canonicalPath: string;
   description?: string;
+  ogImage?: string;
 }): Promise<Metadata> {
   const store = await getTenantMetadataContext(args.tenant);
+  if (!store) {
+    const defaultOrigin = getMetadataBaseUrl();
+    return {
+      metadataBase: new URL(defaultOrigin),
+      title: {
+        absolute: "Store Not Found | BornoLand",
+      },
+      description: "This store does not exist on BornoLand.",
+      icons: {
+        icon: [{ url: DEFAULT_FAVICON }],
+        shortcut: [{ url: DEFAULT_FAVICON }],
+        apple: [{ url: DEFAULT_FAVICON }],
+      },
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
   const storeName = store?.shortName || store?.name || "Store";
   const storefrontPath = args.canonicalPath.replace(/^\/site\/[^/]+/, "") || "/";
   const canonicalUrl = getTenantCanonicalUrl(args.tenant, storefrontPath);
-  return buildPageMetadata({
-    title: `${args.pageTitle} • ${storeName}`,
-    description: args.description ?? (store?.description || `${args.pageTitle} at ${storeName}.`),
-    canonicalPath: canonicalUrl,
-    iconUrl: store?.faviconUrl || store?.logoUrl,
+  const isHome = !args.pageTitle || args.pageTitle === "Home" || args.pageTitle === storeName;
+  const title = isHome ? storeName : `${args.pageTitle} | ${storeName}`;
+  const description = args.description ?? (store?.description || `${args.pageTitle} at ${storeName}.`);
+  const iconUrl = resolveStoreFavicon(store);
+  const ogImage = resolveStoreOgImage(args.ogImage, store);
+  const metadataBaseOrigin = getTenantCanonicalUrl(args.tenant, "/");
+
+  return {
+    metadataBase: new URL(metadataBaseOrigin),
+    title: {
+      absolute: title,
+    },
+    description,
     keywords: [args.pageTitle, storeName, "online store", "shop"].filter(Boolean).join(", "),
-    ogImage: store?.logoUrl,
-  });
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    icons: {
+      icon: [{ url: iconUrl }],
+      shortcut: [{ url: iconUrl }],
+      apple: [{ url: iconUrl }],
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: storeName,
+      type: "website",
+      images: ogImage ? [{ url: ogImage }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
+  };
 }
 
 export async function generateProductPageMetadata(args: {
@@ -216,7 +352,8 @@ export async function generateStorefrontPageMetadata(args: {
   const page = data?.page as any;
   const storeName = store?.shortName || store?.name || "Store";
   const pageTitle = page?.title || (args.pageSlug === "home" ? "Home" : args.pageSlug);
-  const seoTitle = page?.seo?.title || `${pageTitle} • ${storeName}`;
+  const isHome = pageTitle === "Home" || pageTitle === "home";
+  const seoTitle = page?.seo?.title || (isHome ? storeName : `${pageTitle} | ${storeName}`);
   const seoDescription = page?.seo?.description || store?.description || `${pageTitle} at ${storeName}.`;
   
   const siteUrl = getMetadataBaseUrl();
@@ -248,18 +385,45 @@ export async function generateStorefrontProductMetadata(args: {
 }): Promise<Metadata> {
   const store = await getTenantMetadataContext(args.tenant);
   const storeName = store?.shortName || store?.name || "Store";
-  const title = `${args.product.name} • ${storeName}`;
-  const description = args.product.description?.slice(0, 160) || `Buy ${args.product.name} online from ${storeName}.`;
+  const title = `${args.product.name} | ${storeName}`;
+  const description =
+    args.product.description?.replace(/<[^>]*>/g, "").slice(0, 160) ||
+    `Buy ${args.product.name} online from ${storeName}.`;
   const canonicalUrl = getTenantCanonicalUrl(args.tenant, `/products/${args.product.slug}`);
+  const iconUrl = resolveStoreFavicon(store);
+  const ogImage = resolveStoreOgImage(args.product.imageUrl, store);
+  const metadataBaseOrigin = getTenantCanonicalUrl(args.tenant, "/");
 
-  return buildPageMetadata({
-    title,
+  return {
+    metadataBase: new URL(metadataBaseOrigin),
+    title: {
+      absolute: title,
+    },
     description,
-    canonicalPath: canonicalUrl,
-    iconUrl: store?.faviconUrl || store?.logoUrl,
-    ogImage: args.product.imageUrl || store?.logoUrl,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     keywords: [args.product.name, args.product.brand, args.product.category, storeName].filter(Boolean).join(", "),
-  });
+    icons: {
+      icon: [{ url: iconUrl }],
+      shortcut: [{ url: iconUrl }],
+      apple: [{ url: iconUrl }],
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: storeName,
+      type: "website",
+      images: ogImage ? [{ url: ogImage }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
+  };
 }
 
 export function buildProductJsonLd(args: {

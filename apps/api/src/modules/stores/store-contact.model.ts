@@ -16,7 +16,7 @@ const socialLinksSchema = new Schema(
 
 const storeContactSchema = new Schema(
   {
-    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, unique: true, index: true },
+    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, unique: true },
     businessName: { type: String, default: "", trim: true, maxlength: 200 },
     email: { type: String, default: "", trim: true, lowercase: true, maxlength: 320 },
     phone: { type: String, default: "", trim: true, maxlength: 40 },

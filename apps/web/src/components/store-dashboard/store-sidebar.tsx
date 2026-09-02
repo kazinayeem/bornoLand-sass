@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useCallback, createContext, useContext, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
 import {
   LayoutDashboard,
   Package,
@@ -36,8 +36,8 @@ import {
   CreditCard as BillingCard,
   ChevronDown,
   Lock,
-  ChevronsLeft,
-  ChevronsRight,
+  PanelLeftClose,
+  PanelLeft,
   Eye,
   Activity,
   Monitor,
@@ -51,17 +51,36 @@ import {
   Store as StoreIcon,
   ChevronsUpDown,
   ArrowLeft,
+  HardDrive,
+  Calculator,
+  UserCheck,
+  CalendarCheck,
+  CalendarDays,
+  Wallet,
+  Landmark,
+  BookOpen,
+  Receipt,
+  Headphones,
+  CheckSquare,
+  Building2,
+  Trash2,
+  ArrowLeftRight,
+  Clock,
+  Briefcase,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
-import { resolveStoreStatus, storeStatusConfig, getTrialDaysRemaining, getStoreDisplayDomain } from "@/lib/store-status";
+import { resolveStoreStatus, getStoreDisplayDomain } from "@/lib/store-status";
 import { useGetStoreFeatureAccessQuery, NAV_FEATURE_MAP, getFeatureByKey } from "@/redux/api/feature-api";
 import { ComingSoonBadge } from "@/components/ecommerce/coming-soon-badge";
 import { useGetMediaStatsQuery } from "@/redux/api/media-api";
 import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
-
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useLanguage, type Dictionary } from "@/providers/language-provider";
+import { useStoreContext } from "@/providers/store-context";
+import { useIsStoreOwner, usePermissions, checkPermission } from "@/features/session/hooks";
 
 /* ── Sidebar Collapse Context ─────────────────────────────────── */
 
@@ -84,11 +103,18 @@ export function useSidebar() {
 export type NavItemDef = {
   href: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   exact?: boolean;
   featureKey?: string;
+  permission?: string;
   comingSoon?: boolean;
-  subItems?: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; exact?: boolean }[];
+  subItems?: {
+    href: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+    exact?: boolean;
+    permission?: string;
+  }[];
 };
 
 export type NavGroupDef = {
@@ -96,38 +122,93 @@ export type NavGroupDef = {
   items: NavItemDef[];
 };
 
-export function getSidebarNavGroups(t: Dictionary): NavGroupDef[] {
+export function getSidebarNavGroups(t: Dictionary, isBn = false): NavGroupDef[] {
   const sn = t.storeNav;
   return [
+    // ── OVERVIEW ──
     {
-      group: sn.catalog,
+      group: isBn ? "ওভারভিউ" : "OVERVIEW",
       items: [
-        { href: "/products", label: sn.products, icon: Package },
-        { href: "/categories", label: sn.categories, icon: Tags },
-        { href: "/inventory", label: sn.inventory, icon: Boxes, featureKey: "inventory" },
+        { href: "/dashboard", label: sn.dashboard, icon: LayoutDashboard, exact: true },
       ],
     },
+    // ── BUSINESS ──
     {
-      group: sn.sales,
+      group: isBn ? "ব্যবসা ও বাণিজ্য" : "BUSINESS",
       items: [
-        { href: "/orders", label: sn.orders, icon: ShoppingBag, exact: true },
-        { href: "/orders/incomplete", label: sn.incompleteOrders, icon: ShoppingCart, featureKey: "incomplete_orders" },
-        { href: "/customers", label: sn.customers, icon: Users },
-        { href: "/reviews", label: sn.reviews, icon: Star, featureKey: "reviews" },
+        { href: "/orders", label: sn.orders, icon: ShoppingBag, exact: true, permission: "orders:read" },
+        { href: "/customers", label: sn.customers, icon: Users, permission: "customers:read" },
+        { href: "/products", label: sn.products, icon: Package, permission: "products:read" },
+        { href: "/categories", label: sn.categories, icon: Tags, permission: "categories:read" },
+        { href: "/orders/incomplete", label: sn.incompleteOrders, icon: ShoppingCart, featureKey: "incomplete_orders", permission: "orders:read" },
+        { href: "/reviews", label: sn.reviews, icon: Star, featureKey: "reviews", permission: "reviews:read" },
       ],
     },
+    // ── INVENTORY ──
     {
-      group: sn.growth,
+      group: isBn ? "ইনভেন্টরি ও গুদাম" : "INVENTORY",
       items: [
-        { href: "/marketing", label: sn.marketing, icon: Megaphone, featureKey: "marketing", comingSoon: true },
-        { href: "/coupons", label: sn.coupons, icon: Ticket, featureKey: "coupons" },
-        { href: "/settings/tracking", label: sn.trackingPixels, icon: Target, featureKey: "marketing" },
+        { href: "/inventory", label: sn.inventory, icon: Boxes, featureKey: "inventory", permission: "inventory:read", exact: true },
+        { href: "/inventory/warehouses", label: sn.warehouses, icon: Building2, featureKey: "warehouses", permission: "warehouse:read" },
+        { href: "/inventory/ledger", label: sn.stockLedger, icon: ArrowLeftRight, featureKey: "inventory", permission: "inventory:read" },
+        { href: "/inventory/waste", label: sn.wasteLoss, icon: Trash2, featureKey: "inventory", permission: "inventory:read" },
+      ],
+    },
+    // ── PURCHASING ──
+    {
+      group: isBn ? "ক্রয় ও সরবরাহ" : "PURCHASING",
+      items: [
+        { href: "/inventory/purchasing", label: sn.purchasing, icon: Receipt, featureKey: "purchase_orders", permission: "procurement:read" },
+        { href: "/inventory/suppliers", label: sn.suppliers, icon: Truck, featureKey: "suppliers", permission: "procurement:read" },
+      ],
+    },
+    // ── SALES & POS ──
+    {
+      group: isBn ? "বিক্রয় ও পিওএস" : "SALES",
+      items: [
+        { href: "/pos", label: sn.pos, icon: Calculator, featureKey: "pos", permission: "pos:read", exact: true },
+        { href: "/pos/shifts", label: sn.posShifts, icon: Clock, featureKey: "pos", permission: "pos:read" },
+      ],
+    },
+    // ── PEOPLE & HRM ──
+    {
+      group: isBn ? "কর্মী ও মানবসম্পদ" : "PEOPLE",
+      items: [
+        { href: "/hrm/employees", label: sn.employees, icon: Users, featureKey: "employees", permission: "hrm:read" },
+        { href: "/hrm/organization", label: sn.organization, icon: Briefcase, featureKey: "departments", permission: "hrm:read" },
+        { href: "/hrm/attendance", label: sn.attendance, icon: CalendarCheck, featureKey: "attendance", permission: "hrm:read" },
+        { href: "/hrm/leaves", label: sn.leaves, icon: CalendarDays, featureKey: "leave_mgmt", permission: "hrm:read" },
+        { href: "/hrm/payroll", label: sn.payroll, icon: Wallet, featureKey: "payroll", permission: "hrm:payroll:manage" },
+        { href: "/hrm/self-service", label: sn.selfService, icon: UserCheck, featureKey: "self_service", permission: "hrm:self:read" },
+      ],
+    },
+    // ── FINANCE & ACCOUNTING ──
+    {
+      group: isBn ? "হিসাববিজ্ঞান ও অর্থ" : "FINANCE",
+      items: [
+        { href: "/finance/accounting", label: sn.accounting, icon: Landmark, featureKey: "chart_of_accounts", permission: "accounting:read", exact: true },
+        { href: "/finance/accounting/coa", label: sn.chartOfAccounts, icon: BookOpen, featureKey: "chart_of_accounts", permission: "accounting:read" },
+        { href: "/finance/accounting/journal", label: sn.journalEntries, icon: FileSpreadsheet, featureKey: "journal_entries", permission: "accounting:read" },
+        { href: "/finance/expenses", label: sn.expenses, icon: Receipt, featureKey: "expenses", permission: "expenses:read" },
+        { href: "/finance/reports", label: sn.financialReports, icon: BarChart3, featureKey: "financial_reports", permission: "accounting:report:view" },
+      ],
+    },
+    // ── GROWTH & CRM ──
+    {
+      group: isBn ? "গ্রোথ ও সিআরএম" : "GROWTH",
+      items: [
+        { href: "/crm/deals", label: sn.crmDeals, icon: Target, featureKey: "crm_deals", permission: "crm:read" },
+        { href: "/support/tickets", label: sn.supportTickets, icon: Headphones, featureKey: "support_tickets", permission: "support:read" },
+        { href: "/marketing", label: sn.marketing, icon: Megaphone, featureKey: "marketing", permission: "marketing:read" },
+        { href: "/coupons", label: sn.coupons, icon: Ticket, featureKey: "coupons", permission: "coupons:read" },
+        { href: "/settings/tracking", label: sn.trackingPixels, icon: Target, featureKey: "marketing", permission: "marketing:read" },
         {
           href: "/analytics",
           label: sn.analytics,
           icon: BarChart3,
           exact: true,
           featureKey: "analytics",
+          permission: "analytics:read",
           subItems: [
             { href: "/analytics", label: sn.overview, icon: BarChart3, exact: true },
             { href: "/analytics/visitors", label: sn.visitors, icon: Eye },
@@ -144,43 +225,44 @@ export function getSidebarNavGroups(t: Dictionary): NavGroupDef[] {
             { href: "/analytics/reports", label: sn.reports, icon: FileSpreadsheet },
           ],
         },
-        { href: "/reports", label: sn.reports, icon: FileSpreadsheet, featureKey: "reports" },
+        { href: "/reports", label: sn.reports, icon: FileSpreadsheet, featureKey: "reports", permission: "reports:read" },
       ],
     },
+    // ── OPERATIONS ──
     {
-      group: sn.store,
+      group: isBn ? "অপারেশনস" : "OPERATIONS",
       items: [
-        { href: "/design", label: sn.design, icon: Palette },
-        { href: "/settings?section=navigation", label: sn.navigation, icon: Menu },
-        { href: "/pages", label: sn.pages, icon: FileText },
-        { href: "/settings?section=seo", label: sn.seo, icon: Search, featureKey: "seo" },
-        { href: "/settings?section=domain", label: sn.domain, icon: Globe2, featureKey: "custom_domain" },
-        { href: "/settings?section=social-links", label: sn.socialLinks, icon: Share2 },
+        { href: "/operations/approvals", label: sn.approvals, icon: CheckSquare, featureKey: "approvals", permission: "operations:read" },
+        { href: "/operations/tasks", label: sn.tasks, icon: Layers, featureKey: "tasks", permission: "operations:read" },
+        { href: "/settings/shipping", label: sn.shipping, icon: Truck, permission: "shipping:read" },
+        { href: "/settings/courier", label: sn.courier, icon: PackageCheck, featureKey: "courier", permission: "shipping:read" },
+        { href: "/settings/payments", label: sn.payments, icon: CreditCard, permission: "payments:read" },
+        { href: "/settings/taxes", label: sn.taxes, icon: Percent, permission: "settings:read" },
       ],
     },
+    // ── WEBSITE & DESIGN ──
     {
-      group: sn.operations,
+      group: isBn ? "ওয়েবসাইট ও ডিজাইন" : "WEBSITE",
       items: [
-        { href: "/settings/shipping", label: sn.shipping, icon: Truck },
-        { href: "/settings/courier", label: sn.courier, icon: PackageCheck, featureKey: "courier" },
-        { href: "/settings/payments", label: sn.payments, icon: CreditCard },
-        { href: "/settings/taxes", label: sn.taxes, icon: Percent },
+        { href: "/design", label: sn.design, icon: Palette, permission: "pages:read" },
+        { href: "/settings?section=navigation", label: sn.navigation, icon: Menu, permission: "pages:read" },
+        { href: "/pages", label: sn.pages, icon: FileText, permission: "pages:read" },
+        { href: "/media", label: sn.media, icon: ImageIcon, featureKey: "media", permission: "media:read" },
+        { href: "/customer-messages", label: sn.messages, icon: Mail, featureKey: "cms", permission: "settings:read" },
+        { href: "/settings?section=seo", label: sn.seo, icon: Search, featureKey: "seo", permission: "settings:read" },
+        { href: "/settings?section=domain", label: sn.domain, icon: Globe2, featureKey: "custom_domain", permission: "settings:read" },
+        { href: "/settings?section=social-links", label: sn.socialLinks, icon: Share2, permission: "settings:read" },
+        { href: "/settings?section=faq", label: sn.faq, icon: HelpCircle, permission: "settings:read" },
       ],
     },
+    // ── SYSTEM & ACCESS ──
     {
-      group: sn.content,
+      group: isBn ? "সিস্টেম ও অ্যাক্সেস" : "SYSTEM",
       items: [
-        { href: "/media", label: sn.media, icon: ImageIcon, featureKey: "media" },
-        { href: "/customer-messages", label: sn.messages, icon: Mail, featureKey: "cms" },
-        { href: "/settings?section=faq", label: sn.faq, icon: HelpCircle },
-      ],
-    },
-    {
-      group: sn.system,
-      items: [
-        { href: "/settings?section=general", label: sn.settings, icon: Settings },
+        { href: "/settings?section=general", label: sn.settings, icon: Settings, permission: "settings:read" },
+        { href: "/members", label: isBn ? "টিম ও পারমিশন" : "Team & Permissions", icon: Users, permission: "members:read" },
         { href: "/apps", label: sn.apps, icon: Blocks, featureKey: "apps", comingSoon: true },
-        { href: "/activity", label: sn.activity, icon: ScrollText },
+        { href: "/activity", label: sn.activity, icon: ScrollText, permission: "settings:read" },
         { href: "/billing", label: sn.billing, icon: BillingCard },
       ],
     },
@@ -188,6 +270,32 @@ export function getSidebarNavGroups(t: Dictionary): NavGroupDef[] {
 }
 
 export const SIDEBAR_NAV_GROUPS: NavGroupDef[] = [];
+
+/* ── Collapsed Tooltip Helper ─────────────────────────────────── */
+
+function NavTooltipWrapper({
+  label,
+  subtext,
+  collapsed,
+  children,
+}: {
+  label: string;
+  subtext?: string;
+  collapsed: boolean;
+  children: ReactNode;
+}) {
+  if (!collapsed) return <>{children}</>;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="right" sideOffset={10} className="flex items-center gap-1.5 py-1 px-2.5 shadow-md">
+        <span>{label}</span>
+        {subtext && <span className="text-[10px] text-zinc-400">({subtext})</span>}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 /* ── Nav Item Component ───────────────────────────────────────── */
 
@@ -205,7 +313,7 @@ function NavItem({
 }: {
   href: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   basePath: string;
   exact?: boolean;
   locked?: boolean;
@@ -229,57 +337,66 @@ function NavItem({
 
   const active = exact
     ? pathname === fullHref
-    : (pathname === fullHref || (!exact && !hasSub && pathname.startsWith(`${fullHref}/`)));
+    : pathname === fullHref || (!exact && !hasSub && pathname.startsWith(`${fullHref}/`));
+
+  const tooltipSubtext = locked ? (requiredPlan ? `Requires ${requiredPlan}` : "Locked") : comingSoon ? "Soon" : undefined;
 
   if (hasSub) {
     return (
       <div className="space-y-0.5">
-        <button
-          type="button"
-          onClick={() => setOpen((prev) => !prev)}
-          title={collapsed ? label : locked ? `Available in ${requiredPlan ?? "a higher plan"}` : undefined}
-          className={cn(
-            "group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150",
-            isParentActive
-              ? "bg-apple-primary/10 text-apple-primary font-semibold"
-              : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment hover:text-apple-ink",
-            locked && !isParentActive && "opacity-60",
-            collapsed && "justify-center px-0"
-          )}
-        >
-          {isParentActive && (
-            <div className="absolute left-0 top-1/2 h-4 w-[2.5px] -translate-y-1/2 rounded-r-full bg-apple-primary" />
-          )}
-          <Icon
+        <NavTooltipWrapper label={label} subtext={tooltipSubtext} collapsed={collapsed}>
+          <button
+            type="button"
+            onClick={() => setOpen((prev) => !prev)}
             className={cn(
-              "h-4 w-4 shrink-0 transition-colors duration-150",
+              "group relative flex w-full items-center gap-3 rounded-[4px] px-2.5 h-10 min-h-[40px] text-[13px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#003399]",
               isParentActive
-                ? "text-apple-primary"
-                : "text-apple-ink-muted-48 group-hover:text-apple-ink-muted-80"
+                ? "bg-[#ebf0fa] text-[#003399] font-bold dark:bg-[#003399]/20 dark:text-[#FFDA1A]"
+                : "text-[#484848] hover:bg-[#F5F5F5] hover:text-[#111111] dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-white",
+              locked && !isParentActive && "opacity-60",
+              collapsed && "justify-center px-0"
             )}
-          />
-          {!collapsed && (
-            <>
-              <span className="flex-1 text-left truncate">{label}</span>
-              {comingSoon && !locked && <ComingSoonBadge className="scale-90" />}
-              {locked && <Lock className="h-3 w-3 shrink-0 text-apple-ink-muted-48" />}
-              {!locked && (
-                <ChevronDown
-                  className={cn(
-                    "h-3.5 w-3.5 text-apple-ink-muted-48 transition-transform duration-200",
-                    open && "rotate-180 text-apple-ink"
-                  )}
-                />
+            aria-expanded={open}
+            aria-label={label}
+          >
+            {/* Subtle Active Indicator Strip */}
+            {isParentActive && (
+              <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#003399] dark:bg-[#FFDA1A]" />
+            )}
+            <Icon
+              strokeWidth={1.75}
+              className={cn(
+                "h-[18px] w-[18px] shrink-0 transition-colors duration-150",
+                isParentActive
+                  ? "text-[#003399] dark:text-[#FFDA1A]"
+                  : "text-[#767676] group-hover:text-[#111111] dark:text-zinc-500 dark:group-hover:text-zinc-300"
               )}
-            </>
-          )}
-        </button>
+            />
+            {!collapsed && (
+              <>
+                <span className="flex-1 text-left truncate">{label}</span>
+                {comingSoon && !locked && <ComingSoonBadge className="scale-90" />}
+                {locked && <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />}
+                {!locked && (
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 text-zinc-400 transition-transform duration-200 group-hover:text-zinc-600",
+                      open && "rotate-180 text-zinc-700 dark:text-zinc-200"
+                    )}
+                  />
+                )}
+              </>
+            )}
+          </button>
+        </NavTooltipWrapper>
 
         {!collapsed && open && subItems && (
-          <ul className="relative mt-0.5 space-y-0.5 pl-5 before:absolute before:left-3 before:top-1.5 before:bottom-1.5 before:w-px before:bg-apple-hairline">
+          <ul className="relative mt-0.5 space-y-0.5 pl-5 ml-4 border-l border-[#DFDFDF] dark:border-zinc-800">
             {subItems.map((sub) => {
               const subFullHref = `${basePath}${sub.href}`;
-              const subActive = sub.exact ? pathname === subFullHref : pathname === subFullHref || pathname.startsWith(`${subFullHref}/`);
+              const subActive = sub.exact
+                ? pathname === subFullHref
+                : pathname === subFullHref || pathname.startsWith(`${subFullHref}/`);
               const SubIcon = sub.icon;
               return (
                 <li key={sub.href}>
@@ -287,13 +404,19 @@ function NavItem({
                     href={subFullHref}
                     onClick={onNavigate}
                     className={cn(
-                      "flex items-center gap-2 rounded-md px-2 py-1 text-[12px] font-medium transition-colors",
+                      "flex items-center gap-2.5 rounded-[4px] px-2.5 h-8 min-h-[32px] text-[12.5px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#003399]",
                       subActive
-                        ? "bg-apple-primary/10 text-apple-primary font-semibold"
-                        : "text-apple-ink-muted-48 hover:bg-apple-canvas-parchment hover:text-apple-ink"
+                        ? "bg-[#ebf0fa] text-[#003399] font-bold dark:bg-[#003399]/20 dark:text-[#FFDA1A]"
+                        : "text-[#767676] hover:bg-[#F5F5F5] hover:text-[#111111] dark:text-zinc-400 dark:hover:bg-white/[0.04] dark:hover:text-zinc-200"
                     )}
                   >
-                    <SubIcon className="h-3.5 w-3.5 shrink-0" />
+                    <SubIcon
+                      strokeWidth={1.75}
+                      className={cn(
+                        "h-3.5 w-3.5 shrink-0",
+                        subActive ? "text-[#003399] dark:text-[#FFDA1A]" : "text-[#767676]"
+                      )}
+                    />
                     <span className="truncate">{sub.label}</span>
                   </Link>
                 </li>
@@ -306,38 +429,42 @@ function NavItem({
   }
 
   return (
-    <Link
-      href={fullHref}
-      onClick={onNavigate}
-      title={collapsed ? label : locked ? `Available in ${requiredPlan ?? "a higher plan"}` : undefined}
-      className={cn(
-        "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150",
-        active
-          ? "bg-apple-primary/10 text-apple-primary font-semibold"
-          : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment hover:text-apple-ink",
-        locked && !active && "opacity-60",
-        collapsed && "justify-center px-0"
-      )}
-    >
-      {active && (
-        <div className="absolute left-0 top-1/2 h-4 w-[2.5px] -translate-y-1/2 rounded-r-full bg-apple-primary" />
-      )}
-      <Icon
+    <NavTooltipWrapper label={label} subtext={tooltipSubtext} collapsed={collapsed}>
+      <Link
+        href={fullHref}
+        onClick={onNavigate}
         className={cn(
-          "h-4 w-4 shrink-0 transition-colors duration-150",
+          "group relative flex items-center gap-3 rounded-[4px] px-2.5 h-10 min-h-[40px] text-[13px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#003399]",
           active
-            ? "text-apple-primary"
-            : "text-apple-ink-muted-48 group-hover:text-apple-ink-muted-80"
+            ? "bg-[#ebf0fa] text-[#003399] font-bold dark:bg-[#003399]/20 dark:text-[#FFDA1A]"
+            : "text-[#484848] hover:bg-[#F5F5F5] hover:text-[#111111] dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-zinc-100",
+          locked && !active && "opacity-60",
+          collapsed && "justify-center px-0"
         )}
-      />
-      {!collapsed && (
-        <>
-          <span className="flex-1 truncate">{label}</span>
-          {comingSoon && !locked && <ComingSoonBadge className="scale-90" />}
-          {locked && <Lock className="h-3 w-3 shrink-0 text-apple-ink-muted-48" />}
-        </>
-      )}
-    </Link>
+        aria-label={label}
+      >
+        {/* Subtle Active Indicator Strip */}
+        {active && (
+          <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#003399] dark:bg-[#FFDA1A]" />
+        )}
+        <Icon
+          strokeWidth={1.75}
+          className={cn(
+            "h-[18px] w-[18px] shrink-0 transition-colors duration-150",
+            active
+              ? "text-[#003399] dark:text-[#FFDA1A]"
+              : "text-[#767676] group-hover:text-[#111111] dark:text-zinc-500 dark:group-hover:text-zinc-300"
+          )}
+        />
+        {!collapsed && (
+          <>
+            <span className="flex-1 truncate">{label}</span>
+            {comingSoon && !locked && <ComingSoonBadge className="scale-90" />}
+            {locked && <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />}
+          </>
+        )}
+      </Link>
+    </NavTooltipWrapper>
   );
 }
 
@@ -345,9 +472,9 @@ function NavItem({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   const { collapsed } = useSidebar();
-  if (collapsed) return <div className="mx-2 my-2 h-px bg-apple-hairline" />;
+  if (collapsed) return <div className="mx-3 my-2.5 h-px bg-[#DFDFDF] dark:bg-zinc-800" />;
   return (
-    <p className="mb-1 px-2.5 pt-3 text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">
+    <p className="px-2.5 pt-4 pb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-[#767676] dark:text-zinc-500">
       {children}
     </p>
   );
@@ -374,60 +501,74 @@ function SidebarStoreSwitcher({ store, collapsed }: { store: Store; collapsed: b
 
   const status = resolveStoreStatus(store);
   const statusLabel =
-    status === "active" ? t.common.active :
-    status === "trial" ? t.common.trial : t.common.expired;
+    status === "active" ? t.common.active : status === "trial" ? t.common.trial : t.common.expired;
 
   return (
     <div ref={dropdownRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={cn(
-          "flex w-full items-center gap-2.5 rounded-xl border border-apple-hairline bg-apple-canvas-parchment/60 p-2 text-left transition-all hover:border-zinc-300 hover:bg-white",
-          collapsed ? "justify-center p-1.5" : ""
-        )}
-        title={collapsed ? store.name : t.navigation.selectStore}
-      >
-        <StoreBrandMark store={store} size={collapsed ? 32 : 34} roundedClassName="rounded-lg" />
-        {!collapsed && (
-          <>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <p className="truncate text-xs font-semibold text-apple-ink">{store.shortName || store.name}</p>
-                <span className={cn(
-                  "inline-flex items-center rounded-full px-1.5 py-0.2 text-[9px] font-bold",
-                  status === "active" ? "bg-emerald-50 text-emerald-700" :
-                  status === "trial" ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"
-                )}>
-                  {statusLabel}
-                </span>
+      <NavTooltipWrapper label={store.name} subtext={statusLabel} collapsed={collapsed}>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className={cn(
+            "flex w-full items-center gap-2.5 rounded-xl border border-zinc-200/80 bg-zinc-50/50 p-2 text-left transition-colors duration-150 hover:border-zinc-300 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900/50 dark:hover:bg-zinc-900",
+            collapsed ? "justify-center p-1.5" : ""
+          )}
+          aria-expanded={open}
+          aria-label={t.navigation.selectStore}
+        >
+          <StoreBrandMark store={store} size={collapsed ? 32 : 34} roundedClassName="rounded-lg shadow-2xs" />
+          {!collapsed && (
+            <>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                    {store.shortName || store.name}
+                  </p>
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
+                      status === "active"
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                        : status === "trial"
+                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
+                          : "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                    )}
+                  >
+                    {statusLabel}
+                  </span>
+                </div>
+                <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                  {getStoreDisplayDomain(store.subdomain || store.slug)}
+                </p>
               </div>
-              <p className="truncate text-[11px] text-apple-ink-muted-48">
-                {getStoreDisplayDomain(store.subdomain || store.slug)}
-              </p>
-            </div>
-            <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-apple-ink-muted-48" />
-          </>
-        )}
-      </button>
+              <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
+            </>
+          )}
+        </button>
+      </NavTooltipWrapper>
 
       {open && (
         <div
           className={cn(
-            "absolute z-50 mt-1 overflow-hidden rounded-xl border border-apple-hairline bg-white shadow-xl animate-scale-in",
-            collapsed ? "left-12 top-0 w-60" : "left-0 right-0 top-full"
+            "absolute z-50 mt-1 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl animate-in fade-in-0 zoom-in-95 dark:border-zinc-800 dark:bg-zinc-950",
+            collapsed ? "left-12 top-0 w-64" : "left-0 right-0 top-full"
           )}
         >
-          <div className="border-b border-apple-divider-soft px-3 py-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-apple-ink-muted-48">{t.storeNav.yourStores}</p>
-            <p className="truncate text-xs font-medium text-apple-ink">{t.storeNav.currentlyManaging(store.name)}</p>
+          <div className="border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+              {t.storeNav.yourStores}
+            </p>
+            <p className="truncate text-xs font-medium text-zinc-900 dark:text-zinc-100">
+              {t.storeNav.currentlyManaging(store.name)}
+            </p>
           </div>
 
-          <div className="max-h-52 overflow-y-auto p-1.5">
+          <div className="max-h-52 overflow-y-auto p-1.5 space-y-0.5">
             {stores.map((s) => {
               const isCurrent = s._id === store._id;
               const sStatus = resolveStoreStatus(s);
-              const sStatusLabel = sStatus === "active" ? t.common.active : sStatus === "trial" ? t.common.trial : t.common.expired;
+              const sStatusLabel =
+                sStatus === "active" ? t.common.active : sStatus === "trial" ? t.common.trial : t.common.expired;
               const sPlan = typeof s.planId === "object" && s.planId ? s.planId.name : s.plan;
               return (
                 <Link
@@ -436,27 +577,29 @@ function SidebarStoreSwitcher({ store, collapsed }: { store: Store; collapsed: b
                   onClick={() => setOpen(false)}
                   className={cn(
                     "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs transition-colors",
-                    isCurrent ? "bg-apple-primary/10 text-apple-primary font-semibold" : "text-apple-ink-muted-80 hover:bg-apple-canvas-parchment"
+                    isCurrent
+                      ? "bg-zinc-100 text-zinc-950 font-medium dark:bg-white/[0.08] dark:text-white"
+                      : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-900"
                   )}
                 >
                   <StoreBrandMark store={s} size={26} roundedClassName="rounded-md" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{s.shortName || s.name}</p>
-                    <p className="truncate text-[10px] text-apple-ink-muted-48">
+                    <p className="truncate text-[10px] text-zinc-400">
                       {sPlan} • {sStatusLabel}
                     </p>
                   </div>
-                  {isCurrent && <Check className="h-3.5 w-3.5 shrink-0 text-apple-primary" />}
+                  {isCurrent && <Check className="h-3.5 w-3.5 shrink-0 text-zinc-900 dark:text-white" />}
                 </Link>
               );
             })}
           </div>
 
-          <div className="border-t border-apple-divider-soft p-1.5 space-y-0.5">
+          <div className="border-t border-zinc-100 p-1.5 space-y-0.5 dark:border-zinc-800">
             <Link
               href="/dashboard"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-apple-primary transition-colors hover:bg-apple-primary/10"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
               <LayoutDashboard className="h-3.5 w-3.5" />
               <span>{language === "bn" ? "ওয়ার্কস্পেস ড্যাশবোর্ড" : "Back to Workspace"}</span>
@@ -464,7 +607,7 @@ function SidebarStoreSwitcher({ store, collapsed }: { store: Store; collapsed: b
             <Link
               href="/dashboard/stores/create"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>{t.navigation.createStore}</span>
@@ -472,7 +615,7 @@ function SidebarStoreSwitcher({ store, collapsed }: { store: Store; collapsed: b
             <Link
               href="/dashboard/stores"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
               <StoreIcon className="h-3.5 w-3.5" />
               <span>{t.navigation.allStores}</span>
@@ -495,7 +638,6 @@ export function StoreSidebar({
 }) {
   const { t, language } = useLanguage();
   const basePath = `/store/${store.slug}`;
-  const pathname = usePathname();
 
   // Persist collapsed sidebar preference in localStorage
   const [collapsed, setCollapsedState] = useState(false);
@@ -520,21 +662,37 @@ export function StoreSidebar({
     }
   }, []);
 
-  const { data: accessData } = useGetStoreFeatureAccessQuery(store._id);
-  const { data: storageData } = useGetMediaStatsQuery(store._id);
-  const features = accessData?.data?.features ?? [];
-  const stats = storageData?.data?.stats;
+  const storeContext = useStoreContext();
+  const contextFeatures = (storeContext.features as { features?: any[] } | null)?.features;
+  const contextStats = storeContext.storageStats;
 
-  const resolveLink = useCallback((link: { label: string; featureKey?: string; comingSoon?: boolean }) => {
-    const key = link.featureKey ?? NAV_FEATURE_MAP[link.label];
-    if (!key) return { locked: false, comingSoon: link.comingSoon };
-    const feature = getFeatureByKey(features, key);
-    return {
-      locked: feature?.locked ?? false,
-      requiredPlan: feature?.requiredPlan?.name,
-      comingSoon: link.comingSoon || feature?.comingSoon,
-    };
-  }, [features]);
+  const { data: accessData } = useGetStoreFeatureAccessQuery(store._id, {
+    skip: !store._id || Boolean(contextFeatures && contextFeatures.length > 0),
+  });
+  const { data: storageData } = useGetMediaStatsQuery(store._id, {
+    skip: !store._id || Boolean(contextStats),
+  });
+  const features = contextFeatures ?? accessData?.data?.features ?? [];
+  const stats = contextStats ?? storageData?.data?.stats;
+
+  const isOwner = useIsStoreOwner();
+  const permissionSet = usePermissions();
+
+  const resolveLink = useCallback(
+    (link: { label: string; featureKey?: string; permission?: string; comingSoon?: boolean }) => {
+      const key = link.featureKey ?? NAV_FEATURE_MAP[link.label];
+      const feature = key ? getFeatureByKey(features, key) : undefined;
+      const hasPerm = isOwner || !link.permission || checkPermission(permissionSet, link.permission);
+
+      return {
+        locked: feature?.locked ?? false,
+        noPermission: !hasPerm,
+        requiredPlan: feature?.requiredPlan?.name,
+        comingSoon: link.comingSoon || feature?.comingSoon,
+      };
+    },
+    [features, isOwner, permissionSet]
+  );
 
   const storagePercent = Math.min(stats?.percentUsed ?? 0, 100);
   const storageLabel = stats?.unlimited
@@ -549,135 +707,177 @@ export function StoreSidebar({
     : "0 B";
 
   const isStorageHigh = storagePercent >= 80;
-
-  const navGroups = useMemo(() => getSidebarNavGroups(t), [t]);
+  const navGroups = useMemo(() => getSidebarNavGroups(t, language === "bn"), [t, language]);
 
   return (
-    <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
-      <aside
-        className={cn(
-          "sticky top-0 flex h-screen flex-col border-r border-apple-hairline bg-apple-canvas transition-all duration-300 ease-in-out",
-          collapsed ? "w-[68px]" : "w-[260px]"
-        )}
-        role="navigation"
-        aria-label="Store navigation"
-      >
-        {/* ── Top: Store & Workspace Switcher ────────────────── */}
-        <div className={cn("shrink-0 border-b border-apple-hairline", collapsed ? "p-2" : "p-3")}>
-          <SidebarStoreSwitcher store={store} collapsed={collapsed} />
-        </div>
-
-        {/* ── Scrollable Navigation Groups ───────────────────── */}
-        <nav className="sidebar-scroll flex-1 overflow-y-auto px-2.5 py-2 space-y-1" aria-label="Main navigation">
-          {/* Back to Workspace Action */}
-          <div className="mb-2">
-            <Link
-              href="/dashboard"
-              onClick={onNavigate}
-              className={cn(
-                "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-semibold text-apple-ink-muted-80 hover:bg-apple-primary/10 hover:text-apple-primary transition-all duration-150 border border-apple-hairline/60 bg-apple-canvas-parchment/60",
-                collapsed ? "justify-center px-0" : ""
-              )}
-              title={language === "bn" ? "ওয়ার্কস্পেসে ফিরে যান" : "Back to Workspace"}
-            >
-              <ArrowLeft className="h-4 w-4 shrink-0 text-apple-primary transition-transform group-hover:-translate-x-0.5" />
-              {!collapsed && (
-                <span className="truncate">
-                  {language === "bn" ? "ওয়ার্কস্পেসে ফিরে যান" : "Back to Workspace"}
-                </span>
-              )}
-            </Link>
-          </div>
-
-          {/* Dashboard Direct Top Link */}
-          <div>
-            <NavItem
-              href="/dashboard"
-              label={t.storeNav.dashboard}
-              icon={LayoutDashboard}
-              exact={true}
-              basePath={basePath}
-              onNavigate={onNavigate}
-            />
-          </div>
-
-          {/* Grouped Information Architecture */}
-          {navGroups.map((groupDef) => (
-            <div key={groupDef.group} className="space-y-0.5">
-              <SectionLabel>{groupDef.group}</SectionLabel>
-              <ul className="space-y-0.5">
-                {groupDef.items.map((link) => {
-                  const meta = resolveLink(link);
-                  return (
-                    <li key={link.href + link.label}>
-                      <NavItem
-                        {...link}
-                        basePath={basePath}
-                        locked={meta.locked}
-                        requiredPlan={meta.requiredPlan}
-                        comingSoon={meta.comingSoon}
-                        onNavigate={onNavigate}
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </nav>
-
-        {/* ── Compact Storage & Footer Bar ──────────────────── */}
-        <div className={cn("shrink-0 border-t border-apple-hairline bg-apple-canvas", collapsed ? "p-2" : "p-3")}>
-          {!collapsed && (
-            <div className="mb-2 rounded-lg bg-apple-canvas-parchment/70 px-2.5 py-2">
-              <div className="flex items-center justify-between text-[11px] font-medium text-apple-ink-muted-48">
-                <span>{t.storeNav.storage}</span>
-                <span className="tabular-nums font-semibold text-apple-ink">
-                  {usedLabel} / {storageLabel}
-                </span>
-              </div>
-              <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-apple-hairline">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all duration-500",
-                    isStorageHigh ? "bg-amber-500" : "bg-apple-primary"
-                  )}
-                  style={{ width: `${storagePercent}%` }}
-                />
-              </div>
-              {isStorageHigh && (
-                <div className="mt-1 flex items-center justify-between text-[10px] text-amber-700">
-                  <span>{t.storeNav.storageAlmostFull}</span>
-                  <Link href={`${basePath}/billing`} className="font-semibold underline hover:text-amber-900">
-                    {t.storeNav.upgrade}
-                  </Link>
-                </div>
-              )}
-            </div>
+    <TooltipProvider delayDuration={120}>
+      <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
+        <aside
+          className={cn(
+            "sticky top-0 flex h-screen flex-col border-r border-zinc-200/80 bg-white transition-[width] duration-200 ease-in-out dark:border-zinc-800 dark:bg-zinc-950",
+            collapsed ? "w-[68px]" : "w-[260px]"
           )}
+          role="navigation"
+          aria-label="Store navigation"
+        >
+          {/* ── Top: Store & Workspace Switcher ────────────────── */}
+          <div className={cn("shrink-0 border-b border-zinc-200/80 dark:border-zinc-800", collapsed ? "p-2" : "p-3")}>
+            <SidebarStoreSwitcher store={store} collapsed={collapsed} />
+          </div>
 
-          {/* Collapse/Expand Action Button */}
-          <button
-            type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            className={cn(
-              "flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-apple-ink-muted-48 transition-all duration-150 hover:bg-apple-canvas-parchment hover:text-apple-ink",
-              collapsed ? "justify-center px-0" : ""
-            )}
-            title={collapsed ? t.navigation.expandSidebar : t.navigation.collapseSidebar}
-            aria-label={collapsed ? t.navigation.expandSidebar : t.navigation.collapseSidebar}
+          {/* ── Scrollable Navigation Groups ───────────────────── */}
+          <nav
+            className="sidebar-scroll flex-1 overflow-y-auto px-2.5 py-2 space-y-0.5"
+            aria-label="Main navigation"
           >
-            {collapsed ? (
-              <ChevronsRight className="h-4 w-4 shrink-0" />
+            {/* Back to Workspace Action */}
+            <div className="mb-2">
+              <NavTooltipWrapper
+                label={language === "bn" ? "ওয়ার্কস্পেসে ফিরে যান" : "Back to Workspace"}
+                collapsed={collapsed}
+              >
+                <Link
+                  href="/dashboard"
+                  onClick={onNavigate}
+                  className={cn(
+                    "group flex w-full items-center gap-2.5 rounded-lg px-2.5 h-9 min-h-[36px] text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 transition-colors duration-150 border border-zinc-200/60 bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20",
+                    collapsed ? "justify-center px-0" : ""
+                  )}
+                  aria-label={language === "bn" ? "ওয়ার্কস্পেসে ফিরে যান" : "Back to Workspace"}
+                >
+                  <ArrowLeft className="h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-150 group-hover:-translate-x-0.5 dark:text-zinc-400" />
+                  {!collapsed && (
+                    <span className="truncate">
+                      {language === "bn" ? "ওয়ার্কস্পেসে ফিরে যান" : "Back to Workspace"}
+                    </span>
+                  )}
+                </Link>
+              </NavTooltipWrapper>
+            </div>
+
+            {/* Dashboard Direct Top Link */}
+            <div>
+              <NavItem
+                href="/dashboard"
+                label={t.storeNav.dashboard}
+                icon={LayoutDashboard}
+                exact={true}
+                basePath={basePath}
+                onNavigate={onNavigate}
+              />
+            </div>
+
+            {/* Grouped Information Architecture */}
+            {navGroups.map((groupDef) => {
+              const visibleItems = groupDef.items.filter((item) => {
+                const meta = resolveLink(item);
+                return !meta.noPermission;
+              });
+
+              if (visibleItems.length === 0) return null;
+
+              return (
+                <div key={groupDef.group} className="space-y-0.5">
+                  <SectionLabel>{groupDef.group}</SectionLabel>
+                  <ul className="space-y-0.5">
+                    {visibleItems.map((link) => {
+                      const meta = resolveLink(link);
+                      return (
+                        <li key={link.href + link.label}>
+                          <NavItem
+                            {...link}
+                            basePath={basePath}
+                            locked={meta.locked}
+                            requiredPlan={meta.requiredPlan}
+                            comingSoon={meta.comingSoon}
+                            onNavigate={onNavigate}
+                          />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* ── Compact Storage & Footer Bar ──────────────────── */}
+          <div className={cn("shrink-0 border-t border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-950", collapsed ? "p-2" : "p-3")}>
+            {!collapsed ? (
+              <div className="mb-2.5 rounded-lg border border-zinc-200/60 bg-zinc-50/70 p-2.5 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+                <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                  <span className="flex items-center gap-1.5">
+                    <HardDrive className="h-3 w-3 text-zinc-400" />
+                    <span>{t.storeNav.storage}</span>
+                  </span>
+                  <span className="tabular-nums font-semibold text-zinc-700 dark:text-zinc-300">
+                    {usedLabel} / {storageLabel}
+                  </span>
+                </div>
+                <div className="mt-2 h-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all duration-300",
+                      isStorageHigh ? "bg-amber-500" : "bg-zinc-900 dark:bg-white"
+                    )}
+                    style={{ width: `${storagePercent}%` }}
+                  />
+                </div>
+                {isStorageHigh && (
+                  <div className="mt-1.5 flex items-center justify-between text-[10px] text-amber-700 dark:text-amber-400">
+                    <span>{t.storeNav.storageAlmostFull}</span>
+                    <Link href={`${basePath}/billing`} className="font-semibold underline hover:text-amber-900">
+                      {t.storeNav.upgrade}
+                    </Link>
+                  </div>
+                )}
+              </div>
             ) : (
-              <>
-                <ChevronsLeft className="h-4 w-4 shrink-0" />
-                <span>{t.navigation.collapseSidebar}</span>
-              </>
+              <div className="mb-2 flex justify-center">
+                <NavTooltipWrapper
+                  label={`${t.storeNav.storage}: ${usedLabel} / ${storageLabel}`}
+                  subtext={isStorageHigh ? "Almost full" : `${storagePercent}%`}
+                  collapsed={true}
+                >
+                  <button
+                    type="button"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900"
+                    aria-label="Storage status"
+                  >
+                    <HardDrive className={cn("h-4 w-4", isStorageHigh && "text-amber-500")} />
+                  </button>
+                </NavTooltipWrapper>
+              </div>
             )}
-          </button>
-        </div>
-      </aside>
-    </SidebarContext.Provider>
+
+            {/* Collapse/Expand Action Button */}
+            <NavTooltipWrapper
+              label={collapsed ? t.navigation.expandSidebar : t.navigation.collapseSidebar}
+              collapsed={collapsed}
+            >
+              <button
+                type="button"
+                onClick={() => setCollapsed(!collapsed)}
+                className={cn(
+                  "flex w-full items-center gap-2.5 rounded-lg px-2.5 h-9 text-xs font-medium text-zinc-500 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20",
+                  collapsed ? "justify-center px-0" : ""
+                )}
+                aria-label={collapsed ? t.navigation.expandSidebar : t.navigation.collapseSidebar}
+              >
+                {collapsed ? (
+                  <PanelLeft className="h-4 w-4 shrink-0 text-zinc-400" />
+                ) : (
+                  <>
+                    <PanelLeftClose className="h-4 w-4 shrink-0 text-zinc-400" />
+                    <span>{t.navigation.collapseSidebar}</span>
+                  </>
+                )}
+              </button>
+            </NavTooltipWrapper>
+          </div>
+        </aside>
+      </SidebarContext.Provider>
+    </TooltipProvider>
   );
 }
+

@@ -35,27 +35,35 @@ import {
   filtersLabel,
   toDateRange,
 } from "./modules/module-types";
-import { OverviewModule } from "./modules/OverviewModule";
-import { SalesModule } from "./modules/SalesModule";
-import { OrdersModule } from "./modules/OrdersModule";
-import { ProductsModule } from "./modules/ProductsModule";
-import { InventoryModule } from "./modules/InventoryModule";
-import { CustomersModule } from "./modules/CustomersModule";
-import { PaymentsModule } from "./modules/PaymentsModule";
-import { ShippingModule } from "./modules/ShippingModule";
-import { CourierModule } from "./modules/CourierModule";
-import { CategoriesModule } from "./modules/CategoriesModule";
-import { CouponsModule } from "./modules/CouponsModule";
-import { TaxModule } from "./modules/TaxModule";
-import { ExpenseModule } from "./modules/ExpenseModule";
-import { ProfitLossModule } from "./modules/ProfitLossModule";
-import { PerformanceModule } from "./modules/PerformanceModule";
-import { StaffModule } from "./modules/StaffModule";
-import { RefundsModule } from "./modules/RefundsModule";
-import { ReturnsModule } from "./modules/ReturnsModule";
-import { WalletModule } from "./modules/WalletModule";
-import { SubscriptionModule } from "./modules/SubscriptionModule";
-import { CustomModule } from "./modules/CustomModule";
+import dynamic from "next/dynamic";
+
+const ReportModuleLoading = () => (
+  <div className="flex h-64 items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50">
+    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+  </div>
+);
+
+const OverviewModule = dynamic(() => import("./modules/OverviewModule").then((m) => m.OverviewModule), { loading: ReportModuleLoading });
+const SalesModule = dynamic(() => import("./modules/SalesModule").then((m) => m.SalesModule), { loading: ReportModuleLoading });
+const OrdersModule = dynamic(() => import("./modules/OrdersModule").then((m) => m.OrdersModule), { loading: ReportModuleLoading });
+const ProductsModule = dynamic(() => import("./modules/ProductsModule").then((m) => m.ProductsModule), { loading: ReportModuleLoading });
+const InventoryModule = dynamic(() => import("./modules/InventoryModule").then((m) => m.InventoryModule), { loading: ReportModuleLoading });
+const CustomersModule = dynamic(() => import("./modules/CustomersModule").then((m) => m.CustomersModule), { loading: ReportModuleLoading });
+const PaymentsModule = dynamic(() => import("./modules/PaymentsModule").then((m) => m.PaymentsModule), { loading: ReportModuleLoading });
+const ShippingModule = dynamic(() => import("./modules/ShippingModule").then((m) => m.ShippingModule), { loading: ReportModuleLoading });
+const CourierModule = dynamic(() => import("./modules/CourierModule").then((m) => m.CourierModule), { loading: ReportModuleLoading });
+const CategoriesModule = dynamic(() => import("./modules/CategoriesModule").then((m) => m.CategoriesModule), { loading: ReportModuleLoading });
+const CouponsModule = dynamic(() => import("./modules/CouponsModule").then((m) => m.CouponsModule), { loading: ReportModuleLoading });
+const TaxModule = dynamic(() => import("./modules/TaxModule").then((m) => m.TaxModule), { loading: ReportModuleLoading });
+const ExpenseModule = dynamic(() => import("./modules/ExpenseModule").then((m) => m.ExpenseModule), { loading: ReportModuleLoading });
+const ProfitLossModule = dynamic(() => import("./modules/ProfitLossModule").then((m) => m.ProfitLossModule), { loading: ReportModuleLoading });
+const PerformanceModule = dynamic(() => import("./modules/PerformanceModule").then((m) => m.PerformanceModule), { loading: ReportModuleLoading });
+const StaffModule = dynamic(() => import("./modules/StaffModule").then((m) => m.StaffModule), { loading: ReportModuleLoading });
+const RefundsModule = dynamic(() => import("./modules/RefundsModule").then((m) => m.RefundsModule), { loading: ReportModuleLoading });
+const ReturnsModule = dynamic(() => import("./modules/ReturnsModule").then((m) => m.ReturnsModule), { loading: ReportModuleLoading });
+const WalletModule = dynamic(() => import("./modules/WalletModule").then((m) => m.WalletModule), { loading: ReportModuleLoading });
+const SubscriptionModule = dynamic(() => import("./modules/SubscriptionModule").then((m) => m.SubscriptionModule), { loading: ReportModuleLoading });
+const CustomModule = dynamic(() => import("./modules/CustomModule").then((m) => m.CustomModule), { loading: ReportModuleLoading });
 import {
   DollarSign,
   ShoppingCart,

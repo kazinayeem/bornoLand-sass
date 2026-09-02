@@ -1,14 +1,15 @@
 import { cn } from "@/lib/utils";
 
 const badgeVariants = {
-  default: "bg-muted text-muted-foreground ring-1 ring-border",
-  primary: "bg-primary/10 text-primary ring-1 ring-primary/20",
-  outline: "border border-border bg-transparent text-foreground",
-  success: "bg-success/10 text-success ring-1 ring-success/20 dark:bg-success/20",
-  warning: "bg-amber-50 text-amber-700 ring-1 ring-amber-200/70 dark:bg-amber-950/30 dark:text-amber-400",
-  danger: "bg-destructive/10 text-destructive ring-1 ring-destructive/20 dark:bg-destructive/20",
-  violet: "bg-muted text-muted-foreground ring-1 ring-border",
-  slate: "bg-secondary text-secondary-foreground ring-1 ring-border",
+  default: "bg-[#F5F5F5] text-[#484848] border border-[#DFDFDF] dark:bg-[#27272a] dark:text-[#a1a1aa] dark:border-[#3f3f46]",
+  primary: "bg-[#ebf0fa] text-[#003399] border border-[#b8cbed] dark:bg-[#003399]/20 dark:text-[#6694ff] dark:border-[#003399]/30 font-semibold",
+  yellow: "bg-[#FFDA1A] text-[#111111] border border-[#e6c400] font-bold",
+  outline: "border border-[#DFDFDF] bg-transparent text-[#111111] dark:border-[#27272a] dark:text-white",
+  success: "bg-[#eaf6eb] text-[#0A8A00] border border-[#bce4be] dark:bg-[#0A8A00]/20 dark:text-[#52d248] dark:border-[#0A8A00]/30 font-medium",
+  warning: "bg-[#fef4eb] text-[#E87400] border border-[#fbd6b1] dark:bg-[#E87400]/20 dark:text-[#ff9d3b] dark:border-[#E87400]/30 font-medium",
+  danger: "bg-[#fcedee] text-[#CC0008] border border-[#f8bcc0] dark:bg-[#CC0008]/20 dark:text-[#ff666d] dark:border-[#CC0008]/30 font-medium",
+  violet: "bg-[#ebf0fa] text-[#003399] border border-[#b8cbed]",
+  slate: "bg-[#F5F5F5] text-[#484848] border border-[#DFDFDF]",
 };
 
 type BadgeProps = {
@@ -22,12 +23,12 @@ export function Badge({ variant = "default", children, className, dot }: BadgePr
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
+        "inline-flex items-center gap-1.5 rounded-[4px] px-2 py-0.5 text-xs transition-colors select-none",
         badgeVariants[variant],
         className
       )}
     >
-      {dot && <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />}
+      {dot && <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" />}
       {children}
     </span>
   );
@@ -43,13 +44,15 @@ export const statusBadge = (
     published: { label: "Published", variant: "success" },
     pending: { label: "Pending", variant: "warning" },
     processing: { label: "Processing", variant: "primary" },
-    shipped: { label: "Shipped", variant: "violet" },
+    shipped: { label: "Shipped", variant: "primary" },
     delivered: { label: "Delivered", variant: "success" },
     cancelled: { label: "Cancelled", variant: "danger" },
     refunded: { label: "Refunded", variant: "danger" },
     paid: { label: "Paid", variant: "success" },
     unpaid: { label: "Unpaid", variant: "warning" },
     partial: { label: "Partial", variant: "primary" },
+    won: { label: "Won", variant: "success" },
+    lost: { label: "Lost", variant: "danger" },
     true: { label: "Yes", variant: "success" },
     false: { label: "No", variant: "default" },
   };

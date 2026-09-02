@@ -304,17 +304,22 @@ export async function resetPage(pageId: string, storeId?: string) {
 
 export async function publishPage(pageId: string, payload?: { storeId?: string; status?: string }) {
   await connectDatabase();
-  const existing = (await PageModel.findById(pageId).lean()) as { storeId?: unknown } | null;
+  const existing = (await PageModel.findById(pageId).lean()) as { storeId?: unknown; isHome?: boolean; slug?: string } | null;
   if (!existing) return { ok: false as const, message: "Page not found" };
   if (payload?.storeId && String(existing.storeId) !== payload.storeId) {
     return { ok: false as const, message: "Page does not belong to this store" };
   }
 
-  const page = await PageModel.findByIdAndUpdate(
+  const page = (await PageModel.findByIdAndUpdate(
     pageId,
     { $set: { status: payload?.status ?? "published" } },
     { new: true },
-  ).lean() as any;
+  ).lean()) as any;
   if (!page) return { ok: false as const, message: "Page not found" };
+
+  const storeIdStr = String(existing.storeId);
+  const { invalidateStoreTenantCache } = await import("../../common/cache/cache.service.js");
+  invalidateStoreTenantCache(storeIdStr, "all").catch(() => {});
+
   return { ok: true as const, data: { page } };
 }

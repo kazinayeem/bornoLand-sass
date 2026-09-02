@@ -26,6 +26,8 @@ import { useGetStoreCustomersQuery } from "@/redux/api/store-customers-api";
 import { useValidateCouponMutation, type ValidateCouponResponse } from "@/redux/api/coupon-api";
 import { useCreateStoreOrderMutation } from "@/redux/api/store-order-api";
 import { PosVariantModal } from "./pos-variant-modal";
+import { DocumentPreviewDialog } from "@/components/documents/document-preview-dialog";
+import { PosReceiptDocument } from "@/components/documents/templates/pos-receipt-document";
 
 import { formatCurrency } from "@/lib/format-currency";
 import { useTenant } from "@/providers/tenant-provider";
@@ -78,6 +80,7 @@ export function PosOrderModal({
   const [appliedCoupon, setAppliedCoupon] = useState<ValidateCouponResponse | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "mobile_banking" | "cod">("cash");
   const [shippingFee, setShippingFee] = useState(0);
+  const [completedOrder, setCompletedOrder] = useState<any | null>(null);
 
   // API Hooks
   const { data: productsData, isLoading: loadingProducts } = useGetProductsQuery({ storeId }, { skip: !open || !storeId });
@@ -264,11 +267,11 @@ export function PosOrderModal({
 
       if (res.data?.order) {
         toast.success(`POS Order #${res.data.order.orderNumber} created!`);
+        setCompletedOrder(res.data.order);
         setLineItems([]);
         setAppliedCoupon(null);
         setProductSearch("");
         onSuccess?.();
-        onClose();
       } else {
         toast.error((res as any).message || "Failed to create POS order");
       }
@@ -279,23 +282,23 @@ export function PosOrderModal({
     }
   };
 
-  return (
+  if (!open) return null;
 
-    <AnimatePresence>
+  return (
+    <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-5"
-        onClick={(e) => {
-          if (e.target === e.currentTarget && !isSubmittingOrder) onClose();
-        }}
+        key="pos-modal-backdrop"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-5"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isSubmittingOrder) onClose();
+      }}
+    >
+      <div
+        key="pos-modal-content"
+        className="flex flex-col w-full max-w-6xl bg-white rounded-2xl border border-zinc-200 shadow-2xl overflow-hidden text-apple-ink"
+        style={{ height: "min(92vh, 850px)" }}
       >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.97, y: 12 }}
-          className="flex flex-col w-full max-w-6xl bg-white rounded-2xl border border-zinc-200 shadow-2xl overflow-hidden text-apple-ink"
-          style={{ height: "min(92vh, 850px)" }}
-        >
-          {/* Top POS Header Bar */}
+        {/* Top POS Header Bar */}
           <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-6 bg-zinc-900 text-white shrink-0">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-apple-primary text-white font-bold text-xs">
@@ -331,11 +334,11 @@ export function PosOrderModal({
                 {/* Customer dropdown results */}
                 {customerSearch && !selectedCustomer && customers.length > 0 && (
                   <div className="absolute top-full left-0 right-0 z-20 mt-1 max-h-36 overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-800 shadow-xl divide-y divide-zinc-700">
-                    {customers.map((c) => (
+                    {customers.map((c, cIdx) => (
                       <div
-                        key={c._id}
+                        key={c._id || (c as any).id || `pos-customer-${cIdx}`}
                         onClick={() => {
-                          setSelectedCustomer({ id: c._id, name: c.name, email: c.email, phone: c.phone });
+                          setSelectedCustomer({ id: c._id || (c as any).id, name: c.name, email: c.email, phone: c.phone });
                           setCustomerSearch("");
                         }}
                         className="p-2 hover:bg-zinc-700 cursor-pointer text-xs"
@@ -387,9 +390,9 @@ export function PosOrderModal({
                   >
                     All Categories
                   </button>
-                  {categories.map((cat) => (
+                  {categories.map((cat, catIdx) => (
                     <button
-                      key={cat._id}
+                      key={cat._id || (cat as any).id || cat.slug || `pos-cat-${catIdx}`}
                       type="button"
                       onClick={() => setSelectedCategory(cat.name)}
                       className={cn(
@@ -416,11 +419,11 @@ export function PosOrderModal({
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {filteredProducts.map((product) => {
+                    {filteredProducts.map((product, pIdx) => {
                       const hasVariants = (product.options?.length ?? 0) > 0 || (product.variants?.length ?? 0) > 0;
                       return (
                         <div
-                          key={product._id}
+                          key={product._id || (product as any).id || product.slug || `pos-prod-${pIdx}`}
                           onClick={() => handleSelectProduct(product)}
                           className="group relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white p-3 shadow-xs transition-all hover:border-apple-primary/50 hover:shadow-md cursor-pointer"
                         >
@@ -654,16 +657,69 @@ export function PosOrderModal({
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
+
+        {/* POS Variant Selector Modal */}
+        <PosVariantModal
+          open={!!variantProduct}
+          product={variantProduct}
+          onClose={() => setVariantProduct(null)}
+          onSelectVariant={handleSelectVariant}
+        />
       </div>
 
-      {/* POS Variant Selector Modal */}
-      <PosVariantModal
-        open={!!variantProduct}
-        product={variantProduct}
-        onClose={() => setVariantProduct(null)}
-        onSelectVariant={handleSelectVariant}
-      />
-    </AnimatePresence>
+      {/* POS Thermal Receipt Preview & Print Dialog */}
+      {completedOrder && (
+        <DocumentPreviewDialog
+          open={!!completedOrder}
+          onClose={() => {
+            setCompletedOrder(null);
+            onClose();
+          }}
+          title={`POS Receipt #${completedOrder.orderNumber}`}
+          filename={`BornoLand-Receipt-${completedOrder.orderNumber}.pdf`}
+          defaultPageSize="thermal-80"
+          allowPageSizeSwitch={true}
+        >
+          <PosReceiptDocument
+            store={{
+              name: store?.name || "BornoLand Retail",
+              shortName: store?.shortName,
+              logoUrl: store?.logoUrl,
+              brandColor: (store as any)?.brandColor,
+              address: (store as any)?.address,
+              phone: (store as any)?.phone,
+              email: (store as any)?.email,
+              binOrTin: (settings as any)?.binOrTin,
+            }}
+            receipt={{
+              receiptNumber: completedOrder.orderNumber,
+              orderNumber: completedOrder.orderNumber,
+              dateTime: completedOrder.createdAt || new Date(),
+              cashierName: "Cashier (Counter 1)",
+              customer: {
+                name: completedOrder.shippingAddress?.fullName || "Walk-in Customer",
+                phone: completedOrder.shippingAddress?.phone,
+              },
+              items: (completedOrder.items || []).map((it: any) => ({
+                title: it.name || it.productName || "Product",
+                quantity: it.quantity || 1,
+                unitPrice: it.price || 0,
+                discount: it.discount || 0,
+                total: (it.price || 0) * (it.quantity || 1),
+              })),
+              subtotal: completedOrder.subtotal || completedOrder.total,
+              discount: completedOrder.discount || 0,
+              tax: completedOrder.tax || 0,
+              grandTotal: completedOrder.total,
+              paymentMethod: completedOrder.paymentMethod || "cash",
+              tenderedAmount: completedOrder.total,
+              changeAmount: 0,
+              notes: completedOrder.shippingAddress?.orderNotes,
+            }}
+          />
+        </DocumentPreviewDialog>
+      )}
+    </>
   );
 }

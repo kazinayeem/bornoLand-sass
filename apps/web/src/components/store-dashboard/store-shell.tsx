@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useStoreFromSlug } from "@/hooks/use-store-from-slug";
 import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 import { StoreBrandingSync } from "@/components/store-dashboard/store-branding-sync";
+import { StorePermissionsSync } from "@/components/store-dashboard/store-permissions-sync";
 import { StoreSidebar } from "@/components/store-dashboard/store-sidebar";
 import { TrialBanner } from "@/components/store-dashboard/trial-banner";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
@@ -33,10 +34,33 @@ export function StoreShell({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-apple-canvas-parchment">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-6 w-6 animate-spin text-apple-primary" />
-          <p className="text-caption text-apple-ink-muted-48">Loading store...</p>
+      <div className="flex h-screen overflow-hidden bg-apple-canvas-parchment">
+        {/* Sidebar skeleton */}
+        <div className="hidden lg:flex w-64 flex-col border-r border-apple-hairline bg-apple-canvas p-4 space-y-4 animate-pulse">
+          <div className="h-10 w-full rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+          <div className="space-y-2 pt-4">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="h-8 w-full rounded-lg bg-zinc-100 dark:bg-zinc-800/60" />
+            ))}
+          </div>
+        </div>
+        {/* Main content skeleton */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="h-14 border-b border-apple-hairline bg-apple-canvas px-6 flex items-center justify-between animate-pulse">
+            <div className="h-6 w-36 rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-8 w-8 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto space-y-6 animate-pulse">
+              <div className="h-8 w-48 rounded bg-zinc-200 dark:bg-zinc-800" />
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-24 rounded-xl bg-apple-canvas border border-apple-hairline" />
+                ))}
+              </div>
+              <div className="h-64 rounded-xl bg-apple-canvas border border-apple-hairline" />
+            </div>
+          </main>
         </div>
       </div>
     );
@@ -68,8 +92,9 @@ export function StoreShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div data-surface="dashboard" className="grid h-screen grid-cols-[auto_1fr] overflow-hidden bg-apple-canvas-parchment">
+    <div data-surface="dashboard" className="grid h-screen grid-cols-[auto_1fr] overflow-hidden bg-zinc-50/70 dark:bg-zinc-950">
       <StoreBrandingSync store={store} />
+      <StorePermissionsSync storeId={store._id} />
 
       <div className="hidden lg:block">
         <StoreSidebar store={store} />
@@ -88,17 +113,22 @@ export function StoreShell({ children }: { children: ReactNode }) {
       {mobileNavOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 bg-apple-surface-black/60 backdrop-blur-sm transition-opacity duration-300"
+            className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-200 animate-in fade-in"
             onClick={closeMobileNav}
             aria-hidden="true"
           />
-          <div className="absolute inset-y-0 left-0 flex w-[280px] animate-slide-in-left flex-col border-r border-apple-hairline bg-apple-canvas">
-            <div className="flex items-center justify-between border-b border-apple-hairline px-4 py-3">
-              <p className="text-caption-strong text-apple-ink">{store.shortName || store.name}</p>
+          <div className="absolute inset-y-0 left-0 flex w-[280px] animate-in slide-in-from-left duration-200 flex-col border-r border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="flex items-center justify-between border-b border-zinc-200/80 px-4 py-3 dark:border-zinc-800">
+              <div className="flex items-center gap-2">
+                <StoreBrandMark store={store} size={28} roundedClassName="rounded-md" />
+                <p className="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                  {store.shortName || store.name}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={closeMobileNav}
-                className="btn-press flex h-11 w-11 items-center justify-center rounded-full bg-apple-surface-chip/64 text-apple-ink-muted-48"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 transition-colors"
                 aria-label="Close menu"
               >
                 <X className="h-4 w-4" />

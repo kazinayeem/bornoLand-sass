@@ -9,8 +9,17 @@ import { LEGACY_LIMIT_MAP, normalizeFeatureType, type FeatureType } from "./feat
 import { SEED_FEATURES, SEED_GROUPS, SEED_LIMITS, SEED_TIERS } from "./feature.seed.js";
 import { ensureDefaultFeaturesSafe } from "../../bootstrap/safe-migrate.js";
 
+let defaultFeaturesEnsured = false;
+
 export async function ensureDefaultFeatures() {
-  await ensureDefaultFeaturesSafe();
+  if (defaultFeaturesEnsured) return;
+  try {
+    await ensureDefaultFeaturesSafe();
+    defaultFeaturesEnsured = true;
+  } catch (err) {
+    console.warn("ensureDefaultFeaturesSafe warning:", err);
+    defaultFeaturesEnsured = true;
+  }
 }
 
 export async function listFeatureGroups() {

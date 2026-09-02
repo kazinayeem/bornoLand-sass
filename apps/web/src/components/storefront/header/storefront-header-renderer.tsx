@@ -1,6 +1,5 @@
-"use client";
-
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { useActiveTheme } from "@/components/store/theme-provider";
 import { useTenant } from "@/providers/tenant-provider";
 import { useRegisterStorefrontHeaderOffset } from "@/components/storefront/storefront-header-offset";
@@ -34,12 +33,15 @@ function readScrollY(target: HTMLElement | Window): number {
 }
 
 export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHeaderRendererProps) {
+  const pathname = usePathname() || "";
+  const isHomePage = pathname === "" || pathname === "/" || pathname.endsWith("/site") || /^\/site\/[^/]+$/.test(pathname);
+
   const { theme } = useActiveTheme();
   const { store } = useTenant();
   const themeId = theme.id || "grocery";
   const headerRef = useRef<HTMLDivElement>(null);
   const registerContentOffset = useRegisterStorefrontHeaderOffset();
-  const [headerHeight, setHeaderHeight] = useState<number>(0);
+  const [headerHeight, setHeaderHeight] = useState<number>(72);
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollYRef = useRef(0);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -64,7 +66,8 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
   const position = config.position;
   const autoHideOnScroll = config.autoHideOnScroll;
   const shadow = config.shadow;
-  const transparent = config.transparent;
+  // Transparent is only allowed on the home page with a hero section; all other standalone pages (checkout, cart, login, etc.) must be solid
+  const transparent = isHomePage && config.transparent;
 
   const resolvedLogoUrl = useMemo(
     () => resolveHeaderLogoUrl(headerSettings, store),
@@ -103,11 +106,24 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
 
   const publishMetrics = useCallback(
     (height: number) => {
-      setHeaderHeight(height);
-      const offset = position === "fixed" && !transparent ? height : 0;
-      registerContentOffset(height, offset);
+      const roundedHeight = Math.max(0, Math.round(height));
+      if (roundedHeight > 0) {
+        setHeaderHeight(roundedHeight);
+        const offset = position === "fixed" && !transparent ? roundedHeight : 0;
+        registerContentOffset(roundedHeight, offset);
+      }
     },
     [position, transparent, registerContentOffset],
+  );
+
+  const setHeaderNode = useCallback(
+    (node: HTMLDivElement | null) => {
+      (headerRef as any).current = node;
+      if (node && !disabled) {
+        publishMetrics(node.offsetHeight || node.getBoundingClientRect().height);
+      }
+    },
+    [disabled, publishMetrics],
   );
 
   useEffect(() => {
@@ -116,14 +132,16 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       return;
     }
     const updateHeight = () => {
-      if (headerRef.current) publishMetrics(headerRef.current.offsetHeight);
+      if (headerRef.current) {
+        const h = headerRef.current.offsetHeight || headerRef.current.getBoundingClientRect().height;
+        if (h > 0) publishMetrics(h);
+      }
     };
     updateHeight();
     const observer = new ResizeObserver(updateHeight);
     observer.observe(headerRef.current);
     return () => {
       observer.disconnect();
-      registerContentOffset(0, 0);
     };
   }, [disabled, template, headerSettings, publishMetrics, registerContentOffset]);
 
@@ -155,7 +173,7 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
   }
 
   const colorStyle = {
-    ["--store-header-height" as string]: `${headerHeight}px`,
+    ["--store-header-height" as string]: `${headerHeight > 0 ? headerHeight : 72}px`,
     ...(config.colors.primary ? { ["--store-primary" as string]: config.colors.primary } : {}),
     ...(config.colors.secondary ? { ["--store-secondary" as string]: config.colors.secondary } : {}),
     ...(config.colors.accent ? { ["--store-accent" as string]: config.colors.accent } : {}),
@@ -170,7 +188,7 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       style={colorStyle}
     >
       <div
-        ref={headerRef}
+        ref={setHeaderNode}
         className={cn(
           "w-full max-w-full min-w-0 transition-transform duration-300 z-50",
           position === "sticky" && "sticky top-0",
@@ -186,9 +204,9 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
         <TemplateComponent key={`header-${template}`} headerSettings={templateSettings} />
       </div>
 
-      {position === "fixed" && !transparent && headerHeight > 0 && (
+      {position === "fixed" && !transparent && (
         <div
-          style={{ height: headerHeight }}
+          style={{ height: `${headerHeight > 0 ? headerHeight : 72}px` }}
           aria-hidden="true"
           className="w-full shrink-0 pointer-events-none"
           data-header-spacer="true"

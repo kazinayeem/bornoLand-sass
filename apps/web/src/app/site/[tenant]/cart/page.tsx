@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, ArrowLeft } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { updateQuantity, removeFromCart } from "@/redux/slices/cart-slice";
-import { useUpdateCartItemMutation, useRemoveFromCartMutation } from "@/redux/api/cart-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
 import { SmartImage } from "@/components/ui/smart-image";
@@ -19,13 +18,14 @@ import {
 } from "@/components/storefront/storefront-ui";
 import { cn } from "@/lib/utils";
 
+import { useIsClient } from "@/hooks/use-is-client";
+
 export default function CartPage() {
   const dispatch = useDispatch();
+  const isClient = useIsClient();
   const { settings } = useTenant();
   const { classes, primaryColor } = useStorefrontSurface();
   const { items } = useSelector((state: RootState) => state.cart);
-  const [updateRemote] = useUpdateCartItemMutation();
-  const [removeRemote] = useRemoveFromCartMutation();
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const freeThreshold = settings.freeShippingEnabled ? (settings.freeShippingMin ?? 0) : (settings.currencyCode === "BDT" ? 5000 : 100);
@@ -38,17 +38,26 @@ export default function CartPage() {
   const handleQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) {
       dispatch(removeFromCart(productId));
-      removeRemote(productId);
     } else {
       dispatch(updateQuantity({ productId, quantity }));
-      updateRemote({ productId, quantity });
     }
   };
 
   const handleRemove = (productId: string) => {
     dispatch(removeFromCart(productId));
-    removeRemote(productId);
   };
+
+  if (!isClient) {
+    return (
+      <StorefrontPage maxWidth="md">
+        <StorefrontPageHeader title="Shopping Cart" />
+        <div className="space-y-4 animate-pulse">
+          <div className="h-24 rounded-2xl bg-zinc-100 dark:bg-zinc-800/50" />
+          <div className="h-24 rounded-2xl bg-zinc-100 dark:bg-zinc-800/50" />
+        </div>
+      </StorefrontPage>
+    );
+  }
 
   if (items.length === 0) {
     return (

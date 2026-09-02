@@ -86,6 +86,9 @@ export type Dictionary = {
     awaitingApproval: string;
   };
   storeNav: {
+    people: string;
+    finance: string;
+    customerGrowth: string;
     catalog: string;
     sales: string;
     growth: string;
@@ -97,13 +100,35 @@ export type Dictionary = {
     products: string;
     categories: string;
     inventory: string;
+    wasteLoss: string;
+    stockLedger: string;
+    warehouses: string;
+    purchasing: string;
+    suppliers: string;
     orders: string;
+    pos: string;
+    posShifts: string;
     incompleteOrders: string;
     customers: string;
     reviews: string;
+    employees: string;
+    organization: string;
+    attendance: string;
+    leaves: string;
+    payroll: string;
+    selfService: string;
+    accounting: string;
+    chartOfAccounts: string;
+    journalEntries: string;
+    expenses: string;
+    financialReports: string;
+    crmDeals: string;
+    supportTickets: string;
     marketing: string;
     coupons: string;
     trackingPixels: string;
+    tasks: string;
+    approvals: string;
     analytics: string;
     overview: string;
     visitors: string;
@@ -304,6 +329,84 @@ export type Dictionary = {
       businessHours: string;
     };
   };
+  dashboard: {
+    greetingMorning: string;
+    greetingAfternoon: string;
+    greetingEvening: string;
+    overviewSubtitle: string;
+    quickActionsTitle: string;
+    quickActions: {
+      newOrder: string;
+      addProduct: string;
+      newPurchase: string;
+      addExpense: string;
+      openPOS: string;
+      builder: string;
+      visitStore: string;
+      editStore: string;
+      upgradePlan: string;
+      manageShifts: string;
+    };
+    kpis: {
+      totalProducts: string;
+      totalOrders: string;
+      totalRevenue: string;
+      conversionRate: string;
+      todaySales: string;
+      pendingOrders: string;
+      lowStockAlert: string;
+      activeStaff: string;
+      grossProfit: string;
+      netProfit: string;
+      customerDue: string;
+      stockValue: string;
+    };
+    storage: {
+      title: string;
+      used: string;
+      limit: string;
+      unlimited: string;
+      remaining: string;
+      upgrade: string;
+    };
+    plan: {
+      title: string;
+      features: string;
+      managePlan: string;
+      daysRemaining: (days: number) => string;
+      bandwidth: string;
+    };
+    storeHealth: {
+      title: string;
+      products: string;
+      orders: string;
+      media: string;
+      pageViews: string;
+    };
+    activity: {
+      title: string;
+      storeCreated: string;
+      lastUpdated: string;
+      allTimeOrders: (count: number) => string;
+      allTimeRevenue: string;
+      allTime: string;
+    };
+    storeDetails: {
+      title: string;
+      name: string;
+      category: string;
+      subdomain: string;
+      plan: string;
+      created: string;
+    };
+    emptyStates: {
+      noProductsTitle: string;
+      noProductsDesc: string;
+      noOrdersTitle: string;
+      noOrdersDesc: string;
+      addProductBtn: string;
+    };
+  };
 };
 
 const bn: Dictionary = {
@@ -380,24 +483,49 @@ const bn: Dictionary = {
     awaitingApproval: "অনুমোদনের অপেক্ষায়",
   },
   storeNav: {
+    people: "কর্মী ও মানবসম্পদ (HRM)",
+    finance: "হিসাববিজ্ঞান ও অর্থায়ন",
+    customerGrowth: "গ্রাহক ও সিআরএম",
     catalog: "ক্যাটালগ",
     sales: "বিক্রয়",
-    growth: "বৃদ্ধি",
-    store: "স্টোর",
-    operations: "অপারেশনস",
+    growth: "বৃদ্ধি ও মার্কেটিং",
+    store: "স্টোর ও ডিজাইন",
+    operations: "অপারেশনস ও টাস্ক",
     content: "কন্টেন্ট",
     system: "সিস্টেম",
     dashboard: "ড্যাশবোর্ড",
     products: "পণ্যসমূহ",
     categories: "ক্যাটাগরি",
-    inventory: "ইনভেন্টরি",
+    inventory: "ইনভেন্টরি ও স্টক",
+    wasteLoss: "ক্ষয়ক্ষতি ও অপচয় (Waste)",
+    stockLedger: "স্টক মুভমেন্ট লেজার",
+    warehouses: "মাল্টি-ওয়্যারহাউস",
+    purchasing: "ক্রয় ও পারচেজ অর্ডার",
+    suppliers: "সরবরাহকারী (Suppliers)",
     orders: "অর্ডার",
+    pos: "পয়েন্ট অব সেল (POS)",
+    posShifts: "POS ক্যাশ রেজিস্টার",
     incompleteOrders: "অসম্পূর্ণ অর্ডার",
-    customers: "গ্রাহক",
+    customers: "গ্রাহক মাস্টার",
     reviews: "রিভিউ",
-    marketing: "মার্কেটিং",
+    employees: "কর্মকর্তা-কর্মচারী",
+    organization: "বিভাগ ও পদবী",
+    attendance: "হাজিরা ও ওভারটাইম",
+    leaves: "ছুটি ব্যবস্থাপনা",
+    payroll: "বেতন ও পে-রোল",
+    selfService: "কর্মী পোর্টাল",
+    accounting: "অ্যাকাউন্টিং ড্যাশবোর্ড",
+    chartOfAccounts: "হিসাবের তালিকা (COA)",
+    journalEntries: "ডাবল-এন্ট্রি জার্নাল",
+    expenses: "ব্যয় ও খরচ (Expenses)",
+    financialReports: "আর্থিক বিবরণী (P&L / BS)",
+    crmDeals: "সিআরএম পাইপলাইন",
+    supportTickets: "সাপোর্ট টিকিট",
+    marketing: "মার্কেটিং ক্যাম্পেইন",
     coupons: "কুপন",
     trackingPixels: "ট্র্যাকিং ও পিক্সেল",
+    tasks: "টাস্ক ও কার্যতালিকা",
+    approvals: "অনুমোদন কেন্দ্র (Approvals)",
     analytics: "অ্যানালিটিক্স",
     overview: "ওভারভিউ",
     visitors: "ভিজিটর",
@@ -598,6 +726,84 @@ const bn: Dictionary = {
       businessHours: "ব্যবসার সময়",
     },
   },
+  dashboard: {
+    greetingMorning: "শুভ সকাল",
+    greetingAfternoon: "শুভ অপরাহ্ন",
+    greetingEvening: "শুভ সন্ধ্যা",
+    overviewSubtitle: "আপনার ব্যবসার আজকের পারফরম্যান্স ও তাৎক্ষণিক অ্যাকশনসমূহ।",
+    quickActionsTitle: "দ্রুত অ্যাকশন",
+    quickActions: {
+      newOrder: "নতুন অর্ডার",
+      addProduct: "পণ্য যোগ করুন",
+      newPurchase: "ক্রয় আদেশ (PO)",
+      addExpense: "খরচ যোগ করুন",
+      openPOS: "POS টার্মিনাল",
+      builder: "স্টোর বিল্ডার",
+      visitStore: "দোকান ভিজিট করুন",
+      editStore: "স্টোর সেটিংস",
+      upgradePlan: "প্ল্যান আপগ্রেড",
+      manageShifts: "ক্যাশ শিফট",
+    },
+    kpis: {
+      totalProducts: "মোট পণ্য",
+      totalOrders: "মোট অর্ডার",
+      totalRevenue: "মোট বিক্রয় (Revenue)",
+      conversionRate: "কনভার্শন রেট",
+      todaySales: "আজকের বিক্রয়",
+      pendingOrders: "অপেক্ষারত অর্ডার",
+      lowStockAlert: "লো-স্টক পণ্য",
+      activeStaff: "উপস্থিত কর্মী",
+      grossProfit: "মোট লাভ (Gross Margin)",
+      netProfit: "প্রকৃত মুনাফা",
+      customerDue: "বাকি / দেনা",
+      stockValue: "বর্তমান মজুদ মূল্য",
+    },
+    storage: {
+      title: "স্টোরেজ ব্যবহার",
+      used: "ব্যবহৃত",
+      limit: "সর্বোচ্চ সীমা",
+      unlimited: "সীমাহীন",
+      remaining: "অবশিষ্ট",
+      upgrade: "আপগ্রেড করুন",
+    },
+    plan: {
+      title: "বর্তমান প্ল্যান",
+      features: "অন্তর্ভুক্ত সুবিধাসমূহ",
+      managePlan: "প্ল্যান পরিচালনা",
+      daysRemaining: (days) => `${days} দিন ট্রায়াল বাকি`,
+      bandwidth: "ব্যান্ডউইথ",
+    },
+    storeHealth: {
+      title: "স্টোর সক্ষমতা ও সীমা",
+      products: "পণ্য সংখ্যা",
+      orders: "অর্ডার ভলিউম",
+      media: "মিডিয়া ফাইল",
+      pageViews: "পেজ ভিউ",
+    },
+    activity: {
+      title: "সাম্প্রতিক কার্যক্রম",
+      storeCreated: "দোকান তৈরি হয়েছে",
+      lastUpdated: "সর্বশেষ আপডেট",
+      allTimeOrders: (count) => `সর্বমোট ${count}টি অর্ডার`,
+      allTimeRevenue: "সর্বমোট বিক্রয়",
+      allTime: "সর্বকালের হিসাব",
+    },
+    storeDetails: {
+      title: "দোকানের বিবরণ",
+      name: "নাম",
+      category: "ক্যাটাগরি",
+      subdomain: "সাবডোমেইন",
+      plan: "প্ল্যান",
+      created: "তৈরি হয়েছে",
+    },
+    emptyStates: {
+      noProductsTitle: "এখনও কোনো পণ্য যোগ করা হয়নি",
+      noProductsDesc: "আপনার অনলাইন শপে বিক্রি শুরু করতে এবং স্টক ট্র্যাক করতে প্রথম পণ্যটি যোগ করুন।",
+      noOrdersTitle: "এখনও কোনো অর্ডার আসেনি",
+      noOrdersDesc: "অর্ডার আসলে এখানে স্বয়ংক্রিয়ভাবে তালিকাভুক্ত হবে এবং হিসাব আপডেট হবে।",
+      addProductBtn: "পণ্য যোগ করুন",
+    },
+  },
 };
 
 const en: Dictionary = {
@@ -674,24 +880,49 @@ const en: Dictionary = {
     awaitingApproval: "Awaiting Approval",
   },
   storeNav: {
-    catalog: "CATALOG",
-    sales: "SALES",
-    growth: "GROWTH",
-    store: "STORE",
-    operations: "OPERATIONS",
-    content: "CONTENT",
-    system: "SYSTEM",
+    people: "PEOPLE & HRM",
+    finance: "FINANCE & ACCOUNTING",
+    customerGrowth: "CUSTOMER & CRM",
+    catalog: "COMMERCE & CATALOG",
+    sales: "SALES & ORDERS",
+    growth: "GROWTH & MARKETING",
+    store: "WEBSITE & CMS",
+    operations: "OPERATIONS & WORKFLOW",
+    content: "CONTENT & MEDIA",
+    system: "SYSTEM & ACCESS",
     dashboard: "Dashboard",
     products: "Products",
     categories: "Categories",
-    inventory: "Inventory",
+    inventory: "Inventory & Stock",
+    wasteLoss: "Waste & Loss Tracker",
+    stockLedger: "Stock Movement Ledger",
+    warehouses: "Multi-Warehouse",
+    purchasing: "Purchasing & POs",
+    suppliers: "Suppliers Master",
     orders: "Orders",
+    pos: "Point of Sale (POS)",
+    posShifts: "POS Register & Shifts",
     incompleteOrders: "Incomplete Orders",
-    customers: "Customers",
+    customers: "Customer Master",
     reviews: "Reviews",
-    marketing: "Marketing",
+    employees: "Employees Directory",
+    organization: "Depts & Designations",
+    attendance: "Attendance & Shifts",
+    leaves: "Leave Management",
+    payroll: "Payroll & Payslips",
+    selfService: "Employee Portal",
+    accounting: "Accounting Dashboard",
+    chartOfAccounts: "Chart of Accounts",
+    journalEntries: "Journal Entries",
+    expenses: "Business Expenses",
+    financialReports: "Financial Statements",
+    crmDeals: "CRM Pipeline & Deals",
+    supportTickets: "Support Desk",
+    marketing: "Campaigns",
     coupons: "Coupons",
     trackingPixels: "Tracking & Pixels",
+    tasks: "Tasks Management",
+    approvals: "Approvals Center",
     analytics: "Analytics",
     overview: "Overview",
     visitors: "Visitors",
@@ -706,22 +937,22 @@ const en: Dictionary = {
     campaigns: "Campaigns",
     conversion: "Conversion",
     reports: "Reports",
-    design: "Design",
+    design: "Design & Themes",
     navigation: "Navigation",
     seo: "SEO",
     domain: "Domain",
     socialLinks: "Social Links",
     shipping: "Shipping",
-    courier: "Courier",
+    courier: "Courier Logistics",
     payments: "Payments",
     taxes: "Taxes",
-    media: "Media",
+    media: "Media Library",
     messages: "Messages",
     faq: "FAQ",
     settings: "Settings",
-    apps: "Apps",
-    activity: "Activity",
-    billing: "Billing",
+    apps: "Apps & Integrations",
+    activity: "Audit Activity",
+    billing: "Billing & Plans",
     storage: "Storage",
     storageAlmostFull: "Storage almost full",
     upgrade: "Upgrade",
@@ -890,6 +1121,84 @@ const en: Dictionary = {
       website: "Website",
       supportEmail: "Support Email",
       businessHours: "Business Hours",
+    },
+  },
+  dashboard: {
+    greetingMorning: "Good morning",
+    greetingAfternoon: "Good afternoon",
+    greetingEvening: "Good evening",
+    overviewSubtitle: "Today's business performance, critical KPIs, and quick operational actions.",
+    quickActionsTitle: "Quick Actions",
+    quickActions: {
+      newOrder: "New Order",
+      addProduct: "Add Product",
+      newPurchase: "New Purchase (PO)",
+      addExpense: "Add Expense",
+      openPOS: "POS Terminal",
+      builder: "Store Builder",
+      visitStore: "Visit Store",
+      editStore: "Store Settings",
+      upgradePlan: "Upgrade Plan",
+      manageShifts: "Cash Shifts",
+    },
+    kpis: {
+      totalProducts: "Total Products",
+      totalOrders: "Total Orders",
+      totalRevenue: "Gross Revenue",
+      conversionRate: "Storefront Conversion",
+      todaySales: "Today's Sales",
+      pendingOrders: "Pending Orders",
+      lowStockAlert: "Low Stock Alert",
+      activeStaff: "Staff Present",
+      grossProfit: "Gross Profit Margin",
+      netProfit: "Net Business Profit",
+      customerDue: "Customer Due",
+      stockValue: "Total Inventory Value",
+    },
+    storage: {
+      title: "Storage Utilization",
+      used: "Used",
+      limit: "Limit",
+      unlimited: "Unlimited",
+      remaining: "Remaining",
+      upgrade: "Upgrade",
+    },
+    plan: {
+      title: "Current Plan",
+      features: "Included Features",
+      managePlan: "Manage Plan",
+      daysRemaining: (days) => `${days} days left in trial`,
+      bandwidth: "Bandwidth",
+    },
+    storeHealth: {
+      title: "Store Limits & Capacity",
+      products: "Products Count",
+      orders: "Processed Orders",
+      media: "Media Files",
+      pageViews: "Page Views",
+    },
+    activity: {
+      title: "Recent Activity",
+      storeCreated: "Store Created",
+      lastUpdated: "Last Updated",
+      allTimeOrders: (count) => `${count} Total Orders`,
+      allTimeRevenue: "All-Time Revenue",
+      allTime: "All-Time",
+    },
+    storeDetails: {
+      title: "Store Details",
+      name: "Store Name",
+      category: "Category",
+      subdomain: "Subdomain",
+      plan: "Plan",
+      created: "Created At",
+    },
+    emptyStates: {
+      noProductsTitle: "No products added yet",
+      noProductsDesc: "Add your first product to start tracking inventory and accepting orders.",
+      noOrdersTitle: "No orders placed yet",
+      noOrdersDesc: "Orders placed through storefront checkout or POS will appear here automatically.",
+      addProductBtn: "Add Product",
     },
   },
 };

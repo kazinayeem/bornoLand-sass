@@ -466,18 +466,20 @@ export async function logStoreTrackingEvent(storeId: string, payload: unknown) {
  * Get sanitized tracking config for storefront execution.
  * Only returns enabled providers that are allowed by the store's current subscription plan.
  */
-export async function getPublicStoreTracking(storeIdOrSlug: string) {
+export async function getPublicStoreTracking(storeIdOrSlug: string, knownStore?: any) {
   await connectDatabase();
   if (!storeIdOrSlug) return null;
 
-  let store: any = null;
-  if (/^[0-9a-fA-F]{24}$/.test(storeIdOrSlug)) {
-    store = (await StoreModel.findById(storeIdOrSlug).select("status billingStatus subscriptionStatus planId plan").lean()) as any;
-  }
+  let store: any = knownStore ?? null;
   if (!store) {
-    store = (await StoreModel.findOne({ slug: storeIdOrSlug.toLowerCase(), status: "active" }).select("status billingStatus subscriptionStatus planId plan").lean()) as any;
+    if (/^[0-9a-fA-F]{24}$/.test(storeIdOrSlug)) {
+      store = (await StoreModel.findById(storeIdOrSlug).select("status billingStatus subscriptionStatus planId plan").lean()) as any;
+    }
+    if (!store) {
+      store = (await StoreModel.findOne({ slug: storeIdOrSlug.toLowerCase(), status: "active" }).select("status billingStatus subscriptionStatus planId plan").lean()) as any;
+    }
   }
-  if (!store || store.status !== "active") {
+  if (!store || (store.status && store.status !== "active")) {
     return null;
   }
 

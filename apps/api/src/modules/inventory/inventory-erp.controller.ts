@@ -32,6 +32,10 @@ import {
   lowStockReport,
   outOfStockReport,
   deadStockReport,
+  recordWasteLoss,
+  listWasteLoss,
+  getStockMovementLedger,
+  updateProductTrueCost,
 } from "./inventory-erp.service.js";
 
 function storeIdOf(request: Request) {
@@ -489,3 +493,58 @@ export async function putAlertSettingsController(request: Request, response: Res
     response.status(500).json({ ok: false, message: "Failed to update alert settings" });
   }
 }
+
+export async function recordWasteController(request: AuthRequest, response: Response) {
+  try {
+    const storeId = storeIdOf(request);
+    if (!storeId) return void response.status(400).json({ ok: false, message: "storeId is required" });
+    const actor = actorOf(request);
+    const result = await recordWasteLoss(storeId, {
+      ...request.body,
+      reportedBy: request.user?.email || actor.actorName,
+      reportedById: actor.actorId ? String(actor.actorId) : null,
+    });
+    response.status(201).json({ ok: true, data: result });
+  } catch (error: any) {
+    console.error("[Inventory ERP] record waste:", error);
+    response.status(400).json({ ok: false, message: error?.message || "Failed to record waste" });
+  }
+}
+
+export async function listWasteController(request: Request, response: Response) {
+  try {
+    const storeId = storeIdOf(request);
+    if (!storeId) return void response.status(400).json({ ok: false, message: "storeId is required" });
+    const result = await listWasteLoss(storeId, request.query as any);
+    response.json({ ok: true, data: result });
+  } catch (error: any) {
+    console.error("[Inventory ERP] list waste:", error);
+    response.status(500).json({ ok: false, message: error?.message || "Failed to list waste records" });
+  }
+}
+
+export async function stockMovementLedgerController(request: Request, response: Response) {
+  try {
+    const storeId = storeIdOf(request);
+    if (!storeId) return void response.status(400).json({ ok: false, message: "storeId is required" });
+    const result = await getStockMovementLedger(storeId, request.query as any);
+    response.json({ ok: true, data: result });
+  } catch (error: any) {
+    console.error("[Inventory ERP] stock movement ledger:", error);
+    response.status(500).json({ ok: false, message: error?.message || "Failed to fetch stock movement ledger" });
+  }
+}
+
+export async function updateProductTrueCostController(request: Request, response: Response) {
+  try {
+    const storeId = storeIdOf(request);
+    const productId = String(request.params.productId ?? "");
+    if (!storeId || !productId) return void response.status(400).json({ ok: false, message: "storeId and productId are required" });
+    const result = await updateProductTrueCost(storeId, productId, request.body ?? {});
+    response.json({ ok: true, data: result });
+  } catch (error: any) {
+    console.error("[Inventory ERP] update true cost:", error);
+    response.status(400).json({ ok: false, message: error?.message || "Failed to update product cost" });
+  }
+}
+

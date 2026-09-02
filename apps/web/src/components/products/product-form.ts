@@ -12,6 +12,7 @@ export type ProductEditorForm = {
   productType: "simple" | "variable" | "digital" | "service" | "downloadable";
   price: string;
   comparePrice: string;
+  costPrice: string;
   stock: string;
   category: string;
   categoryId: string;
@@ -22,6 +23,7 @@ export type ProductEditorForm = {
   barcode: string;
   brand: string;
   brandId: string;
+  supplierId?: string;
   vendor: string;
   tags: string;
   imageUrl: string;
@@ -57,6 +59,7 @@ export const EMPTY_PRODUCT_FORM: ProductEditorForm = {
   productType: "simple",
   price: "",
   comparePrice: "",
+  costPrice: "",
   stock: "0",
   category: "",
   categoryId: "",
@@ -67,7 +70,7 @@ export const EMPTY_PRODUCT_FORM: ProductEditorForm = {
   barcode: "",
   brand: "",
   brandId: "",
-
+  supplierId: "",
   vendor: "",
   tags: "",
   imageUrl: "",
@@ -98,6 +101,8 @@ export function genSlug(name: string) {
 
 export function productToForm(product: Product): ProductEditorForm {
   const seo = (product as Product & { seo?: { title?: string; description?: string; keywords?: string[] } }).seo;
+  const rawCost = (product as Product & { costPrice?: number; buyPrice?: number; purchasePrice?: number });
+  const costVal = rawCost.costPrice ?? rawCost.buyPrice ?? rawCost.purchasePrice;
   return {
     name: product.name,
     slug: product.slug,
@@ -106,6 +111,7 @@ export function productToForm(product: Product): ProductEditorForm {
     productType: product.productType === "variable" ? "variable" : product.productType === "digital" ? "digital" : product.productType === "service" ? "service" : "simple",
     price: String(product.price ?? ""),
     comparePrice: product.comparePrice ? String(product.comparePrice) : "",
+    costPrice: costVal != null ? String(costVal) : "",
     stock: String(product.stock ?? 0),
     category: product.category || "",
     categoryId: (product as any).categoryId || (product.categoryIds?.[0] || ""),
@@ -116,6 +122,7 @@ export function productToForm(product: Product): ProductEditorForm {
     barcode: (product as Product & { barcode?: string }).barcode || "",
     brand: (product as Product & { brand?: string }).brand || "",
     brandId: (product as any).brandId || "",
+    supplierId: (product as any).supplierId || "",
     vendor: (product as Product & { vendor?: string }).vendor || "",
 
     tags: ((product as Product & { tags?: string[] }).tags ?? []).join(", "),
@@ -193,6 +200,7 @@ export function buildProductPayload(
     productType: form.productType,
     price: resolvedPrice,
     comparePrice: form.comparePrice ? Number(form.comparePrice) : undefined,
+    costPrice: form.costPrice ? Number(form.costPrice) : undefined,
     stock: Number(form.stock) || 0,
     category: form.category,
     status,

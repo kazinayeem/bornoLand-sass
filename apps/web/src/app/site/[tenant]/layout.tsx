@@ -12,8 +12,9 @@ import type {
 } from "@/providers/tenant-provider";
 import type { StoreContact } from "@/redux/api/store-contact-api";
 import { fetchTenantSite } from "@/lib/server/tenant-site";
-import { generateTenantMetadata } from "@/lib/server/page-metadata";
+import { generateTenantLayoutMetadata } from "@/lib/server/page-metadata";
 import { getThemeById } from "@/themes/registry";
+import { StoreNotFoundView } from "@/components/storefront/store-not-found-view";
 
 /** ISR — public storefront shell (store, theme, products, categories, navigation) */
 export const revalidate = 60;
@@ -27,11 +28,7 @@ export const dynamicParams = true;
 
 export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }): Promise<Metadata> {
   const { tenant } = await params;
-  return generateTenantMetadata({
-    tenant,
-    pageTitle: "Home",
-    canonicalPath: `/site/${tenant}`,
-  });
+  return generateTenantLayoutMetadata(tenant);
 }
 
 import type { PublicStoreTracking } from "@/lib/tracking/types";
@@ -50,11 +47,10 @@ export default async function TenantLayout({ params, children }: { params: Promi
     tracking?: PublicStoreTracking | null;
   } | null;
 
-  // Only 404 when the store itself does not exist. Transient API failures throw
-  // from fetchTenantSite and must not be cached as a sticky ISR 404.
+  // Render dedicated Store Not Found page when store does not exist (HTTP 404)
   if (!data?.store) {
     if (process.env.NODE_ENV === "development" || process.env.DEBUG_TENANT_ROUTING === "1") {
-      console.log(`[site-layout] notFound — store missing for tenant="${slug}"`);
+      console.log(`[site-layout] store missing for tenant="${slug}" → triggering notFound()`);
     }
     notFound();
   }

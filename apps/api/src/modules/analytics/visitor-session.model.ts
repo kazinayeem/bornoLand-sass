@@ -41,7 +41,6 @@ const visitorSessionSchema = new Schema(
 visitorSessionSchema.index({ storeId: 1, startedAt: -1 });
 visitorSessionSchema.index({ storeId: 1, visitorId: 1 });
 visitorSessionSchema.index({ storeId: 1, isActive: 1 });
-visitorSessionSchema.index({ sessionId: 1 }, { unique: true });
 visitorSessionSchema.index({ storeId: 1, isReturning: 1 });
 visitorSessionSchema.index({ createdAt: -1 });
 visitorSessionSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });

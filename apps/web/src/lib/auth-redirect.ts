@@ -63,6 +63,22 @@ export function validateInternalRedirect(value: string | null | undefined): stri
   }
 }
 
+const STOREFRONT_ONLY_PREFIXES = ["/checkout", "/cart", "/shop", "/account"];
+
+/**
+ * Validates internal redirect paths specifically for platform merchant logins.
+ * Rejects storefront paths (e.g. /checkout, /cart) which do not exist on the platform apex.
+ */
+export function validatePlatformRedirect(value: string | null | undefined): string | null {
+  const safe = validateInternalRedirect(value);
+  if (!safe) return null;
+  const path = safe.toLowerCase();
+  if (STOREFRONT_ONLY_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`))) {
+    return null;
+  }
+  return safe;
+}
+
 export function buildLoginUrl(destination: string | null | undefined, loginPath = "/login") {
   const safeDestination = validateInternalRedirect(destination);
   if (!safeDestination) return loginPath;

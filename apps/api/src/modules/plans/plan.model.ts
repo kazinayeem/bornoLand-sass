@@ -188,7 +188,5 @@ const planSchema = new Schema({
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
-planSchema.index({ slug: 1 }, { unique: true });
-
 export type PlanDocument = InferSchemaType<typeof planSchema>;
 export const PlanModel = models.Plan ?? model("Plan", planSchema);

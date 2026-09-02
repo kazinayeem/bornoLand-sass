@@ -292,6 +292,15 @@ type UpdateStoreBrandingRequest = Partial<
   >
 >;
 
+export type StoreContextData = {
+  store: Store;
+  permissions: string[];
+  isOwner: boolean;
+  role: string;
+  features?: Record<string, unknown> | null;
+  storageStats?: import("@/redux/api/media-api").StorageStats | null;
+};
+
 export const storeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createStore: builder.mutation<ApiEnvelope<{ store: Store }>, CreateStoreRequest>({
@@ -300,15 +309,26 @@ export const storeApi = baseApi.injectEndpoints({
     }),
     getMyStores: builder.query<ApiEnvelope<{ stores: Store[] }>, void>({
       query: () => ({ url: "/stores/my-stores" }),
+      keepUnusedDataFor: 300,
       providesTags: ["Stores"]
     }),
     getStore: builder.query<ApiEnvelope<{ store: Store }>, string>({
       query: (id) => ({ url: `/stores/${id}` }),
+      keepUnusedDataFor: 300,
       providesTags: (_result, _error, id) => [{ type: "Stores", id }]
     }),
     getStoreBySlug: builder.query<ApiEnvelope<{ store: Store }>, string>({
       query: (slug) => ({ url: `/stores/by-slug/${slug}` }),
-      providesTags: (result) => [{ type: "Stores", id: result?.data?.store?._id }],
+      keepUnusedDataFor: 300,
+      providesTags: (result) => [{ type: "Stores", id: result?.data?.store?._id ?? "CURRENT" }],
+    }),
+    getStoreContextBySlug: builder.query<ApiEnvelope<StoreContextData>, string>({
+      query: (slug) => ({ url: `/stores/by-slug/${slug}/context` }),
+      keepUnusedDataFor: 300,
+      providesTags: (result) => [
+        { type: "Stores", id: result?.data?.store?._id ?? "CURRENT_CONTEXT" },
+        { type: "Stores", id: "STORE_CONTEXT" },
+      ],
     }),
     updateStore: builder.mutation<ApiEnvelope<{ store: Store }>, { id: string; data: UpdateStoreRequest }>({
       query: ({ id, data }) => ({ url: `/stores/${id}`, method: "PUT", body: data }),
@@ -389,6 +409,7 @@ export const {
   useGetMyStoresQuery,
   useGetStoreQuery,
   useGetStoreBySlugQuery,
+  useGetStoreContextBySlugQuery,
   useUpdateStoreMutation,
   useChangeStoreThemeMutation,
   useGetStoreBrandingQuery,

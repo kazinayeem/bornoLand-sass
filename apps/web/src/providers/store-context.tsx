@@ -3,9 +3,10 @@
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 import { useParams } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { useGetStoreBySlugQuery } from "@/redux/api/store-api";
-import type { Store } from "@/redux/api/store-api";
+import { useGetStoreContextBySlugQuery } from "@/redux/api/store-api";
+import type { Store, StoreContextData } from "@/redux/api/store-api";
 import { setCurrentStore } from "@/redux/slices/current-store-slice";
+import { setStorePermissions } from "@/redux/slices/auth-slice";
 
 export type StoreSubscription = {
   billingStatus?: Store["billingStatus"];
@@ -21,6 +22,11 @@ export type StoreContextValue = {
   workspaceId: string | null;
   plan: string | null;
   subscription: StoreSubscription | null;
+  permissions: string[];
+  isOwner: boolean;
+  role: string;
+  features: Record<string, unknown> | null;
+  storageStats: StoreContextData["storageStats"] | null;
   isLoading: boolean;
   isError: boolean;
   isReady: boolean;
@@ -32,11 +38,14 @@ export function StoreProvider({ children, initialStore }: { children: ReactNode;
   const params = useParams();
   const storeSlug = typeof params.storeSlug === "string" ? params.storeSlug : "";
   const dispatch = useDispatch();
-  const query = useGetStoreBySlugQuery(storeSlug, {
+
+  const query = useGetStoreContextBySlugQuery(storeSlug, {
     skip: !storeSlug || storeSlug === "",
     refetchOnMountOrArgChange: false,
   });
-  const store = query.data?.data?.store ?? initialStore ?? null;
+
+  const contextData = query.data?.data;
+  const store = contextData?.store ?? initialStore ?? null;
 
   useEffect(() => {
     if (store) {
@@ -45,6 +54,7 @@ export function StoreProvider({ children, initialStore }: { children: ReactNode;
           storeId: store._id,
           storeName: store.name,
           storeSlug: store.slug,
+          userId: store.userId,
         }),
       );
       try {
@@ -53,7 +63,16 @@ export function StoreProvider({ children, initialStore }: { children: ReactNode;
         // Ignore local storage errors
       }
     }
-  }, [store, dispatch]);
+    if (contextData?.permissions) {
+      dispatch(
+        setStorePermissions({
+          permissions: contextData.permissions,
+          isOwner: contextData.isOwner,
+          role: contextData.role,
+        }),
+      );
+    }
+  }, [store, contextData, dispatch]);
 
   const value = useMemo<StoreContextValue>(
     () => ({
@@ -70,13 +89,17 @@ export function StoreProvider({ children, initialStore }: { children: ReactNode;
             trialEndsAt: store.trialEndsAt,
           }
         : null,
+      permissions: contextData?.permissions ?? [],
+      isOwner: contextData?.isOwner ?? false,
+      role: contextData?.role ?? "viewer",
+      features: (contextData?.features as Record<string, unknown> | null) ?? null,
+      storageStats: contextData?.storageStats ?? null,
       isLoading: !store && !initialStore && !query.isError && (query.isLoading || query.isFetching),
       isError: query.isError,
       isReady: !!store && !!store._id,
     }),
-    [store, storeSlug, initialStore, query.isLoading, query.isFetching, query.isError],
+    [store, storeSlug, initialStore, contextData, query.isLoading, query.isFetching, query.isError],
   );
-
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

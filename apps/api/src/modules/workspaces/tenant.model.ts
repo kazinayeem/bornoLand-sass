@@ -5,7 +5,7 @@ const { Schema, model, models } = mongoose;
 const tenantSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
-    slug: { type: String, required: true, unique: true, index: true, lowercase: true, trim: true },
+    slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     customDomain: { type: String, unique: true, sparse: true },
     subdomain: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
     plan: { type: String, enum: ["free", "starter", "growth", "enterprise"], default: "free" },

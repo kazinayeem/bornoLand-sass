@@ -67,12 +67,14 @@ export async function revalidateStorefront(args: {
     }
 
     revalidatePath(`/site/${tenantSlug}`);
-    if (scope === "all" || scope === "home") {
+    revalidatePath(`/site/${tenantSlug}`, "layout");
+    if (scope === "all" || scope === "home" || scope === "theme" || scope === "navigation") {
       revalidatePath(`/site/${tenantSlug}`, "page");
+      revalidatePath(`/site/${tenantSlug}`, "layout");
     }
     if (scope === "all" || scope === "products") {
       revalidatePath(`/site/${tenantSlug}/shop`);
-      if (productSlug) revalidatePath(`/products/${productSlug}`);
+      if (productSlug) revalidatePath(`/site/${tenantSlug}/products/${productSlug}`);
     }
     if (scope === "all" || scope === "cms") {
       for (const segment of ["about", "contact", "faq", "terms", "privacy", "shipping", "returns", "size-guide", "checkout", "cart"]) {

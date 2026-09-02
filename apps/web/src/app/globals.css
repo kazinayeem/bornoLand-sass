@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../styles/print.css";
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
@@ -10,99 +11,103 @@
  * In v4, max-w-lg maps to --spacing-lg (not a separate max-width scale).
  * Overriding those keys collapsed max-w-* to 12–32px and broke every layout.
  * Use --spacing-apple-* / --radius-apple-* for design-system-specific values.
+ *
+ * FIX: Removed --spacing-sm/md/lg/xl from @theme to restore Tailwind's default
+ * spacing scale. This fixes max-w-sm (24rem), max-w-md (28rem), max-w-lg (32rem),
+ * max-w-xl (36rem) and all other width utilities that depend on --spacing-*.
+ * The --spacing-apple-* tokens remain for p-apple-* / px-apple-* / py-apple-* utilities.
  */
 
+/* ── Nordic Yellow Design System Tokens ───────────────────────── */
 @theme {
-  /* Colors */
-  --color-canvas-night: #000000;
-  --color-canvas-night-elevated: #0a0a0a;
-  --color-surface-elevated-dark: #1e2c31;
-  --color-canvas-light: #ffffff;
-  --color-canvas-cream: #fbfbf5;
-  --color-hairline-light: #e4e4e7;
-  --color-hairline-dark: #1e2c31;
-  --color-aloe-10: #c1fbd4;
-  --color-pistachio-10: #d4f9e0;
-  --color-link-cool-1: #9dabad;
-  --color-link-cool-2: #9797a2;
-  --color-link-cool-3: #bdbdca;
-  --color-link-mint: #99b3ad;
+  /* Nordic Yellow Canonical Colors */
+  --color-nordic-primary: #003399;
+  --color-nordic-primary-hover: #002B80;
+  --color-nordic-yellow: #FFDA1A;
+  --color-nordic-yellow-hover: #f5d000;
+  --color-nordic-neutral: #767676;
+  --color-nordic-bg: #F5F5F5;
+  --color-nordic-surface: #FFFFFF;
+  --color-nordic-text-primary: #111111;
+  --color-nordic-text-secondary: #484848;
+  --color-nordic-border: #DFDFDF;
+  --color-nordic-success: #0A8A00;
+  --color-nordic-warning: #E87400;
+  --color-nordic-error: #CC0008;
 
-  --color-shade-30: #d4d4d8;
+  /* Semantic aliases */
+  --color-background: #F5F5F5;
+  --color-foreground: #111111;
+  --color-primary: #003399;
+  --color-primary-foreground: #ffffff;
+  --color-primary-hover: #002B80;
+  --color-secondary: #FFDA1A;
+  --color-secondary-foreground: #111111;
+  --color-accent: #FFDA1A;
+  --color-accent-foreground: #111111;
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #111111;
+  --color-muted: #F5F5F5;
+  --color-muted-foreground: #767676;
+  --color-border: #DFDFDF;
+  --color-input: #DFDFDF;
+  --color-ring: #003399;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #111111;
+  --color-destructive: #CC0008;
+  --color-destructive-foreground: #ffffff;
+  --color-destructive-hover: #b00007;
+  --color-success: #0A8A00;
+  --color-success-foreground: #ffffff;
+  --color-success-hover: #087300;
+  --color-warning: #E87400;
+  --color-warning-foreground: #ffffff;
+
+  /* Backward-compatible aliases */
+  --color-canvas-night: #0e0e10;
+  --color-canvas-night-elevated: #18181b;
+  --color-surface-elevated-dark: #202024;
+  --color-canvas-light: #ffffff;
+  --color-canvas-cream: #F5F5F5;
+  --color-hairline-light: #DFDFDF;
+  --color-hairline-dark: #27272a;
+  --color-shade-30: #DFDFDF;
   --color-shade-40: #a1a1aa;
-  --color-shade-50: #71717a;
-  --color-shade-60: #52525b;
-  --color-shade-70: #3f3f46;
-  --color-ink: #000000;
+  --color-shade-50: #767676;
+  --color-shade-60: #484848;
+  --color-shade-70: #111111;
+  --color-ink: #111111;
   --color-on-primary: #ffffff;
 
-  /* Backward-compatible Apple / platform aliases */
-  --color-apple-primary: #18181b;
-  --color-apple-primary-focus: #000000;
+  --color-apple-primary: #003399;
+  --color-apple-primary-focus: #002B80;
   --color-apple-primary-on-dark: #ffffff;
-  --color-apple-ink: #09090b;
-  --color-apple-body: #18181b;
+  --color-apple-ink: #111111;
+  --color-apple-body: #484848;
   --color-apple-body-on-dark: #ffffff;
-  --color-apple-body-muted: #a1a1aa;
-  --color-apple-ink-muted-80: #3f3f46;
-  --color-apple-ink-muted-48: #71717a;
-  --color-apple-divider-soft: #f4f4f5;
-  --color-apple-hairline: #e4e4e7;
+  --color-apple-body-muted: #767676;
+  --color-apple-ink-muted-80: #484848;
+  --color-apple-ink-muted-48: #767676;
+  --color-apple-divider-soft: #F5F5F5;
+  --color-apple-hairline: #DFDFDF;
   --color-apple-canvas: #ffffff;
-  --color-apple-canvas-parchment: #fafafa;
-  --color-apple-surface-pearl: #fcfcfc;
-  --color-apple-surface-tile-1: #09090b;
-  --color-apple-surface-tile-2: #121215;
-  --color-apple-surface-tile-3: #18181b;
+  --color-apple-canvas-parchment: #F5F5F5;
+  --color-apple-surface-pearl: #ffffff;
+  --color-apple-surface-tile-1: #111111;
+  --color-apple-surface-tile-2: #18181b;
+  --color-apple-surface-tile-3: #27272a;
   --color-apple-surface-black: #000000;
-  --color-apple-surface-chip: #e4e4e7;
+  --color-apple-surface-chip: #DFDFDF;
   --color-apple-on-primary: #ffffff;
   --color-apple-on-dark: #ffffff;
 
-  /* Semantic aliases */
-  --color-background: var(--color-canvas-light);
-  --color-foreground: var(--color-ink);
-  --color-primary: #000000;
-  --color-primary-foreground: #ffffff;
-  --color-primary-hover: var(--color-shade-70);
-  --color-secondary: var(--color-canvas-cream);
-  --color-secondary-foreground: var(--color-shade-70);
-  --color-accent: var(--color-aloe-10);
-  --color-accent-foreground: var(--color-ink);
-  --color-popover: var(--color-canvas-light);
-  --color-popover-foreground: var(--color-ink);
-  --color-muted: #f4f4f5;
-  --color-muted-foreground: var(--color-shade-50);
-  --color-border: var(--color-hairline-light);
-  --color-input: var(--color-hairline-light);
-  --color-ring: var(--color-shade-70);
-  --color-card: var(--color-canvas-light);
-  --color-card-foreground: var(--color-ink);
-  --color-destructive: #dc2626;
-  --color-destructive-foreground: #ffffff;
-  --color-destructive-hover: #b91c1c;
-  --color-success: #059669;
-  --color-success-foreground: #ffffff;
-  --color-success-hover: #047857;
+  /* Non-conflicting spacing tokens (do NOT use names: sm, md, lg, xl — they break max-w-*) */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-xxl: 48px;
+  --spacing-section: 80px;
 
-  /* Border radius — safe custom tokens */
-  --radius-xs: 4px;
-  --radius-sm: 5px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 20px;
-  --radius-pill: 9999px;
-
-  --radius-apple-none: 0px;
-  --radius-apple-xs: 4px;
-  --radius-apple-sm: 8px;
-  --radius-apple-md: 10px;
-  --radius-apple-lg: 12px;
-  --radius-apple-pill: 9999px;
-  --radius-apple-full: 9999px;
-  --radius-apple-xl: 20px;
-
-  /* Spacing */
+  /* Apple Design System Spacing tokens (for p-apple-* / px-apple-* / py-apple-* utilities) */
   --spacing-apple-xxs: 4px;
   --spacing-apple-xs: 8px;
   --spacing-apple-sm: 12px;
@@ -112,40 +117,68 @@
   --spacing-apple-xxl: 48px;
   --spacing-apple-section: 80px;
 
-  /* Typography families */
-  --font-display: var(--font-bengali), var(--font-inter), "Hind Siliguri", "Inter", system-ui, -apple-system, sans-serif;
-  --font-body: var(--font-bengali), var(--font-inter), "Hind Siliguri", "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* Border radius — Nordic standard 4px */
+  --radius-xs: 4px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 9999px;
 
-  /* Elevation Shadows (DESIGN.md) */
-  --shadow-level-1: 0 1px 2px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  --shadow-level-2: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 1px 3px rgba(0, 0, 0, 0.3), 0 5px 10px rgba(0, 0, 0, 0.2);
-  --shadow-level-3: 0 8px 8px rgba(0, 0, 0, 0.03), 0 4px 4px rgba(0, 0, 0, 0.03), 0 2px 2px rgba(0, 0, 0, 0.02), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  --shadow-level-4: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  --shadow-product: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+  --radius-apple-none: 0px;
+  --radius-apple-xs: 4px;
+  --radius-apple-sm: 4px;
+  --radius-apple-md: 8px;
+  --radius-apple-lg: 12px;
+  --radius-apple-pill: 9999px;
+  --radius-apple-full: 9999px;
+  --radius-apple-xl: 16px;
+
+  /* Elevation Shadows (Flat, clean, Nordic) */
+  --shadow-level-0: none;
+  --shadow-level-1: 0 1px 3px rgba(17, 17, 17, 0.06);
+  --shadow-level-2: 0 4px 12px rgba(17, 17, 17, 0.08);
+  --shadow-level-3: 0 8px 24px rgba(17, 17, 17, 0.12);
+  --shadow-level-4: 0 16px 32px rgba(17, 17, 17, 0.16);
+  --shadow-product: 0 1px 3px rgba(17, 17, 17, 0.06);
+
+  /* Typography families */
+  --font-display: "Noto Sans", var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-body: "Noto Sans", var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Animation */
-  --ease-apple: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-nordic: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 150ms;
   --duration-normal: 200ms;
-  --duration-slow: 300ms;
+  --duration-slow: 250ms;
 }
 
 :root {
   color-scheme: light;
-  font-feature-settings: "ss03" 1;
+  --store-header-height: 72px;
+  --store-header-offset: 0px;
 }
 
 .dark {
   color-scheme: dark;
-  --color-background: var(--color-canvas-night);
-  --color-foreground: var(--color-on-primary);
-  --color-primary-hover: var(--color-shade-70);
-  --color-secondary: var(--color-canvas-night-elevated);
-  --color-secondary-foreground: var(--color-shade-40);
-  --color-accent: var(--color-aloe-10);
-  --color-accent-foreground: var(--color-ink);
-  --color-popover: var(--color-canvas-night-elevated);
+  --color-background: #0f1117;
+  --color-foreground: #f4f4f5;
+  --color-card: #181920;
+  --color-card-foreground: #f4f4f5;
+  --color-popover: #181920;
+  --color-popover-foreground: #f4f4f5;
+  --color-primary: #2d62d8;
+  --color-primary-foreground: #ffffff;
+  --color-primary-hover: #1e4eb8;
+  --color-secondary: #FFDA1A;
+  --color-secondary-foreground: #111111;
+  --color-muted: #1c1e27;
+  --color-muted-foreground: #a1a1aa;
+  --color-border: #282a36;
+  --color-input: #282a36;
+  --color-ring: #FFDA1A;
   --color-popover-foreground: var(--color-on-primary);
   --color-muted: var(--color-surface-elevated-dark);
   --color-muted-foreground: var(--color-shade-40);
@@ -237,7 +270,7 @@ svg {
   font-weight: 600;
   line-height: 1.08;
   letter-spacing: -0.28px;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .text-display-lg {
@@ -246,7 +279,7 @@ svg {
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .text-display-md {

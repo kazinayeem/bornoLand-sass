@@ -151,7 +151,7 @@ export function buildDataGridReportHtml(options: PrintReportOptions): string {
     body {
       margin: 0;
       color: #111827;
-      font-family: "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hind Siliguri", "Noto Sans Bengali", sans-serif;
       font-size: 11px;
       line-height: 1.35;
       background: #fff;
@@ -199,6 +199,8 @@ export function buildDataGridReportHtml(options: PrintReportOptions): string {
       border-collapse: collapse;
       table-layout: auto;
     }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
     th, td {
       border-bottom: 1px solid #e5e7eb;
       padding: 6px 8px;

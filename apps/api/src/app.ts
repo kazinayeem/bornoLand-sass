@@ -31,6 +31,7 @@ import { deliveryZoneRouter } from "./modules/delivery/delivery-zone.route.js";
 import { cmsRouter } from "./modules/cms/cms.route.js";
 import { categoryRouter } from "./modules/categories/category.route.js";
 import { brandRouter } from "./modules/brands/brand.route.js";
+import { locationRouter } from "./modules/locations/location.route.js";
 
 import { subscriptionPaymentRouter } from "./modules/payments/subscription-payment.route.js";
 import { subscriptionRouter } from "./modules/subscriptions/subscription.route.js";
@@ -52,6 +53,7 @@ import { subdomainDetector } from "./common/middleware/subdomain.middleware.js";
 import { globalRateLimit, authRateLimit, analyticsTrackRateLimit, newsletterRateLimit } from "./common/middleware/rate-limit.middleware.js";
 import { storeEmailRouter } from "./modules/email/store-email.route.js";
 import { aiRouter } from "./modules/ai/ai.route.js";
+import { teamRouter } from "./modules/team/team.route.js";
 import { errorHandler, notFoundHandler } from "./common/middleware/error.middleware.js";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -96,6 +98,8 @@ const allowedOriginPatterns: RegExp[] = [
     String.raw`^https?://(?:${DNS_LABEL}\.)?${IPV4_DASHED}\.[a-z0-9.-]+(?::\d+)?$`,
     "i",
   ),
+  // Payment Gateways (SSLCommerz sandbox, live, and subdomains)
+  new RegExp(String.raw`^https?://(?:[a-z0-9-]+\.)*sslcommerz\.com(?::\d+)?$`, "i"),
 ];
 
 // Env-configured platform bases (PLATFORM_BASES) → allow http(s)://{base} and http(s)://*.{base}
@@ -149,8 +153,8 @@ const corsOptions: CorsOptions = {
       }
     }
 
-    console.warn(`[CORS] Blocked origin: ${origin}`);
-    callback(new Error(`CORS origin blocked: ${origin}`));
+    console.warn(`[CORS] Disallowed origin: ${origin}`);
+    callback(null, false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -186,6 +190,7 @@ app.use(helmet({
 }));
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(globalRateLimit);
 app.use(subdomainDetector);
 
@@ -242,6 +247,8 @@ app.use("/payments/sslcommerz", publicSSLCommerzRouter);
 app.use("/api/payments/sslcommerz", publicSSLCommerzRouter);
 app.use("/admin/payment-gateways", adminPaymentGatewaysRouter);
 app.use("/delivery-zones", deliveryZoneRouter);
+app.use("/locations", locationRouter);
+app.use("/api/locations", locationRouter);
 app.use("/cms", cmsRouter);
 app.use("/categories", categoryRouter);
 app.use("/brands", brandRouter);
@@ -262,6 +269,9 @@ app.use("/admin/analytics", adminAnalyticsRouter);
 app.use("/reports", reportRouter);
 app.use("/stores", storeEmailRouter);
 app.use("/ai", aiRouter);
+// Team member management — mounted at root because routes include /stores/:storeId/members
+// and public /invite/:token paths
+app.use("/", teamRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

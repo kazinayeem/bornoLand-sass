@@ -97,15 +97,17 @@ async function fetchTenantSiteRemote(slug: string, pageSlug?: string): Promise<T
  * Cache successful storefront payloads only.
  * Misses and errors are NOT written to unstable_cache (throws bypass the cache).
  */
-const getCachedTenantSite = (slug: string, pageSlug?: string) =>
-  unstable_cache(
-    () => fetchTenantSiteRemote(slug, pageSlug),
-    ["tenant-site", slug, pageSlug ?? "home"],
+const getCachedTenantSite = (slug: string, pageSlug?: string) => {
+  const normSlug = slug.trim().toLowerCase();
+  return unstable_cache(
+    () => fetchTenantSiteRemote(normSlug, pageSlug),
+    ["tenant-site", normSlug, pageSlug ?? "home"],
     {
       revalidate: CACHE_REVALIDATE.storefront,
-      tags: [cacheTags.tenant(slug), cacheTags.tenantTheme(slug)],
+      tags: [cacheTags.tenant(normSlug), cacheTags.tenantTheme(normSlug)],
     },
   )();
+};
 
 /**
  * Public storefront loader — ISR via unstable_cache + request memoization.
@@ -116,7 +118,14 @@ const getCachedTenantSite = (slug: string, pageSlug?: string) =>
  */
 export const fetchTenantSite = cache(async (slug: string, pageSlug?: string): Promise<TenantSiteData | null> => {
   try {
-    return await getCachedTenantSite(slug, pageSlug);
+    try {
+      return await getCachedTenantSite(slug, pageSlug);
+    } catch (cacheErr: any) {
+      if (cacheErr?.message?.includes("incrementalCache missing")) {
+        return await fetchTenantSiteRemote(slug, pageSlug);
+      }
+      throw cacheErr;
+    }
   } catch (error) {
     if (error instanceof TenantNotFoundError) return null;
     throw error;

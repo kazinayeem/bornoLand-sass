@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useVerifyEmailMutation } from "@/redux/api/auth-api";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useLanguage } from "@/providers/language-provider";
 
 export function VerifyEmailForm({ token: propToken }: { token?: string } = {}) {
+  const { language } = useLanguage();
+  const isBn = language === "bn";
   const router = useRouter();
   const token = propToken || (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("token") || "" : "");
 
@@ -21,44 +25,49 @@ export function VerifyEmailForm({ token: propToken }: { token?: string } = {}) {
       .unwrap()
       .then((res) => {
         setStatus("success");
-        setMessage(res.message || "Email verified successfully");
-        toast.success(res.message || "Email verified successfully");
+        const msg = res.message || (isBn ? "ইমেইল সফলভাবে ভেরিফাই হয়েছে।" : "Email verified successfully.");
+        setMessage(msg);
+        toast.success(msg);
       })
       .catch((err: unknown) => {
         setStatus("error");
         const msg =
           err && typeof err === "object" && "data" in err && err.data && typeof err.data === "object" && "message" in err.data
             ? String((err.data as { message?: string }).message)
-            : "Verification failed";
+            : isBn ? "ইমেইল ভেরিফিকেশন ব্যর্থ হয়েছে" : "Verification failed";
         setMessage(msg);
         toast.error(msg);
       });
-  }, [token, verifyEmail]);
+  }, [token, verifyEmail, isBn]);
 
   return (
     <div className="space-y-5 text-center">
-      {status === "loading" && <p className="text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">Verifying your email...</p>}
+      {status === "loading" && (
+        <p className="text-sm text-zinc-500">
+          {isBn ? "আপনার ইমেইল যাচাই করা হচ্ছে..." : "Verifying your email..."}
+        </p>
+      )}
       {status === "success" && (
-        <>
-          <p className="text-sm text-green-600 dark:text-green-400">{message}</p>
+        <div className="space-y-4">
+          <p className="text-sm font-semibold text-[#0A8A00]">{message}</p>
           <Button
             onClick={() => { router.push("/login"); }}
-            className="h-11 w-full rounded-xl bg-zinc-900 text-sm font-semibold hover:bg-zinc-800 dark:bg-apple-canvas-parchment dark:text-apple-ink dark:hover:bg-white"
+            className="h-11 w-full rounded-xl bg-[#003399] hover:bg-[#002B80] text-white text-sm font-bold shadow-xs"
           >
-            Sign in
+            {isBn ? "সাইন ইন করুন" : "Sign In"}
           </Button>
-        </>
+        </div>
       )}
 
       {status === "error" && (
-        <>
-          <p className="text-sm text-red-600 dark:text-red-400">{message}</p>
-          <p className="text-sm text-apple-ink-muted-80 dark:text-apple-ink-muted-48">
-            <a href="/login" className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">
-              Back to sign in
-            </a>
+        <div className="space-y-4">
+          <p className="text-sm font-semibold text-red-600">{message}</p>
+          <p className="text-sm text-zinc-500">
+            <Link href="/login" className="font-semibold text-primary hover:underline">
+              {isBn ? "লগইনে ফিরে যান" : "Back to sign in"}
+            </Link>
           </p>
-        </>
+        </div>
       )}
     </div>
   );

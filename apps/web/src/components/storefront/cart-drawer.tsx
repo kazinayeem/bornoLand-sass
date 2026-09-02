@@ -6,7 +6,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Tag, Check, X, Loader2 } from "lucide-react";
 import type { RootState } from "@/redux/store";
 import { closeCart, updateQuantity, removeFromCart } from "@/redux/slices/cart-slice";
-import { useUpdateCartItemMutation, useRemoveFromCartMutation } from "@/redux/api/cart-api";
 import { useValidateCouponMutation, type ValidateCouponResponse } from "@/redux/api/coupon-api";
 import { useTenant } from "@/providers/tenant-provider";
 import { formatCurrency } from "@/lib/format-currency";
@@ -28,8 +27,6 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
   const { classes } = useStorefrontSurface();
   const { items, isOpen } = useSelector((state: RootState) => state.cart);
 
-  const [updateRemote] = useUpdateCartItemMutation();
-  const [removeRemote] = useRemoveFromCartMutation();
   const [validateCoupon, { isLoading: isValidating }] = useValidateCouponMutation();
 
   const [couponCode, setCouponCode] = useState("");
@@ -83,10 +80,8 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
   const handleQuantity = (productId: string, variantId: string | undefined, quantity: number) => {
     if (quantity <= 0) {
       dispatch(removeFromCart({ productId, variantId }));
-      removeRemote(productId);
     } else {
       dispatch(updateQuantity({ productId, variantId, quantity }));
-      updateRemote({ productId, quantity, variantId });
     }
     // Reset coupon validation if subtotal changed
     setAppliedCoupon(null);
@@ -94,7 +89,6 @@ export function CartDrawer({ primaryColor }: CartDrawerProps) {
 
   const handleRemove = (productId: string, variantId: string | undefined) => {
     dispatch(removeFromCart({ productId, variantId }));
-    removeRemote(productId);
     setAppliedCoupon(null);
   };
 

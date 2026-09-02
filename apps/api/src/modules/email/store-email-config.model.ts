@@ -6,7 +6,7 @@ const encryptionOptions = ["tls", "ssl", "starttls", "none"] as const;
 
 const storeEmailConfigSchema = new Schema(
   {
-    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, unique: true, index: true },
+    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, unique: true },
     senderName: { type: String, default: "", trim: true, maxlength: 200 },
     senderEmail: { type: String, default: "", trim: true, lowercase: true, maxlength: 320 },
     smtpHost: { type: String, default: "", trim: true, maxlength: 255 },

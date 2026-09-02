@@ -12,7 +12,6 @@ import { getContrastColor } from "@/lib/color-utils";
 import { StoreLink } from "./store-link";
 import { addToCart, openCart } from "@/redux/slices/cart-slice";
 import { toggleWishlist } from "@/redux/slices/wishlist-slice";
-import { useAddToCartMutation } from "@/redux/api/cart-api";
 import { useGetPublicProductQuery } from "@/redux/api/product-api";
 import type { Product, ProductVariant } from "@/redux/api/product-api";
 import { useTenant } from "@/providers/tenant-provider";
@@ -59,7 +58,6 @@ export function QuickViewModal({ product: initialProduct, onClose }: Props) {
 
   const { theme, settings, products } = useTenant();
   const { primaryColor, buttonStyle } = theme;
-  const [addToCartRemote] = useAddToCartMutation();
   const { trackAddToCart } = useStorefrontTracking();
 
   const { data: publicData, isLoading: loadingDetails } = useGetPublicProductQuery(initialProduct.slug, {
@@ -184,42 +182,29 @@ export function QuickViewModal({ product: initialProduct, onClose }: Props) {
     touchStartX.current = null;
   };
 
-  const handleAddToCart = async (openDrawer = false) => {
+  const handleAddToCart = (openDrawer = false) => {
     if (!canPurchase) return;
-    const setter = openDrawer ? setBuying : setAdding;
-    setter(true);
-    try {
-      dispatch(addToCart({
-        productId: product._id,
-        variantId: activeVariant?._id,
-        variantTitle: activeVariant ? Object.values(selectedOptions).join(" / ") : undefined,
-        name: product.name,
-        price: displayPrice,
-        quantity,
-        image: activeImage,
-      }));
-      await addToCartRemote({
-        productId: product._id,
-        quantity,
-        variantId: activeVariant?._id,
-      }).unwrap();
-      trackAddToCart({
-        id: product._id,
-        name: product.name,
-        price: displayPrice,
-        quantity,
-        category: product.category,
-        currency: settings?.currencyCode || "BDT",
-      });
-      toast.success(`${product.name} added to cart`);
-      if (openDrawer) {
-        dispatch(openCart());
-        onClose();
-      }
-    } catch {
-      toast.error("Could not add to cart");
-    } finally {
-      setter(false);
+    dispatch(addToCart({
+      productId: product._id,
+      variantId: activeVariant?._id,
+      variantTitle: activeVariant ? Object.values(selectedOptions).join(" / ") : undefined,
+      name: product.name,
+      price: displayPrice,
+      quantity,
+      image: activeImage,
+    }));
+    trackAddToCart({
+      id: product._id,
+      name: product.name,
+      price: displayPrice,
+      quantity,
+      category: product.category,
+      currency: settings?.currencyCode || "BDT",
+    });
+    toast.success(`${product.name} added to cart`);
+    if (openDrawer) {
+      dispatch(openCart());
+      onClose();
     }
   };
 

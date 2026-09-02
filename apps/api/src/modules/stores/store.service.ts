@@ -4,6 +4,7 @@ import { StoreModel } from "../../models/store.model.js";
 import { PlanModel } from "../../models/plan.model.js";
 import { TenantModel } from "../../models/tenant.model.js";
 import { TeamMemberModel } from "../../models/team-member.model.js";
+import { StoreMemberModel } from "../team/store-member.model.js";
 import { PageModel } from "../../models/page.model.js";
 import { ensureDefaultStoreSettings } from "./store-settings.service.js";
 import { ensureDefaultStoreContact } from "./store-contact.service.js";
@@ -88,41 +89,104 @@ function formatCreateStoreError(error: unknown): string {
 
 import { listPlans } from "../plans/plan.service.js";
 
+let plansEnsuredAt = 0;
 async function ensurePlans() {
+  const now = Date.now();
+  if (now - plansEnsuredAt < 300_000) return; // 5 minute in-memory cache
   await listPlans();
+  plansEnsuredAt = now;
+}
+
+type CachedStoreMetrics = {
+  productCount: number;
+  orderCount: number;
+  revenueBDT: number;
+  cachedAt: number;
+};
+const storeMetricsCache = new Map<string, CachedStoreMetrics>();
+const METRICS_CACHE_TTL_MS = 30_000; // 30 seconds TTL
+
+export function invalidateStoreMetricsCache(storeId?: string) {
+  if (storeId) {
+    storeMetricsCache.delete(storeId);
+  } else {
+    storeMetricsCache.clear();
+  }
 }
 
 async function attachStoreMetrics(stores: any[]) {
   if (stores.length === 0) return stores;
 
-  const storeObjectIds = stores.map((store) => store._id);
+  const now = Date.now();
+  const missingStoreObjectIds: mongoose.Types.ObjectId[] = [];
+  const resultMap = new Map<string, CachedStoreMetrics>();
 
-  const [productCounts, orderCounts, orderRevenue] = await Promise.all([
-    ProductModel.aggregate([{ $match: { storeId: { $in: storeObjectIds } } }, { $group: { _id: "$storeId", count: { $sum: 1 } } }]),
-    OrderModel.aggregate([{ $match: { storeId: { $in: storeObjectIds } } }, { $group: { _id: "$storeId", count: { $sum: 1 } } }]),
-    OrderModel.aggregate([{ $match: { storeId: { $in: storeObjectIds }, status: { $ne: "cancelled" } } }, { $group: { _id: "$storeId", revenue: { $sum: "$total" } } }]),
-  ]);
+  for (const store of stores) {
+    const sId = store._id.toString();
+    const cached = storeMetricsCache.get(sId);
+    if (cached && now - cached.cachedAt < METRICS_CACHE_TTL_MS) {
+      resultMap.set(sId, cached);
+    } else {
+      missingStoreObjectIds.push(store._id);
+    }
+  }
 
-  const productCountMap = new Map(productCounts.map((entry: any) => [entry._id.toString(), entry.count]));
-  const orderCountMap = new Map(orderCounts.map((entry: any) => [entry._id.toString(), entry.count]));
-  const revenueMap = new Map(orderRevenue.map((entry: any) => [entry._id.toString(), entry.revenue]));
+  if (missingStoreObjectIds.length > 0) {
+    const [productCounts, orderCounts, orderRevenue] = await Promise.all([
+      ProductModel.aggregate([
+        { $match: { storeId: { $in: missingStoreObjectIds } } },
+        { $group: { _id: "$storeId", count: { $sum: 1 } } },
+      ]),
+      OrderModel.aggregate([
+        { $match: { storeId: { $in: missingStoreObjectIds } } },
+        { $group: { _id: "$storeId", count: { $sum: 1 } } },
+      ]),
+      OrderModel.aggregate([
+        { $match: { storeId: { $in: missingStoreObjectIds }, status: { $ne: "cancelled" } } },
+        { $group: { _id: "$storeId", revenue: { $sum: "$total" } } },
+      ]),
+    ]);
+
+    const productCountMap = new Map(productCounts.map((entry: any) => [entry._id.toString(), entry.count]));
+    const orderCountMap = new Map(orderCounts.map((entry: any) => [entry._id.toString(), entry.count]));
+    const revenueMap = new Map(orderRevenue.map((entry: any) => [entry._id.toString(), entry.revenue]));
+
+    for (const sObjId of missingStoreObjectIds) {
+      const sId = sObjId.toString();
+      const entry: CachedStoreMetrics = {
+        productCount: productCountMap.get(sId) ?? 0,
+        orderCount: orderCountMap.get(sId) ?? 0,
+        revenueBDT: revenueMap.get(sId) ?? 0,
+        cachedAt: now,
+      };
+      storeMetricsCache.set(sId, entry);
+      resultMap.set(sId, entry);
+    }
+  }
 
   return stores.map((store) => {
     // Resolve storage limit from the populated plan if the cached field is 0
     let limitBytes = store.storageLimitBytes ?? 0;
     if (limitBytes <= 0) {
-      const populatedPlan = store.planId && typeof store.planId === "object" ? store.planId as Record<string, unknown> : null;
+      const populatedPlan = store.planId && typeof store.planId === "object" ? (store.planId as Record<string, unknown>) : null;
       const planStorageMB = (populatedPlan?.limits as Record<string, unknown> | undefined)?.storage as number | undefined;
       if (planStorageMB != null && planStorageMB > 0) {
         limitBytes = planStorageMB * 1024 * 1024;
       }
     }
 
+    const metrics = resultMap.get(store._id.toString()) ?? {
+      productCount: 0,
+      orderCount: 0,
+      revenueBDT: 0,
+      cachedAt: now,
+    };
+
     return {
       ...store,
-      productCount: productCountMap.get(store._id.toString()) ?? 0,
-      orderCount: orderCountMap.get(store._id.toString()) ?? 0,
-      revenueBDT: revenueMap.get(store._id.toString()) ?? 0,
+      productCount: metrics.productCount,
+      orderCount: metrics.orderCount,
+      revenueBDT: metrics.revenueBDT,
       storageUsedBytes: store.storageUsedBytes ?? 0,
       storageLimitBytes: limitBytes,
     };
@@ -343,7 +407,16 @@ export async function createStore(userId: string, payload: unknown) {
 export async function getUserStores(userId: string) {
   await connectDatabase();
   await ensurePlans();
-  const stores = await StoreModel.find({ userId })
+
+  const storeMemberStoreIds = await StoreMemberModel.find({ userId, status: "active" }).distinct("storeId");
+
+  const stores = await StoreModel.find({
+    $or: [
+      { userId },
+      ...(storeMemberStoreIds.length ? [{ _id: { $in: storeMemberStoreIds } }] : []),
+    ],
+    status: { $ne: "archived" },
+  })
     .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
     .sort({ createdAt: -1 })

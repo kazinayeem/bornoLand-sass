@@ -102,25 +102,33 @@ export function LoginForm({
     if (loginType === "admin") {
       fallbackDestination = "/admin/dashboard";
     } else {
-      const stores = (payload as { stores?: Array<{ slug?: string }>; user?: { defaultStoreSlug?: string } }).stores ?? [];
-      const defaultSlug =
-        (payload as { defaultStoreSlug?: string }).defaultStoreSlug ||
-        payload.user?.defaultStoreSlug ||
-        stores[0]?.slug;
+      const serverLandingPath =
+        (payload as any)?.defaultLandingPath ||
+        (payload as any)?.user?.defaultLandingPath;
 
-      let lastSelectedSlug: string | null = null;
-      try {
-        lastSelectedSlug = localStorage.getItem("bornoland_last_store_slug");
-      } catch {
-        // Ignore local storage error
-      }
-
-      if (lastSelectedSlug && (stores.length === 0 || stores.some((s) => s.slug === lastSelectedSlug))) {
-        fallbackDestination = `/store/${lastSelectedSlug}/dashboard`;
-      } else if (defaultSlug) {
-        fallbackDestination = `/store/${defaultSlug}/dashboard`;
+      if (serverLandingPath) {
+        fallbackDestination = serverLandingPath;
       } else {
-        fallbackDestination = "/dashboard";
+        const stores = (payload as { stores?: Array<{ slug?: string }>; user?: { defaultStoreSlug?: string } }).stores ?? [];
+        const defaultSlug =
+          (payload as { defaultStoreSlug?: string }).defaultStoreSlug ||
+          payload.user?.defaultStoreSlug ||
+          stores[0]?.slug;
+
+        let lastSelectedSlug: string | null = null;
+        try {
+          lastSelectedSlug = localStorage.getItem("bornoland_last_store_slug");
+        } catch {
+          // Ignore local storage error
+        }
+
+        if (lastSelectedSlug && (stores.length === 0 || stores.some((s) => s.slug === lastSelectedSlug))) {
+          fallbackDestination = `/store/${lastSelectedSlug}/dashboard`;
+        } else if (defaultSlug) {
+          fallbackDestination = `/store/${defaultSlug}/dashboard`;
+        } else {
+          fallbackDestination = "/dashboard";
+        }
       }
     }
 
@@ -133,24 +141,30 @@ export function LoginForm({
       <Card className="rounded-apple-xl border-border bg-card shadow-xl">
         <CardHeader className="space-y-1.5">
           <CardTitle className="text-2xl font-bold tracking-tight">
-            {loginType === "admin"
-              ? isBn ? "এডমিন সাইন ইন" : "Admin Sign In"
-              : isBn ? "আপনার অ্যাকাউন্টে লগইন করুন" : "Sign in to your account"}
+            {isBn ? "লগইন করুন" : "Sign in to BornoLand"}
           </CardTitle>
           <CardDescription>
-            {isBn ? "লগইন করতে আপনার নিবন্ধিত ইমেইল ও পাসওয়ার্ড লিখুন" : "Enter your email and password to sign in"}
+            {isBn
+              ? "আপনার অ্যাকাউন্টে প্রবেশ করতে ইমেইল/কর্মী আইডি এবং পাসওয়ার্ড দিন"
+              : "Enter your email or employee ID to access your account"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} noValidate>
+          <form onSubmit={onSubmit} className="space-y-6" noValidate>
             <FieldGroup>
               <Field data-invalid={Boolean(errors.email) || undefined}>
-                <FieldLabel htmlFor="login-email">{isBn ? "ইমেইল ঠিকানা" : "Email address"}</FieldLabel>
+                <FieldLabel htmlFor="login-email">
+                  {isBn ? "ইমেইল বা কর্মী আইডি" : "Email or Employee ID"}
+                </FieldLabel>
                 <Input
                   id="login-email"
-                  type="email"
-                  placeholder={isBn ? "আপনার ইমেইল লিখুন" : "Enter your email"}
-                  autoComplete="email"
+                  type="text"
+                  placeholder={
+                    isBn
+                      ? "ইমেইল বা কর্মী আইডি (যেমন EMP-0001)"
+                      : "name@company.com or EMP-0001"
+                  }
+                  autoComplete="username"
                   required
                   aria-invalid={Boolean(errors.email)}
                   {...register("email")}

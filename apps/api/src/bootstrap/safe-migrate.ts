@@ -99,71 +99,87 @@ function collectMissingFields(
 export async function ensureDefaultFeaturesSafe() {
   await connectDatabase();
 
-  await FeatureGroupModel.bulkWrite(
-    SEED_GROUPS.map((group) => ({
-      updateOne: {
-        filter: { key: group.key },
-        update: { $setOnInsert: { ...group, isActive: true } },
-        upsert: true,
-      },
-    })),
-    { ordered: false }
-  );
-
-  await FeatureModel.bulkWrite(
-    SEED_FEATURES.map((feature) => ({
-      updateOne: {
-        filter: { key: feature.key },
-        update: {
-          $setOnInsert: {
-            key: feature.key,
-            name: feature.name,
-            description: feature.description,
-            type: feature.type,
-            groupKey: feature.groupKey,
-            group: feature.groupKey,
-            sortOrder: feature.sortOrder,
-            usageCounterKey: feature.usageCounterKey ?? "",
-            unit: feature.unit ?? "",
-            defaultEnabled: feature.defaultEnabled ?? false,
-            defaultLimit: feature.defaultLimit ?? 0,
-            defaultTier: feature.defaultTier ?? "disabled",
-            isActive: true,
-          },
+  try {
+    await FeatureGroupModel.bulkWrite(
+      SEED_GROUPS.map((group) => ({
+        updateOne: {
+          filter: { key: group.key },
+          update: { $setOnInsert: { ...group, isActive: true } },
+          upsert: true,
         },
-        upsert: true,
-      },
-    })),
-    { ordered: false }
-  );
+      })),
+      { ordered: false }
+    );
+  } catch (e) {
+    // Ignore bulkWrite duplicates
+  }
 
-  await FeatureTierModel.bulkWrite(
-    SEED_TIERS.map((tier) => ({
-      updateOne: {
-        filter: { featureKey: tier.featureKey, tierKey: tier.tierKey },
-        update: { $setOnInsert: { ...tier } },
-        upsert: true,
-      },
-    })),
-    { ordered: false }
-  );
-
-  await FeatureLimitModel.bulkWrite(
-    SEED_LIMITS.map((limit) => ({
-      updateOne: {
-        filter: { featureKey: limit.featureKey },
-        update: {
-          $setOnInsert: {
-            ...limit,
-            unlimitedValue: 0,
-            displayFormat: "{current} / {limit}",
+  try {
+    await FeatureModel.bulkWrite(
+      SEED_FEATURES.map((feature) => ({
+        updateOne: {
+          filter: { key: feature.key },
+          update: {
+            $setOnInsert: {
+              key: feature.key,
+              name: feature.name,
+              description: feature.description,
+              type: feature.type,
+              groupKey: feature.groupKey,
+              group: feature.groupKey,
+              sortOrder: feature.sortOrder,
+              usageCounterKey: feature.usageCounterKey ?? "",
+              unit: feature.unit ?? "",
+              defaultEnabled: feature.defaultEnabled ?? false,
+              defaultLimit: feature.defaultLimit ?? 0,
+              defaultTier: feature.defaultTier ?? "disabled",
+              isActive: true,
+            },
           },
+          upsert: true,
         },
-        upsert: true,
-      },
-    })),
-    { ordered: false }
-  );
+      })),
+      { ordered: false }
+    );
+  } catch (e) {
+    // Ignore bulkWrite duplicates
+  }
+
+  try {
+    await FeatureTierModel.bulkWrite(
+      SEED_TIERS.map((tier) => ({
+        updateOne: {
+          filter: { featureKey: tier.featureKey, tierKey: tier.tierKey },
+          update: { $setOnInsert: { ...tier } },
+          upsert: true,
+        },
+      })),
+      { ordered: false }
+    );
+  } catch (e) {
+    // Ignore bulkWrite duplicates
+  }
+
+  try {
+    await FeatureLimitModel.bulkWrite(
+      SEED_LIMITS.map((limit) => ({
+        updateOne: {
+          filter: { featureKey: limit.featureKey },
+          update: {
+            $setOnInsert: {
+              ...limit,
+              unlimitedValue: 0,
+              displayFormat: "{current} / {limit}",
+            },
+          },
+          upsert: true,
+        },
+      })),
+      { ordered: false }
+    );
+  } catch (e) {
+    // Ignore bulkWrite duplicates
+  }
 }
 
 export async function ensureDefaultPlansSafe() {

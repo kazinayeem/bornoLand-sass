@@ -48,7 +48,7 @@ export async function listStoreOrdersController(request: AuthRequest, response: 
     const userId = request.user?.userId;
     const { status, paymentStatus, from, to, page = "1", limit = "20", search } = request.query as Record<string, string>;
 
-    const store = await StoreModel.findOne({ _id: storeId, userId });
+    const store = await StoreModel.findById(storeId);
     if (!store) {
       return response.status(404).json({ message: "Store not found" });
     }
@@ -149,7 +149,7 @@ export async function getStoreOrderController(request: AuthRequest, response: Re
     const { storeId, id } = request.params;
     const userId = request.user?.userId;
 
-    const store = await StoreModel.findOne({ _id: storeId, userId });
+    const store = await StoreModel.findById(storeId);
     if (!store) {
       return response.status(404).json({ message: "Store not found" });
     }
@@ -180,7 +180,7 @@ export async function updateOrderStatusController(request: AuthRequest, response
       return response.status(400).json({ message: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
     }
 
-    const store = await StoreModel.findOne({ _id: storeId, userId });
+    const store = await StoreModel.findById(storeId);
     if (!store) {
       return response.status(404).json({ message: "Store not found" });
     }
@@ -291,7 +291,7 @@ export async function updatePaymentStatusController(request: AuthRequest, respon
       return response.status(400).json({ message: `Invalid payment status. Must be one of: ${validStatuses.join(", ")}` });
     }
 
-    const store = await StoreModel.findOne({ _id: storeId, userId });
+    const store = await StoreModel.findById(storeId);
     if (!store) {
       return response.status(404).json({ message: "Store not found" });
     }
@@ -368,7 +368,7 @@ export async function addOrderNoteController(request: AuthRequest, response: Res
     const userId = request.user?.userId;
     if (!body) return response.status(400).json({ message: "Note body required" });
 
-    const store = await StoreModel.findOne({ _id: storeId, userId });
+    const store = await StoreModel.findById(storeId);
     if (!store) return response.status(404).json({ message: "Store not found" });
 
     const order = await OrderModel.findOneAndUpdate(
@@ -399,7 +399,7 @@ export async function processRefundController(request: AuthRequest, response: Re
     const { amount, partial } = request.body as { amount?: number; partial?: boolean };
     const userId = request.user?.userId;
 
-    const store = await StoreModel.findOne({ _id: storeId, userId });
+    const store = await StoreModel.findById(storeId);
     if (!store) return response.status(404).json({ message: "Store not found" });
 
     const existing = await OrderModel.findOne({ _id: id, storeId }).lean() as { total?: number; refundAmount?: number } | null;
@@ -465,7 +465,7 @@ export async function downloadStoreOrderInvoiceController(request: AuthRequest, 
     const { storeId, id } = request.params;
     const userId = request.user?.userId;
 
-    const store = await StoreModel.findOne({ _id: storeId, userId });
+    const store = await StoreModel.findById(storeId);
     if (!store) {
       return response.status(404).json({ message: "Store not found" });
     }
@@ -496,7 +496,7 @@ export async function emailStoreOrderInvoiceController(request: AuthRequest, res
     const userId = request.user?.userId;
     const { email } = (request.body || {}) as { email?: string };
 
-    const store = await StoreModel.findOne({ _id: storeId, userId });
+    const store = await StoreModel.findById(storeId);
     if (!store) {
       return response.status(404).json({ message: "Store not found" });
     }
@@ -556,9 +556,9 @@ export async function createStoreOrderController(request: AuthRequest, response:
       : (request.params.storeId as string);
     const userId = request.user?.userId;
 
-    const store = await StoreModel.findOne({ _id: storeId, userId }).lean();
+    const store = await StoreModel.findById(storeId).lean();
     if (!store) {
-      return response.status(404).json({ success: false, message: "Store not found or access denied" });
+      return response.status(404).json({ success: false, message: "Store not found" });
     }
 
     let customerId = request.body?.customerId;

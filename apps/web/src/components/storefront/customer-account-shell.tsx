@@ -51,7 +51,7 @@ export function CustomerAccountShell({ children }: { children: ReactNode }) {
       <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
         <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
           <aside className="hidden lg:block">
-            <div className={cn("sticky top-24 rounded-apple-lg border p-2", classes.divider ? "border-apple-hairline" : "border-zinc-100")}>
+            <div className={cn("sticky top-[calc(var(--store-header-height,70px)+1.5rem)] rounded-apple-lg border p-2 transition-[top] duration-150", classes.divider ? "border-apple-hairline" : "border-zinc-100")}>
               <div className="px-3 py-2">
                 <p className="text-sm font-semibold">Account Center</p>
                 <p className="mt-1 text-xs" style={{ color: "#6B7280" }}>

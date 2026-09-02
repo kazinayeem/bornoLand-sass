@@ -43,15 +43,16 @@ export async function createOrderController(request: SubdomainRequest, response:
   let customerId = getCustomerId(request) || (typeof request.body?.customerId === "string" ? request.body.customerId : null);
 
 
-  console.info("[orders] createOrder request", {
-    storeId,
-    customerId,
-    sessionId,
-    cartId: request.body?.cartId ?? null,
-    itemCount: Array.isArray(request.body?.items) ? request.body.items.length : 0,
-  });
+  const idempotencyKey =
+    (request.headers["x-idempotency-key"] as string | undefined) ??
+    (request.body?.idempotencyKey as string | undefined);
 
-  const result = await createOrder(storeId, customerId, sessionId, request.body);
+  const payload = {
+    ...request.body,
+    ...(idempotencyKey ? { idempotencyKey } : {}),
+  };
+
+  const result = await createOrder(storeId, customerId, sessionId, payload);
   return result.ok
     ? sendSuccess(response, result.data, "Order created", 201)
     : sendFailure(response, result.message);

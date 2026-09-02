@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { Response } from "express";
 import { requireAuth } from "../../common/middleware/auth.middleware.js";
-import { requireStoreAccess, requireStoreAccessForParam } from "../../common/middleware/store-access.middleware.js";
+import { requireStoreAccess } from "../../common/middleware/store-permission.middleware.js";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
 import { sendSuccess, sendFailure } from "../../common/utils/api-response.js";
 import {
@@ -24,7 +24,7 @@ builderTemplateRouter.use(requireAuth);
 
 // ─── List templates ──────────────────────────────────────────────────────────
 
-builderTemplateRouter.get("/stores/:storeId", requireStoreAccessForParam(), async (request: AuthRequest, response: Response) => {
+builderTemplateRouter.get("/stores/:storeId", requireStoreAccess, async (request: AuthRequest, response: Response) => {
   const { category, templateType } = request.query as { category?: string; templateType?: string };
   const result = await listTemplates(request.params.storeId as string, category, templateType);
   return sendSuccess(response, result.data);
@@ -39,7 +39,7 @@ builderTemplateRouter.get("/:id", requireStoreAccess, async (request: AuthReques
 
 // ─── Create ──────────────────────────────────────────────────────────────────
 
-builderTemplateRouter.post("/stores/:storeId", requireStoreAccessForParam(), async (request: AuthRequest, response: Response) => {
+builderTemplateRouter.post("/stores/:storeId", requireStoreAccess, async (request: AuthRequest, response: Response) => {
   const result = await createTemplate(request.params.storeId as string, {
     ...request.body,
     createdBy: request.user!.userId,
@@ -107,14 +107,14 @@ builderTemplateRouter.get("/:id/export", requireStoreAccess, async (request: Aut
 
 // ─── Seed built-in templates ─────────────────────────────────────────────────
 
-builderTemplateRouter.post("/stores/:storeId/seed", requireStoreAccessForParam(), async (request: AuthRequest, response: Response) => {
+builderTemplateRouter.post("/stores/:storeId/seed", requireStoreAccess, async (request: AuthRequest, response: Response) => {
   const result = await seedBuiltInTemplates(request.params.storeId as string);
   return sendSuccess(response, result.data, "Built-in templates seeded");
 });
 
 // ─── Import ──────────────────────────────────────────────────────────────────
 
-builderTemplateRouter.post("/stores/:storeId/import", requireStoreAccessForParam(), async (request: AuthRequest, response: Response) => {
+builderTemplateRouter.post("/stores/:storeId/import", requireStoreAccess, async (request: AuthRequest, response: Response) => {
   const result = await importTemplate(request.params.storeId as string, {
     ...request.body,
     createdBy: request.user!.userId,

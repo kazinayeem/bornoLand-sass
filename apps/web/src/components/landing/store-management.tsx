@@ -33,7 +33,7 @@ export function StoreManagement() {
           variants={staggerContainer}
           className={`mt-10 sm:mt-12 ${landingGridManagement}`}
         >
-          {m.items.map((item, i) => {
+          {m.items.map((item: { title: string; description: string }, i: number) => {
             const Icon = icons[i] ?? ShoppingBag;
             return (
               <motion.article

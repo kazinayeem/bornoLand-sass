@@ -11,7 +11,7 @@ export async function listStoreCustomersController(request: AuthRequest, respons
     const userId = request.user?.userId;
     const { search, page, limit, status } = request.query as Record<string, string>;
 
-    const store = await StoreModel.findOne({ _id: storeId, userId });
+    const store = await StoreModel.findById(storeId);
     if (!store) return response.status(404).json({ message: "Store not found" });
 
     const result = await listStoreCustomers(storeId, {
@@ -36,7 +36,7 @@ export async function getStoreCustomerController(request: AuthRequest, response:
 
     if (!isValidObjectId(customerId)) return sendFailure(response, "Invalid customer ID", 400);
 
-    const store = await StoreModel.findOne({ _id: storeId, userId });
+    const store = await StoreModel.findById(storeId);
     if (!store) return response.status(404).json({ message: "Store not found" });
 
     const result = await getStoreCustomerDetail(storeId, customerId);
@@ -57,7 +57,7 @@ export async function updateStoreCustomerController(request: AuthRequest, respon
 
     if (!isValidObjectId(customerId)) return sendFailure(response, "Invalid customer ID", 400);
 
-    const store = await StoreModel.findOne({ _id: storeId, userId });
+    const store = await StoreModel.findById(storeId);
     if (!store) return response.status(404).json({ message: "Store not found" });
 
     const { name, email, phone, status, notes, tags } = request.body;

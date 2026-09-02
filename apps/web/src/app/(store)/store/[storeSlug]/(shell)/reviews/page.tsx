@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-page";
+import { useStoreContext } from "@/providers/store-context";
+import { TableSkeleton } from "@/components/ui/skeleton";
 import { EcommerceModuleShell } from "@/components/ecommerce/module-shell";
 import { useGetStoreFeatureAccessQuery, getFeatureByKey } from "@/redux/api/feature-api";
 import {
@@ -35,8 +37,14 @@ type StatusTab = "all" | "pending" | "approved" | "rejected";
 
 export default function StoreReviewsPage() {
   const { storeId, store, isLoading: isStoreLoading } = useStorePage();
-  const { data: accessData } = useGetStoreFeatureAccessQuery(storeId ?? "", { skip: !storeId });
-  const feature = getFeatureByKey(accessData?.data?.features ?? [], "reviews");
+  const storeContext = useStoreContext();
+  const contextFeatures = (storeContext.features as { features?: any[]; currentPlan?: { name?: string } } | null)?.features;
+
+  const { data: accessData } = useGetStoreFeatureAccessQuery(storeId ?? "", {
+    skip: !storeId || Boolean(contextFeatures && contextFeatures.length > 0),
+  });
+  const features = contextFeatures ?? accessData?.data?.features ?? [];
+  const feature = getFeatureByKey(features, "reviews");
   const billingHref = store ? `/store/${store.slug}/billing` : "#";
 
   const [activeTab, setActiveTab] = useState<StatusTab>("all");
@@ -208,8 +216,8 @@ export default function StoreReviewsPage() {
 
           {/* Table / List View */}
           {isReviewsLoading ? (
-            <div className="flex justify-center py-16">
-              <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+            <div className="py-4">
+              <TableSkeleton rows={6} cols={5} />
             </div>
           ) : reviews.length === 0 ? (
             <div className="text-center py-16 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/50 space-y-3">

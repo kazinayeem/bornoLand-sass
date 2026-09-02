@@ -1,73 +1,170 @@
 "use client";
 
+import { useState } from "react";
 import { landingContainer } from "./landing-ui";
-import { Code2, Webhook } from "lucide-react";
+import { useLandingLocale } from "./landing-locale";
+import { Reveal } from "./motion-primitives";
+import {
+  Users,
+  Clock,
+  CalendarCheck,
+  FileText,
+  CheckCircle2,
+  ArrowRight,
+  Sparkles,
+  ShieldCheck,
+  UserCheck,
+  Send,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function StoryDeveloper() {
+  const { locale, t } = useLandingLocale();
+  const [payslipSent, setPayslipSent] = useState(false);
+
+  const EMPLOYEES = [
+    { name: "Tanvir Ahmed", role: "POS Lead Cashier", attendance: "100%", salary: "৳২৫,০০০", status: "Present" },
+    { name: "Farhana Yasmin", role: "Inventory Manager", attendance: "96%", salary: "৳৩২,০০০", status: "Present" },
+    { name: "Mahmudul Hasan", role: "Store Operations", attendance: "92%", salary: "৳২৮,০০০", status: "On Leave" },
+  ];
+
   return (
-    <section id="developer" className="py-20 sm:py-24 bg-zinc-950 text-white border-b border-zinc-800 scroll-mt-20">
+    <section id="hrm" className="py-20 sm:py-24 bg-white border-b border-zinc-200/80 scroll-mt-20">
       <div className={landingContainer}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center max-w-6xl mx-auto">
-          {/* Left: Copy */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center max-w-6xl mx-auto">
+          {/* Left Column: Value Copy */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="space-y-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400 bg-blue-950/80 px-3 py-1 rounded-full border border-blue-800">
-                উন্নত ফিচার ও ইন্টিগ্রেশন
+            <Reveal direction="down" delay={50}>
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#003399] bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+                {t.hrm.eyebrow}
               </span>
-              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-                আরও বেশি নিয়ন্ত্রণ চান?
+            </Reveal>
+
+            <Reveal direction="up" delay={100}>
+              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-950 leading-tight">
+                {t.hrm.title}
               </h2>
-              <p className="text-base text-zinc-400 leading-relaxed font-normal">
-                আপনার ব্যবসা বড় হলে আরও উন্নত কাস্টমাইজেশন ও ইন্টিগ্রেশনের সুবিধা নিন।
+            </Reveal>
+
+            <Reveal direction="up" delay={160}>
+              <p className="text-base text-zinc-600 leading-relaxed font-normal">
+                {t.hrm.description}
               </p>
-            </div>
+            </Reveal>
 
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800">
-                <Code2 className="h-5 w-5 text-emerald-400 shrink-0" />
-                <div>
-                  <p className="font-bold text-white text-sm">REST API অ্যাক্সেস</p>
-                  <p className="text-zinc-400">পণ্য, স্টক, অর্ডার ও ইনভয়েস প্রোগ্রাম্যাটিকভাবে কানেক্ট করার সুবিধা।</p>
-                </div>
+            <Reveal direction="up" delay={220}>
+              <div className="space-y-3 pt-2">
+                {t.hrm.bullets.map((bullet, idx) => (
+                  <div key={idx} className="flex items-start gap-2.5 text-xs text-zinc-700 font-medium">
+                    <CheckCircle2 className="h-4 w-4 text-[#0A8A00] shrink-0 mt-0.5" />
+                    <span>{bullet}</span>
+                  </div>
+                ))}
               </div>
+            </Reveal>
 
-              <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800">
-                <Webhook className="h-5 w-5 text-blue-400 shrink-0" />
-                <div>
-                  <p className="font-bold text-white text-sm">রিয়েল-টাইম ওয়েবহুক (Webhooks)</p>
-                  <p className="text-zinc-400">নতুন অর্ডার বা পেমেন্ট নিশ্চিত হলেই সাথে সাথে ইভেন্ট নোটিফিকেশন।</p>
-                </div>
+            <Reveal direction="up" delay={280}>
+              <div className="pt-3">
+                <a
+                  href="/register"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#003399] text-white text-xs font-bold shadow-xs hover:bg-[#002B80] transition-all"
+                >
+                  <span>{t.hrm.cta}</span>
+                  <ArrowRight className="h-4 w-4" />
+                </a>
               </div>
-            </div>
+            </Reveal>
           </div>
 
-          {/* Right: Code Mockup */}
+          {/* Right Column: HRM & Payroll Dashboard Mockup */}
           <div className="lg:col-span-7">
-            <div className="rounded-3xl border border-zinc-800 bg-zinc-900/90 shadow-2xl overflow-hidden font-mono text-xs">
-              <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3 bg-zinc-950 text-[11px]">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1.5">
-                    <div className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
-                    <div className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
-                    <div className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+            <Reveal direction="scale" delay={180}>
+              <div className="rounded-2xl border border-zinc-200/90 bg-zinc-50/60 p-5 sm:p-6 shadow-md space-y-4">
+                {/* HRM Header */}
+                <div className="flex items-center justify-between border-b border-zinc-200/80 pb-3 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-[#003399]" />
+                    <span className="font-extrabold text-zinc-950">{t.hrm.portalTitle}</span>
                   </div>
-                  <span className="text-zinc-400">POST /api/v1/orders</span>
+                  <span className="px-2.5 py-1 rounded-full bg-purple-50 border border-purple-200 text-[10px] font-bold text-purple-700">
+                    Audit-Verified Payroll
+                  </span>
                 </div>
-                <span className="text-emerald-400 font-bold text-[10px]">201 CREATED</span>
-              </div>
 
-              <div className="p-5 text-zinc-300 space-y-2 overflow-x-auto text-[11px] leading-relaxed">
-                <p className="text-zinc-500">// প্রোগ্রামাটিক অর্ডার প্রসেসিং API</p>
-                <p><span className="text-purple-400">curl</span> -X POST https://api.bornoland.com/orders \</p>
-                <p className="pl-4">-H <span className="text-emerald-300">&quot;Authorization: Bearer sec_tok_live&quot;</span> \</p>
-                <p className="pl-4">-H <span className="text-emerald-300">&quot;Content-Type: application/json&quot;</span> \</p>
-                <p className="pl-4">-d <span className="text-amber-300">&apos;&#123;</span></p>
-                <p className="pl-8"><span className="text-blue-300">&quot;storeId&quot;</span>: <span className="text-emerald-300">&quot;mybrand_shop_01&quot;</span>,</p>
-                <p className="pl-8"><span className="text-blue-300">&quot;items&quot;</span>: [&#123; <span className="text-blue-300">&quot;sku&quot;</span>: <span className="text-emerald-300">&quot;PNJ-COT-01&quot;</span>, <span className="text-blue-300">&quot;qty&quot;</span>: 2 &#125;],</p>
-                <p className="pl-8"><span className="text-blue-300">&quot;paymentMethod&quot;</span>: <span className="text-emerald-300">&quot;bkash&quot;</span></p>
-                <p className="pl-4"><span className="text-amber-300">&#125;&apos;</span></p>
+                {/* 3 Quick Stats */}
+                <div className="grid grid-cols-3 gap-2.5 text-xs">
+                  <div className="p-3 rounded-xl bg-white border border-zinc-200 shadow-2xs space-y-1">
+                    <span className="text-[10px] text-zinc-500 font-semibold">{t.hrm.activeEmployees}</span>
+                    <p className="text-base font-extrabold text-zinc-950">১৮ জন</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white border border-zinc-200 shadow-2xs space-y-1">
+                    <span className="text-[10px] text-zinc-500 font-semibold">{t.hrm.onTimeAttendance}</span>
+                    <p className="text-base font-extrabold text-[#0A8A00]">৯৬.৪%</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white border border-zinc-200 shadow-2xs space-y-1">
+                    <span className="text-[10px] text-zinc-500 font-semibold">Monthly Payroll</span>
+                    <p className="text-base font-extrabold text-[#003399]">৳৪,৮৫,০০০</p>
+                  </div>
+                </div>
+
+                {/* Employee Directory Table */}
+                <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-2xs text-xs">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-zinc-100 bg-zinc-50 text-[10px] font-bold uppercase text-zinc-500">
+                        <th className="py-2.5 px-3.5">Staff Member</th>
+                        <th className="py-2.5 px-3.5">Attendance</th>
+                        <th className="py-2.5 px-3.5">Net Salary</th>
+                        <th className="py-2.5 px-3.5 text-right">Today</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {EMPLOYEES.map((emp, idx) => (
+                        <tr key={idx} className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="py-3 px-3.5">
+                            <p className="font-bold text-zinc-900">{emp.name}</p>
+                            <p className="text-[10px] text-zinc-400">{emp.role}</p>
+                          </td>
+                          <td className="py-3 px-3.5 font-bold text-zinc-700">
+                            {emp.attendance}
+                          </td>
+                          <td className="py-3 px-3.5 font-mono font-bold text-zinc-950">
+                            {emp.salary}
+                          </td>
+                          <td className="py-3 px-3.5 text-right">
+                            <span
+                              className={cn(
+                                "text-[10px] font-bold px-2 py-0.5 rounded-full border",
+                                emp.status === "Present"
+                                  ? "text-[#0A8A00] bg-emerald-50 border-emerald-200"
+                                  : "text-amber-700 bg-amber-50 border-amber-200"
+                              )}
+                            >
+                              {emp.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 1-Click Payslip Trigger Action */}
+                <div className="p-3.5 rounded-xl bg-purple-50/60 border border-purple-200/80 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-purple-900 font-bold">
+                    <FileText className="h-4 w-4 text-purple-700" />
+                    <span>{t.hrm.payslipGenerated}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPayslipSent(true)}
+                    className="px-3 py-1.5 rounded-lg bg-purple-700 text-white text-[11px] font-bold hover:bg-purple-800 transition-colors cursor-pointer shadow-2xs"
+                  >
+                    {payslipSent ? "Dispatched ✓" : "Send Payslips"}
+                  </button>
+                </div>
               </div>
-            </div>
+            </Reveal>
           </div>
         </div>
       </div>

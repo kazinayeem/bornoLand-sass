@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, useEffect, type ReactNode } from "react";
 
 type StorefrontHeaderOffsetContextValue = {
   headerHeight: number;
@@ -10,7 +10,7 @@ type StorefrontHeaderOffsetContextValue = {
 };
 
 const StorefrontHeaderOffsetContext = createContext<StorefrontHeaderOffsetContextValue>({
-  headerHeight: 0,
+  headerHeight: 72,
   contentOffset: 0,
   registerContentOffset: () => {},
 });
@@ -18,7 +18,7 @@ const StorefrontHeaderOffsetContext = createContext<StorefrontHeaderOffsetContex
 const StorefrontHeaderSettingsContext = createContext<Record<string, unknown>>({});
 
 export function StorefrontHeaderOffsetProvider({ children }: { children: ReactNode }) {
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const [headerHeight, setHeaderHeight] = useState(72);
   const [contentOffset, setContentOffset] = useState(0);
 
   const registerContentOffset = useCallback((height: number, offset?: number) => {
@@ -26,7 +26,25 @@ export function StorefrontHeaderOffsetProvider({ children }: { children: ReactNo
     const nextOffset = Math.max(0, Math.round(offset ?? height));
     setHeaderHeight((prev) => (prev === nextHeight ? prev : nextHeight));
     setContentOffset((prev) => (prev === nextOffset ? prev : nextOffset));
+
+    if (typeof document !== "undefined") {
+      document.documentElement.style.setProperty("--store-header-height", `${nextHeight > 0 ? nextHeight : 72}px`);
+      if (nextOffset > 0) {
+        document.documentElement.style.setProperty("--store-header-offset", `${nextOffset}px`);
+      } else {
+        document.documentElement.style.removeProperty("--store-header-offset");
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.style.setProperty(
+        "--store-header-height",
+        `${headerHeight > 0 ? headerHeight : 72}px`
+      );
+    }
+  }, [headerHeight]);
 
   const value = useMemo(
     () => ({ headerHeight, contentOffset, registerContentOffset }),
@@ -36,11 +54,13 @@ export function StorefrontHeaderOffsetProvider({ children }: { children: ReactNo
   return (
     <StorefrontHeaderOffsetContext.Provider value={value}>
       <div
+        data-storefront-root
         className="w-full max-w-full min-w-0"
         style={{
-          ["--store-header-height" as string]: `${headerHeight}px`,
+          ["--store-header-height" as string]: `${headerHeight > 0 ? headerHeight : 72}px`,
           ["--store-header-offset" as string]: `${contentOffset}px`,
-        }}
+          scrollPaddingTop: `${headerHeight > 0 ? headerHeight : 72}px`,
+        } as React.CSSProperties}
       >
         {children}
       </div>

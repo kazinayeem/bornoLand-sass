@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
-import { usePermissions } from "@/features/session/hooks";
+import { useHasPermission } from "@/features/session/hooks";
 
 type RequirePermissionProps = {
   children: React.ReactNode;
@@ -10,8 +9,7 @@ type RequirePermissionProps = {
 };
 
 export function RequirePermission({ children, permission, fallback = null }: RequirePermissionProps) {
-  const permissions = usePermissions();
-  const allowed = useMemo(() => permissions.has(permission), [permission, permissions]);
+  const allowed = useHasPermission(permission);
 
   if (!allowed) return <>{fallback}</>;
   return <>{children}</>;

@@ -385,9 +385,9 @@ describe("Multi-Tenant SSLCommerz Payment Gateway System", () => {
       transactionId: "TXN-999",
     });
 
-    assert.equal(urls.storefrontSuccessUrl, "https://brandstore.com/checkout/payment/success?orderNumber=ORD-999&tran_id=TXN-999");
-    assert.equal(urls.storefrontFailUrl, "https://brandstore.com/checkout/payment/fail?orderNumber=ORD-999&tran_id=TXN-999");
-    assert.equal(urls.storefrontCancelUrl, "https://brandstore.com/checkout/payment/cancel?orderNumber=ORD-999&tran_id=TXN-999");
+    assert.equal(urls.storefrontSuccessUrl, "https://brandstore.com/checkout/payment/success?orderNumber=ORD-999&order=ORD-999&tran_id=TXN-999");
+    assert.equal(urls.storefrontFailUrl, "https://brandstore.com/checkout/payment/fail?orderNumber=ORD-999&order=ORD-999&tran_id=TXN-999");
+    assert.equal(urls.storefrontCancelUrl, "https://brandstore.com/checkout/payment/cancel?orderNumber=ORD-999&order=ORD-999&tran_id=TXN-999");
   });
 
   it("14. Cross-Shop Isolation: Shop A cancel returns to Shop A domain, not Shop B", async () => {

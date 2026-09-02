@@ -17,9 +17,25 @@ export type ShippingAddress = {
   email?: string;
   label?: "Home" | "Office" | "Other";
   country?: string;
+  countryCode?: string;
   state?: string;
+  division?: string;
+  divisionId?: string;
+  divisionName?: string;
+  divisionNameBn?: string;
   city: string;
+  district?: string;
+  districtId?: string;
+  districtName?: string;
+  districtNameBn?: string;
   area?: string;
+  upazila?: string;
+  upazilaId?: string;
+  upazilaName?: string;
+  upazilaNameBn?: string;
+  union?: string;
+  unionId?: string;
+  village?: string;
   street: string;
   apartment?: string;
   zip?: string;
@@ -73,6 +89,7 @@ export type CreateOrderPayload = {
   cartId?: string;
   storeId?: string;
   customerId?: string;
+  idempotencyKey?: string;
   senderNumber?: string;
   transactionId?: string;
   paymentDetails?: {

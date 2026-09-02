@@ -63,6 +63,15 @@ const orderSchema = new Schema(
       phone: { type: String, default: "" },
       address: { type: String, default: "" },
       country: { type: String, default: "Bangladesh" },
+      countryCode: { type: String, default: "BD" },
+      division: { type: String, default: "" },
+      divisionId: { type: String, default: "" },
+      district: { type: String, default: "" },
+      districtId: { type: String, default: "" },
+      upazila: { type: String, default: "" },
+      upazilaId: { type: String, default: "" },
+      union: { type: String, default: "" },
+      village: { type: String, default: "" },
       state: { type: String, default: "" },
       city: { type: String, default: "" },
       area: { type: String, default: "" },
@@ -109,6 +118,22 @@ const orderSchema = new Schema(
       state: { type: String, default: "" },
       zip: { type: String, default: "" },
       country: { type: String, default: "Bangladesh" },
+      countryCode: { type: String, default: "BD" },
+      division: { type: String, default: "" },
+      divisionId: { type: String, default: "" },
+      divisionName: { type: String, default: "" },
+      divisionNameBn: { type: String, default: "" },
+      district: { type: String, default: "" },
+      districtId: { type: String, default: "" },
+      districtName: { type: String, default: "" },
+      districtNameBn: { type: String, default: "" },
+      upazila: { type: String, default: "" },
+      upazilaId: { type: String, default: "" },
+      upazilaName: { type: String, default: "" },
+      upazilaNameBn: { type: String, default: "" },
+      union: { type: String, default: "" },
+      unionId: { type: String, default: "" },
+      village: { type: String, default: "" },
       landmark: { type: String, default: "" },
       orderNotes: { type: String, default: "" },
     },
@@ -123,6 +148,16 @@ const orderSchema = new Schema(
       senderNumber: { type: String, default: "" },
       receiverNumber: { type: String, default: "" },
       transactionId: { type: String, default: "" },
+      valId: { type: String, default: "" },
+      bankTranId: { type: String, default: "" },
+      cardType: { type: String, default: "" },
+      cardBrand: { type: String, default: "" },
+      cardIssuer: { type: String, default: "" },
+      tranDate: { type: String, default: "" },
+      gateway: { type: String, default: "" },
+      sessionKey: { type: String, default: "" },
+      environment: { type: String, default: "" },
+      verifiedAt: { type: String, default: "" },
     },
     courier: { type: String, default: "" },
     trackingNumber: { type: String, default: "" },
@@ -171,12 +206,17 @@ const orderSchema = new Schema(
     currencyCode: { type: String, enum: ["USD", "BDT", "EUR", "INR", "GBP"], default: "USD" },
     invoiceNumber: { type: String, default: "" },
     verificationToken: { type: String, unique: true, sparse: true },
+    idempotencyKey: { type: String, sparse: true, index: true },
   },
   { timestamps: true }
 );
 
+orderSchema.index({ storeId: 1, createdAt: -1 });
 orderSchema.index({ storeId: 1, status: 1, createdAt: -1 });
+orderSchema.index({ storeId: 1, orderNumber: 1 });
 orderSchema.index({ storeId: 1, paymentStatus: 1 });
+orderSchema.index({ customerId: 1, createdAt: -1 });
+orderSchema.index({ storeId: 1, idempotencyKey: 1 }, { sparse: true });
 
 export type OrderDocument = InferSchemaType<typeof orderSchema>;
 export const OrderModel = models.Order ?? model("Order", orderSchema);

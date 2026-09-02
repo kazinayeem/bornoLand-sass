@@ -6,8 +6,8 @@ const userSchema = new Schema(
   {
     tenantId: { type: Schema.Types.ObjectId, ref: "Tenant", index: true },
     name: { type: String, required: true, trim: true },
-    username: { type: String, unique: true, sparse: true, index: true, lowercase: true, trim: true },
-    email: { type: String, required: true, unique: true, index: true, lowercase: true, trim: true },
+    username: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     emailVerifiedAt: { type: Date, default: null },
     passwordHash: { type: String, required: true },
     role: {

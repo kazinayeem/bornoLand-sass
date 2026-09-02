@@ -20,7 +20,7 @@ const SESSION_COOKIE_NAME = "bornoland.session";
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: apiBaseUrl,
   credentials: "include",
-  timeout: 15000,
+  timeout: 30000,
   prepareHeaders: (headers) => {
     if (typeof window !== "undefined") {
       const tenantHeaders = getStorefrontTenantHeaders();
@@ -206,6 +206,6 @@ const baseQueryWithGlobalErrorHandling: BaseQueryFn<string | FetchArgs, unknown,
 export const baseApi = createApi({
   reducerPath: "baseApi",
   baseQuery: baseQueryWithGlobalErrorHandling,
-  tagTypes: ["Auth", "User", "Tenant", "Dashboard", "Stores", "Templates", "Products", "Cart", "Orders", "BuilderPages", "BuilderPage", "Customer", "Customers", "StoreSettings", "StoreContact", "ContactMessages", "HomepageSliders", "PaymentMethods", "DeliveryZones", "CmsPages", "CmsPage", "Faqs", "Categories", "Brands", "SubscriptionPayments", "Subscriptions", "Notifications", "Invoices", "Features", "Coupons", "Inventory", "Reviews", "Marketing", "Reports", "Media", "AuditLogs", "Analytics", "StorePages", "StorePage", "PageVersions", "Navigations", "Navigation", "GlobalSections", "GlobalSection", "BuilderTemplates", "BuilderTemplate", "EmailConfig", "EmailTemplates", "EmailTemplate", "EmailBranding", "EmailLogs", "EmailLog", "StoreCouriers", "Tracking", "IncompleteCheckouts"],
+  tagTypes: ["Auth", "User", "Tenant", "Dashboard", "Stores", "Templates", "Products", "Cart", "Orders", "BuilderPages", "BuilderPage", "Customer", "Customers", "StoreSettings", "StoreContact", "ContactMessages", "HomepageSliders", "PaymentMethods", "DeliveryZones", "Locations", "CmsPages", "CmsPage", "Faqs", "Categories", "Brands", "SubscriptionPayments", "Subscriptions", "Notifications", "Invoices", "Features", "Coupons", "Inventory", "Reviews", "Marketing", "Reports", "Media", "AuditLogs", "Analytics", "StorePages", "StorePage", "PageVersions", "Navigations", "Navigation", "GlobalSections", "GlobalSection", "BuilderTemplates", "BuilderTemplate", "EmailConfig", "EmailTemplates", "EmailTemplate", "EmailBranding", "EmailLogs", "EmailLog", "StoreCouriers", "Tracking", "IncompleteCheckouts", "Members", "POS", "HRM", "Accounting", "CRM", "Support", "Operations", "Billing"],
   endpoints: () => ({})
 });

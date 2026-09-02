@@ -20,6 +20,13 @@ export type SSLCommerzUrlBundle = {
   storefrontCancelUrl: string;
 };
 
+const STORE_URL_CACHE = new Map<string, { url: string; expiresAt: number }>();
+const CACHE_TTL_MS = 60_000; // 1 minute
+
+export function clearStoreUrlCache(): void {
+  STORE_URL_CACHE.clear();
+}
+
 /**
  * Resolves the public base URL of the store.
  * Supports:
@@ -36,6 +43,14 @@ export function getStorePublicUrl(
     return `https://${fallbackRoot}`;
   }
 
+  const cacheKey = `${String(store._id || "")}:${store.subdomain || ""}:${store.slug || ""}:${store.customDomain || ""}:${Array.isArray(store.customDomains) ? store.customDomains.join(",") : ""}`;
+  const cached = STORE_URL_CACHE.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.url;
+  }
+
+  let resolvedUrl = "";
+
   // 1. Custom domain check (takes precedence if configured)
   const customDomains = Array.isArray(store.customDomains) ? store.customDomains : [];
   const primaryCustomDomain = customDomains[0] || (typeof store.customDomain === "string" ? store.customDomain : null);
@@ -44,7 +59,9 @@ export function getStorePublicUrl(
     const cleanDomain = stripPort(primaryCustomDomain.trim().toLowerCase());
     const isLocal = isLoopbackHostname(cleanDomain) || cleanDomain.endsWith(".localhost");
     const scheme = isLocal ? "http" : "https";
-    return `${scheme}://${cleanDomain}`;
+    resolvedUrl = `${scheme}://${cleanDomain}`;
+    STORE_URL_CACHE.set(cacheKey, { url: resolvedUrl, expiresAt: Date.now() + CACHE_TTL_MS });
+    return resolvedUrl;
   }
 
   // 2. Subdomain / slug resolution
@@ -76,14 +93,16 @@ export function getStorePublicUrl(
       const match = webUrl.match(/:(\d+)/);
       if (match?.[1]) port = match[1];
     }
-    return `http://${storeSlug}.localhost:${port}`;
+    resolvedUrl = `http://${storeSlug}.localhost:${port}`;
+  } else {
+    // Production root domain resolution
+    const productionBase = rootDomain ? stripPort(rootDomain) : "bornoland.com";
+    const protocol = process.env.NEXT_PUBLIC_PROTOCOL || process.env.PROTOCOL || "https";
+    resolvedUrl = `${protocol}://${storeSlug}.${productionBase}`;
   }
 
-  // Production root domain resolution
-  const productionBase = rootDomain ? stripPort(rootDomain) : "bornoland.com";
-  const protocol = process.env.NEXT_PUBLIC_PROTOCOL || process.env.PROTOCOL || "https";
-
-  return `${protocol}://${storeSlug}.${productionBase}`;
+  STORE_URL_CACHE.set(cacheKey, { url: resolvedUrl, expiresAt: Date.now() + CACHE_TTL_MS });
+  return resolvedUrl;
 }
 
 /**
@@ -124,7 +143,10 @@ export function getSSLCommerzCallbackUrls(params: {
   const apiBase = params.apiBaseUrl || getApiBaseUrl();
 
   const queryParams = new URLSearchParams();
-  if (order?.orderNumber) queryParams.set("orderNumber", String(order.orderNumber));
+  if (order?.orderNumber) {
+    queryParams.set("orderNumber", String(order.orderNumber));
+    queryParams.set("order", String(order.orderNumber));
+  }
   if (order?._id) queryParams.set("orderId", String(order._id));
   if (transactionId) queryParams.set("tran_id", String(transactionId));
 

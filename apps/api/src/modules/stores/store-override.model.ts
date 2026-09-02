@@ -4,7 +4,7 @@ const { Schema, model, models } = mongoose;
 
 const storeOverrideSchema = new Schema(
   {
-    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, unique: true, index: true },
+    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, unique: true },
 
     // Plan override — if set, store uses this plan instead of the one on the Store doc
     planId: { type: Schema.Types.ObjectId, ref: "Plan" },
@@ -45,8 +45,6 @@ const storeOverrideSchema = new Schema(
   },
   { timestamps: true }
 );
-
-storeOverrideSchema.index({ storeId: 1 });
 
 export type StoreOverrideDocument = InferSchemaType<typeof storeOverrideSchema>;
 export const StoreOverrideModel =

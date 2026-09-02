@@ -137,7 +137,7 @@ export function StorefrontShell({
 
               <CartProvider>
                 <CartDrawer primaryColor={theme.primaryColor} />
-                <main className="relative w-full max-w-full min-w-0 overflow-x-clip">
+                <main className="relative w-full max-w-full min-w-0 flex-1 overflow-x-clip">
                   {children}
                 </main>
               </CartProvider>

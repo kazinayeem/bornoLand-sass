@@ -71,7 +71,6 @@ const invoiceSchema = new Schema(
 );
 
 invoiceSchema.index({ storeId: 1, createdAt: -1 });
-invoiceSchema.index({ invoiceNumber: 1 });
 
 export type InvoiceDocument = InferSchemaType<typeof invoiceSchema>;
 export const InvoiceModel = models.Invoice ?? model("Invoice", invoiceSchema);

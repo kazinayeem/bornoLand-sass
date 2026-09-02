@@ -10,17 +10,17 @@ import { useCustomerLoginMutation } from "@/redux/api/customer-api";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/redux/store";
 import { setCustomer } from "@/redux/slices/customer-slice";
-import { motion } from "framer-motion";
-import { LogIn, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
-import { StorefrontButton, useStorefrontSurface } from "@/components/storefront/storefront-ui";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle } from "lucide-react";
+import { useTenant } from "@/providers/tenant-provider";
 import { CustomerAuthLoader } from "@/components/auth/customer-auth-loader";
+import { CustomerAuthShell } from "@/components/storefront/auth/customer-auth-shell";
+import { CustomerSocialButtons } from "@/components/storefront/auth/customer-social-buttons";
 import { validateInternalRedirect } from "@/lib/auth-redirect";
 import { resolveStoreHref } from "@/lib/store-href";
-import { cn } from "@/lib/utils";
 import { useIsClient } from "@/hooks/use-is-client";
 
 const loginFormSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -32,15 +32,20 @@ function LoginForm() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const { restored, isAuthenticated } = useSelector((s: RootState) => s.customer);
+  const { theme } = useTenant();
   const mounted = useIsClient();
   const redirectTo = validateInternalRedirect(searchParams.get("redirect")) ?? "/";
   const [login, { isLoading }] = useCustomerLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState("");
-  const { classes, primaryColor } = useStorefrontSurface();
   const redirectedRef = useRef(false);
+  const primaryColor = theme?.primaryColor || "#18181b";
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: { email: "", password: "" },
   });
@@ -54,20 +59,19 @@ function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     setApiError("");
     try {
-      const result = await login({ email: data.email, password: data.password }).unwrap();
+      const result = await login({ email: data.email.trim(), password: data.password }).unwrap();
       if (result.success && result.data) {
         localStorage.setItem("customer_token", result.data.token);
         dispatch(setCustomer({ customer: result.data.customer, token: result.data.token }));
         window.dispatchEvent(new Event("auth-change"));
-        // CartProvider listens for auth-change and merges guest → customer cart.
         redirectedRef.current = true;
         router.replace(resolveStoreHref(redirectTo, pathname));
       } else {
-        setApiError(result.message ?? "Login failed");
+        setApiError(result.message ?? "Login failed. Please check your credentials.");
       }
     } catch (err: any) {
       if (err?.status === "FETCH_ERROR" || err?.code === "ERR_NETWORK") {
-        setApiError("Unable to reach the server. Please check your connection or try again.");
+        setApiError("Unable to reach the server. Please check your internet connection.");
       } else {
         setApiError(err?.data?.message ?? "Invalid email or password");
       }
@@ -85,118 +89,124 @@ function LoginForm() {
   const forgotHref = resolveStoreHref("/account/forgot-password", pathname);
 
   return (
-    <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-apple-lg bg-apple-canvas-parchment">
-            <LogIn className="h-6 w-6 text-apple-ink-muted-80" />
+    <CustomerAuthShell
+      title="Welcome back"
+      subtitle="Sign in to your account to continue shopping"
+      badgeText="Customer Sign In"
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Global API Error Banner */}
+        {apiError ? (
+          <div className="flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50/90 px-3.5 py-2.5 text-xs text-red-700">
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+            <span>{apiError}</span>
           </div>
-          <h1 className={cn("text-display-md", classes.heading)}>Welcome back</h1>
-          <p className={cn("mt-1 text-caption", classes.muted)}>Sign in to your account</p>
-        </div>
+        ) : null}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className={cn("mb-1.5 block text-caption-strong", classes.body)}>Email</label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
-              <input
-                type="email"
-                {...register("email")}
-                required
-                placeholder="you@example.com"
-                className={cn(classes.input, "pl-10")}
-              />
-            </div>
-            {errors.email && <p className="mt-1 text-fine-print text-red-500">{errors.email.message}</p>}
-          </div>
-
-          <div>
-            <label className={cn("mb-1.5 block text-caption-strong", classes.body)}>Password</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-apple-ink-muted-48" />
-              <input
-                type={showPassword ? "text" : "password"}
-                {...register("password")}
-                required
-                placeholder="Enter your password"
-                className={cn(classes.input, "pl-10 pr-10")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-apple-ink-muted-48"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {errors.password && <p className="mt-1 text-fine-print text-red-500">{errors.password.message}</p>}
-          </div>
-
-          {apiError && <p className="rounded-apple-md bg-red-50 px-3 py-2 text-caption text-red-600">{apiError}</p>}
-
-          <StorefrontButton type="submit" disabled={isLoading} className="h-11 w-full">
-            {isLoading ? "Signing in..." : "Sign In"}
-            <ArrowRight className="h-4 w-4" />
-          </StorefrontButton>
-        </form>
-
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className={cn("w-full border-t", classes.divider)} />
-          </div>
-          <div className="relative flex justify-center text-fine-print uppercase">
-            <span className="bg-apple-canvas px-2 text-apple-ink-muted-48">or continue with</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <button
-            type="button"
-            disabled
-            className={cn(
-              "flex items-center justify-center gap-2 rounded-apple-lg border px-4 py-2.5 text-caption font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50",
-              classes.card,
-              classes.body
-            )}
+        {/* Email Field */}
+        <div>
+          <label
+            htmlFor="customer-login-email"
+            className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-700"
           >
-            <svg className="h-4 w-4" viewBox="0 0 24 24">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-            Google
-          </button>
-          <button
-            type="button"
-            disabled
-            className={cn(
-              "flex items-center justify-center gap-2 rounded-apple-lg border px-4 py-2.5 text-caption font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50",
-              classes.card,
-              classes.body
-            )}
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="#1877F2">
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-            </svg>
-            Facebook
-          </button>
+            Email Address
+          </label>
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400">
+              <Mail className="h-4 w-4" />
+            </div>
+            <input
+              id="customer-login-email"
+              type="email"
+              autoComplete="email"
+              {...register("email")}
+              placeholder="you@example.com"
+              className="h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 transition-all hover:border-zinc-300 focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
+            />
+          </div>
+          {errors.email ? (
+            <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
+          ) : null}
         </div>
 
-        <p className={cn("mt-6 text-center text-caption", classes.muted)}>
-          Don&apos;t have an account?{" "}
-          <Link href={registerHref} className="font-medium text-apple-primary underline underline-offset-4" style={{ color: primaryColor }}>
-            Create one
-          </Link>
-        </p>
-        <p className={cn("mt-3 text-center text-caption", classes.muted)}>
-          <Link href={forgotHref} className="underline underline-offset-4" style={{ color: primaryColor }}>
-            Forgot password?
-          </Link>
-        </p>
-      </motion.div>
-    </div>
+        {/* Password Field */}
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label
+              htmlFor="customer-login-password"
+              className="block text-xs font-semibold uppercase tracking-wider text-zinc-700"
+            >
+              Password
+            </label>
+            <Link
+              href={forgotHref}
+              className="text-xs font-medium text-zinc-600 transition-colors hover:text-zinc-900 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400">
+              <Lock className="h-4 w-4" />
+            </div>
+            <input
+              id="customer-login-password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              {...register("password")}
+              placeholder="Enter your password"
+              className="h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50/50 pl-10 pr-11 text-sm text-zinc-900 placeholder:text-zinc-400 transition-all hover:border-zinc-300 focus:border-zinc-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 transition-colors hover:text-zinc-700"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          {errors.password ? (
+            <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
+          ) : null}
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="group mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white shadow-sm transition-all hover:opacity-95 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+          style={{ backgroundColor: primaryColor }}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin text-white" />
+              <span>Signing in...</span>
+            </>
+          ) : (
+            <>
+              <span>Sign In</span>
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </>
+          )}
+        </button>
+      </form>
+
+      {/* Social Buttons */}
+      <CustomerSocialButtons disabled={true} />
+
+      {/* Switch to Register */}
+      <p className="mt-6 text-center text-xs text-zinc-500 sm:text-sm">
+        Don&apos;t have an account?{" "}
+        <Link
+          href={registerHref}
+          className="font-semibold text-zinc-900 underline underline-offset-4 transition-colors hover:text-zinc-700"
+          style={{ color: primaryColor }}
+        >
+          Create one
+        </Link>
+      </p>
+    </CustomerAuthShell>
   );
 }
 

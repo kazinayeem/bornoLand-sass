@@ -33,6 +33,7 @@ export default function FinancialReportsPage() {
   const isBn = language === "bn";
 
   const [activeTab, setActiveTab] = useState("pl");
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   const hasAccess = useHasPermission("accounting:read");
 
@@ -73,7 +74,7 @@ export default function FinancialReportsPage() {
             <RefreshCw className="h-4 w-4" />
             <span>{isBn ? "রিফ্রেশ" : "Refresh"}</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowPrintModal(true)} className="gap-2">
             <Printer className="h-4 w-4" />
             <span>{isBn ? "রিপোর্ট প্রিন্ট" : "Print Report"}</span>
           </Button>
@@ -242,6 +243,56 @@ export default function FinancialReportsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Unified Master Financial Statement Print & Preview Modal */}
+      {showPrintModal && (
+        <DocumentPreviewDialog
+          open={showPrintModal}
+          onClose={() => setShowPrintModal(false)}
+          title={`${isBn ? "আর্থিক বিবরণী" : "Financial Statement"} — ${
+            activeTab === "tb"
+              ? isBn
+                ? "ট্রায়াল ব্যালেন্স"
+                : "Trial Balance"
+              : activeTab === "bs"
+              ? isBn
+                ? "ব্যালেন্স শিট"
+                : "Balance Sheet"
+              : isBn
+              ? "লাভ ও ক্ষতি বিবরণী"
+              : "Profit & Loss"
+          }`}
+          filename={`BornoLand-Financial-Statement-${activeTab.toUpperCase()}-${new Date().toISOString().slice(0, 10)}.pdf`}
+          defaultPageSize={activeTab === "tb" ? "a4-landscape" : "a4-portrait"}
+        >
+          <FinancialReportDocument
+            store={{
+              name: store?.name || "BornoLand Enterprise",
+              shortName: store?.shortName,
+              logoUrl: store?.logoUrl,
+              brandColor: store?.brandColor,
+              address: store?.address,
+              phone: store?.phone,
+              email: store?.email,
+            }}
+            data={{
+              statementType:
+                activeTab === "tb"
+                  ? "trial-balance"
+                  : activeTab === "bs"
+                  ? "balance-sheet"
+                  : "profit-loss",
+              period: `${new Date().toLocaleString("default", { month: "long" })} ${new Date().getFullYear()}`,
+              asOfDate: new Date(),
+              currency: "BDT (৳)",
+              trialBalance: tb,
+              profitAndLoss: pl,
+              balanceSheet: bs,
+            }}
+            isBn={isBn}
+          />
+        </DocumentPreviewDialog>
+      )}
     </div>
   );
 }

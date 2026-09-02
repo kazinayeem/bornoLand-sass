@@ -152,7 +152,7 @@ function buildReportPdfHtml(options: PrintReportPdfOptions) {
     body {
       margin: 0;
       color: #111827;
-      font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hind Siliguri", "Noto Sans Bengali", sans-serif;
       font-size: 10px;
       line-height: 1.35;
       background: #fff;
@@ -206,6 +206,8 @@ function buildReportPdfHtml(options: PrintReportPdfOptions) {
       color: #111827;
     }
     table { width: 100%; border-collapse: collapse; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
     th, td {
       border-bottom: 1px solid #e5e7eb;
       padding: 5px 7px;

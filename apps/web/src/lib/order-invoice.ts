@@ -31,7 +31,7 @@ export async function downloadStoreOrderInvoice(storeId: string, orderId: string
     `${getApiUrl()}/stores/${storeId}/orders/${orderId}/invoice.pdf`,
     getAccessToken(),
   );
-  triggerDownload(blob, `invoice-${orderNumber}.pdf`);
+  triggerDownload(blob, `BornoLand-Invoice-${orderNumber}.pdf`);
 }
 
 export async function viewStoreOrderInvoice(storeId: string, orderId: string) {
@@ -79,7 +79,7 @@ export async function emailStoreOrderInvoice(storeId: string, orderId: string, e
 
 export async function downloadCustomerOrderInvoice(orderId: string, orderNumber: string) {
   const blob = await fetchInvoicePdf(`${getApiUrl()}/orders/${orderId}/invoice.pdf`, customerToken());
-  triggerDownload(blob, `invoice-${orderNumber}.pdf`);
+  triggerDownload(blob, `BornoLand-Invoice-${orderNumber}.pdf`);
 }
 
 export async function viewCustomerOrderInvoice(orderId: string) {
@@ -104,7 +104,7 @@ export async function printCustomerOrderInvoice(orderId: string) {
 
 export async function shareCustomerOrderInvoice(orderId: string, orderNumber: string) {
   const blob = await fetchInvoicePdf(`${getApiUrl()}/orders/${orderId}/invoice.pdf`, customerToken());
-  const file = new File([blob], `invoice-${orderNumber}.pdf`, { type: "application/pdf" });
+  const file = new File([blob], `BornoLand-Invoice-${orderNumber}.pdf`, { type: "application/pdf" });
   if (typeof navigator !== "undefined" && navigator.share && navigator.canShare?.({ files: [file] })) {
     await navigator.share({
       title: `Invoice ${orderNumber}`,

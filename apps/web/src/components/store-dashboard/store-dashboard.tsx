@@ -616,19 +616,19 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
       <div className="grid gap-4 lg:grid-cols-3">
         <PlanCard
           planName={planName || "Starter"}
-          features={features}
+          features={features.map((f: any) => typeof f === "string" ? f : f.name || f.featureKey || "")}
           storage={usage?.storageLimitMB ? `${usage.storageLimitMB} MB` : "Unlimited"}
-          bandwidth={usage?.bandwidthLimitMB ? `${(usage.bandwidthLimitMB / 1024).toFixed(0)} GB` : "Unlimited"}
+          bandwidth="Unlimited"
           billingHref={billingHref}
           delay={0.25}
           labels={d.plan}
         />
 
         <StorageCard
-          usedMB={stats?.totalStorageMB ?? 0}
-          limitMB={usage?.storageLimitMB ?? 500}
-          unlimited={!usage?.storageLimitMB}
-          percentUsed={usage?.storageLimitMB ? Math.round(((stats?.totalStorageMB ?? 0) / usage.storageLimitMB) * 100) : 0}
+          usedMB={stats?.usedMB ?? usage?.storageMB ?? 0}
+          limitMB={stats?.limitMB ?? usage?.storageLimitMB ?? 500}
+          unlimited={stats?.unlimited ?? !usage?.storageLimitMB}
+          percentUsed={stats?.percentUsed ?? (usage?.storageLimitMB ? Math.round(((usage?.storageMB ?? 0) / usage.storageLimitMB) * 100) : 0)}
           billingHref={billingHref}
           delay={0.3}
           labels={d.storage}
@@ -637,7 +637,7 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
         <PerformanceCard
           productCount={store.productCount ?? 0}
           orderCount={store.orderCount ?? 0}
-          mediaCount={stats?.totalFiles ?? 0}
+          mediaCount={stats?.fileCount ?? 0}
           delay={0.35}
           labels={d.storeHealth}
           isBn={isBn}

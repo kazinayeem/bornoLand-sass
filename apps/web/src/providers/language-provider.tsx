@@ -85,6 +85,7 @@ export type Dictionary = {
     expired: string;
     awaitingApproval: string;
   };
+  storeNav: {
     people: string;
     finance: string;
     customerGrowth: string;

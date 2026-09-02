@@ -134,7 +134,7 @@ export const hrmApi = baseApi.injectEndpoints({
         url: `/stores/${storeId}/hrm/employees`,
         params,
       }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-employees` }],
+      providesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-employees` }],
     }),
 
     createEmployee: builder.mutation<ApiEnvelope<Employee>, { storeId: string; body: any }>({
@@ -143,7 +143,7 @@ export const hrmApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-employees` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-employees` }],
     }),
 
     updateEmployee: builder.mutation<ApiEnvelope<Employee>, { storeId: string; employeeId: string; body: any }>({
@@ -152,13 +152,13 @@ export const hrmApi = baseApi.injectEndpoints({
         method: "PUT",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-employees` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-employees` }],
     }),
 
     // ── Organization ──
     getDepartments: builder.query<ApiEnvelope<{ departments: Department[] }>, string>({
       query: (storeId) => ({ url: `/stores/${storeId}/hrm/departments` }),
-      providesTags: (_r, _e, storeId) => [{ type: "Team", id: `${storeId}-depts` }],
+      providesTags: (_r, _e, storeId) => [{ type: "HRM", id: `${storeId}-depts` }],
     }),
 
     createDepartment: builder.mutation<ApiEnvelope<Department>, { storeId: string; body: { name: string; code?: string; description?: string } }>({
@@ -167,12 +167,12 @@ export const hrmApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-depts` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-depts` }],
     }),
 
     getDesignations: builder.query<ApiEnvelope<{ designations: Designation[] }>, string>({
       query: (storeId) => ({ url: `/stores/${storeId}/hrm/designations` }),
-      providesTags: (_r, _e, storeId) => [{ type: "Team", id: `${storeId}-desigs` }],
+      providesTags: (_r, _e, storeId) => [{ type: "HRM", id: `${storeId}-desigs` }],
     }),
 
     createDesignation: builder.mutation<ApiEnvelope<Designation>, { storeId: string; body: { name: string; code?: string; departmentId?: string; description?: string } }>({
@@ -181,12 +181,12 @@ export const hrmApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-desigs` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-desigs` }],
     }),
 
     getShifts: builder.query<ApiEnvelope<{ shifts: Shift[] }>, string>({
       query: (storeId) => ({ url: `/stores/${storeId}/hrm/shifts` }),
-      providesTags: (_r, _e, storeId) => [{ type: "Team", id: `${storeId}-shifts` }],
+      providesTags: (_r, _e, storeId) => [{ type: "HRM", id: `${storeId}-shifts` }],
     }),
 
     createShift: builder.mutation<ApiEnvelope<Shift>, { storeId: string; body: any }>({
@@ -195,7 +195,7 @@ export const hrmApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-shifts` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-shifts` }],
     }),
 
     // ── Attendance ──
@@ -207,7 +207,7 @@ export const hrmApi = baseApi.injectEndpoints({
         url: `/stores/${storeId}/hrm/attendance`,
         params,
       }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-attendance` }],
+      providesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-attendance` }],
     }),
 
     clockIn: builder.mutation<ApiEnvelope<AttendanceRecord>, { storeId: string; employeeId: string }>({
@@ -216,7 +216,7 @@ export const hrmApi = baseApi.injectEndpoints({
         method: "POST",
         body: { employeeId },
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-attendance` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-attendance` }],
     }),
 
     clockOut: builder.mutation<ApiEnvelope<AttendanceRecord>, { storeId: string; employeeId: string }>({
@@ -225,7 +225,7 @@ export const hrmApi = baseApi.injectEndpoints({
         method: "POST",
         body: { employeeId },
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-attendance` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-attendance` }],
     }),
 
     // ── Leaves ──
@@ -234,7 +234,7 @@ export const hrmApi = baseApi.injectEndpoints({
         url: `/stores/${storeId}/hrm/leaves`,
         params,
       }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-leaves` }],
+      providesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-leaves` }],
     }),
 
     applyLeave: builder.mutation<ApiEnvelope<LeaveRequest>, { storeId: string; body: any }>({
@@ -243,7 +243,7 @@ export const hrmApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-leaves` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-leaves` }],
     }),
 
     approveLeave: builder.mutation<ApiEnvelope<LeaveRequest>, { storeId: string; leaveId: string; status: "approved" | "rejected"; managerRemarks?: string }>({
@@ -252,7 +252,7 @@ export const hrmApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-leaves` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-leaves` }],
     }),
 
     // ── Payroll ──
@@ -264,7 +264,7 @@ export const hrmApi = baseApi.injectEndpoints({
         url: `/stores/${storeId}/hrm/payroll`,
         params,
       }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-payroll` }],
+      providesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-payroll` }],
     }),
 
     generatePayroll: builder.mutation<
@@ -276,7 +276,7 @@ export const hrmApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-payroll` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-payroll` }],
     }),
 
     approvePayroll: builder.mutation<ApiEnvelope<Payroll>, { storeId: string; payrollId: string }>({
@@ -284,7 +284,7 @@ export const hrmApi = baseApi.injectEndpoints({
         url: `/stores/${storeId}/hrm/payroll/${payrollId}/approve`,
         method: "POST",
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-payroll` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-payroll` }],
     }),
 
     markPayrollPaid: builder.mutation<ApiEnvelope<Payroll>, { storeId: string; payrollId: string; paymentMethod: string }>({
@@ -293,7 +293,7 @@ export const hrmApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Team", id: `${storeId}-payroll` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-payroll` }],
     }),
   }),
 });

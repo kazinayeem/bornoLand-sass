@@ -211,12 +211,29 @@ type ApiEnvelope<T> = { ok?: boolean; success?: boolean; data?: T; message?: str
 
 export const inventoryApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getInventory: builder.query<ApiEnvelope<InventoryListResponse>, { storeId: string; params?: Record<string, string | number> }>({
-      query: ({ storeId, params }) => ({
-        url: `/stores/${storeId}/inventory`,
-        params,
-      }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Inventory", id: storeId }],
+    getInventory: builder.query<
+      ApiEnvelope<InventoryListResponse>,
+      string | { storeId: string; page?: number; limit?: number; search?: string; params?: Record<string, string | number> }
+    >({
+      query: (arg) => {
+        const storeId = typeof arg === "string" ? arg : arg.storeId;
+        const params =
+          typeof arg === "string"
+            ? undefined
+            : {
+                ...arg.params,
+                ...(arg.page !== undefined ? { page: arg.page } : {}),
+                ...(arg.limit !== undefined ? { limit: arg.limit } : {}),
+                ...(arg.search ? { search: arg.search } : {}),
+              };
+        return {
+          url: `/stores/${storeId}/inventory`,
+          params,
+        };
+      },
+      providesTags: (_r, _e, arg) => [
+        { type: "Inventory", id: typeof arg === "string" ? arg : arg.storeId },
+      ],
     }),
     getInventoryStats: builder.query<ApiEnvelope<InventoryStats>, string>({
       query: (storeId) => ({ url: `/stores/${storeId}/inventory/stats` }),
@@ -225,11 +242,25 @@ export const inventoryApi = baseApi.injectEndpoints({
     getInventoryAnalytics: builder.query<ApiEnvelope<InventoryAnalytics>, string>({
       query: (storeId) => ({ url: `/stores/${storeId}/inventory/analytics` }),
     }),
-    getStockHistory: builder.query<ApiEnvelope<StockHistoryResponse>, { storeId: string; params?: Record<string, string | number> }>({
-      query: ({ storeId, params }) => ({
-        url: `/stores/${storeId}/inventory/history`,
-        params,
-      }),
+    getStockHistory: builder.query<
+      ApiEnvelope<StockHistoryResponse>,
+      string | { storeId: string; page?: number; limit?: number; params?: Record<string, string | number> }
+    >({
+      query: (arg) => {
+        const storeId = typeof arg === "string" ? arg : arg.storeId;
+        const params =
+          typeof arg === "string"
+            ? undefined
+            : {
+                ...arg.params,
+                ...(arg.page !== undefined ? { page: arg.page } : {}),
+                ...(arg.limit !== undefined ? { limit: arg.limit } : {}),
+              };
+        return {
+          url: `/stores/${storeId}/inventory/history`,
+          params,
+        };
+      },
     }),
     adjustStock: builder.mutation<ApiEnvelope<unknown>, { storeId: string; productId: string; quantity: number; variantId?: string; reason?: string; note?: string }>({
       query: ({ storeId, productId, ...body }) => ({
@@ -266,14 +297,24 @@ export const inventoryApi = baseApi.injectEndpoints({
 
     // ─── ERP ────────────────────────────────────────────────────────────────
     getInventorySuppliers: builder.query<
-      ApiEnvelope<{ items: InventorySupplier[]; total: number; page: number; perPage: number }>,
-      { storeId: string; params?: Record<string, string | number> }
+      ApiEnvelope<{ items: InventorySupplier[]; suppliers?: InventorySupplier[]; total: number; page: number; perPage: number }>,
+      string | { storeId: string; page?: number; limit?: number; params?: Record<string, string | number> }
     >({
-      query: ({ storeId, params }) => ({ url: `/stores/${storeId}/inventory/suppliers`, params }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Inventory", id: `${storeId}-suppliers` }],
+      query: (arg) => {
+        const storeId = typeof arg === "string" ? arg : arg.storeId;
+        const params = typeof arg === "string" ? undefined : { ...arg.params, page: arg.page, limit: arg.limit };
+        return { url: `/stores/${storeId}/inventory/suppliers`, params };
+      },
+      providesTags: (_r, _e, arg) => [
+        { type: "Inventory", id: `${typeof arg === "string" ? arg : arg.storeId}-suppliers` },
+      ],
     }),
-    createInventorySupplier: builder.mutation<ApiEnvelope<{ data?: InventorySupplier }>, { storeId: string; body: Partial<InventorySupplier> }>({
-      query: ({ storeId, body }) => ({ url: `/stores/${storeId}/inventory/suppliers`, method: "POST", body }),
+    createInventorySupplier: builder.mutation<ApiEnvelope<{ data?: InventorySupplier }>, { storeId: string; body?: Partial<InventorySupplier>; [key: string]: any }>({
+      query: ({ storeId, body, ...rest }) => ({
+        url: `/stores/${storeId}/inventory/suppliers`,
+        method: "POST",
+        body: body || rest,
+      }),
       invalidatesTags: (_r, _e, { storeId }) => [{ type: "Inventory", id: `${storeId}-suppliers` }],
     }),
     updateInventorySupplier: builder.mutation<ApiEnvelope<unknown>, { storeId: string; id: string; body: Partial<InventorySupplier> }>({
@@ -286,14 +327,24 @@ export const inventoryApi = baseApi.injectEndpoints({
     }),
 
     getInventoryWarehouses: builder.query<
-      ApiEnvelope<{ items: InventoryWarehouse[]; total: number }>,
-      { storeId: string; params?: Record<string, string | number> }
+      ApiEnvelope<{ items: InventoryWarehouse[]; warehouses?: InventoryWarehouse[]; total: number }>,
+      string | { storeId: string; page?: number; limit?: number; params?: Record<string, string | number> }
     >({
-      query: ({ storeId, params }) => ({ url: `/stores/${storeId}/inventory/warehouses`, params }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Inventory", id: `${storeId}-warehouses` }],
+      query: (arg) => {
+        const storeId = typeof arg === "string" ? arg : arg.storeId;
+        const params = typeof arg === "string" ? undefined : { ...arg.params, page: arg.page, limit: arg.limit };
+        return { url: `/stores/${storeId}/inventory/warehouses`, params };
+      },
+      providesTags: (_r, _e, arg) => [
+        { type: "Inventory", id: `${typeof arg === "string" ? arg : arg.storeId}-warehouses` },
+      ],
     }),
-    createInventoryWarehouse: builder.mutation<ApiEnvelope<unknown>, { storeId: string; body: Partial<InventoryWarehouse> }>({
-      query: ({ storeId, body }) => ({ url: `/stores/${storeId}/inventory/warehouses`, method: "POST", body }),
+    createInventoryWarehouse: builder.mutation<ApiEnvelope<unknown>, { storeId: string; body?: Partial<InventoryWarehouse>; [key: string]: any }>({
+      query: ({ storeId, body, ...rest }) => ({
+        url: `/stores/${storeId}/inventory/warehouses`,
+        method: "POST",
+        body: body || rest,
+      }),
       invalidatesTags: (_r, _e, { storeId }) => [{ type: "Inventory", id: `${storeId}-warehouses` }],
     }),
     updateInventoryWarehouse: builder.mutation<ApiEnvelope<unknown>, { storeId: string; id: string; body: Partial<InventoryWarehouse> }>({
@@ -306,30 +357,46 @@ export const inventoryApi = baseApi.injectEndpoints({
     }),
 
     getInventoryPurchaseOrders: builder.query<
-      ApiEnvelope<{ items: InventoryPurchaseOrder[]; total: number }>,
-      { storeId: string; params?: Record<string, string | number> }
+      ApiEnvelope<{ items: InventoryPurchaseOrder[]; purchaseOrders?: InventoryPurchaseOrder[]; total: number }>,
+      string | { storeId: string; page?: number; limit?: number; params?: Record<string, string | number> }
     >({
-      query: ({ storeId, params }) => ({ url: `/stores/${storeId}/inventory/purchase-orders`, params }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Inventory", id: `${storeId}-pos` }],
+      query: (arg) => {
+        const storeId = typeof arg === "string" ? arg : arg.storeId;
+        const params = typeof arg === "string" ? undefined : { ...arg.params, page: arg.page, limit: arg.limit };
+        return { url: `/stores/${storeId}/inventory/purchase-orders`, params };
+      },
+      providesTags: (_r, _e, arg) => [
+        { type: "Inventory", id: `${typeof arg === "string" ? arg : arg.storeId}-pos` },
+      ],
     }),
     createInventoryPurchaseOrder: builder.mutation<
       ApiEnvelope<unknown>,
       {
         storeId: string;
-        body: {
+        body?: {
           supplierId: string;
           warehouseId?: string;
-          status?: string;
-          items: Array<{ productId: string; quantity: number; unitCost?: number; name?: string; sku?: string }>;
+          items: Array<{
+            productId: string;
+            quantity: number;
+            unitCost?: number;
+            name?: string;
+            sku?: string;
+            variantId?: string | null;
+            [key: string]: any;
+          }>;
           notes?: string;
+          status?: string;
         };
+        [key: string]: any;
       }
     >({
-      query: ({ storeId, body }) => ({ url: `/stores/${storeId}/inventory/purchase-orders`, method: "POST", body }),
-      invalidatesTags: (_r, _e, { storeId }) => [
-        { type: "Inventory", id: `${storeId}-pos` },
-        { type: "Inventory", id: storeId },
-      ],
+      query: ({ storeId, body, ...rest }) => ({
+        url: `/stores/${storeId}/inventory/purchase-orders`,
+        method: "POST",
+        body: body || rest,
+      }),
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Inventory", id: `${storeId}-pos` }],
     }),
     updateInventoryPurchaseOrder: builder.mutation<ApiEnvelope<unknown>, { storeId: string; id: string; body: Record<string, unknown> }>({
       query: ({ storeId, id, body }) => ({ url: `/stores/${storeId}/inventory/purchase-orders/${id}`, method: "PUT", body }),

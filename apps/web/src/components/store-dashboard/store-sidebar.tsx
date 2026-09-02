@@ -341,10 +341,10 @@ function NavItem({
             type="button"
             onClick={() => setOpen((prev) => !prev)}
             className={cn(
-              "group relative flex w-full items-center gap-3 rounded-lg px-2.5 h-10 min-h-[40px] text-[13px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:focus-visible:ring-white/20",
+              "group relative flex w-full items-center gap-3 rounded-[4px] px-2.5 h-10 min-h-[40px] text-[13px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#003399]",
               isParentActive
-                ? "bg-zinc-100 text-zinc-950 font-medium dark:bg-white/[0.08] dark:text-white"
-                : "text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-zinc-100",
+                ? "bg-[#ebf0fa] text-[#003399] font-bold dark:bg-[#003399]/20 dark:text-[#FFDA1A]"
+                : "text-[#484848] hover:bg-[#F5F5F5] hover:text-[#111111] dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-white",
               locked && !isParentActive && "opacity-60",
               collapsed && "justify-center px-0"
             )}
@@ -353,15 +353,15 @@ function NavItem({
           >
             {/* Subtle Active Indicator Strip */}
             {isParentActive && (
-              <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-zinc-900 dark:bg-white" />
+              <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#003399] dark:bg-[#FFDA1A]" />
             )}
             <Icon
               strokeWidth={1.75}
               className={cn(
                 "h-[18px] w-[18px] shrink-0 transition-colors duration-150",
                 isParentActive
-                  ? "text-zinc-950 dark:text-white"
-                  : "text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300"
+                  ? "text-[#003399] dark:text-[#FFDA1A]"
+                  : "text-[#767676] group-hover:text-[#111111] dark:text-zinc-500 dark:group-hover:text-zinc-300"
               )}
             />
             {!collapsed && (
@@ -383,7 +383,7 @@ function NavItem({
         </NavTooltipWrapper>
 
         {!collapsed && open && subItems && (
-          <ul className="relative mt-0.5 space-y-0.5 pl-5 ml-4 border-l border-zinc-200/80 dark:border-zinc-800">
+          <ul className="relative mt-0.5 space-y-0.5 pl-5 ml-4 border-l border-[#DFDFDF] dark:border-zinc-800">
             {subItems.map((sub) => {
               const subFullHref = `${basePath}${sub.href}`;
               const subActive = sub.exact
@@ -396,17 +396,17 @@ function NavItem({
                     href={subFullHref}
                     onClick={onNavigate}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-md px-2.5 h-8 min-h-[32px] text-[12.5px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20",
+                      "flex items-center gap-2.5 rounded-[4px] px-2.5 h-8 min-h-[32px] text-[12.5px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#003399]",
                       subActive
-                        ? "bg-zinc-100 text-zinc-950 font-semibold dark:bg-white/[0.08] dark:text-white"
-                        : "text-zinc-500 hover:bg-zinc-100/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.04] dark:hover:text-zinc-200"
+                        ? "bg-[#ebf0fa] text-[#003399] font-bold dark:bg-[#003399]/20 dark:text-[#FFDA1A]"
+                        : "text-[#767676] hover:bg-[#F5F5F5] hover:text-[#111111] dark:text-zinc-400 dark:hover:bg-white/[0.04] dark:hover:text-zinc-200"
                     )}
                   >
                     <SubIcon
                       strokeWidth={1.75}
                       className={cn(
                         "h-3.5 w-3.5 shrink-0",
-                        subActive ? "text-zinc-950 dark:text-white" : "text-zinc-400"
+                        subActive ? "text-[#003399] dark:text-[#FFDA1A]" : "text-[#767676]"
                       )}
                     />
                     <span className="truncate">{sub.label}</span>
@@ -426,10 +426,10 @@ function NavItem({
         href={fullHref}
         onClick={onNavigate}
         className={cn(
-          "group relative flex items-center gap-3 rounded-lg px-2.5 h-10 min-h-[40px] text-[13px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:focus-visible:ring-white/20",
+          "group relative flex items-center gap-3 rounded-[4px] px-2.5 h-10 min-h-[40px] text-[13px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#003399]",
           active
-            ? "bg-zinc-100 text-zinc-950 font-medium dark:bg-white/[0.08] dark:text-white"
-            : "text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-zinc-100",
+            ? "bg-[#ebf0fa] text-[#003399] font-bold dark:bg-[#003399]/20 dark:text-[#FFDA1A]"
+            : "text-[#484848] hover:bg-[#F5F5F5] hover:text-[#111111] dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-zinc-100",
           locked && !active && "opacity-60",
           collapsed && "justify-center px-0"
         )}
@@ -437,15 +437,15 @@ function NavItem({
       >
         {/* Subtle Active Indicator Strip */}
         {active && (
-          <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-zinc-900 dark:bg-white" />
+          <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#003399] dark:bg-[#FFDA1A]" />
         )}
         <Icon
           strokeWidth={1.75}
           className={cn(
             "h-[18px] w-[18px] shrink-0 transition-colors duration-150",
             active
-              ? "text-zinc-950 dark:text-white"
-              : "text-zinc-400 group-hover:text-zinc-600 dark:text-zinc-500 dark:group-hover:text-zinc-300"
+              ? "text-[#003399] dark:text-[#FFDA1A]"
+              : "text-[#767676] group-hover:text-[#111111] dark:text-zinc-500 dark:group-hover:text-zinc-300"
           )}
         />
         {!collapsed && (
@@ -464,9 +464,9 @@ function NavItem({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   const { collapsed } = useSidebar();
-  if (collapsed) return <div className="mx-3 my-2.5 h-px bg-zinc-200/60 dark:bg-zinc-800" />;
+  if (collapsed) return <div className="mx-3 my-2.5 h-px bg-[#DFDFDF] dark:bg-zinc-800" />;
   return (
-    <p className="px-2.5 pt-4 pb-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+    <p className="px-2.5 pt-4 pb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-[#767676] dark:text-zinc-500">
       {children}
     </p>
   );

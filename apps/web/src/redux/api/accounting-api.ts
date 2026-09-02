@@ -93,7 +93,7 @@ export const accountingApi = baseApi.injectEndpoints({
         url: `/stores/${storeId}/accounting/accounts`,
         params,
       }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Billing", id: `${storeId}-accounts` }],
+      providesTags: (_r, _e, { storeId }) => [{ type: "Accounting", id: `${storeId}-accounts` }],
     }),
 
     createAccount: builder.mutation<ApiEnvelope<Account>, { storeId: string; body: any }>({
@@ -102,7 +102,7 @@ export const accountingApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Billing", id: `${storeId}-accounts` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Accounting", id: `${storeId}-accounts` }],
     }),
 
     // ── Journal Entries ──
@@ -114,7 +114,7 @@ export const accountingApi = baseApi.injectEndpoints({
         url: `/stores/${storeId}/accounting/journal`,
         params,
       }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Billing", id: `${storeId}-journal` }],
+      providesTags: (_r, _e, { storeId }) => [{ type: "Accounting", id: `${storeId}-journal` }],
     }),
 
     postJournalEntry: builder.mutation<ApiEnvelope<JournalEntry>, { storeId: string; body: any }>({
@@ -124,8 +124,8 @@ export const accountingApi = baseApi.injectEndpoints({
         body,
       }),
       invalidatesTags: (_r, _e, { storeId }) => [
-        { type: "Billing", id: `${storeId}-journal` },
-        { type: "Billing", id: `${storeId}-accounts` },
+        { type: "Accounting", id: `${storeId}-journal` },
+        { type: "Accounting", id: `${storeId}-accounts` },
       ],
     }),
 
@@ -134,7 +134,7 @@ export const accountingApi = baseApi.injectEndpoints({
       query: (storeId) => ({
         url: `/stores/${storeId}/accounting/statements`,
       }),
-      providesTags: (_r, _e, storeId) => [{ type: "Billing", id: `${storeId}-statements` }],
+      providesTags: (_r, _e, storeId) => [{ type: "Accounting", id: `${storeId}-statements` }],
     }),
 
     // ── Expenses ──
@@ -146,7 +146,7 @@ export const accountingApi = baseApi.injectEndpoints({
         url: `/stores/${storeId}/accounting/expenses`,
         params,
       }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Billing", id: `${storeId}-expenses` }],
+      providesTags: (_r, _e, { storeId }) => [{ type: "Accounting", id: `${storeId}-expenses` }],
     }),
 
     createExpense: builder.mutation<ApiEnvelope<Expense>, { storeId: string; body: any }>({
@@ -156,9 +156,9 @@ export const accountingApi = baseApi.injectEndpoints({
         body,
       }),
       invalidatesTags: (_r, _e, { storeId }) => [
-        { type: "Billing", id: `${storeId}-expenses` },
-        { type: "Billing", id: `${storeId}-accounts` },
-        { type: "Billing", id: `${storeId}-journal` },
+        { type: "Accounting", id: `${storeId}-expenses` },
+        { type: "Accounting", id: `${storeId}-accounts` },
+        { type: "Accounting", id: `${storeId}-journal` },
       ],
     }),
   }),

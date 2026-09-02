@@ -71,6 +71,34 @@ export type LandingCopy = {
       item2: { title: string; subtitle: string; amount: string; status: string };
       item3: { title: string; subtitle: string; amount: string; status: string };
     };
+    // Compatibility fields
+    orders?: string;
+    live?: string;
+    revenueMonth?: string;
+    conversion?: string;
+    customers?: string;
+    products?: string;
+    dashboard?: string;
+    benefits?: string[];
+  };
+  trust: {
+    stores: string;
+    products: string;
+    orders: string;
+    rating: string;
+    logosLabel: string;
+  };
+  features: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    items: Array<{ title: string; description: string }>;
+  };
+  management: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    items: Array<{ title: string; description: string }>;
   };
   problem: {
     eyebrow: string;
@@ -333,6 +361,44 @@ const en: LandingCopy = {
         status: "Received",
       },
     },
+    orders: "Orders",
+    live: "Live",
+    revenueMonth: "Revenue this month",
+    conversion: "Conversion",
+    customers: "Customers",
+    products: "Products",
+    dashboard: "Dashboard",
+    benefits: ["No coding", "Custom domain", "Mobile ready", "SSL included"],
+  },
+  trust: {
+    stores: "Stores launched",
+    products: "Products managed",
+    orders: "Orders processed",
+    rating: "Average rating",
+    logosLabel: "Trusted by growing brands",
+  },
+  features: {
+    eyebrow: "What BornoLand does",
+    title: "Everything you need. Nothing you don’t.",
+    description: "One platform to create your store, sell products, and run day-to-day operations.",
+    items: [
+      { title: "Create your store", description: "Launch a branded online store with your own domain." },
+      { title: "Manage products", description: "Add products, variants, prices, and images effortlessly." },
+      { title: "Track inventory", description: "Know what's in stock across all warehouses." },
+      { title: "Point of Sale", description: "Modern POS for retail checkout and register shifts." },
+    ],
+  },
+  management: {
+    eyebrow: "Store management",
+    title: "Run your business from one dashboard",
+    description: "Products, orders, inventory, invoices, and analytics — together.",
+    items: [
+      { title: "Products", description: "Catalog, variants, pricing, and media in one workspace." },
+      { title: "Orders", description: "Track, fulfill, and update orders with a clear timeline." },
+      { title: "Inventory", description: "Stock levels and low-stock alerts you can act on." },
+      { title: "Invoices", description: "Branded PDFs for every order — download or share." },
+      { title: "Analytics", description: "Revenue, customers, and product performance at a glance." },
+    ],
   },
   problem: {
     eyebrow: "THE PROBLEM & THE CURE",
@@ -742,10 +808,10 @@ const en: LandingCopy = {
       solutions: {
         title: "Solutions",
         links: [
-          { label: "Fashion & Lifestyle", href: "#transformation" },
-          { label: "Electronics & Gadgets", href: "#transformation" },
-          { label: "Wholesale & Distribution", href: "#transformation" },
-          { label: "Multi-Branch Retail", href: "#transformation" },
+          { label: "Fashion & Lifestyle", href: "#platform-architecture" },
+          { label: "Electronics & Gadgets", href: "#platform-architecture" },
+          { label: "Wholesale & Distribution", href: "#platform-architecture" },
+          { label: "Multi-Branch Retail", href: "#platform-architecture" },
         ],
       },
       resources: {
@@ -857,6 +923,44 @@ const bn: LandingCopy = {
         status: "গৃহীত",
       },
     },
+    orders: "মোট অর্ডার",
+    live: "লাইভ স্টোর",
+    revenueMonth: "মোট বিক্রয়",
+    conversion: "কনভার্শন রেট",
+    customers: "কাস্টমার",
+    products: "পণ্য সংখ্যা",
+    dashboard: "ড্যাশবোর্ড",
+    benefits: ["কোডিং লাগবে না", "কাস্টম ডোমেইন", "মোবাইল ফ্রেন্ডলি", "SSL ফ্রি"],
+  },
+  trust: {
+    stores: "অনলাইন শপ চালু",
+    products: "পণ্য ম্যানেজড",
+    orders: "অর্ডার প্রসেসড",
+    rating: "কাস্টমার রেটিং",
+    logosLabel: "বাংলাদেশের জনপ্রিয় সব মার্চেন্টদের প্রথম পছন্দ",
+  },
+  features: {
+    eyebrow: "অল-ইন-ওয়ান সিস্টেম",
+    title: "আপনার পুরো ব্যবসা, এক জায়গায়।",
+    description: "আলাদা আলাদা পেপার বা সফটওয়্যার ছেড়ে একটি মাত্র ড্যাশবোর্ডে পুরো স্টোর ও অর্ডার সামলান।",
+    items: [
+      { title: "অনলাইন দোকান তৈরি করুন", description: "নিজের ব্র্যান্ড, ডোমেইন আর সাবডোমেইন দিয়ে সহজে দোকান চালু করুন।" },
+      { title: "পণ্য ম্যানেজ করুন", description: "পণ্যের ছবি, ভ্যারিয়েন্ট, দাম ও বিবরণ এক জায়গায় রাখুন।" },
+      { title: "ইনভেন্টরি ট্র্যাক করুন", description: "স্টক কত আছে, কী কমছে—অটোমেটিক হিসাব ও অ্যালার্ট পান।" },
+      { title: "পয়েন্ট অব সেল (POS)", description: "দোকানের জন্য আধুনিক পিওএস ক্যাশিয়ার টার্মিনাল।" },
+    ],
+  },
+  management: {
+    eyebrow: "স্টোর ম্যানেজমেন্ট",
+    title: "এক ড্যাশবোর্ডে পুরো ব্যবসা চালান",
+    description: "পণ্য, অর্ডার, ইনভেন্টরি, ইনভয়েস আর অ্যানালিটিক্স—একসাথে।",
+    items: [
+      { title: "পণ্য", description: "ক্যাটালগ, ভ্যারিয়েন্ট, দাম আর মিডিয়া এক ড্যাশবোর্ডে।" },
+      { title: "অর্ডার", description: "অর্ডার ট্র্যাক করুন, ডেলিভারি স্ট্যাটাস আপডেট করুন।" },
+      { title: "ইনভেন্টরি", description: "স্টক লেভেল আর লো-স্টক অ্যালার্ট হাতের কাছে।" },
+      { title: "ইনভয়েস", description: "ব্র্যান্ডেড PDF—ডাউনলোড, শেয়ার বা গ্রাহককে পাঠান।" },
+      { title: "অ্যানালিটিক্স", description: "সেলস, কাস্টমার আর টপ প্রোডাক্ট এক নজরে।" },
+    ],
   },
   problem: {
     eyebrow: "সমস্যা ও সমাধান",
@@ -1266,10 +1370,10 @@ const bn: LandingCopy = {
       solutions: {
         title: "সমাধান",
         links: [
-          { label: "ফ্যাশন ও লাইফস্টাইল", href: "#transformation" },
-          { label: "ইলেকট্রনিক্স ও গ্যাজেট", href: "#transformation" },
-          { label: "পাইকারি ও ডিস্ট্রিবিউশন", href: "#transformation" },
-          { label: "মাল্টি-ব্রাঞ্চ রিটেল", href: "#transformation" },
+          { label: "ফ্যাশন ও লাইফস্টাইল", href: "#platform-architecture" },
+          { label: "ইলেকট্রনিক্স ও গ্যাজেট", href: "#platform-architecture" },
+          { label: "পাইকারি ও ডিস্ট্রিবিউশন", href: "#platform-architecture" },
+          { label: "মাল্টি-ব্রাঞ্চ রিটেল", href: "#platform-architecture" },
         ],
       },
       resources: {

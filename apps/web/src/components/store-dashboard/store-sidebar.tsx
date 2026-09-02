@@ -124,41 +124,54 @@ export type NavGroupDef = {
 export function getSidebarNavGroups(t: Dictionary, isBn = false): NavGroupDef[] {
   const sn = t.storeNav;
   return [
-    // ── COMMERCE & CATALOG ──
+    // ── OVERVIEW ──
     {
-      group: sn.catalog,
+      group: isBn ? "ওভারভিউ" : "OVERVIEW",
       items: [
-        { href: "/products", label: sn.products, icon: Package, permission: "products:read" },
-        { href: "/categories", label: sn.categories, icon: Tags, permission: "categories:read" },
-        { href: "/inventory", label: sn.inventory, icon: Boxes, featureKey: "inventory", permission: "inventory:read" },
+        { href: "/dashboard", label: sn.dashboard, icon: LayoutDashboard, exact: true },
       ],
     },
-    // ── INVENTORY & PROCUREMENT ──
+    // ── BUSINESS ──
     {
-      group: isBn ? "ইনভেন্টরি ও প্রকিউরমেন্ট" : "INVENTORY & PROCUREMENT",
+      group: isBn ? "ব্যবসা ও বাণিজ্য" : "BUSINESS",
       items: [
-        { href: "/inventory/waste", label: sn.wasteLoss, icon: Trash2, featureKey: "inventory", permission: "inventory:read" },
-        { href: "/inventory/ledger", label: sn.stockLedger, icon: ArrowLeftRight, featureKey: "inventory", permission: "inventory:read" },
+        { href: "/orders", label: sn.orders, icon: ShoppingBag, exact: true, permission: "orders:read" },
+        { href: "/customers", label: sn.customers, icon: Users, permission: "customers:read" },
+        { href: "/products", label: sn.products, icon: Package, permission: "products:read" },
+        { href: "/categories", label: sn.categories, icon: Tags, permission: "categories:read" },
+        { href: "/orders/incomplete", label: sn.incompleteOrders, icon: ShoppingCart, featureKey: "incomplete_orders", permission: "orders:read" },
+        { href: "/reviews", label: sn.reviews, icon: Star, featureKey: "reviews", permission: "reviews:read" },
+      ],
+    },
+    // ── INVENTORY ──
+    {
+      group: isBn ? "ইনভেন্টরি ও গুদাম" : "INVENTORY",
+      items: [
+        { href: "/inventory", label: sn.inventory, icon: Boxes, featureKey: "inventory", permission: "inventory:read", exact: true },
         { href: "/inventory/warehouses", label: sn.warehouses, icon: Building2, featureKey: "warehouses", permission: "warehouse:read" },
+        { href: "/inventory/ledger", label: sn.stockLedger, icon: ArrowLeftRight, featureKey: "inventory", permission: "inventory:read" },
+        { href: "/inventory/waste", label: sn.wasteLoss, icon: Trash2, featureKey: "inventory", permission: "inventory:read" },
+      ],
+    },
+    // ── PURCHASING ──
+    {
+      group: isBn ? "ক্রয় ও সরবরাহ" : "PURCHASING",
+      items: [
         { href: "/inventory/purchasing", label: sn.purchasing, icon: Receipt, featureKey: "purchase_orders", permission: "procurement:read" },
         { href: "/inventory/suppliers", label: sn.suppliers, icon: Truck, featureKey: "suppliers", permission: "procurement:read" },
       ],
     },
-    // ── SALES & ORDERS ──
+    // ── SALES & POS ──
     {
-      group: sn.sales,
+      group: isBn ? "বিক্রয় ও পিওএস" : "SALES",
       items: [
-        { href: "/orders", label: sn.orders, icon: ShoppingBag, exact: true, permission: "orders:read" },
-        { href: "/pos", label: sn.pos, icon: Calculator, featureKey: "pos", permission: "pos:read" },
+        { href: "/pos", label: sn.pos, icon: Calculator, featureKey: "pos", permission: "pos:read", exact: true },
         { href: "/pos/shifts", label: sn.posShifts, icon: Clock, featureKey: "pos", permission: "pos:read" },
-        { href: "/orders/incomplete", label: sn.incompleteOrders, icon: ShoppingCart, featureKey: "incomplete_orders", permission: "orders:read" },
-        { href: "/customers", label: sn.customers, icon: Users, permission: "customers:read" },
-        { href: "/reviews", label: sn.reviews, icon: Star, featureKey: "reviews", permission: "reviews:read" },
       ],
     },
     // ── PEOPLE & HRM ──
     {
-      group: sn.people,
+      group: isBn ? "কর্মী ও মানবসম্পদ" : "PEOPLE",
       items: [
         { href: "/hrm/employees", label: sn.employees, icon: Users, featureKey: "employees", permission: "hrm:read" },
         { href: "/hrm/organization", label: sn.organization, icon: Briefcase, featureKey: "departments", permission: "hrm:read" },
@@ -170,42 +183,24 @@ export function getSidebarNavGroups(t: Dictionary, isBn = false): NavGroupDef[] 
     },
     // ── FINANCE & ACCOUNTING ──
     {
-      group: sn.finance,
+      group: isBn ? "হিসাববিজ্ঞান ও অর্থ" : "FINANCE",
       items: [
-        { href: "/finance/accounting", label: sn.accounting, icon: Landmark, featureKey: "chart_of_accounts", permission: "accounting:read" },
+        { href: "/finance/accounting", label: sn.accounting, icon: Landmark, featureKey: "chart_of_accounts", permission: "accounting:read", exact: true },
         { href: "/finance/accounting/coa", label: sn.chartOfAccounts, icon: BookOpen, featureKey: "chart_of_accounts", permission: "accounting:read" },
         { href: "/finance/accounting/journal", label: sn.journalEntries, icon: FileSpreadsheet, featureKey: "journal_entries", permission: "accounting:read" },
         { href: "/finance/expenses", label: sn.expenses, icon: Receipt, featureKey: "expenses", permission: "expenses:read" },
         { href: "/finance/reports", label: sn.financialReports, icon: BarChart3, featureKey: "financial_reports", permission: "accounting:report:view" },
       ],
     },
-    // ── CUSTOMER & CRM ──
+    // ── GROWTH & CRM ──
     {
-      group: sn.customerGrowth,
+      group: isBn ? "গ্রোথ ও সিআরএম" : "GROWTH",
       items: [
         { href: "/crm/deals", label: sn.crmDeals, icon: Target, featureKey: "crm_deals", permission: "crm:read" },
         { href: "/support/tickets", label: sn.supportTickets, icon: Headphones, featureKey: "support_tickets", permission: "support:read" },
         { href: "/marketing", label: sn.marketing, icon: Megaphone, featureKey: "marketing", permission: "marketing:read" },
         { href: "/coupons", label: sn.coupons, icon: Ticket, featureKey: "coupons", permission: "coupons:read" },
         { href: "/settings/tracking", label: sn.trackingPixels, icon: Target, featureKey: "marketing", permission: "marketing:read" },
-      ],
-    },
-    // ── OPERATIONS & WORKFLOW ──
-    {
-      group: sn.operations,
-      items: [
-        { href: "/operations/approvals", label: sn.approvals, icon: CheckSquare, featureKey: "approvals", permission: "operations:read" },
-        { href: "/operations/tasks", label: sn.tasks, icon: Layers, featureKey: "tasks", permission: "operations:read" },
-        { href: "/settings/shipping", label: sn.shipping, icon: Truck, permission: "shipping:read" },
-        { href: "/settings/courier", label: sn.courier, icon: PackageCheck, featureKey: "courier", permission: "shipping:read" },
-        { href: "/settings/payments", label: sn.payments, icon: CreditCard, permission: "payments:read" },
-        { href: "/settings/taxes", label: sn.taxes, icon: Percent, permission: "settings:read" },
-      ],
-    },
-    // ── ANALYTICS & BI ──
-    {
-      group: sn.growth,
-      items: [
         {
           href: "/analytics",
           label: sn.analytics,
@@ -232,9 +227,21 @@ export function getSidebarNavGroups(t: Dictionary, isBn = false): NavGroupDef[] 
         { href: "/reports", label: sn.reports, icon: FileSpreadsheet, featureKey: "reports", permission: "reports:read" },
       ],
     },
-    // ── WEBSITE & CMS ──
+    // ── OPERATIONS ──
     {
-      group: sn.store,
+      group: isBn ? "অপারেশনস" : "OPERATIONS",
+      items: [
+        { href: "/operations/approvals", label: sn.approvals, icon: CheckSquare, featureKey: "approvals", permission: "operations:read" },
+        { href: "/operations/tasks", label: sn.tasks, icon: Layers, featureKey: "tasks", permission: "operations:read" },
+        { href: "/settings/shipping", label: sn.shipping, icon: Truck, permission: "shipping:read" },
+        { href: "/settings/courier", label: sn.courier, icon: PackageCheck, featureKey: "courier", permission: "shipping:read" },
+        { href: "/settings/payments", label: sn.payments, icon: CreditCard, permission: "payments:read" },
+        { href: "/settings/taxes", label: sn.taxes, icon: Percent, permission: "settings:read" },
+      ],
+    },
+    // ── WEBSITE & DESIGN ──
+    {
+      group: isBn ? "ওয়েবসাইট ও ডিজাইন" : "WEBSITE",
       items: [
         { href: "/design", label: sn.design, icon: Palette, permission: "pages:read" },
         { href: "/settings?section=navigation", label: sn.navigation, icon: Menu, permission: "pages:read" },
@@ -249,7 +256,7 @@ export function getSidebarNavGroups(t: Dictionary, isBn = false): NavGroupDef[] 
     },
     // ── SYSTEM & ACCESS ──
     {
-      group: sn.system,
+      group: isBn ? "সিস্টেম ও অ্যাক্সেস" : "SYSTEM",
       items: [
         { href: "/settings?section=general", label: sn.settings, icon: Settings, permission: "settings:read" },
         { href: "/members", label: isBn ? "টিম ও পারমিশন" : "Team & Permissions", icon: Users, permission: "members:read" },

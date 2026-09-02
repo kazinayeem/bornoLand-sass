@@ -116,7 +116,7 @@ describe("Builder → Publish → On-Demand Revalidation Architecture Test Suite
 
     const unpublishResult = await unpublishPage(String(page._id), storeAId);
     assert.equal(unpublishResult.ok, true);
-    assert.equal(unpublishResult.data.page.status, "draft");
+    assert.equal((unpublishResult.data as any)?.page?.status, "draft");
 
     const rollbackResult = await rollbackToVersion(String(page._id), storeAId, 1);
     assert.equal(rollbackResult.ok, true);

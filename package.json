@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
+    "docx": "^9.7.1",
     "prettier": "^3.4.2",
     "turbo": "^2.3.3"
   }

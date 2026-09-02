@@ -1,0 +1,587 @@
+{
+  "metadata": {
+    "generated": "2026-09-02",
+    "branch": "builder-2.1",
+    "totalModules": 41,
+    "totalModels": 71,
+    "totalFrontendRoutes": "200+",
+    "totalBackendRoutes": "92+",
+    "totalFeatures": 51,
+    "totalPermissions": 154,
+    "totalRoles": 6
+  },
+  "technologyStack": {
+    "frontend": {
+      "framework": "Next.js 15 (App Router)",
+      "uiLibrary": "React 19",
+      "stateManagement": "Redux Toolkit + RTK Query",
+      "styling": "Tailwind CSS v4",
+      "uiComponents": "Radix UI",
+      "animations": "Framer Motion",
+      "validation": "Zod 4",
+      "icons": "Lucide React",
+      "jwt": "jose"
+    },
+    "backend": {
+      "framework": "Express 5",
+      "language": "TypeScript 5",
+      "database": "MongoDB + Mongoose 8",
+      "cache": "Redis (ioredis) with in-memory fallback",
+      "jwt": "jsonwebtoken",
+      "passwordHashing": "bcryptjs (12 rounds)",
+      "logging": "Pino",
+      "build": "tsup"
+    },
+    "payments": ["SSLCommerz", "Stripe"],
+    "media": ["Cloudinary", "S3"],
+    "pdf": "pdfkit",
+    "qrCodes": "qrcode",
+    "monorepo": "pnpm workspaces + Turborepo",
+    "deployment": "Docker"
+  },
+  "domains": [
+    {
+      "name": "Commerce",
+      "modules": ["products", "categories", "brands", "collections", "orders", "customers", "reviews", "coupons"],
+      "routePrefix": "/:storeId"
+    },
+    {
+      "name": "Operations",
+      "modules": ["pos", "inventory", "warehouses", "procurement", "suppliers", "waste"],
+      "routePrefix": "/:storeId/inventory"
+    },
+    {
+      "name": "People",
+      "modules": ["hrm"],
+      "routePrefix": "/:storeId/hrm"
+    },
+    {
+      "name": "Finance",
+      "modules": ["accounting"],
+      "routePrefix": "/:storeId/accounting"
+    },
+    {
+      "name": "Growth",
+      "modules": ["crm", "support", "operations"],
+      "routePrefix": "/:storeId/crm"
+    },
+    {
+      "name": "Marketing",
+      "modules": ["marketing", "campaigns", "analytics"],
+      "routePrefix": "/:storeId/marketing"
+    },
+    {
+      "name": "Shipping",
+      "modules": ["shipping", "couriers", "delivery"],
+      "routePrefix": "/:storeId/shipping"
+    },
+    {
+      "name": "Content",
+      "modules": ["pages", "cms", "builder", "navigation", "themes", "templates", "ai"],
+      "routePrefix": "/:storeId/pages"
+    },
+    {
+      "name": "Platform",
+      "modules": ["platform", "settings", "subscriptions", "features", "team", "auth", "email", "notifications", "locations"],
+      "routePrefix": "various"
+    }
+  ],
+  "modules": [
+    {
+      "name": "auth",
+      "domain": "Platform",
+      "files": ["auth.route.ts", "auth.controller.ts", "auth.service.ts", "auth.repository.ts", "auth.validator.ts", "auth.types.ts", "auth-cookies.ts", "refresh-token.model.ts", "verification-token.model.ts"],
+      "models": ["RefreshToken", "VerificationToken"],
+      "endpoints": [
+        {"method": "POST", "path": "/auth/register", "auth": "public", "description": "Register user + tenant + subscription"},
+        {"method": "POST", "path": "/auth/login", "auth": "public", "description": "Login with credentials"},
+        {"method": "POST", "path": "/auth/refresh", "auth": "cookie", "description": "Rotate refresh token"},
+        {"method": "POST", "path": "/auth/logout", "auth": "cookie", "description": "Revoke all tokens"},
+        {"method": "POST", "path": "/auth/forgot-password", "auth": "public", "description": "Send password reset email"},
+        {"method": "POST", "path": "/auth/reset-password", "auth": "public", "description": "Reset password with token"},
+        {"method": "POST", "path": "/auth/verify-email", "auth": "public", "description": "Verify email with token"},
+        {"method": "GET", "path": "/auth/me", "auth": "cookie/bearer", "description": "Get current session"},
+        {"method": "GET", "path": "/auth/google", "auth": "public", "description": "Google OAuth redirect"},
+        {"method": "GET", "path": "/auth/google/callback", "auth": "public", "description": "Google OAuth callback"}
+      ],
+      "middleware": ["requireAuth"],
+      "tenantScoped": false,
+      "featureGated": false
+    },
+    {
+      "name": "team",
+      "domain": "Platform",
+      "files": ["team-member.model.ts", "store-member.model.ts", "team.service.ts", "team.validator.ts", "team.controller.ts", "team.route.ts"],
+      "models": ["TeamMember", "StoreMember"],
+      "endpoints": [
+        {"method": "GET", "path": "/stores/:storeId/members", "auth": "requireAuth", "permission": "members:read", "description": "List store members"},
+        {"method": "POST", "path": "/stores/:storeId/members", "auth": "requireAuth", "permission": "members:manage", "description": "Invite/create member"},
+        {"method": "PATCH", "path": "/stores/:storeId/members/:memberId", "auth": "requireAuth", "permission": "members:manage", "description": "Update member"},
+        {"method": "PATCH", "path": "/stores/:storeId/members/:memberId/status", "auth": "requireAuth", "permission": "members:manage", "description": "Update member status"},
+        {"method": "DELETE", "path": "/stores/:storeId/members/:memberId", "auth": "requireAuth", "permission": "members:manage", "description": "Remove member"},
+        {"method": "POST", "path": "/stores/:storeId/members/:memberId/resend", "auth": "requireAuth", "permission": "members:manage", "description": "Resend invite"},
+        {"method": "POST", "path": "/stores/:storeId/members/:memberId/reset-password", "auth": "requireAuth", "permission": "members:manage", "description": "Reset member password"},
+        {"method": "GET", "path": "/stores/:storeId/members/me/permissions", "auth": "requireAuth", "description": "Get own permissions"},
+        {"method": "GET", "path": "/invite/:token", "auth": "public", "description": "Validate invite token"},
+        {"method": "POST", "path": "/invite/:token", "auth": "public", "description": "Accept invitation"}
+      ],
+      "middleware": ["requireAuth", "requireStorePermission"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "subscriptions",
+      "domain": "Platform",
+      "files": ["subscription.model.ts", "store-subscription.model.ts", "invoice.model.ts", "subscription.constants.ts", "subscription.route.ts", "billing.route.ts", "invoice.route.ts", "subscription-rules.service.ts", "store-subscription.service.ts", "invoice.service.ts", "invoice-pdf.service.ts", "billing-cron.service.ts"],
+      "models": ["Subscription", "StoreSubscription", "Invoice", "InvoiceCounter"],
+      "endpoints": [
+        {"method": "GET", "path": "/subscriptions/billing-config", "auth": "public", "description": "Platform billing settings"},
+        {"method": "GET", "path": "/subscriptions/stores/:storeId", "auth": "requireAuth", "description": "Get store subscription"},
+        {"method": "POST", "path": "/subscriptions/cron/run", "auth": "super_admin", "description": "Trigger billing cron"},
+        {"method": "POST", "path": "/billing/webhook", "auth": "public", "description": "Payment gateway webhook"},
+        {"method": "GET", "path": "/invoices/verify/:verificationCode", "auth": "public", "description": "Verify invoice"},
+        {"method": "GET", "path": "/invoices/store/:storeSlug/:id", "auth": "requireAuth", "description": "Get invoice by store"},
+        {"method": "GET", "path": "/invoices/stores/:storeId", "auth": "requireAuth", "description": "List store invoices"},
+        {"method": "GET", "path": "/invoices/:id", "auth": "requireAuth", "description": "Get invoice"},
+        {"method": "GET", "path": "/invoices/:id/pdf", "auth": "requireAuth", "description": "Download invoice PDF"},
+        {"method": "GET", "path": "/invoices", "auth": "super_admin", "description": "List all invoices"},
+        {"method": "PATCH", "path": "/invoices/:id/status", "auth": "super_admin", "description": "Update invoice status"},
+        {"method": "POST", "path": "/invoices/:id/regenerate-pdf", "auth": "super_admin", "description": "Regenerate PDF"},
+        {"method": "GET", "path": "/invoices/admin/search", "auth": "super_admin", "description": "Search invoices"},
+        {"method": "POST", "path": "/invoices/:id/regenerate-token", "auth": "super_admin", "description": "New verification token"},
+        {"method": "POST", "path": "/invoices/:id/email", "auth": "super_admin", "description": "Email invoice"},
+        {"method": "GET", "path": "/invoices/admin/:id/pdf", "auth": "super_admin", "description": "Download any invoice PDF"}
+      ],
+      "middleware": ["requireAuth", "requireRole"],
+      "tenantScoped": true,
+      "featureGated": false
+    },
+    {
+      "name": "features",
+      "domain": "Platform",
+      "files": ["feature.model.ts", "feature-tier.model.ts", "feature-limit.model.ts", "plan-feature.model.ts", "feature-group.model.ts", "store-usage.model.ts", "feature.constants.ts", "feature.service.ts", "feature-access.service.ts", "feature.controller.ts", "feature.route.ts", "feature.seed.ts"],
+      "models": ["Feature", "FeatureTier", "FeatureLimit", "PlanFeature", "FeatureGroup", "StoreUsage"],
+      "endpoints": [
+        {"method": "GET", "path": "/features/stores/:storeId/access", "auth": "requireAuth", "description": "Get feature access matrix"},
+        {"method": "GET", "path": "/features/groups", "auth": "super_admin", "description": "List feature groups"},
+        {"method": "POST", "path": "/features/groups", "auth": "super_admin", "description": "Create feature group"},
+        {"method": "PUT", "path": "/features/groups/:key", "auth": "super_admin", "description": "Update feature group"},
+        {"method": "GET", "path": "/features/plans/:planId", "auth": "super_admin", "description": "Get plan features"},
+        {"method": "PUT", "path": "/features/plans/:planId", "auth": "super_admin", "description": "Set plan features"},
+        {"method": "GET", "path": "/features", "auth": "super_admin", "description": "List features"},
+        {"method": "POST", "path": "/features", "auth": "super_admin", "description": "Create feature"},
+        {"method": "GET", "path": "/features/:key", "auth": "super_admin", "description": "Get feature"},
+        {"method": "PUT", "path": "/features/:key", "auth": "super_admin", "description": "Update feature"},
+        {"method": "DELETE", "path": "/features/:key", "auth": "super_admin", "description": "Soft-delete feature"},
+        {"method": "GET", "path": "/features/:key/tiers", "auth": "super_admin", "description": "Get feature tiers"},
+        {"method": "PUT", "path": "/features/:key/tiers", "auth": "super_admin", "description": "Set feature tiers"}
+      ],
+      "middleware": ["requireAuth", "requireRole"],
+      "tenantScoped": false,
+      "featureGated": false
+    },
+    {
+      "name": "products",
+      "domain": "Commerce",
+      "models": ["Product"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "categories",
+      "domain": "Commerce",
+      "models": ["Category"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "brands",
+      "domain": "Commerce",
+      "models": ["Brand"],
+      "endpoints": [
+        {"method": "GET", "path": "/:storeId", "auth": "public", "description": "List brands"},
+        {"method": "GET", "path": "/:storeId/:id", "auth": "public", "description": "Get brand"},
+        {"method": "POST", "path": "/:storeId/create", "auth": "requireAuth", "description": "Create brand"},
+        {"method": "PUT", "path": "/:storeId/reorder", "auth": "requireAuth", "description": "Reorder brands"},
+        {"method": "PUT", "path": "/:storeId/:id", "auth": "requireAuth", "description": "Update brand"},
+        {"method": "DELETE", "path": "/:storeId/:id", "auth": "requireAuth", "description": "Delete brand"}
+      ],
+      "tenantScoped": true,
+      "featureGated": false
+    },
+    {
+      "name": "collections",
+      "domain": "Commerce",
+      "models": ["Collection"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "orders",
+      "domain": "Commerce",
+      "models": ["Order"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "customers",
+      "domain": "Commerce",
+      "models": ["Customer"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "reviews",
+      "domain": "Commerce",
+      "models": ["Review"],
+      "endpoints": [
+        {"method": "GET", "path": "/", "auth": "requireAuth", "permission": "reviews", "description": "List reviews"},
+        {"method": "POST", "path": "/", "auth": "requireAuth", "permission": "reviews", "description": "Create review"},
+        {"method": "PUT", "path": "/:id/status", "auth": "requireAuth", "permission": "reviews", "description": "Update review status"},
+        {"method": "DELETE", "path": "/:id", "auth": "requireAuth", "permission": "reviews", "description": "Delete review"}
+      ],
+      "middleware": ["requireAuth", "requireFeatureAccess"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "coupons",
+      "domain": "Commerce",
+      "models": ["Coupon"],
+      "endpoints": [
+        {"method": "POST", "path": "/validate", "auth": "public", "description": "Validate coupon for cart"},
+        {"method": "GET", "path": "/", "auth": "requireAuth", "permission": "read", "description": "List coupons"},
+        {"method": "GET", "path": "/:id", "auth": "requireAuth", "permission": "read", "description": "Get coupon"},
+        {"method": "POST", "path": "/", "auth": "requireAuth", "permission": "write", "description": "Create coupon"},
+        {"method": "PUT", "path": "/:id", "auth": "requireAuth", "permission": "write", "description": "Update coupon"},
+        {"method": "DELETE", "path": "/:id", "auth": "requireAuth", "permission": "write", "description": "Delete coupon"}
+      ],
+      "middleware": ["requireAuth", "requireFeatureAccess", "verifyStoreAccess"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "pos",
+      "domain": "Operations",
+      "models": ["PosShift"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "inventory",
+      "domain": "Operations",
+      "models": ["StockLog", "WasteLog", "InventoryWarehouse", "InventorySupplier", "InventoryPurchaseOrder"],
+      "subModules": 13,
+      "apiRoutes": 48,
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "hrm",
+      "domain": "People",
+      "models": ["HrmEmployee", "HrmDepartment", "HrmDesignation", "HrmShift", "HrmAttendance", "HrmLeave", "HrmPayroll"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "accounting",
+      "domain": "Finance",
+      "models": ["AccountingAccount", "AccountingJournalEntry", "AccountingExpense"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "crm",
+      "domain": "Growth",
+      "models": ["CrmDeal"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "support",
+      "domain": "Growth",
+      "models": ["SupportTicket"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "operations",
+      "domain": "Growth",
+      "models": ["OperationTask"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "marketing",
+      "domain": "Marketing",
+      "models": ["Campaign"],
+      "endpoints": [
+        {"method": "GET", "path": "/campaigns", "auth": "requireAuth", "permission": "marketing", "description": "List campaigns"},
+        {"method": "POST", "path": "/campaigns", "auth": "requireAuth", "permission": "marketing", "description": "Create campaign"},
+        {"method": "PUT", "path": "/campaigns/:id", "auth": "requireAuth", "permission": "marketing", "description": "Update campaign"},
+        {"method": "DELETE", "path": "/campaigns/:id", "auth": "requireAuth", "permission": "marketing", "description": "Delete campaign"}
+      ],
+      "middleware": ["requireAuth", "requireFeatureAccess"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "analytics",
+      "domain": "Marketing",
+      "models": ["PageView", "VisitorSession", "TrafficSource", "DailyAnalytic", "MonthlyAnalytic", "VisitorStatistic"],
+      "endpoints": [
+        {"method": "POST", "path": "/track/:storeId", "auth": "public+ratelimit", "description": "Track page view"},
+        {"method": "POST", "path": "/track/:storeId/session-end", "auth": "public+ratelimit", "description": "Track session end"},
+        {"method": "GET", "path": "/:storeId/stats", "auth": "requireAuth", "description": "Analytics stats"},
+        {"method": "GET", "path": "/:storeId/charts", "auth": "requireAuth", "description": "Visitor charts"},
+        {"method": "GET", "path": "/:storeId/traffic-sources", "auth": "requireAuth", "description": "Traffic sources"},
+        {"method": "GET", "path": "/:storeId/devices", "auth": "requireAuth", "description": "Device breakdown"},
+        {"method": "GET", "path": "/:storeId/top-content", "auth": "requireAuth", "description": "Top content"},
+        {"method": "GET", "path": "/:storeId/live", "auth": "requireAuth", "description": "Live visitors"},
+        {"method": "GET", "path": "/:storeId/cities", "auth": "requireAuth", "description": "City analytics"},
+        {"method": "GET", "path": "/:storeId/conversion", "auth": "requireAuth", "description": "Conversion funnel"},
+        {"method": "POST", "path": "/:storeId/aggregate", "auth": "requireAuth", "description": "Trigger aggregation"},
+        {"method": "GET", "path": "/analytics/overview", "auth": "super_admin", "description": "Platform analytics"},
+        {"method": "GET", "path": "/analytics/stores/:storeId", "auth": "super_admin", "description": "Store analytics"}
+      ],
+      "middleware": ["requireAuth", "analyticsTrackRateLimit", "requireRole"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "shipping",
+      "domain": "Shipping",
+      "models": ["ShippingZone"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "couriers",
+      "domain": "Shipping",
+      "models": ["StoreCourier"],
+      "providers": ["pathao", "redx", "steadfast", "paperfly", "sundarban"],
+      "endpoints": [
+        {"method": "GET", "path": "/access", "auth": "requireAuth", "description": "Get courier access list"},
+        {"method": "PUT", "path": "/access", "auth": "requireAuth+super_admin", "description": "Update courier access"},
+        {"method": "GET", "path": "/", "auth": "requireAuth", "description": "List store couriers"},
+        {"method": "GET", "path": "/:provider", "auth": "requireAuth", "description": "Get courier config"},
+        {"method": "PUT", "path": "/:provider", "auth": "requireAuth", "description": "Update courier config"},
+        {"method": "POST", "path": "/:provider/test", "auth": "requireAuth", "description": "Test courier connection"}
+      ],
+      "shipmentEndpoints": [
+        {"method": "GET", "path": "/orders/:orderId/shipment-options", "description": "Get shipment options"},
+        {"method": "POST", "path": "/orders/:orderId/shipment", "description": "Create shipment"},
+        {"method": "POST", "path": "/orders/:orderId/shipment/cancel", "description": "Cancel shipment"},
+        {"method": "GET", "path": "/orders/:orderId/shipment/track", "description": "Track shipment"}
+      ],
+      "tenantScoped": true,
+      "featureGated": false
+    },
+    {
+      "name": "delivery",
+      "domain": "Shipping",
+      "models": ["DeliveryZone"],
+      "tenantScoped": true,
+      "featureGated": false
+    },
+    {
+      "name": "notifications",
+      "domain": "Platform",
+      "models": ["Notification", "BillingNotification", "Contact", "Newsletter"],
+      "endpoints": [
+        {"method": "POST", "path": "/contact/submit", "auth": "public", "description": "Submit contact form"},
+        {"method": "GET", "path": "/contact-messages/", "auth": "requireAuth", "description": "List contact messages"},
+        {"method": "GET", "path": "/contact-messages/export", "auth": "requireAuth", "description": "Export CSV"},
+        {"method": "GET", "path": "/contact-messages/:id", "auth": "requireAuth", "description": "Get message"},
+        {"method": "PATCH", "path": "/contact-messages/:id", "auth": "requireAuth", "description": "Update message"},
+        {"method": "DELETE", "path": "/contact-messages/:id", "auth": "requireAuth", "description": "Delete message"},
+        {"method": "POST", "path": "/newsletter/subscribe", "auth": "public", "description": "Subscribe to newsletter"},
+        {"method": "GET", "path": "/notifications/", "auth": "requireAuth", "description": "List notifications"},
+        {"method": "GET", "path": "/notifications/unread-count", "auth": "requireAuth", "description": "Get unread count"},
+        {"method": "PUT", "path": "/notifications/read-all", "auth": "requireAuth", "description": "Mark all read"},
+        {"method": "PUT", "path": "/notifications/:id/read", "auth": "requireAuth", "description": "Mark one read"},
+        {"method": "DELETE", "path": "/notifications/", "auth": "requireAuth", "description": "Clear all"},
+        {"method": "DELETE", "path": "/notifications/:id", "auth": "requireAuth", "description": "Delete one"}
+      ],
+      "tenantScoped": true,
+      "featureGated": false
+    },
+    {
+      "name": "email",
+      "domain": "Platform",
+      "models": ["StoreEmailConfig", "StoreEmailBranding", "StoreEmailLog", "StoreEmailTemplate"],
+      "endpoints": [
+        {"method": "GET", "path": "/:storeId/email/config", "auth": "requireAuth", "description": "Get SMTP config"},
+        {"method": "PUT", "path": "/:storeId/email/config", "auth": "requireAuth", "description": "Update SMTP config"},
+        {"method": "GET", "path": "/:storeId/email/templates", "auth": "requireAuth", "description": "List templates"},
+        {"method": "GET", "path": "/:storeId/email/templates/:id", "auth": "requireAuth", "description": "Get template"},
+        {"method": "PUT", "path": "/:storeId/email/templates/:id", "auth": "requireAuth", "description": "Update template"},
+        {"method": "POST", "path": "/:storeId/email/templates/:id/reset", "auth": "requireAuth", "description": "Reset template"},
+        {"method": "POST", "path": "/:storeId/email/templates/:id/duplicate", "auth": "requireAuth", "description": "Duplicate template"},
+        {"method": "GET", "path": "/:storeId/email/branding", "auth": "requireAuth", "description": "Get branding"},
+        {"method": "PUT", "path": "/:storeId/email/branding", "auth": "requireAuth", "description": "Update branding"},
+        {"method": "POST", "path": "/:storeId/email/test", "auth": "requireAuth", "description": "Send test email"},
+        {"method": "GET", "path": "/:storeId/email/logs", "auth": "requireAuth", "description": "List email logs"},
+        {"method": "GET", "path": "/:storeId/email/logs/:logId", "auth": "requireAuth", "description": "Get email log"}
+      ],
+      "tenantScoped": true,
+      "featureGated": false
+    },
+    {
+      "name": "platform",
+      "domain": "Platform",
+      "endpoints": [
+        {"method": "GET", "path": "/overview", "auth": "super_admin", "description": "Platform overview"},
+        {"method": "GET", "path": "/revenue-analytics", "auth": "super_admin", "description": "Revenue analytics"},
+        {"method": "GET", "path": "/subscription-revenue", "auth": "super_admin", "description": "Subscription revenue"},
+        {"method": "GET", "path": "/payment-dashboard", "auth": "super_admin", "description": "Payment dashboard"},
+        {"method": "GET", "path": "/finance", "auth": "super_admin", "description": "Platform finance"},
+        {"method": "GET", "path": "/reports/revenue", "auth": "super_admin", "description": "Revenue report"},
+        {"method": "GET", "path": "/reports/stores", "auth": "super_admin", "description": "Store report"},
+        {"method": "GET", "path": "/reports/subscriptions", "auth": "super_admin", "description": "Subscription report"},
+        {"method": "GET", "path": "/reports/payments", "auth": "super_admin", "description": "Payment report"},
+        {"method": "GET", "path": "/orders", "auth": "super_admin", "description": "Order report"}
+      ],
+      "middleware": ["requireAuth", "requireRole"],
+      "tenantScoped": false,
+      "featureGated": false
+    },
+    {
+      "name": "settings",
+      "domain": "Platform",
+      "models": ["PlatformSettings"],
+      "tenantScoped": false,
+      "featureGated": false
+    },
+    {
+      "name": "pages",
+      "domain": "Content",
+      "models": ["StorePage", "PageHistory", "PageVersion"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "cms",
+      "domain": "Content",
+      "models": ["CmsPage", "Faq"],
+      "tenantScoped": true,
+      "featureGated": false
+    },
+    {
+      "name": "builder",
+      "domain": "Content",
+      "models": ["BuilderTemplate", "GlobalSection"],
+      "tenantScoped": true,
+      "featureGated": true
+    },
+    {
+      "name": "navigation",
+      "domain": "Content",
+      "models": ["Navigation", "MenuItem"],
+      "tenantScoped": true,
+      "featureGated": false
+    },
+    {
+      "name": "themes",
+      "domain": "Content",
+      "models": ["Template"],
+      "tenantScoped": true,
+      "featureGated": false
+    },
+    {
+      "name": "templates",
+      "domain": "Content",
+      "models": [],
+      "note": "Empty directory",
+      "tenantScoped": true,
+      "featureGated": false
+    },
+    {
+      "name": "ai",
+      "domain": "Content",
+      "models": [],
+      "note": "No dedicated model - uses external AI APIs",
+      "tenantScoped": true,
+      "featureGated": false
+    },
+    {
+      "name": "tax",
+      "domain": "Commerce",
+      "models": ["TaxClass"],
+      "tenantScoped": true,
+      "featureGated": false
+    },
+    {
+      "name": "locations",
+      "domain": "Platform",
+      "models": [],
+      "note": "Static Bangladesh location data",
+      "tenantScoped": false,
+      "featureGated": false
+    }
+  ],
+  "permissions": {
+    "modules": [
+      "products", "categories", "inventory", "warehouse", "procurement",
+      "pos", "orders", "customers", "coupons", "reviews", "pages", "media",
+      "analytics", "settings", "members", "billing", "marketing", "shipping",
+      "payments", "reports", "hrm", "finance"
+    ],
+    "actions": ["read", "create", "update", "delete", "export", "manage", "refund"],
+    "roles": {
+      "owner": "Full access, cannot be demoted/removed",
+      "admin": "Broad access across all modules",
+      "manager": "Module-level management",
+      "staff": "Limited operational access",
+      "cashier": "POS-only access",
+      "viewer": "Read-only access"
+    }
+  },
+  "features": {
+    "totalSeeded": 51,
+    "groups": ["Commerce", "Inventory Management", "Content", "Marketing & Tracking", "Platform"],
+    "types": ["boolean", "limit", "tier"],
+    "keyFeatures": [
+      {"key": "products", "type": "limit", "limit": 50},
+      {"key": "categories", "type": "limit", "limit": 20},
+      {"key": "inventory", "type": "boolean"},
+      {"key": "orders", "type": "limit", "limit": 0},
+      {"key": "customers", "type": "limit", "limit": 0},
+      {"key": "staff", "type": "limit", "limit": 1},
+      {"key": "storage", "type": "limit", "limit": 1, "unit": "GB"},
+      {"key": "analytics", "type": "tier", "tiers": ["disabled", "basic", "advanced", "enterprise"]},
+      {"key": "page_builder", "type": "limit", "limit": 10},
+      {"key": "media", "type": "limit", "limit": 0},
+      {"key": "courier", "type": "boolean"},
+      {"key": "meta_pixel", "type": "boolean"},
+      {"key": "tiktok_pixel", "type": "boolean"},
+      {"key": "google_analytics", "type": "boolean"}
+    ]
+  },
+  "middleware": {
+    "global": ["helmet", "cors", "express.json", "express.urlencoded", "globalRateLimit", "subdomainDetector", "pino-http", "requestId"],
+    "custom": [
+      {"name": "auth.middleware.ts", "exports": ["requireAuth"], "attaches": "req.user"},
+      {"name": "rate-limit.middleware.ts", "exports": ["globalRateLimit", "authRateLimit", "writeRateLimit", "sensitiveWriteRateLimit", "analyticsTrackRateLimit", "newsletterRateLimit"]},
+      {"name": "validate.middleware.ts", "exports": ["validate", "validateQuery", "validateParams"]},
+      {"name": "role.middleware.ts", "exports": ["requireRole"]},
+      {"name": "store-permission.middleware.ts", "exports": ["requireStoreAccess", "requireStorePermission", "requireStoreModule", "requireAllStorePermissions", "verifyStoreAccess", "getAuthorizedStoreId"], "attaches": "req.storeContext"},
+      {"name": "page-store.middleware.ts", "exports": ["attachStoreIdFromPage"], "attaches": "req.resolvedStoreId"},
+      {"name": "subdomain.middleware.ts", "exports": ["subdomainDetector", "resolveStoreFromSubdomain"], "attaches": "req.subdomain, req.store, req.tenant"},
+      {"name": "error.middleware.ts", "exports": ["notFoundHandler", "errorHandler"]},
+      {"name": "ownership.middleware.ts", "exports": ["requireStoreOwnership"], "attaches": "req.resource"},
+      {"name": "tenant.middleware.ts", "exports": ["requireTenantScope"], "attaches": "req.params.tenantId"},
+      {"name": "store-access.middleware.ts", "exports": ["requireStoreAccess", "requireStoreAccessForParam"]},
+      {"name": "plan-enforcement.middleware.ts", "exports": ["requirePlanLimit", "requireFeatureEnabled", "requireStorageAvailable", "requireSubscriptionActive"]},
+      {"name": "feature.middleware.ts", "exports": ["checkStoreStatusMiddleware", "checkSubscriptionMiddleware", "checkFeatureMiddleware", "checkLimitMiddleware", "checkTierMiddleware", "requireFeatureAccess", "requireAnyFeature"]}
+    ]
+  },
+  "rateLimits": [
+    {"name": "globalRateLimit", "window": "1min", "max": 100},
+    {"name": "authRateLimit", "window": "1min", "max": 10},
+    {"name": "writeRateLimit", "window": "1min", "max": 30},
+    {"name": "sensitiveWriteRateLimit", "window": "1min", "max": 10},
+    {"name": "analyticsTrackRateLimit", "window": "1min", "max": 60},
+    {"name": "newsletterRateLimit", "window": "1min", "max": 5}
+  ]
+}

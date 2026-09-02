@@ -23,6 +23,7 @@ import {
   approvePayrollController,
   markPaidPayrollController,
 } from "./hrm.controller.js";
+import { hrmSelfServiceRouter } from "./hrm-self-service.route.js";
 
 export const hrmRouter: Router = Router({ mergeParams: true });
 
@@ -31,6 +32,9 @@ const hrmGuard = requireFeatureAccess("employees", { getStoreId: storeId });
 const payrollGuard = requireFeatureAccess("payroll", { getStoreId: storeId });
 
 hrmRouter.use(requireAuth);
+
+// ── Dedicated Employee Self-Service Portal Routes ──
+hrmRouter.use("/self-service", hrmSelfServiceRouter);
 
 // Employees
 hrmRouter.get("/employees", hrmGuard, listEmployeesController);

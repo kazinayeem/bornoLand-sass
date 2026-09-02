@@ -1,4 +1,5 @@
 import mongoose, { type InferSchemaType } from "mongoose";
+import { STORE_MEMBER_ROLES } from "../../common/types/permissions.js";
 
 const { Schema, model, models } = mongoose;
 
@@ -18,10 +19,11 @@ const storeMemberSchema = new Schema(
 
     email:    { type: String, required: true, lowercase: true, trim: true, index: true },
     name:     { type: String, default: "", trim: true },
+    memberCode: { type: String, default: "", trim: true, index: true },
 
     role: {
       type: String,
-      enum: ["owner", "admin", "manager", "staff", "viewer"],
+      enum: STORE_MEMBER_ROLES,
       required: true,
     },
 

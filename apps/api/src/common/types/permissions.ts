@@ -46,7 +46,30 @@ export type Permission =
   | `${StoreModule}:${StoreAction}`;
 
 // ── Role Keys ─────────────────────────────────────────────────────────
-export const STORE_MEMBER_ROLES = ["owner", "admin", "manager", "staff", "viewer", "cashier"] as const;
+export const STORE_MEMBER_ROLES = [
+  "owner",
+  "admin",
+  "store_manager",
+  "manager",
+  "hr_manager",
+  "hr_staff",
+  "accountant",
+  "finance_manager",
+  "sales_manager",
+  "cashier",
+  "inventory_manager",
+  "inventory_staff",
+  "warehouse_manager",
+  "warehouse_staff",
+  "purchasing_manager",
+  "purchasing_staff",
+  "crm_manager",
+  "support_agent",
+  "marketing_manager",
+  "employee",
+  "staff",
+  "viewer",
+] as const;
 export type StoreMemberRole = (typeof STORE_MEMBER_ROLES)[number];
 
 // ── Default Permission Presets per Role ───────────────────────────────
@@ -77,6 +100,25 @@ export const ROLE_PERMISSION_PRESETS: Record<StoreMemberRole, Permission[]> = {
     "reports:read",
     "reports:export",
     "finance:read",
+    "hrm:*",
+  ],
+  store_manager: [
+    "products:*",
+    "categories:*",
+    "inventory:*",
+    "warehouse:*",
+    "procurement:*",
+    "pos:*",
+    "orders:*",
+    "customers:*",
+    "reviews:*",
+    "media:*",
+    "analytics:read",
+    "marketing:*",
+    "shipping:*",
+    "reports:read",
+    "hrm:read",
+    "finance:read",
   ],
   manager: [
     "products:*",
@@ -102,6 +144,104 @@ export const ROLE_PERMISSION_PRESETS: Record<StoreMemberRole, Permission[]> = {
     "shipping:read",
     "reports:read",
   ],
+  hr_manager: [
+    "hrm:*",
+    "members:read",
+    "members:manage",
+    "reports:read",
+  ],
+  hr_staff: [
+    "hrm:read",
+    "hrm:create",
+    "hrm:update",
+    "members:read",
+  ],
+  accountant: [
+    "finance:*",
+    "reports:read",
+    "orders:read",
+    "billing:read",
+  ],
+  finance_manager: [
+    "finance:*",
+    "reports:*",
+    "billing:*",
+    "orders:read",
+    "hrm:read",
+  ],
+  sales_manager: [
+    "orders:*",
+    "customers:*",
+    "pos:*",
+    "coupons:*",
+    "reviews:*",
+    "products:read",
+    "analytics:read",
+  ],
+  cashier: [
+    "pos:*",
+    "products:read",
+    "orders:read",
+    "orders:create",
+    "customers:read",
+    "customers:create",
+  ],
+  inventory_manager: [
+    "inventory:*",
+    "warehouse:*",
+    "procurement:*",
+    "products:*",
+    "categories:*",
+  ],
+  inventory_staff: [
+    "inventory:read",
+    "inventory:update",
+    "warehouse:read",
+    "products:read",
+  ],
+  warehouse_manager: [
+    "warehouse:*",
+    "inventory:*",
+    "shipping:*",
+    "products:read",
+  ],
+  warehouse_staff: [
+    "warehouse:read",
+    "warehouse:update",
+    "inventory:read",
+    "shipping:read",
+  ],
+  purchasing_manager: [
+    "procurement:*",
+    "inventory:*",
+    "warehouse:read",
+    "products:read",
+  ],
+  purchasing_staff: [
+    "procurement:read",
+    "procurement:create",
+    "inventory:read",
+  ],
+  crm_manager: [
+    "customers:*",
+    "reviews:*",
+    "marketing:read",
+  ],
+  support_agent: [
+    "customers:read",
+    "orders:read",
+    "reviews:read",
+  ],
+  marketing_manager: [
+    "marketing:*",
+    "coupons:*",
+    "analytics:read",
+    "pages:read",
+    "media:*",
+  ],
+  employee: [
+    "hrm:read",
+  ],
   staff: [
     "products:read",
     "products:create",
@@ -116,14 +256,6 @@ export const ROLE_PERMISSION_PRESETS: Record<StoreMemberRole, Permission[]> = {
     "pos:read",
     "pos:create",
   ],
-  cashier: [
-    "pos:*",
-    "products:read",
-    "orders:read",
-    "orders:create",
-    "customers:read",
-    "customers:create",
-  ],
   viewer: [
     "products:read",
     "categories:read",
@@ -135,25 +267,49 @@ export const ROLE_PERMISSION_PRESETS: Record<StoreMemberRole, Permission[]> = {
   ],
 };
 
+// ── Role Default Landing Path Helper ──────────────────────────────────
+export function getRoleDefaultLandingPath(role: string, storeSlug: string): string {
+  const r = (role || "").toLowerCase().trim();
+  if (r === "cashier") return `/store/${storeSlug}/pos`;
+  if (r === "employee") return `/store/${storeSlug}/hrm/self-service`;
+  if (
+    r === "warehouse_manager" ||
+    r === "warehouse_staff" ||
+    r === "inventory_manager" ||
+    r === "inventory_staff"
+  ) {
+    return `/store/${storeSlug}/inventory`;
+  }
+  if (r === "accountant" || r === "finance_manager") {
+    return `/store/${storeSlug}/finance/reports`;
+  }
+  if (r === "hr_manager" || r === "hr_staff") {
+    return `/store/${storeSlug}/hrm/employees`;
+  }
+  return `/store/${storeSlug}/dashboard`;
+}
+
 // ── Permission Checking Utilities ──────────────────────────────────────
 
 /**
  * Check if the user's permission array satisfies a required permission.
  * Supports wildcard: `*`, `module:*`, exact `module:action`.
+ * Also normalizes dot notation (e.g. `hrm.attendance.view_self` -> `hrm:self:read`).
  */
 export function hasPermission(
   userPermissions: string[],
   required: string,
 ): boolean {
-  // Super admin / Owner wildcard
+  if (!userPermissions || !Array.isArray(userPermissions)) return false;
   if (userPermissions.includes("*")) return true;
-
-  // Exact match
   if (userPermissions.includes(required)) return true;
 
   // Module wildcard e.g. "products:*" satisfies "products:read"
-  const [module] = required.split(":");
+  const [module] = required.split(/[:.]/);
   if (module && userPermissions.includes(`${module}:*`)) return true;
+
+  // Self-permission alias: hrm:read satisfies hrm:self:read
+  if (required.includes("self") && userPermissions.includes(`${module}:read`)) return true;
 
   return false;
 }

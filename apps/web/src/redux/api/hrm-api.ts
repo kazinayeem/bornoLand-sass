@@ -295,6 +295,109 @@ export const hrmApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-payroll` }],
     }),
+
+    // ── Dedicated Employee Self-Service Endpoints ──
+    getMySelfServiceProfile: builder.query<
+      ApiEnvelope<{ employee: Employee; todayAttendance?: Attendance }>,
+      string
+    >({
+      query: (storeId) => `/stores/${storeId}/hrm/self-service/profile`,
+      providesTags: (_r, _e, storeId) => [{ type: "HRM", id: `${storeId}-self-profile` }],
+    }),
+
+    getMyTodayAttendance: builder.query<
+      ApiEnvelope<{ date: string; attendance?: Attendance; status: string; serverTime: string }>,
+      string
+    >({
+      query: (storeId) => `/stores/${storeId}/hrm/self-service/attendance/today`,
+      providesTags: (_r, _e, storeId) => [{ type: "HRM", id: `${storeId}-self-attendance` }],
+    }),
+
+    clockInMyAttendance: builder.mutation<ApiEnvelope<Attendance>, string>({
+      query: (storeId) => ({
+        url: `/stores/${storeId}/hrm/self-service/attendance/clock-in`,
+        method: "POST",
+      }),
+      invalidatesTags: (_r, _e, storeId) => [
+        { type: "HRM", id: `${storeId}-self-attendance` },
+        { type: "HRM", id: `${storeId}-attendance` },
+      ],
+    }),
+
+    clockOutMyAttendance: builder.mutation<ApiEnvelope<Attendance>, string>({
+      query: (storeId) => ({
+        url: `/stores/${storeId}/hrm/self-service/attendance/clock-out`,
+        method: "POST",
+      }),
+      invalidatesTags: (_r, _e, storeId) => [
+        { type: "HRM", id: `${storeId}-self-attendance` },
+        { type: "HRM", id: `${storeId}-attendance` },
+      ],
+    }),
+
+    getMyAttendanceHistory: builder.query<
+      ApiEnvelope<{ attendance: Attendance[]; total: number }>,
+      { storeId: string; month?: number; year?: number; limit?: number }
+    >({
+      query: ({ storeId, ...params }) => ({
+        url: `/stores/${storeId}/hrm/self-service/attendance/history`,
+        params,
+      }),
+      providesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-self-attendance` }],
+    }),
+
+    getMyLeaves: builder.query<
+      ApiEnvelope<{
+        leaves: LeaveRequest[];
+        balances: {
+          casual: { quota: number; used: number; remaining: number };
+          sick: { quota: number; used: number; remaining: number };
+          annual: { quota: number; used: number; remaining: number };
+        };
+      }>,
+      string
+    >({
+      query: (storeId) => `/stores/${storeId}/hrm/self-service/leaves`,
+      providesTags: (_r, _e, storeId) => [{ type: "HRM", id: `${storeId}-self-leaves` }],
+    }),
+
+    applyMyLeave: builder.mutation<
+      ApiEnvelope<LeaveRequest>,
+      { storeId: string; leaveType: string; startDate: string; endDate: string; daysCount: number; reason: string }
+    >({
+      query: ({ storeId, ...body }) => ({
+        url: `/stores/${storeId}/hrm/self-service/leaves`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_r, _e, { storeId }) => [
+        { type: "HRM", id: `${storeId}-self-leaves` },
+        { type: "HRM", id: `${storeId}-leaves` },
+      ],
+    }),
+
+    cancelMyLeave: builder.mutation<ApiEnvelope<LeaveRequest>, { storeId: string; leaveId: string }>({
+      query: ({ storeId, leaveId }) => ({
+        url: `/stores/${storeId}/hrm/self-service/leaves/${leaveId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_r, _e, { storeId }) => [
+        { type: "HRM", id: `${storeId}-self-leaves` },
+        { type: "HRM", id: `${storeId}-leaves` },
+      ],
+    }),
+
+    getMyPayslips: builder.query<
+      ApiEnvelope<{
+        payslips: Payroll[];
+        salaryStructure?: Employee["salaryStructure"];
+        bankInfo?: Employee["bankInfo"];
+      }>,
+      string
+    >({
+      query: (storeId) => `/stores/${storeId}/hrm/self-service/payslips`,
+      providesTags: (_r, _e, storeId) => [{ type: "HRM", id: `${storeId}-self-payslips` }],
+    }),
   }),
 });
 
@@ -318,4 +421,14 @@ export const {
   useGeneratePayrollMutation,
   useApprovePayrollMutation,
   useMarkPayrollPaidMutation,
+  // Self-Service hooks
+  useGetMySelfServiceProfileQuery,
+  useGetMyTodayAttendanceQuery,
+  useClockInMyAttendanceMutation,
+  useClockOutMyAttendanceMutation,
+  useGetMyAttendanceHistoryQuery,
+  useGetMyLeavesQuery,
+  useApplyMyLeaveMutation,
+  useCancelMyLeaveMutation,
+  useGetMyPayslipsQuery,
 } = hrmApi;

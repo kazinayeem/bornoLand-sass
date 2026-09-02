@@ -24,7 +24,7 @@ export const registerSchema = z
 export type RegisterInput = z.infer<typeof registerSchema>;
 
 export const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().min(2, "Email or Employee ID is required"),
   password: z.string().min(8),
   rememberMe: z.boolean().optional().default(false),
   loginType: z.enum(["user", "admin"]).optional().default("user")

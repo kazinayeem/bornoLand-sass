@@ -3,6 +3,7 @@ import type { AuthRequest } from "./auth.middleware.js";
 import { connectDatabase } from "../database/connection.js";
 import { StoreModel } from "../../modules/stores/store.model.js";
 import { StoreMemberModel } from "../../modules/team/store-member.model.js";
+import { EmployeeModel } from "../../modules/hrm/employee.model.js";
 import { hasPermission, roleToPermissions } from "../types/permissions.js";
 import { checkStoreModuleEntitlement } from "../services/module-entitlement.service.js";
 
@@ -13,6 +14,8 @@ export type PermissionRequest = AuthRequest & {
     isOwner: boolean;
     memberRole: string;
     memberPermissions: string[];
+    employeeId?: string;
+    employeeCode?: string;
     enabledModules?: string[];
   };
 };
@@ -111,6 +114,29 @@ async function resolveStoreAccess(
     }
   }
 
+  // Look up linked employee profile (if any)
+  let employeeId: string | undefined;
+  let employeeCode: string | undefined;
+  if (userId) {
+    const emp = (await EmployeeModel.findOne({
+      storeId,
+      $or: [
+        { userId },
+        ...(req.user?.email ? [{ email: req.user.email.toLowerCase() }] : []),
+      ],
+    })
+      .select("_id employeeCode userId")
+      .lean()) as { _id: unknown; employeeCode: string; userId?: unknown } | null;
+
+    if (emp) {
+      employeeId = String(emp._id);
+      employeeCode = emp.employeeCode;
+      if (!emp.userId) {
+        await EmployeeModel.updateOne({ _id: emp._id }, { $set: { userId } }).exec();
+      }
+    }
+  }
+
   if (isOwner) {
     req.storeContext = {
       storeId,
@@ -118,6 +144,8 @@ async function resolveStoreAccess(
       isOwner: true,
       memberRole: "owner",
       memberPermissions: ["*"],
+      employeeId,
+      employeeCode,
     };
     return true;
   }
@@ -152,6 +180,8 @@ async function resolveStoreAccess(
     isOwner: false,
     memberRole: member.role,
     memberPermissions: effectivePermissions,
+    employeeId,
+    employeeCode,
   };
   return true;
 }
@@ -162,6 +192,41 @@ async function resolveStoreAccess(
 export async function requireStoreAccess(req: PermissionRequest, res: Response, next: NextFunction) {
   const ok = await resolveStoreAccess(req, res);
   if (ok) next();
+}
+
+/**
+ * Middleware factory: Verify the caller has either an administrative permission OR is acting on their own employee record.
+ */
+export function requireSelfOrPermission(
+  adminPermission: string,
+  getTargetEmployeeId: (req: PermissionRequest) => string | undefined,
+) {
+  return async (req: PermissionRequest, res: Response, next: NextFunction) => {
+    const ok = await resolveStoreAccess(req, res);
+    if (!ok) return;
+
+    const targetEmployeeId = getTargetEmployeeId(req);
+    const myEmployeeId = req.storeContext?.employeeId;
+    const isSelf = Boolean(
+      targetEmployeeId &&
+      myEmployeeId &&
+      String(targetEmployeeId) === String(myEmployeeId)
+    );
+
+    if (isSelf) {
+      return next();
+    }
+
+    if (hasPermission(req.storeContext?.memberPermissions || [], adminPermission)) {
+      return next();
+    }
+
+    res.status(403).json({
+      success: false,
+      message: `Access denied. You may only access your own records or require ${adminPermission}.`,
+      code: "PERMISSION_DENIED",
+    });
+  };
 }
 
 /**

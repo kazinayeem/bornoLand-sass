@@ -14,6 +14,8 @@ import { UserModel } from "../users/user.model.js";
 import { TeamMemberModel } from "../team/team-member.model.js";
 import { StoreMemberModel } from "../team/store-member.model.js";
 import { StoreModel } from "../stores/store.model.js";
+import { EmployeeModel } from "../hrm/employee.model.js";
+import { getRoleDefaultLandingPath } from "../../common/types/permissions.js";
 import { SubscriptionModel } from "../subscriptions/subscription.model.js";
 import { VerificationTokenModel } from "./verification-token.model.js";
 import { RefreshTokenModel } from "./refresh-token.model.js";
@@ -138,7 +140,9 @@ export async function loginUser(payload: unknown) {
 
   await connectDatabase();
 
-  const user = (await UserModel.findOne({ email: parsed.data.email }).lean()) as {
+  const rawIdentifier = String(parsed.data.email || "").trim();
+
+  let user = (await UserModel.findOne({ email: rawIdentifier.toLowerCase() }).lean()) as {
     _id: unknown;
     tenantId: unknown;
     role: string;
@@ -149,6 +153,25 @@ export async function loginUser(payload: unknown) {
     loginCount?: number;
     sessionVersion?: number;
   } | null;
+
+  // If not found by email, check if rawIdentifier is an Employee Code (e.g. EMP-0001, EMP-0042)
+  if (!user) {
+    const emp = (await EmployeeModel.findOne({
+      employeeCode: new RegExp(`^${rawIdentifier}$`, "i"),
+    }).lean()) as { _id: unknown; userId?: unknown; email: string } | null;
+
+    if (emp) {
+      if (emp.userId) {
+        user = (await UserModel.findById(emp.userId).lean()) as any;
+      }
+      if (!user && emp.email) {
+        user = (await UserModel.findOne({ email: emp.email.toLowerCase() }).lean()) as any;
+        if (user) {
+          await EmployeeModel.updateOne({ _id: emp._id }, { $set: { userId: user._id } }).exec();
+        }
+      }
+    }
+  }
 
   if (!user || !user.passwordHash) {
     return { ok: false as const, message: "Invalid credentials" };
@@ -244,6 +267,31 @@ export async function loginUser(payload: unknown) {
   }));
   const defaultStoreSlug = storesPayload[0]?.slug ?? null;
 
+  let defaultMemberRole = user.role === "super_admin" ? "owner" : "member";
+  let defaultLandingPath = "/dashboard";
+  if (defaultStoreSlug && storesPayload[0]?.id) {
+    const mem = (await StoreMemberModel.findOne({
+      storeId: storesPayload[0].id,
+      userId: user._id,
+      status: "active",
+    })
+      .select("role")
+      .lean()) as { role: string } | null;
+
+    if (mem?.role) {
+      defaultMemberRole = mem.role;
+      defaultLandingPath = getRoleDefaultLandingPath(mem.role, defaultStoreSlug);
+    } else {
+      const isStoreOwner = Boolean(
+        await StoreModel.findOne({ _id: storesPayload[0].id, userId: user._id }).select("_id").lean()
+      );
+      if (isStoreOwner) {
+        defaultMemberRole = "owner";
+        defaultLandingPath = `/store/${defaultStoreSlug}/dashboard`;
+      }
+    }
+  }
+
   return {
     ok: true as const,
     data: {
@@ -256,6 +304,8 @@ export async function loginUser(payload: unknown) {
       session,
       stores: storesPayload,
       defaultStoreSlug,
+      defaultLandingPath,
+      memberRole: defaultMemberRole,
       user: {
         id: String(user._id),
         name: user.name,
@@ -264,6 +314,8 @@ export async function loginUser(payload: unknown) {
         tenantId: String(user.tenantId ?? ""),
         stores: storesPayload,
         defaultStoreSlug,
+        defaultLandingPath,
+        memberRole: defaultMemberRole,
       },
     },
   };

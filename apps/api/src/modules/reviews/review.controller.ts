@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { AuthRequest } from "../../common/middleware/auth.middleware.js";
 import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
-import { StoreModel } from "../stores/store.model.js";
+import { verifyStoreAccess } from "../../common/middleware/store-permission.middleware.js";
 import {
   createReview,
   deleteReview,
@@ -10,13 +10,15 @@ import {
   updateReviewStatus,
 } from "./review.service.js";
 
-async function verifyStoreOwner(storeId: string, userId?: string) {
-  return Boolean(await StoreModel.findOne({ _id: storeId, userId }).lean());
+async function checkStoreAccess(storeId: string, userId?: string) {
+  const { ok, storeId: resolvedStoreId } = await verifyStoreAccess(storeId, userId);
+  return { ok, storeId: resolvedStoreId || storeId };
 }
 
 export async function listReviewsController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const result = await listReviews(storeId, request.query as Record<string, unknown>);
@@ -24,8 +26,9 @@ export async function listReviewsController(request: AuthRequest, response: Resp
 }
 
 export async function createReviewController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const result = await createReview(storeId, request.body);
@@ -33,10 +36,11 @@ export async function createReviewController(request: AuthRequest, response: Res
 }
 
 export async function updateReviewStatusController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
   const id = String(request.params.id);
   const { status } = request.body as { status: string };
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const result = await updateReviewStatus(storeId, id, status);
@@ -44,9 +48,10 @@ export async function updateReviewStatusController(request: AuthRequest, respons
 }
 
 export async function deleteReviewController(request: AuthRequest, response: Response) {
-  const storeId = String(request.params.storeId);
+  const rawId = String(request.params.storeId);
+  const { ok, storeId } = await checkStoreAccess(rawId, request.user?.userId);
   const id = String(request.params.id);
-  if (!(await verifyStoreOwner(storeId, request.user?.userId))) {
+  if (!ok) {
     return sendFailure(response, "Store not found", 404);
   }
   const result = await deleteReview(storeId, id);

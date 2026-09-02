@@ -210,3 +210,27 @@ export function requireAllStorePermissions(...permissions: string[]) {
     next();
   };
 }
+
+/**
+ * Universal store access verification helper for controllers.
+ * Supports both ObjectId and slug lookups and validates both Owners and active Team Members.
+ */
+export async function verifyStoreAccess(storeId: string, userId?: string): Promise<{ ok: boolean; storeId?: string }> {
+  if (!userId || !storeId) return { ok: false };
+  const isObjectId = /^[a-f\d]{24}$/i.test(storeId);
+  const store = (isObjectId
+    ? await StoreModel.findById(storeId).select("_id userId").lean()
+    : await StoreModel.findOne({ slug: storeId }).select("_id userId").lean()) as { _id: unknown; userId: unknown } | null;
+  if (!store) return { ok: false };
+  const canonicalId = String(store._id);
+  if (String(store.userId) === userId) return { ok: true, storeId: canonicalId };
+  const member = await StoreMemberModel.findOne({ storeId: canonicalId, userId, status: "active" }).select("_id").lean();
+  return { ok: Boolean(member), storeId: canonicalId };
+}
+
+/**
+ * Helper to get the canonical authorized store ID from request storeContext or param.
+ */
+export function getAuthorizedStoreId(req: PermissionRequest): string {
+  return req.storeContext?.storeId || String(req.params.storeId || req.params.id);
+}

@@ -123,17 +123,17 @@ export function PosVariantModal({
             </div>
 
             {/* Option Attribute Chips */}
-            {options.map((opt) => (
-              <div key={opt.name} className="space-y-2">
+            {options.map((opt, optIdx) => (
+              <div key={`pos-opt-${opt.name}-${optIdx}`} className="space-y-2">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
                   Select {opt.name}
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {opt.values.map((val) => {
+                  {opt.values.map((val, valIdx) => {
                     const isSelected = selectedOptions[opt.name] === val;
                     return (
                       <button
-                        key={val}
+                        key={`pos-val-${val}-${valIdx}`}
                         type="button"
                         onClick={() => setSelectedOptions((prev) => ({ ...prev, [opt.name]: val }))}
                         className={cn(
@@ -158,14 +158,14 @@ export function PosVariantModal({
                 All Available Variants ({variants.length})
               </label>
               <div className="divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-white overflow-hidden max-h-48 overflow-y-auto">
-                {variants.map((v) => {
+                {variants.map((v, vIdx) => {
                   const title = Object.values(v.optionValues || {}).join(" / ") || v.sku || "Default";
                   const isSelected = activeVariant?._id === v._id;
                   const available = v.enabled && v.stock > 0;
 
                   return (
                     <div
-                      key={v._id || title}
+                      key={v._id || (v as any).id || v.sku || `pos-var-${vIdx}`}
                       onClick={() => {
                         if (available) setSelectedOptions(v.optionValues || {});
                       }}

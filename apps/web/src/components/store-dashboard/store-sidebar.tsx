@@ -593,8 +593,8 @@ export function StoreSidebar({
     }
   }, []);
 
-  const { data: accessData } = useGetStoreFeatureAccessQuery(store._id);
-  const { data: storageData } = useGetMediaStatsQuery(store._id);
+  const { data: accessData } = useGetStoreFeatureAccessQuery(store._id, { skip: !store._id });
+  const { data: storageData } = useGetMediaStatsQuery(store._id, { skip: !store._id });
   const features = accessData?.data?.features ?? [];
   const stats = storageData?.data?.stats;
 

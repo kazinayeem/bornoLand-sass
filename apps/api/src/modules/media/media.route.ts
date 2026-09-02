@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../../common/middleware/auth.middleware.js";
-import { requireFeatureAccess } from "../../common/middleware/feature.middleware.js";
+import { requireStorePermission } from "../../common/middleware/store-permission.middleware.js";
 import {
   bulkDeleteMediaController,
   deleteMediaController,
@@ -20,21 +20,21 @@ export const mediaRouter: Router = Router({ mergeParams: true });
 
 mediaRouter.use(requireAuth);
 
-const storeId = (req: { params: { storeId?: string } }) => String(req.params.storeId);
+mediaRouter.get("/stats", getMediaStatsController);
+mediaRouter.get("/", requireStorePermission("media:read"), listMediaController);
+mediaRouter.get("/:id/usage", requireStorePermission("media:read"), getMediaUsageController);
+mediaRouter.get("/:id/download", requireStorePermission("media:read"), downloadMediaController);
+mediaRouter.get("/:id", requireStorePermission("media:read"), getMediaFileController);
 
-mediaRouter.get("/stats", requireFeatureAccess("media", { getStoreId: storeId }), getMediaStatsController);
 mediaRouter.post(
   "/upload",
-  requireFeatureAccess("media", { getStoreId: storeId }),
+  requireStorePermission("media:create"),
   mediaUploadMiddleware,
   uploadMediaController
 );
-mediaRouter.post("/import-url", requireFeatureAccess("media", { getStoreId: storeId }), importMediaFromUrlController);
-mediaRouter.post("/bulk-delete", requireFeatureAccess("media", { getStoreId: storeId }), bulkDeleteMediaController);
-mediaRouter.get("/", requireFeatureAccess("media", { getStoreId: storeId }), listMediaController);
-mediaRouter.get("/:id/usage", requireFeatureAccess("media", { getStoreId: storeId }), getMediaUsageController);
-mediaRouter.get("/:id/download", requireFeatureAccess("media", { getStoreId: storeId }), downloadMediaController);
-mediaRouter.post("/:id/replace", requireFeatureAccess("media", { getStoreId: storeId }), replaceMediaController);
-mediaRouter.get("/:id", requireFeatureAccess("media", { getStoreId: storeId }), getMediaFileController);
-mediaRouter.put("/:id", requireFeatureAccess("media", { getStoreId: storeId }), renameMediaController);
-mediaRouter.delete("/:id", requireFeatureAccess("media", { getStoreId: storeId }), deleteMediaController);
+mediaRouter.post("/import-url", requireStorePermission("media:create"), importMediaFromUrlController);
+mediaRouter.post("/:id/replace", requireStorePermission("media:update"), replaceMediaController);
+mediaRouter.put("/:id", requireStorePermission("media:update"), renameMediaController);
+
+mediaRouter.post("/bulk-delete", requireStorePermission("media:delete"), bulkDeleteMediaController);
+mediaRouter.delete("/:id", requireStorePermission("media:delete"), deleteMediaController);

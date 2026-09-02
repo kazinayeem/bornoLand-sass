@@ -330,11 +330,11 @@ export function PosOrderModal({
                 {/* Customer dropdown results */}
                 {customerSearch && !selectedCustomer && customers.length > 0 && (
                   <div className="absolute top-full left-0 right-0 z-20 mt-1 max-h-36 overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-800 shadow-xl divide-y divide-zinc-700">
-                    {customers.map((c) => (
+                    {customers.map((c, cIdx) => (
                       <div
-                        key={c._id}
+                        key={c._id || (c as any).id || `pos-customer-${cIdx}`}
                         onClick={() => {
-                          setSelectedCustomer({ id: c._id, name: c.name, email: c.email, phone: c.phone });
+                          setSelectedCustomer({ id: c._id || (c as any).id, name: c.name, email: c.email, phone: c.phone });
                           setCustomerSearch("");
                         }}
                         className="p-2 hover:bg-zinc-700 cursor-pointer text-xs"
@@ -386,9 +386,9 @@ export function PosOrderModal({
                   >
                     All Categories
                   </button>
-                  {categories.map((cat) => (
+                  {categories.map((cat, catIdx) => (
                     <button
-                      key={cat._id}
+                      key={cat._id || (cat as any).id || cat.slug || `pos-cat-${catIdx}`}
                       type="button"
                       onClick={() => setSelectedCategory(cat.name)}
                       className={cn(
@@ -415,11 +415,11 @@ export function PosOrderModal({
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {filteredProducts.map((product) => {
+                    {filteredProducts.map((product, pIdx) => {
                       const hasVariants = (product.options?.length ?? 0) > 0 || (product.variants?.length ?? 0) > 0;
                       return (
                         <div
-                          key={product._id}
+                          key={product._id || (product as any).id || product.slug || `pos-prod-${pIdx}`}
                           onClick={() => handleSelectProduct(product)}
                           className="group relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white p-3 shadow-xs transition-all hover:border-apple-primary/50 hover:shadow-md cursor-pointer"
                         >

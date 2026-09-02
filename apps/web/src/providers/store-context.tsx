@@ -45,6 +45,7 @@ export function StoreProvider({ children, initialStore }: { children: ReactNode;
           storeId: store._id,
           storeName: store.name,
           storeSlug: store.slug,
+          userId: store.userId,
         }),
       );
       try {

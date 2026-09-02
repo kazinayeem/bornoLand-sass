@@ -101,7 +101,7 @@ storeRouter.use("/:storeId/shipping", requireStorePermission("shipping:read"), s
 storeRouter.use("/:storeId/couriers", requireStoreAccess, courierRouter);
 storeRouter.use("/:storeId/tax", requireStorePermission("settings:read"), taxRouter);
 storeRouter.use("/:storeId/marketing", requireStorePermission("marketing:read"), marketingRouter);
-storeRouter.use("/:storeId/media", requireStorePermission("media:read"), mediaRouter);
+storeRouter.use("/:storeId/media", requireStoreAccess, mediaRouter);
 storeRouter.use("/:storeId/audit-logs", requireStorePermission("settings:read"), storeAuditRouter);
 storeRouter.use("/:storeId/contact-messages", requireStoreAccess, contactMessageRouter);
 storeRouter.use("/:storeId/tracking", requireStoreAccess, storeTrackingRouter);

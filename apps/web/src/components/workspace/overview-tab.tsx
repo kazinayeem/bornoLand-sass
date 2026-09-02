@@ -22,7 +22,7 @@ function formatBDT(value: number) {
 }
 
 export function OverviewTab({ storeId, store }: OverviewTabProps) {
-  const { data: mediaStats } = useGetMediaStatsQuery(storeId);
+  const { data: mediaStats } = useGetMediaStatsQuery(storeId, { skip: !storeId });
   const billingHref = `/store/${store.slug}/billing`;
   const stats = useMemo(() => [
     {

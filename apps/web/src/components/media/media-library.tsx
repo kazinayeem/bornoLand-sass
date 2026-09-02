@@ -88,14 +88,17 @@ export function MediaLibrary({
 
   const filterQuery = mapMediaFilterToQuery(fileFilter);
 
-  const { data, isLoading, isFetching, refetch: refetchMediaFiles } = useGetMediaFilesQuery({
-    storeId,
-    search: debouncedSearch || undefined,
-    sort: pickerSort === "recent" ? "newest" : sortOption,
-    page: pickerSort === "recent" ? 1 : page,
-    limit: pickerSort === "recent" ? 24 : PAGE_SIZE,
-    ...filterQuery,
-  });
+  const { data, isLoading, isFetching, refetch: refetchMediaFiles } = useGetMediaFilesQuery(
+    {
+      storeId,
+      search: debouncedSearch || undefined,
+      sort: pickerSort === "recent" ? "newest" : sortOption,
+      page: pickerSort === "recent" ? 1 : page,
+      limit: pickerSort === "recent" ? 24 : PAGE_SIZE,
+      ...filterQuery,
+    },
+    { skip: !storeId }
+  );
 
   const storageLimit = data?.data?.globalStats?.limitBytes ?? 0;
   const storageUsed = data?.data?.globalStats?.usedBytes ?? 0;

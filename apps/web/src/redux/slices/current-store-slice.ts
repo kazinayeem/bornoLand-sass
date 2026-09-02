@@ -6,6 +6,7 @@ type CurrentStoreState = {
   storeId: string;
   storeName: string;
   storeSlug: string;
+  userId?: string;
   initialized: boolean;
 };
 
@@ -19,6 +20,7 @@ function loadFromStorage(): Omit<CurrentStoreState, "initialized"> {
         storeId: parsed.storeId ?? "",
         storeName: parsed.storeName ?? "",
         storeSlug: parsed.storeSlug ?? "",
+        userId: parsed.userId,
       };
     }
   } catch {}
@@ -40,6 +42,7 @@ const initialState: CurrentStoreState = {
   storeId: "",
   storeName: "",
   storeSlug: "",
+  userId: undefined,
   initialized: false,
 };
 
@@ -49,11 +52,12 @@ const currentStoreSlice = createSlice({
   reducers: {
     setCurrentStore(
       state,
-      action: PayloadAction<{ storeId: string; storeName: string; storeSlug: string }>
+      action: PayloadAction<{ storeId: string; storeName: string; storeSlug: string; userId?: string }>
     ) {
       state.storeId = action.payload.storeId;
       state.storeName = action.payload.storeName;
       state.storeSlug = action.payload.storeSlug;
+      state.userId = action.payload.userId;
       state.initialized = true;
       saveToStorage(action.payload);
     },
@@ -61,6 +65,7 @@ const currentStoreSlice = createSlice({
       state.storeId = "";
       state.storeName = "";
       state.storeSlug = "";
+      state.userId = undefined;
       state.initialized = true;
       saveToStorage({ storeId: "", storeName: "", storeSlug: "" });
     },

@@ -436,9 +436,9 @@ function StoreDetailsCard({
 /* ── Main Dashboard ───────────────────────────────────────────── */
 
 export function StoreDashboard({ store, storeId }: { store: Store; storeId: string }) {
-  const { data: mediaStats } = useGetMediaStatsQuery(storeId);
-  const { data: subscriptionData } = useGetStoreSubscriptionQuery(storeId);
-  const { data: accessData } = useGetStoreFeatureAccessQuery(storeId);
+  const { data: mediaStats } = useGetMediaStatsQuery(storeId, { skip: !storeId });
+  const { data: subscriptionData } = useGetStoreSubscriptionQuery(storeId, { skip: !storeId });
+  const { data: accessData } = useGetStoreFeatureAccessQuery(storeId, { skip: !storeId });
 
   const stats = mediaStats?.data?.stats;
   const subscription = subscriptionData?.data;

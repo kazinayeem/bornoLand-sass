@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Package, Sparkles, CheckCircle2, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import {
   useCreateProductMutation,
@@ -17,11 +17,14 @@ import { useGetBrandsQuery } from "@/redux/api/brand-api";
 import { VariantsPanel } from "@/components/workspace/variants-panel";
 import { ProductEditorActionBar } from "@/components/products/product-editor-action-bar";
 import { ProductEditorSidebar } from "@/components/products/product-editor-sidebar";
-import { ProductEditorGeneralTab } from "@/components/products/product-editor-general-tab";
+import { ProductSectionNav, type ProductSectionId } from "@/components/products/product-section-nav";
+import { ProductBasicSection } from "@/components/products/product-basic-section";
+import { ProductPricingSection } from "@/components/products/product-pricing-section";
+import { ProductInventorySection } from "@/components/products/product-inventory-section";
+import { ProductOrganizationSection } from "@/components/products/product-organization-section";
+import { ProductSeoSection } from "@/components/products/product-seo-section";
 import { ProductEditorMediaTab } from "@/components/products/product-editor-media-tab";
-import { ProductEditorInventoryTab } from "@/components/products/product-editor-inventory-tab";
 import { ProductEditorShippingTab } from "@/components/products/product-editor-shipping-tab";
-import { ProductEditorSeoTab } from "@/components/products/product-editor-seo-tab";
 import { ProductEditorAdvancedTab } from "@/components/products/product-editor-advanced-tab";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -32,21 +35,11 @@ import {
   genSlug,
   productToForm,
   type ProductEditorForm,
-  type ProductEditorTab,
   type VariantDraft,
 } from "@/components/products/product-form";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes";
 import { revalidateStorefrontAction } from "@/lib/actions/revalidate-storefront";
-
-const TABS: { id: ProductEditorTab; label: string }[] = [
-  { id: "general", label: "General" },
-  { id: "media", label: "Media" },
-  { id: "variants", label: "Variants" },
-  { id: "inventory", label: "Inventory" },
-  { id: "shipping", label: "Shipping" },
-  { id: "seo", label: "SEO" },
-  { id: "advanced", label: "Advanced" },
-];
+import { formatBDT } from "@/lib/format-bdt";
 
 export type ProductEditorMode = "create" | "edit" | "duplicate";
 
@@ -73,18 +66,17 @@ export function ProductEditor({
   const { data: productData, isLoading: loadingProduct } = useGetProductQuery(productId ?? "", {
     skip: !productId || mode === "create",
   });
-  const { data: catsData } = useGetCategoriesQuery(storeId);
+  const { data: catsData } = useGetCategoriesQuery(storeId, { skip: !storeId });
   const categories = catsData?.data?.categories ?? [];
-  const { data: brandsData } = useGetBrandsQuery(storeId);
+  const { data: brandsData } = useGetBrandsQuery(storeId, { skip: !storeId });
   const brands = brandsData?.data?.brands ?? [];
-
 
   const [createProduct] = useCreateProductMutation();
   const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
   const [duplicateProduct] = useDuplicateProductMutation();
 
-  const [activeTab, setActiveTab] = useState<ProductEditorTab>("general");
+  const [activeSection, setActiveSection] = useState<ProductSectionId>("basic");
   const [form, setForm] = useState<ProductEditorForm>(EMPTY_PRODUCT_FORM);
   const [variantDraft, setVariantDraft] = useState<VariantDraft>(EMPTY_VARIANT_DRAFT);
   const [saving, setSaving] = useState(false);
@@ -139,11 +131,7 @@ export function ProductEditor({
 
   const patchForm = useCallback((patch: Partial<ProductEditorForm>) => {
     setForm((prev) => ({ ...prev, ...patch }));
-    if (patch.productType === "variable") {
-      setActiveTab("variants");
-    }
   }, []);
-
 
   const handleNameChange = useCallback(
     (name: string) => {
@@ -156,14 +144,26 @@ export function ProductEditor({
     [isEdit]
   );
 
+  const scrollToSection = useCallback((id: ProductSectionId) => {
+    setActiveSection(id);
+    const element = document.getElementById(`section-${id}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
+
   const save = useCallback(
     async (options?: { forceStatus?: ProductEditorForm["status"]; redirect?: boolean }) => {
       if (!form.name.trim()) {
         toast.error("Product name is required");
+        scrollToSection("basic");
+        const nameInput = document.querySelector('input[placeholder*="Ginger"]') as HTMLInputElement | null;
+        nameInput?.focus();
         return false;
       }
       if (form.productType === "simple" && form.price === "") {
-        toast.error("Price is required for simple products");
+        toast.error("Selling price is required for simple products");
+        scrollToSection("pricing");
         return false;
       }
 
@@ -196,7 +196,7 @@ export function ProductEditor({
               productSlug: payload.slug || form.slug,
             });
           }
-          toast.success("Product created");
+          toast.success("Product created successfully");
           savedSnapshot.current = snapshot;
           setIsDirty(false);
           if (options?.redirect !== false && newId) {
@@ -221,7 +221,7 @@ export function ProductEditor({
         setSaving(false);
       }
     },
-    [form, variantDraft, isEdit, productId, storeId, storeSlug, createProduct, updateProduct, router, snapshot]
+    [form, variantDraft, isEdit, productId, storeId, storeSlug, createProduct, updateProduct, router, snapshot, scrollToSection]
   );
 
   useEffect(() => {
@@ -265,18 +265,19 @@ export function ProductEditor({
     }
   };
 
-  const visibleTabs = TABS.filter((tab) => tab.id !== "variants" || form.productType === "variable");
-
   if ((mode === "edit" || mode === "duplicate") && loadingProduct) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
+        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
       </div>
     );
   }
 
+  const sellPrice = Number(form.price) || 0;
+  const costPrice = Number(form.costPrice) || 0;
+
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-auto max-w-7xl pb-16">
       <ProductEditorActionBar
         title={editorTitle}
         backHref={listHref}
@@ -292,56 +293,49 @@ export function ProductEditor({
         onBack={handleBack}
       />
 
-      <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
-        <div className="min-w-0 flex-1">
-          {(isEdit || mode === "duplicate") && (
-            <section className="mb-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <h2 className="text-2xl font-semibold tracking-tight text-apple-ink">
-                {form.name || (mode === "duplicate" ? "Duplicate Product" : "Product")}
-              </h2>
-              <p className="mt-1 text-sm text-apple-ink-muted-48">{storeName}</p>
-              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-                <span className="rounded-full border border-zinc-200 bg-apple-canvas-parchment px-2.5 py-1 font-medium text-apple-ink-muted-80">
-                  Status: {form.status}
-                </span>
-                <span className="rounded-full border border-zinc-200 bg-apple-canvas-parchment px-2.5 py-1 font-medium text-apple-ink-muted-80">
-                  SKU: {form.sku || "—"}
-                </span>
-              </div>
-            </section>
-          )}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr_320px]">
+        {/* Left: Sticky Section Navigator */}
+        <div className="hidden lg:block">
+          <ProductSectionNav
+            form={form}
+            variantDraft={variantDraft}
+            activeSection={activeSection}
+            onSelectSection={scrollToSection}
+          />
+        </div>
 
-          <div className="mb-4 flex gap-1 overflow-x-auto border-b border-zinc-200 pb-px">
-            {visibleTabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? "border-zinc-900 text-apple-ink"
-                    : "border-transparent text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+        {/* Center: Main Form Sections */}
+        <div className="min-w-0 space-y-6">
+          <ProductBasicSection
+            form={form}
+            isEdit={isEdit}
+            onChange={patchForm}
+            onNameChange={handleNameChange}
+          />
+
+          <div id="section-media" className="scroll-mt-24">
+            <ProductEditorMediaTab
+              form={form}
+              storeId={storeId}
+              billingHref={billingHref}
+              onChange={patchForm}
+            />
           </div>
 
-          {activeTab === "general" && (
-            <ProductEditorGeneralTab
-              form={form}
-              categories={categories}
-              isEdit={isEdit}
-              onChange={patchForm}
-              onNameChange={handleNameChange}
-            />
-          )}
-          {activeTab === "media" && (
-            <ProductEditorMediaTab form={form} storeId={storeId} billingHref={billingHref} onChange={patchForm} />
-          )}
-          {activeTab === "variants" && form.productType === "variable" && (
-            <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <ProductPricingSection form={form} onChange={patchForm} />
+
+          <ProductInventorySection form={form} onChange={patchForm} />
+
+          {form.productType === "variable" && (
+            <section id="section-variants" className="scroll-mt-24 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="mb-4">
+                <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                  Product Variants
+                </h2>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Manage options (size, color, weight) and individual variant pricing and stock.
+                </p>
+              </div>
               <VariantsPanel
                 options={variantDraft.options}
                 variants={variantDraft.variants}
@@ -351,13 +345,90 @@ export function ProductEditor({
               />
             </section>
           )}
-          {activeTab === "inventory" && <ProductEditorInventoryTab form={form} onChange={patchForm} />}
-          {activeTab === "shipping" && <ProductEditorShippingTab form={form} onChange={patchForm} />}
-          {activeTab === "seo" && <ProductEditorSeoTab form={form} onChange={patchForm} />}
-          {activeTab === "advanced" && <ProductEditorAdvancedTab form={form} onChange={patchForm} />}
+
+          <ProductOrganizationSection
+            form={form}
+            categories={categories}
+            brands={brands}
+            onChange={patchForm}
+          />
+
+          <div id="section-shipping" className="scroll-mt-24">
+            <ProductEditorShippingTab form={form} onChange={patchForm} />
+          </div>
+
+          <ProductSeoSection form={form} storeSlug={storeSlug} onChange={patchForm} />
+
+          <div id="section-advanced" className="scroll-mt-24">
+            <ProductEditorAdvancedTab form={form} onChange={patchForm} />
+          </div>
         </div>
 
-        <aside className="w-full shrink-0 lg:w-80">
+        {/* Right Rail: Status & Live Preview Card */}
+        <aside className="w-full space-y-4 lg:w-80">
+          {/* Live Product Overview Card */}
+          <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-950 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                Product Summary
+              </span>
+              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                form.status === "active"
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                  : form.status === "draft"
+                  ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                  : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+              }`}>
+                {form.status}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="h-14 w-14 shrink-0 rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 flex items-center justify-center overflow-hidden">
+                {form.imageUrl ? (
+                  <img src={form.imageUrl} alt={form.name} className="h-full w-full object-cover" />
+                ) : (
+                  <Package className="h-6 w-6 text-zinc-400" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100 truncate">
+                  {form.name || "Untitled Product"}
+                </p>
+                <p className="text-xs text-zinc-400 font-mono truncate">
+                  {form.sku || "No SKU"}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 border-t border-zinc-100 pt-3 text-xs dark:border-zinc-800">
+              <div>
+                <p className="text-zinc-400">Selling Price</p>
+                <p className="font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums">
+                  {sellPrice > 0 ? formatBDT(sellPrice) : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-zinc-400">Cost Price</p>
+                <p className="font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums">
+                  {costPrice > 0 ? formatBDT(costPrice) : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-zinc-400">Total Stock</p>
+                <p className="font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums">
+                  {form.stock || "0"} units
+                </p>
+              </div>
+              <div>
+                <p className="text-zinc-400">Type</p>
+                <p className="font-semibold text-zinc-900 dark:text-zinc-100 capitalize">
+                  {form.productType}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <ProductEditorSidebar
             form={form}
             product={product}

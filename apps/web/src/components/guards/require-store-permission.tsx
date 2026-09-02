@@ -2,13 +2,17 @@
 
 import { useHasPermission } from "@/features/session/hooks";
 
-type RequirePermissionProps = {
+type RequireStorePermissionProps = {
   children: React.ReactNode;
   permission: string;
   fallback?: React.ReactNode;
 };
 
-export function RequirePermission({ children, permission, fallback = null }: RequirePermissionProps) {
+export function RequireStorePermission({
+  children,
+  permission,
+  fallback = null,
+}: RequireStorePermissionProps) {
   const allowed = useHasPermission(permission);
 
   if (!allowed) return <>{fallback}</>;

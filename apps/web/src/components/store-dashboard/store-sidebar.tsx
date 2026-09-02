@@ -61,13 +61,9 @@ import { useGetStoreFeatureAccessQuery, NAV_FEATURE_MAP, getFeatureByKey } from 
 import { ComingSoonBadge } from "@/components/ecommerce/coming-soon-badge";
 import { useGetMediaStatsQuery } from "@/redux/api/media-api";
 import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useLanguage, type Dictionary } from "@/providers/language-provider";
+import { useIsStoreOwner, usePermissions, checkPermission } from "@/features/session/hooks";
 
 /* ── Sidebar Collapse Context ─────────────────────────────────── */
 
@@ -93,12 +89,14 @@ export type NavItemDef = {
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   exact?: boolean;
   featureKey?: string;
+  permission?: string;
   comingSoon?: boolean;
   subItems?: {
     href: string;
     label: string;
     icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
     exact?: boolean;
+    permission?: string;
   }[];
 };
 
@@ -107,38 +105,39 @@ export type NavGroupDef = {
   items: NavItemDef[];
 };
 
-export function getSidebarNavGroups(t: Dictionary): NavGroupDef[] {
+export function getSidebarNavGroups(t: Dictionary, isBn = false): NavGroupDef[] {
   const sn = t.storeNav;
   return [
     {
       group: sn.catalog,
       items: [
-        { href: "/products", label: sn.products, icon: Package },
-        { href: "/categories", label: sn.categories, icon: Tags },
-        { href: "/inventory", label: sn.inventory, icon: Boxes, featureKey: "inventory" },
+        { href: "/products", label: sn.products, icon: Package, permission: "products:read" },
+        { href: "/categories", label: sn.categories, icon: Tags, permission: "categories:read" },
+        { href: "/inventory", label: sn.inventory, icon: Boxes, featureKey: "inventory", permission: "inventory:read" },
       ],
     },
     {
       group: sn.sales,
       items: [
-        { href: "/orders", label: sn.orders, icon: ShoppingBag, exact: true },
-        { href: "/orders/incomplete", label: sn.incompleteOrders, icon: ShoppingCart, featureKey: "incomplete_orders" },
-        { href: "/customers", label: sn.customers, icon: Users },
-        { href: "/reviews", label: sn.reviews, icon: Star, featureKey: "reviews" },
+        { href: "/orders", label: sn.orders, icon: ShoppingBag, exact: true, permission: "orders:read" },
+        { href: "/orders/incomplete", label: sn.incompleteOrders, icon: ShoppingCart, featureKey: "incomplete_orders", permission: "orders:read" },
+        { href: "/customers", label: sn.customers, icon: Users, permission: "customers:read" },
+        { href: "/reviews", label: sn.reviews, icon: Star, featureKey: "reviews", permission: "reviews:read" },
       ],
     },
     {
       group: sn.growth,
       items: [
-        { href: "/marketing", label: sn.marketing, icon: Megaphone, featureKey: "marketing", comingSoon: true },
-        { href: "/coupons", label: sn.coupons, icon: Ticket, featureKey: "coupons" },
-        { href: "/settings/tracking", label: sn.trackingPixels, icon: Target, featureKey: "marketing" },
+        { href: "/marketing", label: sn.marketing, icon: Megaphone, featureKey: "marketing", comingSoon: true, permission: "marketing:read" },
+        { href: "/coupons", label: sn.coupons, icon: Ticket, featureKey: "coupons", permission: "coupons:read" },
+        { href: "/settings/tracking", label: sn.trackingPixels, icon: Target, featureKey: "marketing", permission: "marketing:read" },
         {
           href: "/analytics",
           label: sn.analytics,
           icon: BarChart3,
           exact: true,
           featureKey: "analytics",
+          permission: "analytics:read",
           subItems: [
             { href: "/analytics", label: sn.overview, icon: BarChart3, exact: true },
             { href: "/analytics/visitors", label: sn.visitors, icon: Eye },
@@ -155,43 +154,44 @@ export function getSidebarNavGroups(t: Dictionary): NavGroupDef[] {
             { href: "/analytics/reports", label: sn.reports, icon: FileSpreadsheet },
           ],
         },
-        { href: "/reports", label: sn.reports, icon: FileSpreadsheet, featureKey: "reports" },
+        { href: "/reports", label: sn.reports, icon: FileSpreadsheet, featureKey: "reports", permission: "reports:read" },
       ],
     },
     {
       group: sn.store,
       items: [
-        { href: "/design", label: sn.design, icon: Palette },
-        { href: "/settings?section=navigation", label: sn.navigation, icon: Menu },
-        { href: "/pages", label: sn.pages, icon: FileText },
-        { href: "/settings?section=seo", label: sn.seo, icon: Search, featureKey: "seo" },
-        { href: "/settings?section=domain", label: sn.domain, icon: Globe2, featureKey: "custom_domain" },
-        { href: "/settings?section=social-links", label: sn.socialLinks, icon: Share2 },
+        { href: "/design", label: sn.design, icon: Palette, permission: "pages:read" },
+        { href: "/settings?section=navigation", label: sn.navigation, icon: Menu, permission: "pages:read" },
+        { href: "/pages", label: sn.pages, icon: FileText, permission: "pages:read" },
+        { href: "/settings?section=seo", label: sn.seo, icon: Search, featureKey: "seo", permission: "settings:read" },
+        { href: "/settings?section=domain", label: sn.domain, icon: Globe2, featureKey: "custom_domain", permission: "settings:read" },
+        { href: "/settings?section=social-links", label: sn.socialLinks, icon: Share2, permission: "settings:read" },
       ],
     },
     {
       group: sn.operations,
       items: [
-        { href: "/settings/shipping", label: sn.shipping, icon: Truck },
-        { href: "/settings/courier", label: sn.courier, icon: PackageCheck, featureKey: "courier" },
-        { href: "/settings/payments", label: sn.payments, icon: CreditCard },
-        { href: "/settings/taxes", label: sn.taxes, icon: Percent },
+        { href: "/settings/shipping", label: sn.shipping, icon: Truck, permission: "shipping:read" },
+        { href: "/settings/courier", label: sn.courier, icon: PackageCheck, featureKey: "courier", permission: "shipping:read" },
+        { href: "/settings/payments", label: sn.payments, icon: CreditCard, permission: "payments:read" },
+        { href: "/settings/taxes", label: sn.taxes, icon: Percent, permission: "settings:read" },
       ],
     },
     {
       group: sn.content,
       items: [
-        { href: "/media", label: sn.media, icon: ImageIcon, featureKey: "media" },
-        { href: "/customer-messages", label: sn.messages, icon: Mail, featureKey: "cms" },
-        { href: "/settings?section=faq", label: sn.faq, icon: HelpCircle },
+        { href: "/media", label: sn.media, icon: ImageIcon, featureKey: "media", permission: "media:read" },
+        { href: "/customer-messages", label: sn.messages, icon: Mail, featureKey: "cms", permission: "settings:read" },
+        { href: "/settings?section=faq", label: sn.faq, icon: HelpCircle, permission: "settings:read" },
       ],
     },
     {
       group: sn.system,
       items: [
-        { href: "/settings?section=general", label: sn.settings, icon: Settings },
+        { href: "/settings?section=general", label: sn.settings, icon: Settings, permission: "settings:read" },
+        { href: "/members", label: isBn ? "টিম মেম্বার" : "Team Members", icon: Users, permission: "members:read" },
         { href: "/apps", label: sn.apps, icon: Blocks, featureKey: "apps", comingSoon: true },
-        { href: "/activity", label: sn.activity, icon: ScrollText },
+        { href: "/activity", label: sn.activity, icon: ScrollText, permission: "settings:read" },
         { href: "/billing", label: sn.billing, icon: BillingCard },
       ],
     },
@@ -596,18 +596,23 @@ export function StoreSidebar({
   const features = accessData?.data?.features ?? [];
   const stats = storageData?.data?.stats;
 
+  const isOwner = useIsStoreOwner();
+  const permissionSet = usePermissions();
+
   const resolveLink = useCallback(
-    (link: { label: string; featureKey?: string; comingSoon?: boolean }) => {
+    (link: { label: string; featureKey?: string; permission?: string; comingSoon?: boolean }) => {
       const key = link.featureKey ?? NAV_FEATURE_MAP[link.label];
-      if (!key) return { locked: false, comingSoon: link.comingSoon };
-      const feature = getFeatureByKey(features, key);
+      const feature = key ? getFeatureByKey(features, key) : undefined;
+      const hasPerm = isOwner || !link.permission || checkPermission(permissionSet, link.permission);
+
       return {
         locked: feature?.locked ?? false,
+        noPermission: !hasPerm,
         requiredPlan: feature?.requiredPlan?.name,
         comingSoon: link.comingSoon || feature?.comingSoon,
       };
     },
-    [features]
+    [features, isOwner, permissionSet]
   );
 
   const storagePercent = Math.min(stats?.percentUsed ?? 0, 100);
@@ -623,7 +628,7 @@ export function StoreSidebar({
     : "0 B";
 
   const isStorageHigh = storagePercent >= 80;
-  const navGroups = useMemo(() => getSidebarNavGroups(t), [t]);
+  const navGroups = useMemo(() => getSidebarNavGroups(t, language === "bn"), [t, language]);
 
   return (
     <TooltipProvider delayDuration={120}>
@@ -684,28 +689,37 @@ export function StoreSidebar({
             </div>
 
             {/* Grouped Information Architecture */}
-            {navGroups.map((groupDef) => (
-              <div key={groupDef.group} className="space-y-0.5">
-                <SectionLabel>{groupDef.group}</SectionLabel>
-                <ul className="space-y-0.5">
-                  {groupDef.items.map((link) => {
-                    const meta = resolveLink(link);
-                    return (
-                      <li key={link.href + link.label}>
-                        <NavItem
-                          {...link}
-                          basePath={basePath}
-                          locked={meta.locked}
-                          requiredPlan={meta.requiredPlan}
-                          comingSoon={meta.comingSoon}
-                          onNavigate={onNavigate}
-                        />
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
+            {navGroups.map((groupDef) => {
+              const visibleItems = groupDef.items.filter((item) => {
+                const meta = resolveLink(item);
+                return !meta.noPermission;
+              });
+
+              if (visibleItems.length === 0) return null;
+
+              return (
+                <div key={groupDef.group} className="space-y-0.5">
+                  <SectionLabel>{groupDef.group}</SectionLabel>
+                  <ul className="space-y-0.5">
+                    {visibleItems.map((link) => {
+                      const meta = resolveLink(link);
+                      return (
+                        <li key={link.href + link.label}>
+                          <NavItem
+                            {...link}
+                            basePath={basePath}
+                            locked={meta.locked}
+                            requiredPlan={meta.requiredPlan}
+                            comingSoon={meta.comingSoon}
+                            onNavigate={onNavigate}
+                          />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
           </nav>
 
           {/* ── Compact Storage & Footer Bar ──────────────────── */}

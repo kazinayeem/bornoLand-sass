@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useStoreFromSlug } from "@/hooks/use-store-from-slug";
 import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 import { StoreBrandingSync } from "@/components/store-dashboard/store-branding-sync";
+import { StorePermissionsSync } from "@/components/store-dashboard/store-permissions-sync";
 import { StoreSidebar } from "@/components/store-dashboard/store-sidebar";
 import { TrialBanner } from "@/components/store-dashboard/trial-banner";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
@@ -70,6 +71,7 @@ export function StoreShell({ children }: { children: ReactNode }) {
   return (
     <div data-surface="dashboard" className="grid h-screen grid-cols-[auto_1fr] overflow-hidden bg-zinc-50/70 dark:bg-zinc-950">
       <StoreBrandingSync store={store} />
+      <StorePermissionsSync storeId={store._id} />
 
       <div className="hidden lg:block">
         <StoreSidebar store={store} />

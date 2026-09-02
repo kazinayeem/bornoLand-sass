@@ -53,6 +53,7 @@ import { subdomainDetector } from "./common/middleware/subdomain.middleware.js";
 import { globalRateLimit, authRateLimit, analyticsTrackRateLimit, newsletterRateLimit } from "./common/middleware/rate-limit.middleware.js";
 import { storeEmailRouter } from "./modules/email/store-email.route.js";
 import { aiRouter } from "./modules/ai/ai.route.js";
+import { teamRouter } from "./modules/team/team.route.js";
 import { errorHandler, notFoundHandler } from "./common/middleware/error.middleware.js";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -268,6 +269,9 @@ app.use("/admin/analytics", adminAnalyticsRouter);
 app.use("/reports", reportRouter);
 app.use("/stores", storeEmailRouter);
 app.use("/ai", aiRouter);
+// Team member management — mounted at root because routes include /stores/:storeId/members
+// and public /invite/:token paths
+app.use("/", teamRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

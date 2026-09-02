@@ -17,9 +17,20 @@ export const selectWorkspace = createSelector(selectTenant, (tenant) => ({
   id: tenant.tenantId,
   slug: tenant.tenantSlug,
 }));
-export const selectPermissions = createSelector(selectAuth, (auth) =>
-  auth.session?.role ? [auth.session.role] : []
+export const selectIsStoreOwner = createSelector(
+  selectAuth,
+  (auth) => Boolean(auth.isStoreOwner || auth.session?.role === "super_admin")
 );
+export const selectMemberRole = createSelector(
+  selectAuth,
+  (auth) => auth.memberRole ?? auth.session?.role ?? "viewer"
+);
+export const selectPermissions = createSelector(selectAuth, (auth) => {
+  if (auth.session?.role === "super_admin" || auth.isStoreOwner) {
+    return ["*"];
+  }
+  return auth.memberPermissions ?? [];
+});
 export const selectCurrentStoreId = createSelector(selectCurrentStore, (store) => store.storeId);
 export const selectCurrentStoreSlug = createSelector(selectCurrentStore, (store) => store.storeSlug);
 export const selectCurrentSubscription = createSelector(selectBillingState, (billing) => ({

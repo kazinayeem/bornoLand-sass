@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { requireAuth } from "../../common/middleware/auth.middleware.js";
 import {
+  requireStoreAccess,
+  requireStorePermission,
+} from "../../common/middleware/store-permission.middleware.js";
+import {
   createStoreController,
   deleteStoreController,
   deleteStoreFaviconController,
@@ -17,7 +21,6 @@ import { getStoreSettingsController, updateStoreSettingsController } from "./sto
 import { getStoreContactController, updateStoreContactController } from "./store-contact.controller.js";
 import { createHomepageSliderController, deleteHomepageSliderController, listHomepageSlidersController, updateHomepageSliderController } from "./homepage-slider.controller.js";
 import { listStoreOrdersController, getStoreOrderController, updateOrderStatusController, updatePaymentStatusController, addOrderNoteController, processRefundController, downloadStoreOrderInvoiceController, emailStoreOrderInvoiceController, createStoreOrderController } from "./store-order.controller.js";
-
 import {
   cancelShipmentController,
   createShipmentController,
@@ -45,60 +48,65 @@ export const storeRouter: Router = Router();
 
 storeRouter.use(requireAuth);
 
+// ── Workspace-level store operations ──────────────────────────────────────────
 storeRouter.post("/create", createStoreController);
 storeRouter.get("/my-stores", getUserStoresController);
 storeRouter.get("/by-slug/:slug", getStoreBySlugController);
-storeRouter.get("/:id", getStoreController);
-storeRouter.put("/:id", updateStoreController);
-storeRouter.put("/:id/theme", changeStoreThemeController);
-storeRouter.get("/:id/branding", getStoreBrandingController);
-storeRouter.put("/:id/branding", updateStoreBrandingController);
-storeRouter.delete("/:id/branding/logo", deleteStoreLogoController);
-storeRouter.delete("/:id/branding/favicon", deleteStoreFaviconController);
-storeRouter.get("/:id/settings", getStoreSettingsController);
-storeRouter.put("/:id/settings", updateStoreSettingsController);
-storeRouter.get("/:id/contact", getStoreContactController);
-storeRouter.put("/:id/contact", updateStoreContactController);
-storeRouter.get("/:id/sliders", listHomepageSlidersController);
-storeRouter.post("/:id/sliders", createHomepageSliderController);
-storeRouter.put("/:id/sliders/:sliderId", updateHomepageSliderController);
-storeRouter.delete("/:id/sliders/:sliderId", deleteHomepageSliderController);
-storeRouter.delete("/:id", deleteStoreController);
+storeRouter.get("/:id", requireStoreAccess, getStoreController);
+storeRouter.put("/:id", requireStorePermission("settings:manage"), updateStoreController);
+storeRouter.put("/:id/theme", requireStorePermission("settings:manage"), changeStoreThemeController);
+storeRouter.get("/:id/branding", requireStoreAccess, getStoreBrandingController);
+storeRouter.put("/:id/branding", requireStorePermission("settings:manage"), updateStoreBrandingController);
+storeRouter.delete("/:id/branding/logo", requireStorePermission("settings:manage"), deleteStoreLogoController);
+storeRouter.delete("/:id/branding/favicon", requireStorePermission("settings:manage"), deleteStoreFaviconController);
+storeRouter.get("/:id/settings", requireStorePermission("settings:read"), getStoreSettingsController);
+storeRouter.put("/:id/settings", requireStorePermission("settings:manage"), updateStoreSettingsController);
+storeRouter.get("/:id/contact", requireStoreAccess, getStoreContactController);
+storeRouter.put("/:id/contact", requireStorePermission("settings:manage"), updateStoreContactController);
+storeRouter.get("/:id/sliders", requireStoreAccess, listHomepageSlidersController);
+storeRouter.post("/:id/sliders", requireStorePermission("settings:manage"), createHomepageSliderController);
+storeRouter.put("/:id/sliders/:sliderId", requireStorePermission("settings:manage"), updateHomepageSliderController);
+storeRouter.delete("/:id/sliders/:sliderId", requireStorePermission("settings:manage"), deleteHomepageSliderController);
+storeRouter.delete("/:id", requireStorePermission("settings:manage"), deleteStoreController);
 
-storeRouter.get("/:storeId/orders", listStoreOrdersController);
-storeRouter.post("/:storeId/orders", createStoreOrderController);
-storeRouter.get("/:storeId/orders/:id", getStoreOrderController);
+// ── Orders ────────────────────────────────────────────────────────────────────
+storeRouter.get("/:storeId/orders", requireStorePermission("orders:read"), listStoreOrdersController);
+storeRouter.post("/:storeId/orders", requireStorePermission("orders:create"), createStoreOrderController);
+storeRouter.get("/:storeId/orders/:id", requireStorePermission("orders:read"), getStoreOrderController);
+storeRouter.get("/:storeId/orders/:id/invoice.pdf", requireStorePermission("orders:read"), downloadStoreOrderInvoiceController);
+storeRouter.post("/:storeId/orders/:id/invoice/email", requireStorePermission("orders:read"), emailStoreOrderInvoiceController);
+storeRouter.get("/:storeId/orders/:id/shipment/options", requireStorePermission("orders:read"), getShipmentOptionsController);
+storeRouter.post("/:storeId/orders/:id/shipment", requireStorePermission("orders:update"), createShipmentController);
+storeRouter.post("/:storeId/orders/:id/shipment/cancel", requireStorePermission("orders:update"), cancelShipmentController);
+storeRouter.post("/:storeId/orders/:id/shipment/track", requireStorePermission("orders:read"), trackShipmentController);
+storeRouter.put("/:storeId/orders/:id/status", requireStorePermission("orders:update"), updateOrderStatusController);
+storeRouter.put("/:storeId/orders/:id/payment-status", requireStorePermission("orders:update"), updatePaymentStatusController);
+storeRouter.post("/:storeId/orders/:id/notes", requireStorePermission("orders:update"), addOrderNoteController);
+storeRouter.post("/:storeId/orders/:id/refund", requireStorePermission("orders:delete"), processRefundController);
 
-storeRouter.get("/:storeId/orders/:id/invoice.pdf", downloadStoreOrderInvoiceController);
-storeRouter.post("/:storeId/orders/:id/invoice/email", emailStoreOrderInvoiceController);
-storeRouter.get("/:storeId/orders/:id/shipment/options", getShipmentOptionsController);
-storeRouter.post("/:storeId/orders/:id/shipment", createShipmentController);
-storeRouter.post("/:storeId/orders/:id/shipment/cancel", cancelShipmentController);
-storeRouter.post("/:storeId/orders/:id/shipment/track", trackShipmentController);
-storeRouter.put("/:storeId/orders/:id/status", updateOrderStatusController);
-storeRouter.put("/:storeId/orders/:id/payment-status", updatePaymentStatusController);
-storeRouter.post("/:storeId/orders/:id/notes", addOrderNoteController);
-storeRouter.post("/:storeId/orders/:id/refund", processRefundController);
+// ── Customers ─────────────────────────────────────────────────────────────────
+storeRouter.get("/:storeId/customers", requireStorePermission("customers:read"), listStoreCustomersController);
+storeRouter.get("/:storeId/customers/:customerId", requireStorePermission("customers:read"), getStoreCustomerController);
+storeRouter.put("/:storeId/customers/:customerId", requireStorePermission("customers:update"), updateStoreCustomerController);
 
-storeRouter.get("/:storeId/customers", listStoreCustomersController);
-storeRouter.get("/:storeId/customers/:customerId", getStoreCustomerController);
-storeRouter.put("/:storeId/customers/:customerId", updateStoreCustomerController);
-
-storeRouter.use("/:storeId/coupons", couponRouter);
-storeRouter.use("/:storeId/reviews", reviewRouter);
-storeRouter.use("/:storeId/collections", collectionRouter);
-storeRouter.use("/:storeId/inventory", inventoryRouter);
-storeRouter.use("/:storeId/reports", reportsRouter);
-storeRouter.use("/:storeId/shipping", shippingRouter);
-storeRouter.use("/:storeId/couriers", courierRouter);
-storeRouter.use("/:storeId/tax", taxRouter);
-storeRouter.use("/:storeId/marketing", marketingRouter);
-storeRouter.use("/:storeId/media", mediaRouter);
-storeRouter.use("/:storeId/audit-logs", storeAuditRouter);
-storeRouter.use("/:storeId/contact-messages", contactMessageRouter);
-storeRouter.use("/:storeId/tracking", storeTrackingRouter);
-storeRouter.use("/:id/tracking", storeTrackingRouter);
-storeRouter.use("/:storeId/incomplete-checkouts", incompleteCheckoutRouter);
-storeRouter.use("/:id/incomplete-checkouts", incompleteCheckoutRouter);
-storeRouter.use("/:storeId/payment-gateways/sslcommerz", storeSSLCommerzRouter);
-storeRouter.use("/:id/payment-gateways/sslcommerz", storeSSLCommerzRouter);
+// ── Sub-routers (store-level middleware already applied above per-route) ───────
+// Note: requireStoreAccess at the use() level means all sub-router handlers are
+// also protected. Sub-routers may add further permission guards internally.
+storeRouter.use("/:storeId/coupons", requireStoreAccess, couponRouter);
+storeRouter.use("/:storeId/reviews", requireStoreAccess, reviewRouter);
+storeRouter.use("/:storeId/collections", requireStoreAccess, collectionRouter);
+storeRouter.use("/:storeId/inventory", requireStoreAccess, inventoryRouter);
+storeRouter.use("/:storeId/reports", requireStorePermission("reports:read"), reportsRouter);
+storeRouter.use("/:storeId/shipping", requireStorePermission("shipping:read"), shippingRouter);
+storeRouter.use("/:storeId/couriers", requireStoreAccess, courierRouter);
+storeRouter.use("/:storeId/tax", requireStorePermission("settings:read"), taxRouter);
+storeRouter.use("/:storeId/marketing", requireStorePermission("marketing:read"), marketingRouter);
+storeRouter.use("/:storeId/media", requireStorePermission("media:read"), mediaRouter);
+storeRouter.use("/:storeId/audit-logs", requireStorePermission("settings:read"), storeAuditRouter);
+storeRouter.use("/:storeId/contact-messages", requireStoreAccess, contactMessageRouter);
+storeRouter.use("/:storeId/tracking", requireStoreAccess, storeTrackingRouter);
+storeRouter.use("/:id/tracking", requireStoreAccess, storeTrackingRouter);
+storeRouter.use("/:storeId/incomplete-checkouts", requireStorePermission("orders:read"), incompleteCheckoutRouter);
+storeRouter.use("/:id/incomplete-checkouts", requireStorePermission("orders:read"), incompleteCheckoutRouter);
+storeRouter.use("/:storeId/payment-gateways/sslcommerz", requireStorePermission("payments:read"), storeSSLCommerzRouter);
+storeRouter.use("/:id/payment-gateways/sslcommerz", requireStorePermission("payments:read"), storeSSLCommerzRouter);

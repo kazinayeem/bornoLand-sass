@@ -108,7 +108,7 @@ export function FinancialReportDocument({
                     <td className="py-2 px-3 text-zinc-500 font-mono w-20">{rev.code}</td>
                     <td className="py-2 px-3 font-medium text-zinc-800">{rev.name}</td>
                     <td className="py-2 px-3 text-right font-mono font-semibold text-zinc-900 w-36">
-                      ৳{rev.amount.toLocaleString()}
+                      ৳{(rev.amount ?? rev.currentBalance ?? 0).toLocaleString()}
                     </td>
                   </tr>
                 ))}
@@ -138,7 +138,7 @@ export function FinancialReportDocument({
                     <td className="py-2 px-3 text-zinc-500 font-mono w-20">{exp.code}</td>
                     <td className="py-2 px-3 font-medium text-zinc-800">{exp.name}</td>
                     <td className="py-2 px-3 text-right font-mono font-semibold text-rose-700 w-36">
-                      ৳{exp.amount.toLocaleString()}
+                      ৳{(exp.amount ?? exp.currentBalance ?? 0).toLocaleString()}
                     </td>
                   </tr>
                 ))}
@@ -192,7 +192,7 @@ export function FinancialReportDocument({
                         <td className="py-2 px-3 text-zinc-500 font-mono w-16">{asset.code}</td>
                         <td className="py-2 px-3 font-medium text-zinc-800">{asset.name}</td>
                         <td className="py-2 px-3 text-right font-mono font-semibold text-zinc-900 w-28">
-                          ৳{asset.amount.toLocaleString()}
+                          ৳{(asset.amount ?? asset.currentBalance ?? 0).toLocaleString()}
                         </td>
                       </tr>
                     ))}
@@ -220,7 +220,7 @@ export function FinancialReportDocument({
                         <td className="py-2 px-3 text-zinc-500 font-mono w-16">{liab.code}</td>
                         <td className="py-2 px-3 font-medium text-zinc-800">{liab.name}</td>
                         <td className="py-2 px-3 text-right font-mono font-semibold text-zinc-900 w-28">
-                          ৳{liab.amount.toLocaleString()}
+                          ৳{(liab.amount ?? liab.currentBalance ?? 0).toLocaleString()}
                         </td>
                       </tr>
                     ))}
@@ -229,7 +229,7 @@ export function FinancialReportDocument({
                         <td className="py-2 px-3 text-zinc-500 font-mono w-16">{eq.code}</td>
                         <td className="py-2 px-3 font-medium text-zinc-800">{eq.name}</td>
                         <td className="py-2 px-3 text-right font-mono font-semibold text-zinc-900 w-28">
-                          ৳{eq.amount.toLocaleString()}
+                          ৳{(eq.amount ?? eq.currentBalance ?? 0).toLocaleString()}
                         </td>
                       </tr>
                     ))}

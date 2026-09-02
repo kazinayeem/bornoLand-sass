@@ -131,16 +131,16 @@ export interface FinancialStatementData {
     credit: number;
   }[];
   profitAndLoss?: {
-    revenues: { code: string; name: string; amount: number }[];
-    expenses: { code: string; name: string; amount: number }[];
+    revenues: { code: string; name: string; amount?: number; currentBalance?: number }[];
+    expenses: { code: string; name: string; amount?: number; currentBalance?: number }[];
     totalRevenue: number;
     totalExpense: number;
     netProfit: number;
   };
   balanceSheet?: {
-    assets: { code: string; name: string; amount: number }[];
-    liabilities: { code: string; name: string; amount: number }[];
-    equity: { code: string; name: string; amount: number }[];
+    assets: { code: string; name: string; amount?: number; currentBalance?: number }[];
+    liabilities: { code: string; name: string; amount?: number; currentBalance?: number }[];
+    equity: { code: string; name: string; amount?: number; currentBalance?: number }[];
     totalAssets: number;
     totalLiabilities: number;
     totalEquity: number;

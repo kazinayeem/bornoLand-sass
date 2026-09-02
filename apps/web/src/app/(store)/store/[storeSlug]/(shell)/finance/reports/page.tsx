@@ -271,9 +271,9 @@ export default function FinancialReportsPage() {
               shortName: store?.shortName,
               logoUrl: store?.logoUrl,
               brandColor: store?.brandColor,
-              address: store?.address,
-              phone: store?.phone,
-              email: store?.email,
+              address: (store as any)?.address,
+              phone: (store as any)?.phone,
+              email: (store as any)?.email,
             }}
             data={{
               statementType:

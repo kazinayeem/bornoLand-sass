@@ -40,7 +40,7 @@ export const crmApi = baseApi.injectEndpoints({
         url: `/stores/${storeId}/crm/deals`,
         params,
       }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Customers", id: `${storeId}-deals` }],
+      providesTags: (_r, _e, { storeId }) => [{ type: "CRM", id: `${storeId}-deals` }],
     }),
 
     createDeal: builder.mutation<ApiEnvelope<CrmDeal>, { storeId: string; body: any }>({
@@ -49,7 +49,7 @@ export const crmApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Customers", id: `${storeId}-deals` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "CRM", id: `${storeId}-deals` }],
     }),
 
     updateDealStage: builder.mutation<
@@ -61,7 +61,7 @@ export const crmApi = baseApi.injectEndpoints({
         method: "PUT",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Customers", id: `${storeId}-deals` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "CRM", id: `${storeId}-deals` }],
     }),
   }),
 });

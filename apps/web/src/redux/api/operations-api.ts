@@ -38,7 +38,7 @@ export const operationsApi = baseApi.injectEndpoints({
         url: `/stores/${storeId}/operations/tasks`,
         params,
       }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Audit", id: `${storeId}-tasks` }],
+      providesTags: (_r, _e, { storeId }) => [{ type: "Operations", id: `${storeId}-tasks` }],
     }),
 
     createTask: builder.mutation<ApiEnvelope<OperationTask>, { storeId: string; body: any }>({
@@ -47,7 +47,7 @@ export const operationsApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Audit", id: `${storeId}-tasks` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Operations", id: `${storeId}-tasks` }],
     }),
 
     updateTaskStatus: builder.mutation<
@@ -59,7 +59,7 @@ export const operationsApi = baseApi.injectEndpoints({
         method: "PUT",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Audit", id: `${storeId}-tasks` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Operations", id: `${storeId}-tasks` }],
     }),
   }),
 });

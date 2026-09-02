@@ -43,7 +43,7 @@ export const supportApi = baseApi.injectEndpoints({
         url: `/stores/${storeId}/support/tickets`,
         params,
       }),
-      providesTags: (_r, _e, { storeId }) => [{ type: "Notifications", id: `${storeId}-tickets` }],
+      providesTags: (_r, _e, { storeId }) => [{ type: "Support", id: `${storeId}-tickets` }],
     }),
 
     createTicket: builder.mutation<ApiEnvelope<SupportTicket>, { storeId: string; body: any }>({
@@ -52,7 +52,7 @@ export const supportApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Notifications", id: `${storeId}-tickets` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Support", id: `${storeId}-tickets` }],
     }),
 
     addTicketReply: builder.mutation<
@@ -64,7 +64,7 @@ export const supportApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Notifications", id: `${storeId}-tickets` }],
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "Support", id: `${storeId}-tickets` }],
     }),
   }),
 });

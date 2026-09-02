@@ -2,13 +2,14 @@
 
 import { useEffect } from "react";
 import { useGetMyStorePermissionsQuery } from "@/redux/api/team-api";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setStorePermissions } from "@/redux/slices/auth-slice";
 
 export function StorePermissionsSync({ storeId }: { storeId: string }) {
   const dispatch = useAppDispatch();
+  const memberPermissions = useAppSelector((state) => state.auth.memberPermissions);
   const { data: res } = useGetMyStorePermissionsQuery(storeId, {
-    skip: !storeId,
+    skip: !storeId || Boolean(memberPermissions && memberPermissions.length > 0),
   });
 
   useEffect(() => {

@@ -1,37 +1,41 @@
 "use client";
 
 import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-page";
+import { useStoreContext } from "@/providers/store-context";
 import { EcommerceModuleShell } from "@/components/ecommerce/module-shell";
 import { InventoryHub } from "@/components/workspace/inventory/inventory-hub";
 import { useGetStoreFeatureAccessQuery, getFeatureByKey } from "@/redux/api/feature-api";
-import { Loader2 } from "lucide-react";
+import { TablePageSkeleton } from "@/components/loading/table-page-skeleton";
 
 export default function StoreInventoryPage() {
   const { storeId, store, isLoading } = useStorePage();
-  const { data: accessData } = useGetStoreFeatureAccessQuery(storeId ?? "", { skip: !storeId });
-  const features = accessData?.data?.features ?? [];
+  const storeContext = useStoreContext();
+  const contextFeatures = (storeContext.features as { features?: any[]; currentPlan?: { name?: string } } | null)?.features;
+
+  const { data: accessData } = useGetStoreFeatureAccessQuery(storeId ?? "", {
+    skip: !storeId || Boolean(contextFeatures && contextFeatures.length > 0),
+  });
+
+  const features = contextFeatures ?? accessData?.data?.features ?? [];
   const feature = getFeatureByKey(features, "inventory");
   const billingHref = store ? `/store/${store.slug}/billing` : "#";
-
-  if (isLoading || !storeId) {
-    return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
-      </div>
-    );
-  }
+  const currentPlan = (storeContext.features as any)?.currentPlan?.name ?? accessData?.data?.currentPlan?.name;
 
   return (
     <StorePageCard>
-      <EcommerceModuleShell
-        title="Inventory"
-        description="Enterprise stock control — only modules in your plan are available."
-        feature={feature}
-        billingHref={billingHref}
-        currentPlan={accessData?.data?.currentPlan?.name}
-      >
-        <InventoryHub storeId={storeId} features={features} />
-      </EcommerceModuleShell>
+      {isLoading || !storeId ? (
+        <TablePageSkeleton rows={6} cols={5} />
+      ) : (
+        <EcommerceModuleShell
+          title="Inventory"
+          description="Enterprise stock control — only modules in your plan are available."
+          feature={feature}
+          billingHref={billingHref}
+          currentPlan={currentPlan}
+        >
+          <InventoryHub storeId={storeId} features={features} />
+        </EcommerceModuleShell>
+      )}
     </StorePageCard>
   );
 }

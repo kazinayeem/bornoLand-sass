@@ -7,6 +7,7 @@ export type AuthRequest = Request & {
     userId: string;
     tenantId: string;
     role: string;
+    email?: string;
   };
 };
 

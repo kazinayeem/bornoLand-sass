@@ -32,6 +32,7 @@ import { resolveStoreStatus, storeStatusConfig, getTrialDaysRemaining, getStoreD
 import { getStoreUrl } from "@/lib/urls";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/providers/language-provider";
+import { useStoreContext } from "@/providers/store-context";
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 
@@ -385,19 +386,26 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
   const isBn = language === "bn";
   const d = t.dashboard;
 
-  const { data: mediaStats } = useGetMediaStatsQuery(storeId, { skip: !storeId });
-  const { data: subscriptionData } = useGetStoreSubscriptionQuery(storeId, { skip: !storeId });
-  const { data: accessData } = useGetStoreFeatureAccessQuery(storeId, { skip: !storeId });
+  const storeContext = useStoreContext();
+  const contextFeatures = (storeContext.features as { features?: any[] } | null)?.features;
+  const contextStats = storeContext.storageStats;
 
-  const stats = mediaStats?.data?.stats;
+  const { data: mediaStats } = useGetMediaStatsQuery(storeId, {
+    skip: !storeId || Boolean(contextStats),
+  });
+  const { data: subscriptionData } = useGetStoreSubscriptionQuery(storeId, { skip: !storeId });
+  const { data: accessData } = useGetStoreFeatureAccessQuery(storeId, {
+    skip: !storeId || Boolean(contextFeatures && contextFeatures.length > 0),
+  });
+
+  const stats = contextStats ?? mediaStats?.data?.stats;
+  const features = contextFeatures ?? accessData?.data?.features ?? [];
   const subscription = subscriptionData?.data;
   const usage = subscription?.usage;
   const planName = typeof store.planId === "object" && store.planId ? store.planId.name : store.plan;
   const status = resolveStoreStatus(store);
   const statusConfig = storeStatusConfig[status];
   const trialDays = getTrialDaysRemaining(store.trialEndsAt);
-
-  const features = accessData?.data?.features ?? [];
   const storeBase = `/store/${store.slug}`;
   const billingHref = `${storeBase}/billing`;
 

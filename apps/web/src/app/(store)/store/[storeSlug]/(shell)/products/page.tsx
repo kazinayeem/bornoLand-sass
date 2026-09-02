@@ -3,12 +3,12 @@
 import { Suspense } from "react";
 import { ProductsTab } from "@/components/workspace/products-tab";
 import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-page";
-import { Loader2 } from "lucide-react";
+import { TablePageSkeleton } from "@/components/loading/table-page-skeleton";
 
 function StoreProductsContent() {
   const { storeId, store, isLoading } = useStorePage();
   if (isLoading || !storeId) {
-    return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" /></div>;
+    return <TablePageSkeleton rows={7} cols={6} />;
   }
   const billingHref = store ? `/store/${store.slug}/billing` : "#";
   return (
@@ -22,13 +22,7 @@ function StoreProductsContent() {
 
 export default function StoreProductsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-apple-ink-muted-48" />
-        </div>
-      }
-    >
+    <Suspense fallback={<TablePageSkeleton rows={7} cols={6} />}>
       <StoreProductsContent />
     </Suspense>
   );

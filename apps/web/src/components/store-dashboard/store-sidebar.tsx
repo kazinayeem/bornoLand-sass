@@ -79,6 +79,7 @@ import { useGetMediaStatsQuery } from "@/redux/api/media-api";
 import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useLanguage, type Dictionary } from "@/providers/language-provider";
+import { useStoreContext } from "@/providers/store-context";
 import { useIsStoreOwner, usePermissions, checkPermission } from "@/features/session/hooks";
 
 /* ── Sidebar Collapse Context ─────────────────────────────────── */
@@ -661,10 +662,18 @@ export function StoreSidebar({
     }
   }, []);
 
-  const { data: accessData } = useGetStoreFeatureAccessQuery(store._id, { skip: !store._id });
-  const { data: storageData } = useGetMediaStatsQuery(store._id, { skip: !store._id });
-  const features = accessData?.data?.features ?? [];
-  const stats = storageData?.data?.stats;
+  const storeContext = useStoreContext();
+  const contextFeatures = (storeContext.features as { features?: any[] } | null)?.features;
+  const contextStats = storeContext.storageStats;
+
+  const { data: accessData } = useGetStoreFeatureAccessQuery(store._id, {
+    skip: !store._id || Boolean(contextFeatures && contextFeatures.length > 0),
+  });
+  const { data: storageData } = useGetMediaStatsQuery(store._id, {
+    skip: !store._id || Boolean(contextStats),
+  });
+  const features = contextFeatures ?? accessData?.data?.features ?? [];
+  const stats = contextStats ?? storageData?.data?.stats;
 
   const isOwner = useIsStoreOwner();
   const permissionSet = usePermissions();

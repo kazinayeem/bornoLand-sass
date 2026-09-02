@@ -298,12 +298,7 @@ export type StoreContextData = {
   isOwner: boolean;
   role: string;
   features?: Record<string, unknown> | null;
-  storageStats?: {
-    storageUsedBytes: number;
-    storageLimitBytes: number;
-    fileCount?: number;
-    usagePercent?: number;
-  } | null;
+  storageStats?: import("@/redux/api/media-api").StorageStats | null;
 };
 
 export const storeApi = baseApi.injectEndpoints({
@@ -414,6 +409,7 @@ export const {
   useGetMyStoresQuery,
   useGetStoreQuery,
   useGetStoreBySlugQuery,
+  useGetStoreContextBySlugQuery,
   useUpdateStoreMutation,
   useChangeStoreThemeMutation,
   useGetStoreBrandingQuery,

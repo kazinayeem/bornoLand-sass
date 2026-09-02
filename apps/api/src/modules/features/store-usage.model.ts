@@ -4,7 +4,7 @@ const { Schema, model, models } = mongoose;
 
 const storeUsageSchema = new Schema(
   {
-    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, unique: true, index: true },
+    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, unique: true },
     tenantId: { type: Schema.Types.ObjectId, ref: "Tenant", index: true },
     products: { type: Number, default: 0 },
     orders: { type: Number, default: 0 },

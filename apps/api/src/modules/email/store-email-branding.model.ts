@@ -15,7 +15,7 @@ const socialLinkSchema = new Schema(
 
 const storeEmailBrandingSchema = new Schema(
   {
-    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, unique: true, index: true },
+    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, unique: true },
     logo: { type: String, default: "", trim: true, maxlength: 2000 },
     primaryColor: { type: String, default: "#0066cc", trim: true, maxlength: 20 },
     buttonColor: { type: String, default: "#0066cc", trim: true, maxlength: 20 },

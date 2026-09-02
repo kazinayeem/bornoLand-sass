@@ -13,7 +13,7 @@ const changeSchema = new Schema(
 
 const auditLogSchema = new Schema(
   {
-    auditId: { type: String, required: true, unique: true, index: true },
+    auditId: { type: String, required: true, unique: true },
     tenantId: { type: Schema.Types.ObjectId, ref: "Tenant", index: true },
     workspaceName: { type: String, default: "" },
     storeId: { type: Schema.Types.ObjectId, ref: "Store", index: true },

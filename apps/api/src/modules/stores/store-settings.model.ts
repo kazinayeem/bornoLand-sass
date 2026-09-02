@@ -4,7 +4,7 @@ const { Schema, model, models } = mongoose;
 
 const storeSettingsSchema = new Schema(
   {
-    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, unique: true, index: true },
+    storeId: { type: Schema.Types.ObjectId, ref: "Store", required: true, unique: true },
     currencyCode: { type: String, enum: ["USD", "BDT", "EUR", "GBP", "INR"], default: "USD" },
     currencySymbol: { type: String, default: "$" },
     currencyPosition: { type: String, enum: ["before", "after"], default: "before" },

@@ -4,7 +4,7 @@ const { Schema, model, models } = mongoose;
 
 const storagePlanSchema = new Schema(
   {
-    planId: { type: Schema.Types.ObjectId, ref: "Plan", required: true, unique: true, index: true },
+    planId: { type: Schema.Types.ObjectId, ref: "Plan", required: true, unique: true },
     storageLimitMB: { type: Number, default: 0 },
     maxFileSizeMB: { type: Number, default: 10 },
     allowedMimeTypes: { type: [String], default: [] },

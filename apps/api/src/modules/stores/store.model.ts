@@ -4,8 +4,8 @@ const { Schema, model, models } = mongoose;
 
 const storeSchema = new Schema(
   {
-    tenantId: { type: Schema.Types.ObjectId, ref: "Tenant", required: true, index: true },
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    tenantId: { type: Schema.Types.ObjectId, ref: "Tenant", required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, lowercase: true, trim: true },
     subdomain: { type: String, unique: true, lowercase: true, trim: true },
@@ -88,6 +88,7 @@ const storeSchema = new Schema(
 );
 
 storeSchema.index({ tenantId: 1, slug: 1 }, { unique: true });
+storeSchema.index({ slug: 1 });
 storeSchema.index({ userId: 1, createdAt: -1 });
 storeSchema.index({ status: 1, billingStatus: 1 });
 storeSchema.index({ tenantId: 1 });

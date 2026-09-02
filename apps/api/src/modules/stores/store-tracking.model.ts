@@ -21,7 +21,6 @@ const storeTrackingSettingsSchema = new Schema(
       ref: "Store",
       required: true,
       unique: true,
-      index: true,
     },
     metaPixel: {
       enabled: { type: Boolean, default: false },

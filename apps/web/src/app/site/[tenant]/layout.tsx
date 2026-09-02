@@ -47,12 +47,12 @@ export default async function TenantLayout({ params, children }: { params: Promi
     tracking?: PublicStoreTracking | null;
   } | null;
 
-  // Render dedicated Store Not Found page when store does not exist
+  // Render dedicated Store Not Found page when store does not exist (HTTP 404)
   if (!data?.store) {
     if (process.env.NODE_ENV === "development" || process.env.DEBUG_TENANT_ROUTING === "1") {
-      console.log(`[site-layout] store missing for tenant="${slug}" → rendering StoreNotFoundView`);
+      console.log(`[site-layout] store missing for tenant="${slug}" → triggering notFound()`);
     }
-    return <StoreNotFoundView tenantSlug={slug} />;
+    notFound();
   }
 
   const { store, products, settings, sliders } = data;

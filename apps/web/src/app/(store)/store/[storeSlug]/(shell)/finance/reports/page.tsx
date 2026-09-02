@@ -19,6 +19,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DocumentPreviewDialog } from "@/components/documents/document-preview-dialog";
+import { FinancialReportDocument } from "@/components/documents/templates/financial-report-document";
 
 export default function FinancialReportsPage() {
   const params = useParams();

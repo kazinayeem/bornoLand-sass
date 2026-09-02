@@ -24,14 +24,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { DocumentPreviewDialog } from "@/components/documents/document-preview-dialog";
+import { PayslipDocument } from "@/components/documents/templates/payslip-document";
+import type { PayslipData } from "@/components/documents/document-types";
 import {
   Select,
   SelectContent,
@@ -343,84 +338,62 @@ export default function PayrollPage() {
         </CardContent>
       </Card>
 
-      {/* Payslip View Modal */}
+      {/* Unified Master Payslip Document Preview & Print Modal */}
       {selectedPayslip && (
-        <Dialog open={!!selectedPayslip} onOpenChange={() => setSelectedPayslip(null)}>
-          <DialogContent className="sm:max-w-[550px] p-6">
-            <div className="border-b pb-4 flex justify-between items-start">
-              <div>
-                <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
-                  {store?.name || "BornoLand Enterprise"}
-                </h2>
-                <p className="text-xs text-zinc-500">
-                  {isBn ? "মাসিক বেতন পে-স্লিপ" : "Monthly Salary Payslip"} — {new Date(selectedPayslip.year, selectedPayslip.month - 1).toLocaleString("default", { month: "long" })} {selectedPayslip.year}
-                </p>
-              </div>
-              <div className="text-right font-mono text-xs text-zinc-500">
-                <div>#{selectedPayslip.payslipNumber}</div>
-                <div className="capitalize text-emerald-600 font-semibold">{selectedPayslip.status}</div>
-              </div>
-            </div>
-
-            <div className="py-3 grid grid-cols-2 gap-2 text-xs border-b border-zinc-100 dark:border-zinc-800">
-              <div>
-                <span className="text-zinc-400">{isBn ? "কর্মী:" : "Employee:"}</span>{" "}
-                <span className="font-semibold">{selectedPayslip.employeeId?.firstName} {selectedPayslip.employeeId?.lastName}</span>
-              </div>
-              <div>
-                <span className="text-zinc-400">{isBn ? "কর্মী কোড:" : "Code:"}</span>{" "}
-                <span className="font-mono font-medium">{selectedPayslip.employeeId?.employeeCode}</span>
-              </div>
-            </div>
-
-            <div className="py-3 space-y-2 text-xs">
-              <div className="font-semibold text-zinc-700 dark:text-zinc-300">{isBn ? "উপার্জন (Earnings):" : "Earnings:"}</div>
-              <div className="flex justify-between pl-2">
-                <span>{isBn ? "মূল বেতন (Basic Salary):" : "Basic Salary:"}</span>
-                <span className="font-medium">৳{selectedPayslip.basicSalary?.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between pl-2">
-                <span>{isBn ? "বাড়ি ভাড়া ও চিকিৎসা ভাতা:" : "House Rent & Medical:"}</span>
-                <span className="font-medium">৳{(selectedPayslip.houseRent + selectedPayslip.medical)?.toLocaleString()}</span>
-              </div>
-              {selectedPayslip.overtimePay > 0 && (
-                <div className="flex justify-between pl-2 text-indigo-600">
-                  <span>{isBn ? `ওভারটাইম (${selectedPayslip.overtimeHours} ঘন্টা):` : `Overtime (${selectedPayslip.overtimeHours} hrs):`}</span>
-                  <span className="font-semibold">+৳{selectedPayslip.overtimePay?.toLocaleString()}</span>
-                </div>
-              )}
-
-              <div className="font-semibold text-zinc-700 dark:text-zinc-300 pt-2 border-t">{isBn ? "কর্তন (Deductions):" : "Deductions:"}</div>
-              {selectedPayslip.taxDeduction > 0 && (
-                <div className="flex justify-between pl-2 text-rose-600">
-                  <span>{isBn ? "আয়কর (Tax):" : "Tax Deduction:"}</span>
-                  <span>-৳{selectedPayslip.taxDeduction?.toLocaleString()}</span>
-                </div>
-              )}
-              {selectedPayslip.providentFundDeduction > 0 && (
-                <div className="flex justify-between pl-2 text-rose-600">
-                  <span>{isBn ? "ভবিষ্য তহবিল (PF):" : "Provident Fund:"}</span>
-                  <span>-৳{selectedPayslip.providentFundDeduction?.toLocaleString()}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between pt-3 border-t text-sm font-bold text-zinc-900 dark:text-white">
-                <span>{isBn ? "সর্বমোট নিট বেতন (Net Salary):" : "Net Salary Payable:"}</span>
-                <span className="text-emerald-600 text-base">৳{selectedPayslip.netSalary?.toLocaleString()}</span>
-              </div>
-            </div>
-
-            <DialogFooter className="flex justify-between sm:justify-between items-center pt-2">
-              <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-1.5">
-                <Printer className="h-4 w-4" />
-                <span>{isBn ? "প্রিন্ট করুন" : "Print"}</span>
-              </Button>
-              <Button size="sm" onClick={() => setSelectedPayslip(null)}>
-                {isBn ? "বন্ধ করুন" : "Close"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <DocumentPreviewDialog
+          open={!!selectedPayslip}
+          onClose={() => setSelectedPayslip(null)}
+          title={`${isBn ? "বেতন পে-স্লিপ" : "Salary Payslip"} #${selectedPayslip.payslipNumber}`}
+          filename={`BornoLand-Payslip-${selectedPayslip.payslipNumber}.pdf`}
+          defaultPageSize="a4-portrait"
+        >
+          <PayslipDocument
+            store={{
+              name: store?.name || "BornoLand Store",
+              shortName: store?.shortName,
+              logoUrl: store?.logoUrl,
+              brandColor: store?.brandColor,
+              address: store?.address,
+              phone: store?.phone,
+              email: store?.email,
+            }}
+            payslip={{
+              payslipNumber: selectedPayslip.payslipNumber,
+              period: `${new Date(selectedPayslip.year, selectedPayslip.month - 1).toLocaleString("default", { month: "long" })} ${selectedPayslip.year}`,
+              paymentDate: selectedPayslip.paymentDate,
+              status: selectedPayslip.status,
+              paymentMethod: selectedPayslip.paymentMethod,
+              employee: {
+                code: selectedPayslip.employeeId?.employeeCode || "EMP-001",
+                name: `${selectedPayslip.employeeId?.firstName || ""} ${selectedPayslip.employeeId?.lastName || ""}`.trim() || "Employee",
+                designation: selectedPayslip.employeeId?.designationId?.title || "Staff",
+                department: selectedPayslip.employeeId?.departmentId?.name || "General",
+                bankAccount: selectedPayslip.employeeId?.bankAccount?.accountNumber,
+                phone: selectedPayslip.employeeId?.phone,
+              },
+              earnings: {
+                basicSalary: selectedPayslip.basicSalary || 0,
+                houseRent: selectedPayslip.houseRent || 0,
+                medical: selectedPayslip.medical || 0,
+                conveyance: selectedPayslip.conveyance || 0,
+                overtimeHours: selectedPayslip.overtimeHours || 0,
+                overtimePay: selectedPayslip.overtimePay || 0,
+                otherAllowances: selectedPayslip.otherAllowances || 0,
+                bonus: selectedPayslip.bonus || 0,
+              },
+              deductions: {
+                taxDeduction: selectedPayslip.taxDeduction || 0,
+                providentFundDeduction: selectedPayslip.providentFundDeduction || 0,
+                unpaidLeaveDeduction: selectedPayslip.unpaidLeaveDeduction || 0,
+              },
+              grossSalary: selectedPayslip.grossSalary || 0,
+              totalDeductions: selectedPayslip.totalDeductions || 0,
+              netSalary: selectedPayslip.netSalary || 0,
+              notes: selectedPayslip.notes,
+            }}
+            isBn={isBn}
+          />
+        </DocumentPreviewDialog>
       )}
     </div>
   );

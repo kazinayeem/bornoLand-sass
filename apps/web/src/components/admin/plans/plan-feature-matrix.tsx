@@ -11,6 +11,10 @@ import type { Plan } from "@/redux/api/store-api";
 
 const COMPARISON_KEYS = [
   "products",
+  "pos",
+  "inventory",
+  "warehouses",
+  "suppliers",
   "storage",
   "product_variants",
   "coupons",
@@ -31,6 +35,10 @@ const COMPARISON_KEYS = [
 
 const COMPARISON_LABELS: Record<string, string> = {
   products: "Products",
+  pos: "Point of Sale (POS)",
+  inventory: "Inventory Management",
+  warehouses: "Multi-Warehouse",
+  suppliers: "Suppliers & POs",
   storage: "Storage",
   product_variants: "Variants",
   coupons: "Coupons",

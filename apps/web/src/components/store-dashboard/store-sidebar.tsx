@@ -52,6 +52,7 @@ import {
   ChevronsUpDown,
   ArrowLeft,
   HardDrive,
+  Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
@@ -120,6 +121,7 @@ export function getSidebarNavGroups(t: Dictionary, isBn = false): NavGroupDef[] 
       group: sn.sales,
       items: [
         { href: "/orders", label: sn.orders, icon: ShoppingBag, exact: true, permission: "orders:read" },
+        { href: "/pos", label: isBn ? "পয়েন্ট অব সেল (POS)" : "Point of Sale (POS)", icon: Calculator, featureKey: "pos", permission: "pos:read" },
         { href: "/orders/incomplete", label: sn.incompleteOrders, icon: ShoppingCart, featureKey: "incomplete_orders", permission: "orders:read" },
         { href: "/customers", label: sn.customers, icon: Users, permission: "customers:read" },
         { href: "/reviews", label: sn.reviews, icon: Star, featureKey: "reviews", permission: "reviews:read" },

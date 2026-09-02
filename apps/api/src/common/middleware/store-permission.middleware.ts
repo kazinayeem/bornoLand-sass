@@ -4,6 +4,7 @@ import { connectDatabase } from "../database/connection.js";
 import { StoreModel } from "../../modules/stores/store.model.js";
 import { StoreMemberModel } from "../../modules/team/store-member.model.js";
 import { hasPermission, roleToPermissions } from "../types/permissions.js";
+import { checkStoreModuleEntitlement } from "../services/module-entitlement.service.js";
 
 export type PermissionRequest = AuthRequest & {
   storeContext?: {
@@ -12,25 +13,45 @@ export type PermissionRequest = AuthRequest & {
     isOwner: boolean;
     memberRole: string;
     memberPermissions: string[];
+    enabledModules?: string[];
   };
 };
 
 /**
- * Core store access + permission resolver.
- *
- * Resolves storeId from `req.params.storeId`, `req.params.id` (if it looks like
- * a slug, we look up by slug), `req.body.storeId`, or `req.query.storeId`.
+ * Maps a permission string to its corresponding module key (if restricted by subscription).
+ */
+function permissionToModule(permission: string): string | null {
+  const [module] = permission.split(":");
+  const moduleMap: Record<string, string> = {
+    pos: "pos",
+    inventory: "inventory",
+    warehouse: "warehouse",
+    procurement: "procurement",
+    hrm: "hrm",
+    analytics: "analytics",
+    reports: "analytics",
+    marketing: "marketing",
+    shipping: "shipping",
+    finance: "finance",
+  };
+  return moduleMap[module] || null;
+}
+
+/**
+ * Core store access + permission + plan entitlement resolver.
  *
  * Authorization hierarchy:
  *  1. Super Admin → full access always.
- *  2. Store Owner (store.userId === userId) → full access always.
- *  3. Active StoreMember → checked against required permission.
- *  4. Otherwise → 403 PERMISSION_DENIED.
+ *  2. Store Exists & Active?
+ *  3. Store Owner OR Active Member?
+ *  4. Plan Entitlement for requested module / permission?
+ *  5. Member Permission satisfied?
  */
 async function resolveStoreAccess(
   req: PermissionRequest,
   res: Response,
   requiredPermission?: string,
+  requiredModule?: string,
 ): Promise<boolean> {
   const userId = req.user?.userId;
   if (!userId) {
@@ -38,7 +59,7 @@ async function resolveStoreAccess(
     return false;
   }
 
-  // Super admin bypasses all store-level permission checks
+  // Super admin bypasses all store-level permission and plan checks
   if (req.user?.role === "super_admin") {
     req.storeContext = {
       storeId: "super_admin",
@@ -46,6 +67,7 @@ async function resolveStoreAccess(
       isOwner: true,
       memberRole: "owner",
       memberPermissions: ["*"],
+      enabledModules: ["*"],
     };
     return true;
   }
@@ -62,9 +84,9 @@ async function resolveStoreAccess(
   // Look up store — by ObjectId first, then by slug
   const isObjectId = /^[a-f\d]{24}$/i.test(rawId);
   const store = (isObjectId
-    ? await StoreModel.findById(rawId).select("_id tenantId userId slug").lean()
-    : await StoreModel.findOne({ slug: rawId }).select("_id tenantId userId slug").lean()
-  ) as { _id: unknown; tenantId: unknown; userId: unknown; slug: string } | null;
+    ? await StoreModel.findById(rawId).select("_id tenantId userId slug status planId").lean()
+    : await StoreModel.findOne({ slug: rawId }).select("_id tenantId userId slug status planId").lean()
+  ) as { _id: unknown; tenantId: unknown; userId: unknown; slug: string; status: string; planId?: unknown } | null;
 
   if (!store) {
     res.status(404).json({ success: false, message: "Store not found", code: "STORE_NOT_FOUND" });
@@ -73,6 +95,21 @@ async function resolveStoreAccess(
 
   const storeId = String(store._id);
   const isOwner = String(store.userId) === userId;
+
+  // Check module entitlement if a specific module or permission was requested
+  const targetModule = requiredModule || (requiredPermission ? permissionToModule(requiredPermission) : null);
+  if (targetModule) {
+    const entitlement = await checkStoreModuleEntitlement(storeId, targetModule);
+    if (!entitlement.entitled) {
+      res.status(403).json({
+        success: false,
+        message: entitlement.message || `The ${targetModule} module is not enabled for your store.`,
+        code: entitlement.code || "MODULE_NOT_ENTITLED",
+        requiredModule: targetModule,
+      });
+      return false;
+    }
+  }
 
   if (isOwner) {
     req.storeContext = {
@@ -86,9 +123,9 @@ async function resolveStoreAccess(
   }
 
   // Check team membership
-  const member = await StoreMemberModel.findOne({ storeId, userId, status: "active" })
+  const member = (await StoreMemberModel.findOne({ storeId, userId, status: "active" })
     .select("role permissions status")
-    .lean() as { role: string; permissions: string[]; status: string } | null;
+    .lean()) as { role: string; permissions: string[]; status: string } | null;
 
   if (!member) {
     res.status(403).json({ success: false, message: "You do not have access to this store", code: "STORE_ACCESS_DENIED" });
@@ -140,11 +177,22 @@ export function requireStorePermission(permission: string) {
 }
 
 /**
+ * Middleware factory: Verify the store has an active entitlement for a specific module.
+ *
+ * Usage: `router.use("/pos", requireStoreModule("pos"), posRouter)`
+ */
+export function requireStoreModule(moduleKey: string) {
+  return async (req: PermissionRequest, res: Response, next: NextFunction) => {
+    const ok = await resolveStoreAccess(req, res, undefined, moduleKey);
+    if (ok) next();
+  };
+}
+
+/**
  * Middleware factory: Verify the caller has ALL of the given permissions.
  */
 export function requireAllStorePermissions(...permissions: string[]) {
   return async (req: PermissionRequest, res: Response, next: NextFunction) => {
-    // Resolve access first without specific permission check
     const ok = await resolveStoreAccess(req, res);
     if (!ok) return;
 

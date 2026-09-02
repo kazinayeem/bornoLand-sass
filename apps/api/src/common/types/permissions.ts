@@ -12,6 +12,9 @@ export const STORE_MODULES = [
   "products",
   "categories",
   "inventory",
+  "warehouse",
+  "procurement",
+  "pos",
   "orders",
   "customers",
   "coupons",
@@ -26,12 +29,14 @@ export const STORE_MODULES = [
   "shipping",
   "payments",
   "reports",
+  "hrm",
+  "finance",
 ] as const;
 
 export type StoreModule = (typeof STORE_MODULES)[number];
 
 // ── Action Keys ────────────────────────────────────────────────────────
-export const STORE_ACTIONS = ["read", "create", "update", "delete", "export", "manage"] as const;
+export const STORE_ACTIONS = ["read", "create", "update", "delete", "export", "manage", "refund"] as const;
 export type StoreAction = (typeof STORE_ACTIONS)[number];
 
 // ── Permission String Type ─────────────────────────────────────────────
@@ -41,7 +46,7 @@ export type Permission =
   | `${StoreModule}:${StoreAction}`;
 
 // ── Role Keys ─────────────────────────────────────────────────────────
-export const STORE_MEMBER_ROLES = ["owner", "admin", "manager", "staff", "viewer"] as const;
+export const STORE_MEMBER_ROLES = ["owner", "admin", "manager", "staff", "viewer", "cashier"] as const;
 export type StoreMemberRole = (typeof STORE_MEMBER_ROLES)[number];
 
 // ── Default Permission Presets per Role ───────────────────────────────
@@ -51,6 +56,9 @@ export const ROLE_PERMISSION_PRESETS: Record<StoreMemberRole, Permission[]> = {
     "products:*",
     "categories:*",
     "inventory:*",
+    "warehouse:*",
+    "procurement:*",
+    "pos:*",
     "orders:*",
     "customers:*",
     "coupons:*",
@@ -68,6 +76,7 @@ export const ROLE_PERMISSION_PRESETS: Record<StoreMemberRole, Permission[]> = {
     "payments:read",
     "reports:read",
     "reports:export",
+    "finance:read",
   ],
   manager: [
     "products:*",
@@ -75,6 +84,10 @@ export const ROLE_PERMISSION_PRESETS: Record<StoreMemberRole, Permission[]> = {
     "categories:update",
     "inventory:read",
     "inventory:update",
+    "warehouse:read",
+    "warehouse:update",
+    "procurement:read",
+    "pos:*",
     "orders:*",
     "customers:read",
     "customers:update",
@@ -100,6 +113,16 @@ export const ROLE_PERMISSION_PRESETS: Record<StoreMemberRole, Permission[]> = {
     "customers:read",
     "media:read",
     "media:create",
+    "pos:read",
+    "pos:create",
+  ],
+  cashier: [
+    "pos:*",
+    "products:read",
+    "orders:read",
+    "orders:create",
+    "customers:read",
+    "customers:create",
   ],
   viewer: [
     "products:read",
@@ -122,13 +145,13 @@ export function hasPermission(
   userPermissions: string[],
   required: string,
 ): boolean {
-  // Super admin wildcard
+  // Super admin / Owner wildcard
   if (userPermissions.includes("*")) return true;
 
   // Exact match
   if (userPermissions.includes(required)) return true;
 
-  // Module wildcard  e.g. "products:*" satisfies "products:read"
+  // Module wildcard e.g. "products:*" satisfies "products:read"
   const [module] = required.split(":");
   if (module && userPermissions.includes(`${module}:*`)) return true;
 

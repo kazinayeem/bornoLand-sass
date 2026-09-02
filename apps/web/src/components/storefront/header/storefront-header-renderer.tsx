@@ -103,11 +103,22 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
 
   const publishMetrics = useCallback(
     (height: number) => {
-      setHeaderHeight(height);
-      const offset = position === "fixed" && !transparent ? height : 0;
-      registerContentOffset(height, offset);
+      const roundedHeight = Math.max(0, Math.round(height));
+      setHeaderHeight(roundedHeight);
+      const offset = position === "fixed" && !transparent ? roundedHeight : 0;
+      registerContentOffset(roundedHeight, offset);
     },
     [position, transparent, registerContentOffset],
+  );
+
+  const setHeaderNode = useCallback(
+    (node: HTMLDivElement | null) => {
+      (headerRef as any).current = node;
+      if (node && !disabled) {
+        publishMetrics(node.offsetHeight);
+      }
+    },
+    [disabled, publishMetrics],
   );
 
   useEffect(() => {
@@ -123,7 +134,6 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
     observer.observe(headerRef.current);
     return () => {
       observer.disconnect();
-      registerContentOffset(0, 0);
     };
   }, [disabled, template, headerSettings, publishMetrics, registerContentOffset]);
 
@@ -155,7 +165,7 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
   }
 
   const colorStyle = {
-    ["--store-header-height" as string]: `${headerHeight}px`,
+    ["--store-header-height" as string]: headerHeight > 0 ? `${headerHeight}px` : "72px",
     ...(config.colors.primary ? { ["--store-primary" as string]: config.colors.primary } : {}),
     ...(config.colors.secondary ? { ["--store-secondary" as string]: config.colors.secondary } : {}),
     ...(config.colors.accent ? { ["--store-accent" as string]: config.colors.accent } : {}),
@@ -170,7 +180,7 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
       style={colorStyle}
     >
       <div
-        ref={headerRef}
+        ref={setHeaderNode}
         className={cn(
           "w-full max-w-full min-w-0 transition-transform duration-300 z-50",
           position === "sticky" && "sticky top-0",
@@ -186,9 +196,9 @@ export function StorefrontHeaderRenderer({ headerSettings = {} }: StorefrontHead
         <TemplateComponent key={`header-${template}`} headerSettings={templateSettings} />
       </div>
 
-      {position === "fixed" && !transparent && headerHeight > 0 && (
+      {position === "fixed" && !transparent && (
         <div
-          style={{ height: headerHeight }}
+          style={{ height: headerHeight > 0 ? `${headerHeight}px` : "var(--store-header-height, 72px)" }}
           aria-hidden="true"
           className="w-full shrink-0 pointer-events-none"
           data-header-spacer="true"

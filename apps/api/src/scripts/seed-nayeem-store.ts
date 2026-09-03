@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import dotenv from "dotenv";
+import dotenvFlow from "dotenv-flow";
 import path from "path";
 import { fileURLToPath } from "url";
 import { connectDatabase } from "../common/database/connection.js";
@@ -10,8 +10,7 @@ import { ProductModel } from "../models/product.model.js";
 
 // Ensure env is loaded
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
-dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
+dotenvFlow.config({ path: path.resolve(__dirname, "../../") });
 
 export async function seedNayeemStoreData() {
   await connectDatabase();

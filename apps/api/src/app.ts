@@ -1,8 +1,6 @@
 import express, { type Express } from "express";
 import helmet from "helmet";
 import cors, { type CorsOptions } from "cors";
-import dotenv from "dotenv";
-import path from "path";
 import crypto from "crypto";
 import mongoose from "mongoose";
 import pino from "pino";
@@ -56,8 +54,7 @@ import { aiRouter } from "./modules/ai/ai.route.js";
 import { teamRouter } from "./modules/team/team.route.js";
 import { errorHandler, notFoundHandler } from "./common/middleware/error.middleware.js";
 
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
-dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
+
 
 const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "";
 const ROOT_HOSTNAME = ROOT_DOMAIN.includes(":") ? ROOT_DOMAIN.split(":")[0] : ROOT_DOMAIN;

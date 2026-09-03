@@ -39,8 +39,9 @@ export function getStorePublicUrl(
   options?: { host?: string; protocol?: string }
 ): string {
   if (!store) {
-    const fallbackRoot = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || process.env.ROOT_DOMAIN || "bornoland.com").trim();
-    return `https://${fallbackRoot}`;
+    const fallbackRoot = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || process.env.ROOT_DOMAIN || "localhost:3000").trim();
+    const protocol = process.env.NEXT_PUBLIC_PROTOCOL || process.env.PROTOCOL || (process.env.NODE_ENV === "production" ? "http" : "http");
+    return `${protocol}://${fallbackRoot}`;
   }
 
   const cacheKey = `${String(store._id || "")}:${store.subdomain || ""}:${store.slug || ""}:${store.customDomain || ""}:${Array.isArray(store.customDomains) ? store.customDomains.join(",") : ""}`;
@@ -96,9 +97,16 @@ export function getStorePublicUrl(
     resolvedUrl = `http://${storeSlug}.localhost:${port}`;
   } else {
     // Production root domain resolution
-    const productionBase = rootDomain ? stripPort(rootDomain) : "bornoland.com";
+    const productionBase = rootDomain
+      ? stripPort(rootDomain)
+      : (process.env.APP_URL ? new URL(process.env.APP_URL).hostname : "localhost");
     const protocol = process.env.NEXT_PUBLIC_PROTOCOL || process.env.PROTOCOL || "https";
-    resolvedUrl = `${protocol}://${storeSlug}.${productionBase}`;
+    if (isIpHostname(productionBase)) {
+      const portPart = rootDomain.includes(":") ? `:${rootDomain.split(":")[1]}` : "";
+      resolvedUrl = `${protocol}://${productionBase}${portPart}/store/${storeSlug}`;
+    } else {
+      resolvedUrl = `${protocol}://${storeSlug}.${productionBase}`;
+    }
   }
 
   STORE_URL_CACHE.set(cacheKey, { url: resolvedUrl, expiresAt: Date.now() + CACHE_TTL_MS });
@@ -119,13 +127,20 @@ export function getApiBaseUrl(): string {
     return envApiUrl.trim().replace(/\/$/, "");
   }
 
+  const port = process.env.PORT || process.env.API_PORT || "4000";
   const isDev = process.env.NODE_ENV !== "production";
   if (isDev) {
-    const port = process.env.PORT || process.env.API_PORT || "4000";
     return `http://localhost:${port}`;
   }
 
-  return "https://api.bornoland.com";
+  const rootDomain = (process.env.ROOT_DOMAIN || process.env.NEXT_PUBLIC_ROOT_DOMAIN || "").trim();
+  if (rootDomain) {
+    const cleanHost = stripPort(rootDomain);
+    const protocol = process.env.NEXT_PUBLIC_PROTOCOL || process.env.PROTOCOL || "http";
+    return `${protocol}://${cleanHost}:${port}`;
+  }
+
+  return `http://localhost:${port}`;
 }
 
 /**

@@ -1,3 +1,16 @@
+// ── Load environment configuration FIRST (before any module imports) ──────────
+// dotenv-flow loads:  .env  →  .env.local (dev)  or  .env.production (prod)
+// NODE_ENV is set explicitly by package.json scripts.
+import dotenvFlow from "dotenv-flow";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// When compiled: dist/index.js → project root is two levels up
+// When running with tsx: src/index.ts → project root is two levels up
+const projectRoot = path.resolve(__dirname, "../../");
+dotenvFlow.config({ path: projectRoot, node_env: process.env.NODE_ENV ?? "development" });
+
 import { app } from "./app.js";
 import { connectDatabase } from "./common/database/connection.js";
 import { CartModel } from "./modules/cart/cart.model.js";
@@ -7,6 +20,7 @@ import { startEmailQueue } from "./modules/email/email-queue.service.js";
 import { startShipmentSyncScheduler } from "./modules/couriers/shipment-sync.cron.js";
 import { runSafeMigration } from "./bootstrap/safe-migrate.js";
 import mongoose from "mongoose";
+
 
 const port = Number(process.env.PORT ?? 4000);
 

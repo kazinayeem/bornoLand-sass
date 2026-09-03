@@ -9,4 +9,12 @@ coverage
 apps/api/uploads
 mobileapp/node_modules
 
-
+# Environment files and secrets
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*
+!.env.example
+!.env.production.example

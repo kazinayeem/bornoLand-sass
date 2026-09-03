@@ -18,9 +18,7 @@ import { startBillingCronScheduler } from "./modules/subscriptions/billing-cron.
 import { startStorageCronScheduler } from "./modules/media/storage-cron.service.js";
 import { startEmailQueue } from "./modules/email/email-queue.service.js";
 import { startShipmentSyncScheduler } from "./modules/couriers/shipment-sync.cron.js";
-import { runSafeMigration } from "./bootstrap/safe-migrate.js";
 import mongoose from "mongoose";
-
 
 const port = Number(process.env.PORT ?? 4000);
 
@@ -36,10 +34,6 @@ async function startServer() {
     const server = app.listen(port, "0.0.0.0", () => {
       console.log(`BornoLand API listening on port ${port}`);
       console.log("MongoDB connection established");
-
-      void runSafeMigration().catch((error) => {
-        console.error("[bootstrap] Safe migration failed:", error);
-      });
     });
 
     const shutdown = async (signal: string) => {

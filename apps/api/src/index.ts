@@ -6,10 +6,12 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// When compiled: dist/index.js → project root is two levels up
-// When running with tsx: src/index.ts → project root is two levels up
-const projectRoot = path.resolve(__dirname, "../../");
-dotenvFlow.config({ path: projectRoot, node_env: process.env.NODE_ENV ?? "development" });
+const appDir = path.resolve(__dirname, "..");
+const repoRoot = path.resolve(appDir, "../../");
+
+// Load backend app env files, then fallback to repo root if present
+dotenvFlow.config({ path: appDir, node_env: process.env.NODE_ENV ?? "development", silent: true });
+dotenvFlow.config({ path: repoRoot, node_env: process.env.NODE_ENV ?? "development", silent: true });
 
 import { app } from "./app.js";
 import { connectDatabase } from "./common/database/connection.js";

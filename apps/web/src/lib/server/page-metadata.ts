@@ -11,6 +11,21 @@ const API_BASE = getApiUrl();
 const APP_NAME = "BornoLand";
 const DEFAULT_FAVICON = "/logo.png";
 
+function safeMetadataBase(urlStr?: string): URL {
+  if (urlStr) {
+    try {
+      return new URL(urlStr);
+    } catch (err: any) {
+      console.warn(`[page-metadata] Invalid metadataBase URL "${urlStr}", falling back to getMetadataBaseUrl():`, err?.message);
+    }
+  }
+  try {
+    return new URL(getMetadataBaseUrl());
+  } catch {
+    return new URL("http://localhost:3000");
+  }
+}
+
 type StoreMetadata = {
   _id: string;
   name: string;
@@ -183,7 +198,7 @@ export async function generateTenantLayoutMetadata(tenant: string): Promise<Meta
   if (!store) {
     const defaultOrigin = getMetadataBaseUrl();
     return {
-      metadataBase: new URL(defaultOrigin),
+      metadataBase: safeMetadataBase(defaultOrigin),
       title: {
         absolute: "Store Not Found | BornoLand",
       },
@@ -208,7 +223,7 @@ export async function generateTenantLayoutMetadata(tenant: string): Promise<Meta
   const metadataBaseOrigin = getTenantCanonicalUrl(tenant, "/");
 
   return {
-    metadataBase: new URL(metadataBaseOrigin),
+    metadataBase: safeMetadataBase(metadataBaseOrigin),
     title: {
       default: storeName,
       template: `%s | ${storeName}`,
@@ -251,7 +266,7 @@ export async function generateTenantMetadata(args: {
   if (!store) {
     const defaultOrigin = getMetadataBaseUrl();
     return {
-      metadataBase: new URL(defaultOrigin),
+      metadataBase: safeMetadataBase(defaultOrigin),
       title: {
         absolute: "Store Not Found | BornoLand",
       },
@@ -279,7 +294,7 @@ export async function generateTenantMetadata(args: {
   const metadataBaseOrigin = getTenantCanonicalUrl(args.tenant, "/");
 
   return {
-    metadataBase: new URL(metadataBaseOrigin),
+    metadataBase: safeMetadataBase(metadataBaseOrigin),
     title: {
       absolute: title,
     },
@@ -395,7 +410,7 @@ export async function generateStorefrontProductMetadata(args: {
   const metadataBaseOrigin = getTenantCanonicalUrl(args.tenant, "/");
 
   return {
-    metadataBase: new URL(metadataBaseOrigin),
+    metadataBase: safeMetadataBase(metadataBaseOrigin),
     title: {
       absolute: title,
     },

@@ -112,8 +112,8 @@ bornoland/
 │   ├── web/                    # Next.js 15 frontend
 │   │   ├── src/
 │   │   │   ├── app/            # App Router routes (200+ pages)
-│   │   │   ├── components/     # UI, builder, storefront, admin, workspace (663 files)
-│   │   │   ├── redux/          # RTK Query APIs (44) + slices (16)
+│   │   │   ├── components/     # UI, builder, storefront, admin, workspace (35 domains, 663+ files)
+│   │   │   ├── redux/          # RTK Query APIs (51) + slices (18)
 │   │   │   ├── lib/            # URLs, sections, server fetch helpers
 │   │   │   ├── middleware.ts   # Auth + subdomain routing
 │   │   │   ├── providers/      # Tenant, store context
@@ -121,8 +121,8 @@ bornoland/
 │   │   ├── Dockerfile
 │   │   └── package.json
 │   └── api/                    # Express 5 backend
-│       ├── src/
-│       │   ├── modules/        # 45 domain modules
+│   ├── src/
+│   │   ├── modules/        # 46 domain modules
 │       │   ├── common/         # Middleware, DB, utils, cache
 │       │   ├── bootstrap/      # Safe migrations + default seeds
 │       │   └── seed/           # Database seed scripts
@@ -1018,7 +1018,7 @@ pnpm --filter @bornoland/api start
 
 | Component | Command | Result |
 |-----------|---------|--------|
-| Backend API | `pnpm --filter @bornoland/api build` | ✅ PASS |
+| Backend API | `pnpm --filter @bornoland/api build` | ✅ PASS (46 modules) |
 | Frontend Web | `pnpm --filter @bornoland/web build` | ✅ PASS (200+ routes) |
 
 ---

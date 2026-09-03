@@ -111,9 +111,26 @@ export function joinUrl(origin: string, path = "/"): string {
 
 export function getStoreHost(storeSlug: string): string {
   const slug = storeSlug.trim().toLowerCase();
-  const { rootDomain } = readAppUrlConfig();
+  const { rootDomain, rootHostname, rootPortSuffix } = readAppUrlConfig();
   const baseDomain = rootDomain || "localhost:3000";
   if (!slug) return baseDomain;
+
+  // In browser, if on nip.io or sslip.io, preserve that domain
+  if (typeof window !== "undefined") {
+    const currentHost = window.location.host.toLowerCase();
+    const nipMatch = currentHost.match(/^(?:[a-z0-9-]+\.)?((?:\d{1,3}\.){3}\d{1,3}\.(?:nip|sslip)\.io(?::\d+)?)$/);
+    if (nipMatch) {
+      return `${slug}.${nipMatch[1]}`;
+    }
+  }
+
+  // If rootHostname is an IP address (e.g. 3.111.51.117), a raw subdomain like
+  // nayeem.3.111.51.117 is an invalid hostname in WHATWG URL spec (causes new URL() to throw TypeError).
+  // Automatically use nip.io for IP-based subdomains.
+  if (isIpHostname(rootHostname)) {
+    return `${slug}.${rootHostname}.nip.io${rootPortSuffix}`;
+  }
+
   return `${slug}.${baseDomain}`;
 }
 

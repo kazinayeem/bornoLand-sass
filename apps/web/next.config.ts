@@ -77,12 +77,13 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
+    const backendUrl = (process.env.API_URL || "http://localhost:4000").replace(/\/$/, "");
     return [
       {
         source: "/api/:path*",
         // Server-side proxy target. In Docker Compose use http://backend:4000.
         // Browser clients should use NEXT_PUBLIC_API_URL=/api (same-origin).
-        destination: `${process.env.API_URL ?? ""}/:path*`,
+        destination: `${backendUrl}/:path*`,
       },
     ];
   },

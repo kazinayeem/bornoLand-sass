@@ -3,7 +3,6 @@ import "server-only";
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { CACHE_REVALIDATE, cacheTags } from "@/lib/server/cache-tags";
-import { getApiUrl } from "@/lib/urls";
 
 export type TenantSiteData = {
   store: Record<string, unknown> | null;
@@ -26,16 +25,16 @@ class TenantNotFoundError extends Error {
 }
 
 function resolveApiBase(): string {
-  const apiUrl = getApiUrl();
-  // Relative `/api` works in the browser via Next rewrites, but Node fetch needs an absolute URL.
-  if (!apiUrl || apiUrl.startsWith("/")) {
-    const fallback = process.env.API_URL?.replace(/\/$/, "") || "http://localhost:4000";
-    if (process.env.NODE_ENV === "development") {
-      console.warn(`[tenant-site] Invalid API_URL "${apiUrl}", falling back to ${fallback}`);
-    }
-    return fallback;
+  // Server-side: prefer explicit API_URL over NEXT_PUBLIC_API_URL (which is /api, a relative path)
+  const serverUrl = (process.env.API_URL ?? "").trim();
+  if (serverUrl && (serverUrl.startsWith("http://") || serverUrl.startsWith("https://"))) {
+    return serverUrl.replace(/\/$/, "");
   }
-  return apiUrl;
+  // Fallback: NEXT_PUBLIC_API_URL is /api in production — unusable for server Node fetch
+  const fallback = "http://localhost:4000";
+  const sourceVar = serverUrl ? `API_URL="${serverUrl}"` : "API_URL not set";
+  console.warn(`[tenant-site] ${sourceVar} is not an absolute URL — falling back to ${fallback}`);
+  return fallback;
 }
 
 /**
@@ -49,9 +48,13 @@ async function fetchTenantSiteRemote(slug: string, pageSlug?: string): Promise<T
     ? `${apiBase}/public/tenant/${encodeURIComponent(slug)}?page=${encodeURIComponent(pageSlug)}`
     : `${apiBase}/public/tenant/${encodeURIComponent(slug)}`;
 
-  if (process.env.NODE_ENV === "development" || process.env.DEBUG_TENANT_ROUTING === "1") {
-    console.log(`[tenant-site] fetch slug="${slug}" page="${pageSlug ?? "home"}" url="${url}"`);
-  }
+  // Always log in production for diagnostic purposes (no secrets exposed)
+  const isDiagnostic = process.env.DEBUG_TENANT_ROUTING === "1";
+  const isDevOrDiag = process.env.NODE_ENV === "development" || isDiagnostic;
+
+  console.log(
+    `[store-render-debug] slug="${slug}" page="${pageSlug ?? "home"}" API_URL="${process.env.API_URL ?? "(not set)"}" url="${url}"`,
+  );
 
   let res: Response;
   try {
@@ -61,34 +64,40 @@ async function fetchTenantSiteRemote(slug: string, pageSlug?: string): Promise<T
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "network error";
-    console.error(`[tenant-site] network failure slug="${slug}": ${message}`);
+    console.error(`[store-render-error] network failure slug="${slug}" url="${url}": ${message}`);
+    if (error instanceof Error && error.stack) {
+      console.error(`[store-render-error] stack:`, error.stack);
+    }
     throw new Error(`Failed to reach tenant API for "${slug}": ${message}`);
   }
 
+  console.log(
+    `[store-render-debug] HTTP ${res.status} slug="${slug}" url="${url}"`,
+  );
+
   if (res.status === 404) {
-    if (process.env.NODE_ENV === "development" || process.env.DEBUG_TENANT_ROUTING === "1") {
-      console.log(`[tenant-site] 404 store not found slug="${slug}"`);
+    if (isDevOrDiag) {
+      console.log(`[store-render-debug] 404 store not found slug="${slug}"`);
     }
     throw new TenantNotFoundError(slug);
   }
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    console.error(`[tenant-site] upstream ${res.status} slug="${slug}": ${body.slice(0, 200)}`);
+    console.error(`[store-render-error] upstream ${res.status} slug="${slug}" url="${url}": ${body.slice(0, 400)}`);
     throw new Error(`Tenant API returned ${res.status} for "${slug}"`);
   }
 
   const json = (await res.json()) as { data?: TenantSiteData };
   const data = json.data;
   if (!data?.store) {
+    console.log(`[store-render-debug] API returned 200 but no store data for slug="${slug}"`);
     throw new TenantNotFoundError(slug);
   }
 
-  if (process.env.NODE_ENV === "development" || process.env.DEBUG_TENANT_ROUTING === "1") {
-    console.log(
-      `[tenant-site] ok slug="${slug}" store="${String((data.store as { name?: string }).name ?? "")}" page=${data.page ? "yes" : "no"}`,
-    );
-  }
+  console.log(
+    `[store-render-debug] store found: id="${String((data.store as Record<string,unknown>)._id ?? "")}" slug="${String((data.store as Record<string,unknown>).slug ?? "")}" name="${String((data.store as { name?: string }).name ?? "")}"`
+  );
 
   return data;
 }
@@ -121,13 +130,25 @@ export const fetchTenantSite = cache(async (slug: string, pageSlug?: string): Pr
     try {
       return await getCachedTenantSite(slug, pageSlug);
     } catch (cacheErr: any) {
-      if (cacheErr?.message?.includes("incrementalCache missing")) {
+      // unstable_cache may throw if the incremental cache is not available (standalone first cold start)
+      if (
+        cacheErr?.message?.includes("incrementalCache missing") ||
+        cacheErr?.message?.includes("No incremental cache was available")
+      ) {
+        console.warn(`[store-render-debug] unstable_cache unavailable for slug="${slug}", bypassing cache`);
         return await fetchTenantSiteRemote(slug, pageSlug);
       }
       throw cacheErr;
     }
   } catch (error) {
     if (error instanceof TenantNotFoundError) return null;
+    // Log unexpected errors so they appear in PM2 logs on EC2
+    if (!(error instanceof TenantNotFoundError)) {
+      console.error(`[store-render-error] Unhandled error for slug="${slug}":`, error);
+      if (error instanceof Error && error.stack) {
+        console.error(`[store-render-error] stack:`, error.stack);
+      }
+    }
     throw error;
   }
 });

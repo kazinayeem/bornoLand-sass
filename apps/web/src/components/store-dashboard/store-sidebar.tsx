@@ -2,85 +2,66 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useCallback, createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
+import {
+  useState,
+  useCallback,
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  type ReactNode,
+} from "react";
 import {
   LayoutDashboard,
-  Package,
-  Tags,
-  Boxes,
-  ShoppingBag,
-  ShoppingCart,
-  Users,
-  Star,
-  Megaphone,
-  Ticket,
-  Target,
-  BarChart3,
-  FileSpreadsheet,
-  Palette,
-  Menu,
-  FileText,
-  Search,
-  Globe2,
-  Share2,
-  Truck,
-  PackageCheck,
-  CreditCard,
-  Percent,
-  Image as ImageIcon,
-  Mail,
-  HelpCircle,
-  Settings,
-  Blocks,
-  ScrollText,
-  CreditCard as BillingCard,
   ChevronDown,
-  Lock,
-  PanelLeftClose,
-  PanelLeft,
-  Eye,
-  Activity,
-  Monitor,
-  Globe,
-  MapPin,
-  Building,
-  ExternalLink,
-  Link2,
+  ChevronRight,
+  Star,
+  HardDrive,
+  ArrowLeft,
+  ChevronsUpDown,
   Check,
   Plus,
   Store as StoreIcon,
-  ChevronsUpDown,
-  ArrowLeft,
-  HardDrive,
-  Calculator,
-  UserCheck,
-  CalendarCheck,
-  CalendarDays,
-  Wallet,
-  Landmark,
-  BookOpen,
-  Receipt,
-  Headphones,
-  CheckSquare,
-  Building2,
-  Trash2,
-  ArrowLeftRight,
-  Clock,
-  Briefcase,
-  Layers,
+  PanelLeftClose,
+  PanelLeft,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
 import { useGetMyStoresQuery } from "@/redux/api/store-api";
 import { resolveStoreStatus, getStoreDisplayDomain } from "@/lib/store-status";
-import { useGetStoreFeatureAccessQuery, NAV_FEATURE_MAP, getFeatureByKey } from "@/redux/api/feature-api";
+import {
+  useGetStoreFeatureAccessQuery,
+  NAV_FEATURE_MAP,
+  getFeatureByKey,
+} from "@/redux/api/feature-api";
 import { ComingSoonBadge } from "@/components/ecommerce/coming-soon-badge";
 import { useGetMediaStatsQuery } from "@/redux/api/media-api";
 import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { useLanguage, type Dictionary } from "@/providers/language-provider";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { useLanguage } from "@/providers/language-provider";
 import { useStoreContext } from "@/providers/store-context";
-import { useIsStoreOwner, usePermissions, checkPermission } from "@/features/session/hooks";
+import {
+  useIsStoreOwner,
+  usePermissions,
+  checkPermission,
+} from "@/features/session/hooks";
+
+import {
+  BUSINESS_MODULES,
+  type BusinessModule,
+  type NavItem,
+  findModuleByPathname,
+} from "./navigation-registry";
+import { useStoreNavState } from "./use-store-nav-state";
+import { SidebarModuleSwitcher } from "./sidebar-module-switcher";
+import { SidebarFavorites } from "./sidebar-favorites";
+import { SidebarPosWidget } from "./sidebar-pos-widget";
 
 /* ── Sidebar Collapse Context ─────────────────────────────────── */
 
@@ -98,508 +79,113 @@ export function useSidebar() {
   return useContext(SidebarContext);
 }
 
-/* ── Navigation Group Definitions ─────────────────────────────── */
+/* ── Store Switcher Dropdown (Top Header) ───────────────────────── */
 
-export type NavItemDef = {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  exact?: boolean;
-  featureKey?: string;
-  permission?: string;
-  comingSoon?: boolean;
-  subItems?: {
-    href: string;
-    label: string;
-    icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-    exact?: boolean;
-    permission?: string;
-  }[];
-};
-
-export type NavGroupDef = {
-  group: string;
-  items: NavItemDef[];
-};
-
-export function getSidebarNavGroups(t: Dictionary, isBn = false): NavGroupDef[] {
-  const sn = t.storeNav;
-  return [
-    // ── OVERVIEW ──
-    {
-      group: isBn ? "ওভারভিউ" : "OVERVIEW",
-      items: [
-        { href: "/dashboard", label: sn.dashboard, icon: LayoutDashboard, exact: true },
-      ],
-    },
-    // ── BUSINESS ──
-    {
-      group: isBn ? "ব্যবসা ও বাণিজ্য" : "BUSINESS",
-      items: [
-        { href: "/orders", label: sn.orders, icon: ShoppingBag, exact: true, permission: "orders:read" },
-        { href: "/customers", label: sn.customers, icon: Users, permission: "customers:read" },
-        { href: "/products", label: sn.products, icon: Package, permission: "products:read" },
-        { href: "/categories", label: sn.categories, icon: Tags, permission: "categories:read" },
-        { href: "/orders/incomplete", label: sn.incompleteOrders, icon: ShoppingCart, featureKey: "incomplete_orders", permission: "orders:read" },
-        { href: "/reviews", label: sn.reviews, icon: Star, featureKey: "reviews", permission: "reviews:read" },
-      ],
-    },
-    // ── INVENTORY ──
-    {
-      group: isBn ? "ইনভেন্টরি ও গুদাম" : "INVENTORY",
-      items: [
-        { href: "/inventory", label: sn.inventory, icon: Boxes, featureKey: "inventory", permission: "inventory:read", exact: true },
-        { href: "/inventory/warehouses", label: sn.warehouses, icon: Building2, featureKey: "warehouses", permission: "warehouse:read" },
-        { href: "/inventory/ledger", label: sn.stockLedger, icon: ArrowLeftRight, featureKey: "inventory", permission: "inventory:read" },
-        { href: "/inventory/waste", label: sn.wasteLoss, icon: Trash2, featureKey: "inventory", permission: "inventory:read" },
-      ],
-    },
-    // ── PURCHASING ──
-    {
-      group: isBn ? "ক্রয় ও সরবরাহ" : "PURCHASING",
-      items: [
-        { href: "/inventory/purchasing", label: sn.purchasing, icon: Receipt, featureKey: "purchase_orders", permission: "procurement:read" },
-        { href: "/inventory/suppliers", label: sn.suppliers, icon: Truck, featureKey: "suppliers", permission: "procurement:read" },
-      ],
-    },
-    // ── SALES & POS ──
-    {
-      group: isBn ? "বিক্রয় ও পিওএস" : "SALES",
-      items: [
-        { href: "/pos", label: sn.pos, icon: Calculator, featureKey: "pos", permission: "pos:read", exact: true },
-        { href: "/pos/shifts", label: sn.posShifts, icon: Clock, featureKey: "pos", permission: "pos:read" },
-      ],
-    },
-    // ── PEOPLE & HRM ──
-    {
-      group: isBn ? "কর্মী ও মানবসম্পদ" : "PEOPLE",
-      items: [
-        { href: "/hrm/employees", label: sn.employees, icon: Users, featureKey: "employees", permission: "hrm:read" },
-        { href: "/hrm/organization", label: sn.organization, icon: Briefcase, featureKey: "departments", permission: "hrm:read" },
-        { href: "/hrm/attendance", label: sn.attendance, icon: CalendarCheck, featureKey: "attendance", permission: "hrm:read" },
-        { href: "/hrm/leaves", label: sn.leaves, icon: CalendarDays, featureKey: "leave_mgmt", permission: "hrm:read" },
-        { href: "/hrm/payroll", label: sn.payroll, icon: Wallet, featureKey: "payroll", permission: "hrm:payroll:manage" },
-        { href: "/hrm/self-service", label: sn.selfService, icon: UserCheck, featureKey: "self_service", permission: "hrm:self:read" },
-      ],
-    },
-    // ── FINANCE & ACCOUNTING ──
-    {
-      group: isBn ? "হিসাববিজ্ঞান ও অর্থ" : "FINANCE",
-      items: [
-        { href: "/finance/accounting", label: sn.accounting, icon: Landmark, featureKey: "chart_of_accounts", permission: "accounting:read", exact: true },
-        { href: "/finance/accounting/coa", label: sn.chartOfAccounts, icon: BookOpen, featureKey: "chart_of_accounts", permission: "accounting:read" },
-        { href: "/finance/accounting/journal", label: sn.journalEntries, icon: FileSpreadsheet, featureKey: "journal_entries", permission: "accounting:read" },
-        { href: "/finance/expenses", label: sn.expenses, icon: Receipt, featureKey: "expenses", permission: "expenses:read" },
-        { href: "/finance/reports", label: sn.financialReports, icon: BarChart3, featureKey: "financial_reports", permission: "accounting:report:view" },
-      ],
-    },
-    // ── GROWTH & CRM ──
-    {
-      group: isBn ? "গ্রোথ ও সিআরএম" : "GROWTH",
-      items: [
-        { href: "/crm/deals", label: sn.crmDeals, icon: Target, featureKey: "crm_deals", permission: "crm:read" },
-        { href: "/support/tickets", label: sn.supportTickets, icon: Headphones, featureKey: "support_tickets", permission: "support:read" },
-        { href: "/marketing", label: sn.marketing, icon: Megaphone, featureKey: "marketing", permission: "marketing:read" },
-        { href: "/coupons", label: sn.coupons, icon: Ticket, featureKey: "coupons", permission: "coupons:read" },
-        { href: "/settings/tracking", label: sn.trackingPixels, icon: Target, featureKey: "marketing", permission: "marketing:read" },
-        {
-          href: "/analytics",
-          label: sn.analytics,
-          icon: BarChart3,
-          exact: true,
-          featureKey: "analytics",
-          permission: "analytics:read",
-          subItems: [
-            { href: "/analytics", label: sn.overview, icon: BarChart3, exact: true },
-            { href: "/analytics/visitors", label: sn.visitors, icon: Eye },
-            { href: "/analytics/live", label: sn.liveVisitors, icon: Activity },
-            { href: "/analytics/traffic-sources", label: sn.trafficSources, icon: Globe },
-            { href: "/analytics/devices", label: sn.devices, icon: Monitor },
-            { href: "/analytics/browsers", label: sn.browsers, icon: Globe },
-            { href: "/analytics/countries", label: sn.countries, icon: MapPin },
-            { href: "/analytics/cities", label: sn.cities, icon: Building },
-            { href: "/analytics/pages", label: sn.pages, icon: ExternalLink },
-            { href: "/analytics/referrers", label: sn.referrers, icon: Link2 },
-            { href: "/analytics/campaigns", label: sn.campaigns, icon: Target },
-            { href: "/analytics/conversion", label: sn.conversion, icon: BarChart3 },
-            { href: "/analytics/reports", label: sn.reports, icon: FileSpreadsheet },
-          ],
-        },
-        { href: "/reports", label: sn.reports, icon: FileSpreadsheet, featureKey: "reports", permission: "reports:read" },
-      ],
-    },
-    // ── OPERATIONS ──
-    {
-      group: isBn ? "অপারেশনস" : "OPERATIONS",
-      items: [
-        { href: "/operations/approvals", label: sn.approvals, icon: CheckSquare, featureKey: "approvals", permission: "operations:read" },
-        { href: "/operations/tasks", label: sn.tasks, icon: Layers, featureKey: "tasks", permission: "operations:read" },
-        { href: "/settings/shipping", label: sn.shipping, icon: Truck, permission: "shipping:read" },
-        { href: "/settings/courier", label: sn.courier, icon: PackageCheck, featureKey: "courier", permission: "shipping:read" },
-        { href: "/settings/payments", label: sn.payments, icon: CreditCard, permission: "payments:read" },
-        { href: "/settings/taxes", label: sn.taxes, icon: Percent, permission: "settings:read" },
-      ],
-    },
-    // ── WEBSITE & DESIGN ──
-    {
-      group: isBn ? "ওয়েবসাইট ও ডিজাইন" : "WEBSITE",
-      items: [
-        { href: "/design", label: sn.design, icon: Palette, permission: "pages:read" },
-        { href: "/settings?section=navigation", label: sn.navigation, icon: Menu, permission: "pages:read" },
-        { href: "/pages", label: sn.pages, icon: FileText, permission: "pages:read" },
-        { href: "/media", label: sn.media, icon: ImageIcon, featureKey: "media", permission: "media:read" },
-        { href: "/customer-messages", label: sn.messages, icon: Mail, featureKey: "cms", permission: "settings:read" },
-        { href: "/settings?section=seo", label: sn.seo, icon: Search, featureKey: "seo", permission: "settings:read" },
-        { href: "/settings?section=domain", label: sn.domain, icon: Globe2, featureKey: "custom_domain", permission: "settings:read" },
-        { href: "/settings?section=social-links", label: sn.socialLinks, icon: Share2, permission: "settings:read" },
-        { href: "/settings?section=faq", label: sn.faq, icon: HelpCircle, permission: "settings:read" },
-      ],
-    },
-    // ── SYSTEM & ACCESS ──
-    {
-      group: isBn ? "সিস্টেম ও অ্যাক্সেস" : "SYSTEM",
-      items: [
-        { href: "/settings?section=general", label: sn.settings, icon: Settings, permission: "settings:read" },
-        { href: "/members", label: isBn ? "টিম ও পারমিশন" : "Team & Permissions", icon: Users, permission: "members:read" },
-        { href: "/apps", label: sn.apps, icon: Blocks, featureKey: "apps", comingSoon: true },
-        { href: "/activity", label: sn.activity, icon: ScrollText, permission: "settings:read" },
-        { href: "/billing", label: sn.billing, icon: BillingCard },
-      ],
-    },
-  ];
-}
-
-export const SIDEBAR_NAV_GROUPS: NavGroupDef[] = [];
-
-/* ── Collapsed Tooltip Helper ─────────────────────────────────── */
-
-function NavTooltipWrapper({
-  label,
-  subtext,
+function SidebarStoreSwitcher({
+  store,
   collapsed,
-  children,
 }: {
-  label: string;
-  subtext?: string;
+  store: Store;
   collapsed: boolean;
-  children: ReactNode;
 }) {
-  if (!collapsed) return <>{children}</>;
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side="right" sideOffset={10} className="flex items-center gap-1.5 py-1 px-2.5 shadow-md">
-        <span>{label}</span>
-        {subtext && <span className="text-[10px] text-zinc-400">({subtext})</span>}
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-/* ── Nav Item Component ───────────────────────────────────────── */
-
-function NavItem({
-  href,
-  label,
-  icon: Icon,
-  basePath,
-  exact,
-  locked,
-  requiredPlan,
-  comingSoon,
-  subItems,
-  onNavigate,
-}: {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  basePath: string;
-  exact?: boolean;
-  locked?: boolean;
-  requiredPlan?: string;
-  comingSoon?: boolean;
-  subItems?: NavItemDef["subItems"];
-  onNavigate?: () => void;
-}) {
-  const pathname = usePathname();
-  const { collapsed } = useSidebar();
-  const fullHref = `${basePath}${href}`;
-
-  const hasSub = Boolean(subItems && subItems.length > 0);
-  const isParentActive = hasSub && pathname.startsWith(`${basePath}/analytics`);
-  const [open, setOpen] = useState(isParentActive);
-
-  // Keep open state in sync when route changes to a child
-  useEffect(() => {
-    if (isParentActive) setOpen(true);
-  }, [isParentActive]);
-
-  const active = exact
-    ? pathname === fullHref
-    : pathname === fullHref || (!exact && !hasSub && pathname.startsWith(`${fullHref}/`));
-
-  const tooltipSubtext = locked ? (requiredPlan ? `Requires ${requiredPlan}` : "Locked") : comingSoon ? "Soon" : undefined;
-
-  if (hasSub) {
-    return (
-      <div className="space-y-0.5">
-        <NavTooltipWrapper label={label} subtext={tooltipSubtext} collapsed={collapsed}>
-          <button
-            type="button"
-            onClick={() => setOpen((prev) => !prev)}
-            className={cn(
-              "group relative flex w-full items-center gap-3 rounded-[4px] px-2.5 h-10 min-h-[40px] text-[13px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#003399]",
-              isParentActive
-                ? "bg-[#ebf0fa] text-[#003399] font-bold dark:bg-[#003399]/20 dark:text-[#FFDA1A]"
-                : "text-[#484848] hover:bg-[#F5F5F5] hover:text-[#111111] dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-white",
-              locked && !isParentActive && "opacity-60",
-              collapsed && "justify-center px-0"
-            )}
-            aria-expanded={open}
-            aria-label={label}
-          >
-            {/* Subtle Active Indicator Strip */}
-            {isParentActive && (
-              <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#003399] dark:bg-[#FFDA1A]" />
-            )}
-            <Icon
-              strokeWidth={1.75}
-              className={cn(
-                "h-[18px] w-[18px] shrink-0 transition-colors duration-150",
-                isParentActive
-                  ? "text-[#003399] dark:text-[#FFDA1A]"
-                  : "text-[#767676] group-hover:text-[#111111] dark:text-zinc-500 dark:group-hover:text-zinc-300"
-              )}
-            />
-            {!collapsed && (
-              <>
-                <span className="flex-1 text-left truncate">{label}</span>
-                {comingSoon && !locked && <ComingSoonBadge className="scale-90" />}
-                {locked && <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />}
-                {!locked && (
-                  <ChevronDown
-                    className={cn(
-                      "h-3.5 w-3.5 text-zinc-400 transition-transform duration-200 group-hover:text-zinc-600",
-                      open && "rotate-180 text-zinc-700 dark:text-zinc-200"
-                    )}
-                  />
-                )}
-              </>
-            )}
-          </button>
-        </NavTooltipWrapper>
-
-        {!collapsed && open && subItems && (
-          <ul className="relative mt-0.5 space-y-0.5 pl-5 ml-4 border-l border-[#DFDFDF] dark:border-zinc-800">
-            {subItems.map((sub) => {
-              const subFullHref = `${basePath}${sub.href}`;
-              const subActive = sub.exact
-                ? pathname === subFullHref
-                : pathname === subFullHref || pathname.startsWith(`${subFullHref}/`);
-              const SubIcon = sub.icon;
-              return (
-                <li key={sub.href}>
-                  <Link
-                    href={subFullHref}
-                    onClick={onNavigate}
-                    className={cn(
-                      "flex items-center gap-2.5 rounded-[4px] px-2.5 h-8 min-h-[32px] text-[12.5px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#003399]",
-                      subActive
-                        ? "bg-[#ebf0fa] text-[#003399] font-bold dark:bg-[#003399]/20 dark:text-[#FFDA1A]"
-                        : "text-[#767676] hover:bg-[#F5F5F5] hover:text-[#111111] dark:text-zinc-400 dark:hover:bg-white/[0.04] dark:hover:text-zinc-200"
-                    )}
-                  >
-                    <SubIcon
-                      strokeWidth={1.75}
-                      className={cn(
-                        "h-3.5 w-3.5 shrink-0",
-                        subActive ? "text-[#003399] dark:text-[#FFDA1A]" : "text-[#767676]"
-                      )}
-                    />
-                    <span className="truncate">{sub.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <NavTooltipWrapper label={label} subtext={tooltipSubtext} collapsed={collapsed}>
-      <Link
-        href={fullHref}
-        onClick={onNavigate}
-        className={cn(
-          "group relative flex items-center gap-3 rounded-[4px] px-2.5 h-10 min-h-[40px] text-[13px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#003399]",
-          active
-            ? "bg-[#ebf0fa] text-[#003399] font-bold dark:bg-[#003399]/20 dark:text-[#FFDA1A]"
-            : "text-[#484848] hover:bg-[#F5F5F5] hover:text-[#111111] dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-zinc-100",
-          locked && !active && "opacity-60",
-          collapsed && "justify-center px-0"
-        )}
-        aria-label={label}
-      >
-        {/* Subtle Active Indicator Strip */}
-        {active && (
-          <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#003399] dark:bg-[#FFDA1A]" />
-        )}
-        <Icon
-          strokeWidth={1.75}
-          className={cn(
-            "h-[18px] w-[18px] shrink-0 transition-colors duration-150",
-            active
-              ? "text-[#003399] dark:text-[#FFDA1A]"
-              : "text-[#767676] group-hover:text-[#111111] dark:text-zinc-500 dark:group-hover:text-zinc-300"
-          )}
-        />
-        {!collapsed && (
-          <>
-            <span className="flex-1 truncate">{label}</span>
-            {comingSoon && !locked && <ComingSoonBadge className="scale-90" />}
-            {locked && <Lock className="h-3.5 w-3.5 shrink-0 text-zinc-400" />}
-          </>
-        )}
-      </Link>
-    </NavTooltipWrapper>
-  );
-}
-
-/* ── Section Label ────────────────────────────────────────────── */
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  const { collapsed } = useSidebar();
-  if (collapsed) return <div className="mx-3 my-2.5 h-px bg-[#DFDFDF] dark:bg-zinc-800" />;
-  return (
-    <p className="px-2.5 pt-4 pb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-[#767676] dark:text-zinc-500">
-      {children}
-    </p>
-  );
-}
-
-/* ── Store Switcher Dropdown (Inside Sidebar) ─────────────────── */
-
-function SidebarStoreSwitcher({ store, collapsed }: { store: Store; collapsed: boolean }) {
-  const { t, language } = useLanguage();
-  const { data } = useGetMyStoresQuery();
-  const stores = data?.data?.stores ?? [];
   const [open, setOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
+  const { t, language } = useLanguage();
+  const { data: storesData } = useGetMyStoresQuery();
+  const stores = storesData?.data?.stores ?? [];
   const status = resolveStoreStatus(store);
-  const statusLabel =
-    status === "active" ? t.common.active : status === "trial" ? t.common.trial : t.common.expired;
+  const domain = getStoreDisplayDomain(store.slug);
 
   return (
-    <div ref={dropdownRef} className="relative">
-      <NavTooltipWrapper label={store.name} subtext={statusLabel} collapsed={collapsed}>
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          className={cn(
-            "flex w-full items-center gap-2.5 rounded-xl border border-zinc-200/80 bg-zinc-50/50 p-2 text-left transition-colors duration-150 hover:border-zinc-300 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900/50 dark:hover:bg-zinc-900",
-            collapsed ? "justify-center p-1.5" : ""
-          )}
-          aria-expanded={open}
-          aria-label={t.navigation.selectStore}
-        >
-          <StoreBrandMark store={store} size={collapsed ? 32 : 34} roundedClassName="rounded-lg shadow-2xs" />
-          {!collapsed && (
-            <>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <p className="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                    {store.shortName || store.name}
-                  </p>
-                  <span
-                    className={cn(
-                      "inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
-                      status === "active"
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-                        : status === "trial"
-                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
-                          : "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
-                    )}
-                  >
-                    {statusLabel}
-                  </span>
-                </div>
-                <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
-                  {getStoreDisplayDomain(store.subdomain || store.slug)}
-                </p>
-              </div>
-              <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-            </>
-          )}
-        </button>
-      </NavTooltipWrapper>
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "group flex w-full items-center gap-2.5 rounded-xl p-1.5 transition-all text-left outline-none hover:bg-zinc-100 dark:hover:bg-zinc-800/60 focus-visible:ring-2 focus-visible:ring-zinc-900/20",
+          collapsed ? "justify-center p-1" : ""
+        )}
+        aria-expanded={open}
+        aria-haspopup="true"
+        aria-label="Switch store"
+      >
+        <StoreBrandMark
+          store={store}
+          size={collapsed ? 36 : 34}
+          roundedClassName="rounded-lg shadow-xs shrink-0"
+        />
+
+        {!collapsed && (
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className="truncate text-xs font-bold text-zinc-900 dark:text-white">
+                {store.shortName || store.name}
+              </span>
+              <span
+                className={cn(
+                  "h-1.5 w-1.5 shrink-0 rounded-full",
+                  status === "active"
+                    ? "bg-emerald-500"
+                    : status === "trial"
+                    ? "bg-indigo-500"
+                    : "bg-zinc-400"
+                )}
+                title={status}
+              />
+            </div>
+            <span className="truncate text-[10px] text-zinc-500 font-mono">
+              {domain}
+            </span>
+          </div>
+        )}
+
+        {!collapsed && (
+          <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-zinc-400 group-hover:text-zinc-600 transition-colors" />
+        )}
+      </button>
 
       {open && (
         <div
-          className={cn(
-            "absolute z-50 mt-1 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl animate-in fade-in-0 zoom-in-95 dark:border-zinc-800 dark:bg-zinc-950",
-            collapsed ? "left-12 top-0 w-64" : "left-0 right-0 top-full"
-          )}
-        >
-          <div className="border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-              {t.storeNav.yourStores}
-            </p>
-            <p className="truncate text-xs font-medium text-zinc-900 dark:text-zinc-100">
-              {t.storeNav.currentlyManaging(store.name)}
-            </p>
-          </div>
+          className="fixed inset-0 z-40"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
-          <div className="max-h-52 overflow-y-auto p-1.5 space-y-0.5">
+      {open && (
+        <div className="absolute left-0 top-full z-50 mt-1.5 w-64 rounded-xl border border-zinc-200/80 bg-white p-1.5 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 animate-in fade-in-50 zoom-in-95 duration-150">
+          <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+            {t.navigation.allStores}
+          </div>
+          <div className="max-h-52 overflow-y-auto space-y-0.5">
             {stores.map((s) => {
               const isCurrent = s._id === store._id;
-              const sStatus = resolveStoreStatus(s);
-              const sStatusLabel =
-                sStatus === "active" ? t.common.active : sStatus === "trial" ? t.common.trial : t.common.expired;
-              const sPlan = typeof s.planId === "object" && s.planId ? s.planId.name : s.plan;
               return (
                 <Link
                   key={s._id}
                   href={`/store/${s.slug}/dashboard`}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs transition-colors",
+                    "flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition-colors",
                     isCurrent
-                      ? "bg-zinc-100 text-zinc-950 font-medium dark:bg-white/[0.08] dark:text-white"
-                      : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-900"
+                      ? "bg-zinc-100 font-semibold text-zinc-900 dark:bg-zinc-800 dark:text-white"
+                      : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white"
                   )}
                 >
-                  <StoreBrandMark store={s} size={26} roundedClassName="rounded-md" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{s.shortName || s.name}</p>
-                    <p className="truncate text-[10px] text-zinc-400">
-                      {sPlan} • {sStatusLabel}
-                    </p>
+                  <div className="flex items-center gap-2 truncate">
+                    <StoreBrandMark store={s} size={20} roundedClassName="rounded-sm" />
+                    <span className="truncate">{s.shortName || s.name}</span>
                   </div>
-                  {isCurrent && <Check className="h-3.5 w-3.5 shrink-0 text-zinc-900 dark:text-white" />}
+                  {isCurrent && <Check className="h-3.5 w-3.5 text-indigo-600 shrink-0" />}
                 </Link>
               );
             })}
           </div>
 
-          <div className="border-t border-zinc-100 p-1.5 space-y-0.5 dark:border-zinc-800">
+          <div className="mt-1 border-t border-zinc-100 pt-1 dark:border-zinc-800">
             <Link
               href="/dashboard"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
               <LayoutDashboard className="h-3.5 w-3.5" />
               <span>{language === "bn" ? "ওয়ার্কস্পেস ড্যাশবোর্ড" : "Back to Workspace"}</span>
@@ -607,18 +193,10 @@ function SidebarStoreSwitcher({ store, collapsed }: { store: Store; collapsed: b
             <Link
               href="/dashboard/stores/create"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>{t.navigation.createStore}</span>
-            </Link>
-            <Link
-              href="/dashboard/stores"
-              onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              <StoreIcon className="h-3.5 w-3.5" />
-              <span>{t.navigation.allStores}</span>
             </Link>
           </div>
         </div>
@@ -627,7 +205,117 @@ function SidebarStoreSwitcher({ store, collapsed }: { store: Store; collapsed: b
   );
 }
 
-/* ── Main Sidebar Component ───────────────────────────────────── */
+/* ── Individual Nav Item Row ───────────────────────────────────── */
+
+function SidebarNavItem({
+  item,
+  basePath,
+  collapsed,
+  isBn,
+  isPinned,
+  onTogglePin,
+  onNavigate,
+  locked,
+  requiredPlan,
+}: {
+  item: NavItem;
+  basePath: string;
+  collapsed: boolean;
+  isBn: boolean;
+  isPinned: boolean;
+  onTogglePin: (id: string) => void;
+  onNavigate?: () => void;
+  locked?: boolean;
+  requiredPlan?: string;
+}) {
+  const pathname = usePathname();
+  const href = `${basePath}${item.href}`;
+  const isExact = item.exact;
+  const isActive = isExact
+    ? pathname === href
+    : pathname.startsWith(href.split("?")[0]);
+
+  const Icon = item.icon;
+  const label = isBn ? item.labelBn : item.labelEn;
+
+  const content = (
+    <div className="group/item relative flex items-center">
+      <Link
+        href={locked ? `${basePath}/billing` : href}
+        onClick={onNavigate}
+        className={cn(
+          "flex flex-1 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all outline-none",
+          isActive
+            ? "bg-indigo-50/90 text-indigo-950 font-bold border-l-2 border-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-200 dark:border-indigo-400"
+            : "text-zinc-600 hover:bg-zinc-100/80 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100",
+          collapsed ? "justify-center px-0 h-9 w-9 mx-auto rounded-lg" : "",
+          locked ? "opacity-60 cursor-not-allowed" : ""
+        )}
+      >
+        <Icon
+          className={cn(
+            "h-4 w-4 shrink-0 transition-colors",
+            isActive
+              ? "text-indigo-600 dark:text-indigo-400"
+              : "text-zinc-500 group-hover/item:text-zinc-900 dark:text-zinc-400 dark:group-hover/item:text-white"
+          )}
+        />
+
+        {!collapsed && (
+          <span className="flex-1 truncate">{label}</span>
+        )}
+
+        {!collapsed && locked && (
+          <Lock className="h-3 w-3 text-amber-500 shrink-0 ml-1" />
+        )}
+
+        {!collapsed && item.comingSoon && (
+          <ComingSoonBadge />
+        )}
+      </Link>
+
+      {!collapsed && !locked && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onTogglePin(item.id);
+          }}
+          title={isPinned ? (isBn ? "পিন সরান" : "Unpin") : (isBn ? "পিন করুন" : "Pin to quick access")}
+          className={cn(
+            "absolute right-1.5 p-1 rounded transition-opacity",
+            isPinned
+              ? "opacity-100 text-amber-500"
+              : "opacity-0 group-hover/item:opacity-70 hover:opacity-100 text-zinc-400 hover:text-amber-500"
+          )}
+        >
+          <Star className={cn("h-3 w-3", isPinned ? "fill-amber-500" : "")} />
+        </button>
+      )}
+    </div>
+  );
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{content}</TooltipTrigger>
+        <TooltipContent side="right" sideOffset={12} className="py-1 px-2.5 font-medium shadow-md">
+          <span>{label}</span>
+          {item.descriptionEn && (
+            <span className="block text-[10px] text-zinc-400 font-normal">
+              {isBn ? item.descriptionBn : item.descriptionEn}
+            </span>
+          )}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return content;
+}
+
+/* ── Main ERP Sidebar Component ───────────────────────────────── */
 
 export function StoreSidebar({
   store,
@@ -636,20 +324,18 @@ export function StoreSidebar({
   store: Store;
   onNavigate?: () => void;
 }) {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
+  const isBn = language === "bn";
   const basePath = `/store/${store.slug}`;
 
-  // Persist collapsed sidebar preference in localStorage
+  // Persist collapsed state
   const [collapsed, setCollapsedState] = useState(false);
-
   useEffect(() => {
     try {
       const saved = localStorage.getItem("bornoland_sidebar_collapsed");
-      if (saved !== null) {
-        setCollapsedState(saved === "true");
-      }
+      if (saved !== null) setCollapsedState(saved === "true");
     } catch {
-      // Ignore local storage errors
+      // Ignore
     }
   }, []);
 
@@ -658,10 +344,11 @@ export function StoreSidebar({
     try {
       localStorage.setItem("bornoland_sidebar_collapsed", String(v));
     } catch {
-      // Ignore local storage errors
+      // Ignore
     }
   }, []);
 
+  // Entitlements & Permissions
   const storeContext = useStoreContext();
   const contextFeatures = (storeContext.features as { features?: any[] } | null)?.features;
   const contextStats = storeContext.storageStats;
@@ -672,212 +359,268 @@ export function StoreSidebar({
   const { data: storageData } = useGetMediaStatsQuery(store._id, {
     skip: !store._id || Boolean(contextStats),
   });
+
   const features = contextFeatures ?? accessData?.data?.features ?? [];
   const stats = contextStats ?? storageData?.data?.stats;
-
   const isOwner = useIsStoreOwner();
   const permissionSet = usePermissions();
 
-  const resolveLink = useCallback(
-    (link: { label: string; featureKey?: string; permission?: string; comingSoon?: boolean }) => {
-      const key = link.featureKey ?? NAV_FEATURE_MAP[link.label];
+  // Navigation state hook (Favorites, Expanded modules, Active module)
+  const {
+    expandedModules,
+    toggleModule,
+    pinnedItemIds,
+    togglePin,
+    activeModule,
+  } = useStoreNavState(store._id, store.slug);
+
+  // Check item permission and entitlement
+  const resolveItemAccess = useCallback(
+    (item: NavItem) => {
+      const key = item.featureKey ?? NAV_FEATURE_MAP[item.labelEn];
       const feature = key ? getFeatureByKey(features, key) : undefined;
-      const hasPerm = isOwner || !link.permission || checkPermission(permissionSet, link.permission);
+      const hasPerm = isOwner || !item.permission || checkPermission(permissionSet, item.permission);
 
       return {
         locked: feature?.locked ?? false,
         noPermission: !hasPerm,
         requiredPlan: feature?.requiredPlan?.name,
-        comingSoon: link.comingSoon || feature?.comingSoon,
+        comingSoon: item.comingSoon || feature?.comingSoon,
       };
     },
     [features, isOwner, permissionSet]
   );
 
+  // Filter modules to only those with visible permitted items
+  const permittedModuleIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const mod of BUSINESS_MODULES) {
+      if (mod.id === "home") {
+        set.add("home");
+        continue;
+      }
+      const hasVisible = mod.items.some((it) => !resolveItemAccess(it).noPermission);
+      if (hasVisible) set.add(mod.id);
+    }
+    return set;
+  }, [resolveItemAccess]);
+
   const storagePercent = Math.min(stats?.percentUsed ?? 0, 100);
   const storageLabel = stats?.unlimited
     ? "Unlimited"
     : stats?.limitMB != null && stats.limitMB >= 1024
-      ? `${(stats.limitMB / 1024).toFixed(0)} GB`
-      : `${stats?.limitMB ?? 0} MB`;
+    ? `${(stats.limitMB / 1024).toFixed(0)} GB`
+    : `${stats?.limitMB ?? 0} MB`;
   const usedLabel = stats?.usedMB != null
     ? stats.usedMB >= 1024
       ? `${(stats.usedMB / 1024).toFixed(2)} GB`
       : `${stats.usedMB.toFixed(1)} MB`
     : "0 B";
 
-  const isStorageHigh = storagePercent >= 80;
-  const navGroups = useMemo(() => getSidebarNavGroups(t, language === "bn"), [t, language]);
-
   return (
-    <TooltipProvider delayDuration={120}>
+    <TooltipProvider delayDuration={100}>
       <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
         <aside
           className={cn(
-            "sticky top-0 flex h-screen flex-col border-r border-zinc-200/80 bg-white transition-[width] duration-200 ease-in-out dark:border-zinc-800 dark:bg-zinc-950",
-            collapsed ? "w-[68px]" : "w-[260px]"
+            "sticky top-0 flex h-screen flex-col border-r border-zinc-200/80 bg-white transition-[width] duration-200 ease-in-out dark:border-zinc-800 dark:bg-zinc-950 select-none",
+            collapsed ? "w-[68px]" : "w-[270px]"
           )}
           role="navigation"
-          aria-label="Store navigation"
+          aria-label="Enterprise ERP Navigation"
         >
-          {/* ── Top: Store & Workspace Switcher ────────────────── */}
+          {/* ── Top: Store Switcher ── */}
           <div className={cn("shrink-0 border-b border-zinc-200/80 dark:border-zinc-800", collapsed ? "p-2" : "p-3")}>
             <SidebarStoreSwitcher store={store} collapsed={collapsed} />
           </div>
 
-          {/* ── Scrollable Navigation Groups ───────────────────── */}
+          {/* ── Business Module Quick Switcher Strip ── */}
+          <div className={cn("shrink-0 border-b border-zinc-100 dark:border-zinc-800/60", collapsed ? "py-2" : "py-2 px-2")}>
+            <SidebarModuleSwitcher
+              basePath={basePath}
+              activeModuleId={activeModule.id}
+              onSelectModule={(mod) => {
+                if (!expandedModules[mod.id]) toggleModule(mod.id);
+              }}
+              collapsed={collapsed}
+              isBn={isBn}
+              permittedModuleIds={permittedModuleIds}
+              onNavigate={onNavigate}
+            />
+          </div>
+
+          {/* ── Quick Access Favorites ── */}
+          <div className="shrink-0">
+            <SidebarFavorites
+              basePath={basePath}
+              pinnedItemIds={pinnedItemIds}
+              onTogglePin={togglePin}
+              collapsed={collapsed}
+              isBn={isBn}
+              onNavigate={onNavigate}
+            />
+          </div>
+
+          {/* ── Scrollable Modular Navigation Tree ── */}
           <nav
-            className="sidebar-scroll flex-1 overflow-y-auto px-2.5 py-2 space-y-0.5"
-            aria-label="Main navigation"
+            className="sidebar-scroll flex-1 overflow-y-auto px-2 py-2 space-y-1"
+            aria-label="ERP Modules"
           >
-            {/* Back to Workspace Action */}
+            {/* Direct Back to Workspace */}
             <div className="mb-2">
-              <NavTooltipWrapper
-                label={language === "bn" ? "ওয়ার্কস্পেসে ফিরে যান" : "Back to Workspace"}
-                collapsed={collapsed}
-              >
-                <Link
-                  href="/dashboard"
-                  onClick={onNavigate}
-                  className={cn(
-                    "group flex w-full items-center gap-2.5 rounded-lg px-2.5 h-9 min-h-[36px] text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 transition-colors duration-150 border border-zinc-200/60 bg-zinc-50/60 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20",
-                    collapsed ? "justify-center px-0" : ""
-                  )}
-                  aria-label={language === "bn" ? "ওয়ার্কস্পেসে ফিরে যান" : "Back to Workspace"}
-                >
-                  <ArrowLeft className="h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-150 group-hover:-translate-x-0.5 dark:text-zinc-400" />
-                  {!collapsed && (
-                    <span className="truncate">
-                      {language === "bn" ? "ওয়ার্কস্পেসে ফিরে যান" : "Back to Workspace"}
-                    </span>
-                  )}
-                </Link>
-              </NavTooltipWrapper>
-            </div>
-
-            {/* Dashboard Direct Top Link */}
-            <div>
-              <NavItem
+              <Link
                 href="/dashboard"
-                label={t.storeNav.dashboard}
-                icon={LayoutDashboard}
-                exact={true}
-                basePath={basePath}
-                onNavigate={onNavigate}
-              />
+                onClick={onNavigate}
+                className={cn(
+                  "group flex w-full items-center gap-2 rounded-lg px-2.5 h-8 text-[11px] font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 transition-colors border border-zinc-200/70 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white",
+                  collapsed ? "justify-center px-0 w-9 mx-auto" : ""
+                )}
+              >
+                <ArrowLeft className="h-3.5 w-3.5 shrink-0 text-zinc-400 group-hover:-translate-x-0.5 transition-transform" />
+                {!collapsed && (
+                  <span className="truncate">
+                    {isBn ? "ওয়ার্কস্পেসে ফিরুন" : "Back to Workspace"}
+                  </span>
+                )}
+              </Link>
             </div>
 
-            {/* Grouped Information Architecture */}
-            {navGroups.map((groupDef) => {
-              const visibleItems = groupDef.items.filter((item) => {
-                const meta = resolveLink(item);
-                return !meta.noPermission;
-              });
+            {/* Render Each Business Module */}
+            {BUSINESS_MODULES.map((mod) => {
+              // Skip unauthorized modules
+              if (!permittedModuleIds.has(mod.id)) return null;
 
+              const visibleItems = mod.items.filter((it) => !resolveItemAccess(it).noPermission);
               if (visibleItems.length === 0) return null;
 
+              const isExpanded = Boolean(expandedModules[mod.id]);
+              const isModuleActive = mod.id === activeModule.id;
+              const ModIcon = mod.icon;
+
               return (
-                <div key={groupDef.group} className="space-y-0.5">
-                  <SectionLabel>{groupDef.group}</SectionLabel>
-                  <ul className="space-y-0.5">
-                    {visibleItems.map((link) => {
-                      const meta = resolveLink(link);
-                      return (
-                        <li key={link.href + link.label}>
-                          <NavItem
-                            {...link}
+                <div
+                  key={mod.id}
+                  className={cn(
+                    "rounded-xl transition-colors",
+                    isModuleActive && !collapsed
+                      ? "bg-zinc-50/70 dark:bg-zinc-900/40 p-1"
+                      : "p-0.5"
+                  )}
+                >
+                  {/* Module Collapsible Header */}
+                  {!collapsed ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleModule(mod.id)}
+                      className={cn(
+                        "flex w-full items-center justify-between px-2 py-1.5 rounded-lg text-xs font-bold tracking-tight transition-all",
+                        isModuleActive
+                          ? "text-indigo-900 dark:text-indigo-300 font-extrabold"
+                          : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100/80 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
+                      )}
+                      aria-expanded={isExpanded}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="text-xs">{mod.badgeIcon}</span>
+                        <span className="truncate uppercase text-[11px] tracking-wider">
+                          {isBn ? mod.titleBn : mod.titleEn}
+                        </span>
+                      </div>
+                      <span className="text-zinc-400">
+                        {isExpanded ? (
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        ) : (
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        )}
+                      </span>
+                    </button>
+                  ) : null}
+
+                  {/* Module Children Items */}
+                  {(isExpanded || collapsed) && (
+                    <div className="space-y-0.5 mt-0.5">
+                      {/* Special POS Quick Widget */}
+                      {mod.id === "pos" && !collapsed && (
+                        <SidebarPosWidget
+                          basePath={basePath}
+                          isBn={isBn}
+                          onNavigate={onNavigate}
+                        />
+                      )}
+
+                      {visibleItems.map((item) => {
+                        const access = resolveItemAccess(item);
+                        return (
+                          <SidebarNavItem
+                            key={item.id}
+                            item={item}
                             basePath={basePath}
-                            locked={meta.locked}
-                            requiredPlan={meta.requiredPlan}
-                            comingSoon={meta.comingSoon}
+                            collapsed={collapsed}
+                            isBn={isBn}
+                            isPinned={pinnedItemIds.includes(item.id)}
+                            onTogglePin={togglePin}
                             onNavigate={onNavigate}
+                            locked={access.locked}
+                            requiredPlan={access.requiredPlan}
                           />
-                        </li>
-                      );
-                    })}
-                  </ul>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </nav>
 
-          {/* ── Compact Storage & Footer Bar ──────────────────── */}
+          {/* ── Bottom Storage & Collapse Toggle Bar ── */}
           <div className={cn("shrink-0 border-t border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-950", collapsed ? "p-2" : "p-3")}>
             {!collapsed ? (
-              <div className="mb-2.5 rounded-lg border border-zinc-200/60 bg-zinc-50/70 p-2.5 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+              <div className="mb-2.5 rounded-lg border border-zinc-200/60 bg-zinc-50/70 p-2 dark:border-zinc-800/80 dark:bg-zinc-900/50">
                 <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
                   <span className="flex items-center gap-1.5">
                     <HardDrive className="h-3 w-3 text-zinc-400" />
-                    <span>{t.storeNav.storage}</span>
+                    <span>{isBn ? "স্টোরেজ" : "Storage"}</span>
                   </span>
                   <span className="tabular-nums font-semibold text-zinc-700 dark:text-zinc-300">
                     {usedLabel} / {storageLabel}
                   </span>
                 </div>
-                <div className="mt-2 h-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
                   <div
                     className={cn(
                       "h-full rounded-full transition-all duration-300",
-                      isStorageHigh ? "bg-amber-500" : "bg-zinc-900 dark:bg-white"
+                      storagePercent >= 80 ? "bg-amber-500" : "bg-indigo-600 dark:bg-indigo-400"
                     )}
                     style={{ width: `${storagePercent}%` }}
                   />
                 </div>
-                {isStorageHigh && (
-                  <div className="mt-1.5 flex items-center justify-between text-[10px] text-amber-700 dark:text-amber-400">
-                    <span>{t.storeNav.storageAlmostFull}</span>
-                    <Link href={`${basePath}/billing`} className="font-semibold underline hover:text-amber-900">
-                      {t.storeNav.upgrade}
-                    </Link>
-                  </div>
-                )}
               </div>
-            ) : (
-              <div className="mb-2 flex justify-center">
-                <NavTooltipWrapper
-                  label={`${t.storeNav.storage}: ${usedLabel} / ${storageLabel}`}
-                  subtext={isStorageHigh ? "Almost full" : `${storagePercent}%`}
-                  collapsed={true}
-                >
-                  <button
-                    type="button"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-900"
-                    aria-label="Storage status"
-                  >
-                    <HardDrive className={cn("h-4 w-4", isStorageHigh && "text-amber-500")} />
-                  </button>
-                </NavTooltipWrapper>
-              </div>
-            )}
+            ) : null}
 
-            {/* Collapse/Expand Action Button */}
-            <NavTooltipWrapper
-              label={collapsed ? t.navigation.expandSidebar : t.navigation.collapseSidebar}
-              collapsed={collapsed}
+            {/* Collapse / Expand Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setCollapsed(!collapsed)}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-lg py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white transition-colors outline-none",
+                collapsed ? "justify-center px-0" : "px-2"
+              )}
+              title={collapsed ? (isBn ? "সাইডবার বড় করুন" : "Expand sidebar") : (isBn ? "সাইডবার ছোট করুন" : "Collapse sidebar")}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <button
-                type="button"
-                onClick={() => setCollapsed(!collapsed)}
-                className={cn(
-                  "flex w-full items-center gap-2.5 rounded-lg px-2.5 h-9 text-xs font-medium text-zinc-500 transition-colors duration-150 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20",
-                  collapsed ? "justify-center px-0" : ""
-                )}
-                aria-label={collapsed ? t.navigation.expandSidebar : t.navigation.collapseSidebar}
-              >
-                {collapsed ? (
-                  <PanelLeft className="h-4 w-4 shrink-0 text-zinc-400" />
-                ) : (
-                  <>
-                    <PanelLeftClose className="h-4 w-4 shrink-0 text-zinc-400" />
-                    <span>{t.navigation.collapseSidebar}</span>
-                  </>
-                )}
-              </button>
-            </NavTooltipWrapper>
+              {collapsed ? (
+                <PanelLeft className="h-4 w-4 shrink-0" />
+              ) : (
+                <>
+                  <PanelLeftClose className="h-4 w-4 shrink-0" />
+                  <span className="text-[11px] font-medium">
+                    {isBn ? "সাইডবার সঙ্কুচিত করুন" : "Collapse sidebar"}
+                  </span>
+                </>
+              )}
+            </button>
           </div>
         </aside>
       </SidebarContext.Provider>
     </TooltipProvider>
   );
 }
-

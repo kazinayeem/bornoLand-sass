@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import dotenvFlow from "dotenv-flow";
 import path from "path";
 import fs from "fs/promises";
 import mongoose from "mongoose";
@@ -19,8 +19,7 @@ import { StoreSettingsModel } from "./models/store-settings.model.js";
 import { MediaFileModel } from "./models/media-file.model.js";
 import { getUploadRoot } from "./modules/media/providers/local-storage.provider.js";
 
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
-dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
+dotenvFlow.config({ path: process.cwd() });
 
 async function run() {
   console.log("=== Verification Script Started ===");

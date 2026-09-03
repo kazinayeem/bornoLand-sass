@@ -1,3 +1,18 @@
+// ── Load environment configuration FIRST (before any module imports) ──────────
+// dotenv-flow loads:  .env  →  .env.local (dev)  or  .env.production (prod)
+// NODE_ENV is set explicitly by package.json scripts.
+import dotenvFlow from "dotenv-flow";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const appDir = path.resolve(__dirname, "..");
+const repoRoot = path.resolve(appDir, "../../");
+
+// Load backend app env files, then fallback to repo root if present
+dotenvFlow.config({ path: appDir, node_env: process.env.NODE_ENV ?? "development", silent: true });
+dotenvFlow.config({ path: repoRoot, node_env: process.env.NODE_ENV ?? "development", silent: true });
+
 import { app } from "./app.js";
 import { connectDatabase } from "./common/database/connection.js";
 import { CartModel } from "./modules/cart/cart.model.js";
@@ -5,7 +20,6 @@ import { startBillingCronScheduler } from "./modules/subscriptions/billing-cron.
 import { startStorageCronScheduler } from "./modules/media/storage-cron.service.js";
 import { startEmailQueue } from "./modules/email/email-queue.service.js";
 import { startShipmentSyncScheduler } from "./modules/couriers/shipment-sync.cron.js";
-import { runSafeMigration } from "./bootstrap/safe-migrate.js";
 import mongoose from "mongoose";
 
 const port = Number(process.env.PORT ?? 4000);
@@ -22,10 +36,6 @@ async function startServer() {
     const server = app.listen(port, "0.0.0.0", () => {
       console.log(`BornoLand API listening on port ${port}`);
       console.log("MongoDB connection established");
-
-      void runSafeMigration().catch((error) => {
-        console.error("[bootstrap] Safe migration failed:", error);
-      });
     });
 
     const shutdown = async (signal: string) => {

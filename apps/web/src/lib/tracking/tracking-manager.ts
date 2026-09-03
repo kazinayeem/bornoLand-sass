@@ -148,7 +148,7 @@ export class TrackingManager {
 
   private logToBackend(eventName: StandardEventName, payload: TrackingPayload): void {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api/v1";
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000").replace(/\/$/, "");
       const endpoint = `${baseUrl}/public/stores/${encodeURIComponent(this.storeId)}/tracking/events`;
 
       fetch(endpoint, {

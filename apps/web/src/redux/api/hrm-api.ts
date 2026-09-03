@@ -298,7 +298,7 @@ export const hrmApi = baseApi.injectEndpoints({
 
     // ── Dedicated Employee Self-Service Endpoints ──
     getMySelfServiceProfile: builder.query<
-      ApiEnvelope<{ employee: Employee; todayAttendance?: Attendance }>,
+      ApiEnvelope<{ employee: Employee; todayAttendance?: AttendanceRecord }>,
       string
     >({
       query: (storeId) => `/stores/${storeId}/hrm/self-service/profile`,
@@ -306,14 +306,14 @@ export const hrmApi = baseApi.injectEndpoints({
     }),
 
     getMyTodayAttendance: builder.query<
-      ApiEnvelope<{ date: string; attendance?: Attendance; status: string; serverTime: string }>,
+      ApiEnvelope<{ date: string; attendance?: AttendanceRecord; status: string; serverTime: string }>,
       string
     >({
       query: (storeId) => `/stores/${storeId}/hrm/self-service/attendance/today`,
       providesTags: (_r, _e, storeId) => [{ type: "HRM", id: `${storeId}-self-attendance` }],
     }),
 
-    clockInMyAttendance: builder.mutation<ApiEnvelope<Attendance>, string>({
+    clockInMyAttendance: builder.mutation<ApiEnvelope<AttendanceRecord>, string>({
       query: (storeId) => ({
         url: `/stores/${storeId}/hrm/self-service/attendance/clock-in`,
         method: "POST",
@@ -324,7 +324,7 @@ export const hrmApi = baseApi.injectEndpoints({
       ],
     }),
 
-    clockOutMyAttendance: builder.mutation<ApiEnvelope<Attendance>, string>({
+    clockOutMyAttendance: builder.mutation<ApiEnvelope<AttendanceRecord>, string>({
       query: (storeId) => ({
         url: `/stores/${storeId}/hrm/self-service/attendance/clock-out`,
         method: "POST",
@@ -336,7 +336,7 @@ export const hrmApi = baseApi.injectEndpoints({
     }),
 
     getMyAttendanceHistory: builder.query<
-      ApiEnvelope<{ attendance: Attendance[]; total: number }>,
+      ApiEnvelope<{ attendance: AttendanceRecord[]; total: number }>,
       { storeId: string; month?: number; year?: number; limit?: number }
     >({
       query: ({ storeId, ...params }) => ({

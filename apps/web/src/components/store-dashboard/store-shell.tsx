@@ -9,6 +9,7 @@ import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 import { StoreBrandingSync } from "@/components/store-dashboard/store-branding-sync";
 import { StorePermissionsSync } from "@/components/store-dashboard/store-permissions-sync";
 import { StoreSidebar } from "@/components/store-dashboard/store-sidebar";
+import { MobileStoreDrawer } from "@/components/store-dashboard/mobile-store-drawer";
 import { TrialBanner } from "@/components/store-dashboard/trial-banner";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 
@@ -118,25 +119,7 @@ export function StoreShell({ children }: { children: ReactNode }) {
             aria-hidden="true"
           />
           <div className="absolute inset-y-0 left-0 flex w-[280px] animate-in slide-in-from-left duration-200 flex-col border-r border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
-            <div className="flex items-center justify-between border-b border-zinc-200/80 px-4 py-3 dark:border-zinc-800">
-              <div className="flex items-center gap-2">
-                <StoreBrandMark store={store} size={28} roundedClassName="rounded-md" />
-                <p className="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                  {store.shortName || store.name}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeMobileNav}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 transition-colors"
-                aria-label="Close menu"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="sidebar-scroll flex-1 overflow-y-auto">
-              <StoreSidebar store={store} onNavigate={closeMobileNav} />
-            </div>
+            <MobileStoreDrawer store={store} onClose={closeMobileNav} />
           </div>
         </div>
       ) : null}

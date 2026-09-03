@@ -8,5 +8,3 @@ coverage
 .pnpm-store
 apps/api/uploads
 mobileapp/node_modules
-
-

@@ -41,7 +41,7 @@ hrmRouter.use("/self-service", hrmSelfServiceRouter);
 
 // Employees (admin HRM - requires hrm:read permission)
 hrmRouter.get("/employees", hrmGuard, hrmPermissionGuard, listEmployeesController);
-hrmRouter.post("/employees", hrmGuard, hrmPermissionGuard, createEmployeeController);
+hrmRouter.post("/employees", hrmGuard, requireStorePermission("hrm:create"), createEmployeeController);
 hrmRouter.get("/employees/:employeeId", hrmGuard, hrmPermissionGuard, getEmployeeController);
 hrmRouter.put("/employees/:employeeId", hrmGuard, hrmPermissionGuard, updateEmployeeController);
 

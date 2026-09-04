@@ -57,7 +57,8 @@ export default function WarehousesPage() {
 
   const [createWarehouse, { isLoading: isCreating }] = useCreateInventoryWarehouseMutation();
 
-  const warehouses = (warehousesData?.data as any)?.warehouses ?? [];
+  const warehousesDataObj = warehousesData?.data as any;
+  const warehouses = warehousesDataObj?.items ?? warehousesDataObj?.warehouses ?? [];
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

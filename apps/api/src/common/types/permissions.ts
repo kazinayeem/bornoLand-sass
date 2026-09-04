@@ -123,6 +123,8 @@ export const ROLE_PERMISSION_PRESETS: Record<StoreMemberRole, Permission[]> = {
     "shipping:*",
     "reports:read",
     "hrm:read",
+    "hrm:create",
+    "hrm:update",
     "finance:read",
   ],
   manager: [

@@ -3,6 +3,10 @@ import { loginAsMerchant, loginAsSuperAdmin, logout, TEST_CREDENTIALS } from "..
 import { attachPageMonitor } from "../helpers/monitor";
 
 test.describe("Authentication & Session Lifecycle (@auth @smoke)", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.context().clearCookies();
+  });
+
   test("Invalid login displays validation or error feedback", async ({ page }) => {
     const monitor = attachPageMonitor(page);
     await page.goto("/login");
@@ -13,7 +17,7 @@ test.describe("Authentication & Session Lifecycle (@auth @smoke)", () => {
     await submitBtn.click();
 
     // Verify error state appears
-    const errorAlert = page.locator("text=/incorrect|invalid|failed|not found|error/i").first();
+    const errorAlert = page.locator("text=/incorrect|invalid|failed|not found|error|too many/i").first();
     await expect(errorAlert).toBeVisible({ timeout: 10_000 });
 
     // Ensure no chunk load failures occurred

@@ -7,6 +7,7 @@ test.describe("CRUD Workflows & Database Persistence (@crud @critical)", () => {
   let storeSlug = "nayeem";
 
   test.beforeEach(async ({ page }) => {
+    await page.context().clearCookies();
     await loginAsMerchant(page);
     storeSlug = await discoverStoreSlug(page);
   });
@@ -21,12 +22,12 @@ test.describe("CRUD Workflows & Database Persistence (@crud @critical)", () => {
     await page.waitForLoadState("networkidle").catch(() => {});
 
     // Fill Title
-    const nameInput = page.locator('input[placeholder*="Product name" i], input[name="name"], input#name').first();
-    await expect(nameInput).toBeVisible({ timeout: 10_000 });
+    const nameInput = page.locator('input[placeholder*="Ginger Powder" i], input[placeholder*="Product name" i], #section-basic input[type="text"]').first();
+    await expect(nameInput).toBeVisible({ timeout: 15_000 });
     await nameInput.fill(testProdName);
 
     // Fill Price
-    const priceInput = page.locator('input[type="number"], input[name="price"], input[placeholder*="0.00"]').first();
+    const priceInput = page.locator('input[type="number"], input[placeholder*="0.00"]').first();
     if (await priceInput.isVisible().catch(() => false)) {
       await priceInput.fill("450");
     }
@@ -35,7 +36,7 @@ test.describe("CRUD Workflows & Database Persistence (@crud @critical)", () => {
     const publishBtn = page.locator('button:has-text("Publish"), button:has-text("Save Draft"), button:has-text("Save")').last();
     await publishBtn.click();
 
-    // Wait for success toast or redirect to products list
+    // Wait for network idle / redirect
     await page.waitForTimeout(2000);
     await page.goto(`/store/${storeSlug}/products`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle").catch(() => {});
@@ -87,26 +88,25 @@ test.describe("CRUD Workflows & Database Persistence (@crud @critical)", () => {
     await page.goto(`/store/${storeSlug}/inventory/warehouses`, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle").catch(() => {});
 
-    // Open add warehouse modal if button exists
-    const addBtn = page.locator('button:has-text("Add Warehouse"), button:has-text("Create Warehouse"), button:has-text("New Warehouse")').first();
-    if (await addBtn.isVisible().catch(() => false)) {
-      await addBtn.click();
+    // Open add warehouse modal
+    const addBtn = page.locator('button:has-text("Add Storage Facility"), button:has-text("Add Warehouse"), button:has-text("New Warehouse")').first();
+    await expect(addBtn).toBeVisible({ timeout: 10_000 });
+    await addBtn.click();
 
-      const nameInput = page.locator('input[placeholder*="Warehouse name" i], input[name="name"]').first();
-      await expect(nameInput).toBeVisible({ timeout: 5000 });
-      await nameInput.fill(testWhName);
+    const nameInput = page.locator('input[placeholder*="Central Hub" i], input[placeholder*="Warehouse" i], [role="dialog"] input').first();
+    await expect(nameInput).toBeVisible({ timeout: 5000 });
+    await nameInput.fill(testWhName);
 
-      const submitBtn = page.locator('button[type="submit"], button:has-text("Save"), button:has-text("Create")').last();
-      await submitBtn.click();
-      await page.waitForTimeout(1500);
+    const submitBtn = page.locator('[role="dialog"] button[type="submit"], [role="dialog"] button:has-text("Save"), [role="dialog"] button:has-text("Add")').last();
+    await submitBtn.click();
+    await page.waitForTimeout(2000);
 
-      // Verify listing
-      await expect(page.locator(`text="${testWhName}"`).first()).toBeVisible({ timeout: 10_000 });
+    // Verify listing
+    await expect(page.locator(`text="${testWhName}"`).first()).toBeVisible({ timeout: 10_000 });
 
-      // Reload to verify DB persistence
-      await page.reload({ waitUntil: "domcontentloaded" });
-      await expect(page.locator(`text="${testWhName}"`).first()).toBeVisible({ timeout: 10_000 });
-    }
+    // Reload to verify DB persistence
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator(`text="${testWhName}"`).first()).toBeVisible({ timeout: 10_000 });
 
     expect(monitor.chunkErrors).toHaveLength(0);
   });

@@ -15,6 +15,12 @@ import { TeamMemberModel } from "../team/team-member.model.js";
 import { StoreMemberModel } from "../team/store-member.model.js";
 import { StoreModel } from "../stores/store.model.js";
 import { EmployeeModel } from "../hrm/employee.model.js";
+import {
+  EmployeeAccountError,
+  findUserIdByEmployeeIdentifier,
+  listActiveMembershipStoreIds,
+  assertEmployeeMayAuthenticate,
+} from "../hrm/employee-account.service.js";
 import { getRoleDefaultLandingPath } from "../../common/types/permissions.js";
 import { SubscriptionModel } from "../subscriptions/subscription.model.js";
 import { VerificationTokenModel } from "./verification-token.model.js";
@@ -93,6 +99,7 @@ function buildSessionPayload(
     name: string;
     sessionVersion?: number;
     status?: string;
+    mustChangePassword?: boolean;
   },
   loginType: SessionPayload["loginType"],
   defaultStoreSlug?: string | null
@@ -106,6 +113,7 @@ function buildSessionPayload(
     loginType,
     sessionVersion: user.sessionVersion ?? 0,
     defaultStoreSlug: user.role === "super_admin" ? null : (defaultStoreSlug ?? null),
+    mustChangePassword: Boolean(user.mustChangePassword),
   };
 }
 
@@ -174,8 +182,11 @@ export async function loginUser(payload: unknown) {
   await connectDatabase();
 
   const rawIdentifier = String(parsed.data.email || "").trim();
+  const identifierLooksLikeEmail = rawIdentifier.includes("@");
 
-  let user = (await UserModel.findOne({ email: rawIdentifier.toLowerCase() }).lean()) as {
+  let user = (await UserModel.findOne({
+    email: identifierLooksLikeEmail ? rawIdentifier.toLowerCase() : rawIdentifier.toLowerCase(),
+  }).lean()) as {
     _id: unknown;
     tenantId: unknown;
     role: string;
@@ -185,50 +196,20 @@ export async function loginUser(payload: unknown) {
     status: string;
     loginCount?: number;
     sessionVersion?: number;
+    mustChangePassword?: boolean;
   } | null;
 
-  // If not found by email, check if rawIdentifier is an Employee Code (e.g. EMP-0001, EMP-0042)
-  // or a mobile/phone number
-  if (!user) {
-    // Try employee code lookup
-    const emp = (await EmployeeModel.findOne({
-      employeeCode: new RegExp(`^${rawIdentifier}$`, "i"),
-    }).lean()) as { _id: unknown; userId?: unknown; email: string } | null;
-
-    if (emp) {
-      if (emp.userId) {
-        user = (await UserModel.findById(emp.userId).lean()) as any;
+  if (!user && !identifierLooksLikeEmail) {
+    try {
+      const employeeUserId = await findUserIdByEmployeeIdentifier(rawIdentifier);
+      if (employeeUserId) {
+        user = (await UserModel.findById(employeeUserId).lean()) as typeof user;
       }
-      if (!user && emp.email) {
-        user = (await UserModel.findOne({ email: emp.email.toLowerCase() }).lean()) as any;
-        if (user) {
-          await EmployeeModel.updateOne({ _id: emp._id }, { $set: { userId: user._id } }).exec();
-        }
+    } catch (error) {
+      if (error instanceof EmployeeAccountError) {
+        return { ok: false as const, message: error.message };
       }
-    }
-  }
-
-  // Try mobile/phone number lookup if still no user found
-  if (!user) {
-    // Normalize phone: remove spaces, dashes, parentheses; ensure leading + or digits only
-    const normalizedPhone = rawIdentifier.replace(/[\s\-\(\)]/g, "");
-    if (/^(\+?\d{10,15})$/.test(normalizedPhone)) {
-      const phoneEmp = (await EmployeeModel.findOne({
-        phone: { $regex: new RegExp(`^${normalizedPhone.replace(/^\+/, "\\+")}$`, "i") },
-        status: "active",
-      }).lean()) as { _id: unknown; userId?: unknown; email: string } | null;
-
-      if (phoneEmp) {
-        if (phoneEmp.userId) {
-          user = (await UserModel.findById(phoneEmp.userId).lean()) as any;
-        }
-        if (!user && phoneEmp.email) {
-          user = (await UserModel.findOne({ email: phoneEmp.email.toLowerCase() }).lean()) as any;
-          if (user) {
-            await EmployeeModel.updateOne({ _id: phoneEmp._id }, { $set: { userId: user._id } }).exec();
-          }
-        }
-      }
+      throw error;
     }
   }
 
@@ -242,7 +223,16 @@ export async function loginUser(payload: unknown) {
   }
 
   if (user.status !== "active") {
-    return { ok: false as const, message: `Account ${user.status}` };
+    return { ok: false as const, message: "Invalid credentials" };
+  }
+
+  try {
+    await assertEmployeeMayAuthenticate(String(user._id), user.email);
+  } catch (error) {
+    if (error instanceof EmployeeAccountError) {
+      return { ok: false as const, message: error.message };
+    }
+    throw error;
   }
 
   const passwordValid = await bcrypt.compare(parsed.data.password, user.passwordHash);

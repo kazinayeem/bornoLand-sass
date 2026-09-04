@@ -1,10 +1,11 @@
 import rateLimit from "express-rate-limit";
 
+const isProd = process.env.NODE_ENV === "production";
 const windowMs = 60 * 1000;
 
 export const globalRateLimit = rateLimit({
   windowMs,
-  max: 100,
+  max: isProd ? 100 : 2000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: "Too many requests, please try again later." },
@@ -12,7 +13,7 @@ export const globalRateLimit = rateLimit({
 
 export const authRateLimit = rateLimit({
   windowMs,
-  max: 10,
+  max: isProd ? 10 : 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: "Too many authentication attempts, please try again later." },

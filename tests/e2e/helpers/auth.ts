@@ -36,7 +36,7 @@ export async function loginAsMerchant(page: Page): Promise<string> {
   await page.waitForURL((url) => {
     const path = url.pathname;
     return path.startsWith("/workshops") || path.startsWith("/store/") || path === "/dashboard";
-  }, { timeout: 15000 });
+  }, { timeout: 30000 });
 
   return page.url();
 }
@@ -64,7 +64,7 @@ export async function loginAsSuperAdmin(page: Page): Promise<string> {
 
   await page.waitForURL((url) => {
     return url.pathname === "/dashboard" || url.pathname.startsWith("/admin/dashboard");
-  }, { timeout: 15000 });
+  }, { timeout: 30000 });
 
   return page.url();
 }

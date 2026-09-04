@@ -6,6 +6,15 @@ import { ShiftModel } from "./shift.model.js";
 import { AttendanceModel } from "./attendance.model.js";
 import { LeaveRequestModel } from "./leave.model.js";
 import { PayrollModel } from "./payroll.model.js";
+import {
+  EmployeeAccountError,
+  normalizeEmail,
+  normalizePhone,
+  phoneDigits,
+  provisionEmployeeLoginAccount,
+  syncMembershipForEmployeeStatus,
+  type EmployeeLoginAccount,
+} from "./employee-account.service.js";
 
 function oid(id: string | mongoose.Types.ObjectId | null | undefined): mongoose.Types.ObjectId | null {
   if (!id) return null;
@@ -77,12 +86,42 @@ export async function listEmployees(
   };
 }
 
-export async function createEmployee(storeId: string, payload: any) {
+export async function createEmployee(storeId: string, payload: any): Promise<{
+  employee: Record<string, unknown>;
+  loginAccount: EmployeeLoginAccount;
+}> {
   await connectDatabase();
   const sid = storeOid(storeId);
 
+  const firstName = String(payload.firstName || "").trim();
+  const lastName = String(payload.lastName || "").trim();
+  const email = normalizeEmail(payload.email);
+  const phone = normalizePhone(payload.phone || payload.mobile || "");
+  const memberRole = String(payload.memberRole || payload.role || "employee").trim();
+
+  if (!firstName) throw new EmployeeAccountError("First name is required.");
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new EmployeeAccountError("A valid email address is required.");
+  }
+  if (phoneDigits(phone).length < 8) {
+    throw new EmployeeAccountError("A mobile number of at least 8 digits is required. It becomes the temporary login password.");
+  }
+
   const count = await EmployeeModel.countDocuments({ storeId: sid });
-  const employeeCode = payload.employeeCode?.trim() || `EMP-${String(count + 1).padStart(4, "0")}`;
+  const employeeCode = String(payload.employeeCode || "").trim() || `EMP-${String(count + 1).padStart(4, "0")}`;
+
+  const codeTaken = await EmployeeModel.exists({
+    storeId: sid,
+    employeeCode: new RegExp(`^${employeeCode.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+  });
+  if (codeTaken) {
+    throw new EmployeeAccountError("This Employee ID already exists in this store.");
+  }
+
+  const emailTaken = await EmployeeModel.exists({ storeId: sid, email });
+  if (emailTaken) {
+    throw new EmployeeAccountError("An employee with this email already exists in this store.");
+  }
 
   const basic = Number(payload.salaryStructure?.basic || 0);
   const houseRent = Number(payload.salaryStructure?.houseRent || 0);
@@ -91,26 +130,63 @@ export async function createEmployee(storeId: string, payload: any) {
   const allowances = Number(payload.salaryStructure?.allowances || 0);
   const grossSalary = basic + houseRent + medical + conveyance + allowances;
 
-  const employee = await EmployeeModel.create({
-    ...payload,
-    storeId: sid,
-    employeeCode,
-    departmentId: payload.departmentId ? oid(payload.departmentId) : null,
-    designationId: payload.designationId ? oid(payload.designationId) : null,
-    shiftId: payload.shiftId ? oid(payload.shiftId) : null,
-    managerId: payload.managerId ? oid(payload.managerId) : null,
-    salaryStructure: {
-      ...payload.salaryStructure,
-      basic,
-      houseRent,
-      medical,
-      conveyance,
-      allowances,
-      grossSalary,
-    },
-  });
+  let employee;
+  try {
+    employee = await EmployeeModel.create({
+      ...payload,
+      storeId: sid,
+      employeeCode,
+      firstName,
+      lastName,
+      email,
+      phone,
+      departmentId: payload.departmentId ? oid(payload.departmentId) : null,
+      designationId: payload.designationId ? oid(payload.designationId) : null,
+      shiftId: payload.shiftId ? oid(payload.shiftId) : null,
+      managerId: payload.managerId ? oid(payload.managerId) : null,
+      joiningDate: payload.joiningDate || Date.now(),
+      salaryStructure: {
+        ...payload.salaryStructure,
+        basic,
+        houseRent,
+        medical,
+        conveyance,
+        allowances,
+        grossSalary,
+      },
+    });
+  } catch (error: any) {
+    if (error?.code === 11000) {
+      throw new EmployeeAccountError("This Employee ID already exists in this store.");
+    }
+    throw error;
+  }
 
-  return employee;
+  try {
+    const loginAccount = await provisionEmployeeLoginAccount({
+      storeId: String(sid),
+      employeeId: String(employee._id),
+      firstName,
+      lastName,
+      email,
+      phone,
+      memberRole,
+    });
+
+    const saved = await EmployeeModel.findById(employee._id)
+      .populate("departmentId", "name code")
+      .populate("designationId", "name code")
+      .populate("shiftId", "name startTime endTime")
+      .lean();
+
+    return {
+      employee: (saved || employee.toObject()) as Record<string, unknown>,
+      loginAccount,
+    };
+  } catch (error) {
+    await EmployeeModel.deleteOne({ _id: employee._id }).catch(() => undefined);
+    throw error;
+  }
 }
 
 export async function updateEmployee(storeId: string, employeeId: string, payload: any) {
@@ -133,6 +209,9 @@ export async function updateEmployee(storeId: string, employeeId: string, payloa
 
   Object.assign(employee, payload);
   await employee.save();
+  if (payload.status) {
+    await syncMembershipForEmployeeStatus(storeId, employeeId, String(payload.status));
+  }
   return employee;
 }
 

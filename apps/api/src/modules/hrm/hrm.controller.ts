@@ -41,10 +41,17 @@ export async function listEmployeesController(request: Request, response: Respon
 export async function createEmployeeController(request: Request, response: Response) {
   try {
     const storeId = storeIdOf(request);
-    const employee = await createEmployee(storeId, request.body);
-    response.status(201).json({ ok: true, data: employee });
+    const result = await createEmployee(storeId, request.body);
+    response.status(201).json({
+      ok: true,
+      message: result.loginAccount.created
+        ? "Employee created successfully. Login account created."
+        : "Employee created successfully. Existing login account linked.",
+      data: result,
+    });
   } catch (error: any) {
-    response.status(400).json({ ok: false, message: error?.message || "Failed to create employee" });
+    const status = typeof error?.statusCode === "number" ? error.statusCode : 400;
+    response.status(status).json({ ok: false, message: error?.message || "Failed to create employee" });
   }
 }
 

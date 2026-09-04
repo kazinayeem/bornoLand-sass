@@ -35,6 +35,8 @@ const userSchema = new Schema(
       marketingEmails: { type: Boolean, default: false },
     },
     passwordChangedAt: { type: Date, default: null },
+    /** When true, the user must set a new password before using the application. */
+    mustChangePassword: { type: Boolean, default: false, index: true },
     sessionVersion: { type: Number, default: 0, min: 0 },
     lastLoginAt: { type: Date },
     lastLoginIp: { type: String },

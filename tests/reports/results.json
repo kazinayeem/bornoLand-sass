@@ -1,0 +1,350 @@
+{
+  "config": {
+    "argv": [
+      "/usr/local/bin/node",
+      "/Users/mohammadalinayeem/Project & Code/bornoland/node_modules/@playwright/test/cli.js",
+      "test",
+      "tests/e2e/auth/auth.spec.ts",
+      "--project=Desktop Chromium"
+    ],
+    "configFile": "/Users/mohammadalinayeem/Project & Code/bornoland/playwright.config.ts",
+    "rootDir": "/Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/mohammadalinayeem/Project & Code/bornoland/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "Desktop Chromium",
+        "name": "Desktop Chromium",
+        "testDir": "/Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/mohammadalinayeem/Project & Code/bornoland/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "Mobile Chromium",
+        "name": "Mobile Chromium",
+        "testDir": "/Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "tests/reports/playwright-html",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "tests/reports/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "auth/auth.spec.ts",
+      "file": "auth/auth.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Authentication & Session Lifecycle (@auth @smoke)",
+          "file": "auth/auth.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Invalid login displays validation or error feedback",
+              "ok": true,
+              "tags": [
+                "auth",
+                "smoke)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2375,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T13:26:11.640Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ab049aabb515b3eeb7-5dd72df2f5db7d2c6da2",
+              "file": "auth/auth.spec.ts",
+              "line": 6,
+              "column": 7
+            },
+            {
+              "title": "Merchant logs in successfully and lands at workspace/store (@smoke)",
+              "ok": true,
+              "tags": [
+                "auth",
+                "smoke)",
+                "smoke)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6687,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T13:26:16.654Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ab049aabb515b3eeb7-c91969dd9329c4f03f75",
+              "file": "auth/auth.spec.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "Super Admin logs in and reaches Platform Overview (/dashboard)",
+              "ok": false,
+              "tags": [
+                "auth",
+                "smoke)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16234,
+                      "error": {
+                        "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================",
+                        "stack": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n    at loginAsSuperAdmin (/Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e/helpers/auth.ts:60:14)\n    at /Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e/auth/auth.spec.ts:39:22",
+                        "location": {
+                          "file": "/Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e/helpers/auth.ts",
+                          "column": 14,
+                          "line": 60
+                        },
+                        "snippet": "   at helpers/auth.ts:60\n\n  58 |   }\n  59 |\n> 60 |   await page.waitForURL((url) => {\n     |              ^\n  61 |     return url.pathname === \"/dashboard\" || url.pathname.startsWith(\"/admin/dashboard\");\n  62 |   }, { timeout: 15000 });\n  63 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e/helpers/auth.ts",
+                            "column": 14,
+                            "line": 60
+                          },
+                          "message": "TimeoutError: page.waitForURL: Timeout 15000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================\n\n   at helpers/auth.ts:60\n\n  58 |   }\n  59 |\n> 60 |   await page.waitForURL((url) => {\n     |              ^\n  61 |     return url.pathname === \"/dashboard\" || url.pathname.startsWith(\"/admin/dashboard\");\n  62 |   }, { timeout: 15000 });\n  63 |\n    at loginAsSuperAdmin (/Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e/helpers/auth.ts:60:14)\n    at /Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e/auth/auth.spec.ts:39:22"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T13:26:23.346Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/mohammadalinayeem/Project & Code/bornoland/test-results/auth-auth-Authentication-S-a8313-latform-Overview-dashboard--Desktop-Chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/mohammadalinayeem/Project & Code/bornoland/test-results/auth-auth-Authentication-S-a8313-latform-Overview-dashboard--Desktop-Chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/mohammadalinayeem/Project & Code/bornoland/test-results/auth-auth-Authentication-S-a8313-latform-Overview-dashboard--Desktop-Chromium/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/mohammadalinayeem/Project & Code/bornoland/test-results/auth-auth-Authentication-S-a8313-latform-Overview-dashboard--Desktop-Chromium/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e/helpers/auth.ts",
+                        "column": 14,
+                        "line": 60
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "11ab049aabb515b3eeb7-9738f725b3e7ba41827a",
+              "file": "auth/auth.spec.ts",
+              "line": 37,
+              "column": 7
+            },
+            {
+              "title": "Logout clears session and blocks access to protected routes",
+              "ok": true,
+              "tags": [
+                "auth",
+                "smoke)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5929,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T13:26:39.841Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ab049aabb515b3eeb7-cc6be7bff2d2664a8224",
+              "file": "auth/auth.spec.ts",
+              "line": 51,
+              "column": 7
+            },
+            {
+              "title": "Unauthenticated access to /admin/dashboard redirects to admin login",
+              "ok": true,
+              "tags": [
+                "auth",
+                "smoke)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 631,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T13:26:45.865Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ab049aabb515b3eeb7-1d94a09f070902715a7f",
+              "file": "auth/auth.spec.ts",
+              "line": 61,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-04T13:26:10.787Z",
+    "duration": 35746.634,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

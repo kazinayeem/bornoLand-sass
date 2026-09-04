@@ -24,8 +24,10 @@ export async function loginAsMerchant(page: Page): Promise<string> {
     await demoBtn.click();
   } else {
     // Fill credentials manually
-    await page.fill('input[type="email"], input[name="email"]', TEST_CREDENTIALS.merchant.email);
-    await page.fill('input[type="password"], input[name="password"]', TEST_CREDENTIALS.merchant.password);
+    const emailInput = page.locator('#login-email, input[name="email"], input[type="email"]').first();
+    const passwordInput = page.locator('#login-password, input[name="password"], input[type="password"]').first();
+    await emailInput.fill(TEST_CREDENTIALS.merchant.email);
+    await passwordInput.fill(TEST_CREDENTIALS.merchant.password);
     const submitBtn = page.locator('button[type="submit"]');
     await submitBtn.click();
   }
@@ -43,16 +45,19 @@ export async function loginAsMerchant(page: Page): Promise<string> {
  * Log into the platform as Super Admin
  */
 export async function loginAsSuperAdmin(page: Page): Promise<string> {
-  await page.goto("/admin/login", { waitUntil: "domcontentloaded" }).catch(async () => {
-    await page.goto("/login", { waitUntil: "domcontentloaded" });
-  });
+  // Try /login first because it has the Quick Demo Super Admin button, or /admin/login
+  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  await page.waitForLoadState("networkidle").catch(() => {});
 
   const demoAdminBtn = page.getByRole("button", { name: /Demo Super Admin/i });
   if (await demoAdminBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
     await demoAdminBtn.click();
   } else {
-    await page.fill('input[type="email"], input[name="email"]', TEST_CREDENTIALS.admin.email);
-    await page.fill('input[type="password"], input[name="password"]', TEST_CREDENTIALS.admin.password);
+    await page.goto("/admin/login", { waitUntil: "domcontentloaded" });
+    const emailInput = page.locator('#login-email, input[name="email"], input[type="email"]').first();
+    const passwordInput = page.locator('#login-password, input[name="password"], input[type="password"]').first();
+    await emailInput.fill(TEST_CREDENTIALS.admin.email);
+    await passwordInput.fill(TEST_CREDENTIALS.admin.password);
     const submitBtn = page.locator('button[type="submit"]');
     await submitBtn.click();
   }

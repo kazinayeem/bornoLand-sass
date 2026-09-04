@@ -14,15 +14,21 @@ import {
   Receipt,
   Plus,
   TrendingDown,
-  Filter,
   RefreshCw,
   CreditCard,
   Building,
   ShieldAlert,
+  DollarSign,
+  Loader2,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { StorePageHeader } from "@/components/store-dashboard/store-page-header";
+import { StorePageCard } from "@/components/store-dashboard/store-page";
+import { MetricCard } from "@/components/ui/metric-card";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState, ErrorState } from "@/components/ui/empty-state";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function ExpensesPage() {
   const params = useParams();
@@ -67,11 +74,11 @@ export default function ExpensesPage() {
 
   const hasAccess = useHasPermission("accounting:read");
 
-  const { data: expData, isLoading, refetch } = useGetExpensesQuery(
+  const { data: expData, isLoading, refetch, isError } = useGetExpensesQuery(
     {
       storeId,
       page,
-      limit: 20,
+      limit: 30,
       category: categoryFilter !== "all" ? categoryFilter : undefined,
     },
     { skip: !storeId }
@@ -83,7 +90,7 @@ export default function ExpensesPage() {
 
   const expenses = expData?.data?.expenses ?? [];
   const totalSpent = expData?.data?.totalSpent ?? 0;
-  const total = expData?.data?.total ?? 0;
+  const total = expData?.data?.total ?? expenses.length;
   const accounts = accountsData?.data?.accounts ?? [];
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -125,250 +132,302 @@ export default function ExpensesPage() {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <ShieldAlert className="h-10 w-10 text-rose-500" />
-        <h2 className="mt-4 text-lg font-semibold">{isBn ? "অনুমতি নেই" : "Access Denied"}</h2>
+        <h2 className="mt-4 text-lg font-bold">{isBn ? "অনুমতি নেই" : "Access Denied"}</h2>
+        <p className="text-xs text-zinc-500 mt-1">
+          {isBn ? "ব্যয় তালিকা দেখার অনুমতি নেই।" : "You do not have permission to view expenses."}
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-white flex items-center gap-2.5">
-            <Receipt className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
-            <span>{isBn ? "ব্যয় ও খরচ ট্র্যাকার (Expense Management)" : "Expense Management"}</span>
-          </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-            {isBn
-              ? "ভাড়া, ইউটিলিটি, প্যাকেজিং, বিপণন ও বিবিধ ব্যবসায়িক পরিচালন ব্যয়ের সুশৃঙ্খল হিসেব।"
-              : "Track operating expenditures, categorize costs, attach vendors, and auto-post into general ledger."}
-          </p>
-        </div>
+      <StorePageHeader
+        title="Expense Management & Operating Costs"
+        description="Track operating expenditures, categorize costs, attach vendors, and auto-post into general ledger."
+        breadcrumbs={[
+          { label: "Dashboard", href: store ? `/store/${store.slug}/dashboard` : "#" },
+          { label: "Finance" },
+          { label: "Expenses" },
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5 text-xs font-semibold cursor-pointer">
+              <RefreshCw className="h-3.5 w-3.5" />
+              <span>Refresh</span>
+            </Button>
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              size="sm"
+              className="gap-1.5 bg-[#003399] hover:bg-[#002B80] text-white text-xs font-bold shadow-2xs cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Record Expense</span>
+            </Button>
+          </div>
+        }
+      />
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
-            <RefreshCw className="h-4 w-4" />
-            <span>{isBn ? "রিফ্রেশ" : "Refresh"}</span>
-          </Button>
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
-          >
-            <Plus className="h-4 w-4" />
-            <span>{isBn ? "নতুন ব্যয় যোগ করুন" : "Record Expense"}</span>
-          </Button>
-        </div>
+      {/* ── KPI Cards ─────────────────────────────────────────── */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <MetricCard
+          title="Total Operating Expenses (BDT)"
+          value={`৳${totalSpent.toLocaleString()}`}
+          subtitle="All recorded expenditure"
+          icon={TrendingDown}
+          iconClassName="text-rose-600 bg-rose-50 dark:bg-rose-950/30"
+        />
+
+        <MetricCard
+          title="Recorded Vouchers"
+          value={total}
+          subtitle="Expense entries"
+          icon={Receipt}
+          iconClassName="text-blue-600 bg-blue-50 dark:bg-blue-950/30"
+        />
+
+        <MetricCard
+          title="Average Expense Size"
+          value={`৳${total > 0 ? Math.round(totalSpent / total).toLocaleString() : "0"}`}
+          subtitle="Per recorded voucher"
+          icon={DollarSign}
+          iconClassName="text-purple-600 bg-purple-50 dark:bg-purple-950/30"
+        />
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
-              <span>{isBn ? "সর্বমোট ব্যয়" : "Total Operating Expenses"}</span>
-              <TrendingDown className="h-4 w-4 text-rose-500" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">
-              ৳{totalSpent.toLocaleString()}
-            </div>
-            <p className="text-xs text-zinc-500 mt-1">
-              {isBn ? "মোট রেকর্ডকৃত খরচের পরিমাণ" : "Total spent across all categories"}
-            </p>
-          </CardContent>
-        </Card>
+      {/* ── Expense Records Table ─────────────────────────────── */}
+      <StorePageCard>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-2">
+            <Receipt className="h-4 w-4 text-[#003399] dark:text-[#FFDA1A]" />
+            <span className="text-sm font-bold text-zinc-950 dark:text-white">Expense Vouchers</span>
+          </div>
 
-        <Card className="border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
-              <span>{isBn ? "মোট খরচের ভাউচার" : "Recorded Vouchers"}</span>
-              <Receipt className="h-4 w-4 text-zinc-400" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-white">
-              {total}
-            </div>
-            <p className="text-xs text-zinc-500 mt-1">
-              {isBn ? "টি খরচের রেকর্ড" : "expense voucher entries"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
-              <span>{isBn ? "গড় খরচ প্রতি ভাউচার" : "Average / Voucher"}</span>
-              <CreditCard className="h-4 w-4 text-zinc-400" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-white">
-              ৳{total > 0 ? (totalSpent / total).toFixed(2) : "0.00"}
-            </div>
-            <p className="text-xs text-zinc-500 mt-1">
-              {isBn ? "গড় খরচের পরিমাণ" : "Average expenditure per entry"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Expenses Table */}
-      <Card className="border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-        <CardHeader className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex flex-row items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Filter className="h-4 w-4 text-zinc-400" />
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[200px] h-9 text-xs">
-                <SelectValue placeholder="Filter by category" />
+          <div className="flex items-center gap-2">
+            <Select value={categoryFilter} onValueChange={(val) => { setCategoryFilter(val); setPage(1); }}>
+              <SelectTrigger className="w-44 h-8 text-xs">
+                <SelectValue placeholder="Category filter" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{isBn ? "সমস্ত ক্যাটাগরি" : "All Categories"}</SelectItem>
-                <SelectItem value="Rent & Utilities">{isBn ? "ভাড়া ও ইউটিলিটি" : "Rent & Utilities"}</SelectItem>
-                <SelectItem value="Marketing & Advertising">{isBn ? "বিপণন ও বিজ্ঞাপন" : "Marketing & Ads"}</SelectItem>
-                <SelectItem value="Packaging & Supplies">{isBn ? "প্যাকেজিং ও সরবরাহ" : "Packaging & Supplies"}</SelectItem>
-                <SelectItem value="Delivery & Courier Fees">{isBn ? "ডেলিভারি ও কুরিয়ার খরচ" : "Delivery Fees"}</SelectItem>
-                <SelectItem value="Salaries & Wages">{isBn ? "বেতন ও মজুরি" : "Salaries & Wages"}</SelectItem>
-                <SelectItem value="Other">{isBn ? "অন্যান্য পরিচালন ব্যয়" : "Other Operating"}</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="Rent & Utilities">Rent &amp; Utilities</SelectItem>
+                <SelectItem value="Packaging & Delivery">Packaging &amp; Delivery</SelectItem>
+                <SelectItem value="Marketing & Ads">Marketing &amp; Ads</SelectItem>
+                <SelectItem value="Office & Supplies">Office &amp; Supplies</SelectItem>
+                <SelectItem value="Staff & Refreshment">Staff &amp; Refreshment</SelectItem>
+                <SelectItem value="Software & Tools">Software &amp; Tools</SelectItem>
+                <SelectItem value="Miscellaneous">Miscellaneous</SelectItem>
               </SelectContent>
             </Select>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-xs uppercase text-zinc-500 font-semibold border-b border-zinc-200/80 dark:border-zinc-800">
-                <tr>
-                  <th className="px-4 py-3">{isBn ? "তারিখ" : "Date"}</th>
-                  <th className="px-4 py-3">{isBn ? "ভাউচার #" : "Voucher #"}</th>
-                  <th className="px-4 py-3">{isBn ? "শিরোনাম ও বিবরণ" : "Title & Details"}</th>
-                  <th className="px-4 py-3">{isBn ? "ক্যাটাগরি" : "Category"}</th>
-                  <th className="px-4 py-3">{isBn ? "পেমেন্ট মাধ্যম" : "Payment Method"}</th>
-                  <th className="px-4 py-3 text-right">{isBn ? "পরিমাণ (৳)" : "Amount (BDT)"}</th>
-                  <th className="px-4 py-3">{isBn ? "রেকর্ডকারী" : "Recorded By"}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-800">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center text-zinc-400">
-                      {isBn ? "লোড হচ্ছে..." : "Loading expenses..."}
-                    </td>
+        </div>
+
+        <div className="mt-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-[#003399]" />
+            </div>
+          ) : isError ? (
+            <ErrorState
+              title="Unable to load expenses"
+              message="Check your network connection"
+              onRetry={refetch}
+            />
+          ) : expenses.length === 0 ? (
+            <EmptyState
+              icon={Receipt}
+              title="No expenses recorded"
+              description="Record recurring or one-off operational costs to keep your financial ledger balanced."
+              action={
+                <Button
+                  onClick={() => setIsModalOpen(true)}
+                  size="sm"
+                  className="bg-[#003399] text-white hover:bg-[#002B80] text-xs font-bold cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Record Expense
+                </Button>
+              }
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                    <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4">Title / Particulars</th>
+                    <th className="py-3 px-4">Category</th>
+                    <th className="py-3 px-4">Vendor</th>
+                    <th className="py-3 px-4">Payment</th>
+                    <th className="py-3 px-4 text-right">Amount (BDT)</th>
+                    <th className="py-3 px-4 text-center">Status</th>
                   </tr>
-                ) : expenses.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-zinc-400">
-                      <Receipt className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
-                      <p className="text-sm">{isBn ? "কোনো ব্যয় রেকর্ড পাওয়া যায়নি" : "No expense records found"}</p>
-                    </td>
-                  </tr>
-                ) : (
-                  expenses.map((exp) => (
-                    <tr key={exp._id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30">
-                      <td className="px-4 py-3 text-xs text-zinc-500 whitespace-nowrap">
-                        {new Date(exp.expenseDate).toLocaleDateString()}
+                </thead>
+                <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-800">
+                  {expenses.map((exp) => (
+                    <tr
+                      key={exp._id}
+                      className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors"
+                    >
+                      <td className="py-3 px-4 font-mono text-zinc-500">
+                        {new Date(exp.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-3 font-mono font-bold text-xs text-zinc-700 dark:text-zinc-300">
-                        {exp.expenseNumber}
+                      <td className="py-3 px-4">
+                        <p className="font-bold text-zinc-900 dark:text-zinc-100">{exp.title}</p>
+                        {exp.notes && (
+                          <p className="text-[11px] text-zinc-400 line-clamp-1">{exp.notes}</p>
+                        )}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-zinc-900 dark:text-zinc-100">
-                        <div>{exp.title}</div>
-                        {exp.vendor && <div className="text-[11px] text-zinc-400">Vendor: {exp.vendor}</div>}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400">
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs text-zinc-700 dark:text-zinc-300">
                           {exp.category}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs capitalize text-zinc-600 dark:text-zinc-400">
-                        {exp.paymentMethod}
+                      <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400">
+                        {exp.vendor || "—"}
                       </td>
-                      <td className="px-4 py-3 text-right font-bold text-rose-600">
-                        ৳{exp.totalAmount?.toLocaleString()}
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-300 uppercase">
+                          <CreditCard className="h-3 w-3 text-zinc-400" />
+                          {exp.paymentMethod}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-zinc-500">
-                        {exp.recordedBy}
+                      <td className="py-3 px-4 text-right font-mono font-bold text-rose-600 dark:text-rose-400">
+                        -৳{exp.amount?.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <Badge variant="success">Posted</Badge>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </StorePageCard>
 
-      {/* Record Expense Modal */}
+      {/* ── Record Expense Modal ──────────────────────────────── */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[480px]">
-          <form onSubmit={handleCreate}>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-indigo-600" />
-                <span>{isBn ? "নতুন ব্যয় রেকর্ড করুন" : "Record Operating Expense"}</span>
-              </DialogTitle>
-            </DialogHeader>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{isBn ? "ব্যয় রেকর্ড করুন" : "Record Operating Expense"}</DialogTitle>
+            <DialogDescription>
+              {isBn ? "খরচের বিবরণ ও অ্যাকাউন্ট পোস্টিং নির্ধারণ করুন।" : "Enter expense voucher details and optional accounting ledger linkage."}
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-3.5 py-3">
-              <div className="space-y-1">
-                <Label>{isBn ? "খরচের শিরোনাম *" : "Expense Title *"}</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Office Rent for Month" required />
+          <form onSubmit={handleCreate} className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>{isBn ? "খরচের বিবরণ *" : "Expense Title *"}</Label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Shop Rent for September, Courier Bags"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>{isBn ? "ক্যাটাগরি" : "Category"}</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Rent & Utilities">Rent &amp; Utilities</SelectItem>
+                    <SelectItem value="Packaging & Delivery">Packaging &amp; Delivery</SelectItem>
+                    <SelectItem value="Marketing & Ads">Marketing &amp; Ads</SelectItem>
+                    <SelectItem value="Office & Supplies">Office &amp; Supplies</SelectItem>
+                    <SelectItem value="Staff & Refreshment">Staff &amp; Refreshment</SelectItem>
+                    <SelectItem value="Software & Tools">Software &amp; Tools</SelectItem>
+                    <SelectItem value="Miscellaneous">Miscellaneous</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label>{isBn ? "ক্যাটাগরি" : "Category"}</Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Rent & Utilities">{isBn ? "ভাড়া ও ইউটিলিটি" : "Rent & Utilities"}</SelectItem>
-                      <SelectItem value="Marketing & Advertising">{isBn ? "বিপণন ও বিজ্ঞাপন" : "Marketing & Ads"}</SelectItem>
-                      <SelectItem value="Packaging & Supplies">{isBn ? "প্যাকেজিং ও সরবরাহ" : "Packaging & Supplies"}</SelectItem>
-                      <SelectItem value="Delivery & Courier Fees">{isBn ? "ডেলিভারি খরচ" : "Delivery Fees"}</SelectItem>
-                      <SelectItem value="Salaries & Wages">{isBn ? "বেতন ও মজুরি" : "Salaries & Wages"}</SelectItem>
-                      <SelectItem value="Other">{isBn ? "অন্যান্য" : "Other"}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1">
-                  <Label>{isBn ? "টাকার পরিমাণ (৳) *" : "Amount (৳) *"}</Label>
-                  <Input type="number" min="1" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label>{isBn ? "পেমেন্ট মাধ্যম" : "Payment Method"}</Label>
-                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="bkash">bKash</SelectItem>
-                      <SelectItem value="nagad">Nagad</SelectItem>
-                      <SelectItem value="card">Card</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1">
-                  <Label>{isBn ? "ভেন্ডর / প্রাপক" : "Vendor / Payee"}</Label>
-                  <Input value={vendor} onChange={(e) => setVendor(e.target.value)} placeholder="e.g. Building Landlord" />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <Label>{isBn ? "নোট" : "Notes"}</Label>
-                <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Cheque # 10492" />
+              <div className="space-y-1.5">
+                <Label>{isBn ? "টাকার পরিমাণ (BDT) *" : "Amount (BDT) *"}</Label>
+                <Input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="2500"
+                  required
+                />
               </div>
             </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>{isBn ? "বাতিল" : "Cancel"}</Button>
-              <Button type="submit" disabled={isCreating} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                {isCreating ? (isBn ? "সংরক্ষণ হচ্ছে..." : "Saving...") : isBn ? "ব্যয় সংরক্ষণ করুন" : "Save Expense"}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>{isBn ? "পেমেন্ট মাধ্যম" : "Payment Method"}</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash in Hand</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="mobile_banking">Mobile Banking (bKash/Nagad)</SelectItem>
+                    <SelectItem value="card">Company Card</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>{isBn ? "ভেন্ডর / প্রাপক" : "Vendor / Payee"}</Label>
+                <Input
+                  value={vendor}
+                  onChange={(e) => setVendor(e.target.value)}
+                  placeholder="e.g. Landlord, Paper Vendor"
+                />
+              </div>
+            </div>
+
+            {accounts.length > 0 && (
+              <div className="grid grid-cols-2 gap-3 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] text-zinc-500">Paid From Account</Label>
+                  <Select value={paidFromAccId} onValueChange={setPaidFromAccId}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Select asset" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {accounts.map((a) => (
+                        <SelectItem key={a._id} value={a._id}>
+                          {a.code} - {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] text-zinc-500">Expense Account</Label>
+                  <Select value={expenseAccId} onValueChange={setExpenseAccId}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Select ledger" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {accounts.map((a) => (
+                        <SelectItem key={a._id} value={a._id}>
+                          {a.code} - {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isCreating} className="bg-[#003399] hover:bg-[#002B80] text-white font-bold">
+                {isCreating ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+                <span>Record Expense</span>
               </Button>
             </DialogFooter>
           </form>

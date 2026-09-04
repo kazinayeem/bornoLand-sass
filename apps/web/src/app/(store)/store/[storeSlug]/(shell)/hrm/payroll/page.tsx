@@ -21,9 +21,16 @@ import {
   CreditCard,
   Building,
   ShieldAlert,
+  Loader2,
+  DollarSign,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { StorePageHeader } from "@/components/store-dashboard/store-page-header";
+import { StorePageCard } from "@/components/store-dashboard/store-page";
+import { MetricCard } from "@/components/ui/metric-card";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState, ErrorState } from "@/components/ui/empty-state";
 import { DocumentPreviewDialog } from "@/components/documents/document-preview-dialog";
 import { PayslipDocument } from "@/components/documents/templates/payslip-document";
 import type { PayslipData } from "@/components/documents/document-types";
@@ -35,6 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function PayrollPage() {
   const params = useParams();
@@ -53,7 +61,7 @@ export default function PayrollPage() {
 
   const hasAccess = useHasPermission("hrm:payroll:manage");
 
-  const { data: payrollData, isLoading, refetch } = useGetPayrollsQuery(
+  const { data: payrollData, isLoading, refetch, isError } = useGetPayrollsQuery(
     { storeId, month: Number(month), year: Number(year) },
     { skip: !storeId }
   );
@@ -64,6 +72,7 @@ export default function PayrollPage() {
 
   const payrolls = payrollData?.data?.payrolls ?? [];
   const totalNet = payrollData?.data?.summary?.totalNetDisbursement ?? 0;
+  const paidCount = payrolls.filter((p) => p.status === "paid").length;
 
   const handleGenerate = async () => {
     try {
@@ -107,8 +116,8 @@ export default function PayrollPage() {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <ShieldAlert className="h-10 w-10 text-rose-500" />
-        <h2 className="mt-4 text-lg font-semibold">{isBn ? "অনুমতি নেই" : "Access Denied"}</h2>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h2 className="mt-4 text-lg font-bold">{isBn ? "অনুমতি নেই" : "Access Denied"}</h2>
+        <p className="text-xs text-zinc-500 mt-1">
           {isBn ? "পে-রোল ও বেতন পরিচালনা করার অনুমতি আপনার নেই।" : "You do not have permission to manage payroll."}
         </p>
       </div>
@@ -117,258 +126,240 @@ export default function PayrollPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-white flex items-center gap-2.5">
-            <Wallet className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
-            <span>{isBn ? "বেতন ও পে-রোল ইঞ্জিন (Payroll & Payslips)" : "Auditable Payroll & Payslips"}</span>
-          </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-            {isBn
-              ? "হাজিরা, ওভারটাইম এবং কর্তন হিসেব করে স্বয়ংক্রিয়ভাবে মাসিক বেতন ও পে-স্লিপ প্রস্তুত করুন।"
-              : "Automate monthly net salary computations with attendance adjustments, overtime pay, tax, and printable payslips."}
-          </p>
-        </div>
+      <StorePageHeader
+        title="Auditable Payroll & Payslips (HRM)"
+        description="Automate monthly net salary computations with attendance adjustments, overtime pay, deductions, tax, and printable payslips."
+        breadcrumbs={[
+          { label: "Dashboard", href: store ? `/store/${store.slug}/dashboard` : "#" },
+          { label: "HRM" },
+          { label: "Payroll" },
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            <Select value={month} onValueChange={setMonth}>
+              <SelectTrigger className="w-32 h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <SelectItem key={i + 1} value={String(i + 1)}>
+                    {new Date(2025, i).toLocaleString("default", { month: "long" })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        <div className="flex items-center gap-2">
-          <Select value={month} onValueChange={setMonth}>
-            <SelectTrigger className="w-32 h-9 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: 12 }, (_, i) => (
-                <SelectItem key={i + 1} value={String(i + 1)}>
-                  {new Date(2025, i).toLocaleString("default", { month: "long" })}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={year} onValueChange={setYear}>
+              <SelectTrigger className="w-24 h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {["2024", "2025", "2026", "2027"].map((y) => (
+                  <SelectItem key={y} value={y}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={year} onValueChange={setYear}>
-            <SelectTrigger className="w-24 h-9 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {["2024", "2025", "2026", "2027"].map((y) => (
-                <SelectItem key={y} value={y}>{y}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Button
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              size="sm"
+              className="gap-1.5 bg-[#003399] hover:bg-[#002B80] text-white text-xs font-bold shadow-2xs cursor-pointer"
+            >
+              <Calculator className="h-4 w-4" />
+              <span>{isGenerating ? "Calculating..." : "Generate Payroll"}</span>
+            </Button>
+          </div>
+        }
+      />
 
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
-          >
-            <Calculator className="h-4 w-4" />
-            <span>{isGenerating ? (isBn ? "হিসাব হচ্ছে..." : "Calculating...") : (isBn ? "পে-রোল তৈরি করুন" : "Generate Payroll")}</span>
+      {/* ── KPI Cards ─────────────────────────────────────────── */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <MetricCard
+          title="Total Net Disbursement"
+          value={`৳${totalNet.toLocaleString()}`}
+          subtitle="Payable for selected period"
+          icon={Wallet}
+          iconClassName="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"
+        />
+
+        <MetricCard
+          title="Processed Employees"
+          value={payrolls.length}
+          subtitle="Staff payroll records"
+          icon={FileText}
+          iconClassName="text-blue-600 bg-blue-50 dark:bg-blue-950/30"
+        />
+
+        <MetricCard
+          title="Disbursement Status"
+          value={`${paidCount} / ${payrolls.length} Paid`}
+          subtitle={payrolls.length > 0 && paidCount === payrolls.length ? "All disbursements clear" : "Pending disbursements"}
+          icon={CheckCircle2}
+          iconClassName="text-purple-600 bg-purple-50 dark:bg-purple-950/30"
+        />
+      </div>
+
+      {/* ── Payroll List Table ────────────────────────────────── */}
+      <StorePageCard>
+        <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
+          <h3 className="text-base font-bold text-zinc-950 dark:text-white flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-[#003399] dark:text-[#FFDA1A]" />
+            <span>Payroll Sheet — {new Date(Number(year), Number(month) - 1).toLocaleString("default", { month: "long" })} {year}</span>
+          </h3>
+
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5 text-xs font-semibold cursor-pointer">
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span>Refresh</span>
           </Button>
         </div>
-      </div>
 
-      {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
-              <span>{isBn ? "মোট প্রদেয় বেতন" : "Total Net Disbursement"}</span>
-              <Wallet className="h-4 w-4 text-emerald-500" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-              ৳{totalNet.toLocaleString()}
+        <div className="mt-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-[#003399]" />
             </div>
-            <p className="text-xs text-zinc-500 mt-1">
-              {isBn ? "নির্বাচিত মাসের সর্বমোট প্রদেয় অর্থ" : "Total net salary payable for selected month"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
-              <span>{isBn ? "কর্মীর সংখ্যা" : "Processed Employees"}</span>
-              <FileText className="h-4 w-4 text-indigo-500" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-white">
-              {payrolls.length}
-            </div>
-            <p className="text-xs text-zinc-500 mt-1">
-              {isBn ? "পে-রোল স্লিপ তৈরি হয়েছে" : "Generated payslips"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
-              <span>{isBn ? "পরিশোধ স্ট্যাটাস" : "Payment Status"}</span>
-              <CreditCard className="h-4 w-4 text-blue-500" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-white">
-              {payrolls.filter((p) => p.status === "paid").length} / {payrolls.length}
-            </div>
-            <p className="text-xs text-zinc-500 mt-1">
-              {isBn ? "জন কর্মীর বেতন পরিশোধ সম্পন্ন" : "employees paid so far"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Payroll Table */}
-      <Card className="border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-xs uppercase text-zinc-500 font-semibold border-b border-zinc-200/80 dark:border-zinc-800">
-                <tr>
-                  <th className="px-4 py-3">{isBn ? "স্লিপ নম্বর" : "Payslip #"}</th>
-                  <th className="px-4 py-3">{isBn ? "কর্মী" : "Employee"}</th>
-                  <th className="px-4 py-3 text-right">{isBn ? "মূল বেতন" : "Basic"}</th>
-                  <th className="px-4 py-3 text-right">{isBn ? "ভাতা" : "Allowances"}</th>
-                  <th className="px-4 py-3 text-right">{isBn ? "ওভারটাইম" : "Overtime"}</th>
-                  <th className="px-4 py-3 text-right">{isBn ? "কর্তন" : "Deductions"}</th>
-                  <th className="px-4 py-3 text-right">{isBn ? "নিট বেতন" : "Net Salary"}</th>
-                  <th className="px-4 py-3">{isBn ? "স্ট্যাটাস" : "Status"}</th>
-                  <th className="px-4 py-3 text-right">{isBn ? "অ্যাকশন" : "Action"}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-800">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={9} className="py-8 text-center text-zinc-400">
-                      {isBn ? "লোড হচ্ছে..." : "Loading payrolls..."}
-                    </td>
+          ) : isError ? (
+            <ErrorState
+              title="Unable to load payroll"
+              message="Check your connection"
+              onRetry={refetch}
+            />
+          ) : payrolls.length === 0 ? (
+            <EmptyState
+              icon={Wallet}
+              title="No payroll generated for this period"
+              description="Click 'Generate Payroll' above to calculate wages based on basic pay and attendance."
+              action={
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  size="sm"
+                  className="bg-[#003399] text-white hover:bg-[#002B80] text-xs font-bold cursor-pointer"
+                >
+                  <Calculator className="h-3.5 w-3.5 mr-1" />
+                  Generate Payroll
+                </Button>
+              }
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                    <th className="py-3 px-4">Employee</th>
+                    <th className="py-3 px-4 text-right">Gross</th>
+                    <th className="py-3 px-4 text-right">Deductions</th>
+                    <th className="py-3 px-4 text-right">Overtime</th>
+                    <th className="py-3 px-4 text-right">Net Payable</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
-                ) : payrolls.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="py-12 text-center text-zinc-400">
-                      <Wallet className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
-                      <p className="text-sm">{isBn ? "এই মাসের জন্য পে-রোল তৈরি করা হয়নি" : "No payroll generated for this month"}</p>
-                      <Button onClick={handleGenerate} size="sm" className="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white">
-                        {isBn ? "এখনই পে-রোল তৈরি করুন" : "Generate Payroll Now"}
-                      </Button>
-                    </td>
-                  </tr>
-                ) : (
-                  payrolls.map((p) => (
-                    <tr key={p._id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30">
-                      <td className="px-4 py-3 font-mono text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                        {p.payslipNumber}
+                </thead>
+                <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-800">
+                  {payrolls.map((pay) => (
+                    <tr
+                      key={pay._id}
+                      className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors"
+                    >
+                      <td className="py-3 px-4">
+                        <p className="font-bold text-zinc-900 dark:text-zinc-100">
+                          {pay.employeeId?.firstName} {pay.employeeId?.lastName}
+                        </p>
+                        <p className="text-[11px] text-zinc-400 font-mono">
+                          {pay.employeeId?.employeeCode || "EMP"}
+                        </p>
                       </td>
-                      <td className="px-4 py-3 font-medium text-zinc-900 dark:text-white">
-                        <div>{p.employeeId?.firstName} {p.employeeId?.lastName}</div>
-                        <div className="text-[11px] text-zinc-400 font-mono">{p.employeeId?.employeeCode}</div>
+                      <td className="py-3 px-4 text-right font-mono text-zinc-700 dark:text-zinc-300">
+                        ৳{pay.grossSalary?.toLocaleString()}
                       </td>
-                      <td className="px-4 py-3 text-right text-xs text-zinc-600 dark:text-zinc-400">
-                        ৳{p.basicSalary?.toLocaleString()}
+                      <td className="py-3 px-4 text-right font-mono text-rose-600 dark:text-rose-400">
+                        -৳{pay.totalDeductions?.toLocaleString()}
                       </td>
-                      <td className="px-4 py-3 text-right text-xs text-zinc-600 dark:text-zinc-400">
-                        ৳{(p.houseRent + p.medical + p.conveyance + p.otherAllowances)?.toLocaleString()}
+                      <td className="py-3 px-4 text-right font-mono text-emerald-600 dark:text-emerald-400">
+                        +৳{pay.overtimePay?.toLocaleString()}
                       </td>
-                      <td className="px-4 py-3 text-right text-xs font-medium text-indigo-600">
-                        +{p.overtimePay > 0 ? `৳${p.overtimePay.toLocaleString()}` : "৳0"}
+                      <td className="py-3 px-4 text-right font-mono font-bold text-zinc-950 dark:text-white">
+                        ৳{pay.netSalary?.toLocaleString()}
                       </td>
-                      <td className="px-4 py-3 text-right text-xs font-medium text-rose-600">
-                        -{p.totalDeductions > 0 ? `৳${p.totalDeductions.toLocaleString()}` : "৳0"}
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-zinc-900 dark:text-white">
-                        ৳{p.netSalary?.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium capitalize ${
-                            p.status === "paid"
-                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400"
-                              : p.status === "approved"
-                              ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400"
-                              : "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400"
-                          }`}
+                      <td className="py-3 px-4 text-center">
+                        <Badge
+                          variant={
+                            pay.status === "paid"
+                              ? "success"
+                              : pay.status === "approved"
+                              ? "primary"
+                              : "warning"
+                          }
                         >
-                          {p.status}
-                        </span>
+                          {pay.status}
+                        </Badge>
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setSelectedPayslip(p)}
-                            className="h-7 text-xs px-2"
-                          >
-                            <FileText className="h-3.5 w-3.5 text-indigo-600 mr-1" />
-                            <span>{isBn ? "স্লিপ" : "Payslip"}</span>
-                          </Button>
-
-                          {p.status === "generated" && (
+                          {pay.status === "draft" && (
                             <Button
-                              size="sm"
                               variant="outline"
-                              onClick={() => handleApprove(p._id)}
+                              size="sm"
+                              onClick={() => handleApprove(pay._id)}
                               disabled={isApproving}
-                              className="h-7 text-xs text-blue-600 border-blue-200 hover:bg-blue-50 px-2"
+                              className="h-7 text-xs font-semibold cursor-pointer"
                             >
-                              <span>{isBn ? "অনুমোদন" : "Approve"}</span>
+                              Approve
                             </Button>
                           )}
-
-                          {p.status === "approved" && (
+                          {pay.status === "approved" && (
                             <Button
                               size="sm"
-                              onClick={() => handlePay(p._id)}
+                              onClick={() => handlePay(pay._id)}
                               disabled={isPaying}
-                              className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-2.5"
+                              className="h-7 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
                             >
-                              <span>{isBn ? "পরিশোধ" : "Pay"}</span>
+                              Mark Paid
                             </Button>
                           )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedPayslip(pay)}
+                            className="h-7 text-xs gap-1 text-zinc-600 hover:text-[#003399] dark:text-zinc-300 dark:hover:text-[#FFDA1A] cursor-pointer"
+                          >
+                            <Printer className="h-3.5 w-3.5" />
+                            <span>Payslip</span>
+                          </Button>
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </StorePageCard>
 
-      {/* Unified Master Payslip Document Preview & Print Modal */}
-      {selectedPayslip && (
+      {/* ── Payslip Document Preview Dialog ───────────────────── */}
+      {selectedPayslip && store && (
         <DocumentPreviewDialog
-          open={!!selectedPayslip}
+          open={Boolean(selectedPayslip)}
           onClose={() => setSelectedPayslip(null)}
-          title={`${isBn ? "বেতন পে-স্লিপ" : "Salary Payslip"} #${selectedPayslip.payslipNumber}`}
-          filename={`BornoLand-Payslip-${selectedPayslip.payslipNumber}.pdf`}
+          title={`Payslip - ${selectedPayslip.employeeId?.firstName} ${selectedPayslip.employeeId?.lastName}`}
           defaultPageSize="a4-portrait"
         >
-          <PayslipDocument
-            store={{
-              name: store?.name || "BornoLand Store",
-              shortName: store?.shortName,
-              logoUrl: store?.logoUrl,
-              brandColor: store?.brandColor,
-              address: (store as any)?.address,
-              phone: (store as any)?.phone,
-              email: (store as any)?.email,
-            }}
-            payslip={{
-              payslipNumber: selectedPayslip.payslipNumber,
-              period: `${new Date(selectedPayslip.year, selectedPayslip.month - 1).toLocaleString("default", { month: "long" })} ${selectedPayslip.year}`,
-              paymentDate: selectedPayslip.paymentDate,
-              status: selectedPayslip.status,
-              paymentMethod: selectedPayslip.paymentMethod,
+          {(() => {
+            const payslipData: PayslipData = {
+              payslipNumber: `PAY-${selectedPayslip._id.slice(-6).toUpperCase()}`,
+              period: `${new Date(Number(year), Number(month) - 1).toLocaleString("default", { month: "long" })} ${year}`,
+              paymentDate: selectedPayslip.paidAt || new Date().toISOString(),
+              status: (selectedPayslip.status === "paid" || selectedPayslip.status === "approved" ? selectedPayslip.status : "pending") as "paid" | "approved" | "pending",
+              paymentMethod: selectedPayslip.paymentMethod || "bank_transfer",
               employee: {
-                code: selectedPayslip.employeeId?.employeeCode || "EMP-001",
-                name: `${selectedPayslip.employeeId?.firstName || ""} ${selectedPayslip.employeeId?.lastName || ""}`.trim() || "Employee",
+                code: selectedPayslip.employeeId?.employeeCode || "EMP",
+                name: `${selectedPayslip.employeeId?.firstName || ""} ${selectedPayslip.employeeId?.lastName || ""}`.trim(),
                 designation: selectedPayslip.employeeId?.designationId?.title || "Staff",
                 department: selectedPayslip.employeeId?.departmentId?.name || "General",
-                bankAccount: selectedPayslip.employeeId?.bankAccount?.accountNumber,
+                joiningDate: selectedPayslip.employeeId?.joiningDate || selectedPayslip.employeeId?.createdAt || "",
+                bankAccount: selectedPayslip.employeeId?.bankInfo?.accountNumber,
                 phone: selectedPayslip.employeeId?.phone,
               },
               earnings: {
@@ -379,20 +370,22 @@ export default function PayrollPage() {
                 overtimeHours: selectedPayslip.overtimeHours || 0,
                 overtimePay: selectedPayslip.overtimePay || 0,
                 otherAllowances: selectedPayslip.otherAllowances || 0,
-                bonus: selectedPayslip.bonus || 0,
               },
               deductions: {
-                taxDeduction: selectedPayslip.taxDeduction || 0,
-                providentFundDeduction: selectedPayslip.providentFundDeduction || 0,
-                unpaidLeaveDeduction: selectedPayslip.unpaidLeaveDeduction || 0,
+                taxDeduction: selectedPayslip.totalDeductions || 0,
               },
               grossSalary: selectedPayslip.grossSalary || 0,
               totalDeductions: selectedPayslip.totalDeductions || 0,
               netSalary: selectedPayslip.netSalary || 0,
-              notes: selectedPayslip.notes,
-            }}
-            isBn={isBn}
-          />
+            };
+
+            return (
+              <PayslipDocument
+                payslip={payslipData}
+                store={store}
+              />
+            );
+          })()}
         </DocumentPreviewDialog>
       )}
     </div>

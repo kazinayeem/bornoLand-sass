@@ -246,14 +246,14 @@ export default function AttendancePage() {
                         </div>
                       </td>
                       <td className="py-3 px-4 font-mono font-medium text-zinc-700 dark:text-zinc-300">
-                        {rec.checkInTime ? new Date(rec.checkInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
+                        {rec.checkIn ? new Date(rec.checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
                       </td>
                       <td className="py-3 px-4 font-mono font-medium text-zinc-700 dark:text-zinc-300">
-                        {rec.checkOutTime ? new Date(rec.checkOutTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
+                        {rec.checkOut ? new Date(rec.checkOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
                       </td>
                       <td className="py-3 px-4">
                         <span className="font-semibold text-zinc-900 dark:text-zinc-100 font-mono">
-                          {rec.workingHours ? `${rec.workingHours.toFixed(1)} hrs` : "In Progress"}
+                          {rec.workedMinutes ? `${(rec.workedMinutes / 60).toFixed(1)} hrs` : "In Progress"}
                         </span>
                       </td>
                       <td className="py-3 px-4">
@@ -279,7 +279,7 @@ export default function AttendancePage() {
                         </Badge>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        {!rec.checkOutTime && (
+                        {!rec.checkOut && (
                           <Button
                             variant="outline"
                             size="sm"

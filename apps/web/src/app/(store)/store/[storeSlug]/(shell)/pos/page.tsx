@@ -296,47 +296,45 @@ export default function PosTerminalPage() {
       {selectedReceiptOrder && store && (
         <DocumentPreviewDialog
           open={Boolean(selectedReceiptOrder)}
-          onOpenChange={(open) => !open && setSelectedReceiptOrder(null)}
-          title={`Receipt #${selectedReceiptOrder.orderNumber}`}
-          initialPageFormat="pos_80mm"
-          availablePageFormats={["pos_80mm", "pos_58mm", "a4"]}
-          renderDocument={({ pageFormat }) => {
-            const receiptData: PosReceiptData = {
-              orderNumber: selectedReceiptOrder.orderNumber,
-              createdAt: selectedReceiptOrder.createdAt,
-              customerName: selectedReceiptOrder.customerName,
-              customerPhone: selectedReceiptOrder.customerPhone,
-              cashierName: "Cashier Station",
-              registerName: "Main Counter POS",
-              items: selectedReceiptOrder.items.map((i) => ({
-                name: i.name,
-                variantTitle: i.variantTitle,
-                sku: i.sku,
-                quantity: i.quantity,
-                unitPrice: i.unitPrice,
-                totalPrice: i.totalPrice,
-              })),
-              subtotal: selectedReceiptOrder.subtotal,
-              discount: selectedReceiptOrder.discount,
-              deliveryCharge: selectedReceiptOrder.deliveryCharge,
-              total: selectedReceiptOrder.total,
-              paidAmount: selectedReceiptOrder.paidAmount,
-              changeAmount: selectedReceiptOrder.changeAmount,
-              paymentMethod: selectedReceiptOrder.paymentMethod,
-              paymentStatus: selectedReceiptOrder.paymentStatus,
-              status: selectedReceiptOrder.status,
-              notes: selectedReceiptOrder.notes,
-            };
-
-            return (
-              <PosReceiptDocument
-                data={receiptData}
-                store={store}
-                pageFormat={pageFormat}
-              />
-            );
-          }}
-        />
+          onClose={() => setSelectedReceiptOrder(null)}
+          title={`Receipt #${(selectedReceiptOrder as any).orderNumber || ""}`}
+          defaultPageSize="thermal-80"
+        >
+          <PosReceiptDocument
+            store={{
+              name: store.name || "Store",
+              address: typeof (store as any)?.address === "string" ? (store as any).address : (store as any)?.address?.street || "",
+              phone: (store as any)?.contactPhone || (store as any)?.phone || "",
+              email: (store as any)?.contactEmail || (store as any)?.email || "",
+              logoUrl: (store as any)?.logo,
+            }}
+            receipt={{
+              receiptNumber: `REC-${(selectedReceiptOrder as any).orderNumber || String((selectedReceiptOrder as any)._id || "").slice(-6)}`,
+              orderNumber: (selectedReceiptOrder as any).orderNumber || "",
+              dateTime: (selectedReceiptOrder as any).createdAt ? new Date((selectedReceiptOrder as any).createdAt) : new Date(),
+              customer: {
+                name: (selectedReceiptOrder as any).customerName || (selectedReceiptOrder as any).customerId?.name || "Walk-in Customer",
+                phone: (selectedReceiptOrder as any).customerPhone || (selectedReceiptOrder as any).customerId?.phone || "",
+              },
+              items: Array.isArray((selectedReceiptOrder as any).items)
+                ? (selectedReceiptOrder as any).items.map((it: any) => ({
+                    title: it.name || it.title || "Item",
+                    quantity: Number(it.quantity) || 1,
+                    unitPrice: Number(it.price ?? it.unitPrice ?? 0),
+                    discount: Number(it.discount ?? 0),
+                    total: Number(it.total ?? ((it.price ?? 0) * (it.quantity ?? 1))),
+                  }))
+                : [],
+              subtotal: Number((selectedReceiptOrder as any).subtotal || (selectedReceiptOrder as any).totalAmount || 0),
+              discount: Number((selectedReceiptOrder as any).discount || 0),
+              tax: Number((selectedReceiptOrder as any).tax || 0),
+              grandTotal: Number((selectedReceiptOrder as any).total || (selectedReceiptOrder as any).totalAmount || 0),
+              tenderedAmount: Number((selectedReceiptOrder as any).paidAmount || (selectedReceiptOrder as any).total || 0),
+              changeAmount: Number((selectedReceiptOrder as any).changeAmount || 0),
+              paymentMethod: String((selectedReceiptOrder as any).paymentMethod || "cash").toUpperCase(),
+            }}
+          />
+        </DocumentPreviewDialog>
       )}
     </div>
   );

@@ -4,7 +4,16 @@ import { Component, type ReactNode } from "react";
 import Link from "next/link";
 
 type Props = { children: ReactNode; storeSlug?: string };
-type State = { error: Error | null };
+type State = {
+  error: Error | null;
+  errorInfo?: {
+    message: string;
+    stack?: string;
+    componentStack: string;
+    storeSlug: string;
+    timestamp: string;
+  };
+};
 
 /**
  * Builder-level error boundary.
@@ -29,6 +38,17 @@ export class BuilderErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: { componentStack: string }) {
     // Always print the full error in dev and prod so it's traceable.
     console.error("[Builder] Uncaught exception:", error, info.componentStack);
+
+    // Store detailed error info for the UI (accessible in prod too).
+    this.setState({
+      errorInfo: {
+        message: error.message,
+        stack: error.stack,
+        componentStack: info.componentStack,
+        storeSlug: this.props.storeSlug ?? "unknown",
+        timestamp: new Date().toISOString(),
+      },
+    });
   }
 
   override render() {
@@ -47,15 +67,17 @@ export class BuilderErrorBoundary extends Component<Props, State> {
               a temporary glitch — refreshing the page fixes it in most cases.
             </p>
 
-            {process.env.NODE_ENV === "development" && this.state.error && (
-              <details className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-left">
+            {this.state.errorInfo && (
+              <details className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-left" open>
                 <summary className="cursor-pointer text-[11px] font-medium text-red-700">
-                  Error details (dev only)
+                  Error details
                 </summary>
                 <pre className="mt-2 overflow-auto text-[10px] text-red-600 whitespace-pre-wrap">
-                  {this.state.error.message}
-                  {"\n"}
-                  {this.state.error.stack}
+                  {`Store: ${this.state.errorInfo.storeSlug}\n`}
+                  {`Time: ${this.state.errorInfo.timestamp}\n`}
+                  {`Error: ${this.state.errorInfo.message}\n\n`}
+                  {this.state.errorInfo.stack}
+                  {`\n\nComponent Stack:\n${this.state.errorInfo.componentStack}`}
                 </pre>
               </details>
             )}

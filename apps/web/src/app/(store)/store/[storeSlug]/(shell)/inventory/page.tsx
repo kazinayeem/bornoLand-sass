@@ -1,6 +1,7 @@
 "use client";
 
 import { StorePageCard, useStorePage } from "@/components/store-dashboard/store-page";
+import { StorePageHeader } from "@/components/store-dashboard/store-page-header";
 import { useStoreContext } from "@/providers/store-context";
 import { EcommerceModuleShell } from "@/components/ecommerce/module-shell";
 import { InventoryHub } from "@/components/workspace/inventory/inventory-hub";
@@ -22,20 +23,31 @@ export default function StoreInventoryPage() {
   const currentPlan = (storeContext.features as any)?.currentPlan?.name ?? accessData?.data?.currentPlan?.name;
 
   return (
-    <StorePageCard>
-      {isLoading || !storeId ? (
-        <TablePageSkeleton rows={6} cols={5} />
-      ) : (
-        <EcommerceModuleShell
-          title="Inventory"
-          description="Enterprise stock control — only modules in your plan are available."
-          feature={feature}
-          billingHref={billingHref}
-          currentPlan={currentPlan}
-        >
-          <InventoryHub storeId={storeId} features={features} />
-        </EcommerceModuleShell>
-      )}
-    </StorePageCard>
+    <div className="space-y-6">
+      <StorePageHeader
+        title="Inventory & Stock Control"
+        description="Multi-warehouse stock allocation, supplier purchase orders, FIFO batches, and automated reorder triggers."
+        breadcrumbs={[
+          { label: "Dashboard", href: store ? `/store/${store.slug}/dashboard` : "#" },
+          { label: "Inventory" },
+          { label: "Stock Control" },
+        ]}
+      />
+      <StorePageCard>
+        {isLoading || !storeId ? (
+          <TablePageSkeleton rows={6} cols={5} />
+        ) : (
+          <EcommerceModuleShell
+            title="Inventory Hub"
+            description="Enterprise stock control — features unlocked according to your subscription tier."
+            feature={feature}
+            billingHref={billingHref}
+            currentPlan={currentPlan}
+          >
+            <InventoryHub storeId={storeId} features={features} />
+          </EcommerceModuleShell>
+        )}
+      </StorePageCard>
+    </div>
   );
 }

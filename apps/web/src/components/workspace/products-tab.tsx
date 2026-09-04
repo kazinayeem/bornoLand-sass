@@ -1037,38 +1037,31 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
       ) : (
         <DataTable
           data={products}
-          columns={columns}
-          keyField="_id"
-          searchable={false}
-          selectable
-          bulkActions={bulkActions}
+          columns={columns as any}
+          keyExtractor={(p) => p._id}
+          bulkActions={bulkActions as any}
           sort={sortKey && order ? { key: sortKey, order: order as "asc" | "desc" } : undefined}
           onSort={handleSort}
-          pagination={
-            totalPages > 1
-              ? {
-                  page,
-                  pageSize,
-                  total,
-                  onPageChange: (p) => setPage(p),
-                  onPageSizeChange: (s) => setPageSize(s),
-                }
-              : undefined
-          }
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          totalPages={totalPages}
+          onPageChange={(p: number) => setPage(p)}
+          onPageSizeChange={(s: number) => setPageSize(s)}
         />
       )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmDialog
         open={Boolean(deleteTarget)}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onClose={() => setDeleteTarget(null)}
         title={isBn ? "পণ্য মুছে ফেলবেন?" : "Delete Product?"}
-        description={
+        message={
           isBn
             ? `আপনি কি নিশ্চিত যে "${deleteTarget?.name}" মুছে ফেলতে চান? এই কাজটি ফিরিয়ে নেওয়া যাবে না।`
             : `Are you sure you want to permanently delete "${deleteTarget?.name}"? This action cannot be undone.`
         }
-        confirmText={isBn ? "মুছে ফেলুন" : "Delete Product"}
+        confirmLabel={isBn ? "মুছে ফেলুন" : "Delete Product"}
         variant="danger"
         onConfirm={handleDelete}
       />

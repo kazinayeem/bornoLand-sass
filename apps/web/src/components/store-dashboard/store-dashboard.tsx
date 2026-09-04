@@ -172,17 +172,38 @@ function PlanCard({
   bandwidth: string;
   billingHref: string;
   delay: number;
-  labels: { title: string; currentPlan: string; planDetails: string; featuresIncluded: string; storageLimit: string; bandwidth: string; manageBilling: string; upgradePlan: string };
+  labels?: Partial<{
+    title: string;
+    currentPlan: string;
+    planDetails: string;
+    featuresIncluded: string;
+    storageLimit: string;
+    bandwidth: string;
+    manageBilling: string;
+    upgradePlan: string;
+    [key: string]: any;
+  }>;
 }) {
+  const lbl = {
+    title: labels?.title || "Plan & Subscription",
+    currentPlan: labels?.currentPlan || "Current tier",
+    planDetails: labels?.planDetails || "Plan Details",
+    featuresIncluded: labels?.featuresIncluded || "Features Included",
+    storageLimit: labels?.storageLimit || "Storage Limit",
+    bandwidth: labels?.bandwidth || "Bandwidth",
+    manageBilling: labels?.manageBilling || "Manage Billing",
+    upgradePlan: labels?.upgradePlan || "Upgrade Plan",
+  };
+
   return (
     <DashboardCard delay={delay}>
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100">{labels.title}</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100">{lbl.title}</h3>
         <Link
           href={billingHref}
           className="inline-flex items-center gap-1 text-xs font-bold text-[#003399] dark:text-[#FFDA1A] hover:underline"
         >
-          {labels.manageBilling}
+          {lbl.manageBilling}
           <ArrowUpRight className="h-3 w-3" />
         </Link>
       </div>
@@ -193,17 +214,17 @@ function PlanCard({
         </div>
         <div>
           <span className="text-lg font-bold text-zinc-950 dark:text-zinc-50">{planName}</span>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">{labels.currentPlan}</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">{lbl.currentPlan}</p>
         </div>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
         <div className="rounded-lg bg-zinc-50 p-2.5 dark:bg-zinc-800/60">
-          <span className="text-zinc-500">{labels.storageLimit}</span>
+          <span className="text-zinc-500">{lbl.storageLimit}</span>
           <p className="font-bold text-zinc-900 dark:text-zinc-100">{storage}</p>
         </div>
         <div className="rounded-lg bg-zinc-50 p-2.5 dark:bg-zinc-800/60">
-          <span className="text-zinc-500">{labels.bandwidth}</span>
+          <span className="text-zinc-500">{lbl.bandwidth}</span>
           <p className="font-bold text-zinc-900 dark:text-zinc-100">{bandwidth}</p>
         </div>
       </div>
@@ -214,7 +235,7 @@ function PlanCard({
           className="btn-press flex w-full items-center justify-center gap-2 rounded-lg bg-[#003399] py-2 text-xs font-bold text-white shadow-2xs hover:bg-[#002B80] transition-colors"
         >
           <Zap className="h-3.5 w-3.5" />
-          {labels.upgradePlan}
+          {lbl.upgradePlan}
         </Link>
       </div>
     </DashboardCard>
@@ -274,8 +295,8 @@ function DashboardRecentOrdersSection({
 }) {
   const { data, isLoading, isError, refetch } = useGetStoreOrdersQuery({
     storeId,
-    page: 1,
-    limit: 5,
+    page: "1",
+    limit: "5",
   });
 
   const orders = data?.data?.orders ?? [];
@@ -388,8 +409,8 @@ function DashboardLowStockSection({
     storeId,
     page: 1,
     limit: 5,
-    sort: "stock",
-    order: "asc",
+    sortBy: "stock",
+    sortOrder: "asc",
   });
 
   const products = data?.data?.products ?? [];
@@ -598,7 +619,7 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Revenue (BDT)"
-          value={formatBDT(store.totalSales ?? 0, isBn)}
+          value={formatBDT((store as any).totalSales ?? 0, isBn)}
           subtitle="All recorded sales"
           change={{ value: "+18.4%", trend: "up", label: "vs last mo" }}
           icon={DollarSign}
@@ -625,7 +646,7 @@ export function StoreDashboard({ store, storeId }: { store: Store; storeId: stri
 
         <MetricCard
           title="Customer Reach"
-          value={store.customerCount ?? Math.max(1, Math.round((store.orderCount ?? 0) * 0.8))}
+          value={(store as any).customerCount ?? Math.max(1, Math.round((store.orderCount ?? 0) * 0.8))}
           subtitle="Unique buyers"
           change={{ value: "+8.1%", trend: "up" }}
           icon={Users}

@@ -757,20 +757,14 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
           ) : (
             <DataTable
               data={orders}
-              columns={columns}
-              keyField="_id"
-              searchable={false}
-              pagination={
-                totalPages > 1
-                  ? {
-                      page,
-                      pageSize,
-                      total,
-                      onPageChange: (p) => setPage(p),
-                      onPageSizeChange: (s) => setPageSize(s),
-                    }
-                  : undefined
-              }
+              columns={columns as any}
+              keyExtractor={(o) => o._id}
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={(p: number) => setPage(p)}
+              onPageSizeChange={(s: number) => setPageSize(s)}
             />
           )}
         </div>
@@ -780,7 +774,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
       {selectedOrder && (
         <Modal
           open={Boolean(selectedOrder)}
-          onOpenChange={(open) => !open && setSelectedOrder(null)}
+          onClose={() => setSelectedOrder(null)}
           title={`Order #${selectedOrder.orderNumber}`}
           className="max-w-2xl"
         >
@@ -817,7 +811,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => downloadStoreOrderInvoice(storeId, selectedOrder._id)}
+                  onClick={() => downloadStoreOrderInvoice(storeId, selectedOrder._id, selectedOrder.orderNumber)}
                   className="h-8 gap-1 text-xs cursor-pointer"
                 >
                   <Download className="h-3.5 w-3.5" />
@@ -932,9 +926,9 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
       {posOpen && (
         <PosOrderModal
           open={posOpen}
-          onOpenChange={setPosOpen}
+          onClose={() => setPosOpen(false)}
           storeId={storeId}
-          onOrderCreated={() => {
+          onSuccess={() => {
             setPosOpen(false);
             refetch();
           }}
@@ -946,10 +940,10 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
         <Suspense fallback={null}>
           <CreateShipmentModal
             open={Boolean(shipmentOrder)}
-            onOpenChange={(open) => !open && setShipmentOrder(null)}
+            onClose={() => setShipmentOrder(null)}
             order={shipmentOrder}
             storeId={storeId}
-            onSuccess={() => {
+            onCreated={() => {
               setShipmentOrder(null);
               refetch();
             }}

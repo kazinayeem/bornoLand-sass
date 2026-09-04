@@ -5,8 +5,8 @@ import {
   resolveStoreKeyForRequest,
   stripPort,
   type HostResolutionConfig,
-} from "../host-resolution";
-import { resolveTenantFromHost } from "../tenant-resolution";
+} from "@/lib/host-resolution";
+import { resolveTenantFromHost } from "@/lib/tenant-resolution";
 
 describe("Production Root-Domain & Tenant Subdomain Host Resolution", () => {
   const prodConfig: HostResolutionConfig = {
@@ -131,5 +131,24 @@ describe("Production Root-Domain & Tenant Subdomain Host Resolution", () => {
     assert.equal(stripPort("bornosoft.site"), "bornosoft.site");
     assert.equal(stripPort("127.0.0.1:4000"), "127.0.0.1");
     assert.equal(stripPort("[::1]:3000"), "::1");
+  });
+
+  it("11. Platform route classification distinguishes platform vs tenant paths", () => {
+    const { isPlatformRoute } = require("../tenant-resolution");
+    assert.equal(isPlatformRoute("/workshops"), true);
+    assert.equal(isPlatformRoute("/workshops/anything"), true);
+    assert.equal(isPlatformRoute("/dashboard"), true);
+    assert.equal(isPlatformRoute("/dashboard/stores"), true);
+    assert.equal(isPlatformRoute("/login"), true);
+    assert.equal(isPlatformRoute("/pricing"), true);
+    assert.equal(isPlatformRoute("/features"), true);
+    assert.equal(isPlatformRoute("/api/stores"), true);
+    assert.equal(isPlatformRoute("/"), true);
+  });
+
+  it("12. Reserved subdomains include workshops and do not become store tenants", () => {
+    const workshops = classifyHost("workshops.bornosoft.site", prodConfig);
+    assert.equal(workshops.kind, "platform");
+    assert.equal(workshops.storeKey, null);
   });
 });

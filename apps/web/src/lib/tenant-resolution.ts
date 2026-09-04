@@ -31,6 +31,37 @@ export type TenantHostResolution = {
   isCustomDomain: boolean;
 };
 
+export const PLATFORM_ROUTES = new Set([
+  "/",
+  "/login",
+  "/register",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/unauthorized",
+  "/logout",
+  "/api",
+  "/dashboard",
+  "/workshops",
+  "/store",
+  "/admin",
+  "/pricing",
+  "/features",
+  "/solutions",
+  "/templates",
+  "/contact",
+  "/about",
+  "/terms",
+  "/privacy",
+  "/faq",
+]);
+
+export function isPlatformRoute(pathname: string): boolean {
+  if (!pathname || pathname === "/") return true;
+  const base = pathname.split("/")[1]?.toLowerCase() ?? "";
+  return PLATFORM_ROUTES.has(`/${base}`) || base.startsWith("_next") || base === "api" || base === "site";
+}
+
 export { getDefaultTenantSlug, isIpHostname, classifyHost, resolveStoreKeyForRequest };
 
 export function isPlatformHost(host: string): boolean {

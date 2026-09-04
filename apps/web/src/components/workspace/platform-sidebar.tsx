@@ -123,7 +123,10 @@ export function PlatformSidebar() {
   const user = useAppSelector((s) => s.user.profile);
   const [logout] = useLogoutMutation();
 
-  const isStoresSection = pathname.startsWith("/dashboard/stores");
+  const isStoresSection =
+    pathname.startsWith("/dashboard/stores") ||
+    pathname.startsWith("/workshops") ||
+    pathname === "/workshops";
   const isAnalyticsSection = pathname.startsWith("/dashboard/analytics");
 
   const closeMobile = () => dispatch(setMobileSidebarOpen(false));
@@ -140,7 +143,7 @@ export function PlatformSidebar() {
 
   const mainNav = [
     { href: "/dashboard", label: t.navigation.dashboard, icon: LayoutDashboard, exact: true },
-    { href: "/dashboard/stores", label: t.navigation.stores, icon: Store },
+    { href: "/workshops", label: t.navigation.stores, icon: Store },
     { href: "/dashboard/plans", label: "Plans & Features", icon: CreditCard },
     { href: "/dashboard/billing", label: t.navigation.billing, icon: CreditCard },
     { href: "/dashboard/team", label: t.navigation.team, icon: Users },
@@ -162,7 +165,7 @@ export function PlatformSidebar() {
   ];
 
   const storeNav = [
-    { href: "/dashboard/stores", label: t.navigation.allStores, icon: Store, exact: true },
+    { href: "/workshops", label: t.navigation.allStores, icon: Store, exact: true },
     { href: "/dashboard/stores/create", label: t.navigation.createStore, icon: Plus },
     { href: "/dashboard/stores/archived", label: t.navigation.archived, icon: Archive },
   ];

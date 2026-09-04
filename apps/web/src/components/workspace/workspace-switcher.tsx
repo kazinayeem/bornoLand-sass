@@ -127,7 +127,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
               <span>{t.navigation.createStore}</span>
             </Link>
             <Link
-              href="/dashboard/stores"
+              href="/workshops"
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors"
             >

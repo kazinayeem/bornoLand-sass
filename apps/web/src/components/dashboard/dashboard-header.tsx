@@ -64,6 +64,7 @@ type SearchResult = {
 
 const workspaceRouteLabels: Record<string, { bn: string; en: string }> = {
   "/dashboard": { bn: "ড্যাশবোর্ড", en: "Dashboard" },
+  "/workshops": { bn: "মার্চেন্ট ওয়ার্কস্পেস", en: "Merchant Workspace" },
   "/dashboard/stores": { bn: "সব দোকান", en: "All Stores" },
   "/dashboard/create-store": { bn: "দোকান তৈরি করুন", en: "Create Store" },
   "/dashboard/stores/create": { bn: "দোকান তৈরি করুন", en: "Create Store" },
@@ -93,6 +94,7 @@ const workspaceRouteLabels: Record<string, { bn: string; en: string }> = {
 function titleCase(value: string, isBn: boolean) {
   const bnMap: Record<string, string> = {
     dashboard: "ড্যাশবোর্ড",
+    workshops: "ওয়ার্কস্পেস",
     stores: "দোকানসমূহ",
     create: "তৈরি করুন",
     billing: "বিলিং",

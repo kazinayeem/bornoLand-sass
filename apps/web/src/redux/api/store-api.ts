@@ -170,6 +170,13 @@ export type PlanFeatureToggles = {
   // ── CRM & Operations ──
   crm: boolean;
   operations: boolean;
+  // ── ERP Suite ──
+  erpCore: boolean;
+  erpFinance: boolean;
+  erpInventory: boolean;
+  erpProcurement: boolean;
+  erpManufacturing: boolean;
+  erpProjects: boolean;
 };
 
 export type PlanCourierAccess = {

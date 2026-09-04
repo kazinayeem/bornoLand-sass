@@ -46,6 +46,22 @@ const RESERVED_LABELS = new Set([
   "mobile",
   "status",
   "docs",
+  "workshops",
+  "workspace",
+  "dashboard",
+  "store",
+  "site",
+  "login",
+  "register",
+  "signup",
+  "pricing",
+  "features",
+  "solutions",
+  "contact",
+  "about",
+  "terms",
+  "privacy",
+  "faq",
 ]);
 
 export function stripPort(host: string): string {

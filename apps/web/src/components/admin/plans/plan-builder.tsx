@@ -136,13 +136,13 @@ const LIMIT_GROUPS: LimitGroup[] = [
 
 /* ── Implemented Feature Groups ───────────────────────────────────────────── */
 
-type FeatureGroup = {
+type PlanBuilderFeatureGroup = {
   key: string;
   label: string;
   toggles: Array<{ key: keyof PlanFeatureToggles; label: string; description?: string; alwaysEnabled?: boolean }>;
 };
 
-const FEATURE_GROUPS: FeatureGroup[] = [
+const FEATURE_GROUPS: PlanBuilderFeatureGroup[] = [
   {
     key: "sales_orders", label: "Sales & Order Management",
     toggles: [
@@ -277,10 +277,42 @@ type Props = {
   initialTab?: string;
 };
 
+type DynamicFeatureGroup = {
+  key: string;
+  label: string;
+  features: PlatformFeature[];
+};
+
 export function PlanBuilder({ plan, initialTab }: Props) {
   const router = useRouter();
   const [updatePlan, { isLoading: isSaving }] = useUpdatePlanMutation();
   const { data: planFeaturesData } = useGetPlanFeatureAssignmentsQuery(plan._id);
+  const { data: featuresData } = useGetAdminFeaturesQuery();
+  const { data: groupsData } = useGetAdminFeatureGroupsQuery();
+
+  const dynamicFeatureGroups = useMemo((): DynamicFeatureGroup[] => {
+    const features = (featuresData?.data?.features ?? []) as PlatformFeature[];
+    const groups = (groupsData?.data?.groups ?? []) as { key: string; name: string; sortOrder: number }[];
+    const groupMap = new Map(groups.map((g) => [g.key, { name: g.name, sortOrder: g.sortOrder }]));
+    const defaultGroup = { name: "General", sortOrder: 999 };
+
+    const featuresByGroup = new Map<string, PlatformFeature[]>();
+    for (const feature of features) {
+      const groupKey = feature.groupKey || feature.group || "general";
+      const list = featuresByGroup.get(groupKey) || [];
+      list.push(feature);
+      featuresByGroup.set(groupKey, list);
+    }
+
+    return Array.from(featuresByGroup.entries())
+      .map(([groupKey, groupFeatures]) => ({
+        key: groupKey,
+        label: groupMap.get(groupKey)?.name ?? defaultGroup.name,
+        features: groupFeatures.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+        sortOrder: groupMap.get(groupKey)?.sortOrder ?? defaultGroup.sortOrder,
+      }))
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }, [featuresData, groupsData]);
 
   const [activeTab, setActiveTab] = useState(initialTab || "general");
   const [name, setName] = useState(plan.name);
@@ -464,6 +496,13 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     // CRM & Operations
     crm: plan.featureToggles?.crm ?? false,
     operations: plan.featureToggles?.operations ?? false,
+    // ERP Suite
+    erpCore: plan.featureToggles?.erpCore ?? false,
+    erpFinance: plan.featureToggles?.erpFinance ?? false,
+    erpInventory: plan.featureToggles?.erpInventory ?? false,
+    erpProcurement: plan.featureToggles?.erpProcurement ?? false,
+    erpManufacturing: plan.featureToggles?.erpManufacturing ?? false,
+    erpProjects: plan.featureToggles?.erpProjects ?? false,
   }));
 
   const [courierAccess, setCourierAccess] = useState<PlanCourierAccess>(() => ({
@@ -722,35 +761,43 @@ export function PlanBuilder({ plan, initialTab }: Props) {
       {/* ────────────── FEATURES ────────────── */}
       {activeTab === "features" && (
         <div className="space-y-8">
-          {FEATURE_GROUPS.map((group) => (
+          {dynamicFeatureGroups.map((group) => (
             <div key={group.key}>
               <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-apple-ink-muted-48">{group.label}</h3>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {group.toggles.map((feat) => (
-                  <label
-                    key={feat.key}
-                    className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors hover:bg-apple-canvas-parchment ${
-                      toggles[feat.key] ? "border-blue-200 bg-blue-50/50" : "border-zinc-200"
-                    } ${feat.alwaysEnabled ? "opacity-75" : ""}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={toggles[feat.key]}
-                      onChange={(e) => updateToggle(feat.key, e.target.checked)}
-                      disabled={feat.alwaysEnabled}
-                      className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-apple-ink">{feat.label}</p>
-                      {feat.description && (
-                        <p className="mt-0.5 text-xs text-apple-ink-muted-48">{feat.description}</p>
-                      )}
-                      {feat.alwaysEnabled && (
-                        <p className="mt-0.5 text-[10px] font-medium text-blue-600">Always enabled</p>
-                      )}
-                    </div>
-                  </label>
-                ))}
+                {group.features.map((feature) => {
+                  const toggleKey = FEATURE_KEY_TO_TOGGLE[feature.key];
+                  const isEnabled = toggleKey ? toggles[toggleKey] : false;
+                  const isAlwaysEnabled = feature.defaultEnabled === true;
+                  return (
+                    <label
+                      key={feature.key}
+                      className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors hover:bg-apple-canvas-parchment ${
+                        isEnabled ? "border-blue-200 bg-blue-50/50" : "border-zinc-200"
+                      } ${isAlwaysEnabled ? "opacity-75" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isEnabled}
+                        onChange={toggleKey ? (e) => updateToggle(toggleKey, e.target.checked) : undefined}
+                        disabled={!toggleKey || isAlwaysEnabled}
+                        className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-apple-ink">{feature.name}</p>
+                        {feature.description && (
+                          <p className="mt-0.5 text-xs text-apple-ink-muted-48">{feature.description}</p>
+                        )}
+                        {isAlwaysEnabled && (
+                          <p className="mt-0.5 text-[10px] font-medium text-blue-600">Always enabled</p>
+                        )}
+                        {!toggleKey && (
+                          <p className="mt-0.5 text-[10px] font-medium text-amber-600">Not mapped to plan toggle</p>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           ))}

@@ -2,24 +2,12 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose/jwt/verify";
 import type { NextRequest } from "next/server";
 import { getApiUrl, getAppOrigin } from "@/lib/urls";
-import { resolveTenantFromHost } from "@/lib/tenant-resolution";
+import { resolveTenantFromHost, isPlatformRoute } from "@/lib/tenant-resolution";
 import { buildLoginUrl, isAuthenticationPath, validateInternalRedirect, validatePlatformRedirect } from "@/lib/auth-redirect";
 
 const PUBLIC_FILE = /\.(.*)$/;
 const authSecret = process.env.JWT_SECRET ?? "bornoland-dev-secret";
 const sessionCookieName = process.env.SESSION_COOKIE_NAME ?? "bornoland.session";
-
-const APP_ROUTES = new Set([
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/reset-password",
-  "/unauthorized",
-  "/api",
-  "/dashboard",
-  "/store",
-  "/admin",
-]);
 
 const secretBytes = new TextEncoder().encode(authSecret);
 
@@ -57,8 +45,7 @@ async function fetchStoreSlug(storeId: string, cookieHeader: string): Promise<st
 }
 
 function isAppRoute(pathname: string): boolean {
-  const base = pathname.split("/")[1] ?? "";
-  return APP_ROUTES.has(`/${base}`) || base.startsWith("_next") || base.startsWith("api");
+  return isPlatformRoute(pathname);
 }
 
 export default async function middleware(request: NextRequest) {
@@ -160,7 +147,11 @@ export default async function middleware(request: NextRequest) {
   const hasRefreshToken = !!rawRefreshToken && /^[a-f0-9]{64}$/.test(rawRefreshToken);
 
   const isAuthPage = isAuthenticationPath(pathname);
-  const isProtectedRoute = pathname.startsWith("/dashboard") || pathname.startsWith("/store");
+  const isProtectedRoute =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/store") ||
+    pathname.startsWith("/workshops") ||
+    pathname === "/workshops";
   const isAdminRoute = pathname.startsWith("/admin");
 
   if (process.env.DEBUG_AUTH === "1" || process.env.NODE_ENV === "development") {
@@ -178,7 +169,7 @@ export default async function middleware(request: NextRequest) {
       : isMerchant
       ? session?.defaultStoreSlug
         ? `/store/${session.defaultStoreSlug}/dashboard`
-        : "/dashboard/stores"
+        : "/workshops"
       : session?.defaultStoreSlug
       ? `/store/${session.defaultStoreSlug}/dashboard`
       : "/dashboard/stores/create";
@@ -209,10 +200,22 @@ export default async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/unauthorized", request.url));
       }
 
+      // Employee rules: employees belong to HRM self-service
+      if (session.role === "employee") {
+        if (pathname === "/workshops" || pathname.startsWith("/workshops/")) {
+          if (session.defaultStoreSlug) {
+            return NextResponse.redirect(
+              new URL(`/store/${session.defaultStoreSlug}/hrm/self-service`, request.url)
+            );
+          }
+          return NextResponse.redirect(new URL("/unauthorized", request.url));
+        }
+      }
+
       const isMerchant = session.role === "admin" || session.role === "owner";
 
       // Root /dashboard platform overview is reserved for Super Admin
-      // Redirect Merchants & Staff to their store or store list
+      // Redirect Merchants & Staff to their store or merchant workspace
       if (pathname === "/dashboard" || pathname === "/dashboard/") {
         if (session.defaultStoreSlug) {
           return NextResponse.redirect(
@@ -221,7 +224,7 @@ export default async function middleware(request: NextRequest) {
         }
         if (isMerchant) {
           return NextResponse.redirect(
-            new URL("/dashboard/stores", request.url)
+            new URL("/workshops", request.url)
           );
         }
         return NextResponse.redirect(

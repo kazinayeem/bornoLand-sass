@@ -44,12 +44,12 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   if (session && !isSuperAdmin) {
     const storeSlug = session.defaultStoreSlug || (await getUserDefaultStoreSlug());
 
-    // Root /dashboard is the platform overview for Super Admin; merchants/staff redirect to their store or store list
+    // Root /dashboard is the platform overview for Super Admin; merchants/staff redirect to their store or merchant workspace
     if (pathname === "/dashboard" || pathname === "/dashboard/") {
       if (storeSlug) {
         redirect(`/store/${storeSlug}/dashboard`);
       } else if (isMerchant) {
-        redirect("/dashboard/stores");
+        redirect("/workshops");
       } else {
         redirect("/dashboard/stores/create");
       }

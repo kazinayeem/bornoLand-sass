@@ -215,14 +215,12 @@ export function LoginForm({
                     email="demo@bornoland.com"
                     password="Demo@123"
                     loginType="user"
-                    callbackUrl="/store/demo-store/dashboard"
                   />
                   <QuickLoginButton
                     label={isBn ? "ডেমো এডমিন লগইন" : "Demo Admin Login"}
                     email="admin@bornoland.com"
                     password="Admin@123"
                     loginType="admin"
-                    callbackUrl="/admin/dashboard"
                   />
                 </div>
               </Field>

@@ -78,7 +78,7 @@ export function resolvePostLoginDestination(
     baseDestination = "/dashboard";
   } else if (isMerchant) {
     // Single store -> directly to /store/{storeSlug}/dashboard
-    // Multi-store -> /dashboard/stores
+    // Multi-store -> /workshops
     // 0 stores -> /dashboard/stores/create
     let lastSelectedSlug: string | null = null;
     try {
@@ -97,7 +97,7 @@ export function resolvePostLoginDestination(
     } else if (storesList.length === 1 && (storesList[0]?.slug || defaultSlug)) {
       baseDestination = `/store/${storesList[0]?.slug || defaultSlug}/dashboard`;
     } else if (storesList.length > 1) {
-      baseDestination = "/dashboard/stores";
+      baseDestination = "/workshops";
     } else if (defaultSlug) {
       baseDestination = `/store/${defaultSlug}/dashboard`;
     } else {
@@ -154,7 +154,9 @@ export function resolvePostLoginDestination(
   if (
     queryRedirect.startsWith("/admin") ||
     queryRedirect === "/dashboard" ||
-    queryRedirect === "/dashboard/"
+    queryRedirect === "/dashboard/" ||
+    queryRedirect.startsWith("/workshops") ||
+    queryRedirect === "/workshops"
   ) {
     return baseDestination;
   }

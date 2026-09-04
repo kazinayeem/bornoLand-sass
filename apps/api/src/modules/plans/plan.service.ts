@@ -32,8 +32,20 @@ const TOGGLE_TO_FEATURE_KEY: Record<string, string> = {
   checkoutRecovery: "checkout_recovery",
   recoveryAnalytics: "recovery_analytics",
   recoveryLinks: "checkout_recovery",
+  sslcommerzPayment: "sslcommerz_payment",
+  // Content & Pages
+  cms: "cms",
+  pageBuilder: "page_builder",
+  mediaLibrary: "media",
+  dragDropBuilder: "builder",
+  themeEditor: "theme_builder",
+  // Platform & Limits
+  advancedAnalytics: "analytics",
+  reports: "reports",
+  staffManagement: "staff",
   // HRM Module
   hrm: "hrm",
+  hrmEmployees: "employees",
   hrmAttendance: "attendance",
   hrmPayroll: "payroll",
   hrmLeave: "leave_mgmt",
@@ -169,6 +181,17 @@ export async function updatePlan(planId: string, payload: unknown) {
     (plan as { courierAccess?: { enabled?: boolean } }).courierAccess?.enabled ?? toggles.courier
   );
   await syncFeatureTogglesToPlanFeatures(planId, { ...toggles, courier: courierEnabled });
+
+  try {
+    const { StoreModel } = await import("../../models/store.model.js");
+    const { invalidateStoreFeatureCache } = await import("../features/feature-access.service.js");
+    const stores = await StoreModel.find({ planId }).select("_id").lean();
+    for (const store of stores) {
+      invalidateStoreFeatureCache(String(store._id));
+    }
+  } catch {
+    // Non-fatal
+  }
 
   return { ok: true as const, data: { plan } };
 }

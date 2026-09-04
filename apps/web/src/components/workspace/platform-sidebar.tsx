@@ -23,16 +23,13 @@ import {
   FileText,
   ChevronDown,
   ShieldCheck,
-  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppSelector, useAppDispatch } from "@/hooks/redux";
 import { toggleSidebarCollapsed, setMobileSidebarOpen } from "@/redux/slices/ui-slice";
 import { useLogoutMutation } from "@/redux/api/auth-api";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
-import { useLanguage } from "@/providers/language-provider";
 import { toast } from "sonner";
-import { getLoginUrlForCurrentPage } from "@/lib/auth-redirect-client";
 
 import {
   TooltipProvider,
@@ -48,6 +45,7 @@ function NavItem({
   exact,
   collapsed,
   onNavigate,
+  aliasHrefs,
 }: {
   href: string;
   label: string;
@@ -55,9 +53,19 @@ function NavItem({
   exact?: boolean;
   collapsed: boolean;
   onNavigate?: () => void;
+  aliasHrefs?: string[];
 }) {
   const pathname = usePathname();
-  const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+
+  const isCurrent = exact
+    ? pathname === href
+    : pathname === href || pathname.startsWith(`${href}/`);
+
+  const isAlias = aliasHrefs?.some((alias) =>
+    exact ? pathname === alias : pathname === alias || pathname.startsWith(`${alias}/`)
+  );
+
+  const active = isCurrent || Boolean(isAlias);
 
   const item = (
     <Link
@@ -67,7 +75,7 @@ function NavItem({
         "group relative flex items-center gap-3 rounded-lg px-2.5 h-10 min-h-[40px] text-[13px] font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:focus-visible:ring-white/20",
         collapsed && "justify-center px-0",
         active
-          ? "bg-zinc-100 text-zinc-950 font-medium dark:bg-white/[0.08] dark:text-white"
+          ? "bg-zinc-100 text-zinc-950 font-semibold dark:bg-white/[0.08] dark:text-white"
           : "text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.05] dark:hover:text-zinc-100"
       )}
       aria-label={label}
@@ -116,56 +124,57 @@ export function PlatformSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { language, t } = useLanguage();
   const collapsed = useAppSelector((s) => s.ui.sidebarCollapsed);
   const mobileOpen = useAppSelector((s) => s.ui.mobileSidebarOpen);
   const user = useAppSelector((s) => s.user.profile);
   const [logout] = useLogoutMutation();
 
   const isStoresSection =
+    pathname.startsWith("/workshops/stores") ||
     pathname.startsWith("/dashboard/stores") ||
-    pathname.startsWith("/workshops") ||
     pathname === "/workshops";
-  const isAnalyticsSection = pathname.startsWith("/dashboard/analytics");
+
+  const isAnalyticsSection =
+    pathname.startsWith("/workshops/analytics") ||
+    pathname.startsWith("/dashboard/analytics");
 
   const closeMobile = () => dispatch(setMobileSidebarOpen(false));
 
   const handleLogout = async () => {
     try {
       await logout().unwrap();
-      // After logout, always go to /login without redirect parameter
       window.location.replace("/login");
     } catch {
-      toast.error(false ? "সাইন আউট করতে ব্যর্থ হয়েছে" : "Failed to sign out");
+      toast.error("Failed to sign out");
     }
   };
 
   const mainNav = [
-    { href: "/workshops", label: t.navigation.stores, icon: Store },
-    { href: "/dashboard/plans", label: "Plans & Features", icon: CreditCard },
-    { href: "/dashboard/billing", label: t.navigation.billing, icon: CreditCard },
-    { href: "/dashboard/team", label: t.navigation.team, icon: Users },
-    { href: "/dashboard/activity", label: t.navigation.activity, icon: ScrollText },
-    { href: "/dashboard/notifications", label: t.navigation.notifications, icon: Bell },
+    { href: "/workshops", label: "Stores", icon: Store, exact: true, aliasHrefs: ["/dashboard/stores"] },
+    { href: "/workshops/plans", label: "Plans & Features", icon: CreditCard, aliasHrefs: ["/dashboard/plans"] },
+    { href: "/workshops/billing", label: "Billing & Invoices", icon: CreditCard, aliasHrefs: ["/dashboard/billing"] },
+    { href: "/workshops/team", label: "Workspace Team", icon: Users, aliasHrefs: ["/dashboard/team"] },
+    { href: "/workshops/activity", label: "Activity Log", icon: ScrollText, aliasHrefs: ["/dashboard/activity"] },
+    { href: "/workshops/notifications", label: "Notifications", icon: Bell, aliasHrefs: ["/dashboard/notifications"] },
   ];
 
   const accountNav = [
-    { href: "/dashboard/account", label: t.navigation.settings, icon: Settings },
-    { href: "/dashboard/security", label: t.navigation.security, icon: ShieldCheck },
-    { href: "/dashboard/help", label: t.navigation.help, icon: HelpCircle },
+    { href: "/workshops/account", label: "Account Settings", icon: Settings, aliasHrefs: ["/dashboard/account", "/workshops/settings", "/dashboard/settings"] },
+    { href: "/workshops/security", label: "Security & Sessions", icon: ShieldCheck, aliasHrefs: ["/dashboard/security"] },
+    { href: "/workshops/help", label: "Help & Support", icon: HelpCircle, aliasHrefs: ["/dashboard/help"] },
   ];
 
   const analyticsSubLinks = [
-    { href: "/dashboard/analytics/visitors", label: t.navigation.visitors, icon: Eye },
-    { href: "/dashboard/analytics/live", label: t.navigation.liveVisitors, icon: Activity },
-    { href: "/dashboard/analytics/sources", label: t.navigation.trafficSources, icon: Globe },
-    { href: "/dashboard/analytics/reports", label: t.navigation.reports, icon: FileText },
+    { href: "/workshops/analytics/visitors", label: "Visitors", icon: Eye, aliasHrefs: ["/dashboard/analytics/visitors"] },
+    { href: "/workshops/analytics/live", label: "Live Traffic", icon: Activity, aliasHrefs: ["/dashboard/analytics/live"] },
+    { href: "/workshops/analytics/sources", label: "Traffic Sources", icon: Globe, aliasHrefs: ["/dashboard/analytics/sources"] },
+    { href: "/workshops/analytics/reports", label: "Performance Reports", icon: FileText, aliasHrefs: ["/dashboard/analytics/reports"] },
   ];
 
   const storeNav = [
-    { href: "/workshops", label: t.navigation.allStores, icon: Store, exact: true },
-    { href: "/dashboard/stores/create", label: t.navigation.createStore, icon: Plus },
-    { href: "/dashboard/stores/archived", label: t.navigation.archived, icon: Archive },
+    { href: "/workshops", label: "All Stores", icon: Store, exact: true, aliasHrefs: ["/dashboard/stores"] },
+    { href: "/workshops/stores/create", label: "Create Store", icon: Plus, aliasHrefs: ["/dashboard/stores/create", "/dashboard/create-store"] },
+    { href: "/workshops/stores/archived", label: "Archived Stores", icon: Archive, aliasHrefs: ["/dashboard/stores/archived"] },
   ];
 
   const initials = user?.name
@@ -173,7 +182,7 @@ export function PlatformSidebar() {
     .map((n) => n[0])
     .slice(0, 2)
     .join("")
-    .toUpperCase() ?? (false ? "ইউ" : "U");
+    .toUpperCase() ?? "U";
 
   const sidebarContent = (
     <>
@@ -201,7 +210,7 @@ export function PlatformSidebar() {
             "hidden lg:flex h-7 w-7 items-center justify-center rounded-md text-apple-ink-muted-48 transition-colors hover:bg-apple-ink/[0.05] hover:text-apple-ink dark:hover:bg-white/10 dark:hover:text-white",
             collapsed && "lg:mx-auto mt-0"
           )}
-          aria-label={collapsed ? t.navigation.expandSidebar : t.navigation.collapseSidebar}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
             <PanelLeft className="h-3.5 w-3.5" />
@@ -218,7 +227,7 @@ export function PlatformSidebar() {
 
       {/* ── Navigation ──────────────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto px-2.5 py-3">
-        <NavSection label={t.navigation.workspace} collapsed={collapsed} />
+        <NavSection label="Workspace" collapsed={collapsed} />
         <ul className="space-y-0.5">
           {mainNav.map((item) => (
             <li key={item.href}>
@@ -231,23 +240,24 @@ export function PlatformSidebar() {
         <div className="mt-0.5">
           {collapsed ? (
             <NavItem
-              href="/dashboard/analytics/visitors"
-              label={t.navigation.analytics}
+              href="/workshops/analytics/visitors"
+              label="Analytics"
               icon={BarChart3}
               collapsed={true}
               onNavigate={closeMobile}
+              aliasHrefs={["/dashboard/analytics/visitors"]}
             />
           ) : (
             <>
               <button
                 type="button"
                 onClick={() => {
-                  if (!isAnalyticsSection) router.push("/dashboard/analytics/visitors");
+                  if (!isAnalyticsSection) router.push("/workshops/analytics/visitors");
                 }}
                 className={cn(
                   "group relative flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-all duration-150",
                   isAnalyticsSection
-                    ? "bg-apple-ink/[0.07] text-apple-ink dark:bg-white/10 dark:text-white"
+                    ? "bg-apple-ink/[0.07] text-apple-ink dark:bg-white/10 dark:text-white font-semibold"
                     : "text-apple-ink-muted-48 hover:bg-apple-ink/[0.04] hover:text-apple-ink dark:text-apple-body-muted dark:hover:bg-white/8 dark:hover:text-white"
                 )}
               >
@@ -255,7 +265,7 @@ export function PlatformSidebar() {
                   <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-apple-ink dark:bg-white" />
                 )}
                 <BarChart3 className={cn("h-4 w-4 shrink-0", isAnalyticsSection ? "text-apple-ink dark:text-white" : "text-apple-ink-muted-48 group-hover:text-apple-ink-muted-80")} />
-                <span className="flex-1 text-left">{t.navigation.analytics}</span>
+                <span className="flex-1 text-left">Analytics</span>
                 <ChevronDown className={cn("h-3 w-3 text-apple-ink-muted-48 transition-transform", isAnalyticsSection && "rotate-180")} />
               </button>
               {isAnalyticsSection && (
@@ -274,7 +284,7 @@ export function PlatformSidebar() {
         {/* Stores sub-nav */}
         {isStoresSection && !collapsed && (
           <>
-            <NavSection label={t.navigation.store} collapsed={collapsed} />
+            <NavSection label="Stores" collapsed={collapsed} />
             <ul className="space-y-0.5">
               {storeNav.map((item) => (
                 <li key={item.href}>
@@ -286,7 +296,7 @@ export function PlatformSidebar() {
         )}
 
         {/* Account nav */}
-        <NavSection label={t.navigation.account} collapsed={collapsed} />
+        <NavSection label="Account" collapsed={collapsed} />
         <ul className="space-y-0.5">
           {accountNav.map((item) => (
             <li key={item.href}>
@@ -302,7 +312,7 @@ export function PlatformSidebar() {
           <button
             type="button"
             onClick={handleLogout}
-            title={t.navigation.signOut}
+            title="Sign out"
             className="flex w-full items-center justify-center rounded-md p-2 text-apple-ink-muted-48 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
           >
             <LogOut className="h-4 w-4" />
@@ -314,7 +324,7 @@ export function PlatformSidebar() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px] font-medium text-apple-ink dark:text-white">
-                {user?.name ?? (false ? "ইউজার" : "User")}
+                {user?.name ?? "Merchant"}
               </p>
               <p className="truncate text-[11px] text-apple-ink-muted-48 dark:text-apple-body-muted">
                 {user?.email ?? ""}
@@ -323,7 +333,7 @@ export function PlatformSidebar() {
             <button
               type="button"
               onClick={handleLogout}
-              title={t.navigation.signOut}
+              title="Sign out"
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-apple-ink-muted-48 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -342,7 +352,7 @@ export function PlatformSidebar() {
           type="button"
           className="fixed inset-0 z-40 bg-apple-surface-black/50 backdrop-blur-sm lg:hidden"
           onClick={closeMobile}
-          aria-label={t.navigation.collapseSidebar}
+          aria-label="Collapse sidebar"
         />
       )}
 
@@ -358,4 +368,3 @@ export function PlatformSidebar() {
     </TooltipProvider>
   );
 }
-

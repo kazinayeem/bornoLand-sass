@@ -9,7 +9,7 @@ import { StoreModel } from "../../models/store.model.js";
 import { LEGACY_LIMIT_MAP, normalizeFeatureType, type FeatureType } from "./feature.constants.js";
 import { SEED_FEATURES, SEED_GROUPS, SEED_LIMITS, SEED_TIERS } from "./feature.seed.js";
 import { ensureDefaultFeaturesSafe } from "../../bootstrap/safe-migrate.js";
-import { invalidateStoreFeatureCache } from "./feature-access.service.js";
+import { invalidateStoreFeatureCache, TOGGLE_KEY_MAP } from "./feature-access.service.js";
 
 let defaultFeaturesEnsured = false;
 
@@ -174,6 +174,8 @@ export async function getPlanFeatures(planId: string) {
 
   const assignmentMap = new Map(planFeatures.map((pf) => [pf.featureKey, pf]));
   const limits = (plan as { limits?: Record<string, unknown> }).limits ?? {};
+  const toggles = (plan as { featureToggles?: Record<string, unknown> }).featureToggles ?? {};
+  const courierAccess = (plan as { courierAccess?: { enabled?: boolean; allProviders?: boolean; providers?: string[] } }).courierAccess;
 
   const matrix = await Promise.all(
     features.map(async (feature) => {
@@ -199,6 +201,49 @@ export async function getPlanFeatures(planId: string) {
           limit: assigned.limit,
           tierKey,
           value: tierKey,
+          tiers,
+          limitMeta,
+        };
+      }
+
+      if (feature.key === "courier") {
+        const courierEnabled = Boolean(
+          courierAccess?.enabled ||
+          courierAccess?.allProviders ||
+          (courierAccess?.providers?.length ?? 0) > 0 ||
+          toggles.courier
+        );
+        return {
+          featureKey: feature.key,
+          name: feature.name,
+          type,
+          groupKey: feature.groupKey || feature.group,
+          group: feature.groupKey || feature.group,
+          comingSoon: feature.comingSoon,
+          enabled: courierEnabled,
+          limit: 0,
+          tierKey: courierEnabled ? "enabled" : "disabled",
+          value: courierEnabled ? "enabled" : "disabled",
+          tiers,
+          limitMeta,
+        };
+      }
+
+      const possibleToggleKeys = TOGGLE_KEY_MAP[feature.key] || [feature.key];
+      const hasMatchingToggle = possibleToggleKeys.some((k) => toggles[k] !== undefined);
+      if (hasMatchingToggle) {
+        const isToggleEnabled = possibleToggleKeys.some((k) => Boolean(toggles[k]));
+        return {
+          featureKey: feature.key,
+          name: feature.name,
+          type,
+          groupKey: feature.groupKey || feature.group,
+          group: feature.groupKey || feature.group,
+          comingSoon: feature.comingSoon,
+          enabled: isToggleEnabled,
+          limit: 0,
+          tierKey: isToggleEnabled ? "enabled" : "disabled",
+          value: isToggleEnabled ? "enabled" : "disabled",
           tiers,
           limitMeta,
         };

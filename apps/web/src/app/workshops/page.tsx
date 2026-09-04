@@ -3,17 +3,13 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import {
   Plus,
   RefreshCw,
   Store as StoreIcon,
   Search,
   ArrowRight,
-  Sparkles,
-  ShoppingBag,
-  ExternalLink,
-  ShieldCheck,
   Building2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -29,34 +25,33 @@ import {
 } from "@/redux/api/store-api";
 import { useGetTemplatesQuery } from "@/redux/api/template-api";
 import { resolveStoreStatus } from "@/lib/store-status";
-import { useLanguage } from "@/providers/language-provider";
 
 function StoreCardSkeleton() {
   return (
-    <div className="flex flex-col rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs animate-pulse space-y-4">
+    <div className="flex flex-col rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs animate-pulse space-y-4 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-zinc-200" />
+          <div className="h-12 w-12 rounded-xl bg-zinc-200 dark:bg-zinc-800" />
           <div className="space-y-2">
-            <div className="h-4 w-32 rounded-md bg-zinc-200" />
-            <div className="h-3 w-20 rounded-md bg-zinc-100" />
+            <div className="h-4 w-32 rounded-md bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-3 w-20 rounded-md bg-zinc-100 dark:bg-zinc-800/60" />
           </div>
         </div>
-        <div className="h-6 w-16 rounded-full bg-zinc-100" />
+        <div className="h-6 w-16 rounded-full bg-zinc-100 dark:bg-zinc-800/60" />
       </div>
 
-      <div className="h-8 rounded-lg bg-zinc-100" />
+      <div className="h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800/60" />
 
       <div className="grid grid-cols-4 gap-2 pt-2">
-        <div className="h-14 rounded-xl bg-zinc-100" />
-        <div className="h-14 rounded-xl bg-zinc-100" />
-        <div className="h-14 rounded-xl bg-zinc-100" />
-        <div className="h-14 rounded-xl bg-zinc-100" />
+        <div className="h-14 rounded-xl bg-zinc-100 dark:bg-zinc-800/60" />
+        <div className="h-14 rounded-xl bg-zinc-100 dark:bg-zinc-800/60" />
+        <div className="h-14 rounded-xl bg-zinc-100 dark:bg-zinc-800/60" />
+        <div className="h-14 rounded-xl bg-zinc-100 dark:bg-zinc-800/60" />
       </div>
 
       <div className="grid grid-cols-2 gap-2 pt-2">
-        <div className="h-9 rounded-full bg-zinc-200" />
-        <div className="h-9 rounded-full bg-zinc-200" />
+        <div className="h-9 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+        <div className="h-9 rounded-full bg-zinc-200 dark:bg-zinc-800" />
       </div>
     </div>
   );
@@ -64,8 +59,6 @@ function StoreCardSkeleton() {
 
 export default function MerchantWorkspacesPage() {
   const router = useRouter();
-  const { language, t } = useLanguage();
-  const isBn = false;
 
   const { data, isLoading, isFetching, refetch } = useGetMyStoresQuery();
   const { data: plansData } = useGetPlansQuery();
@@ -121,7 +114,7 @@ export default function MerchantWorkspacesPage() {
   const handleDeleteStore = async (storeId: string) => {
     try {
       await deleteStore(storeId).unwrap();
-      toast.success(isBn ? "দোকানটি সফলভাবে মুছে ফেলা হয়েছে।" : "Store deleted successfully.");
+      toast.success("Store deleted successfully.");
       setShowDeleteModal(false);
       setDeleteTarget(null);
       refetch();
@@ -130,43 +123,39 @@ export default function MerchantWorkspacesPage() {
         err && typeof err === "object" && "data" in err
           ? (err as { data?: { message?: string } }).data?.message
           : undefined;
-      toast.error(message ?? (isBn ? "দোকান মুছে ফেলা সম্ভব হয়নি" : "Could not delete store"));
+      toast.error(message ?? "Could not delete store");
     }
   };
 
   const tabs = [
-    { id: "all", label: isBn ? "সব দোকান" : "All Stores" },
-    { id: "active", label: isBn ? "সক্রিয়" : "Active" },
-    { id: "trial", label: isBn ? "ট্রায়াল" : "Trial" },
-    { id: "expired", label: isBn ? "মেয়াদ শেষ / বাকি" : "Expired / Due" },
+    { id: "all", label: "All Stores" },
+    { id: "active", label: "Active" },
+    { id: "trial", label: "Trial" },
+    { id: "expired", label: "Expired / Due" },
   ];
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title={isBn ? "মার্চেন্ট ওয়ার্কস্পেস" : "Merchant Workspace"}
-        description={
-          isBn
-            ? "আপনার অনুমোদিত সব অনলাইন স্টোর ও ব্যবসায়িক কার্যক্রম এক জায়গা থেকে নির্বাচন ও পরিচালনা করুন।"
-            : "Select and manage your authorized online stores, operations, and business workspaces."
-        }
+        title="Merchant Workspace"
+        description="Select and manage your authorized online stores, operations, and business workspaces."
         actions={
           <>
             <button
               type="button"
               onClick={() => refetch()}
               disabled={isFetching}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-apple-ink-muted-80 transition-colors hover:bg-apple-canvas-parchment disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
             >
               <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-              {t.common.refresh}
+              Refresh
             </button>
             <Link
-              href="/dashboard/stores/create"
-              className="inline-flex items-center gap-2 rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-zinc-800"
+              href="/workshops/stores/create"
+              className="inline-flex items-center gap-2 rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100"
             >
               <Plus className="h-4 w-4" />
-              {t.navigation.createStore}
+              Create Store
             </Link>
           </>
         }
@@ -174,44 +163,40 @@ export default function MerchantWorkspacesPage() {
 
       {/* Quick Summary Banner if multiple stores exist */}
       {!isLoading && activeStores.length > 1 && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-zinc-200/80 bg-linear-to-r from-blue-50/50 via-indigo-50/30 to-purple-50/50 p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-zinc-200/80 bg-linear-to-r from-blue-50/50 via-indigo-50/30 to-purple-50/50 p-4 sm:p-5 dark:border-zinc-800 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900">
           <div className="flex items-center gap-3.5">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
               <Building2 className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-zinc-900">
-                {isBn
-                  ? `আপনার মোট ${activeStores.length}টি সক্রিয় দোকান রয়েছে`
-                  : `You have ${activeStores.length} authorized stores`}
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                You have {activeStores.length} authorized stores
               </h3>
               <p className="text-xs text-zinc-500">
-                {isBn
-                  ? "যে কোনো দোকানের ড্যাশবোর্ডে প্রবেশ করতে নিচে 'ড্যাশবোর্ড' বাটনে ক্লিক করুন।"
-                  : "Click on any store below to launch its management dashboard."}
+                Click on any store below to launch its management dashboard.
               </p>
             </div>
           </div>
           <Link
-            href="/dashboard/stores/create"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+            href="/workshops/stores/create"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors dark:text-blue-400"
           >
-            {isBn ? "+ নতুন দোকান যোগ করুন" : "+ Add another store"}
+            + Add another store
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       )}
 
       {/* Search & Filter Strip */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-zinc-200 shadow-2xs">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-zinc-200 shadow-2xs dark:border-zinc-800 dark:bg-zinc-900">
         <div className="relative w-full sm:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={isBn ? "দোকানের নাম বা ডোমেইন খুঁজুন..." : "Search store name or domain..."}
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all text-zinc-900 placeholder:text-zinc-400"
+            placeholder="Search store name or domain..."
+            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-zinc-200 bg-zinc-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
           />
         </div>
 
@@ -223,8 +208,8 @@ export default function MerchantWorkspacesPage() {
               onClick={() => setStatusFilter(tab.id as any)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 statusFilter === tab.id
-                  ? "bg-zinc-950 text-white font-bold shadow-2xs"
-                  : "text-zinc-600 hover:bg-zinc-100"
+                  ? "bg-zinc-950 text-white font-bold shadow-2xs dark:bg-white dark:text-zinc-950"
+                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
               }`}
             >
               {tab.label}
@@ -240,32 +225,24 @@ export default function MerchantWorkspacesPage() {
           <StoreCardSkeleton />
         </div>
       ) : filteredStores.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center shadow-xs space-y-3">
-          <StoreIcon className="mx-auto h-10 w-10 text-zinc-300" />
-          <h3 className="text-lg font-semibold text-apple-ink">
+        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center shadow-xs space-y-3 dark:border-zinc-800 dark:bg-zinc-900">
+          <StoreIcon className="mx-auto h-10 w-10 text-zinc-300 dark:text-zinc-700" />
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             {searchQuery || statusFilter !== "all"
-              ? isBn
-                ? "কোনো দোকান পাওয়া যায়নি"
-                : "No stores found"
-              : isBn
-              ? "এখনও কোনো দোকান নেই"
+              ? "No stores found"
               : "No authorized stores yet"}
           </h3>
-          <p className="text-sm text-apple-ink-muted-48 max-w-sm mx-auto">
+          <p className="text-sm text-zinc-500 max-w-sm mx-auto">
             {searchQuery || statusFilter !== "all"
-              ? isBn
-                ? "আপনার সার্চ বা ফিল্টার ফিল্ড পরিবর্তন করে আবার চেষ্টা করুন।"
-                : "Try adjusting your search or filter options."
-              : isBn
-              ? "অনলাইনে পণ্য বিক্রি শুরু করতে আপনার প্রথম দোকানটি তৈরি করুন।"
+              ? "Try adjusting your search or filter options."
               : "Create your first store to start managing inventory, orders, and sales."}
           </p>
           <Link
-            href="/dashboard/stores/create"
-            className="inline-flex items-center gap-2 rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 transition-colors"
+            href="/workshops/stores/create"
+            className="inline-flex items-center gap-2 rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 transition-colors dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100"
           >
             <Plus className="h-4 w-4" />
-            {t.navigation.createStore}
+            Create Store
           </Link>
         </div>
       ) : (

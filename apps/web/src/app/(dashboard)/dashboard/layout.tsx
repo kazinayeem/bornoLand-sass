@@ -27,7 +27,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   const pathname = headerList.get("x-pathname") || "";
   const isSuperAdmin = session?.role === "super_admin";
-  const isMerchant = session?.role === "admin" || session?.role === "owner";
+  const isMerchant = session?.role === "admin" || session?.role === "owner" || session?.role === "editor" || session?.role === "viewer";
 
   // If this is the store creation page, allow any authenticated user (e.g. merchant onboarding)
   if (pathname.startsWith("/dashboard/stores/create") || pathname === "/dashboard/create-store") {
@@ -44,38 +44,31 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   if (session && !isSuperAdmin) {
     const storeSlug = session.defaultStoreSlug || (await getUserDefaultStoreSlug());
 
-    // Root /dashboard is the platform overview for Super Admin; merchants redirect to /workshops, employees to self-service
+    // Root /dashboard is the platform overview reserved for Super Admin; merchants redirect to /workshops, employees to self-service
     if (pathname === "/dashboard" || pathname === "/dashboard/") {
-      if (isMerchant) {
-        redirect("/workshops");
-      }
       if (session.role === "employee") {
         if (session.defaultStoreSlug) {
           redirect(`/store/${session.defaultStoreSlug}/hrm/self-service`);
         }
         redirect("/unauthorized");
       }
+      if (isMerchant) {
+        redirect("/workshops");
+      }
       if (storeSlug) {
         redirect(`/store/${storeSlug}/dashboard`);
+      }
+      redirect("/workshops");
+    }
+
+    if (session.role === "employee") {
+      if (session.defaultStoreSlug) {
+        redirect(`/store/${session.defaultStoreSlug}/hrm/self-service`);
       }
       redirect("/unauthorized");
     }
 
-    if (!isMerchant) {
-      if (session.role === "employee") {
-        if (session.defaultStoreSlug) {
-          redirect(`/store/${session.defaultStoreSlug}/hrm/self-service`);
-        }
-        redirect("/unauthorized");
-      }
-      if (storeSlug) {
-        redirect(`/store/${storeSlug}/dashboard`);
-      } else {
-        redirect("/unauthorized");
-      }
-    }
-
-    // Merchants on allowed /dashboard/* subroutes (stores, billing, account, etc.)
+    // Merchants on allowed /dashboard/* subroutes (stores, billing, account, notifications, etc.)
     return (
       <ProtectedSessionBoundary loginPath="/login">
         <WorkspaceShell>{children}</WorkspaceShell>

@@ -74,7 +74,14 @@ export const billingApi = baseApi.injectEndpoints({
       query: (storeId) => ({ url: `/subscriptions/stores/${storeId}` }),
       providesTags: (_r, _e, storeId) => [{ type: "Subscriptions", id: storeId }],
     }),
-    getNotifications: builder.query<ApiEnvelope<{ notifications: BillingNotification[]; unreadCount: number; pagination: { page: number; limit: number; total: number; pages: number } }>, { page?: number; limit?: number; unreadOnly?: boolean } | void>({
+    getNotifications: builder.query<
+      ApiEnvelope<{
+        notifications: BillingNotification[];
+        unreadCount: number;
+        pagination: { page: number; limit: number; total: number; pages: number };
+      }>,
+      { page?: number; limit?: number; unreadOnly?: boolean; storeId?: string } | void
+    >({
       query: (params) => ({ url: "/notifications", params: params || undefined }),
       providesTags: ["Notifications"],
     }),

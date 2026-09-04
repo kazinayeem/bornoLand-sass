@@ -69,12 +69,14 @@ export async function clearPageController(request: AuthRequest, response: Respon
 
 export async function getOrCreateHomePageController(request: AuthRequest, response: Response) {
   try {
-    const storeId = request.params.storeId as string;
-    if (!storeId || !/^[a-f\d]{24}$/i.test(storeId)) {
-      console.warn("[builder] Invalid store ID format:", storeId);
-      return sendFailure(response, "Invalid store ID", 400);
+    const storeIdOrSlug = request.params.storeId as string;
+    if (!storeIdOrSlug) {
+      return sendFailure(response, "Store identifier is required", 400);
     }
-    const result = await getOrCreateHomePage(storeId);
+    const result = await getOrCreateHomePage(storeIdOrSlug);
+    if (!result.ok) {
+      return sendFailure(response, (result as any).message || "Failed to load home page", 404);
+    }
     return sendSuccess(response, result.data);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

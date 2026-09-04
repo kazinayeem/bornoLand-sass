@@ -11,7 +11,6 @@ import {
   Store,
   UserPlus,
   CreditCard,
-  Upload,
   ChevronRight,
   Package,
   ShoppingBag,
@@ -19,9 +18,10 @@ import {
   Users,
   Calculator,
   Receipt,
-  FileSpreadsheet,
   Settings,
-  HelpCircle,
+  Bell,
+  ShieldCheck,
+  ScrollText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -34,7 +34,6 @@ import { NotificationDropdown } from "@/components/user/notification-dropdown";
 import { ProfileDropdown } from "@/components/user/profile-dropdown";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { LanguageSwitcher } from "@/components/user/language-switcher";
-import { useLanguage } from "@/providers/language-provider";
 import { Button } from "@/components/ui/button";
 import {
   useIsStoreOwner,
@@ -62,56 +61,52 @@ type SearchResult = {
   category?: string;
 };
 
-const workspaceRouteLabels: Record<string, { bn: string; en: string }> = {
-  "/dashboard": { bn: "ড্যাশবোর্ড", en: "Dashboard" },
-  "/workshops": { bn: "মার্চেন্ট ওয়ার্কস্পেস", en: "Merchant Workspace" },
-  "/dashboard/stores": { bn: "সব দোকান", en: "All Stores" },
-  "/dashboard/create-store": { bn: "দোকান তৈরি করুন", en: "Create Store" },
-  "/dashboard/stores/create": { bn: "দোকান তৈরি করুন", en: "Create Store" },
-  "/dashboard/stores/archived": { bn: "আর্কাইভকৃত দোকান", en: "Archived Stores" },
-  "/dashboard/plans": { bn: "প্ল্যান ও ফিচার", en: "Plans & Features" },
-  "/dashboard/billing": { bn: "বিলিং", en: "Billing" },
-  "/dashboard/team": { bn: "টিম", en: "Team" },
-  "/dashboard/account": { bn: "প্রোফাইল সেটিংস", en: "Profile Settings" },
-  "/dashboard/security": { bn: "নিরাপত্তা", en: "Security" },
-  "/dashboard/activity": { bn: "কার্যক্রম লগ", en: "Activity Log" },
-  "/dashboard/orders": { bn: "অর্ডারসমূহ", en: "Orders" },
-  "/dashboard/products": { bn: "পণ্যসমূহ", en: "Products" },
-  "/dashboard/categories": { bn: "ক্যাটাগরি", en: "Categories" },
-  "/dashboard/cms": { bn: "CMS পেজ", en: "CMS Pages" },
-  "/dashboard/settings": { bn: "সেটিংস", en: "Settings" },
-  "/dashboard/notifications": { bn: "নোটিফিকেশন", en: "Notifications" },
-  "/dashboard/help": { bn: "সহায়তা", en: "Help" },
-  "/dashboard/subscription": { bn: "সাবস্ক্রিপশন", en: "Subscription" },
-  "/dashboard/theme": { bn: "থিম ডিজাইন", en: "Theme" },
-  "/dashboard/analytics": { bn: "অ্যানালিটিক্স", en: "Analytics" },
-  "/dashboard/analytics/visitors": { bn: "ভিজিটর", en: "Visitors" },
-  "/dashboard/analytics/live": { bn: "লাইভ ভিজিটর", en: "Live Visitors" },
-  "/dashboard/analytics/sources": { bn: "ট্রাফিক সোর্স", en: "Traffic Sources" },
-  "/dashboard/analytics/reports": { bn: "রিপোর্ট", en: "Reports" },
+const workspaceRouteLabels: Record<string, string> = {
+  "/dashboard": "Platform Dashboard",
+  "/workshops": "Merchant Workspace",
+  "/workshops/stores/create": "Create Store",
+  "/workshops/stores/archived": "Archived Stores",
+  "/workshops/plans": "Plans & Features",
+  "/workshops/billing": "Billing & Invoices",
+  "/workshops/team": "Workspace Team",
+  "/workshops/account": "Account Settings",
+  "/workshops/settings": "Account Settings",
+  "/workshops/security": "Security & Sessions",
+  "/workshops/activity": "Activity Log",
+  "/workshops/notifications": "Notifications",
+  "/workshops/help": "Help & Support",
+  "/workshops/analytics/visitors": "Visitor Analytics",
+  "/workshops/analytics/live": "Live Visitors",
+  "/workshops/analytics/sources": "Traffic Sources",
+  "/workshops/analytics/reports": "Performance Reports",
+  // Legacy /dashboard mappings
+  "/dashboard/stores": "All Stores",
+  "/dashboard/create-store": "Create Store",
+  "/dashboard/stores/create": "Create Store",
+  "/dashboard/stores/archived": "Archived Stores",
+  "/dashboard/plans": "Plans & Features",
+  "/dashboard/billing": "Billing & Invoices",
+  "/dashboard/team": "Workspace Team",
+  "/dashboard/account": "Account Settings",
+  "/dashboard/security": "Security & Sessions",
+  "/dashboard/activity": "Activity Log",
+  "/dashboard/orders": "Orders",
+  "/dashboard/products": "Products",
+  "/dashboard/categories": "Categories",
+  "/dashboard/cms": "CMS Pages",
+  "/dashboard/settings": "Settings",
+  "/dashboard/notifications": "Notifications",
+  "/dashboard/help": "Help & Support",
+  "/dashboard/subscription": "Subscription",
+  "/dashboard/theme": "Theme Design",
+  "/dashboard/analytics": "Analytics",
+  "/dashboard/analytics/visitors": "Visitors",
+  "/dashboard/analytics/live": "Live Visitors",
+  "/dashboard/analytics/sources": "Traffic Sources",
+  "/dashboard/analytics/reports": "Reports",
 };
 
-function titleCase(value: string, isBn: boolean) {
-  const bnMap: Record<string, string> = {
-    dashboard: "ড্যাশবোর্ড",
-    workshops: "ওয়ার্কস্পেস",
-    stores: "দোকানসমূহ",
-    create: "তৈরি করুন",
-    billing: "বিলিং",
-    team: "টিম",
-    account: "অ্যাকাউন্ট",
-    security: "নিরাপত্তা",
-    activity: "কার্যক্রম",
-    orders: "অর্ডার",
-    products: "পণ্য",
-    categories: "ক্যাটাগরি",
-    cms: "CMS",
-    settings: "সেটিংস",
-    notifications: "নোটিফিকেশন",
-    help: "সহায়তা",
-    analytics: "অ্যানালিটিক্স",
-  };
-  if (isBn && bnMap[value.toLowerCase()]) return bnMap[value.toLowerCase()];
+function titleCase(value: string) {
   return value.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
@@ -128,33 +123,30 @@ export function DashboardHeader(props: DashboardHeaderProps = {}) {
 
 function WorkspaceDashboardHeader() {
   const pathname = usePathname();
-  const { language, t } = useLanguage();
   const currentStore = useAppSelector((s) => s.currentStore);
   const { data } = useGetMyStoresQuery();
   const stores = data?.data?.stores ?? [];
 
   const workspaceQuickActions: QuickAction[] = [
-    { label: t.header.newStore, href: "/dashboard/stores/create", icon: Store },
-    { label: t.header.inviteMember, href: "/dashboard/team", icon: UserPlus },
-    { label: t.header.upgradePlan, href: "/dashboard/billing", icon: CreditCard },
+    { label: "New Store", href: "/workshops/stores/create", icon: Store },
+    { label: "Invite Member", href: "/workshops/team", icon: UserPlus },
+    { label: "Upgrade Plan", href: "/workshops/billing", icon: CreditCard },
   ];
 
-  const isBn = false;
-  const routeObj = workspaceRouteLabels[pathname];
   const pageTitle =
-    (routeObj ? routeObj[language] : undefined) ??
-    (pathname.startsWith("/dashboard/stores/")
-      ? isBn ? "দোকানের বিবরণ" : "Store Details"
-      : titleCase(pathname.split("/").filter(Boolean).slice(-1)[0] ?? "dashboard", isBn));
+    workspaceRouteLabels[pathname] ??
+    (pathname.startsWith("/workshops/stores/") || pathname.startsWith("/dashboard/stores/")
+      ? "Store Details"
+      : titleCase(pathname.split("/").filter(Boolean).slice(-1)[0] ?? "workspace"));
 
   const contextTitle =
     currentStore.initialized && currentStore.storeName
       ? currentStore.storeName
-      : t.navigation.workspace;
+      : "Merchant Workspace";
 
   const segments = pathname.split("/").filter(Boolean);
   const breadcrumbs = segments.map((segment, index) => ({
-    label: titleCase(segment, isBn),
+    label: titleCase(segment),
     href: index < segments.length - 1 ? `/${segments.slice(0, index + 1).join("/")}` : undefined,
   }));
 
@@ -163,14 +155,17 @@ function WorkspaceDashboardHeader() {
       label: s.name,
       sub: s.slug,
       href: `/store/${s.slug}/dashboard`,
-      type: isBn ? "দোকান" : "Store",
-      category: isBn ? "দোকানসমূহ" : "Stores",
+      type: "Store",
+      category: "Stores",
     })),
-    { label: t.navigation.allStores, sub: t.navigation.workspace, href: "/workshops", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
-    { label: t.navigation.createStore, sub: t.navigation.workspace, href: "/dashboard/stores/create", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
-    { label: t.navigation.billing, sub: t.navigation.workspace, href: "/dashboard/billing", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
-    { label: t.navigation.team, sub: t.navigation.workspace, href: "/dashboard/team", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
-    { label: t.navigation.settings, sub: t.navigation.workspace, href: "/dashboard/settings", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
+    { label: "All Stores", sub: "Workspace", href: "/workshops", type: "Page", category: "Navigation" },
+    { label: "Create Store", sub: "Workspace", href: "/workshops/stores/create", type: "Page", category: "Navigation" },
+    { label: "Billing & Invoices", sub: "Workspace", href: "/workshops/billing", type: "Page", category: "Navigation" },
+    { label: "Plans & Features", sub: "Workspace", href: "/workshops/plans", type: "Page", category: "Navigation" },
+    { label: "Workspace Team", sub: "Workspace", href: "/workshops/team", type: "Page", category: "Navigation" },
+    { label: "Notifications", sub: "Workspace", href: "/workshops/notifications", type: "Page", category: "Navigation" },
+    { label: "Account Settings", sub: "Workspace", href: "/workshops/account", type: "Page", category: "Navigation" },
+    { label: "Security & Sessions", sub: "Workspace", href: "/workshops/security", type: "Page", category: "Navigation" },
   ];
 
   return (
@@ -178,7 +173,7 @@ function WorkspaceDashboardHeader() {
       pageTitle={pageTitle}
       quickActions={workspaceQuickActions}
       searchResults={searchResults}
-      searchPlaceholder={t.header.searchPlaceholder}
+      searchPlaceholder="Search workspace... ⌘K"
       useWorkspaceMobileSidebar
       breadcrumb={
         <>
@@ -209,7 +204,6 @@ function StoreDashboardHeader({
   onMenuClick?: () => void;
 }) {
   const pathname = usePathname();
-  const { language, t } = useLanguage();
   const params = useParams();
   const productId = typeof params.productId === "string" ? params.productId : "";
   const { data: productData } = useGetProductQuery(productId, { skip: !productId });
@@ -225,7 +219,6 @@ function StoreDashboardHeader({
   });
   const features = contextFeatures ?? accessData?.data?.features ?? [];
 
-  // Helper to check user permission & plan entitlement
   const checkAccess = useCallback(
     (permission?: string, featureKey?: string) => {
       const hasPerm = isOwner || !permission || checkPermission(permissionSet, permission);
@@ -241,10 +234,9 @@ function StoreDashboardHeader({
 
   const storeBase = `/store/${store.slug}`;
   const dashboardHref = `${storeBase}/dashboard`;
-  const isBn = false;
 
   const { pageTitle, breadcrumbs, searchResults } = useMemo(() => {
-    const defaultDashTitle = t.navigation.dashboard;
+    const defaultDashTitle = "Dashboard";
     const crumbs = [{ label: defaultDashTitle, href: dashboardHref }] as Array<{
       label: string;
       href?: string;
@@ -252,59 +244,61 @@ function StoreDashboardHeader({
     let title = defaultDashTitle;
 
     if (pathname.startsWith(`${storeBase}/products/new`)) {
-      title = isBn ? "নতুন পণ্য যোগ করুন" : "Add New Product";
-      crumbs.push({ label: isBn ? "পণ্যসমূহ" : "Products", href: `${storeBase}/products` }, { label: isBn ? "নতুন পণ্য" : "New Product" });
+      title = "Add New Product";
+      crumbs.push({ label: "Products", href: `${storeBase}/products` }, { label: "New Product" });
     } else if (pathname.startsWith(`${storeBase}/products/`) && pathname.endsWith("/edit")) {
-      title = productName || (isBn ? "পণ্য এডিট করুন" : "Edit Product");
-      crumbs.push({ label: isBn ? "পণ্যসমূহ" : "Products", href: `${storeBase}/products` }, { label: title });
+      title = productName || "Edit Product";
+      crumbs.push({ label: "Products", href: `${storeBase}/products` }, { label: title });
     } else if (pathname.startsWith(`${storeBase}/products/`) && pathname.endsWith("/duplicate")) {
-      title = productName ? (isBn ? `${productName} কপি করুন` : `Duplicate ${productName}`) : (isBn ? "পণ্য কপি" : "Duplicate Product");
-      crumbs.push({ label: isBn ? "পণ্যসমূহ" : "Products", href: `${storeBase}/products` }, { label: title });
+      title = productName ? `Duplicate ${productName}` : "Duplicate Product";
+      crumbs.push({ label: "Products", href: `${storeBase}/products` }, { label: title });
     } else if (pathname !== dashboardHref && !pathname.match(new RegExp(`^/store/${store.slug}/?$`))) {
       const segment = pathname.replace(`${storeBase}/`, "").split("/")[0] || "dashboard";
-      const labels: Record<string, { bn: string; en: string }> = {
-        dashboard: { bn: "ড্যাশবোর্ড", en: "Dashboard" },
-        products: { bn: "পণ্যসমূহ", en: "Products" },
-        orders: { bn: "অর্ডারসমূহ", en: "Orders" },
-        customers: { bn: "কাস্টমার", en: "Customers" },
-        cms: { bn: "CMS পেজ", en: "CMS Pages" },
-        "customer-messages": { bn: "মেসেজ", en: "Messages" },
-        pages: { bn: "পেজসমূহ", en: "Pages" },
-        media: { bn: "মিডিয়া লাইব্রেরি", en: "Media Library" },
-        theme: { bn: "থিম", en: "Theme" },
-        settings: { bn: "সেটিংস", en: "Settings" },
-        analytics: { bn: "অ্যানালিটিক্স", en: "Analytics" },
-        categories: { bn: "ক্যাটাগরি", en: "Categories" },
-        inventory: { bn: "ইনভেন্টরি", en: "Inventory" },
-        reviews: { bn: "রিভিউ", en: "Reviews" },
-        coupons: { bn: "কুপন", en: "Coupons" },
-        reports: { bn: "রিপোর্ট", en: "Reports" },
-        marketing: { bn: "মার্কেটিং", en: "Marketing" },
-        billing: { bn: "বিলিং", en: "Billing" },
-        builder: { bn: "বিল্ডার", en: "Builder" },
-        appearance: { bn: "অ্যাপিয়ারেন্স", en: "Appearance" },
-        apps: { bn: "অ্যাপস", en: "Apps" },
-        activity: { bn: "কার্যক্রম লগ", en: "Activity Log" },
-        hrm: { bn: "কর্মী ও মানবসম্পদ (HRM)", en: "Human Resources (HRM)" },
-        employees: { bn: "কর্মকর্তা-কর্মচারী", en: "Employees" },
-        attendance: { bn: "হাজিরা", en: "Attendance" },
-        leaves: { bn: "ছুটি ব্যবস্থাপনা", en: "Leaves" },
-        payroll: { bn: "বেতন ও পে-রোল", en: "Payroll" },
-        finance: { bn: "হিসাববিজ্ঞান ও অর্থায়ন", en: "Finance & Accounting" },
-        accounting: { bn: "অ্যাকাউন্টিং", en: "Accounting" },
-        expenses: { bn: "ব্যয় ও খরচ", en: "Expenses" },
-        crm: { bn: "সিআরএম", en: "CRM" },
-        support: { bn: "সাপোর্ট টিকিট", en: "Support Tickets" },
-        operations: { bn: "অপারেশনস", en: "Operations" },
-        tasks: { bn: "টাস্ক", en: "Tasks" },
-        approvals: { bn: "অনুমোদন কেন্দ্র", en: "Approvals" },
-        pos: { bn: "পয়েন্ট অব সেল (POS)", en: "Point of Sale" },
+      const labels: Record<string, string> = {
+        dashboard: "Dashboard",
+        products: "Products",
+        orders: "Orders",
+        customers: "Customers",
+        cms: "CMS Pages",
+        "customer-messages": "Customer Messages",
+        pages: "Pages",
+        media: "Media Library",
+        theme: "Theme & Design",
+        design: "Theme & Design",
+        settings: "Settings",
+        analytics: "Analytics",
+        categories: "Categories",
+        inventory: "Inventory & Stock",
+        reviews: "Reviews & Ratings",
+        coupons: "Coupons & Discounts",
+        reports: "Business Reports",
+        marketing: "Marketing Campaigns",
+        billing: "Plan & Billing",
+        builder: "Storefront Builder",
+        appearance: "Appearance",
+        apps: "Apps & Integrations",
+        activity: "Activity Audit Log",
+        hrm: "People & HRM",
+        employees: "Employees Directory",
+        attendance: "Attendance & Shifts",
+        leaves: "Leave Management",
+        payroll: "Payroll & Payslips",
+        finance: "Finance & Accounting",
+        accounting: "General Ledger",
+        expenses: "Business Expenses",
+        crm: "CRM & Sales",
+        support: "Support Tickets",
+        operations: "Operations",
+        tasks: "Task Board",
+        approvals: "Approval Center",
+        pos: "Point of Sale (POS)",
+        notifications: "Notifications",
       };
-      title = labels[segment] ? labels[segment][language] : titleCase(segment, isBn);
+      title = labels[segment] || titleCase(segment);
       crumbs.push({ label: title });
     }
 
-    const pageType = isBn ? "পেজ" : "Page";
+    const pageType = "Page";
     const potentialResults: Array<{
       label: string;
       sub: string;
@@ -314,81 +308,81 @@ function StoreDashboardHeader({
       permission?: string;
       featureKey?: string;
     }> = [
-      { label: t.navigation.dashboard, sub: store.name, href: dashboardHref, type: pageType, category: "Core" },
-      { label: isBn ? "পণ্যসমূহ" : "Products", sub: store.name, href: `${storeBase}/products`, type: pageType, category: "Commerce", permission: "products:read" },
-      { label: isBn ? "ক্যাটাগরি" : "Categories", sub: store.name, href: `${storeBase}/categories`, type: pageType, category: "Commerce", permission: "categories:read" },
-      { label: isBn ? "অর্ডারসমূহ" : "Orders", sub: store.name, href: `${storeBase}/orders`, type: pageType, category: "Commerce", permission: "orders:read" },
-      { label: isBn ? "কাস্টমার মাস্টার" : "Customer Master", sub: store.name, href: `${storeBase}/customers`, type: pageType, category: "Commerce", permission: "customers:read" },
-      { label: isBn ? "ইনভেন্টরি ও স্টক" : "Inventory & Stock", sub: store.name, href: `${storeBase}/inventory`, type: pageType, category: "Inventory", permission: "inventory:read", featureKey: "inventory" },
-      { label: isBn ? "ক্ষয়ক্ষতি ও অপচয়" : "Waste & Loss Tracker", sub: store.name, href: `${storeBase}/inventory/waste`, type: pageType, category: "Inventory", permission: "inventory:read", featureKey: "inventory" },
-      { label: isBn ? "স্টক মুভমেন্ট লেজার" : "Stock Movement Ledger", sub: store.name, href: `${storeBase}/inventory/ledger`, type: pageType, category: "Inventory", permission: "inventory:read", featureKey: "inventory" },
-      { label: isBn ? "মাল্টি-ওয়্যারহাউস" : "Warehouses", sub: store.name, href: `${storeBase}/inventory/warehouses`, type: pageType, category: "Inventory", permission: "warehouse:read", featureKey: "warehouses" },
-      { label: isBn ? "ক্রয় ও পারচেজ অর্ডার" : "Purchasing & POs", sub: store.name, href: `${storeBase}/inventory/purchasing`, type: pageType, category: "Purchasing", permission: "procurement:read", featureKey: "purchase_orders" },
-      { label: isBn ? "সরবরাহকারী (Suppliers)" : "Suppliers Master", sub: store.name, href: `${storeBase}/inventory/suppliers`, type: pageType, category: "Purchasing", permission: "procurement:read", featureKey: "suppliers" },
-      { label: isBn ? "পয়েন্ট অব সেল (POS)" : "POS Terminal", sub: store.name, href: `${storeBase}/pos`, type: pageType, category: "POS", permission: "pos:read", featureKey: "pos" },
-      { label: isBn ? "POS ক্যাশ রেজিস্টার ও শিফট" : "POS Register & Shifts", sub: store.name, href: `${storeBase}/pos/shifts`, type: pageType, category: "POS", permission: "pos:read", featureKey: "pos" },
-      { label: isBn ? "কর্মী ও এইচআরএম (HRM)" : "Employees Directory", sub: store.name, href: `${storeBase}/hrm/employees`, type: pageType, category: "HRM", permission: "hrm:read", featureKey: "employees" },
-      { label: isBn ? "হাজিরা ও ওভারটাইম" : "Attendance & Shifts", sub: store.name, href: `${storeBase}/hrm/attendance`, type: pageType, category: "HRM", permission: "hrm:read", featureKey: "attendance" },
-      { label: isBn ? "ছুটি ব্যবস্থাপনা" : "Leave Management", sub: store.name, href: `${storeBase}/hrm/leaves`, type: pageType, category: "HRM", permission: "hrm:read", featureKey: "leave_mgmt" },
-      { label: isBn ? "বেতন ও পে-রোল" : "Payroll & Payslips", sub: store.name, href: `${storeBase}/hrm/payroll`, type: pageType, category: "HRM", permission: "hrm:payroll:manage", featureKey: "payroll" },
-      { label: isBn ? "হিসাববিজ্ঞান (Accounting)" : "Accounting Dashboard", sub: store.name, href: `${storeBase}/finance/accounting`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "chart_of_accounts" },
-      { label: isBn ? "হিসাবের তালিকা (COA)" : "Chart of Accounts", sub: store.name, href: `${storeBase}/finance/accounting/coa`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "chart_of_accounts" },
-      { label: isBn ? "ডাবল-এন্ট্রি জার্নাল" : "Journal Entries", sub: store.name, href: `${storeBase}/finance/accounting/journal`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "journal_entries" },
-      { label: isBn ? "ব্যয় ও খরচ (Expenses)" : "Business Expenses", sub: store.name, href: `${storeBase}/finance/expenses`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "expenses" },
-      { label: isBn ? "আর্থিক বিবরণী (Reports)" : "Financial Statements", sub: store.name, href: `${storeBase}/finance/reports`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "financial_reports" },
-      { label: isBn ? "সিআরএম পাইপলাইন" : "CRM Deals & Pipeline", sub: store.name, href: `${storeBase}/crm/deals`, type: pageType, category: "Growth", permission: "crm:read", featureKey: "crm_deals" },
-      { label: isBn ? "সাপোর্ট টিকিট" : "Support Desk", sub: store.name, href: `${storeBase}/support/tickets`, type: pageType, category: "Growth", permission: "support:read", featureKey: "support_tickets" },
-      { label: isBn ? "অনুমোদন কেন্দ্র" : "Approvals Center", sub: store.name, href: `${storeBase}/operations/approvals`, type: pageType, category: "Operations", permission: "operations:read", featureKey: "approvals" },
-      { label: isBn ? "টাস্ক ম্যানেজমেন্ট" : "Task Board", sub: store.name, href: `${storeBase}/operations/tasks`, type: pageType, category: "Operations", permission: "operations:read", featureKey: "tasks" },
-      { label: t.navigation.analytics, sub: store.name, href: `${storeBase}/analytics`, type: pageType, category: "Analytics", permission: "analytics:read", featureKey: "analytics" },
-      { label: t.navigation.settings, sub: store.name, href: `${storeBase}/settings`, type: pageType, category: "Settings", permission: "settings:read" },
-      { label: t.navigation.billing, sub: store.name, href: `${storeBase}/billing`, type: pageType, category: "Billing" },
-      { label: isBn ? "ডিজাইন ও থিম" : "Theme & Design", sub: store.name, href: `${storeBase}/design`, type: pageType, category: "Storefront", permission: "pages:read" },
+      { label: "Dashboard", sub: store.name, href: dashboardHref, type: pageType, category: "Core" },
+      { label: "Products", sub: store.name, href: `${storeBase}/products`, type: pageType, category: "Commerce", permission: "products:read" },
+      { label: "Categories", sub: store.name, href: `${storeBase}/categories`, type: pageType, category: "Commerce", permission: "categories:read" },
+      { label: "Orders", sub: store.name, href: `${storeBase}/orders`, type: pageType, category: "Commerce", permission: "orders:read" },
+      { label: "Customers", sub: store.name, href: `${storeBase}/customers`, type: pageType, category: "Commerce", permission: "customers:read" },
+      { label: "Inventory & Stock", sub: store.name, href: `${storeBase}/inventory`, type: pageType, category: "Inventory", permission: "inventory:read", featureKey: "inventory" },
+      { label: "Waste & Loss", sub: store.name, href: `${storeBase}/inventory/waste`, type: pageType, category: "Inventory", permission: "inventory:read", featureKey: "inventory" },
+      { label: "Stock Ledger", sub: store.name, href: `${storeBase}/inventory/ledger`, type: pageType, category: "Inventory", permission: "inventory:read", featureKey: "inventory" },
+      { label: "Warehouses", sub: store.name, href: `${storeBase}/inventory/warehouses`, type: pageType, category: "Inventory", permission: "warehouse:read", featureKey: "warehouses" },
+      { label: "Purchase Orders", sub: store.name, href: `${storeBase}/inventory/purchasing`, type: pageType, category: "Purchasing", permission: "procurement:read", featureKey: "purchase_orders" },
+      { label: "Suppliers Master", sub: store.name, href: `${storeBase}/inventory/suppliers`, type: pageType, category: "Purchasing", permission: "procurement:read", featureKey: "suppliers" },
+      { label: "POS Terminal", sub: store.name, href: `${storeBase}/pos`, type: pageType, category: "POS", permission: "pos:read", featureKey: "pos" },
+      { label: "POS Shifts & Registers", sub: store.name, href: `${storeBase}/pos/shifts`, type: pageType, category: "POS", permission: "pos:read", featureKey: "pos" },
+      { label: "Employees Directory", sub: store.name, href: `${storeBase}/hrm/employees`, type: pageType, category: "HRM", permission: "hrm:read", featureKey: "employees" },
+      { label: "Attendance & Shifts", sub: store.name, href: `${storeBase}/hrm/attendance`, type: pageType, category: "HRM", permission: "hrm:read", featureKey: "attendance" },
+      { label: "Leave Management", sub: store.name, href: `${storeBase}/hrm/leaves`, type: pageType, category: "HRM", permission: "hrm:read", featureKey: "leave_mgmt" },
+      { label: "Payroll & Payslips", sub: store.name, href: `${storeBase}/hrm/payroll`, type: pageType, category: "HRM", permission: "hrm:payroll:manage", featureKey: "payroll" },
+      { label: "Accounting Overview", sub: store.name, href: `${storeBase}/finance/accounting`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "chart_of_accounts" },
+      { label: "Chart of Accounts", sub: store.name, href: `${storeBase}/finance/accounting/coa`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "chart_of_accounts" },
+      { label: "Journal Entries", sub: store.name, href: `${storeBase}/finance/accounting/journal`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "journal_entries" },
+      { label: "Business Expenses", sub: store.name, href: `${storeBase}/finance/expenses`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "expenses" },
+      { label: "Financial Reports", sub: store.name, href: `${storeBase}/finance/reports`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "financial_reports" },
+      { label: "CRM Pipeline", sub: store.name, href: `${storeBase}/crm/deals`, type: pageType, category: "Growth", permission: "crm:read", featureKey: "crm_deals" },
+      { label: "Support Tickets", sub: store.name, href: `${storeBase}/support/tickets`, type: pageType, category: "Growth", permission: "support:read", featureKey: "support_tickets" },
+      { label: "Approval Center", sub: store.name, href: `${storeBase}/operations/approvals`, type: pageType, category: "Operations", permission: "operations:read", featureKey: "approvals" },
+      { label: "Tasks & Workflows", sub: store.name, href: `${storeBase}/operations/tasks`, type: pageType, category: "Operations", permission: "operations:read", featureKey: "tasks" },
+      { label: "Analytics Overview", sub: store.name, href: `${storeBase}/analytics`, type: pageType, category: "Analytics", permission: "analytics:read", featureKey: "analytics" },
+      { label: "Store Settings", sub: store.name, href: `${storeBase}/settings`, type: pageType, category: "Settings", permission: "settings:read" },
+      { label: "Plan & Billing", sub: store.name, href: `${storeBase}/billing`, type: pageType, category: "Billing" },
+      { label: "Theme & Design", sub: store.name, href: `${storeBase}/design`, type: pageType, category: "Storefront", permission: "pages:read" },
+      { label: "Notifications", sub: store.name, href: `${storeBase}/notifications`, type: pageType, category: "Core" },
     ];
 
-    // Filter search results by permissions and feature entitlement
     const results: SearchResult[] = potentialResults
       .filter((item) => checkAccess(item.permission, item.featureKey))
       .map(({ permission, featureKey, ...rest }) => rest);
 
     return { pageTitle: title, breadcrumbs: crumbs, searchResults: results };
-  }, [pathname, store, dashboardHref, storeBase, productName, language, t, isBn, checkAccess]);
+  }, [pathname, store, dashboardHref, storeBase, productName, checkAccess]);
 
   // Permission-aware Quick Create Actions
   const quickActions: QuickAction[] = useMemo(() => {
     const list: QuickAction[] = [];
 
     if (checkAccess("products:read", "products")) {
-      list.push({ label: isBn ? "নতুন পণ্য" : "New Product", href: `${storeBase}/products/new`, icon: Package });
+      list.push({ label: "New Product", href: `${storeBase}/products/new`, icon: Package });
     }
     if (checkAccess("orders:read")) {
-      list.push({ label: isBn ? "অর্ডার তালিকা" : "New / View Orders", href: `${storeBase}/orders`, icon: ShoppingBag });
+      list.push({ label: "View Orders", href: `${storeBase}/orders`, icon: ShoppingBag });
     }
     if (checkAccess("pos:read", "pos")) {
-      list.push({ label: isBn ? "পিওএস টার্মিনাল" : "Open POS Terminal", href: `${storeBase}/pos`, icon: Calculator });
+      list.push({ label: "POS Terminal", href: `${storeBase}/pos`, icon: Calculator });
     }
     if (checkAccess("procurement:read", "purchase_orders")) {
-      list.push({ label: isBn ? "নতুন পারচেজ অর্ডার" : "New Purchase Order", href: `${storeBase}/inventory/purchasing`, icon: Boxes });
+      list.push({ label: "New PO", href: `${storeBase}/inventory/purchasing`, icon: Boxes });
     }
     if (checkAccess("finance:read", "expenses")) {
-      list.push({ label: isBn ? "নতুন খরচ রেকর্ড" : "Record Expense", href: `${storeBase}/finance/expenses`, icon: Receipt });
+      list.push({ label: "Record Expense", href: `${storeBase}/finance/expenses`, icon: Receipt });
     }
     if (checkAccess("hrm:read", "employees")) {
-      list.push({ label: isBn ? "নতুন কর্মী যুক্ত করুন" : "Add Employee", href: `${storeBase}/hrm/employees`, icon: Users });
+      list.push({ label: "Add Employee", href: `${storeBase}/hrm/employees`, icon: Users });
     }
     if (checkAccess("settings:read")) {
-      list.push({ label: isBn ? "স্টোর সেটিংস" : "Store Settings", href: `${storeBase}/settings`, icon: Settings });
+      list.push({ label: "Store Settings", href: `${storeBase}/settings`, icon: Settings });
     }
 
     return list;
-  }, [checkAccess, isBn, storeBase]);
+  }, [checkAccess, storeBase]);
 
   return (
     <DashboardHeaderChrome
       pageTitle={pageTitle}
       quickActions={quickActions}
       searchResults={searchResults}
-      searchPlaceholder={isBn ? "সার্চ করুন... ⌘K" : "Search store pages... ⌘K"}
+      searchPlaceholder="Search store pages... ⌘K"
       onMenuClick={onMenuClick}
       compactNotifications
       showWorkspaceSwitcher={false}
@@ -396,7 +390,7 @@ function StoreDashboardHeader({
         <>
           <li className="inline-flex items-center gap-1">
             <Link href="/workshops" className="transition-colors text-zinc-500 hover:text-zinc-900 dark:hover:text-white font-medium">
-              {isBn ? "ওয়ার্কস্পেস" : "Workspace"}
+              Workspace
             </Link>
           </li>
           <li className="inline-flex items-center">
@@ -443,7 +437,6 @@ function DashboardHeaderChrome({
 }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { language, t } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const quickRef = useRef<HTMLDivElement>(null);
@@ -513,7 +506,7 @@ function DashboardHeaderChrome({
             type="button"
             onClick={openMobileSidebar}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 lg:hidden hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-colors"
-            aria-label={false ? "মেনু খুলুন" : "Open menu"}
+            aria-label="Open menu"
           >
             <Menu className="h-4 w-4" />
           </button>
@@ -547,7 +540,7 @@ function DashboardHeaderChrome({
             type="button"
             onClick={() => setSearchOpen(true)}
             className="flex h-8.5 w-8.5 items-center justify-center rounded-lg border border-zinc-200/90 bg-white text-zinc-600 md:hidden hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors shadow-2xs"
-            aria-label={t.header.searchPlaceholder}
+            aria-label={searchPlaceholder}
           >
             <Search className="h-4 w-4" />
           </button>
@@ -566,7 +559,7 @@ function DashboardHeaderChrome({
                 className="h-8.5 rounded-lg px-2.5 text-xs font-semibold shadow-2xs gap-1.5"
               >
                 <Plus className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
-                <span className="hidden sm:inline">{false ? "তৈরি করুন" : "Create"}</span>
+                <span className="hidden sm:inline">Create</span>
               </Button>
 
               {quickOpen && (
@@ -575,7 +568,7 @@ function DashboardHeaderChrome({
                   className="absolute right-0 top-[calc(100%+6px)] z-50 w-52 overflow-hidden rounded-xl border border-zinc-200/90 bg-white p-1 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 animate-in fade-in-50 zoom-in-95 duration-100"
                 >
                   <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                    {false ? "কুইক অ্যাকশন" : "Quick Actions"}
+                    Quick Actions
                   </div>
                   <div className="space-y-0.5">
                     {quickActions.map((action) =>
@@ -662,7 +655,7 @@ function DashboardHeaderChrome({
               <div className="max-h-80 overflow-y-auto p-1.5 space-y-0.5">
                 {filteredResults.length === 0 ? (
                   <p className="px-3 py-8 text-center text-xs text-zinc-400">
-                    {t.header.noResultsFound}
+                    No results found
                   </p>
                 ) : (
                   filteredResults.map((item) => (

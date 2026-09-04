@@ -150,6 +150,7 @@ const planFeatureSchema = new Schema({
   advancedTracking: { type: Boolean, default: false },
   // ── HRM / People Module ──────────────────────────────────────
   hrm: { type: Boolean, default: false },
+  hrmEmployees: { type: Boolean, default: false },
   hrmAttendance: { type: Boolean, default: false },
   hrmPayroll: { type: Boolean, default: false },
   hrmLeave: { type: Boolean, default: false },
@@ -159,6 +160,13 @@ const planFeatureSchema = new Schema({
   // ── CRM & Operations ──────────────────────────────────────────
   crm: { type: Boolean, default: false },
   operations: { type: Boolean, default: false },
+  // ── ERP Suite ─────────────────────────────────────────────────
+  erpCore: { type: Boolean, default: false },
+  erpFinance: { type: Boolean, default: false },
+  erpInventory: { type: Boolean, default: false },
+  erpProcurement: { type: Boolean, default: false },
+  erpManufacturing: { type: Boolean, default: false },
+  erpProjects: { type: Boolean, default: false },
 }, { _id: false });
 
 const planCourierAccessSchema = new Schema(

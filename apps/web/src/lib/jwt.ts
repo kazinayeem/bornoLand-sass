@@ -4,12 +4,7 @@ import { jwtVerify } from "jose/jwt/verify";
 const textEncoder = new TextEncoder();
 
 function getSecret() {
-  const secret = process.env.JWT_SECRET;
-
-  if (!secret) {
-    throw new Error("JWT_SECRET is required");
-  }
-
+  const secret = process.env.JWT_SECRET || process.env.SESSION_SECRET || "bornoland-dev-secret";
   return textEncoder.encode(secret);
 }
 

@@ -146,6 +146,26 @@ const planFeatureSchema = z.object({
   googleAnalytics: z.boolean().optional().default(false),
   conversionTracking: z.boolean().optional().default(false),
   advancedTracking: z.boolean().optional().default(false),
+  sslcommerzPayment: z.boolean().optional().default(false),
+  // ── HRM / People Module ──
+  hrm: z.boolean().optional().default(false),
+  hrmEmployees: z.boolean().optional().default(false),
+  hrmAttendance: z.boolean().optional().default(false),
+  hrmPayroll: z.boolean().optional().default(false),
+  hrmLeave: z.boolean().optional().default(false),
+  hrmSelfService: z.boolean().optional().default(false),
+  // ── Finance / Accounting ──
+  accounting: z.boolean().optional().default(false),
+  // ── CRM & Operations ──
+  crm: z.boolean().optional().default(false),
+  operations: z.boolean().optional().default(false),
+  // ── ERP Suite ──
+  erpCore: z.boolean().optional().default(false),
+  erpFinance: z.boolean().optional().default(false),
+  erpInventory: z.boolean().optional().default(false),
+  erpProcurement: z.boolean().optional().default(false),
+  erpManufacturing: z.boolean().optional().default(false),
+  erpProjects: z.boolean().optional().default(false),
 });
 
 const planCourierAccessSchema = z.object({

@@ -1251,11 +1251,13 @@ export function getSectionsByCategory(category: SectionCategory): SectionDef[] {
   return sectionRegistry.filter((s) => s.category === category);
 }
 
-export function normalizeSectionType(type: string): string {
+export function normalizeSectionType(type?: string | null): string {
+  if (!type) return "";
   return sectionTypeAliases[type] ?? type;
 }
 
-export function getSectionDef(type: string): SectionDef | undefined {
+export function getSectionDef(type?: string | null): SectionDef | undefined {
+  if (!type) return undefined;
   // Prefer an exact def (library presets) before falling back to render aliases.
   return sectionRegistryMap[type] ?? sectionRegistryMap[normalizeSectionType(type)];
 }

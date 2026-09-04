@@ -20,7 +20,8 @@ billingNotificationRouter.get("/", async (request: AuthRequest, response: Respon
   const page = Number(request.query.page ?? 1);
   const limit = Number(request.query.limit ?? 20);
   const unreadOnly = request.query.unreadOnly === "true";
-  const result = await listUserNotifications(request.user!.userId, page, limit, unreadOnly);
+  const storeId = typeof request.query.storeId === "string" && request.query.storeId ? request.query.storeId : undefined;
+  const result = await listUserNotifications(request.user!.userId, page, limit, unreadOnly, storeId);
   return sendSuccess(response, result.data);
 });
 

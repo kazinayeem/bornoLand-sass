@@ -1,7 +1,13 @@
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
+import path from "node:path";
+import dotenvFlow from "dotenv-flow";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+
+dotenvFlow.config({ path: path.resolve(import.meta.dirname, "../../../.."), silent: true });
+dotenvFlow.config({ path: path.resolve(import.meta.dirname, "../../../../../"), silent: true });
+
 import { connectDatabase } from "../../../common/database/connection.js";
 import { UserModel } from "../../users/user.model.js";
 import { StoreModel } from "../../stores/store.model.js";
@@ -41,7 +47,7 @@ describe("Unified Member, RBAC & Modular Entitlement Test Suite", () => {
       name: "Owner A",
       passwordHash: await bcrypt.hash("Password123!", 10),
       tenantId: tenantAId,
-      role: "user",
+      role: "owner",
       status: "active",
     });
     ownerAId = String(ownerA._id);
@@ -97,6 +103,7 @@ describe("Unified Member, RBAC & Modular Entitlement Test Suite", () => {
     await StoreModel.deleteMany({ _id: { $in: [storeAId, storeBId] } });
     await PlanModel.deleteMany({ _id: planModularId });
     await UserModel.deleteMany({ tenantId: tenantAId });
+    await mongoose.disconnect();
   });
 
   it("1. Canonical Module Dependencies: resolves and validates prerequisite chains", () => {
@@ -169,7 +176,7 @@ describe("Unified Member, RBAC & Modular Entitlement Test Suite", () => {
       name: "Existing User",
       passwordHash: await bcrypt.hash(originalPassword, 10),
       tenantId: tenantAId,
-      role: "user",
+      role: "viewer",
       status: "active",
     });
 

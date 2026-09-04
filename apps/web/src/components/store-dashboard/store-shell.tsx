@@ -86,7 +86,7 @@ export function StoreShell({ children }: { children: ReactNode }) {
             This store doesn&apos;t exist or you don&apos;t have access.
           </p>
           <Link
-            href="/dashboard/stores"
+            href="/workshops"
             className="btn-press mt-5 inline-flex items-center gap-2 rounded-pill bg-apple-primary px-[22px] py-[11px] text-body text-apple-on-primary"
           >
             Back to stores

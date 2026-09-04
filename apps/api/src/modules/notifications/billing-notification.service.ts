@@ -37,22 +37,53 @@ function serializeNotification(notification: Record<string, unknown>) {
   };
 }
 
-export async function listUserNotifications(userId: string, page = 1, limit = 20, unreadOnly = false) {
+export async function listUserNotifications(
+  userId: string,
+  page = 1,
+  limit = 20,
+  unreadOnly = false,
+  storeId?: string
+) {
   await connectDatabase();
   const safePage = Math.max(1, page);
   const safeLimit = Math.min(50, Math.max(1, limit));
-  const filter = { userId, ...(unreadOnly ? { isRead: false } : {}) };
+
+  const filter: Record<string, unknown> = {
+    userId: mongoose.Types.ObjectId.isValid(userId) ? new mongoose.Types.ObjectId(userId) : userId,
+    ...(unreadOnly ? { isRead: false } : {}),
+  };
+
+  if (storeId && mongoose.Types.ObjectId.isValid(storeId)) {
+    filter.storeId = new mongoose.Types.ObjectId(storeId);
+  }
+
+  const unreadFilter: Record<string, unknown> = {
+    userId: filter.userId,
+    isRead: false,
+    ...(filter.storeId ? { storeId: filter.storeId } : {}),
+  };
+
   const [notifications, total, unreadCount] = await Promise.all([
-    NotificationModel.find(filter).sort({ createdAt: -1 }).skip((safePage - 1) * safeLimit).limit(safeLimit).lean(),
+    NotificationModel.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit)
+      .lean(),
     NotificationModel.countDocuments(filter),
-    NotificationModel.countDocuments({ userId, isRead: false }),
+    NotificationModel.countDocuments(unreadFilter),
   ]);
+
   return {
     ok: true as const,
     data: {
-      notifications: notifications.map((item) => serializeNotification(item as Record<string, unknown>)),
-      unreadCount,
-      pagination: { page: safePage, limit: safeLimit, total, pages: Math.max(1, Math.ceil(total / safeLimit)) },
+      notifications: (notifications || []).map((item) => serializeNotification(item as Record<string, unknown>)),
+      unreadCount: unreadCount || 0,
+      pagination: {
+        page: safePage,
+        limit: safeLimit,
+        total: total || 0,
+        pages: Math.max(1, Math.ceil((total || 0) / safeLimit)),
+      },
     },
   };
 }

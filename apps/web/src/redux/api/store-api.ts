@@ -159,8 +159,10 @@ export type PlanFeatureToggles = {
   googleAnalytics: boolean;
   conversionTracking: boolean;
   advancedTracking: boolean;
+  sslcommerzPayment: boolean;
   // ── HRM / People Module ──
   hrm: boolean;
+  hrmEmployees: boolean;
   hrmAttendance: boolean;
   hrmPayroll: boolean;
   hrmLeave: boolean;
@@ -405,19 +407,19 @@ export const storeApi = baseApi.injectEndpoints({
     }),
     createPlan: builder.mutation<ApiEnvelope<{ plan: Plan }>, Omit<Plan, "_id" | "createdAt" | "updatedAt">>({
       query: (body) => ({ url: "/plans", method: "POST", body }),
-      invalidatesTags: ["Stores"]
+      invalidatesTags: ["Stores", "Features"]
     }),
     updatePlan: builder.mutation<ApiEnvelope<{ plan: Plan }>, { id: string; data: Partial<Omit<Plan, "_id" | "createdAt" | "updatedAt">> }>({
       query: ({ id, data }) => ({ url: `/plans/${id}`, method: "PUT", body: data }),
-      invalidatesTags: ["Stores"]
+      invalidatesTags: (_r, _e, { id }) => ["Stores", "Features", { type: "Features", id: `plan-${id}` }]
     }),
     deletePlan: builder.mutation<ApiEnvelope<never>, string>({
       query: (id) => ({ url: `/plans/${id}`, method: "DELETE" }),
-      invalidatesTags: ["Stores"]
+      invalidatesTags: ["Stores", "Features"]
     }),
     duplicatePlan: builder.mutation<ApiEnvelope<{ plan: Plan }>, string>({
       query: (id) => ({ url: `/plans/${id}/duplicate`, method: "POST" }),
-      invalidatesTags: ["Stores"]
+      invalidatesTags: ["Stores", "Features"]
     })
   })
 });

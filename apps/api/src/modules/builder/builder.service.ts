@@ -3,8 +3,28 @@ import { PageModel } from "../../models/page.model.js";
 import { StoreModel } from "../../models/store.model.js";
 import { checkLimit } from "../features/feature-access.service.js";
 
-export async function getPages(storeId: string) {
+async function resolveCanonicalStoreId(storeIdOrSlug: string): Promise<string | null> {
+  if (!storeIdOrSlug) return null;
   await connectDatabase();
+  if (/^[a-f\d]{24}$/i.test(storeIdOrSlug)) {
+    return storeIdOrSlug;
+  }
+  const store = await StoreModel.findOne({
+    $or: [
+      { slug: storeIdOrSlug },
+      { slug: storeIdOrSlug.toLowerCase() },
+      { subdomain: storeIdOrSlug },
+      { subdomain: storeIdOrSlug.toLowerCase() },
+    ],
+  })
+    .select("_id")
+    .lean();
+  return store ? String(store._id) : null;
+}
+
+export async function getPages(storeIdOrSlug: string) {
+  await connectDatabase();
+  const storeId = (await resolveCanonicalStoreId(storeIdOrSlug)) || storeIdOrSlug;
   const pages = await PageModel.find({ storeId }).sort({ createdAt: 1 }).lean();
   return { ok: true as const, data: { pages } };
 }
@@ -60,8 +80,9 @@ const DEFAULT_TEMPLATE_SECTIONS = [
   { id: "simple-footer-1", type: "simple-footer", label: "Footer", visible: true, props: { copyright: "© 2026 Your Store. All rights reserved.", showSocial: "true" } },
 ];
 
-export async function getOrCreateHomePage(storeId: string) {
+export async function getOrCreateHomePage(storeIdOrSlug: string) {
   await connectDatabase();
+  const storeId = (await resolveCanonicalStoreId(storeIdOrSlug)) || storeIdOrSlug;
   let home = await PageModel.findOne({ storeId, isHome: true }).lean() as any;
   if (!home) {
     home = await PageModel.findOne({ storeId, slug: "home" }).lean() as any;

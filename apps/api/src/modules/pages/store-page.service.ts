@@ -85,10 +85,88 @@ function makeToken(): string {
   return crypto.randomBytes(32).toString("hex");
 }
 
+const DEFAULT_INITIAL_HOME_SECTIONS = [
+  {
+    id: "hero-banner-1",
+    type: "hero-banner",
+    label: "Hero Banner",
+    visible: true,
+    props: {
+      headline: "Welcome to Our Store",
+      subheadline: "Discover amazing products and exclusive deals.",
+      buttonText: "Shop Now",
+      buttonLink: "/shop",
+      imageUrl: "",
+      overlayColor: "rgba(15, 23, 42, 0.45)",
+      textAlignment: "left",
+      heroHeight: "md",
+    },
+  },
+  {
+    id: "category-grid-1",
+    type: "category-grid",
+    label: "Featured Categories",
+    visible: true,
+    props: {
+      title: "Shop by Category",
+      subtitle: "Browse through our collection",
+      gridColumns: "4",
+    },
+  },
+  {
+    id: "featured-products-1",
+    type: "featured-products",
+    label: "Featured Products",
+    visible: true,
+    props: {
+      title: "Featured Products",
+      subtitle: "Our best selling items",
+      gridColumns: "4",
+      showBadges: "true",
+      showRatings: "true",
+    },
+  },
+  {
+    id: "newsletter-1",
+    type: "newsletter",
+    label: "Newsletter",
+    visible: true,
+    props: {
+      headline: "Stay in the Loop",
+      subheadline: "Subscribe for exclusive deals and updates.",
+      buttonText: "Subscribe",
+      placeholderText: "Enter your email",
+    },
+  },
+];
+
+/** Resolves an ObjectId or a store slug (e.g. 'nayeem') to a canonical ObjectId string. */
+export async function resolveCanonicalStoreId(storeIdOrSlug: string): Promise<string | null> {
+  if (!storeIdOrSlug) return null;
+  await connectDatabase();
+  if (/^[a-f\d]{24}$/i.test(storeIdOrSlug)) {
+    return storeIdOrSlug;
+  }
+  const store = await StoreModel.findOne({
+    $or: [
+      { slug: storeIdOrSlug },
+      { slug: storeIdOrSlug.toLowerCase() },
+      { subdomain: storeIdOrSlug },
+      { subdomain: storeIdOrSlug.toLowerCase() },
+    ],
+  })
+    .select("_id")
+    .lean();
+  return store ? String(store._id) : null;
+}
+
 // ─── Ensure home page exists ─────────────────────────────────────────────────
 
-export async function ensureHomePage(storeId: string) {
+export async function ensureHomePage(storeIdOrSlug: string) {
   await connectDatabase();
+  const storeId = (await resolveCanonicalStoreId(storeIdOrSlug)) || storeIdOrSlug;
+  if (!/^[a-f\d]{24}$/i.test(storeId)) return null;
+
   const home = await StorePageModel.findOne({ storeId, isHomePage: true, deletedAt: null });
   if (home) return home;
 
@@ -98,23 +176,40 @@ export async function ensureHomePage(storeId: string) {
     return existing;
   }
 
-  return StorePageModel.create({
-    storeId,
-    title: "Home",
-    slug: "/",
-    isHomePage: true,
-    pageType: "home",
-    isSystem: true,
-    status: "published",
-    sortOrder: 0,
-    settings: { layoutWidth: "1200px" },
-  });
+  const store = await StoreModel.findById(storeId).select("theme tenantId").lean();
+
+  try {
+    return await StorePageModel.create({
+      storeId,
+      tenantId: (store as any)?.tenantId,
+      title: "Home",
+      slug: "/",
+      isHomePage: true,
+      pageType: "home",
+      isSystem: true,
+      status: "published",
+      sortOrder: 0,
+      sections: DEFAULT_INITIAL_HOME_SECTIONS,
+      theme: (store as any)?.theme ?? {},
+      settings: { layoutWidth: "1200px" },
+    });
+  } catch (error: unknown) {
+    const mongoError = error as { code?: number };
+    if (mongoError.code === 11000) {
+      const existingAfterRace = await StorePageModel.findOne({ storeId, slug: "/", deletedAt: null });
+      if (existingAfterRace) return existingAfterRace;
+    }
+    throw error;
+  }
 }
 
 // ─── Ensure all default system pages exist ────────────────────────────────────
 
-export async function ensureDefaultPages(storeId: string) {
+export async function ensureDefaultPages(storeIdOrSlug: string) {
   await connectDatabase();
+  const storeId = (await resolveCanonicalStoreId(storeIdOrSlug)) || storeIdOrSlug;
+  if (!/^[a-f\d]{24}$/i.test(storeId)) return;
+
   const store = await StoreModel.findById(storeId).lean();
   if (!store) return;
 
@@ -142,7 +237,7 @@ export async function ensureDefaultPages(storeId: string) {
     tenantId: (store as any).tenantId,
     title: def.title,
     slug: existingSlugs.has(def.slug)
-      ? `${def.slug}-${Date.now()}`
+      ? `${def.slug}-${Date.now()}-${i}`
       : def.slug,
     description: def.description,
     pageType: def.pageType,
@@ -153,13 +248,21 @@ export async function ensureDefaultPages(storeId: string) {
     settings: (def.settings ?? {}) as Record<string, unknown>,
   }));
 
-  await StorePageModel.insertMany(docs);
+  try {
+    await StorePageModel.insertMany(docs, { ordered: false });
+  } catch {
+    // Ignore duplicate key collision during concurrent initialization
+  }
 }
 
 // ─── List pages with tree ────────────────────────────────────────────────────
 
-export async function listStorePages(storeId: string) {
+export async function listStorePages(storeIdOrSlug: string) {
   await connectDatabase();
+  const storeId = (await resolveCanonicalStoreId(storeIdOrSlug)) || storeIdOrSlug;
+  if (!/^[a-f\d]{24}$/i.test(storeId)) {
+    return { ok: false as const, message: "Store not found" };
+  }
   await ensureHomePage(storeId);
   await ensureDefaultPages(storeId);
 
@@ -206,9 +309,16 @@ export async function getStorePage(pageId: string) {
   return { ok: true as const, data: { page } };
 }
 
-export async function getStorePageBySlug(storeId: string, slug: string) {
+export async function getStorePageBySlug(storeIdOrSlug: string, slug: string) {
   await connectDatabase();
-  const page = await StorePageModel.findOne({ storeId, slug, deletedAt: null }).lean();
+  const storeId = (await resolveCanonicalStoreId(storeIdOrSlug)) || storeIdOrSlug;
+  if (!/^[a-f\d]{24}$/i.test(storeId)) return { ok: false as const, message: "Store not found" };
+  const normalizedSlug = slug.startsWith("/") ? slug : `/${slug}`;
+  const page = await StorePageModel.findOne({
+    storeId,
+    $or: [{ slug: normalizedSlug }, { slug: slug }],
+    deletedAt: null,
+  }).lean();
   if (!page) return { ok: false as const, message: "Page not found" };
   return { ok: true as const, data: { page } };
 }
@@ -236,7 +346,7 @@ export async function listDeletedStorePages(storeId: string) {
 // ─── Create page ─────────────────────────────────────────────────────────────
 
 export async function createStorePage(
-  storeId: string,
+  storeIdOrSlug: string,
   payload: {
     title: string;
     slug: string;
@@ -256,6 +366,8 @@ export async function createStorePage(
   }
 ) {
   await connectDatabase();
+  const storeId = (await resolveCanonicalStoreId(storeIdOrSlug)) || storeIdOrSlug;
+  if (!/^[a-f\d]{24}$/i.test(storeId)) return { ok: false as const, message: "Store not found" };
 
   if (!payload.isFolder) {
     const limitResult = await checkLimit(storeId, "builderPages");
@@ -306,10 +418,11 @@ export async function createStorePage(
 
 export async function updateStorePage(
   pageId: string,
-  storeId: string,
+  storeIdOrSlug: string,
   payload: Record<string, unknown>
 ) {
   await connectDatabase();
+  const storeId = (await resolveCanonicalStoreId(storeIdOrSlug)) || storeIdOrSlug;
   const existing = await StorePageModel.findOne({ _id: pageId, storeId, deletedAt: null });
   if (!existing) return { ok: false as const, message: "Page not found" };
 
@@ -683,7 +796,7 @@ export async function importPageSections(
 
 export async function saveStorePageDraft(
   pageId: string,
-  storeId: string,
+  storeIdOrSlug: string,
   payload: {
     sections?: unknown[];
     headerSections?: unknown[];
@@ -698,6 +811,7 @@ export async function saveStorePageDraft(
   }
 ) {
   await connectDatabase();
+  const storeId = (await resolveCanonicalStoreId(storeIdOrSlug)) || storeIdOrSlug;
   const existing = await StorePageModel.findOne({ _id: pageId, storeId, deletedAt: null });
   if (!existing) return { ok: false as const, message: "Page not found" };
 

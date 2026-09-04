@@ -38,13 +38,21 @@ export function StoreProvider({
   children,
   initialStore,
   initialContext,
+  storeSlug: explicitStoreSlug,
 }: {
   children: ReactNode;
   initialStore?: Store | null;
   initialContext?: StoreContextData | null;
+  storeSlug?: string;
 }) {
   const params = useParams();
-  const storeSlug = typeof params.storeSlug === "string" ? params.storeSlug : "";
+  const rawParamSlug =
+    typeof params?.storeSlug === "string"
+      ? params.storeSlug
+      : Array.isArray(params?.storeSlug)
+        ? params.storeSlug[0]
+        : "";
+  const storeSlug = explicitStoreSlug || rawParamSlug || initialStore?.slug || initialContext?.store?.slug || "";
   const dispatch = useDispatch();
 
   const query = useGetStoreContextBySlugQuery(storeSlug, {
@@ -129,5 +137,6 @@ export function useRequiredStore() {
     ...context,
     store: context.store,
     storeId: context.storeId,
+    storeSlug: context.storeSlug || context.store.slug,
   };
 }

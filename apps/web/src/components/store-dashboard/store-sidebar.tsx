@@ -206,7 +206,7 @@ function SidebarStoreSwitcher({
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors"
             >
-              <Store className="h-3.5 w-3.5 text-zinc-500" />
+              <StoreIcon className="h-3.5 w-3.5 text-zinc-500" />
               <span>{isBn ? "মার্চেন্ট ওয়ার্কস্পেস" : "Merchant Workspace"}</span>
             </Link>
             <Link

@@ -21,11 +21,19 @@ export function getNotificationStyle(type: string) {
   return styles[type] ?? { icon: Bell, label: type.replace(/_/g, " "), className: "bg-zinc-100 text-apple-ink-muted-80" };
 }
 
-export function timeAgo(value: string) {
-  const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
+export function timeAgo(value: string | undefined | null) {
+  if (!value) return "Just now";
+  const date = new Date(value);
+  const time = date.getTime();
+  if (isNaN(time)) return "Just now";
+  const seconds = Math.max(0, Math.floor((Date.now() - time) / 1000));
   if (seconds < 45) return "Just now";
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(value));
+  try {
+    return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date);
+  } catch {
+    return "Recently";
+  }
 }

@@ -2,8 +2,9 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Loader2, Save, Zap, Shield, HardDrive, DollarSign, Eye, Clock } from "lucide-react";
+import { ChevronDown, Loader2, Save, Check, Zap, Shield, HardDrive, DollarSign, Eye, Clock, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import type { Plan, PlanLimits, PlanFeatureToggles, PlanCourierAccess } from "@/redux/api/store-api";
 import type { PlatformFeature } from "@/redux/api/feature-api";
 import { useUpdatePlanMutation } from "@/redux/api/store-api";
@@ -12,37 +13,85 @@ import { AdminTabs } from "@/components/admin/admin-tabs";
 import { PlanPreviewCard } from "@/components/admin/plans/plan-preview-card";
 
 const FEATURE_KEY_TO_TOGGLE: Partial<Record<string, keyof PlanFeatureToggles>> = {
+  // Products & Commerce
+  product_variants: "productVariants",
+  productVariants: "productVariants",
+  abandoned_cart: "abandonedCart",
+  abandonedCart: "abandonedCart",
+  incomplete_orders: "incompleteOrders",
+  incompleteOrders: "incompleteOrders",
+  checkout_recovery: "checkoutRecovery",
+  checkoutRecovery: "checkoutRecovery",
+  recovery_analytics: "recoveryAnalytics",
+  recoveryAnalytics: "recoveryAnalytics",
+  courier: "courier",
+  sslcommerz_payment: "sslcommerzPayment",
+  sslcommerzPayment: "sslcommerzPayment",
+  // Inventory Management
   inventory: "inventory",
   inventory_history: "inventoryHistory",
+  inventoryHistory: "inventoryHistory",
   price_history: "priceHistory",
+  priceHistory: "priceHistory",
   cost_history: "costHistory",
+  costHistory: "costHistory",
   suppliers: "suppliers",
   purchase_orders: "purchaseOrders",
+  purchaseOrders: "purchaseOrders",
   batch_fifo: "batchFifo",
+  batchFifo: "batchFifo",
   warehouses: "warehousesEnabled",
+  warehousesEnabled: "warehousesEnabled",
   barcode: "barcode",
   inventory_reports: "inventoryReports",
+  inventoryReports: "inventoryReports",
   low_stock_alerts: "lowStockAlerts",
+  lowStockAlerts: "lowStockAlerts",
   stock_transfer: "stockTransfer",
+  stockTransfer: "stockTransfer",
   inventory_audit_log: "inventoryAuditLog",
-  courier: "courier",
+  inventoryAuditLog: "inventoryAuditLog",
+  // Content & Pages
+  cms: "cms",
+  page_builder: "pageBuilder",
+  pageBuilder: "pageBuilder",
+  media: "mediaLibrary",
+  mediaLibrary: "mediaLibrary",
+  builder: "dragDropBuilder",
+  dragDropBuilder: "dragDropBuilder",
+  theme_builder: "themeEditor",
+  themeEditor: "themeEditor",
+  // Marketing & Tracking
   meta_pixel: "metaPixel",
+  metaPixel: "metaPixel",
   tiktok_pixel: "tiktokPixel",
+  tiktokPixel: "tiktokPixel",
   custom_tracking: "customTracking",
+  customTracking: "customTracking",
   google_analytics: "googleAnalytics",
+  googleAnalytics: "googleAnalytics",
   conversion_tracking: "conversionTracking",
+  conversionTracking: "conversionTracking",
   advanced_tracking: "advancedTracking",
-  incomplete_orders: "incompleteOrders",
-  abandoned_cart: "abandonedCart",
-  checkout_recovery: "checkoutRecovery",
-  recovery_analytics: "recoveryAnalytics",
+  advancedTracking: "advancedTracking",
+  // Platform & Analytics
+  analytics: "advancedAnalytics",
+  advancedAnalytics: "advancedAnalytics",
+  reports: "reports",
+  staff: "staffManagement",
+  staffManagement: "staffManagement",
   // HRM Module
   hrm: "hrm",
-  employees: "hrm",
+  employees: "hrmEmployees",
+  hrmEmployees: "hrmEmployees",
   attendance: "hrmAttendance",
+  hrmAttendance: "hrmAttendance",
   leave_mgmt: "hrmLeave",
+  hrmLeave: "hrmLeave",
   payroll: "hrmPayroll",
+  hrmPayroll: "hrmPayroll",
   self_service: "hrmSelfService",
+  hrmSelfService: "hrmSelfService",
   // POS Module
   pos: "pos",
   // Accounting Module
@@ -52,11 +101,17 @@ const FEATURE_KEY_TO_TOGGLE: Partial<Record<string, keyof PlanFeatureToggles>> =
   operations: "operations",
   // ERP Suite
   erp_core: "erpCore",
+  erpCore: "erpCore",
   erp_finance: "erpFinance",
+  erpFinance: "erpFinance",
   erp_inventory: "erpInventory",
+  erpInventory: "erpInventory",
   erp_procurement: "erpProcurement",
+  erpProcurement: "erpProcurement",
   erp_manufacturing: "erpManufacturing",
+  erpManufacturing: "erpManufacturing",
   erp_projects: "erpProjects",
+  erpProjects: "erpProjects",
 };
 
 const COURIER_PROVIDER_OPTIONS: Array<{
@@ -249,6 +304,7 @@ const FEATURE_GROUPS: PlanBuilderFeatureGroup[] = [
     key: "hrm", label: "HR & Employee Management",
     toggles: [
       { key: "hrm", label: "HRM Module", description: "Full HR & Employee management module access" },
+      { key: "hrmEmployees", label: "Employee Directory", description: "Employee profiles, IDs, contracts and documents" },
       { key: "hrmAttendance", label: "Attendance Tracking", description: "Daily clock-ins, clock-outs, shifts and overtime" },
       { key: "hrmLeave", label: "Leave Management", description: "Leave requests, approval workflows and annual balances" },
       { key: "hrmPayroll", label: "Payroll & Payslips", description: "Monthly salary generation, deductions and official payslips" },
@@ -266,6 +322,17 @@ const FEATURE_GROUPS: PlanBuilderFeatureGroup[] = [
     toggles: [
       { key: "crm", label: "CRM & Support Desk", description: "Lead management, deals pipeline, customer 360 and support tickets" },
       { key: "operations", label: "Approvals & Workflow", description: "Multi-step approval engine and centralized task management" },
+    ],
+  },
+  {
+    key: "erp_suite", label: "ERP Suite",
+    toggles: [
+      { key: "erpCore", label: "ERP Core", description: "Central ERP dashboard with cross-module analytics and unified workflows" },
+      { key: "erpFinance", label: "ERP Finance", description: "Integrated financial management: GL, AP, AR, fixed assets, budgeting" },
+      { key: "erpInventory", label: "ERP Inventory", description: "Advanced inventory: multi-warehouse, lot/serial tracking, demand planning" },
+      { key: "erpProcurement", label: "ERP Procurement", description: "Purchase requisitions, vendor management, contract management, RFQ" },
+      { key: "erpManufacturing", label: "ERP Manufacturing", description: "BOM, work orders, routing, shop floor control, MRP" },
+      { key: "erpProjects", label: "ERP Projects", description: "Project accounting, resource planning, time & expense, billing" },
     ],
   },
 ];
@@ -479,6 +546,7 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     analyticsExport: plan.featureToggles?.analyticsExport ?? false,
     reports: plan.featureToggles?.reports ?? false,
     courier: plan.featureToggles?.courier ?? plan.courierAccess?.enabled ?? false,
+    sslcommerzPayment: plan.featureToggles?.sslcommerzPayment ?? false,
     metaPixel: plan.featureToggles?.metaPixel ?? false,
     tiktokPixel: plan.featureToggles?.tiktokPixel ?? false,
     customTracking: plan.featureToggles?.customTracking ?? false,
@@ -487,6 +555,7 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     advancedTracking: plan.featureToggles?.advancedTracking ?? false,
     // HRM Module
     hrm: plan.featureToggles?.hrm ?? false,
+    hrmEmployees: plan.featureToggles?.hrmEmployees ?? false,
     hrmAttendance: plan.featureToggles?.hrmAttendance ?? false,
     hrmPayroll: plan.featureToggles?.hrmPayroll ?? false,
     hrmLeave: plan.featureToggles?.hrmLeave ?? false,
@@ -577,7 +646,36 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     setToggles((t) => ({ ...t, courier: checked }));
   }, []);
 
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [initialSnapshot, setInitialSnapshot] = useState<string>("");
+
+  const currentSnapshot = useMemo(() => JSON.stringify({
+    name, slug, description, priceBDT, priceYearly, isCustomPrice, trialDays,
+    sortOrder, visible, isRecommended, isPopular, isActive, customDomain, prioritySupport,
+    featureText, pricing, limits, toggles, courierAccess
+  }), [name, slug, description, priceBDT, priceYearly, isCustomPrice, trialDays, sortOrder, visible, isRecommended, isPopular, isActive, customDomain, prioritySupport, featureText, pricing, limits, toggles, courierAccess]);
+
+  useEffect(() => {
+    if (!initialSnapshot) {
+      setInitialSnapshot(currentSnapshot);
+    }
+  }, [currentSnapshot, initialSnapshot]);
+
+  const hasUnsavedChanges = Boolean(initialSnapshot && currentSnapshot !== initialSnapshot);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
   const handleSave = async () => {
+    if (isSaving) return;
     const payload = {
       name,
       slug,
@@ -617,9 +715,11 @@ export function PlanBuilder({ plan, initialTab }: Props) {
 
     try {
       await updatePlan({ id: plan._id, data: payload }).unwrap();
+      setInitialSnapshot(currentSnapshot);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
       toast.success("Plan saved successfully");
     } catch (error) {
-
       const msg =
         error && typeof error === "object" && "data" in error
           ? (error as { data: { message?: string } }).data?.message ?? "Failed to save plan"
@@ -630,6 +730,22 @@ export function PlanBuilder({ plan, initialTab }: Props) {
 
   return (
     <div className="space-y-6">
+      {hasUnsavedChanges && (
+        <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span>You have unsaved changes in this plan configuration.</span>
+          </div>
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="font-semibold text-amber-900 underline hover:text-amber-950 dark:text-amber-200"
+          >
+            Save now
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-apple-ink">{plan.name}</h1>
@@ -638,10 +754,27 @@ export function PlanBuilder({ plan, initialTab }: Props) {
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+          className={cn(
+            "inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50",
+            saveSuccess ? "bg-emerald-600 hover:bg-emerald-700" : "bg-blue-600 hover:bg-blue-700"
+          )}
         >
-          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {isSaving ? "Saving..." : "Save Plan"}
+          {isSaving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Saving...</span>
+            </>
+          ) : saveSuccess ? (
+            <>
+              <Check className="h-4 w-4" />
+              <span>Changes Saved</span>
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              <span>Save Plan</span>
+            </>
+          )}
         </button>
       </div>
 

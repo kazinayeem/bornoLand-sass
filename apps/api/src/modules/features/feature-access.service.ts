@@ -156,7 +156,7 @@ export async function syncStoreUsage(storeId: string, force = false) {
   return usage as Record<string, number> | null;
 }
 
-const TOGGLE_KEY_MAP: Record<string, string[]> = {
+export const TOGGLE_KEY_MAP: Record<string, string[]> = {
   inventory: ["inventory"],
   inventory_history: ["inventoryHistory"],
   price_history: ["priceHistory"],
@@ -171,6 +171,7 @@ const TOGGLE_KEY_MAP: Record<string, string[]> = {
   stock_transfer: ["stockTransfer"],
   inventory_audit_log: ["inventoryAuditLog"],
   courier: ["courier"],
+  sslcommerz_payment: ["sslcommerzPayment"],
   meta_pixel: ["metaPixel"],
   tiktok_pixel: ["tiktokPixel"],
   custom_tracking: ["customTracking"],
@@ -185,8 +186,20 @@ const TOGGLE_KEY_MAP: Record<string, string[]> = {
   coupons: ["coupons"],
   custom_domain: ["customDomain"],
   seo: ["seo"],
+  cms: ["cms"],
+  page_builder: ["pageBuilder", "page_builder", "pages", "builder", "dragDropBuilder"],
+  pageBuilder: ["pageBuilder", "page_builder", "pages", "builder", "dragDropBuilder"],
+  media: ["mediaLibrary"],
+  builder: ["dragDropBuilder", "builder", "pageBuilder", "page_builder"],
+  dragDropBuilder: ["dragDropBuilder", "builder", "pageBuilder", "page_builder"],
+  theme_builder: ["themeEditor", "theme_builder", "themes", "activeThemes"],
+  themeEditor: ["themeEditor", "theme_builder", "themes", "activeThemes"],
+  analytics: ["advancedAnalytics", "visitorAnalytics"],
+  reports: ["reports"],
+  staff: ["staffManagement"],
   // HRM Module
   hrm: ["hrm"],
+  employees: ["hrmEmployees", "employees"],
   attendance: ["hrmAttendance"],
   leave_mgmt: ["hrmLeave"],
   payroll: ["hrmPayroll"],

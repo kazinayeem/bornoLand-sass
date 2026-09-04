@@ -375,7 +375,7 @@ export function PlanBuilder({ plan, initialTab }: Props) {
       .map(([groupKey, groupFeatures]) => ({
         key: groupKey,
         label: groupMap.get(groupKey)?.name ?? defaultGroup.name,
-        features: groupFeatures.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+        features: [...groupFeatures].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
         sortOrder: groupMap.get(groupKey)?.sortOrder ?? defaultGroup.sortOrder,
       }))
       .sort((a, b) => a.sortOrder - b.sortOrder);

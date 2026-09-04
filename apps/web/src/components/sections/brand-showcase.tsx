@@ -47,7 +47,7 @@ export function BrandShowcase({ section }: { section: SectionData }) {
     if (source === "featured") {
       list = list.filter((b) => b.featured);
     } else if (source === "popular") {
-      list = list.sort((a, b) => (b.sortOrder ?? 0) - (a.sortOrder ?? 0));
+      list = [...list].sort((a, b) => (b.sortOrder ?? 0) - (a.sortOrder ?? 0));
     }
 
     return list.slice(0, limit);

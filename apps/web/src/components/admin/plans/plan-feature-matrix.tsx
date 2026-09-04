@@ -121,7 +121,7 @@ export function PlanFeatureMatrix({ plans }: { plans: Plan[] }) {
               return (
                 <Fragment key={groupKey}>
                   <GroupHeader groupName={groupName} />
-                  {groupFeatures
+                  {[...groupFeatures]
                     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
                     .map((feature) => (
                       <tr key={feature.key} className="border-b border-zinc-50 hover:bg-apple-canvas-parchment/50">

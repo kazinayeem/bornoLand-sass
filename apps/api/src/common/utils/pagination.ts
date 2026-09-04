@@ -18,6 +18,7 @@ export interface ListQueryParams extends PaginationParams {
   stockStatus?: string;
   priceMin?: number;
   priceMax?: number;
+  view?: string;
 }
 
 export interface PaginationMeta {
@@ -79,6 +80,7 @@ export function parseListQuery(query: Record<string, unknown>): ListQueryParams 
     stockStatus: query.stockStatus ? String(query.stockStatus) : undefined,
     priceMin: priceMinRaw !== undefined && priceMinRaw !== "" ? Number(priceMinRaw) : undefined,
     priceMax: priceMaxRaw !== undefined && priceMaxRaw !== "" ? Number(priceMaxRaw) : undefined,
+    view: query.view ? String(query.view) : undefined,
   };
 }
 

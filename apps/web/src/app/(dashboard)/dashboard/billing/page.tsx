@@ -12,7 +12,7 @@ import { useLanguage } from "@/providers/language-provider";
 
 export default function WorkspaceBillingPage() {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const { data, isLoading } = useGetMyStoresQuery();
   const { data: plansData } = useGetPlansQuery();
   const stores = data?.data?.stores ?? [];

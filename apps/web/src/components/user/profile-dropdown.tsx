@@ -25,7 +25,7 @@ export function UserAvatar({
   const fallback = useAppSelector((state) => state.user.profile);
   const { data } = useGetProfileQuery();
   const profile = data?.data?.profile;
-  const name = profile?.name || fallback?.name || (language === "bn" ? "ইউজার" : "User");
+  const name = profile?.name || fallback?.name || (false ? "ইউজার" : "User");
 
   return (
     <>
@@ -88,10 +88,10 @@ export function ProfileDropdown({ compact = false }: { compact?: boolean }) {
     try {
       await logout().unwrap();
       dispatch(clearUserProfile());
-      toast.success(language === "bn" ? "লগআউট সম্পন্ন হয়েছে" : "Signed out successfully");
+      toast.success(false ? "লগআউট সম্পন্ন হয়েছে" : "Signed out successfully");
       window.location.replace("/login");
     } catch {
-      toast.error(language === "bn" ? "লগআউট করা সম্ভব হয়নি। আবার চেষ্টা করুন।" : "Failed to sign out. Please try again.");
+      toast.error(false ? "লগআউট করা সম্ভব হয়নি। আবার চেষ্টা করুন।" : "Failed to sign out. Please try again.");
     }
   };
 
@@ -101,7 +101,7 @@ export function ProfileDropdown({ compact = false }: { compact?: boolean }) {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        aria-label={language === "bn" ? "প্রোফাইল মেনু খুলুন" : "Open profile menu"}
+        aria-label={false ? "প্রোফাইল মেনু খুলুন" : "Open profile menu"}
         className={cn(
           "flex items-center gap-1.5 rounded-full p-0.5 outline-none transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:focus-visible:ring-white/20",
           compact && "rounded-lg border border-zinc-200/80 bg-white p-1 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800"
@@ -123,7 +123,7 @@ export function ProfileDropdown({ compact = false }: { compact?: boolean }) {
               <UserAvatar className="h-9 w-9" />
               <div className="min-w-0">
                 <p className="truncate text-xs font-semibold text-zinc-900 dark:text-white">
-                  {profile?.name || fallback?.name || (language === "bn" ? "ইউজার" : "User")}
+                  {profile?.name || fallback?.name || (false ? "ইউজার" : "User")}
                 </p>
                 <p className="truncate text-[11px] text-zinc-500 font-mono">
                   {profile?.email || fallback?.email}

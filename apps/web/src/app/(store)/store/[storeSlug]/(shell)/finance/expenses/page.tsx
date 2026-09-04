@@ -49,7 +49,7 @@ export default function ExpensesPage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [page, setPage] = useState(1);
   const [categoryFilter, setCategoryFilter] = useState("all");

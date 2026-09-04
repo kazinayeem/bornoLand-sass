@@ -30,7 +30,7 @@ export default function FinancialReportsPage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [activeTab, setActiveTab] = useState("pl");
   const [showPrintModal, setShowPrintModal] = useState(false);

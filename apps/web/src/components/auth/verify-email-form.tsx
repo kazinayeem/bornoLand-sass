@@ -10,7 +10,7 @@ import { useLanguage } from "@/providers/language-provider";
 
 export function VerifyEmailForm({ token: propToken }: { token?: string } = {}) {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const router = useRouter();
   const token = propToken || (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("token") || "" : "");
 

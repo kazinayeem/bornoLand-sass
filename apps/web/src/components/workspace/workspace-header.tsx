@@ -20,7 +20,7 @@ type WorkspaceHeaderProps = {
 
 export function WorkspaceHeader({ store, onSettings, onBuilder }: WorkspaceHeaderProps) {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const router = useRouter();
   const storeUrl = getStoreUrl(store.subdomain || store.slug);
   const [updateStore] = useUpdateStoreMutation();

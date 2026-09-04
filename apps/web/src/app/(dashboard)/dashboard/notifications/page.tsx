@@ -21,7 +21,7 @@ import { useLanguage } from "@/providers/language-provider";
 
 export default function NotificationsPage() {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const { data, isLoading, isFetching } = useGetNotificationsQuery(

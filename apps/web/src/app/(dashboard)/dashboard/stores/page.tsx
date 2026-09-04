@@ -23,7 +23,7 @@ import { useLanguage } from "@/providers/language-provider";
 export default function StoresPage() {
   const router = useRouter();
   const { language, t } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const { data, isLoading, refetch } = useGetMyStoresQuery();
   const { data: plansData } = useGetPlansQuery();
   const { data: templatesData } = useGetTemplatesQuery();

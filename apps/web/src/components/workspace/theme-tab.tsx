@@ -63,7 +63,7 @@ const CATEGORY_ICONS: Record<string, typeof ShoppingBag> = {
 export function ThemeTab({ storeId }: ThemeTabProps) {
   const router = useRouter();
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const { store: storeContext } = useStorePage();
   const user = useAppSelector((s) => s.user.profile);
 

@@ -64,8 +64,8 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
 
   const handleLanguageSelect = (selectedLang: string) => {
     setLanguage(selectedLang);
-    if (selectedLang === "bn" || selectedLang === "en") {
-      setGlobalLanguage(selectedLang as Language);
+    if (selectedLang === "en") {
+      setGlobalLanguage("en");
     }
   };
 
@@ -80,9 +80,9 @@ export function SettingsTab({ storeId }: SettingsTabProps) {
           dateFormat, timezone, language,
         },
       }).unwrap();
-      toast.success(currentGlobalLang === "bn" ? "সেটিংস সফলভাবে সংরক্ষণ করা হয়েছে" : "Settings saved successfully");
+      toast.success("Settings saved successfully");
     } catch {
-      toast.error(currentGlobalLang === "bn" ? "সেটিংস সংরক্ষণ করা যায়নি" : "Failed to save settings");
+      toast.error("Failed to save settings");
     } finally {
       setSaving(false);
     }

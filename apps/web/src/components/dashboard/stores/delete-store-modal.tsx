@@ -94,7 +94,7 @@ export function DeleteStoreModal({
   loading,
 }: DeleteStoreModalProps) {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const [phase, setPhase] = useState<Phase>("warning");
   const [typedText, setTypedText] = useState("");
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);

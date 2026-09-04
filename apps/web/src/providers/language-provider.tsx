@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type Language = "en" | "bn";
+export type Language = "en";
 
 export type Dictionary = {
   navigation: {
@@ -1203,7 +1203,7 @@ const en: Dictionary = {
   },
 };
 
-const dictionaries: Record<Language, Dictionary> = { en, bn };
+const dictionaries: Record<Language, Dictionary> = { en };
 const STORAGE_KEY = "bornoland.language";
 
 type LanguageContextValue = {
@@ -1220,40 +1220,35 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const saved = (localStorage.getItem(STORAGE_KEY) || localStorage.getItem("language")) as Language | null;
-      if (saved === "en" || saved === "bn") {
-        setLanguageState(saved);
-      }
+      localStorage.setItem(STORAGE_KEY, "en");
+      localStorage.setItem("language", "en");
     } catch {
       /* ignore */
     }
   }, []);
 
   useEffect(() => {
-    document.documentElement.lang = language;
-  }, [language]);
+    document.documentElement.lang = "en";
+  }, []);
 
-  const setLanguage = useCallback((next: Language) => {
-    setLanguageState(next);
+  const setLanguage = useCallback((_next: Language) => {
+    setLanguageState("en");
     try {
-      localStorage.setItem(STORAGE_KEY, next);
-      localStorage.setItem("language", next);
+      localStorage.setItem(STORAGE_KEY, "en");
+      localStorage.setItem("language", "en");
     } catch {
       /* ignore */
     }
   }, []);
 
   const toggleLanguage = useCallback(() => {
-    setLanguageState((prev) => {
-      const next: Language = prev === "en" ? "bn" : "en";
-      try {
-        localStorage.setItem(STORAGE_KEY, next);
-        localStorage.setItem("language", next);
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+    setLanguageState("en");
+    try {
+      localStorage.setItem(STORAGE_KEY, "en");
+      localStorage.setItem("language", "en");
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const value = useMemo(

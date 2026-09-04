@@ -13,7 +13,7 @@ import { useLanguage } from "@/providers/language-provider";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [resetPassword] = useResetPasswordMutation();

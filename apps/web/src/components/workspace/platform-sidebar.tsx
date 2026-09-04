@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboard,
   Store,
   CreditCard,
   Users,
@@ -137,12 +136,11 @@ export function PlatformSidebar() {
       // After logout, always go to /login without redirect parameter
       window.location.replace("/login");
     } catch {
-      toast.error(language === "bn" ? "সাইন আউট করতে ব্যর্থ হয়েছে" : "Failed to sign out");
+      toast.error(false ? "সাইন আউট করতে ব্যর্থ হয়েছে" : "Failed to sign out");
     }
   };
 
   const mainNav = [
-    { href: "/dashboard", label: t.navigation.dashboard, icon: LayoutDashboard, exact: true },
     { href: "/workshops", label: t.navigation.stores, icon: Store },
     { href: "/dashboard/plans", label: "Plans & Features", icon: CreditCard },
     { href: "/dashboard/billing", label: t.navigation.billing, icon: CreditCard },
@@ -175,7 +173,7 @@ export function PlatformSidebar() {
     .map((n) => n[0])
     .slice(0, 2)
     .join("")
-    .toUpperCase() ?? (language === "bn" ? "ইউ" : "U");
+    .toUpperCase() ?? (false ? "ইউ" : "U");
 
   const sidebarContent = (
     <>
@@ -316,7 +314,7 @@ export function PlatformSidebar() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px] font-medium text-apple-ink dark:text-white">
-                {user?.name ?? (language === "bn" ? "ইউজার" : "User")}
+                {user?.name ?? (false ? "ইউজার" : "User")}
               </p>
               <p className="truncate text-[11px] text-apple-ink-muted-48 dark:text-apple-body-muted">
                 {user?.email ?? ""}

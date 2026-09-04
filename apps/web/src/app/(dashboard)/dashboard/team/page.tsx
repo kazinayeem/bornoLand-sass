@@ -10,7 +10,7 @@ import { useLanguage } from "@/providers/language-provider";
 export default function TeamPage() {
   const { language } = useLanguage();
   const user = useAppSelector((s) => s.user.profile);
-  const isBn = language === "bn";
+  const isBn = false;
 
   return (
     <div className="space-y-8">

@@ -91,7 +91,7 @@ function Field({
 
 export function StoreContactTab({ storeId }: StoreContactTabProps) {
   const { language, t } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const { store } = useStorePage();
   const { data: contact, isLoading } = useGetStoreContactQuery(storeId);
   const [updateContact] = useUpdateStoreContactMutation();

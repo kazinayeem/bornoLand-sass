@@ -139,7 +139,7 @@ function WorkspaceDashboardHeader() {
     { label: t.header.upgradePlan, href: "/dashboard/billing", icon: CreditCard },
   ];
 
-  const isBn = language === "bn";
+  const isBn = false;
   const routeObj = workspaceRouteLabels[pathname];
   const pageTitle =
     (routeObj ? routeObj[language] : undefined) ??
@@ -166,7 +166,7 @@ function WorkspaceDashboardHeader() {
       type: isBn ? "দোকান" : "Store",
       category: isBn ? "দোকানসমূহ" : "Stores",
     })),
-    { label: t.navigation.allStores, sub: t.navigation.workspace, href: "/dashboard/stores", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
+    { label: t.navigation.allStores, sub: t.navigation.workspace, href: "/workshops", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
     { label: t.navigation.createStore, sub: t.navigation.workspace, href: "/dashboard/stores/create", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
     { label: t.navigation.billing, sub: t.navigation.workspace, href: "/dashboard/billing", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
     { label: t.navigation.team, sub: t.navigation.workspace, href: "/dashboard/team", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
@@ -241,7 +241,7 @@ function StoreDashboardHeader({
 
   const storeBase = `/store/${store.slug}`;
   const dashboardHref = `${storeBase}/dashboard`;
-  const isBn = language === "bn";
+  const isBn = false;
 
   const { pageTitle, breadcrumbs, searchResults } = useMemo(() => {
     const defaultDashTitle = t.navigation.dashboard;
@@ -395,7 +395,7 @@ function StoreDashboardHeader({
       breadcrumb={
         <>
           <li className="inline-flex items-center gap-1">
-            <Link href="/dashboard" className="transition-colors text-zinc-500 hover:text-zinc-900 dark:hover:text-white font-medium">
+            <Link href="/workshops" className="transition-colors text-zinc-500 hover:text-zinc-900 dark:hover:text-white font-medium">
               {isBn ? "ওয়ার্কস্পেস" : "Workspace"}
             </Link>
           </li>
@@ -513,7 +513,7 @@ function DashboardHeaderChrome({
             type="button"
             onClick={openMobileSidebar}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 lg:hidden hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-colors"
-            aria-label={language === "bn" ? "মেনু খুলুন" : "Open menu"}
+            aria-label={false ? "মেনু খুলুন" : "Open menu"}
           >
             <Menu className="h-4 w-4" />
           </button>
@@ -566,7 +566,7 @@ function DashboardHeaderChrome({
                 className="h-8.5 rounded-lg px-2.5 text-xs font-semibold shadow-2xs gap-1.5"
               >
                 <Plus className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
-                <span className="hidden sm:inline">{language === "bn" ? "তৈরি করুন" : "Create"}</span>
+                <span className="hidden sm:inline">{false ? "তৈরি করুন" : "Create"}</span>
               </Button>
 
               {quickOpen && (
@@ -575,7 +575,7 @@ function DashboardHeaderChrome({
                   className="absolute right-0 top-[calc(100%+6px)] z-50 w-52 overflow-hidden rounded-xl border border-zinc-200/90 bg-white p-1 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 animate-in fade-in-50 zoom-in-95 duration-100"
                 >
                   <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                    {language === "bn" ? "কুইক অ্যাকশন" : "Quick Actions"}
+                    {false ? "কুইক অ্যাকশন" : "Quick Actions"}
                   </div>
                   <div className="space-y-0.5">
                     {quickActions.map((action) =>

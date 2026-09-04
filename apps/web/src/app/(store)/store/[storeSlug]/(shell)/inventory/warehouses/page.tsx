@@ -40,7 +40,7 @@ export default function WarehousesPage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState("");

@@ -180,7 +180,7 @@ export function EmployeeSidebar({
   onNavigate?: () => void;
 }) {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const basePath = `/store/${store.slug}`;
   const [logout] = useLogoutMutation();
 

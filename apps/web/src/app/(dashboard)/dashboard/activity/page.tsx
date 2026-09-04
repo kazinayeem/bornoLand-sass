@@ -38,7 +38,7 @@ const labels: Record<string, string> = {
 
 export default function WorkspaceActivityPage() {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const [page, setPage] = useState(1);
   const { data, isLoading } = useGetProfileActivityQuery({ page, limit: 15 });
   const activities = data?.data?.activities ?? [];

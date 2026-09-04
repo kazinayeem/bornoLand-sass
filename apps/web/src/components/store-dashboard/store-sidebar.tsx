@@ -95,7 +95,7 @@ function SidebarStoreSwitcher({
   const stores = storesData?.data?.stores ?? [];
   const status = resolveStoreStatus(store);
   const domain = getStoreDisplayDomain(store.slug);
-  const isBn = language === "bn";
+  const isBn = false;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -202,12 +202,12 @@ function SidebarStoreSwitcher({
 
           <div className="mt-1 border-t border-zinc-100 pt-1 dark:border-zinc-800 space-y-0.5">
             <Link
-              href="/dashboard"
+              href="/workshops"
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors"
             >
-              <LayoutDashboard className="h-3.5 w-3.5 text-zinc-500" />
-              <span>{isBn ? "ওয়ার্কস্পেস ড্যাশবোর্ড" : "Workspace Dashboard"}</span>
+              <Store className="h-3.5 w-3.5 text-zinc-500" />
+              <span>{isBn ? "মার্চেন্ট ওয়ার্কস্পেস" : "Merchant Workspace"}</span>
             </Link>
             <Link
               href="/dashboard/stores/create"
@@ -352,7 +352,7 @@ export function StoreSidebar({
   onNavigate?: () => void;
 }) {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const basePath = `/store/${store.slug}`;
 
   // Persist collapsed state

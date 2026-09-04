@@ -53,7 +53,7 @@ type CategoriesTabProps = {
 
 export function CategoriesTab({ storeId, billingHref = "#" }: CategoriesTabProps) {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const { store } = useStorePage();
   const [activeTab, setActiveTab] = useState<TabMode>("categories");
 

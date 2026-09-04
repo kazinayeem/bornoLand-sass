@@ -36,7 +36,7 @@ export function RegisterForm({
   ...props
 }: React.ComponentProps<typeof Card>) {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [registerRequest] = useRegisterMutation();

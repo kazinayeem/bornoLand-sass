@@ -50,7 +50,7 @@ export default function AttendancePage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [clockModal, setClockModal] = useState(false);

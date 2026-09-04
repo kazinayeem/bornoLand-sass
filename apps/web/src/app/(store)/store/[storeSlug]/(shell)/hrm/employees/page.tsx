@@ -55,7 +55,7 @@ export default function EmployeesPage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");

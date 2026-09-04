@@ -12,7 +12,7 @@ import { useLanguage } from "@/providers/language-provider";
 
 export function ForgotPasswordForm() {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const [loading, setLoading] = useState(false);
   const [forgotPassword] = useForgotPasswordMutation();
 

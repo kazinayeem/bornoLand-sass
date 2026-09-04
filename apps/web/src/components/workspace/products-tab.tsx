@@ -82,7 +82,7 @@ function parseJsonArray<T>(value: string | undefined, fallback: T[]): T[] {
 
 export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsTabProps) {
   const { language, t } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const router = useRouter();
   const editorBase = storeSlug ? `/store/${storeSlug}/products` : null;

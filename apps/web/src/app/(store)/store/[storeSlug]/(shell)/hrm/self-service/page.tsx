@@ -64,7 +64,7 @@ export default function EmployeeSelfServicePage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [activeTab, setActiveTab] = useState("attendance");
   const [selectedPayslip, setSelectedPayslip] = useState<Payroll | null>(null);

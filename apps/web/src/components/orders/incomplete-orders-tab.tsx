@@ -120,7 +120,7 @@ function rangeForPreset(preset: DatePreset): { from: string; to: string } {
 
 export function IncompleteOrdersTab({ storeId, storeSlug }: IncompleteOrdersTabProps) {
   const { language, t } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -729,7 +729,7 @@ function IncompleteCheckoutDetailModal({
   money: (val: number) => string;
 }) {
   const { language, t } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const { data, isLoading } = useGetStoreIncompleteCheckoutDetailQuery({
     storeId,

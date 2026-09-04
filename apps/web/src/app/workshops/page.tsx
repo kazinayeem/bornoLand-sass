@@ -65,7 +65,7 @@ function StoreCardSkeleton() {
 export default function MerchantWorkspacesPage() {
   const router = useRouter();
   const { language, t } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const { data, isLoading, isFetching, refetch } = useGetMyStoresQuery();
   const { data: plansData } = useGetPlansQuery();

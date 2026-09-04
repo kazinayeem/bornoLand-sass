@@ -13,6 +13,7 @@ import {
   HardDrive,
   Plus,
   ChevronsUpDown,
+  Store as StoreIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
@@ -47,7 +48,7 @@ interface MobileStoreDrawerProps {
 export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
   const pathname = usePathname();
   const { language, t } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const basePath = `/store/${store.slug}`;
 
   // Entitlements & Permissions
@@ -317,12 +318,12 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
         </div>
 
         <Link
-          href="/dashboard"
+          href="/workshops"
           onClick={onClose}
           className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg border border-zinc-200 bg-zinc-50 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 transition-colors"
         >
-          <LayoutDashboard className="h-3.5 w-3.5" />
-          <span>{isBn ? "ওয়ার্কস্পেস ড্যাশবোর্ড" : "Back to Workspace"}</span>
+          <StoreIcon className="h-3.5 w-3.5" />
+          <span>{isBn ? "মার্চেন্ট ওয়ার্কস্পেস" : "Back to Workspace"}</span>
         </Link>
       </div>
     </div>

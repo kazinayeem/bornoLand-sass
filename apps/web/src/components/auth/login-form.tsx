@@ -46,7 +46,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div"> & { loginType?: "user" | "admin" }) {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const [loading, setLoading] = useState(false);
   const [login] = useLoginMutation();
   const dispatch = useAppDispatch();

@@ -52,7 +52,7 @@ export default function PurchasingPage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState("");

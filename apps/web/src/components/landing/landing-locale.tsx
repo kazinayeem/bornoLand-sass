@@ -1421,7 +1421,7 @@ const LandingLocaleContext = createContext<LandingLocaleContextValue | null>(nul
 export function LandingLocaleProvider({ children }: { children: ReactNode }) {
   const { language, setLanguage } = useLanguage();
 
-  const currentLocale: LandingLocale = (language === "en" || language === "bn") ? language : "en";
+  const currentLocale: LandingLocale = (language === "en" || false) ? language : "en";
 
   const value = useMemo(
     () => ({

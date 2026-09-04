@@ -38,7 +38,7 @@ export default function StockLedgerPage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [page, setPage] = useState(1);
   const [reasonFilter, setReasonFilter] = useState("all");

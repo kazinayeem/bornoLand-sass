@@ -36,7 +36,7 @@ type StatusTab = "all" | "active" | "draft" | "expired";
 
 export function CouponsTab({ storeId }: { storeId: string }) {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const [activeTab, setActiveTab] = useState<StatusTab>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);

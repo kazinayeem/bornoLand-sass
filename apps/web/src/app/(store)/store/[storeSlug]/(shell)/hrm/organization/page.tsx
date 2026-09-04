@@ -47,7 +47,7 @@ export default function OrganizationPage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [deptModal, setDeptModal] = useState(false);
   const [desigModal, setDesigModal] = useState(false);

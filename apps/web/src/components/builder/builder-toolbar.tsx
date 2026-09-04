@@ -75,7 +75,7 @@ export function BuilderToolbar({
 }: Props) {
   const dispatch = useDispatch();
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const { store, storeId } = useRequiredStore();
   const pageId = useSelector((s: RootState) => s.builder.page.id);
   const currentSections = useSelector((s: RootState) => s.builder.sections);

@@ -44,7 +44,7 @@ export default function PayrollPage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const currentDate = new Date();
   const [month, setMonth] = useState(String(currentDate.getMonth() + 1));

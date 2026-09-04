@@ -18,7 +18,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
   const currentStoreSlug = routeSlug || currentStore?.storeSlug;
   const currentStoreId = currentStore?.storeId;
   const { language, t } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const user = useAppSelector((s) => s.user.profile);
   const { data } = useGetMyStoresQuery();
   const stores = data?.data?.stores ?? [];

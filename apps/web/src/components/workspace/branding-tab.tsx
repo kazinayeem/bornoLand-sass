@@ -31,7 +31,7 @@ function normalizeColor(value: string, fallback: string) {
 
 export function BrandingTab({ storeId, storeSlug }: BrandingTabProps) {
   const { language, t } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const { store } = useStorePage();
   const { data, isLoading } = useGetStoreBrandingQuery(storeId);

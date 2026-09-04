@@ -32,7 +32,7 @@ export default function PosTerminalPage() {
   const { data: storeData, isLoading } = useGetStoreBySlugQuery(storeSlug, { skip: !storeSlug });
   const store = storeData?.data?.store;
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [posOpen, setPosOpen] = useState(false);
   const [selectedReceiptOrder, setSelectedReceiptOrder] = useState<RecentStoreOrder | null>(null);

@@ -17,8 +17,7 @@ import { getLoginUrlForCurrentPage } from "@/lib/auth-redirect-client";
 import { toast } from "sonner";
 
 const mainLinks = [
-  { href: "/dashboard", label: "ড্যাশবোর্ড", icon: LayoutDashboard },
-  { href: "/dashboard/stores", label: "দোকানসমূহ", icon: Store },
+  { href: "/workshops", label: "দোকানসমূহ", icon: Store },
   { href: "/dashboard/create-store", label: "দোকান তৈরি করুন", icon: Plus },
   { href: "/dashboard/billing", label: "বিলিং", icon: CreditCard },
   { href: "/dashboard/team", label: "টিম", icon: Users },

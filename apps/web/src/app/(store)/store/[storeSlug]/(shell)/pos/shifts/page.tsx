@@ -45,7 +45,7 @@ export default function PosShiftsPage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [openModal, setOpenModal] = useState(false);
   const [closeModal, setCloseModal] = useState(false);

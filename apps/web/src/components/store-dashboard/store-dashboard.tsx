@@ -383,7 +383,7 @@ function StoreDetailsCard({
 
 export function StoreDashboard({ store, storeId }: { store: Store; storeId: string }) {
   const { language, t } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const d = t.dashboard;
 
   const storeContext = useStoreContext();

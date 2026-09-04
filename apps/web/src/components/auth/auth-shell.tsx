@@ -14,7 +14,7 @@ type AuthShellProps = {
 
 export function AuthShell({ children, variant = "login" }: AuthShellProps) {
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const highlights = [
     {

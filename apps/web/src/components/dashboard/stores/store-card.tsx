@@ -194,7 +194,7 @@ function headerGradient(status: StoreStatus) {
 export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCardProps) {
   const router = useRouter();
   const { language, t } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
   const [updateStore] = useUpdateStoreMutation();
 
   const planName = getPlanName(store.planId, store.plan);

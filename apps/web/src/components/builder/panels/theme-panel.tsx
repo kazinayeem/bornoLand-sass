@@ -139,7 +139,7 @@ export function ThemePanel() {
   const t = useSelector((s: RootState) => s.theme);
   const { store, storeId, storeSlug } = useRequiredStore();
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const pageId = useSelector((s: RootState) => s.builder.page.id);
   const currentSections = useSelector((s: RootState) => s.builder.sections);

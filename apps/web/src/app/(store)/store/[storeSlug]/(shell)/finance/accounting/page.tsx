@@ -52,7 +52,7 @@ export default function AccountingPage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [activeTab, setActiveTab] = useState("accounts");
   const [accountModal, setAccountModal] = useState(false);

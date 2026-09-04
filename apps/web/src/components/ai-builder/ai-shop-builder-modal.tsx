@@ -103,7 +103,7 @@ export function AiShopBuilderModal({
 }: AiShopBuilderModalProps) {
   const router = useRouter();
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = false;
 
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [selectedType, setSelectedType] = useState<string>("grocery");
@@ -148,7 +148,7 @@ export function AiShopBuilderModal({
         storeType: activeType,
         description: prompt.trim() || `${activeType} ecommerce store with best sellers and deals`,
         style: selectedStyle,
-        language: isBn ? "bn" : "en",
+        language: "en",
         storeName: storeName || undefined,
       }).unwrap();
 

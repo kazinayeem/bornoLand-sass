@@ -1,44 +1,62 @@
-- name: Deploy to EC2
-  uses: appleboy/ssh-action@v1.2.2
-  with:
-    host: ${{ secrets.EC2_HOST }}
-    username: ${{ secrets.EC2_USER }}
-    key: ${{ secrets.EC2_SSH_KEY }}
-    port: 22
-    script_stop: true
+name: BornoLand CI/CD
 
-    script: |
-      set -e
+on:
+  push:
+    branches:
+      - main
 
-      cd ~/bornoLand-sass
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-      echo "=== Pull latest code ==="
-      git fetch origin main
-      git checkout main
-      git reset --hard origin/main
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script_stop: true
 
-      echo "=== Install dependencies ==="
-      pnpm install --frozen-lockfile
+          script: |
+            set -e
 
-      echo "=== Remove production local env ==="
-      rm -f apps/web/.env.local
+            echo "================================"
+            echo "Starting BornoLand deployment"
+            echo "================================"
 
-      echo "=== Clean Next.js build ==="
-      rm -rf apps/web/.next
+            cd ~/bornoLand-sass
 
-      echo "=== Build frontend + backend ==="
-      pnpm build
+            echo "=== Pull latest code ==="
+            git fetch origin main
+            git checkout main
+            git reset --hard origin/main
 
-      echo "=== Restart API ==="
-      pm2 restart bornoland-api --update-env
+            echo "=== Install dependencies ==="
+            pnpm install --frozen-lockfile
 
-      echo "=== Restart Web ==="
-      pm2 restart bornoland-web --update-env
+            echo "=== Remove production local env ==="
+            rm -f apps/web/.env.local
 
-      echo "=== Save PM2 ==="
-      pm2 save
+            echo "=== Clean Next.js build ==="
+            rm -rf apps/web/.next
 
-      echo "=== PM2 Status ==="
-      pm2 status
+            echo "=== Build frontend + backend ==="
+            pnpm build
 
-      echo "=== DEPLOY SUCCESS ==="
+            echo "=== Restart API ==="
+            pm2 restart bornoland-api --update-env
+
+            echo "=== Restart Web ==="
+            pm2 restart bornoland-web --update-env
+
+            echo "=== Save PM2 ==="
+            pm2 save
+
+            echo "=== PM2 Status ==="
+            pm2 status
+
+            echo "================================"
+            echo "DEPLOYMENT SUCCESS"
+            echo "================================"

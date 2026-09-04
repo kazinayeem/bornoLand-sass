@@ -5,9 +5,11 @@ import { FeatureTierModel } from "./feature-tier.model.js";
 import { FeatureLimitModel } from "./feature-limit.model.js";
 import { PlanFeatureModel } from "./plan-feature.model.js";
 import { PlanModel } from "../../models/plan.model.js";
+import { StoreModel } from "../../models/store.model.js";
 import { LEGACY_LIMIT_MAP, normalizeFeatureType, type FeatureType } from "./feature.constants.js";
 import { SEED_FEATURES, SEED_GROUPS, SEED_LIMITS, SEED_TIERS } from "./feature.seed.js";
 import { ensureDefaultFeaturesSafe } from "../../bootstrap/safe-migrate.js";
+import { invalidateStoreFeatureCache } from "./feature-access.service.js";
 
 let defaultFeaturesEnsured = false;
 
@@ -261,6 +263,12 @@ export async function setPlanFeatures(
       },
       { upsert: true, new: true }
     );
+  }
+
+  // Invalidate store feature cache for all stores on this plan
+  const stores = await StoreModel.find({ planId }).select("_id").lean();
+  for (const store of stores) {
+    invalidateStoreFeatureCache(String(store._id));
   }
 
   return getPlanFeatures(planId);

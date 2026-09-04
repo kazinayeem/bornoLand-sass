@@ -185,6 +185,26 @@ const TOGGLE_KEY_MAP: Record<string, string[]> = {
   coupons: ["coupons"],
   custom_domain: ["customDomain"],
   seo: ["seo"],
+  // HRM Module
+  hrm: ["hrm"],
+  attendance: ["hrmAttendance"],
+  leave_mgmt: ["hrmLeave"],
+  payroll: ["hrmPayroll"],
+  self_service: ["hrmSelfService"],
+  // POS Module
+  pos: ["pos"],
+  // Accounting Module
+  accounting: ["accounting"],
+  // CRM & Operations
+  crm: ["crm"],
+  operations: ["operations"],
+  // ERP Suite
+  erp_core: ["erpCore"],
+  erp_finance: ["erpFinance"],
+  erp_inventory: ["erpInventory"],
+  erp_procurement: ["erpProcurement"],
+  erp_manufacturing: ["erpManufacturing"],
+  erp_projects: ["erpProjects"],
 };
 
 async function getPlanFeatureAssignment(planId: string, featureKey: string): Promise<PlanFeatureAssignment | null> {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose/jwt/verify";
 import type { NextRequest } from "next/server";
 import { getApiUrl, getAppOrigin } from "@/lib/urls";
-import { resolveTenantFromHost, isPlatformRoute } from "@/lib/tenant-resolution";
+import { resolveTenantFromHost, isPlatformRoute, isPlatformManagementRoute } from "@/lib/tenant-resolution";
 import { buildLoginUrl, isAuthenticationPath, validateInternalRedirect, validatePlatformRedirect } from "@/lib/auth-redirect";
 
 const PUBLIC_FILE = /\.(.*)$/;
@@ -44,10 +44,6 @@ async function fetchStoreSlug(storeId: string, cookieHeader: string): Promise<st
   }
 }
 
-function isAppRoute(pathname: string): boolean {
-  return isPlatformRoute(pathname);
-}
-
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get("host") ?? "";
@@ -72,8 +68,8 @@ export default async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    if (isAppRoute(pathname)) {
-      // On platform apex (IP / localhost + default tenant), keep /dashboard|/login on this host.
+    if (isPlatformManagementRoute(pathname)) {
+      // On platform apex (IP / localhost + default tenant), keep /dashboard|/workshops on this host.
       // On loopback multi-tenant domains (*.localhost), keep on current host to prevent Next.js relativizing localhost redirects into an infinite loop.
       const isLoopbackHost = host.endsWith(".localhost") || host.includes(".localhost:") || host.startsWith("localhost");
       if (tenant.source === "default-tenant" || tenant.isPlatformHost || isLoopbackHost) {

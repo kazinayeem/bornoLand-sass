@@ -28,7 +28,7 @@ export type LocationSelectProps = {
 export function LocationSelect({
   label,
   placeholder = "Select location...",
-  searchPlaceholder = "Search in English or বাংলা...",
+  searchPlaceholder = "Search in English or Bangla...",
   options,
   value,
   onChange,

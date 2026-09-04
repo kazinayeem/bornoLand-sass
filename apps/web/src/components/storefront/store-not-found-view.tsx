@@ -71,11 +71,11 @@ export function StoreNotFoundView({
           <span>{identifier}</span>
         </div>
 
-        {/* Bangla / Localized Explanation */}
+        {/* Localized Explanation */}
         <div className="mt-6 rounded-2xl border border-zinc-100 bg-zinc-50/70 p-4 text-sm text-zinc-600">
-          <p className="font-semibold text-zinc-900">স্টোরটি পাওয়া যায়নি</p>
+          <p className="font-semibold text-zinc-900">Store Not Found</p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-            এই নামে BornoLand-এ এখনো কোনো অনলাইন স্টোর তৈরি করা হয়নি। আপনি কি এই নামটি দিয়ে আপনার নিজস্ব স্টোর শুরু করতে চান?
+            No online store has been created on BornoLand with this name yet. Would you like to start your own store with this name?
           </p>
         </div>
 
@@ -85,7 +85,7 @@ export function StoreNotFoundView({
             href={registerUrl}
             className="flex items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 py-3.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-zinc-800 active:scale-[0.99]"
           >
-            <span>Create Store / স্টোর তৈরি করুন</span>
+            <span>Create Store</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link

@@ -31,6 +31,23 @@ export type TenantHostResolution = {
   isCustomDomain: boolean;
 };
 
+/**
+ * Platform-only management routes that exist solely on the platform apex (e.g. bornosoft.site).
+ * If accessed on a tenant subdomain (e.g. nayeem.bornosoft.site/dashboard), they redirect to the platform apex.
+ */
+export const PLATFORM_MANAGEMENT_ROUTES = new Set([
+  "/dashboard",
+  "/workshops",
+  "/admin",
+  "/store",
+]);
+
+export function isPlatformManagementRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  const base = pathname.split("/")[1]?.toLowerCase() ?? "";
+  return PLATFORM_MANAGEMENT_ROUTES.has(`/${base}`);
+}
+
 export const PLATFORM_ROUTES = new Set([
   "/",
   "/login",

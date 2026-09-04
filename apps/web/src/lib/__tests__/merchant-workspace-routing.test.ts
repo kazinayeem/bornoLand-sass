@@ -136,4 +136,45 @@ describe("Merchant Login & Workspace Routing Architecture Tests", () => {
     const destinationPlatformDashboard = resolvePostLoginDestination(payload, "/dashboard");
     assert.equal(destinationPlatformDashboard, "/store/my-shop/dashboard");
   });
+
+  it("TEST 11: Tenant host nayeem.bornosoft.site on path '/' stays on tenant and is NOT a platform management route", () => {
+    const { isPlatformManagementRoute } = require("@/lib/tenant-resolution");
+    const tenantClassification = classifyHost("nayeem.bornosoft.site", prodConfig);
+    assert.equal(tenantClassification.storeKey, "nayeem");
+    assert.equal(tenantClassification.kind, "tenant-subdomain");
+
+    // Root path '/' is storefront homepage, NOT platform management
+    assert.equal(isPlatformManagementRoute("/"), false);
+  });
+
+  it("TEST 12: Storefront routes on tenant subdomain are never classified as platform management routes", () => {
+    const { isPlatformManagementRoute } = require("@/lib/tenant-resolution");
+    const storefrontPaths = [
+      "/",
+      "/shop",
+      "/products",
+      "/products/t-shirt",
+      "/categories",
+      "/cart",
+      "/checkout",
+      "/about",
+      "/contact",
+      "/faq",
+      "/terms",
+      "/privacy",
+      "/blog",
+      "/order-tracking",
+      "/wishlist",
+      "/account/login",
+      "/account/orders",
+    ];
+
+    for (const path of storefrontPaths) {
+      assert.equal(
+        isPlatformManagementRoute(path),
+        false,
+        `Path ${path} must not be a platform management route so it does not redirect to platform apex!`
+      );
+    }
+  });
 });

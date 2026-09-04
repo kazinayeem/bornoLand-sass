@@ -32,6 +32,26 @@ const TOGGLE_TO_FEATURE_KEY: Record<string, string> = {
   checkoutRecovery: "checkout_recovery",
   recoveryAnalytics: "recovery_analytics",
   recoveryLinks: "checkout_recovery",
+  // HRM Module
+  hrm: "hrm",
+  hrmAttendance: "attendance",
+  hrmPayroll: "payroll",
+  hrmLeave: "leave_mgmt",
+  hrmSelfService: "self_service",
+  // POS Module
+  pos: "pos",
+  // Accounting Module
+  accounting: "accounting",
+  // CRM & Operations
+  crm: "crm",
+  operations: "operations",
+  // ERP Suite
+  erpCore: "erp_core",
+  erpFinance: "erp_finance",
+  erpInventory: "erp_inventory",
+  erpProcurement: "erp_procurement",
+  erpManufacturing: "erp_manufacturing",
+  erpProjects: "erp_projects",
 };
 
 async function syncFeatureTogglesToPlanFeatures(

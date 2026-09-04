@@ -151,4 +151,31 @@ describe("Production Root-Domain & Tenant Subdomain Host Resolution", () => {
     assert.equal(workshops.kind, "platform");
     assert.equal(workshops.storeKey, null);
   });
+
+  it("13. Platform management routes are separated from storefront routes", () => {
+    const { isPlatformManagementRoute } = require("../tenant-resolution");
+    // Platform-only management routes:
+    assert.equal(isPlatformManagementRoute("/dashboard"), true);
+    assert.equal(isPlatformManagementRoute("/dashboard/stores"), true);
+    assert.equal(isPlatformManagementRoute("/workshops"), true);
+    assert.equal(isPlatformManagementRoute("/admin"), true);
+    assert.equal(isPlatformManagementRoute("/admin/dashboard"), true);
+    assert.equal(isPlatformManagementRoute("/store"), true);
+    assert.equal(isPlatformManagementRoute("/store/nayeem/dashboard"), true);
+
+    // Storefront routes MUST NOT be platform management routes (so they rewrite, not redirect!):
+    assert.equal(isPlatformManagementRoute("/"), false);
+    assert.equal(isPlatformManagementRoute("/shop"), false);
+    assert.equal(isPlatformManagementRoute("/products"), false);
+    assert.equal(isPlatformManagementRoute("/products/sample"), false);
+    assert.equal(isPlatformManagementRoute("/categories"), false);
+    assert.equal(isPlatformManagementRoute("/cart"), false);
+    assert.equal(isPlatformManagementRoute("/checkout"), false);
+    assert.equal(isPlatformManagementRoute("/about"), false);
+    assert.equal(isPlatformManagementRoute("/contact"), false);
+    assert.equal(isPlatformManagementRoute("/faq"), false);
+    assert.equal(isPlatformManagementRoute("/terms"), false);
+    assert.equal(isPlatformManagementRoute("/privacy"), false);
+    assert.equal(isPlatformManagementRoute("/account/login"), false);
+  });
 });

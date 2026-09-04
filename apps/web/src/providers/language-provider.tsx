@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type Language = "bn" | "en";
+export type Language = "en" | "bn";
 
 export type Dictionary = {
   navigation: {
@@ -845,7 +845,7 @@ const en: Dictionary = {
     upgradePlan: "Upgrade Plan",
     noResultsFound: "No results found",
     language: "Language",
-    bengali: "বাংলা",
+    bengali: "Bengali",
     english: "English",
   },
   dropdowns: {
@@ -1203,7 +1203,7 @@ const en: Dictionary = {
   },
 };
 
-const dictionaries: Record<Language, Dictionary> = { bn, en };
+const dictionaries: Record<Language, Dictionary> = { en, bn };
 const STORAGE_KEY = "bornoland.language";
 
 type LanguageContextValue = {
@@ -1216,7 +1216,7 @@ type LanguageContextValue = {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("bn");
+  const [language, setLanguageState] = useState<Language>("en");
 
   useEffect(() => {
     try {
@@ -1230,7 +1230,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    document.documentElement.lang = language === "bn" ? "bn" : "en";
+    document.documentElement.lang = language;
   }, [language]);
 
   const setLanguage = useCallback((next: Language) => {
@@ -1245,7 +1245,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const toggleLanguage = useCallback(() => {
     setLanguageState((prev) => {
-      const next = prev === "bn" ? "en" : "bn";
+      const next: Language = prev === "en" ? "bn" : "en";
       try {
         localStorage.setItem(STORAGE_KEY, next);
         localStorage.setItem("language", next);

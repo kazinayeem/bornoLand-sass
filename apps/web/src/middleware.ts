@@ -172,7 +172,8 @@ export default async function middleware(request: NextRequest) {
   // Redirect authenticated users away from login/register
   if (isAuthPage && (session || hasRefreshToken)) {
     const isSuperAdmin = session?.role === "super_admin";
-    const defaultDestination = isSuperAdmin
+    const isMerchant = session?.role === "admin" || session?.role === "owner";
+    const defaultDestination = isSuperAdmin || isMerchant
       ? "/dashboard"
       : session?.defaultStoreSlug
       ? `/store/${session.defaultStoreSlug}/dashboard`
@@ -207,7 +208,15 @@ export default async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/unauthorized", request.url));
       }
 
-      // If merchant manually enters /dashboard:
+      // Merchants (admin/owner role) can access /dashboard
+      const isMerchant = session.role === "admin" || session.role === "owner";
+      if (isMerchant) {
+        const requestHeaders = new Headers(request.headers);
+        requestHeaders.set("x-pathname", pathname);
+        return NextResponse.next({ request: { headers: requestHeaders } });
+      }
+
+      // Non-merchant members: if they manually enter /dashboard, redirect to their store
       if (pathname === "/dashboard" || pathname === "/dashboard/") {
         if (session.defaultStoreSlug) {
           return NextResponse.redirect(

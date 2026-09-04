@@ -217,7 +217,7 @@ export function UserSidebar() {
               <p className="truncate text-xs text-apple-ink-muted-48">{user?.email ?? ""}</p>
             </div>
           </div>
-          <button onClick={async () => { try { await logout().unwrap(); toast.success("লগআউট সম্পন্ন হয়েছে"); router.replace(getLoginUrlForCurrentPage()); } catch { toast.error("লগআউট ব্যর্থ হয়েছে"); } }}
+          <button onClick={async () => { try { await logout().unwrap(); toast.success("লগআউট সম্পন্ন হয়েছে"); window.location.replace("/login"); } catch { toast.error("লগআউট ব্যর্থ হয়েছে"); } }}
             className="flex w-full items-center gap-2 rounded-lg p-2 text-apple-ink-muted-48 transition-colors hover:bg-red-50 hover:text-red-600">
             <LogOut className="h-4 w-4" />
             <span className="text-sm">লগআউট</span>

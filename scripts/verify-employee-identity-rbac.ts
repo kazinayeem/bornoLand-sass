@@ -67,10 +67,12 @@ runTest("Cashier role has POS permissions but no settings or member manage", () 
   assert.strictEqual(hasPermission(cashierPerms, "members:manage"), false);
 });
 
-runTest("Employee role has HRM self permissions but no company-wide settings", () => {
+runTest("Employee role has HRM self-service permissions but no admin or company-wide access", () => {
   const employeePerms = ROLE_PERMISSION_PRESETS.employee;
-  assert.ok(hasPermission(employeePerms, "hrm:read"));
-  assert.ok(hasPermission(employeePerms, "hrm.attendance.view_self"));
+  assert.ok(hasPermission(employeePerms, "hrm:self:read"));
+  assert.ok(hasPermission(employeePerms, "hrm:self:create"));
+  assert.ok(hasPermission(employeePerms, "hrm:self:delete"));
+  assert.strictEqual(hasPermission(employeePerms, "hrm:read"), false, "Employee should NOT have admin hrm:read");
   assert.strictEqual(hasPermission(employeePerms, "settings:update"), false);
   assert.strictEqual(hasPermission(employeePerms, "billing:manage"), false);
 });
@@ -84,10 +86,11 @@ runTest("Module wildcard satisfies specific actions", () => {
   assert.strictEqual(hasPermission(["hrm:*"], "finance:read"), false);
 });
 
-runTest("Self-permission queries resolve correctly with hrm:read", () => {
-  assert.strictEqual(hasPermission(["hrm:read"], "hrm:self:read"), true);
-  assert.strictEqual(hasPermission(["hrm:read"], "hrm.attendance.view_self"), true);
-  assert.strictEqual(hasPermission(["products:read"], "hrm:self:read"), false);
+runTest("Self-service permissions require explicit assignment (no implicit alias)", () => {
+  assert.strictEqual(hasPermission(["hrm:self:read"], "hrm:self:read"), true, "Exact self-service permission matches");
+  assert.strictEqual(hasPermission(["hrm:read"], "hrm:self:read"), false, "hrm:read does NOT satisfy hrm:self:read (no alias)");
+  assert.strictEqual(hasPermission(["hrm:*"], "hrm:self:read"), true, "Module wildcard still satisfies self-service");
+  assert.strictEqual(hasPermission(["products:read"], "hrm:self:read"), false, "Unrelated permission denies access");
 });
 
 // ── Test Suite 3: Post-Login Contextual Routing ──────────────────────

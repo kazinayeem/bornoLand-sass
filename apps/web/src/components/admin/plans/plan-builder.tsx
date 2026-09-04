@@ -35,6 +35,20 @@ const FEATURE_KEY_TO_TOGGLE: Partial<Record<string, keyof PlanFeatureToggles>> =
   abandoned_cart: "abandonedCart",
   checkout_recovery: "checkoutRecovery",
   recovery_analytics: "recoveryAnalytics",
+  // HRM Module
+  hrm: "hrm",
+  employees: "hrm",
+  attendance: "hrmAttendance",
+  leave_mgmt: "hrmLeave",
+  payroll: "hrmPayroll",
+  self_service: "hrmSelfService",
+  // POS Module
+  pos: "pos",
+  // Accounting Module
+  accounting: "accounting",
+  // CRM & Operations
+  crm: "crm",
+  operations: "operations",
 };
 
 const COURIER_PROVIDER_OPTIONS: Array<{
@@ -215,6 +229,35 @@ const FEATURE_GROUPS: FeatureGroup[] = [
       { key: "taxEngine", label: "Tax Engine", description: "Automated tax calculation" },
       { key: "maintenanceMode", label: "Maintenance Mode", description: "Put store in maintenance" },
       { key: "developerMode", label: "Developer Mode", description: "Custom code and debug tools" },
+    ],
+  },
+  {
+    key: "pos_module", label: "Point of Sale (POS)",
+    toggles: [
+      { key: "pos", label: "POS Module", description: "In-person cashier checkout, barcode scanning, shift management & receipts" },
+    ],
+  },
+  {
+    key: "hrm", label: "HR & Employee Management",
+    toggles: [
+      { key: "hrm", label: "HRM Module", description: "Full HR & Employee management module access" },
+      { key: "hrmAttendance", label: "Attendance Tracking", description: "Daily clock-ins, clock-outs, shifts and overtime" },
+      { key: "hrmLeave", label: "Leave Management", description: "Leave requests, approval workflows and annual balances" },
+      { key: "hrmPayroll", label: "Payroll & Payslips", description: "Monthly salary generation, deductions and official payslips" },
+      { key: "hrmSelfService", label: "Employee Self-Service", description: "Personal attendance clocking, leave requests & payslips for employees" },
+    ],
+  },
+  {
+    key: "accounting", label: "Finance & Accounting",
+    toggles: [
+      { key: "accounting", label: "Double-Entry Accounting", description: "Chart of Accounts, journals, general ledger, P&L and Balance Sheet" },
+    ],
+  },
+  {
+    key: "crm_ops", label: "CRM & Operations",
+    toggles: [
+      { key: "crm", label: "CRM & Support Desk", description: "Lead management, deals pipeline, customer 360 and support tickets" },
+      { key: "operations", label: "Approvals & Workflow", description: "Multi-step approval engine and centralized task management" },
     ],
   },
 ];
@@ -402,6 +445,17 @@ export function PlanBuilder({ plan, initialTab }: Props) {
     googleAnalytics: plan.featureToggles?.googleAnalytics ?? false,
     conversionTracking: plan.featureToggles?.conversionTracking ?? false,
     advancedTracking: plan.featureToggles?.advancedTracking ?? false,
+    // HRM Module
+    hrm: plan.featureToggles?.hrm ?? false,
+    hrmAttendance: plan.featureToggles?.hrmAttendance ?? false,
+    hrmPayroll: plan.featureToggles?.hrmPayroll ?? false,
+    hrmLeave: plan.featureToggles?.hrmLeave ?? false,
+    hrmSelfService: plan.featureToggles?.hrmSelfService ?? false,
+    // Accounting
+    accounting: plan.featureToggles?.accounting ?? false,
+    // CRM & Operations
+    crm: plan.featureToggles?.crm ?? false,
+    operations: plan.featureToggles?.operations ?? false,
   }));
 
   const [courierAccess, setCourierAccess] = useState<PlanCourierAccess>(() => ({

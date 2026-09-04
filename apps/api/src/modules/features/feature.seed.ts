@@ -32,14 +32,29 @@ export const SEED_GROUPS: SeedGroup[] = [
   { key: "content", name: "Content", sortOrder: 3 },
   { key: "marketing", name: "Marketing & Tracking", sortOrder: 4 },
   { key: "platform", name: "Platform", sortOrder: 5 },
+  { key: "pos_module", name: "Point of Sale (POS)", sortOrder: 6 },
+  { key: "hrm_module", name: "HR & Employee Management", sortOrder: 7 },
+  { key: "finance_module", name: "Finance & Accounting", sortOrder: 8 },
+  { key: "crm_module", name: "CRM & Operations", sortOrder: 9 },
 ];
 
 // ── Features (only implemented modules) ─────────────────────────────────────
 
 export const SEED_FEATURES: SeedFeature[] = [
-  // Commerce
+  // ── Commerce ──
   { key: "products", name: "Products", description: "Product catalog management", type: "limit", groupKey: "commerce", sortOrder: 1, usageCounterKey: "products", unit: "items", defaultLimit: 50 },
   { key: "categories", name: "Categories", description: "Product categories", type: "limit", groupKey: "commerce", sortOrder: 2, usageCounterKey: "categories", defaultLimit: 20 },
+  { key: "orders", name: "Orders", description: "Order management", type: "limit", groupKey: "commerce", sortOrder: 4, usageCounterKey: "orders", unit: "orders", defaultLimit: 0 },
+  { key: "customers", name: "Customers", description: "Customer records", type: "limit", groupKey: "commerce", sortOrder: 5, usageCounterKey: "customers", defaultLimit: 0 },
+  { key: "product_variants", name: "Product Variants", description: "Variant combinations per product", type: "limit", groupKey: "commerce", sortOrder: 6, unit: "variants", defaultLimit: 0 },
+  { key: "abandoned_cart", name: "Abandoned Cart", description: "Track and recover abandoned carts", type: "boolean", groupKey: "commerce", sortOrder: 8, defaultEnabled: false },
+  { key: "incomplete_orders", name: "Incomplete Orders", description: "Track progressive checkout sessions and incomplete orders", type: "boolean", groupKey: "commerce", sortOrder: 9, defaultEnabled: false },
+  { key: "checkout_recovery", name: "Checkout Recovery", description: "Generate secure checkout recovery links and recover sessions", type: "boolean", groupKey: "commerce", sortOrder: 10, defaultEnabled: false },
+  { key: "recovery_analytics", name: "Recovery Analytics", description: "Advanced checkout abandonment and recovery analytics", type: "boolean", groupKey: "commerce", sortOrder: 11, defaultEnabled: false },
+  { key: "courier", name: "Courier Management", description: "Third-party courier integrations (Pathao, RedX, Steadfast, Paperfly, Sundarban)", type: "boolean", groupKey: "commerce", sortOrder: 7, defaultEnabled: false },
+  { key: "sslcommerz_payment", name: "SSLCommerz Payment Gateway", description: "Per-shop multi-tenant SSLCommerz payment gateway integration", type: "boolean", groupKey: "commerce", sortOrder: 12, defaultEnabled: false },
+
+  // ── Inventory ──
   { key: "inventory", name: "Inventory", description: "Current stock tracking and adjustments", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 1, defaultEnabled: true },
   { key: "inventory_history", name: "Inventory History", description: "Stock movement history and ledger", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 2, defaultEnabled: false },
   { key: "price_history", name: "Price History", description: "Track selling and compare price changes", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 3, defaultEnabled: false },
@@ -53,18 +68,15 @@ export const SEED_FEATURES: SeedFeature[] = [
   { key: "low_stock_alerts", name: "Low Stock Alerts", description: "Minimum stock alerts and notifications", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 11, defaultEnabled: false },
   { key: "stock_transfer", name: "Stock Transfer", description: "Transfer stock between warehouses", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 12, defaultEnabled: false },
   { key: "inventory_audit_log", name: "Inventory Audit Log", description: "Permanent audit trail for inventory actions", type: "boolean", groupKey: "inventory_mgmt", sortOrder: 13, defaultEnabled: false },
-  { key: "orders", name: "Orders", description: "Order management", type: "limit", groupKey: "commerce", sortOrder: 4, usageCounterKey: "orders", unit: "orders", defaultLimit: 0 },
-  { key: "customers", name: "Customers", description: "Customer records", type: "limit", groupKey: "commerce", sortOrder: 5, usageCounterKey: "customers", defaultLimit: 0 },
-  { key: "product_variants", name: "Product Variants", description: "Variant combinations per product", type: "limit", groupKey: "commerce", sortOrder: 6, unit: "variants", defaultLimit: 0 },
 
-  // Content
+  // ── Content ──
   { key: "cms", name: "CMS", description: "Content management system", type: "boolean", groupKey: "content", sortOrder: 10, defaultEnabled: true },
   { key: "page_builder", name: "Pages", description: "CMS page management", type: "limit", groupKey: "content", sortOrder: 11, usageCounterKey: "pages", defaultLimit: 10 },
   { key: "media", name: "Media", description: "Media library and file management", type: "limit", groupKey: "content", sortOrder: 12, usageCounterKey: "media", unit: "files", defaultEnabled: true, defaultLimit: 0 },
   { key: "builder", name: "Builder", description: "Visual store page builder", type: "boolean", groupKey: "content", sortOrder: 13, defaultEnabled: true },
   { key: "theme_builder", name: "Theme", description: "Theme customization and management", type: "boolean", groupKey: "content", sortOrder: 14, defaultEnabled: true },
 
-  // Marketing & Tracking
+  // ── Marketing & Tracking ──
   { key: "meta_pixel", name: "Meta Pixel", description: "Facebook & Instagram advertising pixel tracking", type: "boolean", groupKey: "marketing", sortOrder: 1, defaultEnabled: false },
   { key: "tiktok_pixel", name: "TikTok Pixel", description: "TikTok advertising pixel tracking", type: "boolean", groupKey: "marketing", sortOrder: 2, defaultEnabled: false },
   { key: "custom_tracking", name: "Custom Tracking Script", description: "Custom HTML / JS header and body scripts", type: "boolean", groupKey: "marketing", sortOrder: 3, defaultEnabled: false },
@@ -72,20 +84,31 @@ export const SEED_FEATURES: SeedFeature[] = [
   { key: "conversion_tracking", name: "Conversion Tracking", description: "Advanced e-commerce conversion tracking", type: "boolean", groupKey: "marketing", sortOrder: 5, defaultEnabled: false },
   { key: "advanced_tracking", name: "Advanced Tracking", description: "Server-side and advanced matched tracking", type: "boolean", groupKey: "marketing", sortOrder: 6, defaultEnabled: false },
 
-  // Platform
+  // ── Platform ──
   { key: "analytics", name: "Analytics", description: "Store analytics and insights", type: "tier", groupKey: "platform", sortOrder: 20, defaultTier: "basic" },
   { key: "reports", name: "Reports", description: "Advanced business reports, analytics, exports and insights", type: "boolean", groupKey: "platform", sortOrder: 21 },
-  { key: "staff", name: "Staff Members", description: "Team member accounts", type: "limit", groupKey: "platform", sortOrder: 21, usageCounterKey: "staff", defaultLimit: 1 },
-  { key: "storage", name: "Storage", description: "File storage space", type: "limit", groupKey: "platform", sortOrder: 22, usageCounterKey: "storageMB", unit: "GB", defaultLimit: 1 },
-  { key: "billing", name: "Billing", description: "Billing and subscription management", type: "boolean", groupKey: "platform", sortOrder: 23, defaultEnabled: true },
-  { key: "branding", name: "Branding", description: "Store branding and customization", type: "boolean", groupKey: "platform", sortOrder: 24, defaultEnabled: true },
-  // Commerce
-  { key: "abandoned_cart", name: "Abandoned Cart", description: "Track and recover abandoned carts", type: "boolean", groupKey: "commerce", sortOrder: 8, defaultEnabled: false },
-  { key: "incomplete_orders", name: "Incomplete Orders", description: "Track progressive checkout sessions and incomplete orders", type: "boolean", groupKey: "commerce", sortOrder: 9, defaultEnabled: false },
-  { key: "checkout_recovery", name: "Checkout Recovery", description: "Generate secure checkout recovery links and recover sessions", type: "boolean", groupKey: "commerce", sortOrder: 10, defaultEnabled: false },
-  { key: "recovery_analytics", name: "Recovery Analytics", description: "Advanced checkout abandonment and recovery analytics", type: "boolean", groupKey: "commerce", sortOrder: 11, defaultEnabled: false },
-  { key: "courier", name: "Courier Management", description: "Third-party courier integrations (Pathao, RedX, Steadfast, Paperfly, Sundarban)", type: "boolean", groupKey: "commerce", sortOrder: 7, defaultEnabled: false },
-  { key: "sslcommerz_payment", name: "SSLCommerz Payment Gateway", description: "Per-shop multi-tenant SSLCommerz payment gateway integration", type: "boolean", groupKey: "commerce", sortOrder: 12, defaultEnabled: false },
+  { key: "staff", name: "Staff Members", description: "Team member accounts", type: "limit", groupKey: "platform", sortOrder: 22, usageCounterKey: "staff", defaultLimit: 1 },
+  { key: "storage", name: "Storage", description: "File storage space", type: "limit", groupKey: "platform", sortOrder: 23, usageCounterKey: "storageMB", unit: "GB", defaultLimit: 1 },
+  { key: "billing", name: "Billing", description: "Billing and subscription management", type: "boolean", groupKey: "platform", sortOrder: 24, defaultEnabled: true },
+  { key: "branding", name: "Branding", description: "Store branding and customization", type: "boolean", groupKey: "platform", sortOrder: 25, defaultEnabled: true },
+
+  // ── POS Module ──
+  { key: "pos", name: "Point of Sale (POS)", description: "In-person cashier checkout, barcode scanning, shift management & receipts", type: "boolean", groupKey: "pos_module", sortOrder: 1, defaultEnabled: false },
+
+  // ── HRM Module ──
+  { key: "hrm", name: "HRM Module", description: "Full HR & Employee management module access", type: "boolean", groupKey: "hrm_module", sortOrder: 1, defaultEnabled: false },
+  { key: "employees", name: "Employee Directory", description: "Employee profiles, IDs, contracts and documents", type: "boolean", groupKey: "hrm_module", sortOrder: 2, defaultEnabled: false },
+  { key: "attendance", name: "Attendance Tracking", description: "Daily clock-ins, clock-outs, shifts and overtime", type: "boolean", groupKey: "hrm_module", sortOrder: 3, defaultEnabled: false },
+  { key: "leave_mgmt", name: "Leave Management", description: "Leave requests, approval workflows and annual balances", type: "boolean", groupKey: "hrm_module", sortOrder: 4, defaultEnabled: false },
+  { key: "payroll", name: "Payroll & Payslips", description: "Monthly salary generation, deductions and official payslips", type: "boolean", groupKey: "hrm_module", sortOrder: 5, defaultEnabled: false },
+  { key: "self_service", name: "Employee Self-Service", description: "Personal attendance clocking, leave requests & payslips for employees", type: "boolean", groupKey: "hrm_module", sortOrder: 6, defaultEnabled: false },
+
+  // ── Finance / Accounting Module ──
+  { key: "accounting", name: "Double-Entry Accounting", description: "Chart of Accounts, journals, general ledger, P&L and Balance Sheet", type: "boolean", groupKey: "finance_module", sortOrder: 1, defaultEnabled: false },
+
+  // ── CRM & Operations Module ──
+  { key: "crm", name: "CRM & Support Desk", description: "Lead management, deals pipeline, customer 360 and support tickets", type: "boolean", groupKey: "crm_module", sortOrder: 1, defaultEnabled: false },
+  { key: "operations", name: "Approvals & Workflow", description: "Multi-step approval engine and centralized task management", type: "boolean", groupKey: "crm_module", sortOrder: 2, defaultEnabled: false },
 ];
 
 // ── Tiers (only for tier-type features) ─────────────────────────────────────

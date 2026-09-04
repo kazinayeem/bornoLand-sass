@@ -9,12 +9,16 @@ import { StoreBrandMark } from "@/components/store-dashboard/store-brand-mark";
 import { StoreBrandingSync } from "@/components/store-dashboard/store-branding-sync";
 import { StorePermissionsSync } from "@/components/store-dashboard/store-permissions-sync";
 import { StoreSidebar } from "@/components/store-dashboard/store-sidebar";
+import { EmployeeSidebar } from "@/components/store-dashboard/employee-sidebar";
 import { MobileStoreDrawer } from "@/components/store-dashboard/mobile-store-drawer";
 import { TrialBanner } from "@/components/store-dashboard/trial-banner";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { useMemberRole } from "@/features/session/hooks";
 
 export function StoreShell({ children }: { children: ReactNode }) {
   const { store, isLoading, isError } = useStoreFromSlug();
+  const memberRole = useMemberRole();
+  const isEmployee = memberRole === "employee";
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const closeMobileNav = useCallback(() => setMobileNavOpen(false), []);
@@ -98,7 +102,11 @@ export function StoreShell({ children }: { children: ReactNode }) {
       <StorePermissionsSync storeId={store._id} />
 
       <div className="hidden lg:block">
-        <StoreSidebar store={store} />
+        {isEmployee ? (
+          <EmployeeSidebar store={store} />
+        ) : (
+          <StoreSidebar store={store} />
+        )}
       </div>
 
       <div className="flex min-w-0 flex-col overflow-hidden">

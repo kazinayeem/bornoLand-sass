@@ -62,23 +62,34 @@ export function QuickLoginButton({ label, email, password, loginType, callbackUr
         const queryRedirect = new URLSearchParams(window.location.search).get("redirect");
         let fallbackDestination = callbackUrl || "/dashboard";
         if (loginType !== "admin") {
-          const stores = (payload as { stores?: Array<{ slug?: string }>; user?: { defaultStoreSlug?: string } }).stores ?? [];
-          const defaultSlug =
-            (payload as { defaultStoreSlug?: string }).defaultStoreSlug ||
-            payload.user?.defaultStoreSlug ||
-            stores[0]?.slug;
+          const userRole = payload.user?.role;
+          const isMerchant = userRole === "admin" || userRole === "owner";
 
-          let lastSelectedSlug: string | null = null;
-          try {
-            lastSelectedSlug = localStorage.getItem("bornoland_last_store_slug");
-          } catch {
-            // Ignore local storage error
-          }
+          if (isMerchant) {
+            // Merchants go to platform dashboard
+            fallbackDestination = "/dashboard";
+          } else {
+            // Employees go to their assigned store
+            const stores = (payload as { stores?: Array<{ slug?: string }>; user?: { defaultStoreSlug?: string } }).stores ?? [];
+            const defaultSlug =
+              (payload as { defaultStoreSlug?: string }).defaultStoreSlug ||
+              payload.user?.defaultStoreSlug ||
+              stores[0]?.slug;
 
-          if (lastSelectedSlug && (stores.length === 0 || stores.some((s) => s.slug === lastSelectedSlug))) {
-            fallbackDestination = `/store/${lastSelectedSlug}/dashboard`;
-          } else if (defaultSlug) {
-            fallbackDestination = `/store/${defaultSlug}/dashboard`;
+            let lastSelectedSlug: string | null = null;
+            try {
+              lastSelectedSlug = localStorage.getItem("bornoland_last_store_slug");
+            } catch {
+              // Ignore local storage error
+            }
+
+            if (lastSelectedSlug && (stores.length === 0 || stores.some((s) => s.slug === lastSelectedSlug))) {
+              fallbackDestination = `/store/${lastSelectedSlug}/dashboard`;
+            } else if (defaultSlug) {
+              fallbackDestination = `/store/${defaultSlug}/dashboard`;
+            } else {
+              fallbackDestination = "/dashboard";
+            }
           }
         }
         window.location.replace(consumeRedirectAfterLogin(queryRedirect, fallbackDestination));

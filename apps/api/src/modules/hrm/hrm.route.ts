@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../../common/middleware/auth.middleware.js";
 import { requireFeatureAccess } from "../../common/middleware/feature.middleware.js";
+import { requireStorePermission } from "../../common/middleware/store-permission.middleware.js";
 import {
   listEmployeesController,
   createEmployeeController,
@@ -30,38 +31,40 @@ export const hrmRouter: Router = Router({ mergeParams: true });
 const storeId = (req: { params: { storeId?: string } }) => String(req.params.storeId);
 const hrmGuard = requireFeatureAccess("employees", { getStoreId: storeId });
 const payrollGuard = requireFeatureAccess("payroll", { getStoreId: storeId });
+const hrmPermissionGuard = requireStorePermission("hrm:read");
+const payrollPermissionGuard = requireStorePermission("hrm:payroll:manage");
 
 hrmRouter.use(requireAuth);
 
 // ── Dedicated Employee Self-Service Portal Routes ──
 hrmRouter.use("/self-service", hrmSelfServiceRouter);
 
-// Employees
-hrmRouter.get("/employees", hrmGuard, listEmployeesController);
-hrmRouter.post("/employees", hrmGuard, createEmployeeController);
-hrmRouter.get("/employees/:employeeId", hrmGuard, getEmployeeController);
-hrmRouter.put("/employees/:employeeId", hrmGuard, updateEmployeeController);
+// Employees (admin HRM - requires hrm:read permission)
+hrmRouter.get("/employees", hrmGuard, hrmPermissionGuard, listEmployeesController);
+hrmRouter.post("/employees", hrmGuard, hrmPermissionGuard, createEmployeeController);
+hrmRouter.get("/employees/:employeeId", hrmGuard, hrmPermissionGuard, getEmployeeController);
+hrmRouter.put("/employees/:employeeId", hrmGuard, hrmPermissionGuard, updateEmployeeController);
 
-// Organization
-hrmRouter.get("/departments", hrmGuard, listDepartmentsController);
-hrmRouter.post("/departments", hrmGuard, createDepartmentController);
-hrmRouter.get("/designations", hrmGuard, listDesignationsController);
-hrmRouter.post("/designations", hrmGuard, createDesignationController);
+// Organization (admin HRM - requires hrm:read permission)
+hrmRouter.get("/departments", hrmGuard, hrmPermissionGuard, listDepartmentsController);
+hrmRouter.post("/departments", hrmGuard, hrmPermissionGuard, createDepartmentController);
+hrmRouter.get("/designations", hrmGuard, hrmPermissionGuard, listDesignationsController);
+hrmRouter.post("/designations", hrmGuard, hrmPermissionGuard, createDesignationController);
 
-// Shifts & Attendance
-hrmRouter.get("/shifts", hrmGuard, listShiftsController);
-hrmRouter.post("/shifts", hrmGuard, createShiftController);
-hrmRouter.post("/attendance/clock-in", hrmGuard, clockInController);
-hrmRouter.post("/attendance/clock-out", hrmGuard, clockOutController);
-hrmRouter.get("/attendance", hrmGuard, listDailyAttendanceController);
+// Shifts & Attendance (admin HRM - requires hrm:read permission)
+hrmRouter.get("/shifts", hrmGuard, hrmPermissionGuard, listShiftsController);
+hrmRouter.post("/shifts", hrmGuard, hrmPermissionGuard, createShiftController);
+hrmRouter.post("/attendance/clock-in", hrmGuard, hrmPermissionGuard, clockInController);
+hrmRouter.post("/attendance/clock-out", hrmGuard, hrmPermissionGuard, clockOutController);
+hrmRouter.get("/attendance", hrmGuard, hrmPermissionGuard, listDailyAttendanceController);
 
-// Leaves
-hrmRouter.get("/leaves", hrmGuard, listLeavesController);
-hrmRouter.post("/leaves", hrmGuard, applyLeaveController);
-hrmRouter.post("/leaves/:leaveId/approve", hrmGuard, approveLeaveController);
+// Leaves (admin HRM - requires hrm:read permission)
+hrmRouter.get("/leaves", hrmGuard, hrmPermissionGuard, listLeavesController);
+hrmRouter.post("/leaves", hrmGuard, hrmPermissionGuard, applyLeaveController);
+hrmRouter.post("/leaves/:leaveId/approve", hrmGuard, hrmPermissionGuard, approveLeaveController);
 
-// Payroll
-hrmRouter.get("/payroll", payrollGuard, listPayrollsController);
-hrmRouter.post("/payroll/generate", payrollGuard, generatePayrollController);
-hrmRouter.post("/payroll/:payrollId/approve", payrollGuard, approvePayrollController);
-hrmRouter.post("/payroll/:payrollId/pay", payrollGuard, markPaidPayrollController);
+// Payroll (admin HRM - requires hrm:payroll:manage permission)
+hrmRouter.get("/payroll", payrollGuard, payrollPermissionGuard, listPayrollsController);
+hrmRouter.post("/payroll/generate", payrollGuard, payrollPermissionGuard, generatePayrollController);
+hrmRouter.post("/payroll/:payrollId/approve", payrollGuard, payrollPermissionGuard, approvePayrollController);
+hrmRouter.post("/payroll/:payrollId/pay", payrollGuard, payrollPermissionGuard, markPaidPayrollController);

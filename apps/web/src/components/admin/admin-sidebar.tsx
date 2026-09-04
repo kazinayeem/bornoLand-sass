@@ -19,7 +19,8 @@ export function AdminSidebar() {
   const handleLogout = async () => {
     try {
       await logout().unwrap();
-      router.replace(getLoginUrlForCurrentPage("/admin/login"));
+      // After logout, always go to /login without redirect parameter
+      window.location.replace("/login");
     } catch {
       toast.error("Failed to sign out");
     }

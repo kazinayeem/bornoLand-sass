@@ -148,6 +148,17 @@ const planFeatureSchema = new Schema({
   googleAnalytics: { type: Boolean, default: false },
   conversionTracking: { type: Boolean, default: false },
   advancedTracking: { type: Boolean, default: false },
+  // ── HRM / People Module ──────────────────────────────────────
+  hrm: { type: Boolean, default: false },
+  hrmAttendance: { type: Boolean, default: false },
+  hrmPayroll: { type: Boolean, default: false },
+  hrmLeave: { type: Boolean, default: false },
+  hrmSelfService: { type: Boolean, default: false },
+  // ── ERP / Finance ─────────────────────────────────────────────
+  accounting: { type: Boolean, default: false },
+  // ── CRM & Operations ──────────────────────────────────────────
+  crm: { type: Boolean, default: false },
+  operations: { type: Boolean, default: false },
 }, { _id: false });
 
 const planCourierAccessSchema = new Schema(

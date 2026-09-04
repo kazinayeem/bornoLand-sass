@@ -43,7 +43,8 @@ export type StoreAction = (typeof STORE_ACTIONS)[number];
 export type Permission =
   | "*"
   | `${StoreModule}:*`
-  | `${StoreModule}:${StoreAction}`;
+  | `${StoreModule}:${StoreAction}`
+  | `${StoreModule}:self:${StoreAction}`;
 
 // ── Role Keys ─────────────────────────────────────────────────────────
 export const STORE_MEMBER_ROLES = [
@@ -240,7 +241,9 @@ export const ROLE_PERMISSION_PRESETS: Record<StoreMemberRole, Permission[]> = {
     "media:*",
   ],
   employee: [
-    "hrm:read",
+    "hrm:self:read",
+    "hrm:self:create",
+    "hrm:self:delete",
   ],
   staff: [
     "products:read",
@@ -294,7 +297,8 @@ export function getRoleDefaultLandingPath(role: string, storeSlug: string): stri
 /**
  * Check if the user's permission array satisfies a required permission.
  * Supports wildcard: `*`, `module:*`, exact `module:action`.
- * Also normalizes dot notation (e.g. `hrm.attendance.view_self` -> `hrm:self:read`).
+ * Self-service permissions (e.g. `hrm:self:read`) require explicit assignment;
+ * they are NOT automatically satisfied by broader module permissions.
  */
 export function hasPermission(
   userPermissions: string[],
@@ -307,9 +311,6 @@ export function hasPermission(
   // Module wildcard e.g. "products:*" satisfies "products:read"
   const [module] = required.split(/[:.]/);
   if (module && userPermissions.includes(`${module}:*`)) return true;
-
-  // Self-permission alias: hrm:read satisfies hrm:self:read
-  if (required.includes("self") && userPermissions.includes(`${module}:read`)) return true;
 
   return false;
 }
@@ -343,13 +344,23 @@ export function roleToPermissions(role: StoreMemberRole): Permission[] {
 
 /**
  * Validate a permission string against the canonical format.
+ * Supports: `*`, `module:*`, `module:action`, `module:self:action`
  */
 export function isValidPermission(perm: string): boolean {
   if (perm === "*") return true;
   const parts = perm.split(":");
-  if (parts.length !== 2) return false;
-  const [module, action] = parts;
-  const validModule = STORE_MODULES.includes(module as StoreModule);
-  const validAction = action === "*" || STORE_ACTIONS.includes(action as StoreAction);
-  return validModule && validAction;
+  if (parts.length === 2) {
+    const [module, action] = parts;
+    const validModule = STORE_MODULES.includes(module as StoreModule);
+    const validAction = action === "*" || STORE_ACTIONS.includes(action as StoreAction);
+    return validModule && validAction;
+  }
+  if (parts.length === 3) {
+    const [module, self, action] = parts;
+    if (self !== "self") return false;
+    const validModule = STORE_MODULES.includes(module as StoreModule);
+    const validAction = STORE_ACTIONS.includes(action as StoreAction);
+    return validModule && validAction;
+  }
+  return false;
 }

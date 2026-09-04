@@ -131,15 +131,17 @@ export function PlatformSidebar() {
   const handleLogout = async () => {
     try {
       await logout().unwrap();
-      router.replace(getLoginUrlForCurrentPage());
+      // After logout, always go to /login without redirect parameter
+      window.location.replace("/login");
     } catch {
-      toast.error(language === "bn" ? "সাইন আউট করতে ব্যর্থ হয়েছে" : "Failed to sign out");
+      toast.error(language === "bn" ? "সাইন আউট করতে ব্যর্থ হয়েছে" : "Failed to sign out");
     }
   };
 
   const mainNav = [
     { href: "/dashboard", label: t.navigation.dashboard, icon: LayoutDashboard, exact: true },
     { href: "/dashboard/stores", label: t.navigation.stores, icon: Store },
+    { href: "/dashboard/plans", label: "Plans & Features", icon: CreditCard },
     { href: "/dashboard/billing", label: t.navigation.billing, icon: CreditCard },
     { href: "/dashboard/team", label: t.navigation.team, icon: Users },
     { href: "/dashboard/activity", label: t.navigation.activity, icon: ScrollText },

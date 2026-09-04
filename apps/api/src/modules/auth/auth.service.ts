@@ -53,16 +53,27 @@ async function ensureTenantOwner(payload: RegisterInput) {
   return tenant;
 }
 
-async function resolveUserDefaultStoreSlug(userId: unknown, tenantId?: unknown): Promise<string | null> {
+async function resolveUserDefaultStoreSlug(userId: unknown, tenantId?: unknown, userRole?: string): Promise<string | null> {
+  // Super admin and merchants should not have a default store slug
+  if (userRole === "super_admin" || userRole === "admin" || userRole === "owner") {
+    return null;
+  }
+
   try {
     const [teamTenantIds, storeMemberStoreIds] = await Promise.all([
       TeamMemberModel.find({ userId }).distinct("tenantId"),
       StoreMemberModel.find({ userId, status: "active" }).distinct("storeId"),
     ]);
 
+    // Check if user owns any store - merchants go to /dashboard
+    const ownedStore = await StoreModel.findOne({
+      userId,
+      status: { $ne: "archived" },
+    }).select("_id").lean();
+    if (ownedStore) return null;
+
     const store = (await StoreModel.findOne({
       $or: [
-        { userId },
         ...(tenantId ? [{ tenantId }] : []),
         ...(teamTenantIds.length ? [{ tenantId: { $in: teamTenantIds } }] : []),
         ...(storeMemberStoreIds.length ? [{ _id: { $in: storeMemberStoreIds } }] : []),
@@ -91,6 +102,8 @@ function buildSessionPayload(
   loginType: SessionPayload["loginType"],
   defaultStoreSlug?: string | null
 ): SessionPayload {
+  // Super admin and merchants should not have a default store slug in session
+  const isMerchant = user.role === "admin" || user.role === "owner";
   return {
     userId: String(user._id),
     tenantId: String(user.tenantId ?? ""),
@@ -99,7 +112,7 @@ function buildSessionPayload(
     name: user.name,
     loginType,
     sessionVersion: user.sessionVersion ?? 0,
-    defaultStoreSlug: user.role === "super_admin" ? null : (defaultStoreSlug ?? null),
+    defaultStoreSlug: (user.role === "super_admin" || isMerchant) ? null : (defaultStoreSlug ?? null),
   };
 }
 
@@ -182,7 +195,9 @@ export async function loginUser(payload: unknown) {
   } | null;
 
   // If not found by email, check if rawIdentifier is an Employee Code (e.g. EMP-0001, EMP-0042)
+  // or a mobile/phone number
   if (!user) {
+    // Try employee code lookup
     const emp = (await EmployeeModel.findOne({
       employeeCode: new RegExp(`^${rawIdentifier}$`, "i"),
     }).lean()) as { _id: unknown; userId?: unknown; email: string } | null;
@@ -195,6 +210,30 @@ export async function loginUser(payload: unknown) {
         user = (await UserModel.findOne({ email: emp.email.toLowerCase() }).lean()) as any;
         if (user) {
           await EmployeeModel.updateOne({ _id: emp._id }, { $set: { userId: user._id } }).exec();
+        }
+      }
+    }
+  }
+
+  // Try mobile/phone number lookup if still no user found
+  if (!user) {
+    // Normalize phone: remove spaces, dashes, parentheses; ensure leading + or digits only
+    const normalizedPhone = rawIdentifier.replace(/[\s\-\(\)]/g, "");
+    if (/^(\+?\d{10,15})$/.test(normalizedPhone)) {
+      const phoneEmp = (await EmployeeModel.findOne({
+        phone: { $regex: new RegExp(`^${normalizedPhone.replace(/^\+/, "\\+")}$`, "i") },
+        status: "active",
+      }).lean()) as { _id: unknown; userId?: unknown; email: string } | null;
+
+      if (phoneEmp) {
+        if (phoneEmp.userId) {
+          user = (await UserModel.findById(phoneEmp.userId).lean()) as any;
+        }
+        if (!user && phoneEmp.email) {
+          user = (await UserModel.findOne({ email: phoneEmp.email.toLowerCase() }).lean()) as any;
+          if (user) {
+            await EmployeeModel.updateOne({ _id: phoneEmp._id }, { $set: { userId: user._id } }).exec();
+          }
         }
       }
     }
@@ -218,7 +257,7 @@ export async function loginUser(payload: unknown) {
     return { ok: false as const, message: "Invalid credentials" };
   }
 
-  let userStores: Array<{ _id: unknown; slug?: string; name?: string }> = [];
+  let userStores: Array<{ _id: unknown; slug?: string; name?: string; userId?: unknown }> = [];
   let storesPayload: Array<{ id: string; slug: string; name: string }> = [];
   let defaultStoreSlug: string | null = null;
   let defaultMemberRole = user.role === "super_admin" ? "super_admin" : "member";
@@ -228,11 +267,16 @@ export async function loginUser(payload: unknown) {
     defaultLandingPath = "/dashboard";
     defaultStoreSlug = null;
   } else {
+    let teamTenantIds: unknown[] = [];
+    let storeMemberStoreIds: unknown[] = [];
+
     try {
-      const [teamTenantIds, storeMemberStoreIds] = await Promise.all([
+      const [resolvedTeamTenantIds, resolvedStoreMemberStoreIds] = await Promise.all([
         TeamMemberModel.find({ userId: user._id }).distinct("tenantId"),
         StoreMemberModel.find({ userId: user._id, status: "active" }).distinct("storeId"),
       ]);
+      teamTenantIds = resolvedTeamTenantIds;
+      storeMemberStoreIds = resolvedStoreMemberStoreIds;
 
       const foundStores = (await StoreModel.find({
         $or: [
@@ -243,8 +287,8 @@ export async function loginUser(payload: unknown) {
         ],
         status: { $ne: "archived" },
       })
-        .select("_id slug name")
-        .lean()) as Array<{ _id: unknown; slug?: string; name?: string }>;
+        .select("_id slug name userId")
+        .lean()) as Array<{ _id: unknown; slug?: string; name?: string; userId?: unknown }>;
       userStores = foundStores || [];
     } catch {
       // Non-critical
@@ -255,33 +299,56 @@ export async function loginUser(payload: unknown) {
       slug: s.slug || "",
       name: s.name || "",
     }));
-    defaultStoreSlug = storesPayload[0]?.slug ?? null;
 
-    if (defaultStoreSlug && storesPayload[0]?.id) {
-      const mem = (await StoreMemberModel.findOne({
-        storeId: storesPayload[0].id,
+    // Determine if user is a merchant (owns stores) or employee (member only)
+    const isMerchantRole = user.role === "admin" || user.role === "owner";
+    const userOwnsAnyStore = userStores.some((s) => String(s.userId) === String(user._id));
+
+    // Also check if user has StoreMember role "owner" for any store
+    let userIsStoreMemberOwner = false;
+    if (!isMerchantRole && !userOwnsAnyStore && storeMemberStoreIds.length > 0) {
+      const ownerMember = await StoreMemberModel.findOne({
+        storeId: { $in: storeMemberStoreIds },
         userId: user._id,
+        role: "owner",
         status: "active",
-      })
-        .select("role")
-        .lean()) as { role: string } | null;
+      }).select("_id").lean();
+      userIsStoreMemberOwner = Boolean(ownerMember);
+    }
 
-      if (mem?.role) {
-        defaultMemberRole = mem.role;
-        defaultLandingPath = getRoleDefaultLandingPath(mem.role, defaultStoreSlug);
-      } else {
-        const isStoreOwner = Boolean(
-          await StoreModel.findOne({ _id: storesPayload[0].id, userId: user._id }).select("_id").lean()
-        );
-        if (isStoreOwner) {
-          defaultMemberRole = "owner";
-          defaultLandingPath = `/store/${defaultStoreSlug}/dashboard`;
-        } else {
-          defaultLandingPath = `/store/${defaultStoreSlug}/dashboard`;
-        }
-      }
+    const isMerchant = isMerchantRole || userOwnsAnyStore || userIsStoreMemberOwner;
+
+    if (isMerchant) {
+      // Merchant/shop owner → platform dashboard
+      defaultLandingPath = "/dashboard";
+      defaultStoreSlug = null;
+      defaultMemberRole = "owner";
     } else {
-      defaultLandingPath = "/dashboard/stores/create";
+      // Employee/staff → assigned store
+      if (storesPayload.length > 0) {
+        defaultStoreSlug = storesPayload[0]?.slug ?? null;
+
+        if (defaultStoreSlug && storesPayload[0]?.id) {
+          const mem = (await StoreMemberModel.findOne({
+            storeId: storesPayload[0].id,
+            userId: user._id,
+            status: "active",
+          })
+            .select("role")
+            .lean()) as { role: string } | null;
+
+          if (mem?.role) {
+            defaultMemberRole = mem.role;
+            defaultLandingPath = getRoleDefaultLandingPath(mem.role, defaultStoreSlug);
+          } else {
+            defaultLandingPath = `/store/${defaultStoreSlug}/dashboard`;
+          }
+        }
+      } else {
+        // No stores accessible
+        defaultLandingPath = "/dashboard";
+        defaultStoreSlug = null;
+      }
     }
   }
 
@@ -432,7 +499,7 @@ export async function sessionFromRefreshToken(
   const { stored, user } = loaded;
   let defaultStoreSlug: string | null = null;
   if (user.role !== "super_admin") {
-    defaultStoreSlug = await resolveUserDefaultStoreSlug(user._id, user.tenantId);
+    defaultStoreSlug = await resolveUserDefaultStoreSlug(user._id, user.tenantId, user.role);
   }
   const session = buildSessionPayload(
     user,

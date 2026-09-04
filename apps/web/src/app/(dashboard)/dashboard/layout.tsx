@@ -11,8 +11,8 @@ import { getUserDefaultStoreSlug } from "@/lib/server/store-lookup";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Platform Dashboard • Super Admin",
-  description: "Manage the BornoLand SaaS platform as Super Admin.",
+  title: "Platform Dashboard",
+  description: "Manage your BornoLand platform, stores, and business operations.",
   canonicalPath: "/dashboard",
 });
 
@@ -26,6 +26,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   const pathname = headerList.get("x-pathname") || "";
   const isSuperAdmin = session?.role === "super_admin";
+  const isMerchant = session?.role === "admin" || session?.role === "owner";
 
   // If this is the store creation page, allow any authenticated user (e.g. merchant onboarding)
   if (pathname.startsWith("/dashboard/stores/create") || pathname === "/dashboard/create-store") {
@@ -38,8 +39,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     );
   }
 
-  // If authenticated user is NOT super admin, redirect to their own store dashboard
-  if (session && !isSuperAdmin) {
+  // Non-super-admin, non-merchant users: redirect to their store dashboard
+  if (session && !isSuperAdmin && !isMerchant) {
     const storeSlug = session.defaultStoreSlug || (await getUserDefaultStoreSlug());
     if (storeSlug) {
       redirect(`/store/${storeSlug}/dashboard`);
@@ -48,9 +49,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     }
   }
 
-  // Super Admin: render platform administration shell
+  // Super Admin or Merchant: render platform administration shell
   return (
-    <ProtectedSessionBoundary requiredRole="super_admin" loginPath="/admin/login">
+    <ProtectedSessionBoundary loginPath="/login">
       <AdminShell>{children}</AdminShell>
     </ProtectedSessionBoundary>
   );

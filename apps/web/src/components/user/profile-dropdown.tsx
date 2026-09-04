@@ -57,10 +57,11 @@ export function ProfileDropdown({ compact = false }: { compact?: boolean }) {
     try {
       await logout().unwrap();
       dispatch(clearUserProfile());
-      toast.success(language === "bn" ? "লগআউট সম্পন্ন হয়েছে" : "Signed out successfully");
-      router.replace(getLoginUrlForCurrentPage());
+      toast.success(language === "bn" ? "লগআউট সম্পন্ন হয়েছে" : "Signed out successfully");
+      // After logout, always go to /login without redirect parameter
+      window.location.replace("/login");
     } catch {
-      toast.error(language === "bn" ? "লগআউট করা সম্ভব হয়নি। আবার চেষ্টা করুন।" : "Failed to sign out. Please try again.");
+      toast.error(language === "bn" ? "লগআউট করা সম্ভব হয়নি। আবার চেষ্টা করুন।" : "Failed to sign out. Please try again.");
     }
   };
 

@@ -40,6 +40,12 @@ export default async function StoreLayout({ children, params }: StoreLayoutProps
 
   if (!initialContext || !initialContext.store) {
     const session = await getServerSession();
+    // Super admin and merchants can access any store they own
+    if (session?.role === "super_admin" || session?.role === "admin" || session?.role === "owner") {
+      // For merchants, try to find the store through other means or show unauthorized
+      // The API already verified access, so if we got here, access is denied
+      redirect("/unauthorized");
+    }
     if (session?.defaultStoreSlug && session.defaultStoreSlug !== storeSlug) {
       redirect(`/store/${session.defaultStoreSlug}/dashboard`);
     } else {

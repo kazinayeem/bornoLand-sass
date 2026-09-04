@@ -95,6 +95,7 @@ export function LoginForm({
 
     const userRole = payload.user?.role;
     const isSuperAdmin = userRole === "super_admin";
+    const isMerchant = userRole === "admin" || userRole === "owner";
     const defaultSlug =
       (payload as any).defaultStoreSlug ||
       payload.user?.defaultStoreSlug ||
@@ -102,9 +103,11 @@ export function LoginForm({
 
     let destination: string;
 
-    if (isSuperAdmin) {
+    if (isSuperAdmin || isMerchant) {
+      // Super admin and merchants go to platform dashboard
       destination = "/dashboard";
     } else {
+      // Employees/staff go to their assigned store
       let lastSelectedSlug: string | null = null;
       try {
         lastSelectedSlug = localStorage.getItem("bornoland_last_store_slug");
@@ -121,7 +124,7 @@ export function LoginForm({
       } else if (defaultSlug) {
         destination = `/store/${defaultSlug}/dashboard`;
       } else {
-        destination = (payload as any).defaultLandingPath || "/dashboard/stores/create";
+        destination = (payload as any).defaultLandingPath || "/dashboard";
       }
     }
 
@@ -132,11 +135,13 @@ export function LoginForm({
 
     let finalDestination = destination;
     if (queryRedirect && queryRedirect.startsWith("/") && !queryRedirect.startsWith("//")) {
-      if (isSuperAdmin) {
+      if (isSuperAdmin || isMerchant) {
+        // Super admin and merchants: allow redirect to /dashboard or /admin routes
         if (queryRedirect.startsWith("/dashboard") || queryRedirect.startsWith("/admin")) {
           finalDestination = queryRedirect === "/admin/dashboard" ? "/dashboard" : queryRedirect;
         }
       } else {
+        // Employees: allow redirect to store routes they have access to
         const targetStoreSlug = (payload as any).defaultStoreSlug || payload.user?.defaultStoreSlug;
         const storesList: Array<{ slug: string }> = (payload as any).stores || payload.user?.stores || [];
         const match = queryRedirect.match(/^\/store\/([^/]+)/);

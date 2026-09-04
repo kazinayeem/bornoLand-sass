@@ -46,9 +46,10 @@ export async function getStoreEntitledModules(storeId: string): Promise<string[]
   entitled.add("builder");
 
   const toggles = plan.featureToggles || {};
+  const features: string[] = plan.features || [];
 
   // POS
-  if (toggles.pos || plan.features?.includes("pos")) {
+  if (toggles.pos || features.includes("pos")) {
     entitled.add("pos");
   }
 
@@ -57,28 +58,28 @@ export async function getStoreEntitledModules(storeId: string): Promise<string[]
     toggles.inventory ||
     toggles.advancedInventory ||
     toggles.inventoryHistory ||
-    plan.features?.includes("inventory")
+    features.includes("inventory")
   ) {
     entitled.add("inventory");
   }
 
   // Warehouse (requires inventory)
-  if (toggles.warehousesEnabled || toggles.warehouses || plan.features?.includes("warehouse") || plan.features?.includes("warehouses")) {
+  if (toggles.warehousesEnabled || toggles.warehouses || features.includes("warehouse") || features.includes("warehouses")) {
     entitled.add("warehouse");
   }
 
   // Procurement (requires inventory)
-  if (toggles.suppliers || toggles.purchaseOrders || plan.features?.includes("procurement") || plan.features?.includes("suppliers")) {
+  if (toggles.suppliers || toggles.purchaseOrders || features.includes("procurement") || features.includes("suppliers")) {
     entitled.add("procurement");
   }
 
   // Shipping
-  if (toggles.shipping || toggles.courier || plan.courierAccess?.enabled || plan.features?.includes("shipping")) {
+  if (toggles.shipping || toggles.courier || plan.courierAccess?.enabled || features.includes("shipping")) {
     entitled.add("shipping");
   }
 
   // Analytics
-  if (toggles.advancedAnalytics || toggles.visitorAnalytics || toggles.reports || plan.features?.includes("analytics")) {
+  if (toggles.advancedAnalytics || toggles.visitorAnalytics || toggles.reports || features.includes("analytics")) {
     entitled.add("analytics");
   }
 
@@ -90,18 +91,46 @@ export async function getStoreEntitledModules(storeId: string): Promise<string[]
     toggles.customTracking ||
     toggles.emailMarketing ||
     toggles.smsMarketing ||
-    plan.features?.includes("marketing")
+    features.includes("marketing")
   ) {
     entitled.add("marketing");
   }
 
-  // Finance
-  if (toggles.sslcommerzPayment || toggles.invoiceGenerator || toggles.taxEngine || plan.features?.includes("finance")) {
+  // Finance (payment gateways / invoice)
+  if (toggles.sslcommerzPayment || toggles.invoiceGenerator || toggles.taxEngine || features.includes("finance")) {
     entitled.add("finance");
   }
 
+  // Accounting (double-entry ledger)
+  if (toggles.accounting || features.includes("accounting")) {
+    entitled.add("accounting");
+  }
+
+  // HRM / People module
+  if (
+    toggles.hrm ||
+    toggles.hrmAttendance ||
+    toggles.hrmPayroll ||
+    toggles.hrmLeave ||
+    toggles.hrmSelfService ||
+    toggles.staffManagement ||
+    features.includes("hrm")
+  ) {
+    entitled.add("hrm");
+  }
+
+  // CRM
+  if (toggles.crm || features.includes("crm")) {
+    entitled.add("crm");
+  }
+
+  // Operations / Approvals
+  if (toggles.operations || features.includes("operations")) {
+    entitled.add("operations");
+  }
+
   // Check if "Full Platform" (all active modules) is enabled
-  if (plan.slug === "enterprise" || plan.slug === "full-platform" || plan.features?.includes("full_platform")) {
+  if (plan.slug === "enterprise" || plan.slug === "full-platform" || features.includes("full_platform")) {
     for (const key of Object.keys(CANONICAL_MODULE_REGISTRY)) {
       if (CANONICAL_MODULE_REGISTRY[key].status === "active") {
         entitled.add(key);
@@ -110,6 +139,7 @@ export async function getStoreEntitledModules(storeId: string): Promise<string[]
   }
 
   return Array.from(entitled);
+
 }
 
 /**

@@ -40,7 +40,7 @@ export default function SecurityPage() {
   };
   const signOut = async (all: boolean) => {
     if (all && !window.confirm("Log out every device, including this one?")) return;
-    try { await (all ? logoutAll() : logoutCurrent()).unwrap(); toast.success(all ? "All devices logged out" : "Session logged out"); router.replace(getLoginUrlForCurrentPage()); }
+    try { await (all ? logoutAll() : logoutCurrent()).unwrap(); toast.success(all ? "All devices logged out" : "Session logged out"); window.location.replace("/login"); }
     catch { toast.error("Could not log out sessions"); }
   };
 

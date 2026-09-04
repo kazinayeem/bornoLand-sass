@@ -31,6 +31,14 @@ const COMPARISON_KEYS = [
   "marketing",
   "cms",
   "builder",
+  "hrm",
+  "attendance",
+  "leave_mgmt",
+  "payroll",
+  "self_service",
+  "accounting",
+  "crm",
+  "operations",
 ];
 
 const COMPARISON_LABELS: Record<string, string> = {
@@ -55,6 +63,14 @@ const COMPARISON_LABELS: Record<string, string> = {
   marketing: "Marketing",
   cms: "CMS",
   builder: "Builder",
+  hrm: "HRM Module",
+  attendance: "Attendance Tracking",
+  leave_mgmt: "Leave Management",
+  payroll: "Payroll & Payslips",
+  self_service: "Employee Self-Service",
+  accounting: "Double-Entry Accounting",
+  crm: "CRM & Support Desk",
+  operations: "Approvals & Workflow",
 };
 
 function formatCell(feature: PlanFeatureAssignment | undefined) {

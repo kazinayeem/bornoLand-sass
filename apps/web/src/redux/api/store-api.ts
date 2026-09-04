@@ -159,6 +159,17 @@ export type PlanFeatureToggles = {
   googleAnalytics: boolean;
   conversionTracking: boolean;
   advancedTracking: boolean;
+  // ── HRM / People Module ──
+  hrm: boolean;
+  hrmAttendance: boolean;
+  hrmPayroll: boolean;
+  hrmLeave: boolean;
+  hrmSelfService: boolean;
+  // ── ERP / Finance ──
+  accounting: boolean;
+  // ── CRM & Operations ──
+  crm: boolean;
+  operations: boolean;
 };
 
 export type PlanCourierAccess = {

@@ -23,6 +23,7 @@ import {
   refreshAccessToken,
   registerUser,
   resetPassword,
+  resolveUserDefaultStoreSlug,
   sessionFromRefreshToken,
 } from "./auth.service.js";
 import { RefreshTokenModel } from "./refresh-token.model.js";
@@ -233,13 +234,14 @@ export async function meController(request: Request, response: Response) {
       await connectDatabase();
       const u = (await UserModel.findById(userId).select("name email role tenantId").lean()) as any;
       if (!u) return null;
+      const slug = defaultStoreSlug ?? (u.role !== "super_admin" ? await resolveUserDefaultStoreSlug(u._id, u.tenantId, u.role) : null);
       return {
         id: String(u._id),
         name: u.name,
         email: u.email,
         role: u.role,
         tenantId: String(u.tenantId ?? ""),
-        defaultStoreSlug: defaultStoreSlug ?? null,
+        defaultStoreSlug: slug ?? null,
       };
     } catch {
       return null;

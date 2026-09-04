@@ -122,12 +122,16 @@ export function StoreShell({ children }: { children: ReactNode }) {
       {mobileNavOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-200 animate-in fade-in"
+            className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-200 animate-in fade-in"
             onClick={closeMobileNav}
             aria-hidden="true"
           />
-          <div className="absolute inset-y-0 left-0 flex w-[280px] animate-in slide-in-from-left duration-200 flex-col border-r border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
-            <MobileStoreDrawer store={store} onClose={closeMobileNav} />
+          <div className="absolute inset-y-0 left-0 flex w-[min(88vw,340px)] animate-in slide-in-from-left duration-200 flex-col border-r border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
+            {isEmployee ? (
+              <EmployeeSidebar store={store} onNavigate={closeMobileNav} />
+            ) : (
+              <MobileStoreDrawer store={store} onClose={closeMobileNav} />
+            )}
           </div>
         </div>
       ) : null}

@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, ArrowRight, Globe, Layers, Check, ChevronDown } from "lucide-react";
+import { Menu, ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useLandingLocale } from "./landing-locale";
 import { landingContainer } from "./landing-ui";
 import { scrollToSection } from "@/lib/scroll-utils";
 import { useGetProfileQuery } from "@/redux/api/profile-api";
@@ -14,11 +13,13 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetClose,
 } from "@/components/ui/sheet";
 
-export function Header() {
-  const { locale, setLocale, t } = useLandingLocale();
+interface HeaderProps {
+  onOpenDemo?: () => void;
+}
+
+export function Header({ onOpenDemo }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -26,7 +27,7 @@ export function Header() {
   const isAuthenticated = Boolean(profileData?.data?.profile);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setScrolled(window.scrollY > 15);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -45,15 +46,11 @@ export function Header() {
   const closeMenu = useCallback(() => setMobileOpen(false), []);
 
   const navLinks = [
-    { label: t.nav.platform, href: "platform-architecture" },
-    { label: t.nav.builder, href: "builder" },
-    { label: t.nav.pos, href: "pos" },
-    { label: t.nav.inventory, href: "inventory" },
-    { label: t.nav.accounting, href: "accounting" },
-    { label: t.nav.hrm, href: "hrm" },
-    { label: t.nav.analytics, href: "analytics" },
-    { label: t.nav.pricing, href: "pricing" },
-    { label: t.nav.faq, href: "faq" },
+    { label: "Product", href: "platform" },
+    { label: "Solutions", href: "solutions" },
+    { label: "Features", href: "features" },
+    { label: "Pricing", href: "pricing" },
+    { label: "FAQ", href: "faq" },
   ];
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
@@ -69,11 +66,11 @@ export function Header() {
         className={cn(
           "transition-all duration-300",
           scrolled
-            ? "border-b border-zinc-200/80 bg-white/90 backdrop-blur-xl shadow-xs py-3"
+            ? "border-b border-zinc-200/80 bg-white/85 backdrop-blur-xl shadow-xs py-3"
             : "bg-transparent py-4 sm:py-5"
         )}
       >
-        <div className={cn(landingContainer, "flex items-center justify-between gap-3")}>
+        <div className={cn(landingContainer, "flex items-center justify-between gap-4")}>
           {/* Logo */}
           <Link
             href="/"
@@ -97,13 +94,13 @@ export function Header() {
           </Link>
 
           {/* Desktop Nav Items */}
-          <div className="hidden xl:flex items-center gap-0.5 rounded-full border border-zinc-200/80 bg-white/80 px-3 py-1 shadow-2xs backdrop-blur-md">
+          <div className="hidden md:flex items-center gap-1 rounded-full border border-zinc-200/80 bg-white/80 px-4 py-1.5 shadow-2xs backdrop-blur-md">
             {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={`#${link.href}`}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className="rounded-full px-3 py-1.5 text-xs font-semibold text-zinc-600 transition-colors hover:text-[#003399] hover:bg-zinc-100/70"
+                className="rounded-full px-3.5 py-1 text-xs font-semibold text-zinc-600 transition-colors hover:text-[#003399] hover:bg-zinc-100/70 cursor-pointer"
               >
                 {link.label}
               </a>
@@ -111,36 +108,17 @@ export function Header() {
           </div>
 
           {/* Right Action Cluster */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
-            {/* Language Switcher Pill */}
-            <div className="flex items-center rounded-full border border-zinc-200/80 bg-white/90 p-0.5 shadow-2xs">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {onOpenDemo && (
               <button
                 type="button"
-                onClick={() => setLocale("en")}
-                aria-label="Switch to English"
-                className={cn(
-                  "px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer",
-                  locale === "en"
-                    ? "bg-[#003399] text-white shadow-2xs"
-                    : "text-zinc-600 hover:text-zinc-950"
-                )}
+                onClick={onOpenDemo}
+                className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100/80 transition-colors cursor-pointer"
               >
-                EN
+                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                <span>Book Demo</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setLocale("bn")}
-                aria-label="Switch to Bangla"
-                className={cn(
-                  "px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer",
-                  locale === "bn"
-                    ? "bg-[#003399] text-white shadow-2xs"
-                    : "text-zinc-600 hover:text-zinc-950"
-                )}
-              >
-                বাং
-              </button>
-            </div>
+            )}
 
             {/* Auth Buttons */}
             {isAuthenticated ? (
@@ -148,7 +126,7 @@ export function Header() {
                 href="/dashboard"
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#003399] text-xs font-bold text-white shadow-xs hover:bg-[#002B80] transition-colors"
               >
-                <span>{t.nav.dashboard}</span>
+                <span>Dashboard</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             ) : (
@@ -157,13 +135,13 @@ export function Header() {
                   href="/login"
                   className="hidden sm:inline-flex px-3.5 py-2 rounded-lg text-xs font-bold text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100/80 transition-colors"
                 >
-                  {t.nav.login}
+                  Log in
                 </Link>
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-1 px-3.5 sm:px-4 py-2 rounded-lg bg-[#003399] text-xs font-bold text-white shadow-xs hover:bg-[#002B80] transition-all hover:shadow-sm"
+                  className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-lg bg-[#003399] text-xs font-bold text-white shadow-xs hover:bg-[#002B80] transition-all hover:shadow-sm active:scale-[0.98]"
                 >
-                  <span>{t.nav.startFree}</span>
+                  <span>Get Started</span>
                   <ArrowRight className="h-3.5 w-3.5 hidden sm:inline" />
                 </Link>
               </div>
@@ -173,8 +151,8 @@ export function Header() {
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              aria-label="Open menu"
-              className="xl:hidden flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-700 shadow-2xs hover:bg-zinc-50"
+              aria-label="Open navigation menu"
+              className="md:hidden flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-700 shadow-2xs hover:bg-zinc-50 cursor-pointer"
             >
               <Menu className="h-4 w-4" />
             </button>
@@ -208,50 +186,36 @@ export function Header() {
                   key={link.href}
                   href={`#${link.href}`}
                   onClick={(e) => handleNavClick(e, link.href)}
-                  className="px-3 py-2.5 rounded-lg text-sm font-semibold text-zinc-700 hover:text-[#003399] hover:bg-blue-50/50 transition-colors"
+                  className="px-3.5 py-2.5 rounded-lg text-sm font-semibold text-zinc-700 hover:text-[#003399] hover:bg-blue-50/50 transition-colors cursor-pointer"
                 >
                   {link.label}
                 </a>
               ))}
+              {onOpenDemo && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMenu();
+                    onOpenDemo();
+                  }}
+                  className="px-3.5 py-2.5 rounded-lg text-sm font-semibold text-zinc-700 hover:text-[#003399] hover:bg-blue-50/50 transition-colors text-left flex items-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  <span>Book a Product Demo</span>
+                </button>
+              )}
             </div>
           </div>
 
           {/* Bottom Actions */}
           <div className="space-y-3 pt-6 border-t border-zinc-100">
-            {/* Language Selection */}
-            <div className="flex items-center justify-between p-2 rounded-xl bg-zinc-50 border border-zinc-200/80">
-              <span className="text-xs font-semibold text-zinc-600">{t.nav.language}:</span>
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  onClick={() => setLocale("en")}
-                  className={cn(
-                    "px-3 py-1 rounded-md text-xs font-bold transition-all",
-                    locale === "en" ? "bg-[#003399] text-white" : "text-zinc-600 hover:bg-zinc-200"
-                  )}
-                >
-                  English
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLocale("bn")}
-                  className={cn(
-                    "px-3 py-1 rounded-md text-xs font-bold transition-all",
-                    locale === "bn" ? "bg-[#003399] text-white" : "text-zinc-600 hover:bg-zinc-200"
-                  )}
-                >
-                  বাংলা
-                </button>
-              </div>
-            </div>
-
             {isAuthenticated ? (
               <Link
                 href="/dashboard"
                 onClick={closeMenu}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#003399] text-white text-sm font-bold shadow-xs hover:bg-[#002B80]"
               >
-                <span>{t.nav.dashboard}</span>
+                <span>Go to Dashboard</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (
@@ -261,14 +225,14 @@ export function Header() {
                   onClick={closeMenu}
                   className="flex items-center justify-center py-2.5 rounded-xl border border-zinc-200 bg-white text-zinc-900 text-xs font-bold hover:bg-zinc-50"
                 >
-                  {t.nav.login}
+                  Log in
                 </Link>
                 <Link
                   href="/register"
                   onClick={closeMenu}
                   className="flex items-center justify-center py-2.5 rounded-xl bg-[#003399] text-white text-xs font-bold shadow-xs hover:bg-[#002B80]"
                 >
-                  {t.nav.startFree}
+                  Start Free
                 </Link>
               </div>
             )}

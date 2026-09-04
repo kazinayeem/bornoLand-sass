@@ -130,14 +130,21 @@ function EmployeeNavItemRow({
       href={href}
       onClick={onNavigate}
       className={cn(
-        "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all outline-none",
+        "relative flex items-center gap-2.5 rounded-lg px-2.5 h-9 text-xs font-medium transition-all duration-150 outline-none",
         isActive
-          ? "bg-indigo-50/90 text-indigo-950 font-bold border-l-2 border-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-200 dark:border-indigo-400"
-          : "text-zinc-600 hover:bg-zinc-100/80 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100",
+          ? "bg-zinc-100/90 text-zinc-950 font-semibold dark:bg-zinc-800/80 dark:text-white"
+          : "text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900/80 dark:hover:text-zinc-100",
         collapsed ? "justify-center px-0 h-9 w-9 mx-auto rounded-lg" : ""
       )}
+      aria-label={label}
     >
+      {/* Subtle active left indicator bar */}
+      {isActive && !collapsed && (
+        <span className="absolute left-0 top-1/2 h-4 w-[2.5px] -translate-y-1/2 rounded-r-full bg-indigo-600 dark:bg-indigo-400" />
+      )}
+
       <Icon
+        strokeWidth={isActive ? 2 : 1.75}
         className={cn(
           "h-4 w-4 shrink-0 transition-colors",
           isActive
@@ -145,7 +152,7 @@ function EmployeeNavItemRow({
             : "text-zinc-500 dark:text-zinc-400"
         )}
       />
-      {!collapsed && <span className="flex-1 truncate">{label}</span>}
+      {!collapsed && <span className="flex-1 truncate text-[12.5px] leading-none">{label}</span>}
     </Link>
   );
 
@@ -153,7 +160,7 @@ function EmployeeNavItemRow({
     return (
       <Tooltip>
         <TooltipTrigger asChild>{content}</TooltipTrigger>
-        <TooltipContent side="right" sideOffset={12} className="py-1 px-2.5 font-medium shadow-md">
+        <TooltipContent side="right" sideOffset={12} className="py-1 px-2.5 font-medium shadow-md text-xs">
           <span>{label}</span>
         </TooltipContent>
       </Tooltip>
@@ -212,26 +219,26 @@ export function EmployeeSidebar({
         <aside
           className={cn(
             "sticky top-0 flex h-screen flex-col border-r border-zinc-200/80 bg-white transition-[width] duration-200 ease-in-out dark:border-zinc-800 dark:bg-zinc-950 select-none",
-            collapsed ? "w-[68px]" : "w-[270px]"
+            collapsed ? "w-[68px]" : "w-[268px]"
           )}
           role="navigation"
-          aria-label="Employee Self-Service Navigation"
+          aria-label="Employee Navigation"
         >
           {/* ── Top: Store Branding ── */}
-          <div className={cn("shrink-0 border-b border-zinc-200/80 dark:border-zinc-800", collapsed ? "p-2" : "p-3")}>
-            <div className="flex items-center gap-2.5">
+          <div className={cn("shrink-0 border-b border-zinc-200/80 dark:border-zinc-800", collapsed ? "p-2" : "p-2.5")}>
+            <div className={cn("flex items-center gap-2.5 p-1.5", collapsed && "justify-center p-1")}>
               <StoreBrandMark
                 store={store}
-                size={collapsed ? 36 : 34}
-                roundedClassName="rounded-lg shadow-xs shrink-0"
+                size={collapsed ? 34 : 32}
+                roundedClassName="rounded-lg shadow-2xs shrink-0"
               />
               {!collapsed && (
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-xs font-bold text-zinc-900 dark:text-white">
+                  <span className="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">
                     {store.shortName || store.name}
                   </span>
-                  <span className="truncate text-[10px] text-zinc-500">
-                    {isBn ? "কর্মী পোর্টাল" : "Employee Portal"}
+                  <span className="truncate text-[10.5px] text-zinc-500 dark:text-zinc-400">
+                    {isBn ? "কর্মী পোর্টাল" : "Employee Workspace"}
                   </span>
                 </div>
               )}
@@ -240,20 +247,20 @@ export function EmployeeSidebar({
 
           {/* ── Employee Navigation ── */}
           <nav
-            className="sidebar-scroll flex-1 overflow-y-auto px-2 py-3 space-y-1"
+            className="sidebar-scroll flex-1 overflow-y-auto px-2 py-2 space-y-1"
             aria-label="Employee Navigation"
           >
             {/* Quick link to Store Dashboard */}
-            <div className="mb-3">
+            <div className="mb-2">
               <Link
                 href={`${basePath}/hrm/self-service`}
                 onClick={onNavigate}
                 className={cn(
-                  "group flex w-full items-center gap-2 rounded-lg px-2.5 h-8 text-[11px] font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 transition-colors border border-zinc-200/70 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white",
+                  "group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 h-8.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100/80 hover:text-zinc-950 transition-colors border border-zinc-200/60 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white",
                   collapsed ? "justify-center px-0 w-9 mx-auto" : ""
                 )}
               >
-                <LayoutDashboard className="h-3.5 w-3.5 shrink-0 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors" />
+                <LayoutDashboard className="h-3.5 w-3.5 shrink-0 text-zinc-500 group-hover:text-zinc-800 dark:text-zinc-400 dark:group-hover:text-zinc-200 transition-colors" strokeWidth={1.75} />
                 {!collapsed && (
                   <span className="truncate">
                     {isBn ? "আমার ওয়ার্কস্পেস" : "My Workspace"}
@@ -264,7 +271,7 @@ export function EmployeeSidebar({
 
             {/* Section: My Work */}
             {!collapsed && (
-              <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+              <div className="px-2 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
                 {isBn ? "আমার কাজ" : "My Work"}
               </div>
             )}
@@ -283,7 +290,7 @@ export function EmployeeSidebar({
 
             {/* Section: My Payroll */}
             {!collapsed && (
-              <div className="px-2.5 py-1 mt-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+              <div className="px-2 py-1 mt-2.5 text-[10.5px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
                 {isBn ? "আমার বেতন" : "My Payroll"}
               </div>
             )}
@@ -302,7 +309,7 @@ export function EmployeeSidebar({
 
             {/* Section: My Account */}
             {!collapsed && (
-              <div className="px-2.5 py-1 mt-3 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+              <div className="px-2 py-1 mt-2.5 text-[10.5px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
                 {isBn ? "আমার অ্যাকাউন্ট" : "My Account"}
               </div>
             )}
@@ -321,18 +328,19 @@ export function EmployeeSidebar({
           </nav>
 
           {/* ── Bottom: Logout & Collapse Toggle ── */}
-          <div className={cn("shrink-0 border-t border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-950", collapsed ? "p-2" : "p-3")}>
+          <div className={cn("shrink-0 border-t border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-950", collapsed ? "p-1.5" : "p-2.5")}>
             {/* Logout Button */}
             <button
               type="button"
               onClick={handleLogout}
               className={cn(
-                "flex w-full items-center gap-2 rounded-lg py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 transition-colors outline-none mb-2",
+                "flex w-full items-center gap-2 rounded-lg py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 transition-colors outline-none mb-1.5",
                 collapsed ? "justify-center px-0" : "px-2"
               )}
               title={isBn ? "লগআউট" : "Sign out"}
+              aria-label={isBn ? "লগআউট" : "Sign out"}
             >
-              <LogOut className="h-4 w-4 shrink-0" />
+              <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.75} />
               {!collapsed && <span>{isBn ? "লগআউট" : "Sign out"}</span>}
             </button>
 
@@ -345,13 +353,14 @@ export function EmployeeSidebar({
                 collapsed ? "justify-center px-0" : "px-2"
               )}
               title={collapsed ? (isBn ? "সাইডবার বড় করুন" : "Expand sidebar") : (isBn ? "সাইডবার ছোট করুন" : "Collapse sidebar")}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {collapsed ? (
-                <PanelLeft className="h-4 w-4 shrink-0" />
+                <PanelLeft className="h-4 w-4 shrink-0" strokeWidth={1.75} />
               ) : (
                 <>
-                  <PanelLeftClose className="h-4 w-4 shrink-0" />
-                  <span className="text-[11px] font-medium">
+                  <PanelLeftClose className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                  <span className="text-[11.5px] font-medium">
                     {isBn ? "সাইডবার সঙ্কুচিত করুন" : "Collapse sidebar"}
                   </span>
                 </>

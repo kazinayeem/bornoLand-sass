@@ -53,9 +53,9 @@ async function ensureTenantOwner(payload: RegisterInput) {
   return tenant;
 }
 
-async function resolveUserDefaultStoreSlug(userId: unknown, tenantId?: unknown, userRole?: string): Promise<string | null> {
-  // Super admin and merchants should not have a default store slug
-  if (userRole === "super_admin" || userRole === "admin" || userRole === "owner") {
+export async function resolveUserDefaultStoreSlug(userId: unknown, tenantId?: unknown, userRole?: string): Promise<string | null> {
+  // Super admin does not have a store slug
+  if (userRole === "super_admin") {
     return null;
   }
 
@@ -65,21 +65,16 @@ async function resolveUserDefaultStoreSlug(userId: unknown, tenantId?: unknown, 
       StoreMemberModel.find({ userId, status: "active" }).distinct("storeId"),
     ]);
 
-    // Check if user owns any store - merchants go to /dashboard
-    const ownedStore = await StoreModel.findOne({
-      userId,
-      status: { $ne: "archived" },
-    }).select("_id").lean();
-    if (ownedStore) return null;
-
     const store = (await StoreModel.findOne({
       $or: [
+        { userId },
         ...(tenantId ? [{ tenantId }] : []),
         ...(teamTenantIds.length ? [{ tenantId: { $in: teamTenantIds } }] : []),
         ...(storeMemberStoreIds.length ? [{ _id: { $in: storeMemberStoreIds } }] : []),
       ],
       status: { $ne: "archived" },
     })
+      .sort({ createdAt: 1 })
       .select("slug")
       .lean()) as { slug?: string } | null;
 
@@ -102,8 +97,6 @@ function buildSessionPayload(
   loginType: SessionPayload["loginType"],
   defaultStoreSlug?: string | null
 ): SessionPayload {
-  // Super admin and merchants should not have a default store slug in session
-  const isMerchant = user.role === "admin" || user.role === "owner";
   return {
     userId: String(user._id),
     tenantId: String(user.tenantId ?? ""),
@@ -112,7 +105,7 @@ function buildSessionPayload(
     name: user.name,
     loginType,
     sessionVersion: user.sessionVersion ?? 0,
-    defaultStoreSlug: (user.role === "super_admin" || isMerchant) ? null : (defaultStoreSlug ?? null),
+    defaultStoreSlug: user.role === "super_admin" ? null : (defaultStoreSlug ?? null),
   };
 }
 
@@ -319,10 +312,17 @@ export async function loginUser(payload: unknown) {
     const isMerchant = isMerchantRole || userOwnsAnyStore || userIsStoreMemberOwner;
 
     if (isMerchant) {
-      // Merchant/shop owner → platform dashboard
-      defaultLandingPath = "/dashboard";
-      defaultStoreSlug = null;
       defaultMemberRole = "owner";
+      if (storesPayload.length === 1) {
+        defaultStoreSlug = storesPayload[0].slug;
+        defaultLandingPath = `/store/${storesPayload[0].slug}/dashboard`;
+      } else if (storesPayload.length > 1) {
+        defaultStoreSlug = storesPayload[0].slug;
+        defaultLandingPath = "/dashboard/stores";
+      } else {
+        defaultStoreSlug = null;
+        defaultLandingPath = "/dashboard/stores/create";
+      }
     } else {
       // Employee/staff → assigned store
       if (storesPayload.length > 0) {
@@ -340,13 +340,16 @@ export async function loginUser(payload: unknown) {
           if (mem?.role) {
             defaultMemberRole = mem.role;
             defaultLandingPath = getRoleDefaultLandingPath(mem.role, defaultStoreSlug);
+          } else if (user.role === "employee") {
+            defaultMemberRole = "employee";
+            defaultLandingPath = `/store/${defaultStoreSlug}/hrm/self-service`;
           } else {
             defaultLandingPath = `/store/${defaultStoreSlug}/dashboard`;
           }
         }
       } else {
         // No stores accessible
-        defaultLandingPath = "/dashboard";
+        defaultLandingPath = user.role === "employee" ? "/unauthorized" : "/dashboard/stores/create";
         defaultStoreSlug = null;
       }
     }

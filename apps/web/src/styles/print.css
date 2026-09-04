@@ -52,41 +52,49 @@
   box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.1);
 }
 
+/* ── Page definitions ─────────────────────────────────────────────── */
+@page {
+  size: auto;
+  margin: 10mm;
+}
+
+@page a4-portrait {
+  size: A4 portrait;
+  margin: 10mm;
+}
+
+@page a4-landscape {
+  size: A4 landscape;
+  margin: 10mm;
+}
+
+@page thermal-80 {
+  size: 80mm auto;
+  margin: 2mm;
+}
+
+@page thermal-58 {
+  size: 58mm auto;
+  margin: 2mm;
+}
+
 /* ── Universal @media print Engine ────────────────────────────────── */
 @media print {
-  /* Page defaults */
-  @page {
-    size: auto;
-    margin: 10mm;
-  }
-
   /* Specific page size overrides */
   body.print-size-a4-portrait {
-    @page {
-      size: A4 portrait;
-      margin: 10mm;
-    }
+    page: a4-portrait;
   }
 
   body.print-size-a4-landscape {
-    @page {
-      size: A4 landscape;
-      margin: 10mm;
-    }
+    page: a4-landscape;
   }
 
   body.print-size-thermal-80 {
-    @page {
-      size: 80mm auto;
-      margin: 2mm;
-    }
+    page: thermal-80;
   }
 
   body.print-size-thermal-58 {
-    @page {
-      size: 58mm auto;
-      margin: 2mm;
-    }
+    page: thermal-58;
   }
 
   /* Color preservation */

@@ -133,14 +133,14 @@ export function useStoreNavState(storeId: string, storeSlug: string) {
 
     // Find matching item in registry
     let foundItem: NavItem | null = null;
-    let foundModuleBadge = "📌";
+    let foundModuleBadge = "";
 
     for (const mod of BUSINESS_MODULES) {
       for (const item of mod.items) {
         const itemPureHref = item.href.split("?")[0];
         if (item.exact ? relPath === item.href : relPath.startsWith(itemPureHref)) {
           foundItem = item;
-          foundModuleBadge = mod.badgeIcon;
+          foundModuleBadge = mod.badgeIcon || "";
           break;
         }
       }

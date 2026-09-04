@@ -34,8 +34,9 @@ export const SEED_GROUPS: SeedGroup[] = [
   { key: "platform", name: "Platform", sortOrder: 5 },
   { key: "pos_module", name: "Point of Sale (POS)", sortOrder: 6 },
   { key: "hrm_module", name: "HR & Employee Management", sortOrder: 7 },
-  { key: "finance_module", name: "Finance & Accounting", sortOrder: 8 },
-  { key: "crm_module", name: "CRM & Operations", sortOrder: 9 },
+  { key: "erp_module", name: "ERP Suite", sortOrder: 8 },
+  { key: "finance_module", name: "Finance & Accounting", sortOrder: 9 },
+  { key: "crm_module", name: "CRM & Operations", sortOrder: 10 },
 ];
 
 // ── Features (only implemented modules) ─────────────────────────────────────
@@ -109,6 +110,14 @@ export const SEED_FEATURES: SeedFeature[] = [
   // ── CRM & Operations Module ──
   { key: "crm", name: "CRM & Support Desk", description: "Lead management, deals pipeline, customer 360 and support tickets", type: "boolean", groupKey: "crm_module", sortOrder: 1, defaultEnabled: false },
   { key: "operations", name: "Approvals & Workflow", description: "Multi-step approval engine and centralized task management", type: "boolean", groupKey: "crm_module", sortOrder: 2, defaultEnabled: false },
+
+  // ── ERP Suite ──
+  { key: "erp_core", name: "ERP Core", description: "Central ERP dashboard with cross-module analytics and unified workflows", type: "boolean", groupKey: "erp_module", sortOrder: 1, defaultEnabled: false },
+  { key: "erp_finance", name: "ERP Finance", description: "Integrated financial management: GL, AP, AR, fixed assets, budgeting", type: "boolean", groupKey: "erp_module", sortOrder: 2, defaultEnabled: false },
+  { key: "erp_inventory", name: "ERP Inventory", description: "Advanced inventory: multi-warehouse, lot/serial tracking, demand planning", type: "boolean", groupKey: "erp_module", sortOrder: 3, defaultEnabled: false },
+  { key: "erp_procurement", name: "ERP Procurement", description: "Purchase requisitions, vendor management, contract management, RFQ", type: "boolean", groupKey: "erp_module", sortOrder: 4, defaultEnabled: false },
+  { key: "erp_manufacturing", name: "ERP Manufacturing", description: "BOM, work orders, routing, shop floor control, MRP", type: "boolean", groupKey: "erp_module", sortOrder: 5, defaultEnabled: false },
+  { key: "erp_projects", name: "ERP Projects", description: "Project accounting, resource planning, time & expense, billing", type: "boolean", groupKey: "erp_module", sortOrder: 6, defaultEnabled: false },
 ];
 
 // ── Tiers (only for tier-type features) ─────────────────────────────────────

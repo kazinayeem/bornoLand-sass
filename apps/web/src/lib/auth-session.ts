@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
+import { jwtVerify } from "jose/jwt/verify";
 import { getApiUrl } from "@/lib/urls";
 
 export type AppSession = {

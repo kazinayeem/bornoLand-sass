@@ -11,7 +11,7 @@ const userSchema = new Schema(
     emailVerified: { type: Date },
     role: {
       type: String,
-      enum: ["super_admin", "admin", "editor", "viewer"],
+      enum: ["super_admin", "owner", "admin", "editor", "analyst", "viewer"],
       default: "viewer",
       index: true
     },

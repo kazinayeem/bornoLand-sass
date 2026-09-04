@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { jwtVerify } from "jose";
+import { jwtVerify } from "jose/jwt/verify";
 import type { NextRequest } from "next/server";
 import { getApiUrl, getAppOrigin } from "@/lib/urls";
 import { resolveTenantFromHost } from "@/lib/tenant-resolution";

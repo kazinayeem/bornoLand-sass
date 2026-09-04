@@ -4,13 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { landingContainer } from "./landing-ui";
 import { scrollToSection } from "@/lib/scroll-utils";
-import { useLandingLocale } from "./landing-locale";
-import { CheckCircle2, Globe } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export function Footer() {
-  const { locale, setLocale, t } = useLandingLocale();
-
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (href.startsWith("#")) {
       e.preventDefault();
@@ -19,11 +14,53 @@ export function Footer() {
   };
 
   const columns = [
-    t.footer.columns.product,
-    t.footer.columns.solutions,
-    t.footer.columns.resources,
-    t.footer.columns.company,
-    t.footer.columns.legal,
+    {
+      title: "Product",
+      links: [
+        { label: "Storefront Builder", href: "#platform" },
+        { label: "Cloud POS Register", href: "#platform" },
+        { label: "Multi-Warehouse", href: "#platform" },
+        { label: "Double-Entry Accounting", href: "#platform" },
+        { label: "HRM & Payroll", href: "#platform" },
+        { label: "BI & Analytics", href: "#platform" },
+      ],
+    },
+    {
+      title: "Solutions",
+      links: [
+        { label: "Multi-Branch Retail", href: "#solutions" },
+        { label: "Fashion & Apparel", href: "#solutions" },
+        { label: "Electronics & Gadgets", href: "#solutions" },
+        { label: "Wholesale & Distribution", href: "#solutions" },
+      ],
+    },
+    {
+      title: "Resources",
+      links: [
+        { label: "Documentation", href: "/docs" },
+        { label: "API Reference", href: "/docs" },
+        { label: "Platform Status", href: "#" },
+        { label: "Release Notes", href: "#" },
+      ],
+    },
+    {
+      title: "Company",
+      links: [
+        { label: "About BornoLand", href: "/about" },
+        { label: "Careers", href: "/careers" },
+        { label: "Contact Us", href: "/contact" },
+        { label: "Merchant Stories", href: "#trust" },
+      ],
+    },
+    {
+      title: "Legal & Trust",
+      links: [
+        { label: "Privacy Policy", href: "/privacy" },
+        { label: "Terms of Service", href: "/terms" },
+        { label: "Security Architecture", href: "#trust" },
+        { label: "Refund Policy", href: "/refund" },
+      ],
+    },
   ];
 
   return (
@@ -31,7 +68,7 @@ export function Footer() {
       <div className={landingContainer}>
         {/* Top Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 pb-12 border-b border-zinc-200/80">
-          {/* Brand Info Column */}
+          {/* Brand Identity Column */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1 space-y-4">
             <Link href="/" className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#003399] text-white shadow-xs">
@@ -47,14 +84,14 @@ export function Footer() {
                 BornoLand
               </span>
             </Link>
-            <p className="text-xs text-zinc-500 leading-relaxed max-w-sm">
-              {t.footer.tagline}
+            <p className="text-xs text-zinc-500 leading-relaxed max-w-xs">
+              The modern Business Operating System for building, managing, and scaling commerce enterprises.
             </p>
 
             {/* Platform Status Indicator */}
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-bold text-[#0A8A00]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#0A8A00] animate-pulse" />
-              <span>{t.footer.status}</span>
+              <span>All Systems Operational</span>
             </div>
           </div>
 
@@ -81,37 +118,10 @@ export function Footer() {
           ))}
         </div>
 
-        {/* Bottom Bar: Copyright & Language Switcher */}
+        {/* Bottom Bar: Copyright */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
-          <p>© {new Date().getFullYear()} BornoLand. {t.footer.rights}</p>
-
-          <div className="flex items-center gap-3">
-            {/* Footer Language Selector */}
-            <div className="flex items-center gap-1 text-xs">
-              <Globe className="h-3.5 w-3.5 text-zinc-400" />
-              <button
-                type="button"
-                onClick={() => setLocale("en")}
-                className={cn(
-                  "font-bold transition-colors cursor-pointer",
-                  locale === "en" ? "text-[#003399]" : "text-zinc-500 hover:text-zinc-800"
-                )}
-              >
-                English
-              </button>
-              <span className="text-zinc-300">|</span>
-              <button
-                type="button"
-                onClick={() => setLocale("bn")}
-                className={cn(
-                  "font-bold transition-colors cursor-pointer",
-                  locale === "bn" ? "text-[#003399]" : "text-zinc-500 hover:text-zinc-800"
-                )}
-              >
-                বাংলা
-              </button>
-            </div>
-          </div>
+          <p>© {new Date().getFullYear()} BornoLand Inc. All rights reserved.</p>
+          <p className="text-zinc-500 font-medium">Built for modern commerce & retail scale.</p>
         </div>
       </div>
     </footer>

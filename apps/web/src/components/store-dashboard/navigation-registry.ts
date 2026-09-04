@@ -82,7 +82,7 @@ export type BusinessModule = {
   titleBn: string;
   shortTitleEn: string;
   shortTitleBn: string;
-  badgeIcon: string;
+  badgeIcon?: string;
   icon: ComponentType<{ className?: string; strokeWidth?: number }>;
   defaultRoute: string;
   items: NavItem[];

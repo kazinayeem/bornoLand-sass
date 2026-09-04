@@ -45,10 +45,10 @@ export async function seedDatabase() {
     }));
 
   const demoUser = await upsertUser("demo@bornoland.com", {
-    name: "Demo User",
+    name: "Demo Merchant",
     email: "demo@bornoland.com",
     passwordHash: demoUserPassword,
-    role: "admin",
+    role: "owner",
     tenantId: demoTenant._id,
     status: "active",
     rememberMe: true
@@ -56,7 +56,7 @@ export async function seedDatabase() {
 
   await MembershipModel.updateOne(
     { tenantId: demoTenant._id, userId: demoUser._id },
-    { $setOnInsert: { role: "admin", status: "active", invitedAt: new Date(), acceptedAt: new Date() } },
+    { $set: { role: "owner", status: "active", invitedAt: new Date(), acceptedAt: new Date() } },
     { upsert: true }
   );
 

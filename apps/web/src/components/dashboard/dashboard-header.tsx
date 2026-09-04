@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useParams } from "next/navigation";
 import {
@@ -15,6 +15,13 @@ import {
   ChevronRight,
   Package,
   ShoppingBag,
+  Boxes,
+  Users,
+  Calculator,
+  Receipt,
+  FileSpreadsheet,
+  Settings,
+  HelpCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -29,11 +36,21 @@ import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { LanguageSwitcher } from "@/components/user/language-switcher";
 import { useLanguage } from "@/providers/language-provider";
 import { Button } from "@/components/ui/button";
+import {
+  useIsStoreOwner,
+  usePermissions,
+  checkPermission,
+} from "@/features/session/hooks";
+import {
+  useGetStoreFeatureAccessQuery,
+  getFeatureByKey,
+} from "@/redux/api/feature-api";
+import { useStoreContext } from "@/providers/store-context";
 
 type QuickAction = {
   label: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   disabled?: boolean;
 };
 
@@ -42,6 +59,7 @@ type SearchResult = {
   sub: string;
   href: string;
   type: string;
+  category?: string;
 };
 
 const workspaceRouteLabels: Record<string, { bn: string; en: string }> = {
@@ -50,6 +68,7 @@ const workspaceRouteLabels: Record<string, { bn: string; en: string }> = {
   "/dashboard/create-store": { bn: "দোকান তৈরি করুন", en: "Create Store" },
   "/dashboard/stores/create": { bn: "দোকান তৈরি করুন", en: "Create Store" },
   "/dashboard/stores/archived": { bn: "আর্কাইভকৃত দোকান", en: "Archived Stores" },
+  "/dashboard/plans": { bn: "প্ল্যান ও ফিচার", en: "Plans & Features" },
   "/dashboard/billing": { bn: "বিলিং", en: "Billing" },
   "/dashboard/team": { bn: "টিম", en: "Team" },
   "/dashboard/account": { bn: "প্রোফাইল সেটিংস", en: "Profile Settings" },
@@ -114,7 +133,6 @@ function WorkspaceDashboardHeader() {
 
   const workspaceQuickActions: QuickAction[] = [
     { label: t.header.newStore, href: "/dashboard/stores/create", icon: Store },
-    { label: t.header.importStore, href: "/dashboard/stores", icon: Upload, disabled: true },
     { label: t.header.inviteMember, href: "/dashboard/team", icon: UserPlus },
     { label: t.header.upgradePlan, href: "/dashboard/billing", icon: CreditCard },
   ];
@@ -144,12 +162,13 @@ function WorkspaceDashboardHeader() {
       sub: s.slug,
       href: `/store/${s.slug}/dashboard`,
       type: isBn ? "দোকান" : "Store",
+      category: isBn ? "দোকানসমূহ" : "Stores",
     })),
-    { label: t.navigation.allStores, sub: t.navigation.workspace, href: "/dashboard/stores", type: isBn ? "পেজ" : "Page" },
-    { label: t.navigation.createStore, sub: t.navigation.workspace, href: "/dashboard/stores/create", type: isBn ? "পেজ" : "Page" },
-    { label: t.navigation.billing, sub: t.navigation.workspace, href: "/dashboard/billing", type: isBn ? "পেজ" : "Page" },
-    { label: t.navigation.team, sub: t.navigation.workspace, href: "/dashboard/team", type: isBn ? "পেজ" : "Page" },
-    { label: t.navigation.settings, sub: t.navigation.workspace, href: "/dashboard/settings", type: isBn ? "পেজ" : "Page" },
+    { label: t.navigation.allStores, sub: t.navigation.workspace, href: "/dashboard/stores", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
+    { label: t.navigation.createStore, sub: t.navigation.workspace, href: "/dashboard/stores/create", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
+    { label: t.navigation.billing, sub: t.navigation.workspace, href: "/dashboard/billing", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
+    { label: t.navigation.team, sub: t.navigation.workspace, href: "/dashboard/team", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
+    { label: t.navigation.settings, sub: t.navigation.workspace, href: "/dashboard/settings", type: isBn ? "পেজ" : "Page", category: isBn ? "নেভিগেশন" : "Navigation" },
   ];
 
   return (
@@ -161,18 +180,16 @@ function WorkspaceDashboardHeader() {
       useWorkspaceMobileSidebar
       breadcrumb={
         <>
-          <li className="text-muted-foreground">{contextTitle}</li>
+          <li className="text-zinc-500 font-medium">{contextTitle}</li>
           {breadcrumbs.map((item, index) => (
-            <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1">
-              <span aria-hidden className="text-muted-foreground">
-                /
-              </span>
+            <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1.5">
+              <ChevronRight className="h-3 w-3 text-zinc-400" aria-hidden />
               {item.href ? (
-                <Link href={item.href} className="transition-colors hover:text-foreground">
+                <Link href={item.href} className="transition-colors hover:text-zinc-900 dark:hover:text-white">
                   {item.label}
                 </Link>
               ) : (
-                <span className="text-foreground">{item.label}</span>
+                <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{item.label}</span>
               )}
             </li>
           ))}
@@ -195,6 +212,30 @@ function StoreDashboardHeader({
   const productId = typeof params.productId === "string" ? params.productId : "";
   const { data: productData } = useGetProductQuery(productId, { skip: !productId });
   const productName = productData?.data?.product?.name;
+
+  const isOwner = useIsStoreOwner();
+  const permissionSet = usePermissions();
+  const storeContext = useStoreContext();
+  const contextFeatures = (storeContext.features as { features?: any[] } | null)?.features;
+
+  const { data: accessData } = useGetStoreFeatureAccessQuery(store._id, {
+    skip: !store._id || Boolean(contextFeatures && contextFeatures.length > 0),
+  });
+  const features = contextFeatures ?? accessData?.data?.features ?? [];
+
+  // Helper to check user permission & plan entitlement
+  const checkAccess = useCallback(
+    (permission?: string, featureKey?: string) => {
+      const hasPerm = isOwner || !permission || checkPermission(permissionSet, permission);
+      if (!hasPerm) return false;
+      if (featureKey) {
+        const feat = getFeatureByKey(features, featureKey);
+        if (feat?.locked) return false;
+      }
+      return true;
+    },
+    [isOwner, permissionSet, features]
+  );
 
   const storeBase = `/store/${store.slug}`;
   const dashboardHref = `${storeBase}/dashboard`;
@@ -262,78 +303,112 @@ function StoreDashboardHeader({
     }
 
     const pageType = isBn ? "পেজ" : "Page";
-    const results: SearchResult[] = [
-      { label: t.navigation.dashboard, sub: store.name, href: dashboardHref, type: pageType },
-      { label: isBn ? "পণ্যসমূহ" : "Products", sub: store.name, href: `${storeBase}/products`, type: pageType },
-      { label: isBn ? "ইনভেন্টরি ও স্টক" : "Inventory & Stock", sub: store.name, href: `${storeBase}/inventory`, type: pageType },
-      { label: isBn ? "ক্ষয়ক্ষতি ও অপচয় (Waste)" : "Waste & Loss Tracker", sub: store.name, href: `${storeBase}/inventory/waste`, type: pageType },
-      { label: isBn ? "স্টক মুভমেন্ট লেজার" : "Stock Movement Ledger", sub: store.name, href: `${storeBase}/inventory/ledger`, type: pageType },
-      { label: isBn ? "মাল্টি-ওয়্যারহাউস" : "Warehouses", sub: store.name, href: `${storeBase}/inventory/warehouses`, type: pageType },
-      { label: isBn ? "ক্রয় ও পারচেজ অর্ডার" : "Purchasing & POs", sub: store.name, href: `${storeBase}/inventory/purchasing`, type: pageType },
-      { label: isBn ? "সরবরাহকারী (Suppliers)" : "Suppliers Master", sub: store.name, href: `${storeBase}/inventory/suppliers`, type: pageType },
-      { label: isBn ? "অর্ডারসমূহ" : "Orders", sub: store.name, href: `${storeBase}/orders`, type: pageType },
-      { label: isBn ? "পয়েন্ট অব সেল (POS)" : "POS Terminal", sub: store.name, href: `${storeBase}/pos`, type: pageType },
-      { label: isBn ? "POS ক্যাশ রেজিস্টার ও শিফট" : "POS Register & Shifts", sub: store.name, href: `${storeBase}/pos/shifts`, type: pageType },
-      { label: isBn ? "কাস্টমার মাস্টার" : "Customer Master", sub: store.name, href: `${storeBase}/customers`, type: pageType },
-      { label: isBn ? "কর্মী ও এইচআরএম (HRM)" : "Employees Directory", sub: store.name, href: `${storeBase}/hrm/employees`, type: pageType },
-      { label: isBn ? "হাজিরা ও ওভারটাইম" : "Attendance & Shifts", sub: store.name, href: `${storeBase}/hrm/attendance`, type: pageType },
-      { label: isBn ? "ছুটি ব্যবস্থাপনা" : "Leave Management", sub: store.name, href: `${storeBase}/hrm/leaves`, type: pageType },
-      { label: isBn ? "বেতন ও পে-রোল" : "Payroll & Payslips", sub: store.name, href: `${storeBase}/hrm/payroll`, type: pageType },
-      { label: isBn ? "হিসাববিজ্ঞান (Accounting)" : "Accounting Dashboard", sub: store.name, href: `${storeBase}/finance/accounting`, type: pageType },
-      { label: isBn ? "হিসাবের তালিকা (COA)" : "Chart of Accounts", sub: store.name, href: `${storeBase}/finance/accounting/coa`, type: pageType },
-      { label: isBn ? "ডাবল-এন্ট্রি জার্নাল" : "Journal Entries", sub: store.name, href: `${storeBase}/finance/accounting/journal`, type: pageType },
-      { label: isBn ? "ব্যয় ও খরচ (Expenses)" : "Business Expenses", sub: store.name, href: `${storeBase}/finance/expenses`, type: pageType },
-      { label: isBn ? "আর্থিক বিবরণী (Reports)" : "Financial Statements", sub: store.name, href: `${storeBase}/finance/reports`, type: pageType },
-      { label: isBn ? "সিআরএম পাইপলাইন" : "CRM Deals & Pipeline", sub: store.name, href: `${storeBase}/crm/deals`, type: pageType },
-      { label: isBn ? "সাপোর্ট টিকিট" : "Support Desk", sub: store.name, href: `${storeBase}/support/tickets`, type: pageType },
-      { label: isBn ? "অনুমোদন কেন্দ্র" : "Approvals Center", sub: store.name, href: `${storeBase}/operations/approvals`, type: pageType },
-      { label: isBn ? "টাস্ক ম্যানেজমেন্ট" : "Task Board", sub: store.name, href: `${storeBase}/operations/tasks`, type: pageType },
-      { label: t.navigation.analytics, sub: store.name, href: `${storeBase}/analytics`, type: pageType },
-      { label: isBn ? "মার্কেটিং" : "Marketing", sub: store.name, href: `${storeBase}/marketing`, type: pageType },
-      { label: isBn ? "মিডিয়া" : "Media", sub: store.name, href: `${storeBase}/media`, type: pageType },
-      { label: t.navigation.settings, sub: store.name, href: `${storeBase}/settings`, type: pageType },
-      { label: t.navigation.billing, sub: store.name, href: `${storeBase}/billing`, type: pageType },
-      { label: isBn ? "ডিজাইন" : "Design", sub: store.name, href: `${storeBase}/design`, type: pageType },
+    const potentialResults: Array<{
+      label: string;
+      sub: string;
+      href: string;
+      type: string;
+      category?: string;
+      permission?: string;
+      featureKey?: string;
+    }> = [
+      { label: t.navigation.dashboard, sub: store.name, href: dashboardHref, type: pageType, category: "Core" },
+      { label: isBn ? "পণ্যসমূহ" : "Products", sub: store.name, href: `${storeBase}/products`, type: pageType, category: "Commerce", permission: "products:read" },
+      { label: isBn ? "ক্যাটাগরি" : "Categories", sub: store.name, href: `${storeBase}/categories`, type: pageType, category: "Commerce", permission: "categories:read" },
+      { label: isBn ? "অর্ডারসমূহ" : "Orders", sub: store.name, href: `${storeBase}/orders`, type: pageType, category: "Commerce", permission: "orders:read" },
+      { label: isBn ? "কাস্টমার মাস্টার" : "Customer Master", sub: store.name, href: `${storeBase}/customers`, type: pageType, category: "Commerce", permission: "customers:read" },
+      { label: isBn ? "ইনভেন্টরি ও স্টক" : "Inventory & Stock", sub: store.name, href: `${storeBase}/inventory`, type: pageType, category: "Inventory", permission: "inventory:read", featureKey: "inventory" },
+      { label: isBn ? "ক্ষয়ক্ষতি ও অপচয়" : "Waste & Loss Tracker", sub: store.name, href: `${storeBase}/inventory/waste`, type: pageType, category: "Inventory", permission: "inventory:read", featureKey: "inventory" },
+      { label: isBn ? "স্টক মুভমেন্ট লেজার" : "Stock Movement Ledger", sub: store.name, href: `${storeBase}/inventory/ledger`, type: pageType, category: "Inventory", permission: "inventory:read", featureKey: "inventory" },
+      { label: isBn ? "মাল্টি-ওয়্যারহাউস" : "Warehouses", sub: store.name, href: `${storeBase}/inventory/warehouses`, type: pageType, category: "Inventory", permission: "warehouse:read", featureKey: "warehouses" },
+      { label: isBn ? "ক্রয় ও পারচেজ অর্ডার" : "Purchasing & POs", sub: store.name, href: `${storeBase}/inventory/purchasing`, type: pageType, category: "Purchasing", permission: "procurement:read", featureKey: "purchase_orders" },
+      { label: isBn ? "সরবরাহকারী (Suppliers)" : "Suppliers Master", sub: store.name, href: `${storeBase}/inventory/suppliers`, type: pageType, category: "Purchasing", permission: "procurement:read", featureKey: "suppliers" },
+      { label: isBn ? "পয়েন্ট অব সেল (POS)" : "POS Terminal", sub: store.name, href: `${storeBase}/pos`, type: pageType, category: "POS", permission: "pos:read", featureKey: "pos" },
+      { label: isBn ? "POS ক্যাশ রেজিস্টার ও শিফট" : "POS Register & Shifts", sub: store.name, href: `${storeBase}/pos/shifts`, type: pageType, category: "POS", permission: "pos:read", featureKey: "pos" },
+      { label: isBn ? "কর্মী ও এইচআরএম (HRM)" : "Employees Directory", sub: store.name, href: `${storeBase}/hrm/employees`, type: pageType, category: "HRM", permission: "hrm:read", featureKey: "employees" },
+      { label: isBn ? "হাজিরা ও ওভারটাইম" : "Attendance & Shifts", sub: store.name, href: `${storeBase}/hrm/attendance`, type: pageType, category: "HRM", permission: "hrm:read", featureKey: "attendance" },
+      { label: isBn ? "ছুটি ব্যবস্থাপনা" : "Leave Management", sub: store.name, href: `${storeBase}/hrm/leaves`, type: pageType, category: "HRM", permission: "hrm:read", featureKey: "leave_mgmt" },
+      { label: isBn ? "বেতন ও পে-রোল" : "Payroll & Payslips", sub: store.name, href: `${storeBase}/hrm/payroll`, type: pageType, category: "HRM", permission: "hrm:payroll:manage", featureKey: "payroll" },
+      { label: isBn ? "হিসাববিজ্ঞান (Accounting)" : "Accounting Dashboard", sub: store.name, href: `${storeBase}/finance/accounting`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "chart_of_accounts" },
+      { label: isBn ? "হিসাবের তালিকা (COA)" : "Chart of Accounts", sub: store.name, href: `${storeBase}/finance/accounting/coa`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "chart_of_accounts" },
+      { label: isBn ? "ডাবল-এন্ট্রি জার্নাল" : "Journal Entries", sub: store.name, href: `${storeBase}/finance/accounting/journal`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "journal_entries" },
+      { label: isBn ? "ব্যয় ও খরচ (Expenses)" : "Business Expenses", sub: store.name, href: `${storeBase}/finance/expenses`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "expenses" },
+      { label: isBn ? "আর্থিক বিবরণী (Reports)" : "Financial Statements", sub: store.name, href: `${storeBase}/finance/reports`, type: pageType, category: "Finance", permission: "finance:read", featureKey: "financial_reports" },
+      { label: isBn ? "সিআরএম পাইপলাইন" : "CRM Deals & Pipeline", sub: store.name, href: `${storeBase}/crm/deals`, type: pageType, category: "Growth", permission: "crm:read", featureKey: "crm_deals" },
+      { label: isBn ? "সাপোর্ট টিকিট" : "Support Desk", sub: store.name, href: `${storeBase}/support/tickets`, type: pageType, category: "Growth", permission: "support:read", featureKey: "support_tickets" },
+      { label: isBn ? "অনুমোদন কেন্দ্র" : "Approvals Center", sub: store.name, href: `${storeBase}/operations/approvals`, type: pageType, category: "Operations", permission: "operations:read", featureKey: "approvals" },
+      { label: isBn ? "টাস্ক ম্যানেজমেন্ট" : "Task Board", sub: store.name, href: `${storeBase}/operations/tasks`, type: pageType, category: "Operations", permission: "operations:read", featureKey: "tasks" },
+      { label: t.navigation.analytics, sub: store.name, href: `${storeBase}/analytics`, type: pageType, category: "Analytics", permission: "analytics:read", featureKey: "analytics" },
+      { label: t.navigation.settings, sub: store.name, href: `${storeBase}/settings`, type: pageType, category: "Settings", permission: "settings:read" },
+      { label: t.navigation.billing, sub: store.name, href: `${storeBase}/billing`, type: pageType, category: "Billing" },
+      { label: isBn ? "ডিজাইন ও থিম" : "Theme & Design", sub: store.name, href: `${storeBase}/design`, type: pageType, category: "Storefront", permission: "pages:read" },
     ];
 
-    return { pageTitle: title, breadcrumbs: crumbs, searchResults: results };
-  }, [pathname, store, dashboardHref, storeBase, productName, language, t, isBn]);
+    // Filter search results by permissions and feature entitlement
+    const results: SearchResult[] = potentialResults
+      .filter((item) => checkAccess(item.permission, item.featureKey))
+      .map(({ permission, featureKey, ...rest }) => rest);
 
-  const quickActions: QuickAction[] = [
-    { label: isBn ? "নতুন পণ্য" : "New Product", href: `${storeBase}/products/new`, icon: Package },
-    { label: isBn ? "অর্ডার দেখুন" : "View Orders", href: `${storeBase}/orders`, icon: ShoppingBag },
-    { label: isBn ? "ওয়ার্কস্পেস" : "Workspace", href: "/dashboard", icon: Store },
-    { label: t.navigation.billing, href: `${storeBase}/billing`, icon: CreditCard },
-  ];
+    return { pageTitle: title, breadcrumbs: crumbs, searchResults: results };
+  }, [pathname, store, dashboardHref, storeBase, productName, language, t, isBn, checkAccess]);
+
+  // Permission-aware Quick Create Actions
+  const quickActions: QuickAction[] = useMemo(() => {
+    const list: QuickAction[] = [];
+
+    if (checkAccess("products:read", "products")) {
+      list.push({ label: isBn ? "নতুন পণ্য" : "New Product", href: `${storeBase}/products/new`, icon: Package });
+    }
+    if (checkAccess("orders:read")) {
+      list.push({ label: isBn ? "অর্ডার তালিকা" : "New / View Orders", href: `${storeBase}/orders`, icon: ShoppingBag });
+    }
+    if (checkAccess("pos:read", "pos")) {
+      list.push({ label: isBn ? "পিওএস টার্মিনাল" : "Open POS Terminal", href: `${storeBase}/pos`, icon: Calculator });
+    }
+    if (checkAccess("procurement:read", "purchase_orders")) {
+      list.push({ label: isBn ? "নতুন পারচেজ অর্ডার" : "New Purchase Order", href: `${storeBase}/inventory/purchasing`, icon: Boxes });
+    }
+    if (checkAccess("finance:read", "expenses")) {
+      list.push({ label: isBn ? "নতুন খরচ রেকর্ড" : "Record Expense", href: `${storeBase}/finance/expenses`, icon: Receipt });
+    }
+    if (checkAccess("hrm:read", "employees")) {
+      list.push({ label: isBn ? "নতুন কর্মী যুক্ত করুন" : "Add Employee", href: `${storeBase}/hrm/employees`, icon: Users });
+    }
+    if (checkAccess("settings:read")) {
+      list.push({ label: isBn ? "স্টোর সেটিংস" : "Store Settings", href: `${storeBase}/settings`, icon: Settings });
+    }
+
+    return list;
+  }, [checkAccess, isBn, storeBase]);
 
   return (
     <DashboardHeaderChrome
       pageTitle={pageTitle}
       quickActions={quickActions}
       searchResults={searchResults}
-      searchPlaceholder={isBn ? "দোকানের পেজ বা ফিচার খুঁজুন..." : "Search store pages..."}
+      searchPlaceholder={isBn ? "সার্চ করুন... ⌘K" : "Search store pages... ⌘K"}
       onMenuClick={onMenuClick}
       compactNotifications
-      showWorkspaceSwitcher
+      showWorkspaceSwitcher={false}
       breadcrumb={
         <>
           <li className="inline-flex items-center gap-1">
-            <Link href="/dashboard" className="transition-colors text-muted-foreground hover:text-foreground font-medium">
+            <Link href="/dashboard" className="transition-colors text-zinc-500 hover:text-zinc-900 dark:hover:text-white font-medium">
               {isBn ? "ওয়ার্কস্পেস" : "Workspace"}
             </Link>
           </li>
           <li className="inline-flex items-center">
-            <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden />
+            <ChevronRight className="h-3 w-3 text-zinc-400" aria-hidden />
           </li>
           {breadcrumbs.map((item, index) => (
-            <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1">
-              {index > 0 ? <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden /> : null}
+            <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1.5">
+              {index > 0 ? <ChevronRight className="h-3 w-3 text-zinc-400" aria-hidden /> : null}
               {item.href ? (
-                <Link href={item.href} className="transition-colors hover:text-foreground">
+                <Link href={item.href} className="transition-colors hover:text-zinc-900 dark:hover:text-white">
                   {item.label}
                 </Link>
               ) : (
-                <span className="text-foreground">{item.label}</span>
+                <span className="text-zinc-900 dark:text-zinc-100 font-semibold">{item.label}</span>
               )}
             </li>
           ))}
@@ -352,7 +427,7 @@ function DashboardHeaderChrome({
   onMenuClick,
   useWorkspaceMobileSidebar = false,
   compactNotifications = false,
-  showWorkspaceSwitcher = true,
+  showWorkspaceSwitcher = false,
 }: {
   pageTitle: string;
   breadcrumb: React.ReactNode;
@@ -369,14 +444,19 @@ function DashboardHeaderChrome({
   const { language, t } = useLanguage();
   const [searchOpen, setSearchOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
+  const quickRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
 
-  const filteredResults = searchResults.filter(
-    (item) =>
-      !query ||
-      item.label.toLowerCase().includes(query.toLowerCase()) ||
-      item.sub.toLowerCase().includes(query.toLowerCase()),
-  );
+  const filteredResults = useMemo(() => {
+    if (!query) return searchResults.slice(0, 12);
+    const q = query.toLowerCase();
+    return searchResults.filter(
+      (item) =>
+        item.label.toLowerCase().includes(q) ||
+        item.sub.toLowerCase().includes(q) ||
+        (item.category && item.category.toLowerCase().includes(q))
+    );
+  }, [searchResults, query]);
 
   const handleSelect = useCallback(
     (href: string) => {
@@ -384,7 +464,7 @@ function DashboardHeaderChrome({
       setQuery("");
       router.push(href);
     },
-    [router],
+    [router]
   );
 
   useEffect(() => {
@@ -402,6 +482,18 @@ function DashboardHeaderChrome({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (quickRef.current && !quickRef.current.contains(e.target as Node)) {
+        setQuickOpen(false);
+      }
+    }
+    if (quickOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [quickOpen]);
+
   const openMobileSidebar = () => {
     if (useWorkspaceMobileSidebar) {
       dispatch(toggleMobileSidebar());
@@ -412,163 +504,182 @@ function DashboardHeaderChrome({
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/90 px-4 backdrop-blur-xl sm:px-6">
-        <div className="flex min-w-0 items-center gap-3">
+      <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-zinc-200/80 bg-white/95 px-4 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 sm:px-6">
+        {/* Left: Mobile Toggle & Breadcrumbs */}
+        <div className="flex min-w-0 items-center gap-2.5">
           <button
             type="button"
             onClick={openMobileSidebar}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground lg:hidden hover:bg-muted"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 lg:hidden hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-colors"
             aria-label={language === "bn" ? "মেনু খুলুন" : "Open menu"}
           >
             <Menu className="h-4 w-4" />
           </button>
 
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{pageTitle}</h1>
-            <nav aria-label="Breadcrumb" className="mt-0.5 hidden sm:block">
-              <ol className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">{breadcrumb}</ol>
+            <nav aria-label="Breadcrumb" className="flex items-center">
+              <ol className="flex flex-wrap items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                {breadcrumb}
+              </ol>
             </nav>
           </div>
         </div>
 
+        {/* Right: Search, Quick Create, Language, Notifications, Account */}
         <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+          {/* Desktop Search Trigger */}
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="hidden h-9 w-44 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card md:inline-flex lg:w-56"
+            className="hidden h-8.5 w-48 items-center gap-2 rounded-lg border border-zinc-200/90 bg-zinc-50/80 px-2.5 text-xs text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 md:inline-flex lg:w-56 shadow-2xs outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:focus-visible:ring-white/20"
           >
-            <Search className="h-4 w-4 shrink-0" aria-hidden />
+            <Search className="h-3.5 w-3.5 shrink-0 text-zinc-400" aria-hidden />
             <span className="flex-1 text-left truncate">{searchPlaceholder}</span>
-            <kbd className="flex h-5 items-center gap-0.5 rounded border border-border bg-card px-1.5 text-[10px] font-semibold text-muted-foreground">
+            <kbd className="flex h-4.5 items-center gap-0.5 rounded border border-zinc-200 bg-white px-1 text-[10px] font-semibold text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
               <Command className="h-2.5 w-2.5" aria-hidden />K
             </kbd>
           </button>
 
+          {/* Mobile Search Icon Button */}
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted-foreground md:hidden hover:bg-muted"
+            className="flex h-8.5 w-8.5 items-center justify-center rounded-lg border border-zinc-200/90 bg-white text-zinc-600 md:hidden hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors shadow-2xs"
             aria-label={t.header.searchPlaceholder}
           >
             <Search className="h-4 w-4" />
           </button>
 
-          {/* Language Switcher */}
-          <LanguageSwitcher />
+          {/* Language Selector */}
+          <LanguageSwitcher compact />
 
-          <div className="relative">
-            <Button
-              type="button"
-              onClick={() => setQuickOpen((open) => !open)}
-              aria-expanded={quickOpen}
-              aria-haspopup="menu"
-              className="h-9 rounded-xl px-3 text-xs font-semibold shadow-xs"
-            >
-              <Plus className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">{t.header.quickCreate}</span>
-            </Button>
-            {quickOpen ? (
-              <>
-                <button
-                  type="button"
-                  className="fixed inset-0 z-40"
-                  onClick={() => setQuickOpen(false)}
-                  aria-label={language === "bn" ? "মেনু বন্ধ করুন" : "Close menu"}
-                />
+          {/* Quick Create Button + Popover */}
+          {quickActions.length > 0 && (
+            <div ref={quickRef} className="relative">
+              <Button
+                type="button"
+                onClick={() => setQuickOpen((open) => !open)}
+                aria-expanded={quickOpen}
+                aria-haspopup="menu"
+                className="h-8.5 rounded-lg px-2.5 text-xs font-semibold shadow-2xs gap-1.5"
+              >
+                <Plus className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
+                <span className="hidden sm:inline">{language === "bn" ? "তৈরি করুন" : "Create"}</span>
+              </Button>
+
+              {quickOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 top-[calc(100%+8px)] z-50 w-52 overflow-hidden rounded-xl border border-border bg-popover py-1.5 shadow-xl text-popover-foreground"
+                  className="absolute right-0 top-[calc(100%+6px)] z-50 w-52 overflow-hidden rounded-xl border border-zinc-200/90 bg-white p-1 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 animate-in fade-in-50 zoom-in-95 duration-100"
                 >
-                  {quickActions.map((action) =>
-                    action.disabled ? (
-                      <span
-                        key={action.label}
-                        role="menuitem"
-                        aria-disabled="true"
-                        className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-muted-foreground/50"
-                      >
-                        <action.icon className="h-4 w-4" aria-hidden />
-                        {action.label}
-                      </span>
-                    ) : (
-                      <Link
-                        key={action.label}
-                        href={action.href}
-                        role="menuitem"
-                        onClick={() => setQuickOpen(false)}
-                        className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-                      >
-                        <action.icon className="h-4 w-4 text-primary" aria-hidden />
-                        {action.label}
-                      </Link>
-                    ),
-                  )}
+                  <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                    {language === "bn" ? "কুইক অ্যাকশন" : "Quick Actions"}
+                  </div>
+                  <div className="space-y-0.5">
+                    {quickActions.map((action) =>
+                      action.disabled ? (
+                        <span
+                          key={action.label}
+                          role="menuitem"
+                          aria-disabled="true"
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-zinc-400 cursor-not-allowed"
+                        >
+                          <action.icon className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                          {action.label}
+                        </span>
+                      ) : (
+                        <Link
+                          key={action.label}
+                          href={action.href}
+                          role="menuitem"
+                          onClick={() => setQuickOpen(false)}
+                          className="flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white rounded-lg transition-colors"
+                        >
+                          <action.icon className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" strokeWidth={1.75} aria-hidden />
+                          <span>{action.label}</span>
+                        </Link>
+                      )
+                    )}
+                  </div>
                 </div>
-              </>
-            ) : null}
-          </div>
+              )}
+            </div>
+          )}
 
+          {/* Notifications */}
           <NotificationDropdown compact={compactNotifications} />
-          {showWorkspaceSwitcher ? (
+
+          {/* Workspace Switcher if enabled */}
+          {showWorkspaceSwitcher && (
             <div className="hidden w-40 sm:block xl:w-44">
               <WorkspaceSwitcher />
             </div>
-          ) : null}
-          <ProfileDropdown />
+          )}
+
+          {/* Account Profile Dropdown */}
+          <ProfileDropdown compact />
         </div>
       </header>
 
+      {/* Global Command Palette / Search Modal */}
       <AnimatePresence>
-        {searchOpen ? (
-          <div className="fixed inset-0 z-[60] flex items-start justify-center px-4 pt-20 sm:pt-24">
+        {searchOpen && (
+          <div className="fixed inset-0 z-[60] flex items-start justify-center px-4 pt-16 sm:pt-20">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/50 backdrop-blur-xs"
               onClick={() => setSearchOpen(false)}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: -10 }}
+              initial={{ opacity: 0, scale: 0.96, y: -8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+              exit={{ opacity: 0, scale: 0.96, y: -8 }}
+              transition={{ duration: 0.15 }}
+              className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950"
               role="dialog"
               aria-modal="true"
               aria-label="Search"
             >
-              <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-                <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <div className="flex items-center gap-3 border-b border-zinc-200/80 px-4 py-3 dark:border-zinc-800">
+                <Search className="h-4 w-4 shrink-0 text-zinc-400" aria-hidden />
                 <input
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={searchPlaceholder}
-                  className="flex-1 text-sm bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
+                  className="flex-1 text-sm bg-transparent text-zinc-900 dark:text-zinc-100 outline-none placeholder:text-zinc-400 font-medium"
                   autoFocus
                 />
-                <kbd className="hidden h-5 items-center rounded border border-border bg-muted px-1.5 text-[10px] font-semibold text-muted-foreground sm:flex">
+                <kbd className="hidden h-5 items-center rounded border border-zinc-200 bg-zinc-100 px-1.5 text-[10px] font-semibold text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 sm:flex">
                   ESC
                 </kbd>
               </div>
-              <div className="max-h-72 overflow-y-auto p-2">
+
+              <div className="max-h-80 overflow-y-auto p-1.5 space-y-0.5">
                 {filteredResults.length === 0 ? (
-                  <p className="px-3 py-8 text-center text-xs text-muted-foreground">{t.header.noResultsFound}</p>
+                  <p className="px-3 py-8 text-center text-xs text-zinc-400">
+                    {t.header.noResultsFound}
+                  </p>
                 ) : (
                   filteredResults.map((item) => (
                     <button
                       key={`${item.href}-${item.label}`}
                       type="button"
                       onClick={() => handleSelect(item.href)}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:focus-visible:ring-white/20"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground">{item.label}</p>
-                        <p className="text-xs text-muted-foreground">{item.sub}</p>
+                        <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                          {item.label}
+                        </p>
+                        <p className="text-[11px] text-zinc-400 truncate">
+                          {item.sub}
+                        </p>
                       </div>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        {item.type}
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 shrink-0 font-mono">
+                        {item.category || item.type}
                       </span>
                     </button>
                   ))
@@ -576,7 +687,7 @@ function DashboardHeaderChrome({
               </div>
             </motion.div>
           </div>
-        ) : null}
+        )}
       </AnimatePresence>
     </>
   );

@@ -6,7 +6,7 @@ const membershipSchema = new Schema(
   {
     tenantId: { type: Schema.Types.ObjectId, ref: "Tenant", required: true, index: true },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    role: { type: String, enum: ["super_admin", "admin", "editor", "viewer"], default: "viewer", index: true },
+    role: { type: String, enum: ["super_admin", "owner", "admin", "editor", "viewer"], default: "viewer", index: true },
     status: { type: String, enum: ["active", "invited", "revoked"], default: "active" },
     invitedBy: { type: Schema.Types.ObjectId, ref: "User" },
     invitedAt: { type: Date },

@@ -1,77 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, Fragment } from "react";
 import {
   useGetAdminFeaturesQuery,
   useGetPlanFeatureAssignmentsQuery,
+  useGetAdminFeatureGroupsQuery,
   normalizeFeatureType,
   type PlanFeatureAssignment,
+  type PlatformFeature,
+  type FeatureGroup,
 } from "@/redux/api/feature-api";
 import type { Plan } from "@/redux/api/store-api";
-
-const COMPARISON_KEYS = [
-  "products",
-  "pos",
-  "inventory",
-  "warehouses",
-  "suppliers",
-  "storage",
-  "product_variants",
-  "coupons",
-  "analytics",
-  "seo",
-  "custom_domain",
-  "domains",
-  "media",
-  "orders",
-  "staff",
-  "bandwidth",
-  "api",
-  "ai",
-  "marketing",
-  "cms",
-  "builder",
-  "hrm",
-  "attendance",
-  "leave_mgmt",
-  "payroll",
-  "self_service",
-  "accounting",
-  "crm",
-  "operations",
-];
-
-const COMPARISON_LABELS: Record<string, string> = {
-  products: "Products",
-  pos: "Point of Sale (POS)",
-  inventory: "Inventory Management",
-  warehouses: "Multi-Warehouse",
-  suppliers: "Suppliers & POs",
-  storage: "Storage",
-  product_variants: "Variants",
-  coupons: "Coupons",
-  analytics: "Analytics",
-  seo: "SEO",
-  custom_domain: "Domains",
-  domains: "Custom domains",
-  media: "Media",
-  orders: "Orders",
-  staff: "Staff",
-  bandwidth: "Bandwidth",
-  api: "API",
-  ai: "AI",
-  marketing: "Marketing",
-  cms: "CMS",
-  builder: "Builder",
-  hrm: "HRM Module",
-  attendance: "Attendance Tracking",
-  leave_mgmt: "Leave Management",
-  payroll: "Payroll & Payslips",
-  self_service: "Employee Self-Service",
-  accounting: "Double-Entry Accounting",
-  crm: "CRM & Support Desk",
-  operations: "Approvals & Workflow",
-};
 
 function formatCell(feature: PlanFeatureAssignment | undefined) {
   if (!feature) return "—";
@@ -93,9 +32,25 @@ function formatCell(feature: PlanFeatureAssignment | undefined) {
   return `${feature.limit}${unit ? ` ${unit}` : ""}`;
 }
 
+function GroupHeader({ groupName }: { groupName: string }) {
+  return (
+    <tr className="bg-apple-canvas-parchment/50 border-b border-zinc-100">
+      <td colSpan={99} className="px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-apple-ink-muted-48">
+        {groupName}
+      </td>
+    </tr>
+  );
+}
+
+function PlanMatrixCell({ planId, featureKey }: { planId: string; featureKey: string }) {
+  const { data } = useGetPlanFeatureAssignmentsQuery(planId);
+  const feature = data?.data?.features?.find((f) => f.featureKey === featureKey);
+  return <td className="px-4 py-3 text-center text-sm text-apple-ink-muted-80">{formatCell(feature)}</td>;
+}
 
 export function PlanFeatureMatrix({ plans }: { plans: Plan[] }) {
   const { data: featuresData } = useGetAdminFeaturesQuery();
+  const { data: groupsData } = useGetAdminFeatureGroupsQuery();
   const activePlans = plans.filter((p) => p.isActive).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   const featureCount = featuresData?.data?.features?.length ?? 0;
 
@@ -106,6 +61,33 @@ export function PlanFeatureMatrix({ plans }: { plans: Plan[] }) {
       </div>
     );
   }
+
+  const features = (featuresData?.data?.features ?? []) as PlatformFeature[];
+  const groups = (groupsData?.data?.groups ?? []) as FeatureGroup[];
+  const groupMap = new Map(groups.map((g) => [g.key, g.name]));
+  const defaultGroupName = "General";
+
+  const featuresByGroup = useMemo(() => {
+    const map = new Map<string, PlatformFeature[]>();
+    for (const feature of features) {
+      const groupKey = feature.groupKey || feature.group || "general";
+      const list = map.get(groupKey) || [];
+      list.push(feature);
+      map.set(groupKey, list);
+    }
+    return map;
+  }, [features]);
+
+  const sortedGroupKeys = useMemo(() => {
+    const groupEntries = Array.from(featuresByGroup.entries());
+    return groupEntries
+      .sort(([keyA], [keyB]) => {
+        const orderA = groups.find((g) => g.key === keyA)?.sortOrder ?? 999;
+        const orderB = groups.find((g) => g.key === keyB)?.sortOrder ?? 999;
+        return orderA - orderB;
+      })
+      .map(([key]) => key);
+  }, [featuresByGroup, groups]);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
@@ -133,25 +115,30 @@ export function PlanFeatureMatrix({ plans }: { plans: Plan[] }) {
             </tr>
           </thead>
           <tbody>
-            {COMPARISON_KEYS.map((key) => (
-              <tr key={key} className="border-b border-zinc-50 hover:bg-apple-canvas-parchment/50">
-                <td className="sticky left-0 z-10 bg-white px-5 py-3 font-medium text-zinc-800">
-                  {COMPARISON_LABELS[key] ?? key}
-                </td>
-                {activePlans.map((plan) => (
-                  <PlanMatrixCell key={`${plan._id}-${key}`} planId={plan._id} featureKey={key} />
-                ))}
-              </tr>
-            ))}
+            {sortedGroupKeys.map((groupKey) => {
+              const groupFeatures = featuresByGroup.get(groupKey) ?? [];
+              const groupName = groupMap.get(groupKey) ?? defaultGroupName;
+              return (
+                <Fragment key={groupKey}>
+                  <GroupHeader groupName={groupName} />
+                  {groupFeatures
+                    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+                    .map((feature) => (
+                      <tr key={feature.key} className="border-b border-zinc-50 hover:bg-apple-canvas-parchment/50">
+                        <td className="sticky left-0 z-10 bg-white px-5 py-3 font-medium text-zinc-800">
+                          {feature.name}
+                        </td>
+                        {activePlans.map((plan) => (
+                          <PlanMatrixCell key={`${plan._id}-${feature.key}`} planId={plan._id} featureKey={feature.key} />
+                        ))}
+                      </tr>
+                    ))}
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
     </div>
   );
-}
-
-function PlanMatrixCell({ planId, featureKey }: { planId: string; featureKey: string }) {
-  const { data } = useGetPlanFeatureAssignmentsQuery(planId);
-  const feature = data?.data?.features?.find((f) => f.featureKey === featureKey);
-  return <td className="px-4 py-3 text-center text-sm text-apple-ink-muted-80">{formatCell(feature)}</td>;
 }

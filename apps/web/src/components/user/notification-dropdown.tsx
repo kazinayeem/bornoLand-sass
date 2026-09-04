@@ -37,10 +37,22 @@ export function NotificationDropdown({ compact = false }: { compact?: boolean })
 
   return (
     <div ref={rootRef} className="relative">
-      <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={t.dropdowns.unread(unreadCount)}
-        className={cn("relative flex h-9 w-9 items-center justify-center rounded-sm border border-apple-hairline bg-apple-canvas text-apple-ink-muted-48 transition hover:bg-apple-canvas-parchment", compact && "border-apple-hairline text-apple-ink-muted-48")}>
-        <Bell className="h-4 w-4" />
-        {unreadCount > 0 && <span className="absolute -right-1.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-bold leading-4 text-white">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-label={t.dropdowns.unread(unreadCount)}
+        className={cn(
+          "relative flex h-8.5 w-8.5 items-center justify-center rounded-lg border border-zinc-200/90 bg-white text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:focus-visible:ring-white/20 shadow-2xs",
+          compact && "h-8.5 w-8.5"
+        )}
+      >
+        <Bell className="h-4 w-4" strokeWidth={1.75} />
+        {unreadCount > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-xs">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
       </button>
       <AnimatePresence>
         {open && (

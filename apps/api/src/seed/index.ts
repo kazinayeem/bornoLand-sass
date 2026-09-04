@@ -109,7 +109,6 @@ export async function seedDatabase() {
     { upsert: true }
   );
 
-  const superAdmin = await UserModel.findOne({ role: "super_admin" });
   await AuditLogModel.updateOne(
     { action: "seed_completed", entityType: "System" },
     {

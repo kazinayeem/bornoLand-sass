@@ -29,11 +29,15 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { useLoginMutation } from "@/redux/api/auth-api";
+import { baseApi } from "@/redux/api/base-api";
 import { useAppDispatch } from "@/hooks/redux";
 import { setAuthState } from "@/redux/slices/auth-slice";
 import { setUserProfile } from "@/redux/slices/user-slice";
 import { setTenantContext } from "@/redux/slices/tenant-slice";
-import { consumeRedirectAfterLogin } from "@/lib/auth-redirect-client";
+import {
+  consumeRedirectAfterLogin,
+  resolvePostLoginDestination,
+} from "@/lib/auth-redirect-client";
 import { useLanguage } from "@/providers/language-provider";
 
 export function LoginForm({
@@ -89,79 +93,17 @@ export function LoginForm({
       return;
     }
 
+    dispatch(baseApi.util.resetApiState());
     dispatch(setAuthState({ session: payload.session, user: payload.user }));
     dispatch(setUserProfile(payload.user));
     dispatch(setTenantContext({ tenantId: payload.user.tenantId }));
-
-    const userRole = payload.user?.role;
-    const isSuperAdmin = userRole === "super_admin";
-    const isMerchant = userRole === "admin" || userRole === "owner";
-    const defaultSlug =
-      (payload as any).defaultStoreSlug ||
-      payload.user?.defaultStoreSlug ||
-      (payload as any).stores?.[0]?.slug;
-
-    let destination: string;
-
-    if (isSuperAdmin || isMerchant) {
-      // Super admin and merchants go to platform dashboard
-      destination = "/dashboard";
-    } else {
-      // Employees/staff go to their assigned store
-      let lastSelectedSlug: string | null = null;
-      try {
-        lastSelectedSlug = localStorage.getItem("bornoland_last_store_slug");
-      } catch {
-        // Ignore local storage error
-      }
-
-      const storesList = (payload as any).stores ?? [];
-      if (
-        lastSelectedSlug &&
-        (storesList.length === 0 || storesList.some((s: any) => s.slug === lastSelectedSlug))
-      ) {
-        destination = `/store/${lastSelectedSlug}/dashboard`;
-      } else if (defaultSlug) {
-        destination = `/store/${defaultSlug}/dashboard`;
-      } else {
-        destination = (payload as any).defaultLandingPath || "/dashboard";
-      }
-    }
 
     const queryRedirect =
       typeof window !== "undefined"
         ? new URLSearchParams(window.location.search).get("redirect")
         : null;
 
-    let finalDestination = destination;
-    if (queryRedirect && queryRedirect.startsWith("/") && !queryRedirect.startsWith("//")) {
-      if (isSuperAdmin || isMerchant) {
-        // Super admin and merchants: allow redirect to /dashboard or /admin routes
-        if (queryRedirect.startsWith("/dashboard") || queryRedirect.startsWith("/admin")) {
-          finalDestination = queryRedirect === "/admin/dashboard" ? "/dashboard" : queryRedirect;
-        }
-      } else {
-        // Employees: allow redirect to store routes they have access to
-        const targetStoreSlug = (payload as any).defaultStoreSlug || payload.user?.defaultStoreSlug;
-        const storesList: Array<{ slug: string }> = (payload as any).stores || payload.user?.stores || [];
-        const match = queryRedirect.match(/^\/store\/([^/]+)/);
-        const requestedSlug = match ? match[1] : null;
-
-        if (requestedSlug) {
-          const isAuthorizedForRequested =
-            (targetStoreSlug && requestedSlug === targetStoreSlug) ||
-            storesList.some((s) => s.slug === requestedSlug) ||
-            (storesList.length === 0 && Boolean(defaultSlug && defaultSlug === requestedSlug));
-
-          if (isAuthorizedForRequested) {
-            finalDestination = queryRedirect;
-          }
-        } else if (!queryRedirect.startsWith("/admin") && !queryRedirect.startsWith("/dashboard")) {
-          finalDestination = queryRedirect;
-        }
-      }
-    }
-
+    const finalDestination = resolvePostLoginDestination(payload, queryRedirect);
     consumeRedirectAfterLogin(null, finalDestination);
     window.location.replace(finalDestination);
   });
@@ -273,7 +215,7 @@ export function LoginForm({
                     email="demo@bornoland.com"
                     password="Demo@123"
                     loginType="user"
-                    callbackUrl="/dashboard"
+                    callbackUrl="/store/demo-store/dashboard"
                   />
                   <QuickLoginButton
                     label={isBn ? "ডেমো এডমিন লগইন" : "Demo Admin Login"}

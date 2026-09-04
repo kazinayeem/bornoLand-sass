@@ -4,22 +4,32 @@ import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLoginMutation } from "@/redux/api/auth-api";
+import { baseApi } from "@/redux/api/base-api";
 import { useAppDispatch } from "@/hooks/redux";
 import { setAuthState } from "@/redux/slices/auth-slice";
 import { setUserProfile } from "@/redux/slices/user-slice";
 import { setTenantContext } from "@/redux/slices/tenant-slice";
 import { toast } from "sonner";
-import { consumeRedirectAfterLogin } from "@/lib/auth-redirect-client";
+import {
+  consumeRedirectAfterLogin,
+  resolvePostLoginDestination,
+} from "@/lib/auth-redirect-client";
 
 type QuickLoginButtonProps = {
   label: string;
   email: string;
   password: string;
   loginType: "user" | "admin";
-  callbackUrl: string;
+  callbackUrl?: string;
 };
 
-export function QuickLoginButton({ label, email, password, loginType, callbackUrl }: QuickLoginButtonProps) {
+export function QuickLoginButton({
+  label,
+  email,
+  password,
+  loginType,
+  callbackUrl,
+}: QuickLoginButtonProps) {
   const [loading, setLoading] = useState(false);
   const [login] = useLoginMutation();
   const dispatch = useAppDispatch();
@@ -43,7 +53,11 @@ export function QuickLoginButton({ label, email, password, loginType, callbackUr
 
         if ("error" in response) {
           const message =
-            (response.error && "data" in response.error && response.error.data && typeof response.error.data === "object" && "message" in response.error.data
+            (response.error &&
+            "data" in response.error &&
+            response.error.data &&
+            typeof response.error.data === "object" &&
+            "message" in response.error.data
               ? String((response.error.data as { message?: string }).message)
               : "Quick login failed") || "Quick login failed";
           toast.error(message);
@@ -56,43 +70,23 @@ export function QuickLoginButton({ label, email, password, loginType, callbackUr
           return;
         }
 
+        dispatch(baseApi.util.resetApiState());
         dispatch(setAuthState({ session: payload.session, user: payload.user }));
         dispatch(setUserProfile(payload.user));
         dispatch(setTenantContext({ tenantId: payload.user.tenantId }));
-        const queryRedirect = new URLSearchParams(window.location.search).get("redirect");
-        let fallbackDestination = callbackUrl || "/dashboard";
-        if (loginType !== "admin") {
-          const userRole = payload.user?.role;
-          const isMerchant = userRole === "admin" || userRole === "owner";
 
-          if (isMerchant) {
-            // Merchants go to platform dashboard
-            fallbackDestination = "/dashboard";
-          } else {
-            // Employees go to their assigned store
-            const stores = (payload as { stores?: Array<{ slug?: string }>; user?: { defaultStoreSlug?: string } }).stores ?? [];
-            const defaultSlug =
-              (payload as { defaultStoreSlug?: string }).defaultStoreSlug ||
-              payload.user?.defaultStoreSlug ||
-              stores[0]?.slug;
+        const queryRedirect =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("redirect")
+            : null;
 
-            let lastSelectedSlug: string | null = null;
-            try {
-              lastSelectedSlug = localStorage.getItem("bornoland_last_store_slug");
-            } catch {
-              // Ignore local storage error
-            }
+        const finalDestination = resolvePostLoginDestination(
+          payload,
+          queryRedirect || callbackUrl
+        );
 
-            if (lastSelectedSlug && (stores.length === 0 || stores.some((s) => s.slug === lastSelectedSlug))) {
-              fallbackDestination = `/store/${lastSelectedSlug}/dashboard`;
-            } else if (defaultSlug) {
-              fallbackDestination = `/store/${defaultSlug}/dashboard`;
-            } else {
-              fallbackDestination = "/dashboard";
-            }
-          }
-        }
-        window.location.replace(consumeRedirectAfterLogin(queryRedirect, fallbackDestination));
+        consumeRedirectAfterLogin(null, finalDestination);
+        window.location.replace(finalDestination);
       }}
     >
       {!loading && <Sparkles className="h-4 w-4" />}

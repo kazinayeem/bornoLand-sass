@@ -43,9 +43,7 @@ export function ProtectedSessionBoundary({
   const checking = isLoading || (!data && (isFetching || !isError));
 
   const isSuperAdmin = session?.role === "super_admin";
-  const isMerchant = session?.role === "admin" || session?.role === "owner";
-  // Allow super_admin or merchants (admin/owner) when super_admin is required
-  const roleMatches = !requiredRole || (requiredRole === "super_admin" ? (isSuperAdmin || isMerchant) : session?.role === requiredRole);
+  const roleMatches = !requiredRole || (requiredRole === "super_admin" ? isSuperAdmin : session?.role === requiredRole);
   const allowed = !authExpired && Boolean(session && roleMatches);
 
   useEffect(() => {
@@ -65,12 +63,6 @@ export function ProtectedSessionBoundary({
     }
     if (requiredRole && !roleMatches) {
       if (requiredRole === "super_admin") {
-        // Allow merchants on the platform dashboard (they have admin/owner role)
-        const isMerchant = session.role === "admin" || session.role === "owner";
-        if (isMerchant) {
-          // Merchants can access platform dashboard - don't redirect
-          return;
-        }
         const storeSlug =
           session.defaultStoreSlug ||
           (data?.data as any)?.defaultStoreSlug ||

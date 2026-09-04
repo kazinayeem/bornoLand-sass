@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getServerSession, hasAuthCookie } from "@/lib/auth-session";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { WorkspaceShell } from "@/components/workspace/workspace-shell";
 import { buildPageMetadata } from "@/lib/server/page-metadata";
 import { ProtectedSessionBoundary } from "@/components/auth/protected-session-boundary";
 import { getUserDefaultStoreSlug } from "@/lib/server/store-lookup";
@@ -39,19 +40,40 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     );
   }
 
-  // Non-super-admin, non-merchant users: redirect to their store dashboard
-  if (session && !isSuperAdmin && !isMerchant) {
+  // Non-super-admin users:
+  if (session && !isSuperAdmin) {
     const storeSlug = session.defaultStoreSlug || (await getUserDefaultStoreSlug());
-    if (storeSlug) {
-      redirect(`/store/${storeSlug}/dashboard`);
-    } else {
-      redirect("/dashboard/stores/create");
+
+    // Root /dashboard is the platform overview for Super Admin; merchants/staff redirect to their store or store list
+    if (pathname === "/dashboard" || pathname === "/dashboard/") {
+      if (storeSlug) {
+        redirect(`/store/${storeSlug}/dashboard`);
+      } else if (isMerchant) {
+        redirect("/dashboard/stores");
+      } else {
+        redirect("/dashboard/stores/create");
+      }
     }
+
+    if (!isMerchant) {
+      if (storeSlug) {
+        redirect(`/store/${storeSlug}/dashboard`);
+      } else {
+        redirect("/unauthorized");
+      }
+    }
+
+    // Merchants on allowed /dashboard/* subroutes (stores, billing, account, etc.)
+    return (
+      <ProtectedSessionBoundary loginPath="/login">
+        <WorkspaceShell>{children}</WorkspaceShell>
+      </ProtectedSessionBoundary>
+    );
   }
 
-  // Super Admin or Merchant: render platform administration shell
+  // Super Admin: render platform administration shell
   return (
-    <ProtectedSessionBoundary loginPath="/login">
+    <ProtectedSessionBoundary requiredRole="super_admin" loginPath="/login">
       <AdminShell>{children}</AdminShell>
     </ProtectedSessionBoundary>
   );

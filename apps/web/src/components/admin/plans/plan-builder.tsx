@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Loader2, Save, Zap, Shield, HardDrive, DollarSign, Eye, Clock } from "lucide-react";
 import { toast } from "sonner";
 import type { Plan, PlanLimits, PlanFeatureToggles, PlanCourierAccess } from "@/redux/api/store-api";
+import type { PlatformFeature } from "@/redux/api/feature-api";
 import { useUpdatePlanMutation } from "@/redux/api/store-api";
-import { useGetPlanFeatureAssignmentsQuery } from "@/redux/api/feature-api";
+import { useGetPlanFeatureAssignmentsQuery, useGetAdminFeaturesQuery, useGetAdminFeatureGroupsQuery } from "@/redux/api/feature-api";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { PlanPreviewCard } from "@/components/admin/plans/plan-preview-card";
 
@@ -49,6 +50,13 @@ const FEATURE_KEY_TO_TOGGLE: Partial<Record<string, keyof PlanFeatureToggles>> =
   // CRM & Operations
   crm: "crm",
   operations: "operations",
+  // ERP Suite
+  erp_core: "erpCore",
+  erp_finance: "erpFinance",
+  erp_inventory: "erpInventory",
+  erp_procurement: "erpProcurement",
+  erp_manufacturing: "erpManufacturing",
+  erp_projects: "erpProjects",
 };
 
 const COURIER_PROVIDER_OPTIONS: Array<{

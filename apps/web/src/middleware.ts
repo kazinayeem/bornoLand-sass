@@ -173,11 +173,15 @@ export default async function middleware(request: NextRequest) {
   if (isAuthPage && (session || hasRefreshToken)) {
     const isSuperAdmin = session?.role === "super_admin";
     const isMerchant = session?.role === "admin" || session?.role === "owner";
-    const defaultDestination = isSuperAdmin || isMerchant
+    const defaultDestination = isSuperAdmin
       ? "/dashboard"
+      : isMerchant
+      ? session?.defaultStoreSlug
+        ? `/store/${session.defaultStoreSlug}/dashboard`
+        : "/dashboard/stores"
       : session?.defaultStoreSlug
       ? `/store/${session.defaultStoreSlug}/dashboard`
-      : "/dashboard";
+      : "/dashboard/stores/create";
     const redirectTo = validatePlatformRedirect(request.nextUrl.searchParams.get("redirect")) ?? defaultDestination;
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
@@ -194,39 +198,35 @@ export default async function middleware(request: NextRequest) {
         if (pathname === "/admin/dashboard" || pathname === "/admin/dashboard/") {
           return NextResponse.redirect(new URL("/dashboard", request.url));
         }
-        if (pathname.startsWith("/store/")) {
-          // Super admin should not automatically wander into a merchant store dashboard
-          return NextResponse.redirect(new URL("/dashboard", request.url));
-        }
         const requestHeaders = new Headers(request.headers);
         requestHeaders.set("x-pathname", pathname);
         return NextResponse.next({ request: { headers: requestHeaders } });
       }
 
-      // Non-Super Admin (Merchant / Member) rules:
+      // Non-Super Admin (Merchant / Staff / Employee) rules:
+      // Disallow all /admin/* routes for non-super-admins
       if (isAdminRoute) {
         return NextResponse.redirect(new URL("/unauthorized", request.url));
       }
 
-      // Merchants (admin/owner role) can access /dashboard
       const isMerchant = session.role === "admin" || session.role === "owner";
-      if (isMerchant) {
-        const requestHeaders = new Headers(request.headers);
-        requestHeaders.set("x-pathname", pathname);
-        return NextResponse.next({ request: { headers: requestHeaders } });
-      }
 
-      // Non-merchant members: if they manually enter /dashboard, redirect to their store
+      // Root /dashboard platform overview is reserved for Super Admin
+      // Redirect Merchants & Staff to their store or store list
       if (pathname === "/dashboard" || pathname === "/dashboard/") {
         if (session.defaultStoreSlug) {
           return NextResponse.redirect(
             new URL(`/store/${session.defaultStoreSlug}/dashboard`, request.url)
           );
         }
-        // Let through to server layout which will query user's store or redirect to /dashboard/stores/create
-        const requestHeaders = new Headers(request.headers);
-        requestHeaders.set("x-pathname", pathname);
-        return NextResponse.next({ request: { headers: requestHeaders } });
+        if (isMerchant) {
+          return NextResponse.redirect(
+            new URL("/dashboard/stores", request.url)
+          );
+        }
+        return NextResponse.redirect(
+          new URL("/dashboard/stores/create", request.url)
+        );
       }
 
       const requestHeaders = new Headers(request.headers);

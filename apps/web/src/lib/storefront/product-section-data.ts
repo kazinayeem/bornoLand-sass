@@ -3,6 +3,7 @@ import type { Category } from "@/redux/api/category-api";
 import { getCategoryEnglishName } from "@/lib/storefront/category-label";
 
 export type ProductSectionSource =
+  | "all"
   | "featured"
   | "best-sellers"
   | "new-arrivals"
@@ -24,6 +25,7 @@ export function resolveProductSectionSource(
   productSource?: string,
 ): ProductSectionSource {
   if (
+    productSource === "all" ||
     productSource === "featured" ||
     productSource === "best-sellers" ||
     productSource === "new-arrivals" ||
@@ -34,8 +36,10 @@ export function resolveProductSectionSource(
   }
   if (sectionType === "best-sellers") return "best-sellers";
   if (sectionType === "new-arrivals") return "new-arrivals";
-  if (sectionType === "trending-products") return "featured";
-  return "featured";
+  if (sectionType === "trending-products" || sectionType === "featured-products") return "featured";
+  if (sectionType === "category") return "category";
+  if (sectionType === "product-grid") return "all";
+  return "all";
 }
 
 export function isSectionPropEnabled(value: string | undefined, defaultEnabled = true): boolean {
@@ -60,6 +64,16 @@ export function buildProductSectionQueryArgs(
   categories: Category[],
 ): ProductSectionQueryArgs {
   const limit = Math.min(Math.max(Number(props.productCount) || 8, 1), 48);
+
+  if (source === "all") {
+    return {
+      page: 1,
+      limit,
+      status: "active",
+      sortBy: "createdAt",
+      sortOrder: "desc",
+    };
+  }
 
   if (source === "featured") {
     return {

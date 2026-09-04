@@ -31,7 +31,7 @@ function resolveApiBase(): string {
     return serverUrl.replace(/\/$/, "");
   }
   // Fallback: NEXT_PUBLIC_API_URL is /api in production — unusable for server Node fetch
-  const fallback = "http://localhost:4000";
+  const fallback = "http://127.0.0.1:4000";
   const sourceVar = serverUrl ? `API_URL="${serverUrl}"` : "API_URL not set";
   console.warn(`[tenant-site] ${sourceVar} is not an absolute URL — falling back to ${fallback}`);
   return fallback;

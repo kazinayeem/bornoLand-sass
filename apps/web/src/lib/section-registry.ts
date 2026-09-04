@@ -256,7 +256,7 @@ export const sectionRegistry: SectionDef[] = [
   {
     type: "featured-products", label: "Featured Products", category: "products", icon: "Star", description: "Display featured/picked products",
     props: merge(
-      { title: G.text("title", "Section Title", "Featured Products"), subtitle: G.text("subtitle", "Subtitle", "Handpicked favorites"), gridColumns: G.gridCols(), productCount: G.number("productCount", "Max Products", "8"), productSource: G.select("productSource", "Product Source", "featured", [{ value: "featured", label: "Featured products" }, { value: "best-sellers", label: "Best sellers" }, { value: "new-arrivals", label: "New arrivals" }, { value: "manual", label: "Manual selection" }, { value: "category", label: "By category" }], "content"), showBadges: G.toggle("showBadges", "Show Badges", "true"), showRatings: G.toggle("showRatings", "Show Ratings", "true"), showViewNow: G.toggle("showViewNow", "Show View Now", "false"), viewNowText: G.text("viewNowText", "View Now Text", "View Now"), showAddToCart: G.toggle("showAddToCart", "Show Add to Cart", "true"), showViewAll: G.toggle("showViewAll", "Show View All Link", "true"), viewAllText: G.text("viewAllText", "View All Text", "View All"), viewAllLink: G.text("viewAllLink", "View All Link", "/shop") },
+      { title: G.text("title", "Section Title", "Featured Products"), subtitle: G.text("subtitle", "Subtitle", "Handpicked favorites"), gridColumns: G.gridCols(), productCount: G.number("productCount", "Max Products", "8"), productSource: G.select("productSource", "Product Source", "featured", [{ value: "featured", label: "Featured products" }, { value: "all", label: "All products" }, { value: "best-sellers", label: "Best sellers" }, { value: "new-arrivals", label: "New arrivals" }, { value: "manual", label: "Manual selection" }, { value: "category", label: "By category" }], "content"), showBadges: G.toggle("showBadges", "Show Badges", "true"), showRatings: G.toggle("showRatings", "Show Ratings", "true"), showViewNow: G.toggle("showViewNow", "Show View Now", "false"), viewNowText: G.text("viewNowText", "View Now Text", "View Now"), showAddToCart: G.toggle("showAddToCart", "Show Add to Cart", "true"), showViewAll: G.toggle("showViewAll", "Show View All Link", "true"), viewAllText: G.text("viewAllText", "View All Text", "View All"), viewAllLink: G.text("viewAllLink", "View All Link", "/shop") },
       layout, bg, typography,
     ),
   },
@@ -331,7 +331,8 @@ export const sectionRegistry: SectionDef[] = [
           { value: "load-more", label: "Load More" },
           { value: "infinite", label: "Infinite Scroll" },
         ], "layout"),
-        productSource: G.select("productSource", "Product Source", "featured", [
+        productSource: G.select("productSource", "Product Source", "all", [
+          { value: "all", label: "All products" },
           { value: "featured", label: "Featured products" },
           { value: "best-sellers", label: "Best sellers" },
           { value: "new-arrivals", label: "New arrivals" },

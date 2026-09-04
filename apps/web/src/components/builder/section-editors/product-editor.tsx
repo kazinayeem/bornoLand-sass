@@ -5,6 +5,7 @@ import type { SectionEditorProps } from "./types";
 import { isSectionPropEnabled } from "@/lib/storefront/product-section-data";
 
 const SOURCE_OPTIONS = [
+  { value: "all", label: "All products" },
   { value: "featured", label: "Featured products" },
   { value: "best-sellers", label: "Best sellers" },
   { value: "new-arrivals", label: "New arrivals" },
@@ -21,8 +22,8 @@ export function ProductSectionEditor({
   const source = p.productSource || (
     section.type === "best-sellers" ? "best-sellers"
     : section.type === "new-arrivals" ? "new-arrivals"
-    : section.type === "trending-products" ? "featured"
-    : "featured"
+    : section.type === "trending-products" || section.type === "featured-products" ? "featured"
+    : "all"
   );
 
   return (

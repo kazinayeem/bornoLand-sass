@@ -15,6 +15,7 @@ export default function ShopPage() {
         showSort
         showPagination
         allowRowsPerPage
+        productSource="all"
       />
     </StorefrontPage>
   );

@@ -298,7 +298,17 @@ export function ProductsTab({ storeId, storeSlug, billingHref = "#" }: ProductsT
   ];
 
   const productFilters: FilterConfig[] = useMemo(() => [
-    { key: "status", label: isBn ? "স্ট্যাটাস" : "Status", type: "select", options: [{ label: isBn ? "সক্রিয়" : "Active", value: "active" }, { label: isBn ? "নিষ্ক্রিয়" : "Inactive", value: "inactive" }] },
+    {
+      key: "status",
+      label: isBn ? "স্ট্যাটাস" : "Status",
+      type: "select",
+      options: [
+        { label: isBn ? "সক্রিয়" : "Active", value: "active" },
+        { label: isBn ? "ড্রাফট" : "Draft", value: "draft" },
+        { label: isBn ? "নিষ্ক্রিয়" : "Inactive", value: "inactive" },
+        { label: isBn ? "আর্কাইভড" : "Archived", value: "archived" },
+      ],
+    },
   ], [isBn]);
 
   const columns: Column<Product>[] = [

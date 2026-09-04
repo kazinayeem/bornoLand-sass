@@ -70,48 +70,61 @@ jobs:
             pnpm build
 
             # ----------------------------------------------------
-            # 7. Install Nginx configuration
+            # 7. Safely install Nginx configuration
             # ----------------------------------------------------
             echo ""
-            echo "=== 7. Install Nginx configuration ==="
-            echo "--- Inspecting current Nginx sites-available / sites-enabled ---"
-            ls -la /etc/nginx/sites-available/ || true
-            ls -la /etc/nginx/sites-enabled/ || true
+            echo "=== 7. Safely install Nginx configuration ==="
 
-            # Check if SSL certificates exist
             SSL_CERT="/etc/letsencrypt/live/bornosoft.site/fullchain.pem"
             SSL_KEY="/etc/letsencrypt/live/bornosoft.site/privkey.pem"
 
-            if [ -f "$SSL_CERT" ] && [ -f "$SSL_KEY" ]; then
-              echo "  ✓ Found existing SSL certificates at $SSL_CERT"
-              sudo cp nginx/bornosoft.site.conf /etc/nginx/sites-available/bornosoft.site
-            else
-              echo "  ! No SSL certificates found at $SSL_CERT yet — installing HTTP-only server blocks"
-              # Create temporary HTTP-only config to prevent nginx -t failing on missing cert files
-              sed '/server {/,/listen 443 ssl/!b; /listen 443 ssl/,/^[[:space:]]*}/d' nginx/bornosoft.site.conf > /tmp/bornosoft.site.http.conf
-              sudo cp /tmp/bornosoft.site.http.conf /etc/nginx/sites-available/bornosoft.site
-              rm -f /tmp/bornosoft.site.http.conf
+            # Verify that SSL certificates exist (using sudo to access root-owned letsencrypt directory)
+            if ! sudo test -f "$SSL_CERT" || ! sudo test -f "$SSL_KEY"; then
+              echo "  ✗ ERROR: SSL certificate or key not found at $SSL_CERT / $SSL_KEY!"
+              echo "  Cannot install production Nginx configuration without valid SSL certificate files."
+              exit 1
+            fi
+            echo "  ✓ Confirmed SSL certificate and key exist at $SSL_CERT"
+
+            # Atomic backup: preserve existing working configuration before replacing
+            if [ -f /etc/nginx/sites-available/bornosoft.site ]; then
+              sudo cp /etc/nginx/sites-available/bornosoft.site /etc/nginx/sites-available/bornosoft.site.bak
             fi
 
-            # Create / update symlink
+            # Copy clean repository Nginx configuration
+            sudo cp nginx/bornosoft.site.conf /etc/nginx/sites-available/bornosoft.site
+
+            # Create / update symlink to sites-enabled
             sudo ln -sf /etc/nginx/sites-available/bornosoft.site /etc/nginx/sites-enabled/bornosoft.site
 
-            # Safely remove default installation symlink if present
+            # Remove default Nginx site symlink if present
             if [ -L /etc/nginx/sites-enabled/default ]; then
               echo "  Removing default Nginx installation symlink"
               sudo rm -f /etc/nginx/sites-enabled/default
             fi
 
             # ----------------------------------------------------
-            # 8. Validate Nginx
+            # 8. Validate Nginx configuration
             # ----------------------------------------------------
             echo ""
             echo "=== 8. Validate Nginx configuration ==="
             if ! sudo nginx -t; then
-              echo "  ✗ Nginx configuration validation failed! Aborting deployment."
+              echo ""
+              echo "  ✗ NGINX CONFIGURATION VALIDATION FAILED!"
+              echo "  Rolling back to previous Nginx configuration..."
+              if [ -f /etc/nginx/sites-available/bornosoft.site.bak ]; then
+                sudo cp /etc/nginx/sites-available/bornosoft.site.bak /etc/nginx/sites-available/bornosoft.site
+                sudo ln -sf /etc/nginx/sites-available/bornosoft.site /etc/nginx/sites-enabled/bornosoft.site
+                echo "  Restored previous working Nginx configuration."
+                sudo nginx -t || true
+              fi
+              echo "  Aborting deployment without reloading Nginx."
               exit 1
             fi
             echo "  ✓ Nginx configuration syntax is valid"
+
+            # Clean up backup file now that validation succeeded
+            sudo rm -f /etc/nginx/sites-available/bornosoft.site.bak
 
             # ----------------------------------------------------
             # 9. Reload Nginx
@@ -151,24 +164,16 @@ jobs:
 
             run_health_check() {
               local name="$1"
-              local url="$2"
-              local host="$3"
+              local cmd="$2"
               local max_retries=20
               local count=1
 
-              echo "Checking $name ($url with Host: ${host:-none})..."
+              echo "Checking $name..."
 
               while [ $count -le $max_retries ]; do
-                if [ -n "$host" ]; then
-                  if curl -fsS -H "Host: $host" "$url" -o /dev/null 2>/dev/null; then
-                    echo "  ✓ $name is reachable and healthy (attempt $count)"
-                    return 0
-                  fi
-                else
-                  if curl -fsS "$url" -o /dev/null 2>/dev/null; then
-                    echo "  ✓ $name is reachable and healthy (attempt $count)"
-                    return 0
-                  fi
+                if eval "$cmd" >/dev/null 2>&1; then
+                  echo "  ✓ $name is healthy (attempt $count)"
+                  return 0
                 fi
                 sleep 1
                 count=$((count + 1))
@@ -180,20 +185,20 @@ jobs:
 
             failed=0
 
-            # 1. Test Next.js directly for root platform
-            run_health_check "Next.js Direct (Platform Root)" "http://127.0.0.1:3000/" "bornosoft.site" || failed=1
+            # 1. Direct Next.js check (port 3000)
+            run_health_check "Next.js Direct (127.0.0.1:3000)" "curl -fsS http://127.0.0.1:3000/" || failed=1
 
-            # 2. Test Next.js directly for tenant store
-            run_health_check "Next.js Direct (Tenant Subdomain)" "http://127.0.0.1:3000/" "nayeem.bornosoft.site" || failed=1
+            # 2. Direct Express API check (port 4000)
+            run_health_check "Express API Direct (127.0.0.1:4000)" "curl -fsS http://127.0.0.1:4000/" || failed=1
 
-            # 3. Test Nginx reverse proxy for root platform
-            run_health_check "Nginx Ingress (Platform Root)" "http://127.0.0.1/" "bornosoft.site" || failed=1
+            # 3. Nginx HTTPS Root check (443 with SNI bornosoft.site)
+            run_health_check "Nginx HTTPS Root (bornosoft.site)" "curl -k -fsS --resolve bornosoft.site:443:127.0.0.1 https://bornosoft.site/" || failed=1
 
-            # 4. Test Nginx reverse proxy for tenant store
-            run_health_check "Nginx Ingress (Tenant Subdomain)" "http://127.0.0.1/" "nayeem.bornosoft.site" || failed=1
+            # 4. Nginx HTTPS Tenant check (443 with SNI nayeem.bornosoft.site)
+            run_health_check "Nginx HTTPS Tenant (nayeem.bornosoft.site)" "curl -k -fsS --resolve nayeem.bornosoft.site:443:127.0.0.1 https://nayeem.bornosoft.site/" || failed=1
 
-            # 5. Test Express API directly
-            run_health_check "Express API Direct" "http://127.0.0.1:4000/" "" || failed=1
+            # 5. Nginx HTTP -> HTTPS 301 redirect check (port 80)
+            run_health_check "Nginx HTTP to HTTPS 301 Redirect" 'test "$(curl -s -o /dev/null -w "%{http_code}" -H "Host: bornosoft.site" http://127.0.0.1/)" = "301"' || failed=1
 
             if [ $failed -ne 0 ]; then
               echo ""

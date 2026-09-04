@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { useGetStoreBySlugQuery } from "@/redux/api/store-api";
 import { useLanguage } from "@/providers/language-provider";
@@ -9,21 +9,26 @@ import {
   Calculator,
   Plus,
   ShoppingCart,
-  Sparkles,
-  ShieldAlert,
   Receipt,
   RotateCw,
   Loader2,
   Calendar,
   CreditCard,
   User,
+  DollarSign,
+  TrendingUp,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { StorePageHeader } from "@/components/store-dashboard/store-page-header";
+import { StorePageCard } from "@/components/store-dashboard/store-page";
+import { MetricCard } from "@/components/ui/metric-card";
+import { Badge } from "@/components/ui/badge";
 import { useHasPermission } from "@/features/session/hooks";
 import { useGetRecentStoreOrdersQuery, type RecentStoreOrder } from "@/redux/api/store-order-api";
 import { DocumentPreviewDialog } from "@/components/documents/document-preview-dialog";
 import { PosReceiptDocument } from "@/components/documents/templates/pos-receipt-document";
+import { EmptyState, ErrorState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 
 export default function PosTerminalPage() {
@@ -48,10 +53,17 @@ export default function PosTerminalPage() {
   );
   const recentOrders = recentData?.data?.orders || [];
 
+  const summary = useMemo(() => {
+    const totalVolume = recentOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+    const count = recentOrders.length;
+    const avg = count > 0 ? Math.round(totalVolume / count) : 0;
+    return { totalVolume, count, avg };
+  }, [recentOrders]);
+
   if (isLoading) {
     return (
       <div className="flex h-[450px] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#003399]" />
       </div>
     );
   }
@@ -59,13 +71,13 @@ export default function PosTerminalPage() {
   if (!hasPosAccess) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/50">
-          <ShieldAlert className="h-6 w-6 text-red-600 dark:text-red-400" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/50">
+          <ShieldAlert className="h-6 w-6 text-rose-600 dark:text-rose-400" />
         </div>
-        <h2 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mt-4 text-lg font-bold text-zinc-900 dark:text-zinc-100">
           {isBn ? "অনুমতি প্রয়োজন" : "Permission Denied"}
         </h2>
-        <p className="mt-1 text-sm text-zinc-500 max-w-sm">
+        <p className="mt-1 text-xs text-zinc-500 max-w-sm">
           {isBn
             ? "আপনার অ্যাকাউন্টে এই স্টোরের POS টার্মিনাল অ্যাক্সেস করার অনুমতি নেই।"
             : "You don't have permission to access the Point of Sale terminal for this store."}
@@ -76,142 +88,111 @@ export default function PosTerminalPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-white flex items-center gap-2.5">
-            <Calculator className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
-            <span>{isBn ? "পয়েন্ট অব সেল (POS) টার্মিনাল" : "Point of Sale (POS) Terminal"}</span>
-          </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-            {isBn
-              ? "দোকানের কাউন্টারে সরাসরি ক্যাশ, কার্ড বা মোবাইল ব্যাংকিংয়ের মাধ্যমে অর্ডার তৈরি ও রসিদ প্রিন্ট করুন।"
-              : "In-person cashier register, rapid checkout, barcode scanning, and instant receipt generation."}
-          </p>
-        </div>
+      <StorePageHeader
+        title="Point of Sale (POS) Terminal"
+        description="In-person cashier register, rapid barcode/SKU checkout, multi-payment support, and instant thermal receipt printing."
+        breadcrumbs={[
+          { label: "Dashboard", href: store ? `/store/${store.slug}/dashboard` : "#" },
+          { label: "Sales" },
+          { label: "POS Terminal" },
+        ]}
+        actions={
+          <Button
+            onClick={() => setPosOpen(true)}
+            className="gap-2 bg-[#003399] text-white hover:bg-[#002B80] shadow-2xs font-bold text-xs cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Open POS Register</span>
+          </Button>
+        }
+      />
 
-        <Button
-          onClick={() => setPosOpen(true)}
-          className="gap-2 bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm cursor-pointer"
-        >
-          <Plus className="h-4 w-4" />
-          <span>{isBn ? "নতুন POS অর্ডার তৈরি করুন" : "Open POS Register"}</span>
-        </Button>
+      {/* ── KPI Metric Summary ─────────────────────────────────── */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <MetricCard
+          title="Recent In-Store Sales (BDT)"
+          value={`৳${summary.totalVolume.toLocaleString()}`}
+          subtitle="Last 10 counter transactions"
+          icon={DollarSign}
+          iconClassName="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"
+        />
+
+        <MetricCard
+          title="Counter Transactions"
+          value={summary.count}
+          subtitle="Recorded in recent queue"
+          icon={Receipt}
+          iconClassName="text-blue-600 bg-blue-50 dark:bg-blue-950/30"
+        />
+
+        <MetricCard
+          title="Average Counter Ticket"
+          value={`৳${summary.avg.toLocaleString()}`}
+          subtitle="Per in-person order"
+          icon={TrendingUp}
+          iconClassName="text-purple-600 bg-purple-50 dark:bg-purple-950/30"
+        />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <ShoppingCart className="h-4 w-4 text-zinc-500" />
-              <span>{isBn ? "দ্রুত চেকআউট" : "Rapid Checkout"}</span>
-            </CardTitle>
-            <CardDescription>
-              {isBn ? "বারকোড স্ক্যানিং বা নাম দিয়ে দ্রুত পণ্য খুঁজুন" : "Search products by SKU, name, or barcode"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-zinc-500 leading-relaxed">
-              {isBn
-                ? "ভ্যারিয়েন্ট বাছাই, ডিসকাউন্ট কুপন প্রয়োগ এবং তাত্ক্ষণিক স্টক হিসেব।"
-                : "Instant inventory deductions, variation selection, custom discounts, and customer lookup."}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-zinc-500" />
-              <span>{isBn ? "মাল্টিপেমেন্ট মেথড" : "Multi-Payment Support"}</span>
-            </CardTitle>
-            <CardDescription>
-              {isBn ? "ক্যাশ, কার্ড, বিকাশ, নগদ বা রকেট" : "Cash, Card, bKash, Nagad, or Rocket"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-zinc-500 leading-relaxed">
-              {isBn
-                ? "অন-স্পট লেনদেন নিশ্চিতকরণ এবং গ্রাহকের ফোন নম্বরে অর্ডার হিস্ট্রি সংরক্ষণ।"
-                : "Full audit logs of all cashier sales synced in real-time with your store catalog and orders."}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Calculator className="h-4 w-4 text-zinc-500" />
-              <span>{isBn ? "রসিদ ও প্রিন্টিং" : "POS Receipts"}</span>
-            </CardTitle>
-            <CardDescription>
-              {isBn ? "থার্মাল প্রিন্টার সামঞ্জস্যপূর্ণ" : "Thermal printer and 80mm/58mm slip ready"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-zinc-500 leading-relaxed">
-              {isBn
-                ? "বিক্রয় সমাপ্ত হওয়ার সাথে সাথে স্বয়ংক্রিয় চালানের প্রিন্ট ভিউ প্রদর্শিত হবে।"
-                : "Instant PDF and browser thermal receipt generation for completed in-person sales."}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Dedicated Recent 10 Orders Section */}
-      <Card className="border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
+      {/* ── Recent POS Orders Table ───────────────────────────── */}
+      <StorePageCard>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
           <div>
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-              <span>{isBn ? "সাম্প্রতিক ১০টি অর্ডার" : "Recent Orders (Last 10)"}</span>
-            </CardTitle>
-            <CardDescription>
-              {isBn
-                ? "দোকানের সর্বশেষ ১০টি ক্যাশিয়ার ও কাউন্টার বিক্রয়ের তালিকা এবং রসিদ।"
-                : "Latest in-store sales with real-time status and one-click receipt re-printing."}
-            </CardDescription>
+            <h3 className="text-base font-bold text-zinc-950 dark:text-white flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-[#003399] dark:text-[#FFDA1A]" />
+              <span>Recent Cashier Orders</span>
+            </h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+              Live in-store sales log with one-click thermal receipt re-printing.
+            </p>
           </div>
+
           <Button
             variant="outline"
             size="sm"
             onClick={() => refetchRecentOrders()}
             disabled={loadingRecentOrders}
-            className="gap-1.5 h-8 text-xs font-semibold"
+            className="gap-1.5 h-8 text-xs font-semibold self-start sm:self-auto cursor-pointer"
           >
             <RotateCw className={cn("h-3.5 w-3.5", loadingRecentOrders && "animate-spin")} />
-            <span>{isBn ? "রিফ্রেশ" : "Refresh"}</span>
+            <span>Refresh</span>
           </Button>
-        </CardHeader>
-        <CardContent className="p-0">
+        </div>
+
+        <div className="mt-4">
           {loadingRecentOrders ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+              <Loader2 className="h-6 w-6 animate-spin text-[#003399]" />
             </div>
           ) : recentOrders.length === 0 ? (
-            <div className="text-center py-12 text-zinc-400 space-y-2">
-              <Receipt className="h-10 w-10 mx-auto text-zinc-300 dark:text-zinc-600" />
-              <p className="text-sm font-medium text-zinc-500">
-                {isBn ? "কোনো সাম্প্রতিক অর্ডার পাওয়া যায়নি" : "No recent orders found"}
-              </p>
-              <p className="text-xs text-zinc-400">
-                {isBn
-                  ? "নতুন বিক্রয় শুরু করতে উপরের 'নতুন POS অর্ডার তৈরি করুন' বাটনে ক্লিক করুন।"
-                  : "Click 'Open POS Register' above to start your first cashier checkout."}
-              </p>
-            </div>
+            <EmptyState
+              icon={Receipt}
+              title="No recent POS orders"
+              description="Transactions completed in the POS register will appear here immediately."
+              action={
+                <Button
+                  onClick={() => setPosOpen(true)}
+                  size="sm"
+                  className="bg-[#003399] text-white hover:bg-[#002B80] text-xs font-bold cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Open POS Register
+                </Button>
+              }
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                  <tr className="border-b border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/40 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
                     <th className="py-3 px-4">Order #</th>
                     <th className="py-3 px-4">Customer</th>
                     <th className="py-3 px-4">Items</th>
                     <th className="py-3 px-4">Total</th>
                     <th className="py-3 px-4">Payment</th>
                     <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4">Date & Time</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                    <th className="py-3 px-4">Date &amp; Time</th>
+                    <th className="py-3 px-4 text-right">Receipt</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-800">
@@ -247,18 +228,17 @@ export default function PosTerminalPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span
-                          className={cn(
-                            "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase",
+                        <Badge
+                          variant={
                             order.status === "delivered" || order.status === "processing"
-                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60"
+                              ? "success"
                               : order.status === "cancelled"
-                              ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border border-red-200"
-                              : "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200"
-                          )}
+                              ? "danger"
+                              : "primary"
+                          }
                         >
                           {order.status}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="py-3 px-4 text-zinc-500 dark:text-zinc-400 text-[11px]">
                         <div className="flex items-center gap-1">
@@ -283,11 +263,11 @@ export default function PosTerminalPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => setSelectedReceiptOrder(order)}
-                          className="h-7 text-xs gap-1.5 text-zinc-600 hover:text-indigo-600 dark:text-zinc-300 dark:hover:text-indigo-400"
+                          className="h-7 text-xs gap-1.5 text-zinc-600 hover:text-[#003399] dark:text-zinc-300 dark:hover:text-[#FFDA1A] cursor-pointer"
                           title="Print / Re-print Receipt"
                         >
                           <Receipt className="h-3.5 w-3.5" />
-                          <span>Receipt</span>
+                          <span>Print Slip</span>
                         </Button>
                       </td>
                     </tr>
@@ -296,11 +276,11 @@ export default function PosTerminalPage() {
               </table>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </StorePageCard>
 
-      {/* POS Register Checkout Modal */}
-      {store?._id && (
+      {/* POS Order Modal */}
+      {posOpen && store?._id && (
         <PosOrderModal
           open={posOpen}
           storeId={store._id}
@@ -312,45 +292,51 @@ export default function PosTerminalPage() {
         />
       )}
 
-      {/* POS Receipt Re-print Dialog */}
-      {selectedReceiptOrder && (
+      {/* POS Receipt Re-print Preview Dialog */}
+      {selectedReceiptOrder && store && (
         <DocumentPreviewDialog
           open={Boolean(selectedReceiptOrder)}
-          onClose={() => setSelectedReceiptOrder(null)}
-          title={`POS Receipt #${selectedReceiptOrder.orderNumber}`}
-          defaultPageSize="thermal-80"
-        >
-          <PosReceiptDocument
-            store={{
-              name: store?.name || "Store",
-              address: typeof (store as any)?.address === "string" ? (store as any).address : (store as any)?.address?.street || "",
-              phone: (store as any)?.contactPhone || (store as any)?.phone || "",
-              email: (store as any)?.contactEmail || (store as any)?.email || "",
-              logoUrl: (store as any)?.logo,
-            }}
-            receipt={{
-              receiptNumber: `REC-${selectedReceiptOrder.orderNumber}`,
+          onOpenChange={(open) => !open && setSelectedReceiptOrder(null)}
+          title={`Receipt #${selectedReceiptOrder.orderNumber}`}
+          initialPageFormat="pos_80mm"
+          availablePageFormats={["pos_80mm", "pos_58mm", "a4"]}
+          renderDocument={({ pageFormat }) => {
+            const receiptData: PosReceiptData = {
               orderNumber: selectedReceiptOrder.orderNumber,
-              dateTime: selectedReceiptOrder.createdAt ? new Date(selectedReceiptOrder.createdAt) : new Date(),
-              customer: {
-                name: selectedReceiptOrder.customerName,
-                phone: selectedReceiptOrder.customerPhone || "",
-              },
-              items: [
-                {
-                  title: `In-Store Purchase (${selectedReceiptOrder.itemCount || 1} items)`,
-                  quantity: selectedReceiptOrder.itemCount || 1,
-                  unitPrice: selectedReceiptOrder.total,
-                  total: selectedReceiptOrder.total,
-                },
-              ],
-              subtotal: selectedReceiptOrder.total,
-              discount: 0,
-              grandTotal: selectedReceiptOrder.total,
-              paymentMethod: String(selectedReceiptOrder.paymentMethod || "CASH").toUpperCase(),
-            }}
-          />
-        </DocumentPreviewDialog>
+              createdAt: selectedReceiptOrder.createdAt,
+              customerName: selectedReceiptOrder.customerName,
+              customerPhone: selectedReceiptOrder.customerPhone,
+              cashierName: "Cashier Station",
+              registerName: "Main Counter POS",
+              items: selectedReceiptOrder.items.map((i) => ({
+                name: i.name,
+                variantTitle: i.variantTitle,
+                sku: i.sku,
+                quantity: i.quantity,
+                unitPrice: i.unitPrice,
+                totalPrice: i.totalPrice,
+              })),
+              subtotal: selectedReceiptOrder.subtotal,
+              discount: selectedReceiptOrder.discount,
+              deliveryCharge: selectedReceiptOrder.deliveryCharge,
+              total: selectedReceiptOrder.total,
+              paidAmount: selectedReceiptOrder.paidAmount,
+              changeAmount: selectedReceiptOrder.changeAmount,
+              paymentMethod: selectedReceiptOrder.paymentMethod,
+              paymentStatus: selectedReceiptOrder.paymentStatus,
+              status: selectedReceiptOrder.status,
+              notes: selectedReceiptOrder.notes,
+            };
+
+            return (
+              <PosReceiptDocument
+                data={receiptData}
+                store={store}
+                pageFormat={pageFormat}
+              />
+            );
+          }}
+        />
       )}
     </div>
   );

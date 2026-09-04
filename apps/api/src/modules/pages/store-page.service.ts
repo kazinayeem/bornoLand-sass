@@ -226,6 +226,7 @@ export async function ensureDefaultPages(storeIdOrSlug: string) {
   for (const def of DEFAULT_PAGES) {
     if (def.isSystem && !existingPageTypes.has(def.pageType)) {
       pagesToCreate.push(def);
+      existingPageTypes.add(def.pageType);
     }
   }
 
@@ -233,21 +234,30 @@ export async function ensureDefaultPages(storeIdOrSlug: string) {
 
   const maxSort = existingPages.length;
 
-  const docs = pagesToCreate.map((def, i) => ({
-    storeId,
-    tenantId: (store as any).tenantId,
-    title: def.title,
-    slug: existingSlugs.has(def.slug)
-      ? `${def.slug}-${Date.now()}-${i}`
-      : def.slug,
-    description: def.description,
-    pageType: def.pageType,
-    isSystem: def.isSystem,
-    status: "draft" as const,
-    sortOrder: maxSort + i,
-    sections: [],
-    settings: (def.settings ?? {}) as Record<string, unknown>,
-  }));
+  const docs = pagesToCreate.map((def, i) => {
+    let finalSlug = def.slug;
+    if (existingSlugs.has(finalSlug)) {
+      finalSlug = `${def.slug}-${def.pageType}`;
+      if (existingSlugs.has(finalSlug)) {
+        finalSlug = `${def.slug}-${Date.now()}-${i}`;
+      }
+    }
+    existingSlugs.add(finalSlug);
+
+    return {
+      storeId,
+      tenantId: (store as any).tenantId,
+      title: def.title,
+      slug: finalSlug,
+      description: def.description,
+      pageType: def.pageType,
+      isSystem: def.isSystem,
+      status: "draft" as const,
+      sortOrder: maxSort + i,
+      sections: [],
+      settings: (def.settings ?? {}) as Record<string, unknown>,
+    };
+  });
 
   try {
     await StorePageModel.insertMany(docs, { ordered: false });
@@ -315,10 +325,24 @@ export async function getStorePageBySlug(storeIdOrSlug: string, slug: string) {
   const storeId = (await resolveCanonicalStoreId(storeIdOrSlug)) || storeIdOrSlug;
   if (!/^[a-f\d]{24}$/i.test(storeId)) return { ok: false as const, message: "Store not found" };
   const normalizedSlug = slug.startsWith("/") ? slug : `/${slug}`;
+  const isHomeRequest = slug === "home" || slug === "/home" || slug === "/" || slug === "";
+
   const page = await StorePageModel.findOne({
     storeId,
-    $or: [{ slug: normalizedSlug }, { slug: slug }],
     deletedAt: null,
+    ...(isHomeRequest
+      ? {
+          $or: [
+            { isHomePage: true },
+            { pageType: "home" },
+            { slug: "/" },
+            { slug: "/home" },
+            { slug: "home" },
+          ],
+        }
+      : {
+          $or: [{ slug: normalizedSlug }, { slug: slug }, { pageType: slug }],
+        }),
   }).lean();
   if (!page) return { ok: false as const, message: "Page not found" };
   return { ok: true as const, data: { page } };

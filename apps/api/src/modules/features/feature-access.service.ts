@@ -106,13 +106,20 @@ export async function getStoreContext(storeId: string): Promise<StoreContext | n
   return store.toObject() as StoreContext;
 }
 
-export async function syncStoreUsage(storeId: string) {
+export async function syncStoreUsage(storeId: string, force = false) {
   await connectDatabase();
   const store = (await StoreModel.findById(storeId).lean()) as {
     _id: unknown;
     tenantId: unknown;
   } | null;
   if (!store) return null;
+
+  if (!force) {
+    const existing = (await StoreUsageModel.findOne({ storeId }).lean()) as any;
+    if (existing?.lastSyncedAt && Date.now() - new Date(existing.lastSyncedAt).getTime() < 60_000) {
+      return existing as Record<string, number> | null;
+    }
+  }
 
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
@@ -544,7 +551,29 @@ export function hasPlanFeature(_limits: unknown, _feature: string) {
   return true;
 }
 
-export async function getStoreFeatureAccessMatrix(storeId: string) {
+type CachedMatrix = {
+  data: any;
+  cachedAt: number;
+};
+const storeMatrixCache = new Map<string, CachedMatrix>();
+const MATRIX_CACHE_TTL_MS = 60_000;
+
+export function invalidateStoreFeatureCache(storeId?: string) {
+  if (storeId) {
+    storeMatrixCache.delete(storeId);
+  } else {
+    storeMatrixCache.clear();
+  }
+}
+
+export async function getStoreFeatureAccessMatrix(storeId: string, force = false) {
+  if (!force) {
+    const cached = storeMatrixCache.get(storeId);
+    if (cached && Date.now() - cached.cachedAt < MATRIX_CACHE_TTL_MS) {
+      return { ok: true as const, data: cached.data };
+    }
+  }
+
   await ensureDefaultFeatures();
   await connectDatabase();
 
@@ -567,92 +596,169 @@ export async function getStoreFeatureAccessMatrix(storeId: string) {
     if (plan) planId = String(plan._id);
   }
 
-  const usage = await syncStoreUsage(storeId);
-  const features = await FeatureModel.find({ isActive: true }).sort({ groupKey: 1, sortOrder: 1 }).lean();
+  const [usage, features, planAssignments, allLimits, allTiers, allActivePlans] = await Promise.all([
+    syncStoreUsage(storeId, force),
+    FeatureModel.find({ isActive: true }).sort({ groupKey: 1, sortOrder: 1 }).lean(),
+    planId ? PlanFeatureModel.find({ planId }).lean() : [],
+    FeatureLimitModel.find().lean(),
+    FeatureTierModel.find().sort({ rank: 1 }).lean(),
+    PlanModel.find({ isActive: true }).sort({ priceBDT: 1 }).lean(),
+  ]);
 
-  const matrix = await Promise.all(
-    features.map(async (feature) => {
-      const type = normalizeFeatureType(feature.type) as FeatureType;
-      const assignment = planId
-        ? await getPlanFeatureAssignment(planId, feature.key)
-        : null;
+  const assignmentMap = new Map(
+    (planAssignments as any[]).map((a) => [a.featureKey.toLowerCase(), a])
+  );
+  const limitMap = new Map(
+    (allLimits as any[]).map((l) => [l.featureKey.toLowerCase(), l])
+  );
 
-      const counterKey = feature.usageCounterKey || feature.key;
-      const limitMeta =
-        type === "limit"
-          ? ((await FeatureLimitModel.findOne({ featureKey: feature.key }).lean()) as { unit?: string } | null)
-          : null;
-      const unit = feature.unit || limitMeta?.unit || "";
-      const current = Math.floor(resolveUsageValue(usage, counterKey, unit));
-      const limit = assignment?.limit ?? 0;
-      const enabled = assignment?.enabled ?? false;
-      const tierKey = assignment?.tierKey ?? "disabled";
-      const tiers = type === "tier" ? await getFeatureTiers(feature.key) : [];
-      const tierLabel = tiers.find((t) => t.key === tierKey)?.label ?? tierKey;
+  const tierMap = new Map<string, Array<{ key: string; label: string; rank: number; description?: string }>>();
+  for (const t of allTiers as any[]) {
+    const k = t.featureKey.toLowerCase();
+    const list = tierMap.get(k) || [];
+    list.push({ key: t.tierKey, label: t.label, rank: t.rank, description: t.description });
+    tierMap.set(k, list);
+  }
 
-      let locked = false;
-      let lockReason: FeatureAccessDenialReason | undefined;
+  // Pre-fetch active plan assignments for findMinimumPlanForFeature
+  const activePlanIds = allActivePlans.map((p) => String(p._id));
+  const activePlanAssignments = await PlanFeatureModel.find({
+    planId: { $in: activePlanIds },
+  }).lean();
 
-      if (type === "boolean") {
-        locked = !enabled;
-        if (locked) lockReason = "feature_disabled";
-      } else if (type === "tier") {
-        locked = isTierDisabled(tierKey);
-        if (locked) lockReason = "feature_disabled";
-      } else if (type === "limit") {
-        if (!enabled && (limit ?? 0) <= 0) {
-          locked = true;
-          lockReason = "feature_disabled";
-        } else if (limit > 0 && current >= limit) {
-          locked = true;
-          lockReason = "limit_reached";
+  const activePlanAssignmentMap = new Map<string, any>();
+  for (const a of activePlanAssignments as any[]) {
+    activePlanAssignmentMap.set(`${String(a.planId)}:${a.featureKey.toLowerCase()}`, a);
+  }
+
+  const matrix = features.map((feature) => {
+    const normKey = feature.key.toLowerCase();
+    const type = normalizeFeatureType(feature.type) as FeatureType;
+    const rawAssignment = assignmentMap.get(normKey);
+
+    let assignment: PlanFeatureAssignment | null = null;
+    if (rawAssignment) {
+      const tierKey = resolveAssignmentTier(rawAssignment);
+      assignment = {
+        enabled: rawAssignment.enabled ?? false,
+        limit: rawAssignment.limit ?? 0,
+        tierKey,
+        value: tierKey,
+      };
+    } else if (plan) {
+      const toggles = (plan as any).featureToggles || {};
+      const possibleToggleKeys = TOGGLE_KEY_MAP[normKey] || [normKey];
+      const isToggleEnabled = possibleToggleKeys.some((k) => Boolean(toggles[k]));
+      if (normKey === "courier") {
+        const courierEnabled = Boolean(
+          (plan as any).courierAccess?.enabled ||
+          (plan as any).courierAccess?.allProviders ||
+          ((plan as any).courierAccess?.providers?.length ?? 0) > 0 ||
+          toggles.courier
+        );
+        if (courierEnabled) {
+          assignment = { enabled: true, limit: 0, tierKey: "enabled", value: "enabled" };
+        }
+      } else if (isToggleEnabled) {
+        assignment = { enabled: true, limit: 0, tierKey: "enabled", value: "enabled" };
+      }
+    }
+
+    const counterKey = feature.usageCounterKey || feature.key;
+    const limitMeta = limitMap.get(normKey);
+    const unit = feature.unit || limitMeta?.unit || "";
+    const current = Math.floor(resolveUsageValue(usage, counterKey, unit));
+    const limit = assignment?.limit ?? 0;
+    const enabled = assignment?.enabled ?? false;
+    const tierKey = assignment?.tierKey ?? "disabled";
+    const tiers = type === "tier" ? tierMap.get(normKey) || [] : [];
+    const tierLabel = tiers.find((t) => t.key === tierKey)?.label ?? tierKey;
+
+    let locked = false;
+    let lockReason: FeatureAccessDenialReason | undefined;
+
+    if (type === "boolean") {
+      locked = !enabled;
+      if (locked) lockReason = "feature_disabled";
+    } else if (type === "tier") {
+      locked = isTierDisabled(tierKey);
+      if (locked) lockReason = "feature_disabled";
+    } else if (type === "limit") {
+      if (!enabled && (limit ?? 0) <= 0) {
+        locked = true;
+        lockReason = "feature_disabled";
+      } else if (limit > 0 && current >= limit) {
+        locked = true;
+        lockReason = "limit_reached";
+      }
+    }
+
+    let requiredPlan: { slug: string; name: string; priceBDT?: number } | undefined;
+    if (locked) {
+      for (const p of allActivePlans as any[]) {
+        const pAssignment = activePlanAssignmentMap.get(`${String(p._id)}:${normKey}`);
+        if (pAssignment) {
+          const pTierKey = resolveAssignmentTier(pAssignment);
+          if (type === "boolean" && pAssignment.enabled) {
+            requiredPlan = { slug: p.slug, name: p.name, priceBDT: p.priceBDT };
+            break;
+          } else if (type === "tier" && !isTierDisabled(pTierKey)) {
+            requiredPlan = { slug: p.slug, name: p.name, priceBDT: p.priceBDT };
+            break;
+          } else if (type === "limit" && ((pAssignment.limit ?? 0) > limit || pAssignment.enabled)) {
+            requiredPlan = { slug: p.slug, name: p.name, priceBDT: p.priceBDT };
+            break;
+          }
         }
       }
+    }
 
-      const requiredPlan = locked ? await findMinimumPlanForFeature(feature.key) : undefined;
+    return {
+      key: feature.key,
+      name: feature.name,
+      description: feature.description,
+      type,
+      group: feature.groupKey || feature.group,
+      groupKey: feature.groupKey || feature.group,
+      comingSoon: feature.comingSoon ?? false,
+      unit,
+      enabled,
+      limit,
+      tierKey,
+      tierLabel,
+      tiers: tiers.map((t) => ({ key: t.key, label: t.label, rank: t.rank })),
+      value: tierKey,
+      current,
+      locked,
+      lockReason,
+      requiredPlan,
+    };
+  });
 
-      return {
-        key: feature.key,
-        name: feature.name,
-        description: feature.description,
-        type,
-        group: feature.groupKey || feature.group,
-        groupKey: feature.groupKey || feature.group,
-        comingSoon: feature.comingSoon ?? false,
-        unit,
-        enabled,
-        limit,
-        tierKey,
-        tierLabel,
-        tiers: tiers.map((t) => ({ key: t.key, label: t.label, rank: t.rank })),
-        value: tierKey,
-        current,
-        locked,
-        lockReason,
-        requiredPlan,
-      };
-    })
-  );
+  const responseData = {
+    storeId,
+    storeStatus: store.status,
+    billingStatus: store.billingStatus,
+    subscriptionStatus: store.subscriptionStatus,
+    allowNewOrders: store.allowNewOrders,
+    published: store.published,
+    currentPlan: plan
+      ? {
+          slug: plan.slug,
+          name: plan.name,
+          priceBDT: plan.priceBDT,
+          priceYearly: plan.priceYearly,
+        }
+      : null,
+    features: matrix,
+    usage,
+  };
+
+  storeMatrixCache.set(storeId, { data: responseData, cachedAt: Date.now() });
 
   return {
     ok: true as const,
-    data: {
-      storeId,
-      storeStatus: store.status,
-      billingStatus: store.billingStatus,
-      subscriptionStatus: store.subscriptionStatus,
-      allowNewOrders: store.allowNewOrders,
-      published: store.published,
-      currentPlan: plan
-        ? {
-            slug: plan.slug,
-            name: plan.name,
-            priceBDT: plan.priceBDT,
-            priceYearly: plan.priceYearly,
-          }
-        : null,
-      features: matrix,
-      usage,
-    },
+    data: responseData,
   };
 }
+

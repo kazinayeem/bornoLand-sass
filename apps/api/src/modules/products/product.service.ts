@@ -102,7 +102,15 @@ async function syncProductMediaReferences(
 function buildProductListFilter(storeId: string, query: ListQueryParams) {
   const clauses: Record<string, unknown>[] = [{ storeId }];
 
-  const textFilter = buildTextSearchFilter(query.search, ["name", "slug", "sku", "brand", "category", "description"]);
+  const textFilter = buildTextSearchFilter(query.search, [
+    "name",
+    "slug",
+    "sku",
+    "variants.sku",
+    "brand",
+    "category",
+    "description",
+  ]);
   if (textFilter?.$or) clauses.push({ $or: textFilter.$or });
 
   if (query.status) clauses.push({ status: query.status });
@@ -158,12 +166,20 @@ export async function getProducts(storeId: string, query: Record<string, unknown
   const params = parseListQuery(query);
   const filter = buildProductListFilter(storeId, params);
 
+  const isPosView = query.view === "pos";
+  let queryBuilder = ProductModel.find(filter)
+    .sort(params.sort ?? { createdAt: -1 })
+    .skip(params.skip)
+    .limit(params.limit);
+
+  if (isPosView) {
+    queryBuilder = queryBuilder.select(
+      "_id name slug sku price comparePrice imageUrl thumbnailUrl galleryImageUrls stock status category categoryId categoryIds variants options productType trackInventory"
+    );
+  }
+
   const [products, total] = await Promise.all([
-    ProductModel.find(filter)
-      .sort(params.sort ?? { createdAt: -1 })
-      .skip(params.skip)
-      .limit(params.limit)
-      .lean(),
+    queryBuilder.lean(),
     ProductModel.countDocuments(filter),
   ]);
 

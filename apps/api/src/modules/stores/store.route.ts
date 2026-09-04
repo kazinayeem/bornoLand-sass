@@ -21,7 +21,7 @@ import { getStoreContextController } from "./store-context.controller.js";
 import { getStoreSettingsController, updateStoreSettingsController } from "./store-settings.controller.js";
 import { getStoreContactController, updateStoreContactController } from "./store-contact.controller.js";
 import { createHomepageSliderController, deleteHomepageSliderController, listHomepageSlidersController, updateHomepageSliderController } from "./homepage-slider.controller.js";
-import { listStoreOrdersController, getStoreOrderController, updateOrderStatusController, updatePaymentStatusController, addOrderNoteController, processRefundController, downloadStoreOrderInvoiceController, emailStoreOrderInvoiceController, createStoreOrderController } from "./store-order.controller.js";
+import { listStoreOrdersController, getStoreOrderController, updateOrderStatusController, updatePaymentStatusController, addOrderNoteController, processRefundController, downloadStoreOrderInvoiceController, emailStoreOrderInvoiceController, createStoreOrderController, getRecentStoreOrdersController } from "./store-order.controller.js";
 import {
   cancelShipmentController,
   createShipmentController,
@@ -79,6 +79,7 @@ storeRouter.delete("/:id/sliders/:sliderId", requireStorePermission("settings:ma
 storeRouter.delete("/:id", requireStorePermission("settings:manage"), deleteStoreController);
 
 // ── Orders ────────────────────────────────────────────────────────────────────
+storeRouter.get("/:storeId/orders/recent", requireStorePermission("orders:read"), getRecentStoreOrdersController);
 storeRouter.get("/:storeId/orders", requireStorePermission("orders:read"), listStoreOrdersController);
 storeRouter.post("/:storeId/orders", requireStorePermission("orders:create"), createStoreOrderController);
 storeRouter.get("/:storeId/orders/:id", requireStorePermission("orders:read"), getStoreOrderController);

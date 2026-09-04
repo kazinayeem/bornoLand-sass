@@ -34,7 +34,15 @@ export type StoreContextValue = {
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
-export function StoreProvider({ children, initialStore }: { children: ReactNode; initialStore?: Store | null }) {
+export function StoreProvider({
+  children,
+  initialStore,
+  initialContext,
+}: {
+  children: ReactNode;
+  initialStore?: Store | null;
+  initialContext?: StoreContextData | null;
+}) {
   const params = useParams();
   const storeSlug = typeof params.storeSlug === "string" ? params.storeSlug : "";
   const dispatch = useDispatch();
@@ -44,7 +52,7 @@ export function StoreProvider({ children, initialStore }: { children: ReactNode;
     refetchOnMountOrArgChange: false,
   });
 
-  const contextData = query.data?.data;
+  const contextData = query.data?.data ?? initialContext;
   const store = contextData?.store ?? initialStore ?? null;
 
   useEffect(() => {
@@ -94,11 +102,11 @@ export function StoreProvider({ children, initialStore }: { children: ReactNode;
       role: contextData?.role ?? "viewer",
       features: (contextData?.features as Record<string, unknown> | null) ?? null,
       storageStats: contextData?.storageStats ?? null,
-      isLoading: !store && !initialStore && !query.isError && (query.isLoading || query.isFetching),
+      isLoading: !store && !initialStore && !initialContext && !query.isError && (query.isLoading || query.isFetching),
       isError: query.isError,
       isReady: !!store && !!store._id,
     }),
-    [store, storeSlug, initialStore, contextData, query.isLoading, query.isFetching, query.isError],
+    [store, storeSlug, initialStore, initialContext, contextData, query.isLoading, query.isFetching, query.isError],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

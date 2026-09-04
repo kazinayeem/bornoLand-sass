@@ -291,6 +291,13 @@ export const storeOrderApi = baseApi.injectEndpoints({
         { type: "Orders", id: `${storeId}_${orderId}` },
       ],
     }),
+    getRecentStoreOrders: builder.query<{ data: { orders: RecentStoreOrder[] } }, { storeId: string; limit?: number }>({
+      query: ({ storeId, limit = 10 }) => ({
+        url: `/stores/${storeId}/orders/recent`,
+        params: { limit },
+      }),
+      providesTags: (_result, _error, { storeId }) => [{ type: "Orders", id: `${storeId}_recent` }],
+    }),
     createStoreOrder: builder.mutation<
       SingleOrderResponse,
       { storeId: string; body: Record<string, unknown> }
@@ -302,14 +309,30 @@ export const storeOrderApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { storeId }) => [
         { type: "Orders", id: storeId },
+        { type: "Orders", id: `${storeId}_recent` },
       ],
     }),
   }),
 });
 
+export type RecentStoreOrder = {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerPhone?: string;
+  total: number;
+  currencyCode?: string;
+  paymentMethod: string;
+  status: string;
+  itemCount: number;
+  createdAt: string;
+};
+
 export const {
   useGetStoreOrdersQuery,
   useLazyGetStoreOrdersQuery,
+  useGetRecentStoreOrdersQuery,
+  useLazyGetRecentStoreOrdersQuery,
   useGetStoreOrderQuery,
   useCreateStoreOrderMutation,
   useUpdateOrderStatusMutation,
@@ -320,4 +343,5 @@ export const {
   useCancelOrderShipmentMutation,
   useTrackOrderShipmentMutation,
 } = storeOrderApi;
+
 

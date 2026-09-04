@@ -254,6 +254,26 @@ export async function createOrder(
         }
       }
       const qty = Math.max(1, Math.floor(Number(raw.quantity) || 1));
+
+      // Stock safety check
+      const trackInventory = (dbProduct as any).trackInventory !== false;
+      if (trackInventory) {
+        if (raw.variantId && dbProduct.variants?.length) {
+          const v = dbProduct.variants.find((v: any) => String(v._id) === String(raw.variantId));
+          if (v && typeof v.stock === "number" && v.stock < qty) {
+            return {
+              ok: false as const,
+              message: `Insufficient stock for "${dbProduct.name}${variantTitle ? ` (${variantTitle})` : ""}". Available: ${Math.max(0, v.stock)}, Requested: ${qty}`,
+            };
+          }
+        } else if (typeof dbProduct.stock === "number" && dbProduct.stock < qty) {
+          return {
+            ok: false as const,
+            message: `Insufficient stock for "${dbProduct.name}". Available: ${Math.max(0, dbProduct.stock)}, Requested: ${qty}`,
+          };
+        }
+      }
+
       orderItems.push({
         productId: dbProduct._id,
         variantId: raw.variantId ? raw.variantId : undefined,
@@ -504,18 +524,33 @@ export async function createOrder(
   });
 
   // ── 8. Batch Stock Decrements (Atomic Mongo BulkWrite) ──
-  const bulkOps = orderItems.map((item) => ({
-    updateOne: {
-      filter: { _id: item.productId, storeId },
-      update: {
-        $inc: {
-          stock: -item.quantity,
+  const bulkOps = orderItems.map((item) => {
+    if (item.variantId) {
+      return {
+        updateOne: {
+          filter: { _id: item.productId, storeId, "variants._id": item.variantId },
+          update: {
+            $inc: {
+              "variants.$.stock": -item.quantity,
+              stock: -item.quantity,
+            },
+          },
+        },
+      };
+    }
+    return {
+      updateOne: {
+        filter: { _id: item.productId, storeId },
+        update: {
+          $inc: {
+            stock: -item.quantity,
+          },
         },
       },
-    },
-  }));
+    };
+  });
   if (bulkOps.length > 0) {
-    ProductModel.bulkWrite(bulkOps).catch((err) => {
+    ProductModel.bulkWrite(bulkOps as any).catch((err) => {
       console.error("[orders] Product stock bulkWrite error:", err);
     });
   }

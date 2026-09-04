@@ -10,7 +10,7 @@ function SkeletonBlock({ className }: { className?: string }) {
 export default function StoreDashboardPage() {
   const { store, storeId, isLoading } = useStorePage();
 
-  if (isLoading || !store || !storeId) {
+  if (!store || !storeId) {
     return (
       <div className="space-y-6">
         {/* Header skeleton */}

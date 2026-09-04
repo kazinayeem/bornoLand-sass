@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import { StoreProvider } from "@/providers/store-context";
 import { buildPageMetadata, getStoreMetadataContext } from "@/lib/server/page-metadata";
-import { getStoreContext } from "@/lib/server/store-context";
+import { getStoreFullContext } from "@/lib/server/store-context";
 import type { Metadata } from "next";
 
 /**
  * Store layout — Server Component.
- * Loads store (branding, theme, plan, subscription) once per navigation tree.
+ * Loads store context (branding, theme, plan, subscription, permissions) once per navigation tree.
  * Child routes share StoreProvider without refetching on client navigations.
  */
 
@@ -19,7 +19,8 @@ type StoreLayoutProps = {
 
 export async function generateMetadata({ params }: { params: Promise<{ storeSlug: string }> }): Promise<Metadata> {
   const { storeSlug } = await params;
-  const store = await getStoreMetadataContext(storeSlug);
+  const context = await getStoreFullContext(storeSlug);
+  const store = context?.store || (await getStoreMetadataContext(storeSlug));
   const storeName = store?.shortName || store?.name || "Store";
   return buildPageMetadata({
     title: `${storeName}`,
@@ -33,7 +34,11 @@ export async function generateMetadata({ params }: { params: Promise<{ storeSlug
 
 export default async function StoreLayout({ children, params }: StoreLayoutProps) {
   const { storeSlug } = await params;
-  const initialStore = await getStoreContext(storeSlug);
+  const initialContext = await getStoreFullContext(storeSlug);
 
-  return <StoreProvider initialStore={initialStore}>{children}</StoreProvider>;
+  return (
+    <StoreProvider initialStore={initialContext?.store} initialContext={initialContext as any}>
+      {children}
+    </StoreProvider>
+  );
 }

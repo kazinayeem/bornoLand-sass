@@ -22,4 +22,5 @@ export type ListQueryParams = {
   stockStatus?: string;
   priceMin?: string | number;
   priceMax?: string | number;
+  view?: string;
 };

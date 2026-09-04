@@ -132,24 +132,34 @@ async function attachStoreMetrics(stores: any[]) {
   }
 
   if (missingStoreObjectIds.length > 0) {
-    const [productCounts, orderCounts, orderRevenue] = await Promise.all([
+    const typedStoreIds = missingStoreObjectIds.map((id) =>
+      mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id.toString()) : id
+    );
+
+    const [productCounts, orderMetrics] = await Promise.all([
       ProductModel.aggregate([
-        { $match: { storeId: { $in: missingStoreObjectIds } } },
+        { $match: { storeId: { $in: typedStoreIds } } },
         { $group: { _id: "$storeId", count: { $sum: 1 } } },
       ]),
       OrderModel.aggregate([
-        { $match: { storeId: { $in: missingStoreObjectIds } } },
-        { $group: { _id: "$storeId", count: { $sum: 1 } } },
-      ]),
-      OrderModel.aggregate([
-        { $match: { storeId: { $in: missingStoreObjectIds }, status: { $ne: "cancelled" } } },
-        { $group: { _id: "$storeId", revenue: { $sum: "$total" } } },
+        { $match: { storeId: { $in: typedStoreIds } } },
+        {
+          $group: {
+            _id: "$storeId",
+            count: { $sum: 1 },
+            revenue: {
+              $sum: {
+                $cond: [{ $ne: ["$status", "cancelled"] }, "$total", 0],
+              },
+            },
+          },
+        },
       ]),
     ]);
 
     const productCountMap = new Map(productCounts.map((entry: any) => [entry._id.toString(), entry.count]));
-    const orderCountMap = new Map(orderCounts.map((entry: any) => [entry._id.toString(), entry.count]));
-    const revenueMap = new Map(orderRevenue.map((entry: any) => [entry._id.toString(), entry.revenue]));
+    const orderCountMap = new Map(orderMetrics.map((entry: any) => [entry._id.toString(), entry.count]));
+    const revenueMap = new Map(orderMetrics.map((entry: any) => [entry._id.toString(), entry.revenue]));
 
     for (const sObjId of missingStoreObjectIds) {
       const sId = sObjId.toString();

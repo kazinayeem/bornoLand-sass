@@ -120,6 +120,8 @@ productSchema.index({ storeId: 1, category: 1 });
 productSchema.index({ storeId: 1, categoryIds: 1, status: 1, createdAt: -1 });
 productSchema.index({ storeId: 1, brand: 1, status: 1 });
 productSchema.index({ storeId: 1, price: 1, status: 1 });
+productSchema.index({ storeId: 1, sku: 1 });
+productSchema.index({ storeId: 1, "variants.sku": 1 });
 productSchema.index({ name: "text", description: "text", tags: "text" });
 
 export type ProductDocument = InferSchemaType<typeof productSchema>;

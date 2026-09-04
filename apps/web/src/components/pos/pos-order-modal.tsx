@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useMemo, useState, useEffect, useRef } from "react";
 import {
   X,
   Search,
@@ -19,15 +18,24 @@ import {
   Loader2,
   Package,
   Layers,
+  Clock,
+  Receipt,
+  RotateCw,
+  Eye,
 } from "lucide-react";
 import { useGetProductsQuery, type Product, type ProductVariant } from "@/redux/api/product-api";
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
 import { useGetStoreCustomersQuery } from "@/redux/api/store-customers-api";
 import { useValidateCouponMutation, type ValidateCouponResponse } from "@/redux/api/coupon-api";
-import { useCreateStoreOrderMutation } from "@/redux/api/store-order-api";
+import {
+  useCreateStoreOrderMutation,
+  useGetRecentStoreOrdersQuery,
+  type RecentStoreOrder,
+} from "@/redux/api/store-order-api";
 import { PosVariantModal } from "./pos-variant-modal";
 import { DocumentPreviewDialog } from "@/components/documents/document-preview-dialog";
 import { PosReceiptDocument } from "@/components/documents/templates/pos-receipt-document";
+import type { PosReceiptData, StoreIdentity } from "@/components/documents/document-types";
 
 import { formatCurrency } from "@/lib/format-currency";
 import { useTenant } from "@/providers/tenant-provider";
@@ -53,6 +61,8 @@ type PosOrderModalProps = {
   onSuccess?: () => void;
 };
 
+const PAGE_SIZE = 24;
+
 export function PosOrderModal({
   open,
   storeId,
@@ -63,7 +73,13 @@ export function PosOrderModal({
 
   // Search & Catalog state
   const [productSearch, setProductSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [page, setPage] = useState(1);
+  const [accumulatedProducts, setAccumulatedProducts] = useState<Product[]>([]);
+
+  // View Mode: 'catalog' | 'recent_orders'
+  const [activeTab, setActiveTab] = useState<"catalog" | "recent">("catalog");
 
   // Customer state
   const [customerSearch, setCustomerSearch] = useState("");
@@ -82,26 +98,80 @@ export function PosOrderModal({
   const [shippingFee, setShippingFee] = useState(0);
   const [completedOrder, setCompletedOrder] = useState<any | null>(null);
 
-  // API Hooks
-  const { data: productsData, isLoading: loadingProducts } = useGetProductsQuery({ storeId }, { skip: !open || !storeId });
+  // Double-click / In-flight submission protection ref
+  const isSubmittingRef = useRef(false);
+
+  // Debounce search input by 300ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(productSearch.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [productSearch]);
+
+  // Server-side Product Query with pagination, search, and category filter
+  const {
+    data: productsData,
+    isLoading: loadingProducts,
+    isFetching: fetchingProducts,
+  } = useGetProductsQuery(
+    {
+      storeId,
+      page,
+      limit: PAGE_SIZE,
+      search: debouncedSearch || undefined,
+      category: selectedCategory || undefined,
+      status: "active",
+      view: "pos",
+    },
+    { skip: !open || !storeId }
+  );
+
   const { data: categoriesData } = useGetCategoriesQuery({ storeId }, { skip: !open || !storeId });
   const { data: customersData } = useGetStoreCustomersQuery({ storeId, search: customerSearch }, { skip: !open || !storeId });
+
+  // Recent 10 Orders Query
+  const {
+    data: recentOrdersData,
+    isLoading: loadingRecentOrders,
+    refetch: refetchRecentOrders,
+  } = useGetRecentStoreOrdersQuery(
+    { storeId, limit: 10 },
+    { skip: !open || !storeId }
+  );
 
   const [validateCoupon, { isLoading: isValidatingCoupon }] = useValidateCouponMutation();
   const [createStoreOrder, { isLoading: isSubmittingOrder }] = useCreateStoreOrderMutation();
 
-  const products = productsData?.data?.products ?? [];
   const categories = categoriesData?.data?.categories ?? [];
   const customers = customersData?.data?.customers ?? [];
+  const recentOrders = recentOrdersData?.data?.orders ?? [];
 
-  // Filter products by search & category
-  const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      const matchSearch = p.name.toLowerCase().includes(productSearch.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(productSearch.toLowerCase()));
-      const matchCat = !selectedCategory || p.category === selectedCategory || (p.categoryIds && p.categoryIds.includes(selectedCategory));
-      return matchSearch && matchCat;
-    });
-  }, [products, productSearch, selectedCategory]);
+  // Manage accumulated products across pagination pages
+  useEffect(() => {
+    if (!productsData?.data?.products) return;
+    const incoming = productsData.data.products;
+    if (page === 1) {
+      setAccumulatedProducts(incoming);
+    } else {
+      setAccumulatedProducts((prev) => {
+        const seen = new Set(prev.map((p) => p._id));
+        const added = incoming.filter((p) => !seen.has(p._id));
+        return [...prev, ...added];
+      });
+    }
+  }, [productsData, page]);
+
+  const totalCatalogCount = productsData?.data?.total ?? accumulatedProducts.length;
+  const totalPages = productsData?.data?.totalPages ?? 1;
+  const hasMore = page < totalPages;
+
+  // Reset page when category changes
+  const handleSelectCategory = (catName: string) => {
+    setSelectedCategory(catName === selectedCategory ? "" : catName);
+    setPage(1);
+  };
 
   if (!open) return null;
 
@@ -111,7 +181,6 @@ export function PosOrderModal({
     if (hasVariants) {
       setVariantProduct(product);
     } else {
-      // Add simple product
       if (product.stock <= 0) {
         toast.error(`${product.name} is out of stock`);
         return;
@@ -120,6 +189,11 @@ export function PosOrderModal({
       setLineItems((prev) => {
         const existingIndex = prev.findIndex((item) => item.productId === product._id && !item.variantId);
         if (existingIndex > -1) {
+          const currentQty = prev[existingIndex].quantity;
+          if (currentQty >= product.stock) {
+            toast.error(`Only ${product.stock} available in stock`);
+            return prev;
+          }
           const updated = [...prev];
           updated[existingIndex].quantity += 1;
           return updated;
@@ -130,7 +204,7 @@ export function PosOrderModal({
             productId: product._id,
             productName: product.name,
             sku: product.sku || "N/A",
-            image: product.imageUrl || `https://placehold.co/100x100?text=Product`,
+            image: product.imageUrl || product.thumbnailUrl || `https://placehold.co/100x100?text=Product`,
             price: product.price,
             quantity: 1,
             stock: product.stock,
@@ -176,8 +250,13 @@ export function PosOrderModal({
       setLineItems((prev) => prev.filter((_, i) => i !== index));
     } else {
       setLineItems((prev) => {
+        const item = prev[index];
+        if (item.stock && newQty > item.stock) {
+          toast.error(`Only ${item.stock} in stock`);
+          return prev;
+        }
         const updated = [...prev];
-        updated[index].quantity = Math.min(updated[index].stock || 999, newQty);
+        updated[index].quantity = newQty;
         return updated;
       });
     }
@@ -227,21 +306,27 @@ export function PosOrderModal({
     }
   };
 
-  // Complete POS Order Submission
+  // Complete POS Order Submission with Idempotency and Loading Guard
   const handleCompleteOrder = async () => {
-    if (isSubmittingOrder) return;
+    if (isSubmittingRef.current || isSubmittingOrder) return;
     if (lineItems.length === 0) {
       toast.error("Cart is empty");
       return;
     }
+
+    isSubmittingRef.current = true;
 
     try {
       const customerName = selectedCustomer ? selectedCustomer.name : "Walk-in Customer";
       const customerPhone = selectedCustomer ? selectedCustomer.phone : "";
       const customerEmail = selectedCustomer ? selectedCustomer.email : "";
 
+      // Unique Idempotency Key to prevent duplicate order creations
+      const idempotencyKey = `pos_${storeId}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
       const payload = {
         storeId,
+        idempotencyKey,
         customerId: selectedCustomer?.id,
         items: lineItems.map((item) => ({
           productId: item.productId,
@@ -266,8 +351,9 @@ export function PosOrderModal({
       const res = await createStoreOrder({ storeId, body: payload }).unwrap();
 
       if (res.data?.order) {
-        toast.success(`POS Order #${res.data.order.orderNumber} created!`);
+        toast.success(`POS Order #${res.data.order.orderNumber} completed!`);
         setCompletedOrder(res.data.order);
+        // Clear cart only on successful completion
         setLineItems([]);
         setAppliedCoupon(null);
         setProductSearch("");
@@ -275,49 +361,83 @@ export function PosOrderModal({
       } else {
         toast.error((res as any).message || "Failed to create POS order");
       }
-
     } catch (err: any) {
       const errorMsg = err?.data?.message || err?.message || "Failed to create POS order";
       toast.error(errorMsg);
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
-
-  if (!open) return null;
 
   return (
     <>
       <div
         key="pos-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-5"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !isSubmittingOrder) onClose();
-      }}
-    >
-      <div
-        key="pos-modal-content"
-        className="flex flex-col w-full max-w-6xl bg-white rounded-2xl border border-zinc-200 shadow-2xl overflow-hidden text-apple-ink"
-        style={{ height: "min(92vh, 850px)" }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-2 sm:p-4"
+        onClick={(e) => {
+          if (e.target === e.currentTarget && !isSubmittingOrder) onClose();
+        }}
       >
-        {/* Top POS Header Bar */}
-          <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-6 bg-zinc-900 text-white shrink-0">
+        <div
+          key="pos-modal-content"
+          className="flex flex-col w-full max-w-7xl bg-white rounded-2xl border border-zinc-200 shadow-2xl overflow-hidden text-apple-ink"
+          style={{ height: "min(94vh, 900px)" }}
+        >
+          {/* Top POS Header Bar */}
+          <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-4 sm:px-6 bg-zinc-900 text-white shrink-0">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-apple-primary text-white font-bold text-xs">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#003399] text-white font-black text-xs shadow-xs">
                 POS
               </div>
               <div>
-                <h3 className="text-sm font-bold">{store?.name || "Store"} Terminal</h3>
+                <h3 className="text-sm font-black">{store?.name || "Store"} Terminal</h3>
                 <p className="text-[10px] text-zinc-400">Point of Sale • Counter Register</p>
               </div>
             </div>
 
+            {/* Middle Mode Switcher: Catalog vs Recent Orders */}
+            <div className="flex items-center rounded-xl bg-zinc-800 p-1 border border-zinc-700/60 text-xs">
+              <button
+                type="button"
+                onClick={() => setActiveTab("catalog")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3 py-1 font-bold transition-all",
+                  activeTab === "catalog"
+                    ? "bg-[#003399] text-white shadow-xs"
+                    : "text-zinc-400 hover:text-white"
+                )}
+              >
+                <Package className="h-3.5 w-3.5" />
+                <span>Catalog ({totalCatalogCount})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("recent")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3 py-1 font-bold transition-all",
+                  activeTab === "recent"
+                    ? "bg-[#003399] text-white shadow-xs"
+                    : "text-zinc-400 hover:text-white"
+                )}
+              >
+                <Clock className="h-3.5 w-3.5" />
+                <span>Recent Sales ({recentOrders.length})</span>
+              </button>
+            </div>
+
             <div className="flex items-center gap-3">
               {/* Customer Picker */}
-              <div className="relative min-w-[200px]">
+              <div className="relative min-w-[180px] sm:min-w-[220px]">
                 <User className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
                 {selectedCustomer ? (
-                  <div className="flex items-center justify-between rounded-lg bg-zinc-800 px-3 py-1 text-xs text-white">
-                    <span className="truncate font-semibold max-w-[130px]">{selectedCustomer.name}</span>
-                    <button type="button" onClick={() => setSelectedCustomer(null)} className="ml-1 text-zinc-400 hover:text-white">
+                  <div className="flex items-center justify-between rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-white border border-zinc-700">
+                    <span className="truncate font-semibold max-w-[140px]">{selectedCustomer.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCustomer(null)}
+                      className="ml-1 text-zinc-400 hover:text-white"
+                    >
                       <X className="h-3 w-3" />
                     </button>
                   </div>
@@ -327,13 +447,13 @@ export function PosOrderModal({
                     value={customerSearch}
                     onChange={(e) => setCustomerSearch(e.target.value)}
                     placeholder="Walk-in Customer (or search)"
-                    className="w-full rounded-lg border border-zinc-700 bg-zinc-800 pl-8 pr-3 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-apple-primary"
+                    className="w-full rounded-lg border border-zinc-700 bg-zinc-800 pl-8 pr-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#003399]"
                   />
                 )}
 
-                {/* Customer dropdown results */}
+                {/* Customer dropdown search results */}
                 {customerSearch && !selectedCustomer && customers.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-20 mt-1 max-h-36 overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-800 shadow-xl divide-y divide-zinc-700">
+                  <div className="absolute top-full left-0 right-0 z-20 mt-1 max-h-40 overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-800 shadow-xl divide-y divide-zinc-700">
                     {customers.map((c, cIdx) => (
                       <div
                         key={c._id || (c as any).id || `pos-customer-${cIdx}`}
@@ -344,7 +464,7 @@ export function PosOrderModal({
                         className="p-2 hover:bg-zinc-700 cursor-pointer text-xs"
                       >
                         <p className="font-bold text-white">{c.name}</p>
-                        <p className="text-[10px] text-zinc-400">{c.email} • {c.phone}</p>
+                        <p className="text-[10px] text-zinc-400">{c.phone || c.email || "No phone"}</p>
                       </div>
                     ))}
                   </div>
@@ -354,132 +474,289 @@ export function PosOrderModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          {/* Main 2-Column POS Body */}
+          {/* Main POS Workspace */}
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 overflow-hidden">
-            {/* Left Column: Product Search & Catalog (7 cols) */}
-            <div className="lg:col-span-7 flex flex-col border-b lg:border-b-0 lg:border-r border-zinc-200 bg-zinc-50/50 p-4 min-h-0">
-              {/* Product Search & Categories */}
-              <div className="space-y-3 shrink-0 mb-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                  <input
-                    type="text"
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
-                    placeholder="Search product name or SKU…"
-                    className="w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-3 py-2 text-xs font-medium text-apple-ink focus:outline-none focus:ring-2 focus:ring-apple-primary/20 shadow-xs"
-                  />
-                </div>
-
-                {/* Category Chips */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCategory("")}
-                    className={cn(
-                      "rounded-lg px-3 py-1 text-[11px] font-semibold whitespace-nowrap transition-all",
-                      !selectedCategory ? "bg-apple-primary text-white font-bold" : "bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100"
-                    )}
-                  >
-                    All Categories
-                  </button>
-                  {categories.map((cat, catIdx) => (
+            {/* Left Column (7 cols): Catalog OR Recent Orders */}
+            <div className="lg:col-span-7 flex flex-col border-b lg:border-b-0 lg:border-r border-zinc-200 bg-zinc-50/60 p-4 min-h-0 overflow-hidden">
+              {activeTab === "recent" ? (
+                /* ── Recent 10 Orders View ── */
+                <div className="flex flex-col h-full space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-zinc-200">
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-zinc-700">
+                        Recent In-Store Sales (Last 10)
+                      </h4>
+                      <p className="text-[11px] text-zinc-400">Transactions processed on this counter</p>
+                    </div>
                     <button
-                      key={cat._id || (cat as any).id || cat.slug || `pos-cat-${catIdx}`}
                       type="button"
-                      onClick={() => setSelectedCategory(cat.name)}
-                      className={cn(
-                        "rounded-lg px-3 py-1 text-[11px] font-semibold whitespace-nowrap transition-all",
-                        selectedCategory === cat.name ? "bg-apple-primary text-white font-bold" : "bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100"
-                      )}
+                      onClick={() => refetchRecentOrders()}
+                      className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-semibold text-zinc-600 hover:bg-zinc-50"
                     >
-                      {cat.name}
+                      <RotateCw className="h-3 w-3" /> Refresh
                     </button>
-                  ))}
-                </div>
-              </div>
+                  </div>
 
-              {/* Product Grid */}
-              <div className="flex-1 overflow-y-auto pr-1">
-                {loadingProducts ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-                  </div>
-                ) : filteredProducts.length === 0 ? (
-                  <div className="text-center py-12 text-zinc-400 space-y-2">
-                    <Package className="h-8 w-8 mx-auto" />
-                    <p className="text-xs">No products match your search</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {filteredProducts.map((product, pIdx) => {
-                      const hasVariants = (product.options?.length ?? 0) > 0 || (product.variants?.length ?? 0) > 0;
-                      return (
+                  <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                    {loadingRecentOrders ? (
+                      <div className="flex items-center justify-center py-16">
+                        <Loader2 className="h-6 w-6 animate-spin text-[#003399]" />
+                      </div>
+                    ) : recentOrders.length === 0 ? (
+                      <div className="text-center py-16 text-zinc-400 space-y-2">
+                        <Receipt className="h-8 w-8 mx-auto text-zinc-300" />
+                        <p className="text-xs font-medium">No sales recorded yet</p>
+                      </div>
+                    ) : (
+                      recentOrders.map((order) => (
                         <div
-                          key={product._id || (product as any).id || product.slug || `pos-prod-${pIdx}`}
-                          onClick={() => handleSelectProduct(product)}
-                          className="group relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white p-3 shadow-xs transition-all hover:border-apple-primary/50 hover:shadow-md cursor-pointer"
+                          key={order.id}
+                          className="flex items-center justify-between p-3 rounded-xl border border-zinc-200/90 bg-white shadow-xs hover:border-[#003399]/40 transition-all"
                         >
-                          <div className="relative mb-2 aspect-square overflow-hidden rounded-lg bg-zinc-50 border border-zinc-100">
-                            <img
-                              src={product.imageUrl || `https://placehold.co/200x200?text=Product`}
-                              alt={product.name}
-                              className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                            />
-                            {hasVariants && (
-                              <span className="absolute left-1.5 top-1.5 rounded-full bg-zinc-900/80 backdrop-blur-xs px-2 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider">
-                                Variants
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs font-black text-zinc-900">
+                                #{order.orderNumber}
                               </span>
-                            )}
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase",
+                                  order.status === "delivered" || order.status === "processing"
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    : "bg-blue-50 text-[#003399] border border-blue-200"
+                                )}
+                              >
+                                {order.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-zinc-600 font-medium">
+                              {order.customerName} {order.customerPhone ? `• ${order.customerPhone}` : ""}
+                            </p>
+                            <p className="text-[10px] text-zinc-400">
+                              {new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{" "}
+                              • {new Date(order.createdAt).toLocaleDateString([], { month: "short", day: "numeric" })}
+                            </p>
                           </div>
 
-                          <h4 className="line-clamp-1 text-xs font-bold text-apple-ink">{product.name}</h4>
-                          <p className="text-[10px] text-zinc-400 font-mono">SKU: {product.sku || "N/A"}</p>
-
-                          <div className="mt-2 flex items-center justify-between pt-1 border-t border-zinc-100">
-                            <span className="text-xs font-extrabold text-apple-primary">
-                              {formatCurrency(product.price, settings)}
-                            </span>
+                          <div className="flex items-center gap-3 text-right">
+                            <div>
+                              <p className="text-sm font-black text-zinc-900">
+                                {formatCurrency(order.total, settings)}
+                              </p>
+                              <span className="inline-block rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-bold text-zinc-600 uppercase">
+                                {order.paymentMethod}
+                              </span>
+                            </div>
 
                             <button
                               type="button"
-                              className={cn(
-                                "flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold transition-all",
-                                hasVariants
-                                  ? "bg-apple-primary/10 text-apple-primary hover:bg-apple-primary/20"
-                                  : "bg-apple-primary text-white hover:opacity-90"
-                              )}
+                              onClick={() => setCompletedOrder(order)}
+                              className="rounded-lg p-2 border border-zinc-200 bg-zinc-50 hover:bg-white text-zinc-700 hover:text-[#003399] transition-colors"
+                              title="View & Print Receipt"
                             >
-                              {hasVariants ? (
+                              <Receipt className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* ── Catalog View with Search, Category Filter, and Infinite Loading ── */
+                <>
+                  <div className="space-y-3 shrink-0 mb-3">
+                    {/* Search Bar */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                      <input
+                        type="text"
+                        value={productSearch}
+                        onChange={(e) => setProductSearch(e.target.value)}
+                        placeholder="Search all store products by name or SKU / barcode…"
+                        className="w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-8 py-2 text-xs font-medium text-apple-ink focus:outline-none focus:ring-2 focus:ring-[#003399]/20 shadow-xs"
+                      />
+                      {productSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setProductSearch("")}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Category Filter Chips */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-thin">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectCategory("")}
+                        className={cn(
+                          "rounded-lg px-3 py-1 text-[11px] font-bold whitespace-nowrap transition-all",
+                          !selectedCategory
+                            ? "bg-[#003399] text-white shadow-xs"
+                            : "bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100"
+                        )}
+                      >
+                        All Categories ({totalCatalogCount})
+                      </button>
+                      {categories.map((cat, catIdx) => (
+                        <button
+                          key={cat._id || (cat as any).id || cat.slug || `pos-cat-${catIdx}`}
+                          type="button"
+                          onClick={() => handleSelectCategory(cat.name)}
+                          className={cn(
+                            "rounded-lg px-3 py-1 text-[11px] font-semibold whitespace-nowrap transition-all",
+                            selectedCategory === cat.name
+                              ? "bg-[#003399] text-white font-bold shadow-xs"
+                              : "bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100"
+                          )}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Product Catalog Grid */}
+                  <div className="flex-1 overflow-y-auto pr-1">
+                    {loadingProducts && page === 1 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {[...Array(9)].map((_, i) => (
+                          <div key={i} className="animate-pulse rounded-xl border border-zinc-200 bg-white p-3 space-y-2">
+                            <div className="aspect-square rounded-lg bg-zinc-100" />
+                            <div className="h-3 w-3/4 rounded bg-zinc-100" />
+                            <div className="h-3 w-1/2 rounded bg-zinc-100" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : accumulatedProducts.length === 0 ? (
+                      <div className="text-center py-16 text-zinc-400 space-y-2">
+                        <Package className="h-10 w-10 mx-auto text-zinc-300" />
+                        <p className="text-xs font-semibold">No products found</p>
+                        {debouncedSearch && (
+                          <p className="text-[11px] text-zinc-400">
+                            No matches for &ldquo;{debouncedSearch}&rdquo; in this store.
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {accumulatedProducts.map((product, pIdx) => {
+                            const hasVariants =
+                              (product.options?.length ?? 0) > 0 ||
+                              (product.variants?.length ?? 0) > 0 ||
+                              product.productType === "variable";
+                            const isOutOfStock = !hasVariants && (product.stock ?? 0) <= 0;
+
+                            return (
+                              <div
+                                key={product._id || (product as any).id || product.slug || `pos-prod-${pIdx}`}
+                                onClick={() => handleSelectProduct(product)}
+                                className={cn(
+                                  "group relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white p-3 shadow-2xs transition-all hover:border-[#003399]/50 hover:shadow-xs cursor-pointer",
+                                  isOutOfStock && "opacity-60 bg-zinc-50/80"
+                                )}
+                              >
+                                <div className="relative mb-2 aspect-square overflow-hidden rounded-lg bg-zinc-50 border border-zinc-100">
+                                  <img
+                                    src={product.imageUrl || product.thumbnailUrl || `https://placehold.co/200x200?text=Product`}
+                                    alt={product.name}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                                  />
+                                  {hasVariants ? (
+                                    <span className="absolute left-1.5 top-1.5 rounded-full bg-zinc-900/85 backdrop-blur-xs px-2 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider">
+                                      Variants
+                                    </span>
+                                  ) : isOutOfStock ? (
+                                    <span className="absolute left-1.5 top-1.5 rounded-full bg-red-600/90 backdrop-blur-xs px-2 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider">
+                                      Out of Stock
+                                    </span>
+                                  ) : null}
+                                </div>
+
+                                <h4 className="line-clamp-1 text-xs font-bold text-zinc-900">{product.name}</h4>
+                                <p className="text-[10px] text-zinc-400 font-mono">
+                                  SKU: {product.sku || "N/A"}
+                                  {!hasVariants && typeof product.stock === "number" ? ` • ${product.stock} in stock` : ""}
+                                </p>
+
+                                <div className="mt-2 flex items-center justify-between pt-2 border-t border-zinc-100">
+                                  <span className="text-xs font-black text-[#003399]">
+                                    {formatCurrency(product.price, settings)}
+                                  </span>
+
+                                  <button
+                                    type="button"
+                                    disabled={isOutOfStock}
+                                    className={cn(
+                                      "flex items-center gap-1 rounded-lg px-2.5 py-1 text-[10px] font-bold transition-all",
+                                      hasVariants
+                                        ? "bg-blue-50 text-[#003399] border border-blue-200 hover:bg-blue-100"
+                                        : isOutOfStock
+                                        ? "bg-zinc-100 text-zinc-400 cursor-not-allowed"
+                                        : "bg-[#003399] text-white hover:bg-[#002B80]"
+                                    )}
+                                  >
+                                    {hasVariants ? (
+                                      <>
+                                        <Layers className="h-3 w-3" /> Select Variant
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Plus className="h-3 w-3" /> Add
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Infinite Loading / Load More */}
+                        {hasMore && (
+                          <div className="pt-2 pb-4 text-center">
+                            <button
+                              type="button"
+                              onClick={() => setPage((p) => p + 1)}
+                              disabled={fetchingProducts}
+                              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-xs font-bold text-zinc-700 shadow-2xs hover:bg-zinc-50 disabled:opacity-50"
+                            >
+                              {fetchingProducts ? (
                                 <>
-                                  <Layers className="h-3 w-3" /> Select Variant
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#003399]" />
+                                  Loading more products…
                                 </>
                               ) : (
                                 <>
-                                  <Plus className="h-3 w-3" /> Add
+                                  Load More Products ({totalCatalogCount - accumulatedProducts.length} remaining)
                                 </>
                               )}
                             </button>
                           </div>
-                        </div>
-                      );
-                    })}
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
 
-            {/* Right Column: POS Cart Order Lines & Checkout (5 cols) */}
-            <div className="lg:col-span-5 flex flex-col bg-white p-4 min-h-0">
+            {/* Right Column (5 cols): Order Lines & Checkout */}
+            <div className="lg:col-span-5 flex flex-col bg-white p-4 min-h-0 overflow-hidden">
               <div className="flex items-center justify-between border-b border-zinc-200 pb-3 mb-3 shrink-0">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+                <h4 className="text-xs font-black uppercase tracking-wider text-zinc-600">
                   POS Order Lines ({lineItems.length})
                 </h4>
                 {lineItems.length > 0 && (
@@ -489,7 +766,7 @@ export function PosOrderModal({
                       setLineItems([]);
                       setAppliedCoupon(null);
                     }}
-                    className="text-[11px] font-semibold text-red-600 hover:underline"
+                    className="text-[11px] font-bold text-red-600 hover:underline"
                   >
                     Clear All
                   </button>
@@ -501,33 +778,33 @@ export function PosOrderModal({
                 {lineItems.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center py-12 text-zinc-400 space-y-2">
                     <ShoppingCart className="h-10 w-10 text-zinc-300" />
-                    <p className="text-xs font-medium">No items in order</p>
-                    <p className="text-[11px] text-zinc-400 max-w-[200px]">Select products from the catalog to build the register sale.</p>
+                    <p className="text-xs font-bold text-zinc-600">No items in order</p>
+                    <p className="text-[11px] text-zinc-400 max-w-[220px]">
+                      Click products from the catalog or search to build the register sale.
+                    </p>
                   </div>
                 ) : (
                   lineItems.map((item, index) => (
                     <div
                       key={`${item.productId}-${item.variantId || index}`}
-                      className="flex items-center justify-between gap-3 p-3 rounded-xl border border-zinc-200 bg-white shadow-xs"
+                      className="flex items-center justify-between gap-3 p-3 rounded-xl border border-zinc-200 bg-white shadow-2xs"
                     >
-                      {/* Image Thumbnail */}
                       <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50">
                         <img src={item.image} alt={item.productName} className="h-full w-full object-cover" />
                       </div>
 
-                      {/* Product Name, Variant Title, SKU & Price calculation */}
                       <div className="flex-1 min-w-0">
-                        <h5 className="text-xs font-bold truncate text-apple-ink">{item.productName}</h5>
+                        <h5 className="text-xs font-bold truncate text-zinc-900">{item.productName}</h5>
                         {item.variantTitle && (
-                          <span className="inline-block rounded-md bg-apple-primary/10 px-1.5 py-0.2 text-[10px] font-semibold text-apple-primary mb-0.5">
+                          <span className="inline-block rounded-md bg-blue-50 border border-blue-200 px-1.5 py-0.2 text-[10px] font-semibold text-[#003399] mb-0.5">
                             {item.variantTitle}
                           </span>
                         )}
                         <p className="text-[10px] text-zinc-400 font-mono">SKU: {item.sku}</p>
 
-                        <p className="text-xs font-bold text-apple-ink mt-1">
+                        <p className="text-xs font-bold text-zinc-900 mt-1">
                           {formatCurrency(item.price, settings)} × {item.quantity} ={" "}
-                          <span className="text-apple-primary">{formatCurrency(item.price * item.quantity, settings)}</span>
+                          <span className="text-[#003399]">{formatCurrency(item.price * item.quantity, settings)}</span>
                         </p>
                       </div>
 
@@ -537,7 +814,7 @@ export function PosOrderModal({
                           <button
                             type="button"
                             onClick={() => handleUpdateItemQty(index, item.quantity - 1)}
-                            className="flex h-5 w-5 items-center justify-center rounded-md bg-white text-zinc-600 shadow-xs hover:bg-zinc-100"
+                            className="flex h-5 w-5 items-center justify-center rounded-md bg-white text-zinc-600 shadow-2xs hover:bg-zinc-100"
                           >
                             <Minus className="h-3 w-3" />
                           </button>
@@ -545,7 +822,7 @@ export function PosOrderModal({
                           <button
                             type="button"
                             onClick={() => handleUpdateItemQty(index, item.quantity + 1)}
-                            className="flex h-5 w-5 items-center justify-center rounded-md bg-white text-zinc-600 shadow-xs hover:bg-zinc-100"
+                            className="flex h-5 w-5 items-center justify-center rounded-md bg-white text-zinc-600 shadow-2xs hover:bg-zinc-100"
                           >
                             <Plus className="h-3 w-3" />
                           </button>
@@ -554,7 +831,7 @@ export function PosOrderModal({
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(index)}
-                          className="p-1 text-zinc-400 hover:text-red-600"
+                          className="p-1 text-zinc-400 hover:text-red-600 transition-colors"
                           title="Remove line item"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -566,11 +843,11 @@ export function PosOrderModal({
               </div>
 
               {/* Checkout Summary Footer */}
-              <div className="border-t border-zinc-200 pt-3 mt-3 shrink-0 space-y-3 bg-zinc-50/50 p-3 rounded-xl">
+              <div className="border-t border-zinc-200 pt-3 mt-3 shrink-0 space-y-3 bg-zinc-50/70 p-3.5 rounded-2xl">
                 {/* Coupon Input */}
                 {appliedCoupon ? (
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
-                    <span className="truncate">Coupon "{appliedCoupon.coupon.code}" applied</span>
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+                    <span className="truncate">Coupon &ldquo;{appliedCoupon.coupon.code}&rdquo; applied</span>
                     <button type="button" onClick={() => setAppliedCoupon(null)} className="text-emerald-700 hover:text-emerald-900">
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -581,13 +858,13 @@ export function PosOrderModal({
                       type="text"
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                      placeholder="Coupon Code"
-                      className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-1 text-xs font-mono font-bold uppercase focus:outline-none"
+                      placeholder="Discount / Coupon Code"
+                      className="flex-1 rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-mono font-bold uppercase focus:outline-none focus:ring-1 focus:ring-[#003399]"
                     />
                     <button
                       type="submit"
                       disabled={isValidatingCoupon || !couponCode.trim()}
-                      className="rounded-lg bg-zinc-900 px-3 py-1 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                      className="rounded-xl bg-zinc-900 px-3 py-1.5 text-xs font-bold text-white hover:opacity-90 disabled:opacity-50"
                     >
                       {isValidatingCoupon ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Apply"}
                     </button>
@@ -595,8 +872,8 @@ export function PosOrderModal({
                 )}
 
                 {/* Totals Summary */}
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between text-zinc-500">
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex justify-between text-zinc-500 font-medium">
                     <span>Subtotal</span>
                     <span>{formatCurrency(subtotal, settings)}</span>
                   </div>
@@ -606,15 +883,15 @@ export function PosOrderModal({
                       <span>-{formatCurrency(discountAmount, settings)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm font-extrabold text-apple-ink pt-1 border-t border-zinc-200">
+                  <div className="flex justify-between text-base font-black text-zinc-950 pt-2 border-t border-zinc-200">
                     <span>Total Pay</span>
-                    <span className="text-apple-primary">{formatCurrency(grandTotal, settings)}</span>
+                    <span className="text-[#003399]">{formatCurrency(grandTotal, settings)}</span>
                   </div>
                 </div>
 
                 {/* Payment Method Selector */}
-                <div className="space-y-1 pt-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Payment Method</label>
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-400">Payment Method</label>
                   <div className="grid grid-cols-4 gap-1.5 text-[11px]">
                     {[
                       { id: "cash", label: "Cash", icon: Banknote },
@@ -630,9 +907,9 @@ export function PosOrderModal({
                           type="button"
                           onClick={() => setPaymentMethod(m.id as any)}
                           className={cn(
-                            "flex flex-col items-center justify-center p-2 rounded-lg border text-center transition-all gap-1",
+                            "flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all gap-1",
                             active
-                              ? "border-apple-primary bg-apple-primary text-white font-bold shadow-xs"
+                              ? "border-[#003399] bg-[#003399] text-white font-bold shadow-xs"
                               : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
                           )}
                         >
@@ -649,73 +926,81 @@ export function PosOrderModal({
                   type="button"
                   onClick={handleCompleteOrder}
                   disabled={isSubmittingOrder || lineItems.length === 0}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:bg-emerald-700 disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#003399] py-3 text-xs font-black text-white shadow-md hover:bg-[#002B80] disabled:opacity-50 transition-all cursor-pointer"
                 >
-                  {isSubmittingOrder ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                  Complete POS Order ({formatCurrency(grandTotal, settings)})
+                  {isSubmittingOrder ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating POS Order…
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-4 w-4" />
+                      Complete POS Order ({formatCurrency(grandTotal, settings)})
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* POS Variant Selector Modal */}
+      {/* Variant Selection Modal */}
+      {variantProduct && (
         <PosVariantModal
-          open={!!variantProduct}
+          open={Boolean(variantProduct)}
           product={variantProduct}
           onClose={() => setVariantProduct(null)}
           onSelectVariant={handleSelectVariant}
         />
-      </div>
+      )}
 
-      {/* POS Thermal Receipt Preview & Print Dialog */}
+      {/* POS Receipt Preview Document Modal */}
       {completedOrder && (
         <DocumentPreviewDialog
-          open={!!completedOrder}
-          onClose={() => {
-            setCompletedOrder(null);
-            onClose();
-          }}
-          title={`POS Receipt #${completedOrder.orderNumber}`}
-          filename={`BornoLand-Receipt-${completedOrder.orderNumber}.pdf`}
+          open={Boolean(completedOrder)}
+          onClose={() => setCompletedOrder(null)}
+          title={`POS Receipt #${completedOrder.orderNumber || ""}`}
           defaultPageSize="thermal-80"
-          allowPageSizeSwitch={true}
         >
           <PosReceiptDocument
             store={{
-              name: store?.name || "BornoLand Retail",
-              shortName: store?.shortName,
-              logoUrl: store?.logoUrl,
-              brandColor: (store as any)?.brandColor,
-              address: (store as any)?.address,
-              phone: (store as any)?.phone,
-              email: (store as any)?.email,
-              binOrTin: (settings as any)?.binOrTin,
+              name: store?.name || "Store",
+              address: typeof (store as any)?.address === "string" ? (store as any).address : (store as any)?.address?.street || "",
+              phone: (store as any)?.contactPhone || (store as any)?.phone || "",
+              email: (store as any)?.contactEmail || (store as any)?.email || "",
+              logoUrl: (store as any)?.logo,
             }}
             receipt={{
-              receiptNumber: completedOrder.orderNumber,
+              receiptNumber: `REC-${completedOrder.orderNumber || String(completedOrder.id || completedOrder._id || "").slice(-6)}`,
               orderNumber: completedOrder.orderNumber,
-              dateTime: completedOrder.createdAt || new Date(),
-              cashierName: "Cashier (Counter 1)",
+              dateTime: completedOrder.createdAt ? new Date(completedOrder.createdAt) : new Date(),
               customer: {
-                name: completedOrder.shippingAddress?.fullName || "Walk-in Customer",
-                phone: completedOrder.shippingAddress?.phone,
+                name: completedOrder.customerName || completedOrder.customerId?.name || completedOrder.customerSnapshot?.name || "Walk-in Customer",
+                phone: completedOrder.customerPhone || completedOrder.customerId?.phone || completedOrder.customerSnapshot?.phone || "",
               },
-              items: (completedOrder.items || []).map((it: any) => ({
-                title: it.name || it.productName || "Product",
-                quantity: it.quantity || 1,
-                unitPrice: it.price || 0,
-                discount: it.discount || 0,
-                total: (it.price || 0) * (it.quantity || 1),
-              })),
-              subtotal: completedOrder.subtotal || completedOrder.total,
-              discount: completedOrder.discount || 0,
-              tax: completedOrder.tax || 0,
-              grandTotal: completedOrder.total,
-              paymentMethod: completedOrder.paymentMethod || "cash",
-              tenderedAmount: completedOrder.total,
-              changeAmount: 0,
-              notes: completedOrder.shippingAddress?.orderNotes,
+              items: Array.isArray(completedOrder.items) && completedOrder.items.length > 0
+                ? completedOrder.items.map((it: any) => ({
+                    title: it.name || it.title || "Item",
+                    quantity: Number(it.quantity) || 1,
+                    unitPrice: Number(it.price ?? it.unitPrice ?? 0),
+                    discount: Number(it.discount ?? 0),
+                    total: Number(it.total ?? ((it.price ?? 0) * (it.quantity ?? 1))),
+                  }))
+                : [
+                    {
+                      title: `In-Store Purchase (${completedOrder.itemCount || 1} items)`,
+                      quantity: completedOrder.itemCount || 1,
+                      unitPrice: Number(completedOrder.total || 0),
+                      total: Number(completedOrder.total || 0),
+                    },
+                  ],
+              subtotal: Number(completedOrder.subtotal ?? completedOrder.total ?? 0),
+              discount: Number(completedOrder.discount ?? 0),
+              tax: Number(completedOrder.tax ?? 0),
+              grandTotal: Number(completedOrder.total ?? 0),
+              paymentMethod: String(completedOrder.paymentMethod || "CASH").toUpperCase(),
             }}
           />
         </DocumentPreviewDialog>

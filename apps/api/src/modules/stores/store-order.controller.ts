@@ -618,3 +618,38 @@ export async function createStoreOrderController(request: AuthRequest, response:
     return response.status(500).json({ success: false, message: "Failed to create order" });
   }
 }
+
+export async function getRecentStoreOrdersController(request: AuthRequest, response: Response) {
+  try {
+    const storeId = Array.isArray(request.params.storeId)
+      ? request.params.storeId[0]
+      : (request.params.storeId as string);
+    const limit = Math.min(20, Math.max(1, parseInt(String(request.query.limit ?? "10"), 10) || 10));
+
+    const orders = await OrderModel.find({ storeId })
+      .select("_id orderNumber total paymentMethod status createdAt customerId customerSnapshot items currencyCode")
+      .populate("customerId", "name email phone")
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    const formatted = orders.map((o: any) => ({
+      id: String(o._id),
+      orderNumber: o.orderNumber,
+      customerName: o.customerId?.name || o.customerSnapshot?.name || "Walk-in Customer",
+      customerPhone: o.customerId?.phone || o.customerSnapshot?.phone || "",
+      total: o.total,
+      currencyCode: o.currencyCode || "BDT",
+      paymentMethod: o.paymentMethod,
+      status: o.status,
+      itemCount: o.items?.length ?? 0,
+      createdAt: o.createdAt,
+    }));
+
+    return response.status(200).json({ data: { orders: formatted } });
+  } catch (error) {
+    console.error("Get recent orders error:", error);
+    return response.status(500).json({ message: "Failed to load recent orders" });
+  }
+}
+

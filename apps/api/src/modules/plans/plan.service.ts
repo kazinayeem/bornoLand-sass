@@ -115,6 +115,7 @@ export async function listPlans(includeHidden = false) {
 /** Public marketing payload: never exposes hidden or inactive plan configurations. */
 export async function listPublicPlans() {
   await connectDatabase();
+  await ensureDefaultPlans();
   const plans = await PlanModel.find({ isActive: true, visible: { $ne: false } })
     .select("name slug description priceBDT priceYearly isCustomPrice trialDays features limits featureToggles courierAccess pricing customDomain prioritySupport sortOrder isRecommended isPopular")
     .sort({ sortOrder: 1, priceBDT: 1 })

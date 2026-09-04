@@ -1,36 +1,65 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { HelpCircle, Search } from "lucide-react";
-import { SitePageHero } from "@/components/site/site-page-hero";
-import { SiteCtaBanner } from "@/components/site/site-cta-banner";
-import { SiteSection } from "@/components/site/site-section";
+import { useMemo, useState, useEffect } from "react";
+import Link from "next/link";
+import {
+  HelpCircle,
+  Search,
+  ChevronDown,
+  ExternalLink,
+  ArrowRight,
+  Sparkles,
+  CheckCircle2,
+  X,
+} from "lucide-react";
 import {
   FAQ_CATEGORIES,
   FAQ_ITEMS,
   type FaqCategory,
 } from "@/components/site/faq-data";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export function FaqPageContent() {
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<FaqCategory | "All">("All");
+  const [selectedCategory, setSelectedCategory] = useState<FaqCategory | "All">("All");
+  const [openItems, setOpenItems] = useState<Record<string, boolean>>({
+    "gen-1": true,
+    "gs-1": true,
+    "pos-1": true,
+  });
 
-  const filtered = useMemo(() => {
+  // Handle URL hash on mount or hashchange (e.g. /faq#billing)
+  useEffect(() => {
+    const handleHash = () => {
+      if (typeof window !== "undefined" && window.location.hash) {
+        const hash = window.location.hash.slice(1).toLowerCase();
+        const matchedCategory = FAQ_CATEGORIES.find(
+          (c) => c.toLowerCase().replace(/\s+/g, "-") === hash
+        );
+        if (matchedCategory) {
+          setSelectedCategory(matchedCategory);
+        }
+      }
+    };
+
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
+
+  const toggleItem = (id: string) => {
+    setOpenItems((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const filteredItems = useMemo(() => {
     const q = query.trim().toLowerCase();
     return FAQ_ITEMS.filter((item) => {
-      if (category !== "All" && item.category !== category) return false;
+      if (selectedCategory !== "All" && item.category !== selectedCategory) {
+        return false;
+      }
       if (!q) return true;
       return (
         item.question.toLowerCase().includes(q) ||
@@ -38,159 +67,209 @@ export function FaqPageContent() {
         item.category.toLowerCase().includes(q)
       );
     });
-  }, [query, category]);
+  }, [query, selectedCategory]);
 
-  const counts = useMemo(() => {
+  const categoryCounts = useMemo(() => {
     const map = Object.fromEntries(FAQ_CATEGORIES.map((c) => [c, 0])) as Record<
       FaqCategory,
       number
     >;
-    for (const item of FAQ_ITEMS) map[item.category] += 1;
+    for (const item of FAQ_ITEMS) {
+      map[item.category] = (map[item.category] || 0) + 1;
+    }
     return map;
   }, []);
 
   return (
-    <>
-      <SitePageHero
-        eyebrow="Help Center"
-        title="Frequently asked questions"
-        description="Clear answers about BornoLand billing, accounts, security, API access, and running your ecommerce store day to day."
-        primaryCta={{ label: "Contact support", href: "mailto:support@bornoland.com" }}
-        secondaryCta={{ label: "Read the docs", href: "/docs", variant: "outline" }}
-      >
-        <div className="relative mx-auto max-w-xl">
-          <Search
-            className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search questions…"
-            aria-label="Search FAQ"
-            className="border-border bg-card pl-11 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
-          />
-        </div>
-      </SitePageHero>
+    <div className="min-h-screen bg-[#f7f9ff] text-[#181c20] font-sans antialiased py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Hero */}
+        <div className="text-center max-w-3xl mx-auto mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#ebeef4] rounded-full text-xs font-semibold text-[#1664d9] mb-3 border border-[#dfe3e8]">
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>Categorized Frequently Asked Questions</span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-[#181c20]">
+            Frequently Asked Questions
+          </h1>
+          <p className="text-sm sm:text-base text-[#424754] mt-3 mb-6 leading-relaxed">
+            Find immediate answers about storefront commerce, offline POS registers, multi-warehouse stock, biometric payroll, accounting, and billing.
+          </p>
 
-      <SiteSection
-        title="Browse by topic"
-        description="Filter by category or search across every FAQ. Results update instantly."
-        align="left"
-      >
-        <div className="mb-8 flex flex-wrap gap-2" role="tablist" aria-label="FAQ categories">
-          <Button
-            type="button"
-            size="sm"
-            variant={category === "All" ? "default" : "outline"}
-            className="rounded-pill"
-            onClick={() => setCategory("All")}
-            aria-pressed={category === "All"}
+          {/* Search Bar */}
+          <div className="relative max-w-2xl mx-auto">
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#727785]" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by keyword (e.g. POS, bKash, offline, payroll, domain, NBR)..."
+              className="w-full pl-11 pr-10 py-3 bg-white border border-[#dfe3e8] rounded-2xl text-xs sm:text-sm text-[#181c20] placeholder-[#727785] shadow-xs focus:outline-none focus:ring-2 focus:ring-[#1664d9]/20 focus:border-[#1664d9] transition-all"
+            />
+            {query && (
+              <button
+                onClick={() => setQuery("")}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#727785] hover:text-[#181c20]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Category Pills Filter Bar */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+          <button
+            onClick={() => setSelectedCategory("All")}
+            className={cn(
+              "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
+              selectedCategory === "All"
+                ? "bg-[#1664d9] text-white shadow-xs"
+                : "bg-white text-[#424754] hover:bg-[#f1f4fa] border border-[#dfe3e8]"
+            )}
           >
-            All
-            <Badge
-              variant={category === "All" ? "outline" : "default"}
-              className="ml-1 border-primary-foreground/30"
+            <span>All Topics</span>
+            <span
+              className={cn(
+                "px-1.5 py-0.2 rounded-full text-[10px]",
+                selectedCategory === "All"
+                  ? "bg-white/20 text-white"
+                  : "bg-[#ebeef4] text-[#424754]"
+              )}
             >
               {FAQ_ITEMS.length}
-            </Badge>
-          </Button>
-          {FAQ_CATEGORIES.map((cat) => (
-            <Button
-              key={cat}
-              type="button"
-              size="sm"
-              variant={category === cat ? "default" : "outline"}
-              className="rounded-pill"
-              onClick={() => setCategory(cat)}
-              aria-pressed={category === cat}
-            >
-              {cat}
-              <span
+            </span>
+          </button>
+
+          {FAQ_CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat;
+            const slug = cat.toLowerCase().replace(/\s+/g, "-");
+            return (
+              <button
+                key={cat}
+                id={slug}
+                onClick={() => {
+                  setSelectedCategory(cat);
+                  window.history.replaceState(null, "", `/faq#${slug}`);
+                }}
                 className={cn(
-                  "ml-1.5 text-xs tabular-nums opacity-80",
-                  category === cat ? "text-primary-foreground" : "text-muted-foreground",
+                  "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
+                  isSelected
+                    ? "bg-[#1664d9] text-white shadow-xs"
+                    : "bg-white text-[#424754] hover:bg-[#f1f4fa] border border-[#dfe3e8]"
                 )}
               >
-                {counts[cat]}
-              </span>
-            </Button>
-          ))}
+                <span>{cat}</span>
+                <span
+                  className={cn(
+                    "px-1.5 py-0.2 rounded-full text-[10px]",
+                    isSelected ? "bg-white/20 text-white" : "bg-[#ebeef4] text-[#424754]"
+                  )}
+                >
+                  {categoryCounts[cat] || 0}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${category}-${query}`}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.25 }}
-          >
-            {filtered.length === 0 ? (
-              <Card className="rounded-apple-xl border-border">
-                <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
-                  <HelpCircle className="h-8 w-8 text-muted-foreground" aria-hidden />
-                  <p className="text-sm text-muted-foreground">
-                    No FAQs matched your filters. Try another category or clear the search.
-                  </p>
-                  <Button
+        {/* Questions Accordion List */}
+        <div className="max-w-4xl mx-auto space-y-3 mb-16">
+          {filteredItems.length === 0 ? (
+            <div className="bg-white p-8 rounded-2xl border border-[#dfe3e8] text-center space-y-2">
+              <p className="text-sm font-semibold text-[#181c20]">
+                No questions found matching &quot;{query}&quot;.
+              </p>
+              <p className="text-xs text-[#727785]">
+                Try searching for broader terms or browse the help categories.
+              </p>
+              <button
+                onClick={() => {
+                  setQuery("");
+                  setSelectedCategory("All");
+                }}
+                className="mt-2 text-xs font-bold text-[#1664d9] hover:underline"
+              >
+                Reset Search Filters
+              </button>
+            </div>
+          ) : (
+            filteredItems.map((item) => {
+              const isOpen = Boolean(openItems[item.id]);
+              return (
+                <div
+                  key={item.id}
+                  id={item.id}
+                  className="bg-white rounded-2xl border border-[#dfe3e8] shadow-2xs overflow-hidden transition-all"
+                >
+                  <button
                     type="button"
-                    variant="outline"
-                    size="sm"
-                    className="rounded-pill"
-                    onClick={() => {
-                      setQuery("");
-                      setCategory("All");
-                    }}
+                    onClick={() => toggleItem(item.id)}
+                    className="w-full p-5 text-left flex items-start justify-between gap-4 cursor-pointer hover:bg-[#f1f4fa]/50 transition-colors"
                   >
-                    Reset filters
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="rounded-apple-xl border-border shadow-sm">
-                <CardContent className="p-2 sm:p-4">
-                  <Accordion type="single" collapsible className="w-full">
-                    {filtered.map((item) => (
-                      <AccordionItem
-                        key={item.id}
-                        value={item.id}
-                        className="border-border px-2 sm:px-3 data-[state=open]:bg-muted/30"
-                      >
-                        <AccordionTrigger className="py-4 text-left text-base font-semibold text-foreground hover:no-underline hover:text-primary sm:py-5">
-                          <span className="flex flex-col items-start gap-2 pr-3 sm:flex-row sm:items-center sm:gap-3">
-                            <Badge variant="primary" className="shrink-0 rounded-pill">
-                              {item.category}
-                            </Badge>
-                            <span>{item.question}</span>
-                          </span>
-                        </AccordionTrigger>
-                        <AccordionContent className="pb-5 text-sm leading-relaxed text-muted-foreground sm:text-[15px]">
-                          {item.answer}
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
-        </AnimatePresence>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#1664d9] bg-[#1664d9]/10 px-2 py-0.5 rounded-md">
+                        {item.category}
+                      </span>
+                      <h3 className="text-sm sm:text-base font-bold text-[#181c20]">
+                        {item.question}
+                      </h3>
+                    </div>
+                    <div
+                      className={cn(
+                        "w-7 h-7 rounded-full bg-[#f1f4fa] flex items-center justify-center shrink-0 text-[#727785] transition-transform duration-200 mt-1",
+                        isOpen ? "rotate-180 bg-[#1664d9] text-white" : ""
+                      )}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </button>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground" aria-live="polite">
-          Showing {filtered.length} of {FAQ_ITEMS.length} questions
-        </p>
-      </SiteSection>
+                  {isOpen && (
+                    <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-[#424754] leading-relaxed border-t border-[#f1f4fa] space-y-3">
+                      <p>{item.answer}</p>
+                      {item.docLink && (
+                        <div className="pt-2">
+                          <Link
+                            href={item.docLink.href}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-[#1664d9] hover:underline"
+                          >
+                            <span>{item.docLink.label}</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
 
-      <SiteCtaBanner
-        title="Still need a hand?"
-        description="Our team in Dhaka helps merchants with onboarding, payments, and technical integrations. Reach out anytime."
-        primaryLabel="Email support"
-        primaryHref="mailto:support@bornoland.com"
-        secondaryLabel="View documentation"
-        secondaryHref="/docs"
-      />
-    </>
+        {/* Still Have Questions CTA */}
+        <div className="max-w-4xl mx-auto p-8 bg-[#0F172A] text-white rounded-2xl text-center space-y-4">
+          <Sparkles className="w-8 h-8 text-[#8ffa9b] mx-auto" />
+          <h2 className="text-xl sm:text-2xl font-bold">Still have a question?</h2>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto leading-relaxed">
+            Our merchant onboarding specialists and technical engineers are happy to help you via live chat, email, or WhatsApp.
+          </p>
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/contact"
+              className="px-6 py-2.5 bg-[#1664d9] text-white rounded-xl text-xs font-bold hover:bg-[#004caf] transition-colors shadow-xs"
+            >
+              Contact Support Team
+            </Link>
+            <Link
+              href="/docs"
+              className="px-6 py-2.5 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-colors border border-slate-700"
+            >
+              Explore Full Documentation
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

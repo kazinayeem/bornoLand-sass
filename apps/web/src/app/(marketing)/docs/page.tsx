@@ -1,20 +1,22 @@
 import { createSiteMetadata } from "@/components/site/create-site-metadata";
-import { DocsPageContent } from "@/components/site/docs-page-content";
+import { DocsShell } from "@/components/docs/docs-shell";
+import { DOCS_REGISTRY } from "@/lib/docs-data";
 
 export const metadata = createSiteMetadata({
-  title: "Documentation",
+  title: "Documentation & Developer Guides",
   description:
-    "BornoLand developer and merchant documentation — get started, authenticate, configure your store, call the API, and deploy with confidence.",
+    "Official documentation for BornoLand — master online storefronts, retail POS registers, multi-warehouse inventory, automated payroll, and accounting.",
   path: "/docs",
   keywords: [
     "BornoLand docs",
-    "ecommerce API",
-    "store documentation",
-    "Bangladesh ecommerce platform",
-    "BornoLand SDK",
+    "ecommerce documentation",
+    "POS guide",
+    "multi-warehouse inventory",
+    "Bangladesh ERP",
   ],
 });
 
 export default function DocsPage() {
-  return <DocsPageContent />;
+  const initialTopic = DOCS_REGISTRY[0];
+  return <DocsShell currentTopic={initialTopic} />;
 }

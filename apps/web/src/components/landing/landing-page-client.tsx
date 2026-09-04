@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -33,6 +33,7 @@ import {
   Menu,
   X,
   Sparkles,
+  AlertCircle,
 } from "lucide-react";
 import { BRAND_CONFIG } from "@/config/branding";
 import {
@@ -40,12 +41,34 @@ import {
   CompanyAttributionLink,
   ProductOwnershipBadge,
 } from "@/components/brand/brand-attribution";
+import { useGetPublicPlansQuery } from "@/redux/api/public-plan-api";
+import {
+  resolvePlanFeatures,
+  resolvePlanPricing,
+  resolvePlanCta,
+} from "@/lib/plan-display-utils";
+import type { Plan } from "@/redux/api/store-api";
+import { cn } from "@/lib/utils";
 
 export function LandingPageClient() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isYearlyBilling, setIsYearlyBilling] = useState(false);
   const [chartRange, setChartRange] = useState<"7D" | "30D" | "YTD">("7D");
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
+
+  const {
+    data: plansData,
+    isLoading: isPlansLoading,
+    isError: isPlansError,
+    refetch: refetchPlans,
+  } = useGetPublicPlansQuery();
+
+  const publicPlans = useMemo(() => {
+    const list = (plansData?.data?.plans ?? []) as Plan[];
+    return [...list]
+      .filter((p) => p.isActive !== false && p.visible !== false)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.priceBDT - b.priceBDT);
+  }, [plansData]);
 
   const faqItems = [
     {
@@ -91,31 +114,44 @@ export function LandingPageClient() {
           <BornoLandBrandLogo showParentAttribution attributionVariant="inline" />
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1.5">
-            <a
-              href="#unified-section"
+          <nav className="hidden md:flex items-center gap-1">
+            <Link
+              href="/features"
               className="px-3 py-1.5 text-[13px] font-medium text-[#424754] hover:text-[#181c20] hover:bg-[#f1f4fa] rounded-lg transition-colors"
             >
-              Platform
-            </a>
-            <a
-              href="#modules-section"
+              Features
+            </Link>
+            <Link
+              href="/solutions"
               className="px-3 py-1.5 text-[13px] font-medium text-[#424754] hover:text-[#181c20] hover:bg-[#f1f4fa] rounded-lg transition-colors"
             >
               Solutions
-            </a>
-            <a
-              href="#pricing-plans"
+            </Link>
+            <Link
+              href="/how-it-works"
+              className="px-3 py-1.5 text-[13px] font-medium text-[#424754] hover:text-[#181c20] hover:bg-[#f1f4fa] rounded-lg transition-colors"
+            >
+              How It Works
+            </Link>
+            <Link
+              href="/pricing"
               className="px-3 py-1.5 text-[13px] font-medium text-[#424754] hover:text-[#181c20] hover:bg-[#f1f4fa] rounded-lg transition-colors"
             >
               Pricing
-            </a>
-            <a
-              href="#faq-section"
+            </Link>
+            <Link
+              href="/how-to-use"
+              className="px-3 py-1.5 text-[13px] font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors flex items-center gap-1"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>How to Use</span>
+            </Link>
+            <Link
+              href="/docs"
               className="px-3 py-1.5 text-[13px] font-medium text-[#424754] hover:text-[#181c20] hover:bg-[#f1f4fa] rounded-lg transition-colors"
             >
-              Resources
-            </a>
+              Docs
+            </Link>
           </nav>
 
           {/* Desktop Actions */}
@@ -161,34 +197,69 @@ export function LandingPageClient() {
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-b border-[#e5e8ee] bg-white px-4 py-3 space-y-2">
-            <a
-              href="#unified-section"
+            <Link
+              href="/features"
               onClick={() => setMobileMenuOpen(false)}
               className="block px-3 py-2 text-sm font-medium text-[#424754] hover:bg-[#f1f4fa] rounded-lg"
             >
-              Platform
-            </a>
-            <a
-              href="#modules-section"
+              Features
+            </Link>
+            <Link
+              href="/solutions"
               onClick={() => setMobileMenuOpen(false)}
               className="block px-3 py-2 text-sm font-medium text-[#424754] hover:bg-[#f1f4fa] rounded-lg"
             >
               Solutions
-            </a>
-            <a
-              href="#pricing-plans"
+            </Link>
+            <Link
+              href="/how-it-works"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 text-sm font-medium text-[#424754] hover:bg-[#f1f4fa] rounded-lg"
+            >
+              How It Works
+            </Link>
+            <Link
+              href="/how-to-use"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg"
+            >
+              How to Use (Beginner Guide)
+            </Link>
+            <Link
+              href="/pricing"
               onClick={() => setMobileMenuOpen(false)}
               className="block px-3 py-2 text-sm font-medium text-[#424754] hover:bg-[#f1f4fa] rounded-lg"
             >
               Pricing
-            </a>
-            <a
-              href="#faq-section"
+            </Link>
+            <Link
+              href="/docs"
               onClick={() => setMobileMenuOpen(false)}
               className="block px-3 py-2 text-sm font-medium text-[#424754] hover:bg-[#f1f4fa] rounded-lg"
             >
-              Resources &amp; FAQ
-            </a>
+              Documentation
+            </Link>
+            <Link
+              href="/help"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 text-sm font-medium text-[#424754] hover:bg-[#f1f4fa] rounded-lg"
+            >
+              Help Center
+            </Link>
+            <Link
+              href="/faq"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 text-sm font-medium text-[#424754] hover:bg-[#f1f4fa] rounded-lg"
+            >
+              FAQ
+            </Link>
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 text-sm font-medium text-[#424754] hover:bg-[#f1f4fa] rounded-lg"
+            >
+              Contact
+            </Link>
             <div className="pt-2 border-t border-zinc-100 flex items-center justify-between">
               <Link href="/login" className="text-sm font-semibold text-[#1664d9] px-2 py-1">
                 Sign in
@@ -1738,160 +1809,160 @@ export function LandingPageClient() {
               </div>
             </div>
 
-            {/* 4 Tiers Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-              {/* 1. Starter */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#dfe3e8] flex flex-col justify-between">
-                <div>
-                  <h3 className="text-base font-bold text-[#181c20]">Starter</h3>
-                  <p className="text-xs text-[#424754] mt-1">For single store owners launching online and offline.</p>
-                  <div className="my-5">
-                    <span className="text-3xl font-extrabold text-[#181c20]">
-                      {isYearlyBilling ? "৳ 1,999" : "৳ 2,499"}
-                    </span>
-                    <span className="text-xs text-[#424754]"> / month</span>
+            {/* Dynamic Plans Grid / Loading Skeleton / Error & Empty Fallback */}
+            {isPlansLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "bg-white p-6 rounded-2xl shadow-sm border border-[#dfe3e8] flex flex-col justify-between animate-pulse",
+                      i === 2 && "border-2 border-[#1664d9]/30"
+                    )}
+                  >
+                    <div>
+                      <div className="h-5 w-24 bg-zinc-200 rounded mb-2" />
+                      <div className="h-3 w-40 bg-zinc-100 rounded mb-5" />
+                      <div className="my-5">
+                        <div className="h-8 w-32 bg-zinc-200 rounded mb-1" />
+                        <div className="h-3 w-20 bg-zinc-100 rounded" />
+                      </div>
+                      <div className="space-y-2.5 mb-6">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <div key={s} className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-zinc-200 shrink-0" />
+                            <div className="h-3 w-full bg-zinc-100 rounded" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="h-10 w-full bg-zinc-200 rounded-xl" />
                   </div>
-                  <ul className="space-y-2 text-xs text-[#181c20] mb-6">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> 1 Physical Store Location
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> 1 Online Storefront
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Up to 5 Team Accounts
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Full Inventory &amp; POS Sync
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> bKash / Nagad Direct Gateway
-                    </li>
-                  </ul>
-                </div>
-                <Link
-                  href="/register"
-                  className="w-full py-2.5 text-center bg-[#f1f4fa] text-[#181c20] rounded-xl text-xs font-bold hover:bg-[#e5e8ee] transition-colors block border border-[#dfe3e8]"
-                >
-                  Start 7-Day Trial
-                </Link>
+                ))}
               </div>
+            ) : isPlansError ? (
+              <div className="bg-white p-8 rounded-2xl border border-red-200 shadow-sm text-center max-w-lg mx-auto space-y-3">
+                <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-bold text-zinc-900">Plans are temporarily unavailable</h3>
+                <p className="text-xs text-zinc-500">
+                  We are unable to fetch the latest subscription tiers right now. Please try again or contact our support team.
+                </p>
+                <div className="pt-2 flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => refetchPlans()}
+                    className="px-4 py-2 bg-[#1664d9] text-white rounded-xl text-xs font-bold hover:bg-[#004caf] transition-colors cursor-pointer"
+                  >
+                    Try Again
+                  </button>
+                  <Link
+                    href="/contact"
+                    className="px-4 py-2 bg-zinc-100 text-zinc-700 rounded-xl text-xs font-bold hover:bg-zinc-200 transition-colors"
+                  >
+                    Contact Support
+                  </Link>
+                </div>
+              </div>
+            ) : publicPlans.length === 0 ? (
+              <div className="bg-white p-8 rounded-2xl border border-zinc-200 shadow-sm text-center max-w-lg mx-auto space-y-3">
+                <h3 className="text-base font-bold text-zinc-900">No public plans currently available</h3>
+                <p className="text-xs text-zinc-500">
+                  Please check back shortly or reach out to our team for custom subscription details.
+                </p>
+                <div className="pt-2">
+                  <Link
+                    href="/contact"
+                    className="inline-flex px-4 py-2 bg-[#1664d9] text-white rounded-xl text-xs font-bold hover:bg-[#004caf] transition-colors"
+                  >
+                    Contact Sales
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  "grid grid-cols-1 md:grid-cols-2 gap-5",
+                  publicPlans.length <= 3 ? "lg:grid-cols-3" : "lg:grid-cols-4"
+                )}
+              >
+                {publicPlans.map((plan) => {
+                  const isPopular = Boolean(plan.isPopular || plan.isRecommended);
+                  const pricingInfo = resolvePlanPricing(plan, isYearlyBilling);
+                  const featuresList = resolvePlanFeatures(plan);
+                  const cta = resolvePlanCta(plan);
 
-              {/* 2. Business (Most Popular) */}
-              <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-[#1664d9] relative flex flex-col justify-between bg-gradient-to-b from-[#1664d9]/5 via-white to-white">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-[#1664d9] text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
-                  Most Popular
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-[#181c20]">Business</h3>
-                  <p className="text-xs text-[#424754] mt-1">For growing multi-outlet retailers and regional brands.</p>
-                  <div className="my-5">
-                    <span className="text-3xl font-extrabold text-[#1664d9]">
-                      {isYearlyBilling ? "৳ 4,799" : "৳ 5,999"}
-                    </span>
-                    <span className="text-xs text-[#424754]"> / month</span>
-                  </div>
-                  <ul className="space-y-2 text-xs text-[#181c20] mb-6">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Up to 3 Store Locations
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Custom Storefront Domain
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Up to 20 Staff Accounts
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Full HRM &amp; Auto Payroll
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Multi-Warehouse Transfers
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Priority WhatsApp Support
-                    </li>
-                  </ul>
-                </div>
-                <Link
-                  href="/register"
-                  className="w-full py-2.5 text-center bg-[#1664d9] text-white rounded-xl text-xs font-bold hover:bg-[#004caf] transition-colors shadow-sm block"
-                >
-                  Start Free Trial
-                </Link>
-              </div>
+                  return (
+                    <div
+                      key={plan._id || plan.slug}
+                      className={cn(
+                        "bg-white p-6 rounded-2xl shadow-sm border flex flex-col justify-between relative transition-all duration-300",
+                        isPopular
+                          ? "border-2 border-[#1664d9] shadow-lg bg-gradient-to-b from-[#1664d9]/5 via-white to-white"
+                          : "border-[#dfe3e8] hover:shadow-md"
+                      )}
+                    >
+                      {isPopular && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-[#1664d9] text-white text-[10px] font-bold rounded-full uppercase tracking-wider shadow-2xs">
+                          Most Popular
+                        </div>
+                      )}
 
-              {/* 3. Professional */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#dfe3e8] flex flex-col justify-between">
-                <div>
-                  <h3 className="text-base font-bold text-[#181c20]">Professional</h3>
-                  <p className="text-xs text-[#424754] mt-1">For established retail networks with high order volume.</p>
-                  <div className="my-5">
-                    <span className="text-3xl font-extrabold text-[#181c20]">
-                      {isYearlyBilling ? "৳ 9,599" : "৳ 11,999"}
-                    </span>
-                    <span className="text-xs text-[#424754]"> / month</span>
-                  </div>
-                  <ul className="space-y-2 text-xs text-[#181c20] mb-6">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Up to 10 Store Outlets
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> 50 Staff &amp; Permissions
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Advanced Accounting &amp; NBR VAT
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Automated Courier Dispatch API
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Dedicated Account Manager
-                    </li>
-                  </ul>
-                </div>
-                <Link
-                  href="/register"
-                  className="w-full py-2.5 text-center bg-[#f1f4fa] text-[#181c20] rounded-xl text-xs font-bold hover:bg-[#e5e8ee] transition-colors block border border-[#dfe3e8]"
-                >
-                  Start 7-Day Trial
-                </Link>
-              </div>
+                      <div>
+                        <h3 className="text-base font-bold text-[#181c20]">{plan.name}</h3>
+                        {plan.description && (
+                          <p className="text-xs text-[#424754] mt-1 leading-relaxed line-clamp-2">
+                            {plan.description}
+                          </p>
+                        )}
 
-              {/* 4. Enterprise */}
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#dfe3e8] flex flex-col justify-between">
-                <div>
-                  <h3 className="text-base font-bold text-[#181c20]">Enterprise</h3>
-                  <p className="text-xs text-[#424754] mt-1">For major conglomerates and nationwide distribution chains.</p>
-                  <div className="my-5">
-                    <span className="text-3xl font-extrabold text-[#181c20]">Custom</span>
-                    <span className="text-xs text-[#424754] block mt-0.5">Tailored deployment</span>
-                  </div>
-                  <ul className="space-y-2 text-xs text-[#181c20] mb-6">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Unlimited Outlets &amp; Hubs
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> Custom API Webhooks &amp; Bridges
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> On-premise or Private Cloud
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> 99.99% Uptime SLA Agreement
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-[#006e2a]" /> 24/7 Phone Incident Line
-                    </li>
-                  </ul>
-                </div>
-                <Link
-                  href="/contact"
-                  className="w-full py-2.5 text-center bg-[#f1f4fa] text-[#181c20] rounded-xl text-xs font-bold hover:bg-[#e5e8ee] transition-colors block border border-[#dfe3e8]"
-                >
-                  Talk to Sales
-                </Link>
+                        <div className="my-5">
+                          <span
+                            className={cn(
+                              "text-3xl font-extrabold",
+                              isPopular ? "text-[#1664d9]" : "text-[#181c20]"
+                            )}
+                          >
+                            {pricingInfo.priceDisplay}
+                          </span>
+                          <span className="text-xs text-[#424754]">
+                            {pricingInfo.suffix}
+                          </span>
+                          {pricingInfo.annualTotalNote && (
+                            <span className="block text-[11px] text-[#006e2a] font-semibold mt-0.5">
+                              {pricingInfo.annualTotalNote}
+                            </span>
+                          )}
+                        </div>
+
+                        <ul className="space-y-2 text-xs text-[#181c20] mb-6">
+                          {featuresList.map((feat, fIdx) => (
+                            <li key={fIdx} className="flex items-start gap-2">
+                              <Check className="w-4 h-4 text-[#006e2a] shrink-0 mt-0.5" />
+                              <span className="leading-relaxed">{feat}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div>
+                        <Link
+                          href={cta.href}
+                          className={cn(
+                            "w-full py-2.5 text-center rounded-xl text-xs font-bold transition-all block",
+                            isPopular
+                              ? "bg-[#1664d9] text-white hover:bg-[#004caf] shadow-xs"
+                              : "bg-[#f1f4fa] text-[#181c20] hover:bg-[#e5e8ee] border border-[#dfe3e8]"
+                          )}
+                        >
+                          {cta.label}
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -2003,60 +2074,37 @@ export function LandingPageClient() {
 
             <div>
               <h3 className="text-xs font-bold text-[#181c20] uppercase tracking-wider mb-3">
-                Platform
+                Product
               </h3>
               <ul className="space-y-2 text-xs text-[#424754]">
                 <li>
-                  <a href="#unified-section" className="hover:text-[#181c20] transition-colors">
-                    Commerce
-                  </a>
-                </li>
-                <li>
-                  <a href="#unified-section" className="hover:text-[#181c20] transition-colors">
-                    POS
-                  </a>
-                </li>
-                <li>
-                  <a href="#unified-section" className="hover:text-[#181c20] transition-colors">
-                    Inventory
-                  </a>
-                </li>
-                <li>
-                  <a href="#unified-section" className="hover:text-[#181c20] transition-colors">
-                    HRM
-                  </a>
-                </li>
-                <li>
-                  <a href="#unified-section" className="hover:text-[#181c20] transition-colors">
-                    Finance
-                  </a>
-                </li>
-                <li>
-                  <a href="#unified-section" className="hover:text-[#181c20] transition-colors">
-                    Analytics
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-xs font-bold text-[#181c20] uppercase tracking-wider mb-3">
-                Company
-              </h3>
-              <ul className="space-y-2 text-xs text-[#424754]">
-                <li>
-                  <Link href="/about" className="hover:text-[#181c20] transition-colors">
-                    About
+                  <Link href="/features" className="hover:text-[#181c20] transition-colors">
+                    Features
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="hover:text-[#181c20] transition-colors">
-                    Contact
+                  <Link href="/pricing" className="hover:text-[#181c20] transition-colors">
+                    Pricing
                   </Link>
                 </li>
                 <li>
-                  <Link href="/blog" className="hover:text-[#181c20] transition-colors">
-                    Blog
+                  <Link href="/how-it-works" className="hover:text-[#181c20] transition-colors">
+                    How It Works
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/integrations" className="hover:text-[#181c20] transition-colors">
+                    Integrations
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/docs/pos" className="hover:text-[#181c20] transition-colors">
+                    POS Terminal
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/docs/hrm" className="hover:text-[#181c20] transition-colors">
+                    HRM &amp; Payroll
                   </Link>
                 </li>
               </ul>
@@ -2073,13 +2121,51 @@ export function LandingPageClient() {
                   </Link>
                 </li>
                 <li>
+                  <Link href="/how-to-use" className="hover:text-[#181c20] transition-colors text-emerald-700 font-semibold">
+                    How to Use (Guide)
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/help" className="hover:text-[#181c20] transition-colors">
+                    Help Center
+                  </Link>
+                </li>
+                <li>
                   <Link href="/faq" className="hover:text-[#181c20] transition-colors">
                     FAQ
                   </Link>
                 </li>
                 <li>
-                  <Link href="/support" className="hover:text-[#181c20] transition-colors">
-                    Help Center
+                  <Link href="/user-rules" className="hover:text-[#181c20] transition-colors">
+                    User Rules
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-bold text-[#181c20] uppercase tracking-wider mb-3">
+                Company
+              </h3>
+              <ul className="space-y-2 text-xs text-[#424754]">
+                <li>
+                  <Link href="/about" className="hover:text-[#181c20] transition-colors">
+                    About BornoSoft
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="hover:text-[#181c20] transition-colors">
+                    Contact Us
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/careers" className="hover:text-[#181c20] transition-colors">
+                    Careers
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/blog" className="hover:text-[#181c20] transition-colors">
+                    Blog &amp; Updates
                   </Link>
                 </li>
               </ul>
@@ -2091,13 +2177,23 @@ export function LandingPageClient() {
               </h3>
               <ul className="space-y-2 text-xs text-[#424754]">
                 <li>
-                  <Link href="/privacy" className="hover:text-[#181c20] transition-colors">
-                    Privacy
+                  <Link href="/terms" className="hover:text-[#181c20] transition-colors">
+                    Terms of Service
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="hover:text-[#181c20] transition-colors">
-                    Terms
+                  <Link href="/privacy" className="hover:text-[#181c20] transition-colors">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/cookie-policy" className="hover:text-[#181c20] transition-colors">
+                    Cookie Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/user-rules" className="hover:text-[#181c20] transition-colors">
+                    Acceptable Use
                   </Link>
                 </li>
                 <li>
@@ -2120,8 +2216,8 @@ export function LandingPageClient() {
               <Link href="/terms" className="hover:text-[#181c20] transition-colors hidden md:inline">
                 Terms of Service
               </Link>
-              <Link href="/support" className="hover:text-[#181c20] transition-colors hidden md:inline">
-                Trust &amp; Security
+              <Link href="/user-rules" className="hover:text-[#181c20] transition-colors hidden md:inline">
+                User Rules
               </Link>
             </div>
           </div>

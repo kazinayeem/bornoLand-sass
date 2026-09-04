@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -11,20 +11,15 @@ import {
   Lock,
   Star,
   HardDrive,
-  Plus,
-  ChevronsUpDown,
   Store as StoreIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
-import { useGetMyStoresQuery } from "@/redux/api/store-api";
 import { StoreBrandMark } from "./store-brand-mark";
 import {
   BUSINESS_MODULES,
-  type BusinessModule,
   type NavItem,
 } from "./navigation-registry";
-import { useLanguage } from "@/providers/language-provider";
 import {
   useIsStoreOwner,
   usePermissions,
@@ -47,8 +42,6 @@ interface MobileStoreDrawerProps {
 
 export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
   const pathname = usePathname();
-  const { language, t } = useLanguage();
-  const isBn = false;
   const basePath = `/store/${store.slug}`;
 
   // Entitlements & Permissions
@@ -72,7 +65,6 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
     expandedModules,
     toggleModule,
     pinnedItemIds,
-    togglePin,
     activeModule,
   } = useStoreNavState(store._id, store.slug);
 
@@ -148,7 +140,7 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
           type="button"
           onClick={onClose}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
-          aria-label={isBn ? "মেনু বন্ধ করুন" : "Close drawer"}
+          aria-label="Close drawer"
         >
           <X className="h-4 w-4" />
         </button>
@@ -161,7 +153,7 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
           <div>
             <p className="px-1 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
               <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
-              <span>{isBn ? "কুইক অ্যাক্সেস" : "Quick Access"}</span>
+              <span>Quick Access</span>
             </p>
             <div className="grid grid-cols-2 gap-1.5">
               {pinnedItems.map((item) => {
@@ -170,7 +162,7 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
                   ? pathname === href
                   : pathname.startsWith(href.split("?")[0]);
                 const Icon = item.icon;
-                const label = isBn ? item.labelBn : item.labelEn;
+                const label = item.labelEn;
 
                 return (
                   <Link
@@ -206,7 +198,7 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
             )}
           >
             <LayoutDashboard className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-            <span className="truncate">{isBn ? "স্টোর ড্যাশবোর্ড" : "Store Dashboard"}</span>
+            <span className="truncate">Store Dashboard</span>
           </Link>
         </div>
 
@@ -238,7 +230,7 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
                   <div className="flex items-center gap-2 truncate">
                     <ModIcon className="h-3.5 w-3.5 shrink-0 text-zinc-500" strokeWidth={1.75} />
                     <span className="truncate text-[11px]">
-                      {isBn ? mod.titleBn : mod.titleEn}
+                      {mod.titleEn}
                     </span>
                   </div>
                   <span className="text-zinc-400">
@@ -260,7 +252,7 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
                         ? pathname === href
                         : pathname.startsWith(href.split("?")[0]);
                       const ItemIcon = item.icon;
-                      const label = isBn ? item.labelBn : item.labelEn;
+                      const label = item.labelEn;
 
                       return (
                         <Link
@@ -300,7 +292,7 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
           <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
             <span className="flex items-center gap-1.5">
               <HardDrive className="h-3 w-3 text-zinc-400" strokeWidth={1.75} />
-              <span>{isBn ? "স্টোরেজ" : "Storage"}</span>
+              <span>Storage</span>
             </span>
             <span className="tabular-nums font-semibold text-zinc-700 dark:text-zinc-300">
               {usedLabel} / {storageLabel}
@@ -323,7 +315,7 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
           className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg border border-zinc-200 bg-zinc-50 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 transition-colors"
         >
           <StoreIcon className="h-3.5 w-3.5" />
-          <span>{isBn ? "মার্চেন্ট ওয়ার্কস্পেস" : "Back to Workspace"}</span>
+          <span>Back to Workspace</span>
         </Link>
       </div>
     </div>

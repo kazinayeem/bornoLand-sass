@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Compass, Sparkles } from "lucide-react";
+import { Compass } from "lucide-react";
 import { DropdownMenu, type DropdownItem } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { BUSINESS_MODULES, type BusinessModule } from "./navigation-registry";
@@ -16,7 +16,7 @@ interface SidebarModuleSwitcherProps {
   activeModuleId: string;
   onSelectModule: (module: BusinessModule) => void;
   collapsed: boolean;
-  isBn: boolean;
+  isBn?: boolean;
   permittedModuleIds: Set<string>;
   onNavigate?: () => void;
 }
@@ -26,7 +26,6 @@ export function SidebarModuleSwitcher({
   activeModuleId,
   onSelectModule,
   collapsed,
-  isBn,
   permittedModuleIds,
   onNavigate,
 }: SidebarModuleSwitcherProps) {
@@ -43,7 +42,7 @@ export function SidebarModuleSwitcher({
       const ModIcon = m.icon;
       return {
         key: m.id,
-        label: isBn ? m.titleBn : m.titleEn,
+        label: m.titleEn,
         icon: ModIcon,
         onClick: () => {
           onSelectModule(m);
@@ -52,7 +51,7 @@ export function SidebarModuleSwitcher({
         },
       };
     });
-  }, [visibleModules, isBn, basePath, onSelectModule, onNavigate]);
+  }, [visibleModules, basePath, onSelectModule, onNavigate]);
 
   if (collapsed) {
     return (
@@ -61,8 +60,8 @@ export function SidebarModuleSwitcher({
           <button
             type="button"
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200/80 bg-zinc-50/80 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-300 mx-auto transition-colors shadow-2xs outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:focus-visible:ring-white/20"
-            title={isBn ? "মডিউল পরিবর্তন করুন" : "Business Modules"}
-            aria-label={isBn ? "মডিউল পরিবর্তন করুন" : "Business Modules"}
+            title="Business Modules"
+            aria-label="Business Modules"
           >
             <Compass className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
           </button>
@@ -81,7 +80,7 @@ export function SidebarModuleSwitcher({
     <div className="px-2 py-2">
       <div className="flex items-center justify-between px-1 mb-1.5">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-          {isBn ? "বিজনেস ডোমেইন" : "Business Modules"}
+          Business Modules
         </span>
         <span className="text-[10px] text-zinc-400 font-mono font-medium">
           {domainModules.length}
@@ -93,8 +92,8 @@ export function SidebarModuleSwitcher({
         {domainModules.map((m) => {
           const isActive = m.id === activeModuleId;
           const ModIcon = m.icon;
-          const title = isBn ? m.titleBn : m.titleEn;
-          const shortTitle = isBn ? m.shortTitleBn : m.shortTitleEn;
+          const title = m.titleEn;
+          const shortTitle = m.shortTitleEn;
 
           return (
             <Tooltip key={m.id}>

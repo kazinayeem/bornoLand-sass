@@ -9,7 +9,7 @@ async function resolveCanonicalStoreId(storeIdOrSlug: string): Promise<string | 
   if (/^[a-f\d]{24}$/i.test(storeIdOrSlug)) {
     return storeIdOrSlug;
   }
-  const store = await StoreModel.findOne({
+  const store = (await StoreModel.findOne({
     $or: [
       { slug: storeIdOrSlug },
       { slug: storeIdOrSlug.toLowerCase() },
@@ -18,7 +18,7 @@ async function resolveCanonicalStoreId(storeIdOrSlug: string): Promise<string | 
     ],
   })
     .select("_id")
-    .lean();
+    .lean()) as { _id: unknown } | null;
   return store ? String(store._id) : null;
 }
 

@@ -163,7 +163,7 @@ function SidebarStoreSwitcher({
           className="absolute left-0 top-full z-50 mt-1.5 w-64 rounded-xl border border-zinc-200/90 bg-white p-1.5 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 animate-in fade-in-50 zoom-in-95 duration-150"
         >
           <div className="flex items-center justify-between px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-            <span>{isBn ? "অনুমোদিত স্টোরসমূহ" : "Authorized Stores"}</span>
+            <span>Authorized Stores</span>
             <span className="font-mono">{stores.length}</span>
           </div>
 
@@ -207,15 +207,15 @@ function SidebarStoreSwitcher({
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors"
             >
               <StoreIcon className="h-3.5 w-3.5 text-zinc-500" />
-              <span>{isBn ? "মার্চেন্ট ওয়ার্কস্পেস" : "Merchant Workspace"}</span>
+              <span>Merchant Workspace</span>
             </Link>
             <Link
-              href="/dashboard/stores/create"
+              href="/workshops/stores/create"
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors"
             >
               <Plus className="h-3.5 w-3.5 text-zinc-500" />
-              <span>{isBn ? "নতুন স্টোর তৈরি করুন" : "Create New Store"}</span>
+              <span>Create New Store</span>
             </Link>
           </div>
         </div>
@@ -505,7 +505,7 @@ export function StoreSidebar({
                 <LayoutDashboard className="h-3.5 w-3.5 shrink-0 text-zinc-500 group-hover:text-zinc-800 dark:text-zinc-400 dark:group-hover:text-zinc-200 transition-colors" strokeWidth={1.75} />
                 {!collapsed && (
                   <span className="truncate">
-                    {isBn ? "স্টোর ড্যাশবোর্ড" : "Store Dashboard"}
+                    Store Dashboard
                   </span>
                 )}
               </Link>
@@ -546,7 +546,7 @@ export function StoreSidebar({
                       <div className="flex items-center gap-1.5 truncate">
                         <ModIcon className={cn("h-3 w-3 shrink-0", isModuleActive ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-400 dark:text-zinc-500")} strokeWidth={1.75} />
                         <span className="truncate">
-                          {isBn ? mod.titleBn : mod.titleEn}
+                          {mod.titleEn}
                         </span>
                       </div>
                       <span className="text-zinc-400 dark:text-zinc-500">
@@ -593,7 +593,7 @@ export function StoreSidebar({
                 <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
                   <span className="flex items-center gap-1.5">
                     <HardDrive className="h-3 w-3 text-zinc-400" strokeWidth={1.75} />
-                    <span>{isBn ? "স্টোরেজ" : "Storage"}</span>
+                    <span>Storage</span>
                   </span>
                   <span className="tabular-nums font-semibold text-zinc-700 dark:text-zinc-300">
                     {usedLabel} / {storageLabel}
@@ -619,7 +619,7 @@ export function StoreSidebar({
                 "flex w-full items-center gap-2 rounded-lg py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white transition-colors outline-none",
                 collapsed ? "justify-center px-0" : "px-2"
               )}
-              title={collapsed ? (isBn ? "সাইডবার বড় করুন" : "Expand sidebar") : (isBn ? "সাইডবার ছোট করুন" : "Collapse sidebar")}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {collapsed ? (
@@ -628,7 +628,7 @@ export function StoreSidebar({
                 <>
                   <PanelLeftClose className="h-4 w-4 shrink-0" strokeWidth={1.75} />
                   <span className="text-[11.5px] font-medium">
-                    {isBn ? "সাইডবার সঙ্কুচিত করুন" : "Collapse sidebar"}
+                    Collapse sidebar
                   </span>
                 </>
               )}

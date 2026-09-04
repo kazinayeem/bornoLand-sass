@@ -8,7 +8,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  type ReactNode,
 } from "react";
 import {
   UserCheck,
@@ -30,7 +29,6 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { useLanguage } from "@/providers/language-provider";
 import { useLogoutMutation } from "@/redux/api/auth-api";
 import { toast } from "sonner";
 
@@ -55,8 +53,7 @@ export function useEmployeeSidebar() {
 type EmployeeNavItem = {
   id: string;
   href: string;
-  labelEn: string;
-  labelBn: string;
+  label: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   exact?: boolean;
 };
@@ -65,37 +62,32 @@ const EMPLOYEE_NAV_ITEMS: EmployeeNavItem[] = [
   {
     id: "self-service",
     href: "/hrm/self-service",
-    labelEn: "Self-Service Portal",
-    labelBn: "সেলফ-সার্ভিস পোর্টাল",
+    label: "Self-Service Portal",
     icon: UserCheck,
     exact: true,
   },
   {
     id: "attendance",
     href: "/hrm/self-service",
-    labelEn: "Attendance & Time",
-    labelBn: "হাজিরা ও সময়",
+    label: "Attendance & Time",
     icon: Clock,
   },
   {
     id: "leaves",
     href: "/hrm/self-service",
-    labelEn: "Leave Requests",
-    labelBn: "ছুটির আবেদন",
+    label: "Leave Requests",
     icon: CalendarCheck,
   },
   {
     id: "payslips",
     href: "/hrm/self-service",
-    labelEn: "Payslips & Salary",
-    labelBn: "পে-স্লিপ ও বেতন",
+    label: "Payslips & Salary",
     icon: Wallet,
   },
   {
     id: "profile",
     href: "/hrm/self-service",
-    labelEn: "My Profile",
-    labelBn: "আমার প্রোফাইল",
+    label: "My Profile",
     icon: ShieldCheck,
   },
 ];
@@ -106,13 +98,11 @@ function EmployeeNavItemRow({
   item,
   basePath,
   collapsed,
-  isBn,
   onNavigate,
 }: {
   item: EmployeeNavItem;
   basePath: string;
   collapsed: boolean;
-  isBn: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -123,7 +113,7 @@ function EmployeeNavItemRow({
     : pathname.startsWith(href.split("?")[0]);
 
   const Icon = item.icon;
-  const label = isBn ? item.labelBn : item.labelEn;
+  const label = item.label;
 
   const content = (
     <Link
@@ -179,8 +169,6 @@ export function EmployeeSidebar({
   store: Store;
   onNavigate?: () => void;
 }) {
-  const { language } = useLanguage();
-  const isBn = false;
   const basePath = `/store/${store.slug}`;
   const [logout] = useLogoutMutation();
 
@@ -209,7 +197,7 @@ export function EmployeeSidebar({
       await logout().unwrap();
       window.location.replace("/login");
     } catch {
-      toast.error(isBn ? "লগআউট করা সম্ভব হয়নি" : "Failed to sign out");
+      toast.error("Failed to sign out");
     }
   };
 
@@ -238,7 +226,7 @@ export function EmployeeSidebar({
                     {store.shortName || store.name}
                   </span>
                   <span className="truncate text-[10.5px] text-zinc-500 dark:text-zinc-400">
-                    {isBn ? "কর্মী পোর্টাল" : "Employee Workspace"}
+                    Employee Workspace
                   </span>
                 </div>
               )}
@@ -250,7 +238,7 @@ export function EmployeeSidebar({
             className="sidebar-scroll flex-1 overflow-y-auto px-2 py-2 space-y-1"
             aria-label="Employee Navigation"
           >
-            {/* Quick link to Store Dashboard */}
+            {/* Quick link to Self-Service Portal */}
             <div className="mb-2">
               <Link
                 href={`${basePath}/hrm/self-service`}
@@ -263,7 +251,7 @@ export function EmployeeSidebar({
                 <LayoutDashboard className="h-3.5 w-3.5 shrink-0 text-zinc-500 group-hover:text-zinc-800 dark:text-zinc-400 dark:group-hover:text-zinc-200 transition-colors" strokeWidth={1.75} />
                 {!collapsed && (
                   <span className="truncate">
-                    {isBn ? "আমার ওয়ার্কস্পেস" : "My Workspace"}
+                    My Workspace
                   </span>
                 )}
               </Link>
@@ -272,7 +260,7 @@ export function EmployeeSidebar({
             {/* Section: My Work */}
             {!collapsed && (
               <div className="px-2 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
-                {isBn ? "আমার কাজ" : "My Work"}
+                My Work
               </div>
             )}
             <div className="space-y-0.5">
@@ -282,7 +270,6 @@ export function EmployeeSidebar({
                   item={item}
                   basePath={basePath}
                   collapsed={collapsed}
-                  isBn={isBn}
                   onNavigate={onNavigate}
                 />
               ))}
@@ -291,7 +278,7 @@ export function EmployeeSidebar({
             {/* Section: My Payroll */}
             {!collapsed && (
               <div className="px-2 py-1 mt-2.5 text-[10.5px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
-                {isBn ? "আমার বেতন" : "My Payroll"}
+                My Payroll
               </div>
             )}
             <div className="space-y-0.5">
@@ -301,7 +288,6 @@ export function EmployeeSidebar({
                   item={item}
                   basePath={basePath}
                   collapsed={collapsed}
-                  isBn={isBn}
                   onNavigate={onNavigate}
                 />
               ))}
@@ -310,7 +296,7 @@ export function EmployeeSidebar({
             {/* Section: My Account */}
             {!collapsed && (
               <div className="px-2 py-1 mt-2.5 text-[10.5px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
-                {isBn ? "আমার অ্যাকাউন্ট" : "My Account"}
+                My Account
               </div>
             )}
             <div className="space-y-0.5">
@@ -320,7 +306,6 @@ export function EmployeeSidebar({
                   item={item}
                   basePath={basePath}
                   collapsed={collapsed}
-                  isBn={isBn}
                   onNavigate={onNavigate}
                 />
               ))}
@@ -337,11 +322,11 @@ export function EmployeeSidebar({
                 "flex w-full items-center gap-2 rounded-lg py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 transition-colors outline-none mb-1.5",
                 collapsed ? "justify-center px-0" : "px-2"
               )}
-              title={isBn ? "লগআউট" : "Sign out"}
-              aria-label={isBn ? "লগআউট" : "Sign out"}
+              title="Sign out"
+              aria-label="Sign out"
             >
               <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-              {!collapsed && <span>{isBn ? "লগআউট" : "Sign out"}</span>}
+              {!collapsed && <span>Sign out</span>}
             </button>
 
             {/* Collapse / Expand Toggle */}
@@ -352,7 +337,7 @@ export function EmployeeSidebar({
                 "flex w-full items-center gap-2 rounded-lg py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white transition-colors outline-none",
                 collapsed ? "justify-center px-0" : "px-2"
               )}
-              title={collapsed ? (isBn ? "সাইডবার বড় করুন" : "Expand sidebar") : (isBn ? "সাইডবার ছোট করুন" : "Collapse sidebar")}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {collapsed ? (
@@ -361,7 +346,7 @@ export function EmployeeSidebar({
                 <>
                   <PanelLeftClose className="h-4 w-4 shrink-0" strokeWidth={1.75} />
                   <span className="text-[11.5px] font-medium">
-                    {isBn ? "সাইডবার সঙ্কুচিত করুন" : "Collapse sidebar"}
+                    Collapse sidebar
                   </span>
                 </>
               )}

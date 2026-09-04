@@ -28,24 +28,26 @@ export function StorePageHeader({
   children,
 }: StorePageHeaderProps) {
   return (
-    <header className={cn("space-y-4 pb-2", className)}>
+    <header className={cn("space-y-3 pb-1", className)}>
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav aria-label="Breadcrumb">
-          <ol className="flex flex-wrap items-center gap-1.5 text-xs text-apple-ink-muted-48">
+          <ol className="flex flex-wrap items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
             {breadcrumbs.map((item, idx) => {
               const isLast = idx === breadcrumbs.length - 1;
               return (
                 <li key={`${item.label}-${idx}`} className="inline-flex items-center gap-1.5">
-                  {idx > 0 && <ChevronRight className="h-3 w-3 text-apple-ink-muted-48/60" aria-hidden="true" />}
+                  {idx > 0 && (
+                    <ChevronRight className="h-3 w-3 text-zinc-400 dark:text-zinc-600" aria-hidden="true" />
+                  )}
                   {item.href && !isLast ? (
                     <Link
                       href={item.href}
-                      className="transition-colors hover:text-apple-ink"
+                      className="transition-colors hover:text-zinc-900 dark:hover:text-white"
                     >
                       {item.label}
                     </Link>
                   ) : (
-                    <span className={cn(isLast ? "font-medium text-apple-ink" : "")}>
+                    <span className={cn(isLast ? "font-medium text-zinc-900 dark:text-zinc-100" : "")}>
                       {item.label}
                     </span>
                   )}
@@ -59,13 +61,13 @@ export function StorePageHeader({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-xl font-semibold tracking-tight text-apple-ink sm:text-2xl">
+            <h1 className="text-xl font-bold tracking-tight text-zinc-950 sm:text-2xl dark:text-white">
               {title}
             </h1>
             {badge}
           </div>
           {description && (
-            <p className="text-sm text-apple-ink-muted-48 max-w-3xl">
+            <p className="text-xs sm:text-sm text-zinc-500 max-w-3xl dark:text-zinc-400 leading-relaxed">
               {description}
             </p>
           )}

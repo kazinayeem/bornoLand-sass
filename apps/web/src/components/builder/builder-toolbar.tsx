@@ -78,6 +78,7 @@ export function BuilderToolbar({
   const isBn = false;
   const { store, storeId } = useRequiredStore();
   const pageId = useSelector((s: RootState) => s.builder.page.id);
+  const currentPage = useSelector((s: RootState) => s.builder.page);
   const currentSections = useSelector((s: RootState) => s.builder.sections);
   const headerSections = useSelector((s: RootState) => s.builder.headerSections);
   const footerSections = useSelector((s: RootState) => s.builder.footerSections);
@@ -205,7 +206,7 @@ export function BuilderToolbar({
 
   const handleSave = async () => {
     if (!pageId) {
-      toast.error("Home page not loaded");
+      toast.error("Page not loaded");
       return;
     }
     const ok = await onForceSave();
@@ -217,12 +218,13 @@ export function BuilderToolbar({
     if (isDirty) {
       await onForceSave();
     }
-    window.open(`/store/${store.slug}`, "_blank", "noopener,noreferrer");
+    const previewSlug = currentPage?.slug === "/" || !currentPage?.slug ? "" : currentPage.slug.startsWith("/") ? currentPage.slug : `/${currentPage.slug}`;
+    window.open(`/store/${store.slug}${previewSlug}`, "_blank", "noopener,noreferrer");
   };
 
   const handlePublish = async () => {
     if (!pageId) {
-      toast.error("Home page not loaded");
+      toast.error("Page not loaded");
       return;
     }
     dispatch(setPublishing(true));
@@ -273,7 +275,7 @@ export function BuilderToolbar({
               )}
               aria-live="polite"
             >
-              {isBn ? "হোমপেজ" : "Homepage"}{statusLabel ? ` · ${statusLabel}` : ""}
+              {currentPage.title || (isBn ? "হোমপেজ" : "Homepage")}{statusLabel ? ` · ${statusLabel}` : ""}
             </p>
           </div>
         </div>

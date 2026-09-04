@@ -37,7 +37,13 @@ const BuilderEditor = dynamic(
   },
 );
 
-export default function BuilderEditorPage() {
+export default function BuilderEditorPage({
+  pageSlug,
+  storeSlug,
+}: {
+  pageSlug?: string;
+  storeSlug?: string;
+}) {
   const { isReady, isLoading, isError } = useStoreContext();
 
   // Store not ready yet — show the loading screen.
@@ -52,5 +58,5 @@ export default function BuilderEditorPage() {
     return null;
   }
 
-  return <BuilderEditor />;
+  return <BuilderEditor pageSlug={pageSlug} storeSlugProp={storeSlug} />;
 }

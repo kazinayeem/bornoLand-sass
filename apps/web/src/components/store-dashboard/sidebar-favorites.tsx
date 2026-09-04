@@ -11,7 +11,7 @@ interface SidebarFavoritesProps {
   pinnedItemIds: string[];
   onTogglePin: (itemId: string) => void;
   collapsed: boolean;
-  isBn: boolean;
+  isBn?: boolean;
   onNavigate?: () => void;
 }
 
@@ -20,7 +20,6 @@ export function SidebarFavorites({
   pinnedItemIds,
   onTogglePin,
   collapsed,
-  isBn,
   onNavigate,
 }: SidebarFavoritesProps) {
   const pathname = usePathname();
@@ -46,7 +45,7 @@ export function SidebarFavorites({
       <div className="flex items-center justify-between px-1 mb-1.5">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
           <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
-          <span>{isBn ? "কুইক অ্যাক্সেস" : "Quick Access"}</span>
+          <span>Quick Access</span>
         </span>
         <span className="text-[10px] text-zinc-400 font-mono">
           {pinnedItems.length}
@@ -60,7 +59,7 @@ export function SidebarFavorites({
             ? pathname === href
             : pathname.startsWith(href.split("?")[0]);
           const Icon = item.icon;
-          const label = isBn ? item.labelBn : item.labelEn;
+          const label = item.labelEn;
 
           return (
             <div
@@ -90,8 +89,8 @@ export function SidebarFavorites({
                   e.stopPropagation();
                   onTogglePin(item.id);
                 }}
-                title={isBn ? "পিন সরান" : "Remove from Quick Access"}
-                aria-label={isBn ? "পিন সরান" : "Remove from Quick Access"}
+                title="Remove from Quick Access"
+                aria-label="Remove from Quick Access"
                 className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-zinc-400 hover:text-red-500 transition-opacity"
               >
                 <X className="h-2.5 w-2.5" />

@@ -147,7 +147,7 @@ export async function resolveCanonicalStoreId(storeIdOrSlug: string): Promise<st
   if (/^[a-f\d]{24}$/i.test(storeIdOrSlug)) {
     return storeIdOrSlug;
   }
-  const store = await StoreModel.findOne({
+  const store = (await StoreModel.findOne({
     $or: [
       { slug: storeIdOrSlug },
       { slug: storeIdOrSlug.toLowerCase() },
@@ -156,8 +156,9 @@ export async function resolveCanonicalStoreId(storeIdOrSlug: string): Promise<st
     ],
   })
     .select("_id")
-    .lean();
-  return store ? String(store._id) : null;
+    .lean()
+    .exec()) as { _id?: unknown } | null;
+  return store?._id ? String(store._id) : null;
 }
 
 // ─── Ensure home page exists ─────────────────────────────────────────────────

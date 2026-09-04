@@ -2,39 +2,45 @@
 
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { AlertCircle, RotateCw, Search, Inbox } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type EmptyStateProps = {
-  icon?: LucideIcon;
+  icon?: LucideIcon | React.ComponentType<{ className?: string }>;
   title: string;
   description?: string;
   action?: React.ReactNode;
   className?: string;
 };
 
-export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
+export function EmptyState({
+  icon: Icon = Inbox,
+  title,
+  description,
+  action,
+  className,
+}: EmptyStateProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+      transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        "flex flex-col items-center justify-center rounded-lg border border-apple-hairline bg-apple-canvas px-6 py-apple-section text-center dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2",
+        "flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300/80 bg-zinc-50/50 px-6 py-14 text-center dark:border-zinc-800 dark:bg-zinc-900/30",
         className
       )}
     >
-      {Icon && (
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-apple-canvas-parchment text-apple-ink-muted-48 dark:bg-apple-surface-tile-3">
-          <Icon className="h-7 w-7" />
-        </div>
-      )}
-      <h3 className="text-body-strong text-apple-ink dark:text-apple-body-on-dark">{title}</h3>
+      <div className="mb-3.5 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-zinc-500 shadow-2xs ring-1 ring-zinc-200/80 dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700">
+        <Icon className="h-6 w-6" />
+      </div>
+      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</h3>
       {description && (
-        <p className="mt-1 max-w-sm text-caption text-apple-ink-muted-48 dark:text-apple-body-muted">
+        <p className="mt-1 max-w-sm text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
           {description}
         </p>
       )}
-      {action && <div className="mt-4">{action}</div>}
+      {action && <div className="mt-4 flex items-center gap-2">{action}</div>}
     </motion.div>
   );
 }
@@ -53,72 +59,68 @@ export function NoResults({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className={cn(
-        "flex flex-col items-center justify-center rounded-lg border border-apple-hairline bg-apple-canvas px-6 py-apple-section text-center dark:border-apple-surface-tile-3 dark:bg-apple-surface-tile-2",
+        "flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300/80 bg-zinc-50/50 px-6 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900/30",
         className
       )}
     >
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-apple-canvas-parchment dark:bg-apple-surface-tile-3">
-        <svg
-          className="h-7 w-7 text-apple-ink-muted-48"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-          />
-        </svg>
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-zinc-400 shadow-2xs ring-1 ring-zinc-200/80 dark:bg-zinc-800 dark:ring-zinc-700">
+        <Search className="h-5 w-5" />
       </div>
-      <h3 className="text-body-strong text-apple-ink dark:text-apple-body-on-dark">No results found</h3>
+      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">No results found</h3>
       {search && (
-        <p className="mt-1 text-caption text-apple-ink-muted-48 dark:text-apple-body-muted">
-          No results for &quot;{search}&quot;. Try a different search term.
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          No matches found for &quot;{search}&quot;. Try adjusting your keywords or filters.
         </p>
       )}
       {onClear && (
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onClear}
-          className="mt-4 text-caption text-apple-primary transition-colors hover:text-apple-primary-focus"
+          className="mt-4 text-xs font-medium cursor-pointer"
         >
-          Clear search &amp; filters
-        </button>
+          Clear filters
+        </Button>
       )}
     </motion.div>
   );
 }
 
-export function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => void }) {
+export function ErrorState({
+  title = "Failed to load data",
+  message,
+  onRetry,
+  className,
+}: {
+  title?: string;
+  message?: string;
+  onRetry?: () => void;
+  className?: string;
+}) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-red-200 bg-red-50 px-6 py-apple-section text-center dark:border-red-900/50 dark:bg-red-950/20">
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30">
-        <svg
-          className="h-7 w-7 text-red-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-          />
-        </svg>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center rounded-xl border border-rose-200/80 bg-rose-50/50 px-6 py-10 text-center dark:border-rose-950 dark:bg-rose-950/20",
+        className
+      )}
+    >
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400">
+        <AlertCircle className="h-5 w-5" />
       </div>
-      <h3 className="text-body-strong text-red-900 dark:text-red-400">Something went wrong</h3>
-      <p className="mt-1 text-caption text-red-600 dark:text-red-400">
-        {message || "Failed to load data. Please try again."}
+      <h3 className="text-sm font-semibold text-rose-950 dark:text-rose-200">{title}</h3>
+      <p className="mt-1 max-w-sm text-xs text-rose-700 dark:text-rose-400 leading-relaxed">
+        {message || "We encountered an issue while loading this section. Please try again."}
       </p>
       {onRetry && (
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onRetry}
-          className="btn-press mt-4 inline-flex items-center gap-1.5 rounded-pill bg-apple-primary px-[22px] py-[11px] text-body text-apple-on-primary transition-colors hover:bg-apple-primary-focus"
+          className="mt-4 gap-1.5 border-rose-300 bg-white text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:bg-zinc-900 dark:text-rose-300 cursor-pointer"
         >
-          Retry
-        </button>
+          <RotateCw className="h-3.5 w-3.5" />
+          <span>Try Again</span>
+        </Button>
       )}
     </div>
   );

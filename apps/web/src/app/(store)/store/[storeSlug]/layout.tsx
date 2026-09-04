@@ -54,7 +54,7 @@ export default async function StoreLayout({ children, params }: StoreLayoutProps
   }
 
   return (
-    <StoreProvider initialStore={initialContext.store} initialContext={initialContext as any}>
+    <StoreProvider storeSlug={storeSlug} initialStore={initialContext.store} initialContext={initialContext as any}>
       {children}
     </StoreProvider>
   );

@@ -154,12 +154,20 @@ const ResizeHandle = memo(function ResizeHandle({
   );
 });
 
-export function BuilderEditor() {
+export function BuilderEditor({
+  pageSlug: pageSlugProp,
+  storeSlugProp,
+}: {
+  pageSlug?: string;
+  storeSlugProp?: string;
+} = {}) {
   const params = useParams();
   const router = useRouter();
   const dispatch = useDispatch();
-  const { store, storeId, storeSlug } = useRequiredStore();
-  const routePageSlug = typeof params.pageSlug === "string" ? params.pageSlug : "";
+  const { store, storeId, storeSlug: contextStoreSlug } = useRequiredStore();
+  const storeSlug = storeSlugProp || contextStoreSlug || store?.slug || "";
+  const paramPageSlug = typeof params?.pageSlug === "string" ? params.pageSlug : Array.isArray(params?.pageSlug) ? params.pageSlug[0] : "";
+  const routePageSlug = pageSlugProp || paramPageSlug || "home";
   const containerRef = useRef<HTMLDivElement>(null);
 
   // ─── Only fetch what the builder needs ─────────────────────────────────────
@@ -356,9 +364,13 @@ const THEME_LEVEL_TYPES = new Set([
   "header-bar", "header", "simple-footer", "ecommerce-footer", "modern-footer", "footer",
 ]);
 
-function sanitizeHomepageSections(rawSections: unknown[] | undefined, themeId?: string): BuilderSection[] {
+function sanitizePageSections(
+  rawSections: unknown[] | undefined,
+  pageType: string = "home",
+  themeId?: string
+): BuilderSection[] {
   if (!rawSections || !Array.isArray(rawSections) || rawSections.length === 0) {
-    return getDefaultSectionsForPageType("home", themeId);
+    return getDefaultSectionsForPageType(pageType, themeId);
   }
 
   // Filter out theme-level header and footer blocks from body canvas sections
@@ -376,6 +388,7 @@ function sanitizeHomepageSections(rawSections: unknown[] | undefined, themeId?: 
 
   for (const raw of filtered) {
     const sec = raw as Record<string, any>;
+    if (!sec || typeof sec !== "object" || !sec.type) continue;
     let id = sec.id ? String(sec.id) : `${sec.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     if (seenIds.has(id)) {
       id = `${sec.type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
@@ -386,84 +399,152 @@ function sanitizeHomepageSections(rawSections: unknown[] | undefined, themeId?: 
       type: sec.type,
       label: sec.label || sec.type,
       visible: sec.visible !== false,
-      props: (sec.props && typeof sec.props === "object") ? sec.props : {},
+      props: sec.props && typeof sec.props === "object" ? sec.props : {},
       style: sec.style,
     });
   }
 
   if (sanitized.length === 0) {
-    return getDefaultSectionsForPageType("home", themeId);
+    return getDefaultSectionsForPageType(pageType, themeId);
   }
 
   return sanitized;
 }
 
-  // ─── Home-only builder routing ─────────────────────────────────────────────
-  useEffect(() => {
-    if (!routePageSlug || routePageSlug === "home") return;
-    router.replace(`/store/${storeSlug}/builder/home`);
-  }, [routePageSlug, router, storeSlug]);
-
-  // ─── Load home page strictly ───────────────────────────────────────────────
+  // ─── Load page ─────────────────────────────────────────────────────────────
   useEffect(() => {
     const pages = pagesData?.data?.pages;
-    if (!pages) return;
-    if (routePageSlug && routePageSlug !== "home") return;
+    if (!pages || !storeId) return;
 
-    // Strict Home Page resolution (never fall back to contact or about page)
-    const homePage =
-      pages.find((page) => page.isHomePage || page.slug === "/" || page.slug === "home" || (page as any).pageType === "home");
+    const isHomeTarget = !routePageSlug || routePageSlug === "home" || routePageSlug === "/";
+    const normalizedTargetSlug = routePageSlug.startsWith("/") ? routePageSlug : `/${routePageSlug}`;
 
-    if (!homePage) {
-      if (loadedRef.current === `create:${storeId}`) return;
-      loadedRef.current = `create:${storeId}`;
-      createPage({ storeId, title: "Home", slug: "/", pageType: "home" as any, isSystem: true })
-        .unwrap()
-        .then((res) => {
-          const createdPage = res.data?.page;
-          if (!createdPage?._id) return;
-          dispatch(loadPage({
-            page: { id: createdPage._id, title: createdPage.title, slug: createdPage.slug, pageType: "home" as any, isSystem: true, description: "", status: "draft" as any },
-            sections: getDefaultSectionsForPageType("home", (store.theme as any)?.themeId),
-            headerSections: getDefaultHeaderSections(),
-            footerSections: getDefaultFooterSections(),
-          }));
-          router.replace(`/store/${storeSlug}/builder/home`);
+    // Find target page:
+    // 1. If looking for Home: find isHomePage === true or slug "/" or slug "home" or pageType "home"
+    // 2. Otherwise: find by slug (with or without slash), pageType, or _id
+    const targetPage = isHomeTarget
+      ? pages.find(
+          (page) =>
+            page.isHomePage ||
+            page.slug === "/" ||
+            page.slug === "home" ||
+            page.slug === "/home" ||
+            (page as any).pageType === "home"
+        )
+      : pages.find(
+          (page) =>
+            page.slug === normalizedTargetSlug ||
+            page.slug === routePageSlug ||
+            page.pageType === routePageSlug ||
+            page._id === routePageSlug
+        );
+
+    if (!targetPage) {
+      if (isHomeTarget) {
+        if (loadedRef.current === `create:${storeId}:home`) return;
+        loadedRef.current = `create:${storeId}:home`;
+        createPage({ storeId, title: "Home", slug: "/", pageType: "home" as any, isSystem: true })
+          .unwrap()
+          .then((res) => {
+            const createdPage = res.data?.page;
+            if (!createdPage?._id) return;
+            dispatch(
+              loadPage({
+                page: {
+                  id: createdPage._id,
+                  title: createdPage.title,
+                  slug: createdPage.slug,
+                  pageType: "home" as any,
+                  isSystem: true,
+                  description: "",
+                  status: "draft" as any,
+                },
+                sections: getDefaultSectionsForPageType("home", (store.theme as any)?.themeId),
+                headerSections: getDefaultHeaderSections(),
+                footerSections: getDefaultFooterSections(),
+              })
+            );
+          })
+          .catch(() => {
+            loadedRef.current = "";
+          });
+      } else {
+        if (loadedRef.current === `create:${storeId}:${routePageSlug}`) return;
+        loadedRef.current = `create:${storeId}:${routePageSlug}`;
+        const titleCase =
+          routePageSlug.charAt(0).toUpperCase() + routePageSlug.slice(1).replace(/[-_]/g, " ");
+        createPage({
+          storeId,
+          title: titleCase,
+          slug: normalizedTargetSlug,
+          pageType: (routePageSlug as any) || "custom",
+          isSystem: false,
         })
-        .catch(() => {
-          loadedRef.current = "";
-        });
+          .unwrap()
+          .then((res) => {
+            const createdPage = res.data?.page;
+            if (!createdPage?._id) return;
+            dispatch(
+              loadPage({
+                page: {
+                  id: createdPage._id,
+                  title: createdPage.title,
+                  slug: createdPage.slug,
+                  pageType: (createdPage.pageType || "custom") as any,
+                  isSystem: Boolean(createdPage.isSystem),
+                  description: createdPage.description || "",
+                  status: "draft" as any,
+                },
+                sections: getDefaultSectionsForPageType(
+                  createdPage.pageType || routePageSlug,
+                  (store.theme as any)?.themeId
+                ),
+                headerSections: getDefaultHeaderSections(),
+                footerSections: getDefaultFooterSections(),
+              })
+            );
+          })
+          .catch(() => {
+            loadedRef.current = "";
+          });
+      }
       return;
     }
 
     const activeThemeId = (store.theme as any)?.themeId || "grocery";
-    const loadKey = `${storeId}:${homePage._id}:${activeThemeId}`;
+    const loadKey = `${storeId}:${targetPage._id}:${activeThemeId}`;
     if (loadedRef.current === loadKey) return;
     loadedRef.current = loadKey;
 
-    const sanitizedSections = sanitizeHomepageSections(
-      homePage.sections,
+    const sanitizedSections = sanitizePageSections(
+      targetPage.sections,
+      targetPage.pageType || (isHomeTarget ? "home" : routePageSlug),
       activeThemeId
     );
 
-    dispatch(loadPage({
-      page: {
-        id: homePage._id,
-        title: homePage.title,
-        slug: homePage.slug,
-        pageType: "home" as any,
-        isSystem: homePage.isSystem ?? true,
-        description: homePage.description ?? "",
-        status: (homePage.status || "draft") as any,
-      },
-      sections: sanitizedSections,
-      headerSections: (homePage.headerSections?.length ? homePage.headerSections : getDefaultHeaderSections()) as BuilderSection[],
-      footerSections: (homePage.footerSections?.length ? homePage.footerSections : getDefaultFooterSections()) as BuilderSection[],
-      headerSettings: (homePage.headerSettings as any) ?? {},
-      footerSettings: (homePage.footerSettings as any) ?? {},
-    }));
-
-  }, [pagesData, dispatch, storeId, routePageSlug, createPage, router, storeSlug, store.theme]);
+    dispatch(
+      loadPage({
+        page: {
+          id: targetPage._id,
+          title: targetPage.title,
+          slug: targetPage.slug,
+          pageType: (targetPage.pageType || (isHomeTarget ? "home" : "custom")) as any,
+          isSystem: targetPage.isSystem ?? isHomeTarget,
+          description: targetPage.description ?? "",
+          status: (targetPage.status || "draft") as any,
+        },
+        sections: sanitizedSections,
+        headerSections: (targetPage.headerSections?.length
+          ? targetPage.headerSections
+          : getDefaultHeaderSections()) as BuilderSection[],
+        footerSections: (targetPage.footerSections?.length
+          ? targetPage.footerSections
+          : getDefaultFooterSections()) as BuilderSection[],
+        headerSettings: (targetPage.headerSettings as any) ?? {},
+        footerSettings: (targetPage.footerSettings as any) ?? {},
+      })
+    );
+  }, [pagesData, dispatch, storeId, routePageSlug, createPage, store.theme]);
 
   // ─── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {

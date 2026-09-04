@@ -234,7 +234,7 @@ export default async function middleware(request: NextRequest) {
           );
         }
         return NextResponse.redirect(
-          new URL("/unauthorized", request.url)
+          new URL("/workshops", request.url)
         );
       }
 

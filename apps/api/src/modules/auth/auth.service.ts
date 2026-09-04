@@ -53,6 +53,31 @@ async function ensureTenantOwner(payload: RegisterInput) {
   return tenant;
 }
 
+async function resolveUserDefaultStoreSlug(userId: unknown, tenantId?: unknown): Promise<string | null> {
+  try {
+    const [teamTenantIds, storeMemberStoreIds] = await Promise.all([
+      TeamMemberModel.find({ userId }).distinct("tenantId"),
+      StoreMemberModel.find({ userId, status: "active" }).distinct("storeId"),
+    ]);
+
+    const store = (await StoreModel.findOne({
+      $or: [
+        { userId },
+        ...(tenantId ? [{ tenantId }] : []),
+        ...(teamTenantIds.length ? [{ tenantId: { $in: teamTenantIds } }] : []),
+        ...(storeMemberStoreIds.length ? [{ _id: { $in: storeMemberStoreIds } }] : []),
+      ],
+      status: { $ne: "archived" },
+    })
+      .select("slug")
+      .lean()) as { slug?: string } | null;
+
+    return store?.slug ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function buildSessionPayload(
   user: {
     _id: unknown;
@@ -63,7 +88,8 @@ function buildSessionPayload(
     sessionVersion?: number;
     status?: string;
   },
-  loginType: SessionPayload["loginType"]
+  loginType: SessionPayload["loginType"],
+  defaultStoreSlug?: string | null
 ): SessionPayload {
   return {
     userId: String(user._id),
@@ -73,6 +99,7 @@ function buildSessionPayload(
     name: user.name,
     loginType,
     sessionVersion: user.sessionVersion ?? 0,
+    defaultStoreSlug: user.role === "super_admin" ? null : (defaultStoreSlug ?? null),
   };
 }
 
@@ -191,7 +218,78 @@ export async function loginUser(payload: unknown) {
     return { ok: false as const, message: "Invalid credentials" };
   }
 
-  const session = buildSessionPayload(user, isAdminLogin ? "admin" : "user");
+  let userStores: Array<{ _id: unknown; slug?: string; name?: string }> = [];
+  let storesPayload: Array<{ id: string; slug: string; name: string }> = [];
+  let defaultStoreSlug: string | null = null;
+  let defaultMemberRole = user.role === "super_admin" ? "super_admin" : "member";
+  let defaultLandingPath = "/dashboard";
+
+  if (user.role === "super_admin") {
+    defaultLandingPath = "/dashboard";
+    defaultStoreSlug = null;
+  } else {
+    try {
+      const [teamTenantIds, storeMemberStoreIds] = await Promise.all([
+        TeamMemberModel.find({ userId: user._id }).distinct("tenantId"),
+        StoreMemberModel.find({ userId: user._id, status: "active" }).distinct("storeId"),
+      ]);
+
+      const foundStores = (await StoreModel.find({
+        $or: [
+          { userId: user._id },
+          ...(user.tenantId ? [{ tenantId: user.tenantId }] : []),
+          ...(teamTenantIds.length ? [{ tenantId: { $in: teamTenantIds } }] : []),
+          ...(storeMemberStoreIds.length ? [{ _id: { $in: storeMemberStoreIds } }] : []),
+        ],
+        status: { $ne: "archived" },
+      })
+        .select("_id slug name")
+        .lean()) as Array<{ _id: unknown; slug?: string; name?: string }>;
+      userStores = foundStores || [];
+    } catch {
+      // Non-critical
+    }
+
+    storesPayload = userStores.map((s) => ({
+      id: String(s._id),
+      slug: s.slug || "",
+      name: s.name || "",
+    }));
+    defaultStoreSlug = storesPayload[0]?.slug ?? null;
+
+    if (defaultStoreSlug && storesPayload[0]?.id) {
+      const mem = (await StoreMemberModel.findOne({
+        storeId: storesPayload[0].id,
+        userId: user._id,
+        status: "active",
+      })
+        .select("role")
+        .lean()) as { role: string } | null;
+
+      if (mem?.role) {
+        defaultMemberRole = mem.role;
+        defaultLandingPath = getRoleDefaultLandingPath(mem.role, defaultStoreSlug);
+      } else {
+        const isStoreOwner = Boolean(
+          await StoreModel.findOne({ _id: storesPayload[0].id, userId: user._id }).select("_id").lean()
+        );
+        if (isStoreOwner) {
+          defaultMemberRole = "owner";
+          defaultLandingPath = `/store/${defaultStoreSlug}/dashboard`;
+        } else {
+          defaultLandingPath = `/store/${defaultStoreSlug}/dashboard`;
+        }
+      }
+    } else {
+      defaultLandingPath = "/dashboard/stores/create";
+    }
+  }
+
+  const session = buildSessionPayload(
+    user,
+    isAdminLogin ? "admin" : "user",
+    user.role === "super_admin" ? null : defaultStoreSlug
+  );
 
   // Generate Access Token (15min) — returned in response body
   const accessToken = signAccessToken(session);
@@ -236,61 +334,6 @@ export async function loginUser(payload: unknown) {
     entityName: user.name,
     actorRole: user.role,
   });
-
-  let userStores: Array<{ _id: unknown; slug?: string; name?: string }> = [];
-  try {
-    const [teamTenantIds, storeMemberStoreIds] = await Promise.all([
-      TeamMemberModel.find({ userId: user._id }).distinct("tenantId"),
-      StoreMemberModel.find({ userId: user._id, status: "active" }).distinct("storeId"),
-    ]);
-
-    const foundStores = (await StoreModel.find({
-      $or: [
-        { userId: user._id },
-        ...(user.tenantId ? [{ tenantId: user.tenantId }] : []),
-        ...(teamTenantIds.length ? [{ tenantId: { $in: teamTenantIds } }] : []),
-        ...(storeMemberStoreIds.length ? [{ _id: { $in: storeMemberStoreIds } }] : []),
-      ],
-      status: { $ne: "archived" },
-    })
-      .select("_id slug name")
-      .lean()) as Array<{ _id: unknown; slug?: string; name?: string }>;
-    userStores = foundStores || [];
-  } catch {
-    // Non-critical
-  }
-
-  const storesPayload = userStores.map((s) => ({
-    id: String(s._id),
-    slug: s.slug || "",
-    name: s.name || "",
-  }));
-  const defaultStoreSlug = storesPayload[0]?.slug ?? null;
-
-  let defaultMemberRole = user.role === "super_admin" ? "owner" : "member";
-  let defaultLandingPath = "/dashboard";
-  if (defaultStoreSlug && storesPayload[0]?.id) {
-    const mem = (await StoreMemberModel.findOne({
-      storeId: storesPayload[0].id,
-      userId: user._id,
-      status: "active",
-    })
-      .select("role")
-      .lean()) as { role: string } | null;
-
-    if (mem?.role) {
-      defaultMemberRole = mem.role;
-      defaultLandingPath = getRoleDefaultLandingPath(mem.role, defaultStoreSlug);
-    } else {
-      const isStoreOwner = Boolean(
-        await StoreModel.findOne({ _id: storesPayload[0].id, userId: user._id }).select("_id").lean()
-      );
-      if (isStoreOwner) {
-        defaultMemberRole = "owner";
-        defaultLandingPath = `/store/${defaultStoreSlug}/dashboard`;
-      }
-    }
-  }
 
   return {
     ok: true as const,
@@ -387,7 +430,15 @@ export async function sessionFromRefreshToken(
   if (!loaded.ok) return loaded;
 
   const { stored, user } = loaded;
-  const session = buildSessionPayload(user, user.role === "super_admin" ? "admin" : "user");
+  let defaultStoreSlug: string | null = null;
+  if (user.role !== "super_admin") {
+    defaultStoreSlug = await resolveUserDefaultStoreSlug(user._id, user.tenantId);
+  }
+  const session = buildSessionPayload(
+    user,
+    user.role === "super_admin" ? "admin" : "user",
+    defaultStoreSlug
+  );
   const rememberMe = stored.rememberMe === true;
   const sessionMaxAge = getSessionCookieMaxAge(rememberMe);
   const accessToken = signAccessToken(session);

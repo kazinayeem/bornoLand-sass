@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
 import { StoreProvider } from "@/providers/store-context";
 import { buildPageMetadata, getStoreMetadataContext } from "@/lib/server/page-metadata";
 import { getStoreFullContext } from "@/lib/server/store-context";
+import { getServerSession } from "@/lib/auth-session";
 import type { Metadata } from "next";
 
 /**
@@ -36,8 +38,17 @@ export default async function StoreLayout({ children, params }: StoreLayoutProps
   const { storeSlug } = await params;
   const initialContext = await getStoreFullContext(storeSlug);
 
+  if (!initialContext || !initialContext.store) {
+    const session = await getServerSession();
+    if (session?.defaultStoreSlug && session.defaultStoreSlug !== storeSlug) {
+      redirect(`/store/${session.defaultStoreSlug}/dashboard`);
+    } else {
+      redirect("/unauthorized");
+    }
+  }
+
   return (
-    <StoreProvider initialStore={initialContext?.store} initialContext={initialContext as any}>
+    <StoreProvider initialStore={initialContext.store} initialContext={initialContext as any}>
       {children}
     </StoreProvider>
   );

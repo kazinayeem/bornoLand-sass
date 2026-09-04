@@ -8,6 +8,7 @@ export type AppSession = {
   email: string;
   name: string;
   loginType: "user" | "admin";
+  defaultStoreSlug?: string | null;
 };
 
 function getSessionCookieName() {

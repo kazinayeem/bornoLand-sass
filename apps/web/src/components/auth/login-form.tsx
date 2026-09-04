@@ -93,47 +93,60 @@ export function LoginForm({
     dispatch(setUserProfile(payload.user));
     dispatch(setTenantContext({ tenantId: payload.user.tenantId }));
 
+    const userRole = payload.user?.role;
+    const isSuperAdmin = userRole === "super_admin" || loginType === "admin";
+
+    let destination: string;
+
+    if (isSuperAdmin) {
+      destination = "/dashboard";
+    } else {
+      const defaultSlug =
+        (payload as any).defaultStoreSlug ||
+        payload.user?.defaultStoreSlug ||
+        (payload as any).stores?.[0]?.slug;
+
+      let lastSelectedSlug: string | null = null;
+      try {
+        lastSelectedSlug = localStorage.getItem("bornoland_last_store_slug");
+      } catch {
+        // Ignore local storage error
+      }
+
+      const storesList = (payload as any).stores ?? [];
+      if (
+        lastSelectedSlug &&
+        (storesList.length === 0 || storesList.some((s: any) => s.slug === lastSelectedSlug))
+      ) {
+        destination = `/store/${lastSelectedSlug}/dashboard`;
+      } else if (defaultSlug) {
+        destination = `/store/${defaultSlug}/dashboard`;
+      } else {
+        destination = (payload as any).defaultLandingPath || "/dashboard/stores/create";
+      }
+    }
+
     const queryRedirect =
       typeof window !== "undefined"
         ? new URLSearchParams(window.location.search).get("redirect")
         : null;
 
-    let fallbackDestination = "/dashboard";
-    if (loginType === "admin") {
-      fallbackDestination = "/admin/dashboard";
-    } else {
-      const serverLandingPath =
-        (payload as any)?.defaultLandingPath ||
-        (payload as any)?.user?.defaultLandingPath;
-
-      if (serverLandingPath) {
-        fallbackDestination = serverLandingPath;
-      } else {
-        const stores = (payload as { stores?: Array<{ slug?: string }>; user?: { defaultStoreSlug?: string } }).stores ?? [];
-        const defaultSlug =
-          (payload as { defaultStoreSlug?: string }).defaultStoreSlug ||
-          payload.user?.defaultStoreSlug ||
-          stores[0]?.slug;
-
-        let lastSelectedSlug: string | null = null;
-        try {
-          lastSelectedSlug = localStorage.getItem("bornoland_last_store_slug");
-        } catch {
-          // Ignore local storage error
+    let finalDestination = destination;
+    if (queryRedirect && queryRedirect.startsWith("/")) {
+      if (isSuperAdmin) {
+        if (queryRedirect.startsWith("/dashboard") || queryRedirect.startsWith("/admin")) {
+          finalDestination = queryRedirect === "/admin/dashboard" ? "/dashboard" : queryRedirect;
         }
-
-        if (lastSelectedSlug && (stores.length === 0 || stores.some((s) => s.slug === lastSelectedSlug))) {
-          fallbackDestination = `/store/${lastSelectedSlug}/dashboard`;
-        } else if (defaultSlug) {
-          fallbackDestination = `/store/${defaultSlug}/dashboard`;
-        } else {
-          fallbackDestination = "/dashboard";
+      } else {
+        const targetStoreSlug = (payload as any).defaultStoreSlug || payload.user?.defaultStoreSlug;
+        if (targetStoreSlug && queryRedirect.startsWith(`/store/${targetStoreSlug}`)) {
+          finalDestination = queryRedirect;
         }
       }
     }
 
-    const destination = consumeRedirectAfterLogin(queryRedirect, fallbackDestination);
-    window.location.replace(destination);
+    consumeRedirectAfterLogin(null, finalDestination);
+    window.location.replace(finalDestination);
   });
 
   return (

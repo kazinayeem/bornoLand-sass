@@ -16,9 +16,11 @@ export async function getStoreContextController(request: AuthRequest, response: 
   if (!userId) return sendFailure(response, "Unauthorized", 401);
   if (!identifier) return sendFailure(response, "Missing store identifier", 400);
 
-  const storeRes = await getStoreById(identifier, userId);
+  const userRole = request.user?.role;
+  const storeRes = await getStoreById(identifier, userId, userRole);
   if (!storeRes.ok || !storeRes.data?.store) {
-    return sendFailure(response, storeRes.message || "Store not found", 404);
+    const status = storeRes.message?.includes("access denied") ? 403 : 404;
+    return sendFailure(response, storeRes.message || "Store not found", status);
   }
 
   const store = storeRes.data.store;

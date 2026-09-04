@@ -27,6 +27,7 @@ type SessionToken = {
   role?: string;
   userId?: string;
   tenantId?: string;
+  defaultStoreSlug?: string | null;
 };
 
 async function verifySessionToken(token: string): Promise<SessionToken | null> {
@@ -164,10 +165,12 @@ export default async function middleware(request: NextRequest) {
 
   // Redirect authenticated users away from login/register
   if (isAuthPage && (session || hasRefreshToken)) {
-    const defaultDestination =
-      pathname.startsWith("/admin/login") || session?.role === "super_admin"
-        ? "/admin/dashboard"
-        : "/dashboard";
+    const isSuperAdmin = session?.role === "super_admin" || pathname.startsWith("/admin/login");
+    const defaultDestination = isSuperAdmin
+      ? "/dashboard"
+      : session?.defaultStoreSlug
+      ? `/store/${session.defaultStoreSlug}/dashboard`
+      : "/dashboard";
     const redirectTo = validatePlatformRedirect(request.nextUrl.searchParams.get("redirect")) ?? defaultDestination;
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
@@ -175,14 +178,38 @@ export default async function middleware(request: NextRequest) {
 
   // Protected routes
   if (isAdminRoute || isProtectedRoute) {
-    // If we have a valid JWT session, proceed
+    // If we have a valid JWT session, proceed with authoritative checks
     if (session) {
-      if (isAdminRoute && session.role !== "super_admin") {
+      const isSuperAdmin = session.role === "super_admin";
+
+      // Super Admin rules:
+      if (isSuperAdmin) {
+        if (pathname === "/admin/dashboard" || pathname === "/admin/dashboard/") {
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+        if (pathname.startsWith("/store/")) {
+          // Super admin should not automatically wander into a merchant store dashboard
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+        return NextResponse.next();
+      }
+
+      // Non-Super Admin (Merchant / Member) rules:
+      if (isAdminRoute) {
         return NextResponse.redirect(new URL("/unauthorized", request.url));
       }
-      if (!isAdminRoute && isProtectedRoute && session.role === "super_admin") {
-        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+
+      // If merchant manually enters /dashboard:
+      if (pathname === "/dashboard" || pathname === "/dashboard/") {
+        if (session.defaultStoreSlug) {
+          return NextResponse.redirect(
+            new URL(`/store/${session.defaultStoreSlug}/dashboard`, request.url)
+          );
+        }
+        // Let through to server layout which will query user's store or redirect to create
+        return NextResponse.next();
       }
+
       return NextResponse.next();
     }
 

@@ -52,7 +52,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     label: "Overview",
     defaultOpen: true,
     items: [
-      { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
       { href: "/admin/dashboard/analytics", label: "Platform Analytics", icon: BarChart3 },
       { href: "/admin/dashboard/reports", label: "Reports", icon: FileBarChart },
     ],
@@ -151,6 +151,8 @@ for (const item of ADMIN_ACCOUNT_NAV) {
   ADMIN_ROUTE_LABELS[item.href] = item.label;
 }
 
+ADMIN_ROUTE_LABELS["/dashboard"] = "Dashboard";
+ADMIN_ROUTE_LABELS["/admin/dashboard"] = "Dashboard";
 ADMIN_ROUTE_LABELS["/admin/dashboard/plans"] = "Plans";
 ADMIN_ROUTE_LABELS["/admin/dashboard/platform"] = "Finance Overview";
 
@@ -162,6 +164,9 @@ export function getAdminPageTitle(pathname: string): string {
 }
 
 export function isAdminNavActive(pathname: string, href: string, exact?: boolean) {
+  if (href === "/dashboard") {
+    return pathname === "/dashboard" || pathname === "/admin/dashboard";
+  }
   if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }

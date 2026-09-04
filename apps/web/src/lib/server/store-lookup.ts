@@ -50,6 +50,12 @@ export async function getBuilderPageSlugById(pageId: string): Promise<string | n
   return payload?.data?.page?.slug ?? null;
 }
 
+export async function getUserDefaultStoreSlug(): Promise<string | null> {
+  const payload = await apiFetch<{ success?: boolean; data?: { stores?: Array<{ slug?: string }> } }>("/stores/my-stores");
+  const stores = payload?.data?.stores ?? [];
+  return stores[0]?.slug ?? null;
+}
+
 export function isMongoObjectId(value: string): boolean {
   return /^[a-f\d]{24}$/i.test(value);
 }

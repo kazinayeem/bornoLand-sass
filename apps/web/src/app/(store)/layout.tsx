@@ -8,6 +8,6 @@ export const dynamic = "force-dynamic";
 export default async function StoreGroupLayout({ children }: { children: ReactNode }) {
   const [session, hasPendingAuth] = await Promise.all([getServerSession(), hasAuthCookie()]);
   if (!session && !hasPendingAuth) redirect("/login");
-  if (session?.role === "super_admin") redirect("/admin/dashboard");
+  if (session?.role === "super_admin") redirect("/dashboard");
   return <ProtectedSessionBoundary>{children}</ProtectedSessionBoundary>;
 }

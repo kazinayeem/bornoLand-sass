@@ -183,12 +183,12 @@ function SidebarStoreSwitcher({
 
           <div className="mt-1 border-t border-zinc-100 pt-1 dark:border-zinc-800">
             <Link
-              href="/dashboard"
+              href={`/store/${store.slug}/dashboard`}
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
               <LayoutDashboard className="h-3.5 w-3.5" />
-              <span>{language === "bn" ? "ওয়ার্কস্পেস ড্যাশবোর্ড" : "Back to Workspace"}</span>
+              <span>{language === "bn" ? "স্টোর ড্যাশবোর্ড" : "Store Dashboard"}</span>
             </Link>
             <Link
               href="/dashboard/stores/create"
@@ -465,20 +465,20 @@ export function StoreSidebar({
             className="sidebar-scroll flex-1 overflow-y-auto px-2 py-2 space-y-1"
             aria-label="ERP Modules"
           >
-            {/* Direct Back to Workspace */}
+            {/* Direct to Store Dashboard */}
             <div className="mb-2">
               <Link
-                href="/dashboard"
+                href={`${basePath}/dashboard`}
                 onClick={onNavigate}
                 className={cn(
                   "group flex w-full items-center gap-2 rounded-lg px-2.5 h-8 text-[11px] font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 transition-colors border border-zinc-200/70 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white",
                   collapsed ? "justify-center px-0 w-9 mx-auto" : ""
                 )}
               >
-                <ArrowLeft className="h-3.5 w-3.5 shrink-0 text-zinc-400 group-hover:-translate-x-0.5 transition-transform" />
+                <LayoutDashboard className="h-3.5 w-3.5 shrink-0 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors" />
                 {!collapsed && (
                   <span className="truncate">
-                    {isBn ? "ওয়ার্কস্পেসে ফিরুন" : "Back to Workspace"}
+                    {isBn ? "ড্যাশবোর্ড ওভারভিউ" : "Store Dashboard"}
                   </span>
                 )}
               </Link>

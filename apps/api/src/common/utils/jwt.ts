@@ -9,6 +9,7 @@ export type SessionPayload = {
   name: string;
   loginType: "user" | "admin";
   sessionVersion?: number;
+  defaultStoreSlug?: string | null;
 };
 
 const sessionCookieName = process.env.SESSION_COOKIE_NAME ?? "bornoland.session";

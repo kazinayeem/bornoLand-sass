@@ -52,13 +52,401 @@
   {
     "path": "/store/nayeem/builder/home",
     "module": "Website",
-    "status": "FAIL",
-    "httpStatus": 0,
+    "status": "PASS",
+    "httpStatus": 200,
     "chunkErrors": [],
     "hydrationErrors": [],
-    "exceptions": [
-      "page.goto: Timeout 45000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/store/nayeem/builder/home\", waiting until \"domcontentloaded\"\u001b[22m\n"
-    ],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/store/nayeem/settings",
+    "module": "System",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/store/nayeem/settings/checkout",
+    "module": "System",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/store/nayeem/settings/localization",
+    "module": "System",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/store/nayeem/settings/notifications",
+    "module": "System",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/store/nayeem/members",
+    "module": "System",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/store/nayeem/apps",
+    "module": "System",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/store/nayeem/activity",
+    "module": "System",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/store/nayeem/billing",
+    "module": "System",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/workshops",
+    "module": "Workspace",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/workshops/billing",
+    "module": "Workspace",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/workshops/team",
+    "module": "Workspace",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/workshops/settings",
+    "module": "Workspace",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/workshops/account",
+    "module": "Workspace",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/workshops/activity",
+    "module": "Workspace",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/workshops/security",
+    "module": "Workspace",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/workshops/plans",
+    "module": "Workspace",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/workshops/stores/create",
+    "module": "Workspace",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/",
+    "module": "PublicStorefront",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/login",
+    "module": "PublicStorefront",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/register",
+    "module": "PublicStorefront",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/site/nayeem",
+    "module": "PublicStorefront",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/site/nayeem/shop",
+    "module": "PublicStorefront",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/site/nayeem/cart",
+    "module": "PublicStorefront",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/site/nayeem/checkout",
+    "module": "PublicStorefront",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/site/nayeem/about",
+    "module": "PublicStorefront",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/site/nayeem/contact",
+    "module": "PublicStorefront",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/site/nayeem/faq",
+    "module": "PublicStorefront",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/dashboard",
+    "module": "SuperAdmin",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/admin/dashboard/stores",
+    "module": "SuperAdmin",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/admin/dashboard/plans",
+    "module": "SuperAdmin",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/admin/dashboard/users",
+    "module": "SuperAdmin",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/admin/dashboard/subscriptions",
+    "module": "SuperAdmin",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/admin/dashboard/invoices",
+    "module": "SuperAdmin",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/admin/dashboard/payments",
+    "module": "SuperAdmin",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/admin/dashboard/activity",
+    "module": "SuperAdmin",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/admin/dashboard/audit-center",
+    "module": "SuperAdmin",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/admin/dashboard/analytics",
+    "module": "SuperAdmin",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/admin/dashboard/security",
+    "module": "SuperAdmin",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
+    "serverErrors": []
+  },
+  {
+    "path": "/admin/dashboard/settings",
+    "module": "SuperAdmin",
+    "status": "PASS",
+    "httpStatus": 200,
+    "chunkErrors": [],
+    "hydrationErrors": [],
+    "exceptions": [],
     "serverErrors": []
   }
 ]

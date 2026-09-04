@@ -58,7 +58,7 @@ export default defineConfig({
     },
     {
       command: "pnpm --filter @bornoland/web dev",
-      url: "http://localhost:3000",
+      url: "http://localhost:3000/login",
       reuseExistingServer: true,
       timeout: 120_000,
     },

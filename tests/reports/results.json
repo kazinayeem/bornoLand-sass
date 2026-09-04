@@ -4,9 +4,12 @@
       "/usr/local/bin/node",
       "/Users/mohammadalinayeem/Project & Code/bornoland/node_modules/@playwright/test/cli.js",
       "test",
-      "tests/e2e/merchant/routes-crawler.spec.ts",
-      "-g",
-      "Module 8",
+      "tests/e2e/auth",
+      "tests/e2e/workspace",
+      "tests/e2e/permissions",
+      "tests/e2e/tenant",
+      "tests/e2e/responsive",
+      "tests/e2e/crud",
       "--project=Desktop Chromium"
     ],
     "configFile": "/Users/mohammadalinayeem/Project & Code/bornoland/playwright.config.ts",
@@ -20,14 +23,18 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {},
+    "metadata": {
+      "actualWorkers": 1
+    },
     "preserveOutput": "always",
     "projects": [
       {
         "outputDir": "/Users/mohammadalinayeem/Project & Code/bornoland/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "Desktop Chromium",
         "name": "Desktop Chromium",
         "testDir": "/Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e",
@@ -41,7 +48,9 @@
         "outputDir": "/Users/mohammadalinayeem/Project & Code/bornoland/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "Mobile Chromium",
         "name": "Mobile Chromium",
         "testDir": "/Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e",
@@ -84,17 +93,757 @@
     "workers": 1,
     "webServer": null
   },
-  "suites": [],
-  "errors": [
+  "suites": [
     {
-      "message": "Error: Timed out waiting 120000ms from config.webServer.",
-      "stack": "Error: Timed out waiting 120000ms from config.webServer."
+      "title": "auth/auth.spec.ts",
+      "file": "auth/auth.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Authentication & Session Lifecycle (@auth @smoke)",
+          "file": "auth/auth.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Invalid login displays validation or error feedback",
+              "ok": true,
+              "tags": [
+                "auth",
+                "smoke)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1760,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:27:03.941Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ab049aabb515b3eeb7-5dd72df2f5db7d2c6da2",
+              "file": "auth/auth.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "Merchant logs in successfully and lands at workspace/store (@smoke)",
+              "ok": true,
+              "tags": [
+                "auth",
+                "smoke)",
+                "smoke)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6597,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:27:05.951Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ab049aabb515b3eeb7-c91969dd9329c4f03f75",
+              "file": "auth/auth.spec.ts",
+              "line": 27,
+              "column": 7
+            },
+            {
+              "title": "Super Admin logs in and reaches Platform Overview (/dashboard)",
+              "ok": true,
+              "tags": [
+                "auth",
+                "smoke)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6438,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:27:12.555Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ab049aabb515b3eeb7-9738f725b3e7ba41827a",
+              "file": "auth/auth.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "Logout clears session and blocks access to protected routes",
+              "ok": true,
+              "tags": [
+                "auth",
+                "smoke)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7209,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:27:18.998Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ab049aabb515b3eeb7-cc6be7bff2d2664a8224",
+              "file": "auth/auth.spec.ts",
+              "line": 55,
+              "column": 7
+            },
+            {
+              "title": "Unauthenticated access to /admin/dashboard redirects to admin login",
+              "ok": true,
+              "tags": [
+                "auth",
+                "smoke)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1291,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:27:26.213Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ab049aabb515b3eeb7-1d94a09f070902715a7f",
+              "file": "auth/auth.spec.ts",
+              "line": 65,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "crud/crud-persistence.spec.ts",
+      "file": "crud/crud-persistence.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "CRUD Workflows & Database Persistence (@crud @critical)",
+          "file": "crud/crud-persistence.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Product Full CRUD Cycle: Create -> Verify -> Edit -> Refresh Persist -> Delete",
+              "ok": true,
+              "tags": [
+                "crud",
+                "critical)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 36686,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n📦 Testing Product CRUD with name: \"QA-AUTO-PROD-20260904142736-2Y69\"\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:27:27.515Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "90deead11408b92d37ef-f09e5b7e8c4cb5612a60",
+              "file": "crud/crud-persistence.spec.ts",
+              "line": 15,
+              "column": 7
+            },
+            {
+              "title": "Warehouse Creation and Persistence",
+              "ok": true,
+              "tags": [
+                "crud",
+                "critical)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 34009,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n🏢 Testing Warehouse CRUD with name: \"QA-AUTO-WH-20260904142813-YM3J\"\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:28:04.207Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "90deead11408b92d37ef-01987a3c907fa98464ee",
+              "file": "crud/crud-persistence.spec.ts",
+              "line": 83,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "permissions/rbac.spec.ts",
+      "file": "permissions/rbac.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Permissions & Strict Role-Based Access Control (@permissions @critical)",
+          "file": "permissions/rbac.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Merchant is strictly blocked from accessing Super Admin portal (/admin/dashboard)",
+              "ok": true,
+              "tags": [
+                "permissions",
+                "critical)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8335,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:28:38.227Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "579a469a3c9f1f4ada38-b283021b0ac223aea282",
+              "file": "permissions/rbac.spec.ts",
+              "line": 6,
+              "column": 7
+            },
+            {
+              "title": "Super Admin has full authorized access to /dashboard and admin panels",
+              "ok": true,
+              "tags": [
+                "permissions",
+                "critical)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10177,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:28:46.567Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "579a469a3c9f1f4ada38-4d40016680a5166bb3a9",
+              "file": "permissions/rbac.spec.ts",
+              "line": 22,
+              "column": 7
+            },
+            {
+              "title": "Unauthenticated user accessing /store/{slug}/dashboard is redirected to /login",
+              "ok": true,
+              "tags": [
+                "permissions",
+                "critical)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 948,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:28:56.749Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "579a469a3c9f1f4ada38-6ecf7d67238efbcfcde6",
+              "file": "permissions/rbac.spec.ts",
+              "line": 38,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "responsive/responsive.spec.ts",
+      "file": "responsive/responsive.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Responsive Design & Mobile Viewport Audit (@responsive @smoke)",
+          "file": "responsive/responsive.spec.ts",
+          "line": 11,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Public Landing & Login render without horizontal body overflow",
+              "ok": true,
+              "tags": [
+                "responsive",
+                "smoke)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 698,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:28:57.710Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "de2181dd20e1b8583552-4f9771d736044a9057c3",
+              "file": "responsive/responsive.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "Store ERP Dashboard renders responsively across device sizes",
+              "ok": true,
+              "tags": [
+                "responsive",
+                "smoke)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 29446,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:28:58.417Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "de2181dd20e1b8583552-cefaf9d08d5df5c25d79",
+              "file": "responsive/responsive.spec.ts",
+              "line": 25,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "tenant/tenant-isolation.spec.ts",
+      "file": "tenant/tenant-isolation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Tenant Isolation & Multi-Tenancy Boundary Safety (@tenant @critical)",
+          "file": "tenant/tenant-isolation.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Public storefront (/site/{tenant}) displays targeted store without cross-tenant leakage",
+              "ok": true,
+              "tags": [
+                "tenant",
+                "critical)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6562,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:29:27.881Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "0790899e152d638b161f-f721516c78e1d66db37a",
+              "file": "tenant/tenant-isolation.spec.ts",
+              "line": 6,
+              "column": 7
+            },
+            {
+              "title": "Invalid non-existent tenant does not silently resolve to another tenant's store",
+              "ok": true,
+              "tags": [
+                "tenant",
+                "critical)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1787,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:29:34.447Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "0790899e152d638b161f-cb807763fec986990124",
+              "file": "tenant/tenant-isolation.spec.ts",
+              "line": 25,
+              "column": 7
+            },
+            {
+              "title": "Merchant workspace enforces tenant boundaries across store URLs",
+              "ok": true,
+              "tags": [
+                "tenant",
+                "critical)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 16870,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:29:36.239Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "0790899e152d638b161f-2a64a45b9af3d9ecf1c2",
+              "file": "tenant/tenant-isolation.spec.ts",
+              "line": 40,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "workspace/store-discovery.spec.ts",
+      "file": "workspace/store-discovery.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Workspace & Dynamic Store Discovery (@smoke @navigation)",
+          "file": "workspace/store-discovery.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Merchant discovers accessible stores dynamically on /workshops",
+              "ok": true,
+              "tags": [
+                "smoke",
+                "navigation)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 16488,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[Dynamic Discovery] Discovered active store slug: \"nayeem\"\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:29:53.117Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "998db2f46860a713812d-70e6e0ea3ef850358dbb",
+              "file": "workspace/store-discovery.spec.ts",
+              "line": 6,
+              "column": 7
+            },
+            {
+              "title": "Direct URL navigation to /store/{slug}/dashboard succeeds with refresh",
+              "ok": true,
+              "tags": [
+                "smoke",
+                "navigation)"
+              ],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chromium",
+                  "projectName": "Desktop Chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 18194,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-04T14:30:09.611Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "998db2f46860a713812d-b6e09d0a38d82f88f9b7",
+              "file": "workspace/store-discovery.spec.ts",
+              "line": 32,
+              "column": 7
+            }
+          ]
+        }
+      ]
     }
   ],
+  "errors": [],
   "stats": {
-    "startTime": "2026-09-04T14:09:16.165Z",
-    "duration": 256555.839,
-    "expected": 0,
+    "startTime": "2026-09-04T14:27:02.919Z",
+    "duration": 205046.38700000002,
+    "expected": 17,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

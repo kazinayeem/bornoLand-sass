@@ -58,7 +58,7 @@ export const GROCERY_THEME: ThemeDefinition = {
   header: {
     layout: "grocery",
     showAnnouncement: true,
-    announcementText: "🌿 ১০০% খাঁটি ও নির্ভেজাল পণ্যের প্রতিশ্রুতি | সারাদেশে ক্যাশ অন ডেলিভারি সুবিধা",
+    announcementText: "🌿 100% খাঁটি ও নির্ভেজাল পণ্যের প্রতিশ্রুতি | সারাদেশে ক্যাশ অন ডেলিভারি সুবিধা",
     announcementBg: "#055c3a",
     announcementTextColor: "#ffffff",
     showSearch: true,
@@ -84,7 +84,7 @@ export const GROCERY_THEME: ThemeDefinition = {
     aboutText: "আমরা নিশ্চিত করি শতভাগ খাঁটি, প্রাকৃতিক ও স্বাস্থ্যসম্মত খাদ্যপণ্য সরাসরি আপনার ঘরে পৌঁছে দিতে। প্রতিটি পণ্যের গুণগত মান আমাদের সর্বোচ্চ অগ্রাধিকার।",
     hotline: "09613-800800",
     email: "support@bornoland-grocery.com",
-    address: "বাড়ি #২৪, রোড #১২, বনানী, ঢাকা-১২১৩",
+    address: "বাড়ি #24, রোড #12, বনানী, ঢাকা-1213",
     showSocial: true,
     showNewsletter: true,
     showPaymentIcons: true,
@@ -187,7 +187,7 @@ export const GROCERY_THEME: ThemeDefinition = {
       visible: true,
       props: {
         headline: "এক কাপ খাঁটি দুধের মিষ্টি স্বাদ",
-        subheadline: "গাওয়া ঘি ও প্রাকৃতিক খাদ্যপণ্যে ২০% পর্যন্ত বিশেষ ছাড়",
+        subheadline: "গাওয়া ঘি ও প্রাকৃতিক খাদ্যপণ্যে 20% পর্যন্ত বিশেষ ছাড়",
         discountText: "UP TO 20% OFF",
         buttonText: "অফার লুফে নিন",
         buttonLink: "/offers",
@@ -239,7 +239,7 @@ export const GROCERY_THEME: ThemeDefinition = {
       visible: true,
       props: {
         headline: "বিশেষ অফার ও নতুন পণ্যের আপডেট পান",
-        subheadline: "আপনার ইমেইল দিয়ে সাবস্ক্রাইব করুন এবং প্রথম অর্ডারে ১০% ছাড় উপভোগ করুন।",
+        subheadline: "আপনার ইমেইল দিয়ে সাবস্ক্রাইব করুন এবং প্রথম অর্ডারে 10% ছাড় উপভোগ করুন।",
         buttonText: "সাবস্ক্রাইব",
         placeholderText: "আপনার ইমেইল লিখুন...",
         bgColor: "#f3ede3",

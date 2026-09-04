@@ -13,11 +13,11 @@ import {
 
 export function StoryPaymentsDelivery() {
   const JOURNEY = [
-    { label: "০১. অর্ডার গ্রহণ", sub: "১-ক্লিক চেকআউট", icon: ShieldCheck },
-    { label: "০২. পেমেন্ট ভেরিফাই", sub: "বিকাশ / নগদ / COD", icon: Banknote },
-    { label: "০৩. ইনভয়েস তৈরি", sub: "অটো PDF রসিদ", icon: CheckCircle2 },
-    { label: "০৪. কুরিয়ার বুকিং", sub: "পাঠাও / স্টেডফাস্ট", icon: Truck },
-    { label: "০৫. ডেলিভারি ট্র্যাকিং", sub: "অটো SMS আপডেট", icon: CheckCircle2 },
+    { label: "01. Accept Order", sub: "1-Click Checkout", icon: ShieldCheck },
+    { label: "02. Verify Payment", sub: "bKash / Nagad / COD", icon: Banknote },
+    { label: "03. Create Invoice", sub: "Auto PDF Receipt", icon: CheckCircle2 },
+    { label: "04. Book Courier", sub: "Pathao / Steadfast", icon: Truck },
+    { label: "05. Track Delivery", sub: "Auto SMS Updates", icon: CheckCircle2 },
   ];
 
   return (
@@ -26,13 +26,13 @@ export function StoryPaymentsDelivery() {
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-3 mb-14">
           <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-            পেমেন্ট ও ডেলিভারি
+            Payments & Delivery
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-950">
-            পেমেন্ট থেকে ডেলিভারি—সবকিছু একসাথে।
+            From payment to delivery — everything in one place.
           </h2>
           <p className="text-base sm:text-lg text-zinc-600 leading-relaxed font-normal">
-            বাংলাদেশের জনপ্রিয় পেমেন্ট ও কুরিয়ার পদ্ধতিগুলো এক জায়গা থেকেই সহজে পরিচালনা করুন।
+            Easily manage popular payment and courier methods from a single location.
           </p>
         </div>
 
@@ -64,20 +64,20 @@ export function StoryPaymentsDelivery() {
         {/* Integration Badges */}
         <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           <div className="p-4 rounded-2xl bg-white border border-zinc-200 shadow-2xs text-center space-y-1 hover:border-emerald-300 transition-colors">
-            <span className="font-bold text-zinc-900 block text-sm">ক্যাশ অন ডেলিভারি (COD)</span>
-            <span className="text-[10px] text-emerald-600 font-semibold">পণ্য হাতে পেয়ে টাকা</span>
+            <span className="font-bold text-zinc-900 block text-sm">Cash on Delivery (COD)</span>
+            <span className="text-[10px] text-emerald-600 font-semibold">Pay when you receive</span>
           </div>
           <div className="p-4 rounded-2xl bg-white border border-zinc-200 shadow-2xs text-center space-y-1 hover:border-pink-300 transition-colors">
-            <span className="font-bold text-zinc-900 block text-sm">বিকাশ, নগদ ও রকেট</span>
-            <span className="text-[10px] text-pink-600 font-semibold">মোবাইল ব্যাংকিং পেমেন্ট</span>
+            <span className="font-bold text-zinc-900 block text-sm">bKash, Nagad & Rocket</span>
+            <span className="text-[10px] text-pink-600 font-semibold">Mobile Banking Payment</span>
           </div>
           <div className="p-4 rounded-2xl bg-white border border-zinc-200 shadow-2xs text-center space-y-1 hover:border-blue-300 transition-colors">
-            <span className="font-bold text-zinc-900 block text-sm">অনলাইন পেমেন্ট</span>
-            <span className="text-[10px] text-blue-600 font-semibold">ডেবিট/ক্রেডিট কার্ড সাপোর্ট</span>
+            <span className="font-bold text-zinc-900 block text-sm">Online Payment</span>
+            <span className="text-[10px] text-blue-600 font-semibold">Debit/Credit Card Support</span>
           </div>
           <div className="p-4 rounded-2xl bg-white border border-zinc-200 shadow-2xs text-center space-y-1 hover:border-purple-300 transition-colors">
-            <span className="font-bold text-zinc-900 block text-sm">কুরিয়ার ও লাইভ ট্র্যাকিং</span>
-            <span className="text-[10px] text-purple-600 font-semibold">পাঠাও, স্টেডফাস্ট ও রেডএক্স</span>
+            <span className="font-bold text-zinc-900 block text-sm">Courier & Live Tracking</span>
+            <span className="text-[10px] text-purple-600 font-semibold">Pathao, Steadfast & RedX</span>
           </div>
         </div>
       </div>

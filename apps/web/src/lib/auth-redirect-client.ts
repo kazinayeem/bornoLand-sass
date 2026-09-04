@@ -22,14 +22,14 @@ export function clearRedirectAfterLogin() {
   if (typeof window !== "undefined") sessionStorage.removeItem(REDIRECT_AFTER_LOGIN_KEY);
 }
 
-export function consumeRedirectAfterLogin(queryRedirect?: string | null, fallback = "/dashboard") {
+export function consumeRedirectAfterLogin(queryRedirect?: string | null, fallback = "/workshops") {
   if (typeof window === "undefined") return fallback;
   const storedRedirect = sessionStorage.getItem(REDIRECT_AFTER_LOGIN_KEY);
   sessionStorage.removeItem(REDIRECT_AFTER_LOGIN_KEY);
   return validateInternalRedirect(queryRedirect) ?? validateInternalRedirect(storedRedirect) ?? fallback;
 }
 
-export function peekRedirectAfterLogin(queryRedirect?: string | null, fallback = "/dashboard") {
+export function peekRedirectAfterLogin(queryRedirect?: string | null, fallback = "/workshops") {
   if (typeof window === "undefined") return fallback;
   return validateInternalRedirect(queryRedirect) ?? validateInternalRedirect(sessionStorage.getItem(REDIRECT_AFTER_LOGIN_KEY)) ?? fallback;
 }
@@ -77,35 +77,8 @@ export function resolvePostLoginDestination(
   if (isSuperAdmin) {
     baseDestination = "/dashboard";
   } else if (isMerchant) {
-    // Single store -> directly to /store/{storeSlug}/dashboard
-    // Multi-store -> /workshops
-    // 0 stores -> /dashboard/stores/create
-    let lastSelectedSlug: string | null = null;
-    try {
-      if (typeof window !== "undefined") {
-        lastSelectedSlug = localStorage.getItem("bornoland_last_store_slug");
-      }
-    } catch {
-      // Ignore local storage error
-    }
-
-    if (
-      lastSelectedSlug &&
-      storesList.some((s) => s.slug === lastSelectedSlug)
-    ) {
-      baseDestination = `/store/${lastSelectedSlug}/dashboard`;
-    } else if (storesList.length === 1 && (storesList[0]?.slug || defaultSlug)) {
-      baseDestination = `/store/${storesList[0]?.slug || defaultSlug}/dashboard`;
-    } else if (storesList.length > 1) {
-      baseDestination = "/workshops";
-    } else if (defaultSlug) {
-      baseDestination = `/store/${defaultSlug}/dashboard`;
-    } else {
-      baseDestination =
-        defaultLandingPath && defaultLandingPath !== "/dashboard"
-          ? defaultLandingPath
-          : "/dashboard/stores/create";
-    }
+    // Workspace-first architecture: All Merchant/Owner accounts default to /workshops
+    baseDestination = "/workshops";
   } else if (userRole === "employee") {
     // Employee self-service
     if (defaultSlug) {
@@ -134,7 +107,7 @@ export function resolvePostLoginDestination(
 
   // Security checks for requested redirect based on role
   if (isSuperAdmin) {
-    if (queryRedirect === "/admin/dashboard") return "/dashboard";
+    if (queryRedirect === "/admin/dashboard" || queryRedirect === "/admin/dashboard/") return "/dashboard";
     return queryRedirect;
   }
 
@@ -147,6 +120,18 @@ export function resolvePostLoginDestination(
     ) {
       return baseDestination;
     }
+
+    // If queryRedirect points to a specific store route, verify access
+    const match = queryRedirect.match(/^\/store\/([^/]+)/);
+    if (match) {
+      const requestedSlug = match[1];
+      const isAuthorized =
+        (defaultSlug && requestedSlug === defaultSlug) ||
+        storesList.some((s) => s.slug === requestedSlug);
+      if (isAuthorized) return queryRedirect;
+      return baseDestination;
+    }
+
     return queryRedirect;
   }
 

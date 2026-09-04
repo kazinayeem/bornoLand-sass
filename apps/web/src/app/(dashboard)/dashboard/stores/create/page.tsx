@@ -48,7 +48,7 @@ export default function CreateStorePage() {
       }).unwrap();
       const storeSlug = result?.data?.store?.slug ?? slug;
       toast.success(`"${name}" created with a ${STORE_TRIAL_DAYS}-day trial!`);
-      router.push(`/store/${storeSlug}/dashboard`);
+      router.push("/workshops");
     } catch (err: unknown) {
       const message =
         err && typeof err === "object" && "data" in err
@@ -107,7 +107,7 @@ export default function CreateStorePage() {
         <div className="mt-8 flex items-center justify-between border-t border-zinc-100 pt-6">
           <button
             type="button"
-            onClick={() => router.push("/dashboard/stores")}
+            onClick={() => router.push("/workshops")}
             className="text-sm text-apple-ink-muted-48 hover:text-apple-ink-muted-80"
           >
             Cancel

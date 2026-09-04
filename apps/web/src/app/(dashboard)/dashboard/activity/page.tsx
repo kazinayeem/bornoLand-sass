@@ -23,17 +23,17 @@ const icons: Record<string, typeof Activity> = {
   invoice_downloaded: Download,
 };
 
-const labels: Record<string, { bn: string; en: string }> = {
-  login: { bn: "লগইন সম্পন্ন", en: "User Logged In" },
-  logout: { bn: "লগআউট সম্পন্ন", en: "User Logged Out" },
-  password_changed: { bn: "পাসওয়ার্ড পরিবর্তন", en: "Password Changed" },
-  store_settings_updated: { bn: "দোকানের তথ্য আপডেট", en: "Store Settings Updated" },
-  store_branding_updated: { bn: "ব্র্যান্ডিং পরিবর্তন", en: "Branding Updated" },
-  product_created: { bn: "নতুন পণ্য যোগ", en: "Product Created" },
-  order_status_changed: { bn: "অর্ডার স্ট্যাটাস আপডেট", en: "Order Status Changed" },
-  plan_upgraded: { bn: "প্ল্যান আপগ্রেড", en: "Plan Upgraded" },
-  plan_downgraded: { bn: "প্ল্যান পরিবর্তন", en: "Plan Changed" },
-  invoice_downloaded: { bn: "ইনভয়েস ডাউনলোড", en: "Invoice Downloaded" },
+const labels: Record<string, string> = {
+  login: "User Logged In",
+  logout: "User Logged Out",
+  password_changed: "Password Changed",
+  store_settings_updated: "Store Settings Updated",
+  store_branding_updated: "Branding Updated",
+  product_created: "Product Created",
+  order_status_changed: "Order Status Changed",
+  plan_upgraded: "Plan Upgraded",
+  plan_downgraded: "Plan Changed",
+  invoice_downloaded: "Invoice Downloaded",
 };
 
 export default function WorkspaceActivityPage() {
@@ -72,7 +72,7 @@ export default function WorkspaceActivityPage() {
                 const Icon = icons[item.action] ?? Activity;
                 const labelObj = labels[item.action];
                 const actionLabel = labelObj
-                  ? labelObj[language]
+                  ? labelObj
                   : item.action.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
                 return (

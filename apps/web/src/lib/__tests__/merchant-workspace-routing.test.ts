@@ -28,7 +28,7 @@ describe("Merchant Login & Workspace Routing Architecture Tests", () => {
     assert.equal(destination, "/dashboard");
   });
 
-  it("TEST 3: Demo Merchant with single store routes directly to /store/{slug}/dashboard", () => {
+  it("TEST 3: Demo Merchant Login routes to /workshops (workspace-first)", () => {
     const payload: AuthPayload = {
       user: {
         id: "demo-merchant",
@@ -38,7 +38,7 @@ describe("Merchant Login & Workspace Routing Architecture Tests", () => {
       },
     };
     const destination = resolvePostLoginDestination(payload);
-    assert.equal(destination, "/store/demo-store/dashboard");
+    assert.equal(destination, "/workshops");
   });
 
   it("TEST 4: Merchant with multiple stores routes to /workshops", () => {
@@ -57,7 +57,7 @@ describe("Merchant Login & Workspace Routing Architecture Tests", () => {
     assert.equal(destination, "/workshops");
   });
 
-  it("TEST 5: Merchant with 0 stores routes to /dashboard/stores/create", () => {
+  it("TEST 5: Merchant with 0 stores routes to /workshops", () => {
     const payload: AuthPayload = {
       user: {
         id: "merchant-new",
@@ -66,7 +66,7 @@ describe("Merchant Login & Workspace Routing Architecture Tests", () => {
       },
     };
     const destination = resolvePostLoginDestination(payload);
-    assert.equal(destination, "/dashboard/stores/create");
+    assert.equal(destination, "/workshops");
   });
 
   it("TEST 6: Employee login routes to HRM self-service workspace", () => {
@@ -131,10 +131,37 @@ describe("Merchant Login & Workspace Routing Architecture Tests", () => {
       },
     };
     const destinationAdmin = resolvePostLoginDestination(payload, "/admin/dashboard");
-    assert.equal(destinationAdmin, "/store/my-shop/dashboard");
+    assert.equal(destinationAdmin, "/workshops");
 
     const destinationPlatformDashboard = resolvePostLoginDestination(payload, "/dashboard");
-    assert.equal(destinationPlatformDashboard, "/store/my-shop/dashboard");
+    assert.equal(destinationPlatformDashboard, "/workshops");
+  });
+
+  it("TEST 10b: Unauthorized store deep-link safely returns /workshops", () => {
+    const payload: AuthPayload = {
+      user: {
+        id: "merchant-a",
+        role: "owner",
+        defaultStoreSlug: "store-a",
+        stores: [{ id: "1", slug: "store-a", name: "Store A" }],
+      },
+    };
+    // Merchant A attempts to access Merchant B's store via redirect
+    const destinationUnauthorized = resolvePostLoginDestination(payload, "/store/merchant-b-store/dashboard");
+    assert.equal(destinationUnauthorized, "/workshops");
+  });
+
+  it("TEST 10c: Authorized store deep-link preserves exact requested route", () => {
+    const payload: AuthPayload = {
+      user: {
+        id: "merchant-a",
+        role: "owner",
+        defaultStoreSlug: "store-a",
+        stores: [{ id: "1", slug: "store-a", name: "Store A" }],
+      },
+    };
+    const destinationAuthorized = resolvePostLoginDestination(payload, "/store/store-a/hrm/employees");
+    assert.equal(destinationAuthorized, "/store/store-a/hrm/employees");
   });
 
   it("TEST 11: Tenant host nayeem.bornosoft.site on path '/' stays on tenant and is NOT a platform management route", () => {

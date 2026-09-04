@@ -12,27 +12,27 @@ import {
 export function StoryGrowth() {
   const STAGES = [
     {
-      stage: "ধাপ ০১",
-      title: "আরও পণ্য যোগ করুন",
-      unlocked: "প্রথম ২৫টি পণ্য দিয়ে শুরু করে হাজার হাজার ক্যাটাগরি ও পণ্য অবাধে আপলোড করুন।",
+      stage: "STEP 01",
+      title: "Add More Products",
+      unlocked: "Start with the first 25 products and freely upload thousands of categories and products.",
       icon: PackagePlus,
     },
     {
-      stage: "ধাপ ০২",
-      title: "আরও অর্ডার নিন",
-      unlocked: "দৈনিক ১০টি থেকে শত শত অর্ডার কোনো ঝামেলা ছাড়াই স্বয়ংক্রিয়ভাবে গ্রহণ ও প্রসেস করুন।",
+      stage: "STEP 02",
+      title: "Accept More Orders",
+      unlocked: "Automatically accept and process daily orders from 10 to hundreds without any hassle.",
       icon: ShoppingCart,
     },
     {
-      stage: "ধাপ ০৩",
-      title: "আরও কাস্টমার পান",
-      unlocked: "গ্রাহকদের সমস্ত অর্ডার হিস্ট্রি, ফোন নম্বর ও ইমেইল সংরক্ষণ করে কাস্টমার ধরে রাখুন।",
+      stage: "STEP 03",
+      title: "Get More Customers",
+      unlocked: "Retain customers by preserving their complete order history, phone numbers, and emails.",
       icon: Users,
     },
     {
-      stage: "ধাপ ০৪",
-      title: "বিক্রি ও রিপোর্ট বুঝুন",
-      unlocked: "ব্যবসায়ের প্রতিটি স্তরের লাভ-ক্ষতি, গ্রোথ ও বিক্রি নিয়ে স্পষ্ট সিদ্ধান্ত নিন।",
+      stage: "STEP 04",
+      title: "Understand Sales & Reports",
+      unlocked: "Make clear decisions about profit, loss, growth, and sales at every level of your business.",
       icon: Store,
     },
   ];
@@ -43,13 +43,13 @@ export function StoryGrowth() {
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-3 mb-14">
           <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-            ব্যবসার প্রসারণ
+            Business Expansion
           </span>
           <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-950">
-            আজ ছোট, কাল আরও বড়।
+            Small today, bigger tomorrow.
           </h2>
           <p className="text-base sm:text-lg text-zinc-600 leading-relaxed font-normal">
-            আপনার ব্যবসা যত বড় হবে, আপনার প্ল্যাটফর্মও তত সহজে আপনার সাথে বড় হবে।
+            The bigger your business grows, the more easily your platform scales with you.
           </p>
         </div>
 
@@ -77,7 +77,7 @@ export function StoryGrowth() {
                 </div>
 
                 <div className="pt-3 border-t border-zinc-200/60 text-[10px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" /> শতভাগ স্কেলযোগ্য
+                  <Sparkles className="h-3 w-3" /> 100% Scalable
                 </div>
               </div>
             );

@@ -58,7 +58,7 @@ export const RESTAURANT_THEME: ThemeDefinition = {
   header: {
     layout: "standard",
     showAnnouncement: true,
-    announcementText: "🍔 ৩০-৪৫ মিনিটে গরম খাবার হোম ডেলিভারি | ক্যাশ অন ডেলিভারি এভেইলেবল",
+    announcementText: "🍔 30-45 মিনিটে গরম খাবার হোম ডেলিভারি | ক্যাশ অন ডেলিভারি এভেইলেবল",
     announcementBg: "#dc2626",
     announcementTextColor: "#ffffff",
     showSearch: true,
@@ -83,7 +83,7 @@ export const RESTAURANT_THEME: ThemeDefinition = {
     aboutText: "আমরা প্রতিদিন তাজা উপকরণ দিয়ে স্বাস্থ্যসম্মত ও সুস্বাদু খাবার প্রস্তুত করে দ্রুততম সময়ে আপনার টেবিলে পৌঁছে দিই।",
     hotline: "09613-554433",
     email: "orders@bornoland-food.com",
-    address: "প্লট #১২, রোড #০২, মিরপুর-১১, ঢাকা-১২১৬",
+    address: "প্লট #12, রোড #02, মিরপুর-11, ঢাকা-1216",
     showSocial: true,
     showNewsletter: true,
     showPaymentIcons: true,
@@ -158,7 +158,7 @@ export const RESTAURANT_THEME: ThemeDefinition = {
       visible: true,
       props: {
         title: "কেন আমাদের খাবার বেছে নেবেন?",
-        subtitle: "১০০% স্বাস্থ্যকর উপকরণ ও নিরাপদ প্যাকেজিংয়ের নিশ্চয়তা",
+        subtitle: "100% স্বাস্থ্যকর উপকরণ ও নিরাপদ প্যাকেজিংয়ের নিশ্চয়তা",
       },
     },
   ],

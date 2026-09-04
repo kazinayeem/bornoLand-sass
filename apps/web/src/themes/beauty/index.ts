@@ -58,7 +58,7 @@ export const BEAUTY_THEME: ThemeDefinition = {
   header: {
     layout: "standard",
     showAnnouncement: true,
-    announcementText: "🌸 ১০০% অথেন্টিক স্কিনকেয়ার ও বিউটি প্রোডাক্ট | বিশেষজ্ঞ পরামর্শের সুবিধা",
+    announcementText: "🌸 100% Authentic Skincare & Beauty Products | Expert Consultation Available",
     announcementBg: "#831843",
     announcementTextColor: "#ffffff",
     showSearch: true,
@@ -71,19 +71,19 @@ export const BEAUTY_THEME: ThemeDefinition = {
     logoHeight: 42,
     mobileMenuType: "drawer",
     quickLinks: [
-      { label: "স্কিনকেয়ার রুটিন", href: "/skincare", icon: "Sparkles" },
-      { label: "বেস্ট সেলার", href: "/best-sellers", icon: "Award" },
-      { label: "অথেন্টিসিটি গ্যারান্টি", href: "/authenticity", icon: "ShieldCheck" },
+      { label: "Skincare Routine", href: "/skincare", icon: "Sparkles" },
+      { label: "Best Sellers", href: "/best-sellers", icon: "Award" },
+      { label: "Authenticity Guarantee", href: "/authenticity", icon: "ShieldCheck" },
     ],
   },
 
   footer: {
     layout: "multi-column",
     columns: 4,
-    aboutText: "আমরা শুধুমাত্র সরাসরি আন্তর্জাতিক ব্র্যান্ড ও অফিশিয়াল ডিস্ট্রিবিউটর থেকে সংগৃহীত ১০০% অথেন্টিক বিউটি প্রোডাক্ট সরবরাহ করি। আপনার ত্বকের যত্ন আমাদের দায়িত্ব।",
+    aboutText: "আমরা শুধুমাত্র সরাসরি আন্তর্জাতিক ব্র্যান্ড ও অফিশিয়াল ডিস্ট্রিবিউটর থেকে সংগৃহীত 100% অথেন্টিক বিউটি প্রোডাক্ট সরবরাহ করি। আপনার ত্বকের যত্ন আমাদের দায়িত্ব।",
     hotline: "09613-776655",
     email: "care@bornoland-beauty.com",
-    address: "লেভেল ২, ধানমন্ডি ২৭, ঢাকা-১২০৯",
+    address: "Level 2, Dhanmondi 27, Dhaka-1209",
     showSocial: true,
     showNewsletter: true,
     showPaymentIcons: true,
@@ -100,10 +100,10 @@ export const BEAUTY_THEME: ThemeDefinition = {
       visible: true,
       props: {
         headline: "ত্বকের উজ্জ্বলতা বাড়ান আসল যত্নে",
-        subheadline: "আন্তর্জাতিক মানের ডার্মাটোলজিক্যালি টেস্টেড স্কিনকেয়ার ও প্রসাধন সামগ্রী",
-        buttonText: "স্কিনকেয়ার পণ্য দেখুন",
+        subheadline: "International quality dermatologically tested skincare and beauty products",
+        buttonText: "View Skincare Products",
         buttonLink: "/shop",
-        secondaryButtonText: "রুটিন গাইড",
+        secondaryButtonText: "Routine Guide",
         secondaryButtonLink: "/categories",
         heroHeight: "md",
         imageUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1600&q=80",
@@ -118,7 +118,7 @@ export const BEAUTY_THEME: ThemeDefinition = {
       visible: true,
       props: {
         title: "আপনার প্রয়োজন অনুযায়ী বেছে নিন",
-        subtitle: "স্কিনকেয়ার, মেকআপ, হেয়ারকেয়ার ও বডিকেয়ার কালেকশন",
+        subtitle: "Skincare, makeup, haircare and bodycare collection",
         gridColumns: "6",
         cardStyle: "circle",
         showProductCount: "true",
@@ -131,7 +131,7 @@ export const BEAUTY_THEME: ThemeDefinition = {
       visible: true,
       props: {
         title: "জনপ্রিয় ও সর্বোচ্চ রেটেড প্রোডাক্ট",
-        subtitle: "হাজারো কাস্টমারের বিশ্বস্ত ও কার্যকরী বিউটি পণ্য",
+        subtitle: "Trusted and effective beauty products from thousands of customers",
         gridColumns: "4",
         productCount: "8",
         showBadges: "true",
@@ -147,7 +147,7 @@ export const BEAUTY_THEME: ThemeDefinition = {
       visible: true,
       props: {
         title: "আমাদের শতভাগ নিশ্চয়তা",
-        subtitle: "নিরাপদ, পরীক্ষিত ও শতভাগ খাঁটি উপাদান",
+        subtitle: "Safe, tested and 100% pure ingredients",
       },
     },
     {
@@ -156,10 +156,10 @@ export const BEAUTY_THEME: ThemeDefinition = {
       label: "Beauty Glow Combos",
       visible: true,
       props: {
-        headline: "স্পেশাল গ্লো কম্বো প্যাকেজে ২৫% ফ্ল্যাট ছাড়!",
+        headline: "স্পেশাল গ্লো কম্বো প্যাকেজে 25% ফ্ল্যাট ছাড়!",
         subheadline: "ক্লিনজার, টোনার ও সানস্ক্রিন একসাথে অর্ডারে বিশেষ ছাড়",
         badge: "BEAUTY DEALS",
-        buttonText: "কম্বো অফার নিন",
+        buttonText: "Get Combo Offer",
         buttonLink: "/shop",
         discountPercent: "25%",
         couponCode: "GLOW25",
@@ -171,8 +171,8 @@ export const BEAUTY_THEME: ThemeDefinition = {
       label: "Customer Glow Stories",
       visible: true,
       props: {
-        title: "গ্রাহকদের ত্বকের পরিবর্তন ও রিভিউ",
-        subtitle: "আমাদের প্রোডাক্ট ব্যবহারে কাস্টমারদের আসল অভিজ্ঞতা",
+        title: "Customer Skin Transformations & Reviews",
+        subtitle: "Real customer experiences using our products",
       },
     },
   ],

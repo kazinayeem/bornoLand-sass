@@ -44,18 +44,30 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   if (session && !isSuperAdmin) {
     const storeSlug = session.defaultStoreSlug || (await getUserDefaultStoreSlug());
 
-    // Root /dashboard is the platform overview for Super Admin; merchants/staff redirect to their store or merchant workspace
+    // Root /dashboard is the platform overview for Super Admin; merchants redirect to /workshops, employees to self-service
     if (pathname === "/dashboard" || pathname === "/dashboard/") {
+      if (isMerchant) {
+        redirect("/workshops");
+      }
+      if (session.role === "employee") {
+        if (session.defaultStoreSlug) {
+          redirect(`/store/${session.defaultStoreSlug}/hrm/self-service`);
+        }
+        redirect("/unauthorized");
+      }
       if (storeSlug) {
         redirect(`/store/${storeSlug}/dashboard`);
-      } else if (isMerchant) {
-        redirect("/workshops");
-      } else {
-        redirect("/dashboard/stores/create");
       }
+      redirect("/unauthorized");
     }
 
     if (!isMerchant) {
+      if (session.role === "employee") {
+        if (session.defaultStoreSlug) {
+          redirect(`/store/${session.defaultStoreSlug}/hrm/self-service`);
+        }
+        redirect("/unauthorized");
+      }
       if (storeSlug) {
         redirect(`/store/${storeSlug}/dashboard`);
       } else {

@@ -58,7 +58,7 @@ export const FASHION_THEME: ThemeDefinition = {
   header: {
     layout: "centered",
     showAnnouncement: true,
-    announcementText: "✨ নতুন সিজন কালেকশনে ৩০% পর্যন্ত ছাড় | ফ্রি ডেলিভারি সারা বাংলাদেশে",
+    announcementText: "✨ নতুন সিজন কালেকশনে 30% পর্যন্ত ছাড় | ফ্রি ডেলিভারি সারা বাংলাদেশে",
     announcementBg: "#18181b",
     announcementTextColor: "#ffffff",
     showSearch: true,
@@ -83,7 +83,7 @@ export const FASHION_THEME: ThemeDefinition = {
     aboutText: "আমরা ফ্যাশন ও ঐতিহ্যকে আধুনিক ট্রেন্ডের সাথে যুক্ত করে আপনার জন্য সেরা আউটফিট তৈরি করি। প্রতিটি ফেব্রিক সর্বোচ্চ গুণগত মানসম্পন্ন।",
     hotline: "09613-889900",
     email: "style@bornoland-fashion.com",
-    address: "লেভেল ৪, গুলশান এভিনিউ, ঢাকা-১২১২",
+    address: "লেভেল 4, গুলশান এভিনিউ, ঢাকা-1212",
     showSocial: true,
     showNewsletter: true,
     showPaymentIcons: true,
@@ -145,7 +145,7 @@ export const FASHION_THEME: ThemeDefinition = {
       label: "Limited Season Sale",
       visible: true,
       props: {
-        headline: "স্পেশাল সিজন ডিসকাউন্ট — ৪০% পর্যন্ত ছাড়!",
+        headline: "স্পেশাল সিজন ডিসকাউন্ট — 40% পর্যন্ত ছাড়!",
         subheadline: "নির্দিষ্ট ডিজাইনের পোশাকের ওপর সীমিত সময়ের জন্য বিশেষ ছাড়",
         badge: "HOT OFFER",
         buttonText: "এখনই কিনুন",

@@ -58,7 +58,7 @@ export const BOOKS_THEME: ThemeDefinition = {
   header: {
     layout: "standard",
     showAnnouncement: true,
-    announcementText: "📚 দেশি-বিদেশি সকল ধরণের আসল বইয়ের সুবিশাল সমাহার | ৫০% পর্যন্ত কমিশন",
+    announcementText: "📚 দেশি-বিদেশি সকল ধরণের আসল বইয়ের সুবিশাল সমাহার | 50% পর্যন্ত কমিশন",
     announcementBg: "#0f172a",
     announcementTextColor: "#ffffff",
     showSearch: true,
@@ -83,7 +83,7 @@ export const BOOKS_THEME: ThemeDefinition = {
     aboutText: "বই পড়ার আনন্দ ছড়িয়ে দিতে আমরা কাজ করছি দেশের প্রতিটি প্রান্তে। প্রিয় লেখকের নতুন ও ধ্রুপদী বই সরাসরি প্রকাশনী থেকে আপনার কাছে পৌঁছে দিই।",
     hotline: "09613-221100",
     email: "reader@bornoland-books.com",
-    address: "বাংলাবাজার ও কনকর্ড এম্পোরিয়াম, কাঁটাবন, ঢাকা-১২০৫",
+    address: "বাংলাবাজার ও কনকর্ড এম্পোরিয়াম, কাঁটাবন, ঢাকা-1205",
     showSocial: true,
     showNewsletter: true,
     showPaymentIcons: true,
@@ -146,8 +146,8 @@ export const BOOKS_THEME: ThemeDefinition = {
       label: "Book Fair Special Discount",
       visible: true,
       props: {
-        headline: "প্রকাশনী স্পেশাল মেলা — সর্বোচ্চ ৩৫% পর্যন্ত ছাড়!",
-        subheadline: "৫টি বা তার বেশি বই অর্ডারে সারা দেশে সম্পূর্ণ ফ্রি ডেলিভারি",
+        headline: "প্রকাশনী স্পেশাল মেলা — সর্বোচ্চ 35% পর্যন্ত ছাড়!",
+        subheadline: "5টি বা তার বেশি বই অর্ডারে সারা দেশে সম্পূর্ণ ফ্রি ডেলিভারি",
         badge: "BOOK FAIR OFFER",
         buttonText: "বই সংগ্রহ করুন",
         buttonLink: "/shop",

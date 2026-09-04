@@ -163,12 +163,14 @@ export default async function middleware(request: NextRequest) {
     const defaultDestination = isSuperAdmin
       ? "/dashboard"
       : isMerchant
+      ? "/workshops"
+      : session?.role === "employee"
       ? session?.defaultStoreSlug
-        ? `/store/${session.defaultStoreSlug}/dashboard`
-        : "/workshops"
+        ? `/store/${session.defaultStoreSlug}/hrm/self-service`
+        : "/unauthorized"
       : session?.defaultStoreSlug
       ? `/store/${session.defaultStoreSlug}/dashboard`
-      : "/dashboard/stores/create";
+      : "/unauthorized";
     const redirectTo = validatePlatformRedirect(request.nextUrl.searchParams.get("redirect")) ?? defaultDestination;
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
@@ -211,20 +213,28 @@ export default async function middleware(request: NextRequest) {
       const isMerchant = session.role === "admin" || session.role === "owner";
 
       // Root /dashboard platform overview is reserved for Super Admin
-      // Redirect Merchants & Staff to their store or merchant workspace
+      // Redirect Merchants to workspace (/workshops) and Employees/Staff to their authorized destination
       if (pathname === "/dashboard" || pathname === "/dashboard/") {
-        if (session.defaultStoreSlug) {
-          return NextResponse.redirect(
-            new URL(`/store/${session.defaultStoreSlug}/dashboard`, request.url)
-          );
-        }
         if (isMerchant) {
           return NextResponse.redirect(
             new URL("/workshops", request.url)
           );
         }
+        if (session.role === "employee") {
+          if (session.defaultStoreSlug) {
+            return NextResponse.redirect(
+              new URL(`/store/${session.defaultStoreSlug}/hrm/self-service`, request.url)
+            );
+          }
+          return NextResponse.redirect(new URL("/unauthorized", request.url));
+        }
+        if (session.defaultStoreSlug) {
+          return NextResponse.redirect(
+            new URL(`/store/${session.defaultStoreSlug}/dashboard`, request.url)
+          );
+        }
         return NextResponse.redirect(
-          new URL("/dashboard/stores/create", request.url)
+          new URL("/unauthorized", request.url)
         );
       }
 

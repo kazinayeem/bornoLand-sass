@@ -83,7 +83,7 @@ export const MARKETPLACE_THEME: ThemeDefinition = {
     aboutText: "আমরা লক্ষাধিক আসল পণ্যের সমাহারে আপনার ঘরের দরজায় বিশ্বস্ততার সাথে অনলাইন শপিং অভিজ্ঞতা পৌঁছে দিচ্ছি।",
     hotline: "09613-998877",
     email: "support@bornoland-marketplace.com",
-    address: "লেভেল ৫, বসুন্ধরা সিটি শপিং কমপ্লেক্স, পান্থপথ, ঢাকা-১২০৫",
+    address: "লেভেল 5, বসুন্ধরা সিটি শপিং কমপ্লেক্স, পান্থপথ, ঢাকা-1205",
     showSocial: true,
     showNewsletter: true,
     showPaymentIcons: true,
@@ -161,7 +161,7 @@ export const MARKETPLACE_THEME: ThemeDefinition = {
       visible: true,
       props: {
         title: "অফিশিয়াল ব্র্যান্ড মল",
-        subtitle: "১০০% আসল প্রোডাক্ট ও অফিশিয়াল ওয়ারেন্টি নিশ্চয়তা",
+        subtitle: "100% আসল প্রোডাক্ট ও অফিশিয়াল ওয়ারেন্টি নিশ্চয়তা",
       },
     },
     {
@@ -171,7 +171,7 @@ export const MARKETPLACE_THEME: ThemeDefinition = {
       visible: true,
       props: {
         title: "কেন আমাদের থেকে কেনাকাটা করবেন?",
-        subtitle: "বায়ার প্রোটেকশন, ৭ দিনের ফ্রি রিটার্ন ও ২৪/৭ গ্রাহক সেবা",
+        subtitle: "বায়ার প্রোটেকশন, 7 দিনের ফ্রি রিটার্ন ও 24/7 গ্রাহক সেবা",
       },
     },
   ],

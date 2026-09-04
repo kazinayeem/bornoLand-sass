@@ -36,7 +36,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
 
   const storePhone = contact?.phone || store.phone || "09613-800800";
   const storeEmail = contact?.email || store.email || "support@bornoland.com";
-  const storeAddress = contact?.address || (store as any).address || "মিরপুর, ঢাকা - ১২১৬";
+  const storeAddress = contact?.address || (store as any).address || "Mirpur, Dhaka - 1216";
 
   const rootCategories = (categories as Category[]).filter((c) => !c.parentId);
   const [mobileExpandedCol, setMobileExpandedCol] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
   const showPayment = footerSettings.showPaymentIcons !== false;
   const copyrightText =
     (footerSettings.copyrightText as string) ||
-    `© ${new Date().getFullYear()} ${storeName}। সর্বস্বত্ব সংরক্ষিত।`;
+    `© ${new Date().getFullYear()} ${storeName}. All rights reserved.`;
 
   return (
     <footer className="w-full bg-[var(--store-secondary,#11261f)] text-[var(--store-text,#e2e8f0)] border-t border-[var(--store-border,#1d3d32)] select-none">
@@ -61,7 +61,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">১০০% খাঁটি পণ্য</h4>
+              <h4 className="text-xs sm:text-sm font-bold text-white">100% Pure Products</h4>
               <p className="text-[11px] text-zinc-400 mt-0.5">গুণগত মানের নিশ্চয়তা</p>
             </div>
           </div>
@@ -71,8 +71,8 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
               <Truck className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">দ্রুত ডেলিভারি</h4>
-              <p className="text-[11px] text-zinc-400 mt-0.5">সারাদেশে নিরাপদ হোম ডেলিভারি</p>
+              <h4 className="text-xs sm:text-sm font-bold text-white">Fast Delivery</h4>
+              <p className="text-[11px] text-zinc-400 mt-0.5">Nationwide safe home delivery</p>
             </div>
           </div>
 
@@ -81,8 +81,8 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
               <RotateCcw className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">সহজ রিটার্ন</h4>
-              <p className="text-[11px] text-zinc-400 mt-0.5">পণ্য অপছন্দ হলে পরিবর্তনের সুযোগ</p>
+              <h4 className="text-xs sm:text-sm font-bold text-white">Easy Returns</h4>
+              <p className="text-[11px] text-zinc-400 mt-0.5">Exchange if product is unsatisfactory</p>
             </div>
           </div>
 
@@ -91,8 +91,8 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
               <Headphones className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white">কাস্টমার সাপোর্ট</h4>
-              <p className="text-[11px] text-zinc-400 mt-0.5">যেকোনো তথ্যের জন্য ২৪/৭ পাশে</p>
+              <h4 className="text-xs sm:text-sm font-bold text-white">Customer Support</h4>
+              <p className="text-[11px] text-zinc-400 mt-0.5">24/7 support for any queries</p>
             </div>
           </div>
         </div>
@@ -172,7 +172,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
               {rootCategories.length === 0 && (
                 <li>
                   <Link href="/shop" className="hover:text-white hover:underline transition-colors">
-                    সকল পণ্য দেখুন
+                    View All Products
                   </Link>
                 </li>
               )}
@@ -203,27 +203,27 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
             >
               <li>
                 <Link href="/about" className="hover:text-white hover:underline transition-colors">
-                  আমাদের সম্পর্কে
+                  About Us
                 </Link>
               </li>
               <li>
                 <Link href="/order-tracking" className="hover:text-white hover:underline transition-colors">
-                  অর্ডার ট্র্যাক করুন
+                  Track Order
                 </Link>
               </li>
               <li>
                 <Link href="/shipping" className="hover:text-white hover:underline transition-colors">
-                  ডেলিভারি পলিসি
+                  Delivery Policy
                 </Link>
               </li>
               <li>
                 <Link href="/returns" className="hover:text-white hover:underline transition-colors">
-                  রিটার্ন ও রিফান্ড পলিসি
+                  Return & Refund Policy
                 </Link>
               </li>
               <li>
                 <Link href="/privacy" className="hover:text-white hover:underline transition-colors">
-                  প্রাইভেসি পলিসি
+                  Privacy Policy
                 </Link>
               </li>
             </ul>
@@ -236,7 +236,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
               className="flex items-center justify-between cursor-pointer md:cursor-default"
             >
               <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--store-accent,#f97316)] mb-3 md:mb-4">
-                যোগাযোগের ঠিকানা
+                Contact Info
               </h4>
               <ChevronDown
                 className={cn(
@@ -256,7 +256,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
                   <PhoneCall className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <span className="text-[10px] text-zinc-400 block font-semibold">হটলাইন নম্বর:</span>
+                  <span className="text-[10px] text-zinc-400 block font-semibold">Hotline:</span>
                   <a href={`tel:${storePhone}`} className="font-bold text-white hover:text-[var(--store-accent,#f97316)] transition-colors">
                     {storePhone}
                   </a>
@@ -267,7 +267,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
                   <Mail className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <span className="text-[10px] text-zinc-400 block font-semibold">ইমেইল:</span>
+                  <span className="text-[10px] text-zinc-400 block font-semibold">Email:</span>
                   <a href={`mailto:${storeEmail}`} className="font-medium text-white hover:underline">
                     {storeEmail}
                   </a>
@@ -278,7 +278,7 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
                   <MapPin className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <span className="text-[10px] text-zinc-400 block font-semibold">আউটলেট ও অফিস:</span>
+                  <span className="text-[10px] text-zinc-400 block font-semibold">Outlet & Office:</span>
                   <span className="leading-snug block text-zinc-200">{storeAddress}</span>
                 </div>
               </li>
@@ -290,12 +290,12 @@ export function GroceryFooter({ footerSettings = {} }: GroceryFooterProps) {
         <div className="mt-12 pt-6 border-t border-[var(--store-border,#1d3d32)] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
           <p>{copyrightText}</p>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] text-zinc-400 mr-2">নিরাপদ পেমেন্ট মেথড:</span>
-            <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-bold">বিকাশ</span>
-            <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-bold">নগদ</span>
-            <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-bold">রকেট</span>
-            <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-bold">ভিসা</span>
-            <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-bold">ক্যাশ অন ডেলিভারি</span>
+            <span className="text-[11px] text-zinc-400 mr-2">Secure Payment Methods:</span>
+            <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-bold">bKash</span>
+            <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-bold">Nagad</span>
+            <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-bold">Rocket</span>
+            <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-bold">Visa</span>
+            <span className="px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-bold">Cash on Delivery</span>
           </div>
         </div>
       </div>

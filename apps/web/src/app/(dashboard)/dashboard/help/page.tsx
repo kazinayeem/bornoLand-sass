@@ -5,20 +5,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 const resources = [
   {
-    title: "শুরু করার নির্দেশিকা",
-    description: "কীভাবে আপনার প্রথম দোকান তৈরি করবেন এবং পণ্য যোগ করবেন তা শিখুন।",
+    title: "Getting Started Guide",
+    description: "Learn how to create your first store and add products.",
     href: "/dashboard/stores/create",
     icon: BookOpen,
   },
   {
-    title: "দোকান পরিচালনা",
-    description: "পণ্য, অর্ডার, কাস্টমার এবং থিম ডিজাইন খুব সহজে ম্যানেজ করুন।",
+    title: "Store Management",
+    description: "Manage products, orders, customers, and theme design with ease.",
     href: "/dashboard/stores",
     icon: MessageCircle,
   },
   {
-    title: "সরাসরি সহায়তা প্রাপ্তি",
-    description: "যেকোনো প্রশ্নের জন্য আমাদের ইমেইল করুন: support@bornoland.com।",
+    title: "Direct Support",
+    description: "For any questions, email us at: support@bornoland.com",
     href: "mailto:support@bornoland.com",
     icon: Mail,
   },
@@ -28,8 +28,8 @@ export default function HelpPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="সহায়তা কেন্দ্র"
-        description="আপনার বর্ণল্যান্ড ওয়ার্কস্পেস পরিচালনার প্রয়োজনীয় টিউটোরিয়াল ও সাপোর্ট।"
+        title="Help Center"
+        description="Tutorials and support for managing your BornoLand workspace."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -47,7 +47,7 @@ export default function HelpPage() {
                 href={item.href}
                 className="text-sm font-medium text-blue-600 underline-offset-4 hover:underline"
               >
-                বিস্তারিত দেখুন →
+                Learn More →
               </Link>
             </CardContent>
           </Card>

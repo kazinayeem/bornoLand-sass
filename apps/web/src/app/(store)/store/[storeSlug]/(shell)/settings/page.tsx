@@ -109,38 +109,38 @@ function getSettingsSections(t: Dictionary): SectionDef[] {
   const s = t.settings.sections;
   return [
     // GENERAL
-    { id: "general", label: s.general, description: s.generalDesc, icon: Settings2, group: "GENERAL", keywords: ["store name", "slug", "about", "status", "সাধারণ", "নাম"] },
-    { id: "branding", label: s.branding, description: s.brandingDesc, icon: Sparkles, group: "GENERAL", keywords: ["logo", "color", "favicon", "brand", "লোগো", "রং", "ব্র্যান্ডিং"] },
-    { id: "contact", label: s.contact, description: s.contactDesc, icon: MapPin, group: "GENERAL", keywords: ["phone", "email", "support", "address", "ফোন", "ইমেইল", "ঠিকানা", "যোগাযোগ"] },
+    { id: "general", label: s.general, description: s.generalDesc, icon: Settings2, group: "GENERAL", keywords: ["store name", "slug", "about", "status"] },
+    { id: "branding", label: s.branding, description: s.brandingDesc, icon: Sparkles, group: "GENERAL", keywords: ["logo", "color", "favicon", "brand"] },
+    { id: "contact", label: s.contact, description: s.contactDesc, icon: MapPin, group: "GENERAL", keywords: ["phone", "email", "support", "address"] },
 
     // STORE
-    { id: "localization", label: s.localization, description: s.localizationDesc, icon: Globe, group: "STORE", keywords: ["timezone", "date", "language", "locale", "সময়", "তারিখ", "ভাষা", "স্থানীয়করণ"] },
-    { id: "currency", label: s.currency, description: s.currencyDesc, icon: DollarSign, group: "STORE", keywords: ["bdt", "usd", "symbol", "money", "pricing", "টাকা", "মুদ্রা", "প্রতীক"] },
-    { id: "seo", label: s.seo, description: s.seoDesc, icon: Search, group: "STORE", keywords: ["meta", "google", "sitemap", "keywords", "মেটা", "সার্চ"] },
-    { id: "domain", label: s.domain, description: s.domainDesc, icon: Globe2, group: "STORE", keywords: ["cname", "dns", "ssl", "subdomain", "ডোমেইন", "custom domain"] },
+    { id: "localization", label: s.localization, description: s.localizationDesc, icon: Globe, group: "STORE", keywords: ["timezone", "date", "language", "locale"] },
+    { id: "currency", label: s.currency, description: s.currencyDesc, icon: DollarSign, group: "STORE", keywords: ["bdt", "usd", "symbol", "money", "pricing"] },
+    { id: "seo", label: s.seo, description: s.seoDesc, icon: Search, group: "STORE", keywords: ["meta", "google", "sitemap", "keywords"] },
+    { id: "domain", label: s.domain, description: s.domainDesc, icon: Globe2, group: "STORE", keywords: ["cname", "dns", "ssl", "subdomain", "custom domain"] },
 
     // COMMERCE
-    { id: "checkout", label: s.checkout, description: s.checkoutDesc, icon: ShoppingCart, group: "COMMERCE", keywords: ["cart", "guest", "order limit", "fields", "চেকআউট"] },
-    { id: "payments", label: s.payments, description: s.paymentsDesc, icon: CreditCard, group: "COMMERCE", keywords: ["cod", "bkash", "nagad", "gateway", "bank", "পেমেন্ট", "বিকাশ", "নগদ"] },
-    { id: "shipping", label: s.shipping, description: s.shippingDesc, icon: Truck, group: "COMMERCE", keywords: ["delivery", "charge", "free shipping", "zone", "শিপিং", "ডেলিভারি"] },
-    { id: "courier", label: s.courier, description: s.courierDesc, icon: Package, group: "COMMERCE", keywords: ["steadfast", "pathao", "redx", "tracking", "কুরিয়ার", "পাঠাও", "স্টিডফাস্ট"] },
-    { id: "taxes", label: s.taxes, description: s.taxesDesc, icon: Percent, group: "COMMERCE", keywords: ["tax", "vat", "gst", "percentage", "ট্যাক্স", "ভ্যাট"] },
-    { id: "invoice", label: s.invoice, description: s.invoiceDesc, icon: FileText, group: "COMMERCE", keywords: ["pdf", "receipt", "order bill", "numbering", "ইনভয়েস", "বিল"] },
+    { id: "checkout", label: s.checkout, description: s.checkoutDesc, icon: ShoppingCart, group: "COMMERCE", keywords: ["cart", "guest", "order limit", "fields"] },
+    { id: "payments", label: s.payments, description: s.paymentsDesc, icon: CreditCard, group: "COMMERCE", keywords: ["cod", "bkash", "nagad", "gateway", "bank"] },
+    { id: "shipping", label: s.shipping, description: s.shippingDesc, icon: Truck, group: "COMMERCE", keywords: ["delivery", "charge", "free shipping", "zone"] },
+    { id: "courier", label: s.courier, description: s.courierDesc, icon: Package, group: "COMMERCE", keywords: ["steadfast", "pathao", "redx", "tracking"] },
+    { id: "taxes", label: s.taxes, description: s.taxesDesc, icon: Percent, group: "COMMERCE", keywords: ["tax", "vat", "gst", "percentage"] },
+    { id: "invoice", label: s.invoice, description: s.invoiceDesc, icon: FileText, group: "COMMERCE", keywords: ["pdf", "receipt", "order bill", "numbering"] },
 
     // CONTENT
-    { id: "navigation", label: s.navigation, description: s.navigationDesc, icon: Menu, group: "CONTENT", keywords: ["menu", "header", "footer", "links", "নেভিগেশন", "মেনু"] },
-    { id: "cms-pages", label: s.cmsPages, description: s.cmsPagesDesc, icon: BookOpen, group: "CONTENT", keywords: ["about", "terms", "custom page", "পেজ"] },
-    { id: "policies", label: s.policies, description: s.policiesDesc, icon: ShieldCheck, group: "CONTENT", keywords: ["privacy", "refund", "terms", "return", "নীতিমালা"] },
-    { id: "faq", label: s.faq, description: s.faqDesc, icon: HelpCircle, group: "CONTENT", keywords: ["help", "questions", "answers", "প্রশ্ন"] },
-    { id: "social-links", label: s.socialLinks, description: s.socialLinksDesc, icon: Share2, group: "CONTENT", keywords: ["facebook", "instagram", "whatsapp", "tiktok", "সোশ্যাল"] },
+    { id: "navigation", label: s.navigation, description: s.navigationDesc, icon: Menu, group: "CONTENT", keywords: ["menu", "header", "footer", "links"] },
+    { id: "cms-pages", label: s.cmsPages, description: s.cmsPagesDesc, icon: BookOpen, group: "CONTENT", keywords: ["about", "terms", "custom page"] },
+    { id: "policies", label: s.policies, description: s.policiesDesc, icon: ShieldCheck, group: "CONTENT", keywords: ["privacy", "refund", "terms", "return"] },
+    { id: "faq", label: s.faq, description: s.faqDesc, icon: HelpCircle, group: "CONTENT", keywords: ["help", "questions", "answers"] },
+    { id: "social-links", label: s.socialLinks, description: s.socialLinksDesc, icon: Share2, group: "CONTENT", keywords: ["facebook", "instagram", "whatsapp", "tiktok"] },
 
     // COMMUNICATION
-    { id: "email", label: s.email, description: s.emailDesc, icon: Mail, group: "COMMUNICATION", keywords: ["smtp", "notifications", "alerts", "mail", "ইমেইল"] },
-    { id: "messages", label: s.messages, description: s.messagesDesc, icon: MessageSquare, group: "COMMUNICATION", keywords: ["inbox", "inquiries", "contact", "বার্তা"] },
+    { id: "email", label: s.email, description: s.emailDesc, icon: Mail, group: "COMMUNICATION", keywords: ["smtp", "notifications", "alerts", "mail"] },
+    { id: "messages", label: s.messages, description: s.messagesDesc, icon: MessageSquare, group: "COMMUNICATION", keywords: ["inbox", "inquiries", "contact"] },
 
     // ADVANCED
-    { id: "security", label: s.security, description: s.securityDesc, icon: Lock, group: "ADVANCED", keywords: ["password", "protect", "auth", "session", "নিরাপত্তা"] },
-    { id: "advanced", label: s.advanced, description: s.advancedDesc, icon: Cpu, group: "ADVANCED", keywords: ["api", "webhook", "developer", "danger", "অ্যাডভান্সড"] },
+    { id: "security", label: s.security, description: s.securityDesc, icon: Lock, group: "ADVANCED", keywords: ["password", "protect", "auth", "session"] },
+    { id: "advanced", label: s.advanced, description: s.advancedDesc, icon: Cpu, group: "ADVANCED", keywords: ["api", "webhook", "developer", "danger"] },
   ];
 }
 

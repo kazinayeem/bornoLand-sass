@@ -158,15 +158,15 @@ export function StoryAnalytics() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-3.5 rounded-xl bg-white border border-zinc-200 shadow-2xs space-y-1">
                   <p className="font-bold text-zinc-900">Premium Cotton Panjabi</p>
-                  <p className="text-[#0A8A00] font-bold">৳৮৬,৪০০ (৪৬টি বিক্রি)</p>
+                  <p className="text-[#0A8A00] font-bold">৳86,400 (46 sold)</p>
                 </div>
                 <div className="p-3.5 rounded-xl bg-white border border-zinc-200 shadow-2xs space-y-1">
                   <p className="font-bold text-zinc-900">Wireless Earbuds Pro</p>
-                  <p className="text-[#0A8A00] font-bold">৳৪৯,৯৮০ (২০টি বিক্রি)</p>
+                  <p className="text-[#0A8A00] font-bold">৳49,980 (20 sold)</p>
                 </div>
                 <div className="p-3.5 rounded-xl bg-white border border-zinc-200 shadow-2xs space-y-1">
                   <p className="font-bold text-zinc-900">Classic Silk Saree</p>
-                  <p className="text-[#0A8A00] font-bold">৳৩৮,৫০০ (১০টি বিক্রি)</p>
+                  <p className="text-[#0A8A00] font-bold">৳38,500 (10 sold)</p>
                 </div>
               </div>
             </div>

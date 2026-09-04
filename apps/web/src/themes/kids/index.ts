@@ -58,7 +58,7 @@ export const KIDS_THEME: ThemeDefinition = {
   header: {
     layout: "standard",
     showAnnouncement: true,
-    announcementText: "🎈 ১০০% নন-টক্সিক ও শিশুদের জন্য নিরাপদ পণ্য | প্রথম অর্ডারে বিশেষ গিফট!",
+    announcementText: "🎈 100% নন-টক্সিক ও শিশুদের জন্য নিরাপদ পণ্য | প্রথম অর্ডারে বিশেষ গিফট!",
     announcementBg: "#8b5cf6",
     announcementTextColor: "#ffffff",
     showSearch: true,
@@ -83,7 +83,7 @@ export const KIDS_THEME: ThemeDefinition = {
     aboutText: "আপনার সোনামণির হাসিমুখ ও সুরক্ষায় আমরা নিয়ে এসেছি শতভাগ নিরাপদ, নন-টক্সিক ও প্রিমিয়াম মানের বেবি এবং কিডস পণ্য সামগ্রী।",
     hotline: "09613-110099",
     email: "care@bornoland-kids.com",
-    address: "লেভেল ৩, যমুনা ফিউচার পার্ক, বারিধারা, ঢাকা-১২২৯",
+    address: "লেভেল 3, যমুনা ফিউচার পার্ক, বারিধারা, ঢাকা-1229",
     showSocial: true,
     showNewsletter: true,
     showPaymentIcons: true,
@@ -118,7 +118,7 @@ export const KIDS_THEME: ThemeDefinition = {
       visible: true,
       props: {
         title: "বয়স ও ক্যাটাগরি অনুযায়ী পছন্দ করুন",
-        subtitle: "নবজাতক থেকে ১২ বছর পর্যন্ত সকল শিশুর প্রয়োজনীয় পণ্য",
+        subtitle: "নবজাতক থেকে 12 বছর পর্যন্ত সকল শিশুর প্রয়োজনীয় পণ্য",
         gridColumns: "6",
         cardStyle: "kids-fun",
         showProductCount: "true",
@@ -147,7 +147,7 @@ export const KIDS_THEME: ThemeDefinition = {
       visible: true,
       props: {
         title: "শিশুর নিরাপত্তায় আমাদের অঙ্গীকার",
-        subtitle: "BPA-ফ্রি, নন-টক্সিক ও ১০০% ত্বকের জন্য নিরাপদ উপাদান",
+        subtitle: "BPA-ফ্রি, নন-টক্সিক ও 100% ত্বকের জন্য নিরাপদ উপাদান",
       },
     },
     {
@@ -156,7 +156,7 @@ export const KIDS_THEME: ThemeDefinition = {
       label: "Baby Care Value Bundles",
       visible: true,
       props: {
-        headline: "বেবি কেয়ার ও ডায়পার বান্ডেলে ৩০% পর্যন্ত ক্যাশব্যাক!",
+        headline: "বেবি কেয়ার ও ডায়পার বান্ডেলে 30% পর্যন্ত ক্যাশব্যাক!",
         subheadline: "মান্থলি বেবি সাপ্লাই কম্বো প্যাকে পান আকর্ষণীয় ছাড়",
         badge: "PARENTS SPECIAL",
         buttonText: "বান্ডেল অর্ডার করুন",

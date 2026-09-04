@@ -500,9 +500,22 @@ export async function googleCallbackController(request: Request, response: Respo
     sessionMaxAge: rtMaxAge,
   });
 
-  let callbackUrl = "/dashboard";
+  const defaultDestination = user.role === "super_admin" ? "/dashboard" : "/workshops";
+  let callbackUrl = defaultDestination;
   if (state) {
-    try { callbackUrl = safeOAuthCallbackPath(JSON.parse(Buffer.from(state, "base64url").toString("utf8")).callbackUrl); } catch { callbackUrl = "/dashboard"; }
+    try {
+      const parsed = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
+      if (parsed.callbackUrl) {
+        const safe = safeOAuthCallbackPath(parsed.callbackUrl);
+        if (user.role !== "super_admin" && (safe === "/dashboard" || safe === "/dashboard/")) {
+          callbackUrl = "/workshops";
+        } else {
+          callbackUrl = safe;
+        }
+      }
+    } catch {
+      callbackUrl = defaultDestination;
+    }
   }
   // Pass access token as a fragment; fragments never reach the server or logs.
   const destination = new URL(callbackUrl, `${webUrl}/`);

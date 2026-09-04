@@ -11,6 +11,8 @@
     "format": "prettier --write .",
     "clean": "turbo run clean",
     "seed:nayeem-products": "pnpm --filter @bornoland/api seed:nayeem-products",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test --grep @smoke",
     "docker:build": "docker compose --env-file ${ENV_FILE:-.env.production} build",
     "docker:up": "docker compose --env-file ${ENV_FILE:-.env.production} up -d",
     "docker:down": "docker compose --env-file ${ENV_FILE:-.env.production} down",
@@ -19,6 +21,7 @@
     "docker:restart": "docker compose --env-file ${ENV_FILE:-.env.production} up -d --build"
   },
   "devDependencies": {
+    "@playwright/test": "^1.50.1",
     "concurrently": "^9.2.1",
     "docx": "^9.7.1",
     "prettier": "^3.4.2",

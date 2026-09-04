@@ -1,0 +1,1668 @@
+[
+  {
+    "sourceFile": "page.tsx",
+    "routePattern": "/",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/about/page.tsx",
+    "routePattern": "/about",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/acceptable-use/page.tsx",
+    "routePattern": "/acceptable-use",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "admin/page.tsx",
+    "routePattern": "/admin",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/page.tsx",
+    "routePattern": "/admin/dashboard",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/activity/page.tsx",
+    "routePattern": "/admin/dashboard/activity",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/analytics/page.tsx",
+    "routePattern": "/admin/dashboard/analytics",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/announcements/page.tsx",
+    "routePattern": "/admin/dashboard/announcements",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/api-keys/page.tsx",
+    "routePattern": "/admin/dashboard/api-keys",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/apps/page.tsx",
+    "routePattern": "/admin/dashboard/apps",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/audit-center/page.tsx",
+    "routePattern": "/admin/dashboard/audit-center",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/developers/page.tsx",
+    "routePattern": "/admin/dashboard/developers",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/domains/page.tsx",
+    "routePattern": "/admin/dashboard/domains",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/features/page.tsx",
+    "routePattern": "/admin/dashboard/features",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/invoices/page.tsx",
+    "routePattern": "/admin/dashboard/invoices",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/orders/page.tsx",
+    "routePattern": "/admin/dashboard/orders",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/payments/page.tsx",
+    "routePattern": "/admin/dashboard/payments",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/plans/page.tsx",
+    "routePattern": "/admin/dashboard/plans",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/plans/[planId]/page.tsx",
+    "routePattern": "/admin/dashboard/plans/[planId]",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/platform/page.tsx",
+    "routePattern": "/admin/dashboard/platform",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/products/page.tsx",
+    "routePattern": "/admin/dashboard/products",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/profile/page.tsx",
+    "routePattern": "/admin/dashboard/profile",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/reports/page.tsx",
+    "routePattern": "/admin/dashboard/reports",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/roles/page.tsx",
+    "routePattern": "/admin/dashboard/roles",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/security/page.tsx",
+    "routePattern": "/admin/dashboard/security",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/settings/page.tsx",
+    "routePattern": "/admin/dashboard/settings",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/storage/page.tsx",
+    "routePattern": "/admin/dashboard/storage",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/stores/page.tsx",
+    "routePattern": "/admin/dashboard/stores",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/subscriptions/page.tsx",
+    "routePattern": "/admin/dashboard/subscriptions",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/support/page.tsx",
+    "routePattern": "/admin/dashboard/support",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/templates/page.tsx",
+    "routePattern": "/admin/dashboard/templates",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/tracking/page.tsx",
+    "routePattern": "/admin/dashboard/tracking",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/users/page.tsx",
+    "routePattern": "/admin/dashboard/users",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "admin/dashboard/workspaces/page.tsx",
+    "routePattern": "/admin/dashboard/workspaces",
+    "category": "admin",
+    "authRequired": true,
+    "requiredRole": "super_admin"
+  },
+  {
+    "sourceFile": "(admin)/admin/login/page.tsx",
+    "routePattern": "/admin/login",
+    "category": "auth",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/blog/page.tsx",
+    "routePattern": "/blog",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/careers/page.tsx",
+    "routePattern": "/careers",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/contact/page.tsx",
+    "routePattern": "/contact",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/cookie-policy/page.tsx",
+    "routePattern": "/cookie-policy",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/page.tsx",
+    "routePattern": "/dashboard",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/account/page.tsx",
+    "routePattern": "/dashboard/account",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/activity/page.tsx",
+    "routePattern": "/dashboard/activity",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/analytics/live/page.tsx",
+    "routePattern": "/dashboard/analytics/live",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/analytics/reports/page.tsx",
+    "routePattern": "/dashboard/analytics/reports",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/analytics/sources/page.tsx",
+    "routePattern": "/dashboard/analytics/sources",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/analytics/visitors/page.tsx",
+    "routePattern": "/dashboard/analytics/visitors",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/billing/page.tsx",
+    "routePattern": "/dashboard/billing",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/builder/[storeId]/page.tsx",
+    "routePattern": "/dashboard/builder/[storeId]",
+    "category": "store_builder",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/builder/[storeId]/[pageParam]/page.tsx",
+    "routePattern": "/dashboard/builder/[storeId]/[pageParam]",
+    "category": "store_builder",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/categories/page.tsx",
+    "routePattern": "/dashboard/categories",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/cms/page.tsx",
+    "routePattern": "/dashboard/cms",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/cms/[slug]/page.tsx",
+    "routePattern": "/dashboard/cms/[slug]",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/cms/faqs/page.tsx",
+    "routePattern": "/dashboard/cms/faqs",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/create-store/page.tsx",
+    "routePattern": "/dashboard/create-store",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/help/page.tsx",
+    "routePattern": "/dashboard/help",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/notifications/page.tsx",
+    "routePattern": "/dashboard/notifications",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/orders/page.tsx",
+    "routePattern": "/dashboard/orders",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/plans/page.tsx",
+    "routePattern": "/dashboard/plans",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/products/page.tsx",
+    "routePattern": "/dashboard/products",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/security/page.tsx",
+    "routePattern": "/dashboard/security",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/settings/page.tsx",
+    "routePattern": "/dashboard/settings",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/settings/delivery/page.tsx",
+    "routePattern": "/dashboard/settings/delivery",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/settings/email/page.tsx",
+    "routePattern": "/dashboard/settings/email",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/settings/payment/page.tsx",
+    "routePattern": "/dashboard/settings/payment",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/stores/page.tsx",
+    "routePattern": "/dashboard/stores",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/stores/[storeId]/page.tsx",
+    "routePattern": "/dashboard/stores/[storeId]",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/stores/[storeId]/products/page.tsx",
+    "routePattern": "/dashboard/stores/[storeId]/products",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/stores/archived/page.tsx",
+    "routePattern": "/dashboard/stores/archived",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/stores/create/page.tsx",
+    "routePattern": "/dashboard/stores/create",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/subscription/page.tsx",
+    "routePattern": "/dashboard/subscription",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/team/page.tsx",
+    "routePattern": "/dashboard/team",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(dashboard)/dashboard/theme/page.tsx",
+    "routePattern": "/dashboard/theme",
+    "category": "legacy_dashboard",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(marketing)/docs/page.tsx",
+    "routePattern": "/docs",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/docs/[slug]/page.tsx",
+    "routePattern": "/docs/[slug]",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/faq/page.tsx",
+    "routePattern": "/faq",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/features/page.tsx",
+    "routePattern": "/features",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(auth)/forgot-password/page.tsx",
+    "routePattern": "/forgot-password",
+    "category": "auth",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/help/page.tsx",
+    "routePattern": "/help",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/help-center/page.tsx",
+    "routePattern": "/help-center",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/how-it-works/page.tsx",
+    "routePattern": "/how-it-works",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/how-to-use/page.tsx",
+    "routePattern": "/how-to-use",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/integrations/page.tsx",
+    "routePattern": "/integrations",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(auth)/invite/[token]/page.tsx",
+    "routePattern": "/invite/[token]",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "invoice/verify/[token]/page.tsx",
+    "routePattern": "/invoice/verify/[token]",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "invoices/verify/[token]/page.tsx",
+    "routePattern": "/invoices/verify/[token]",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(auth)/login/page.tsx",
+    "routePattern": "/login",
+    "category": "auth",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/pricing/page.tsx",
+    "routePattern": "/pricing",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/privacy/page.tsx",
+    "routePattern": "/privacy",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "products/[slug]/page.tsx",
+    "routePattern": "/products/[slug]",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/refund/page.tsx",
+    "routePattern": "/refund",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/refund-policy/page.tsx",
+    "routePattern": "/refund-policy",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(auth)/register/page.tsx",
+    "routePattern": "/register",
+    "category": "auth",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(auth)/reset-password/[token]/page.tsx",
+    "routePattern": "/reset-password/[token]",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/page.tsx",
+    "routePattern": "/site/[tenant]",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/about/page.tsx",
+    "routePattern": "/site/[tenant]/about",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/account/page.tsx",
+    "routePattern": "/site/[tenant]/account",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/account/addresses/page.tsx",
+    "routePattern": "/site/[tenant]/account/addresses",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/account/forgot-password/page.tsx",
+    "routePattern": "/site/[tenant]/account/forgot-password",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/account/login/page.tsx",
+    "routePattern": "/site/[tenant]/account/login",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/account/notifications/page.tsx",
+    "routePattern": "/site/[tenant]/account/notifications",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/account/orders/page.tsx",
+    "routePattern": "/site/[tenant]/account/orders",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/account/password/page.tsx",
+    "routePattern": "/site/[tenant]/account/password",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/account/profile/page.tsx",
+    "routePattern": "/site/[tenant]/account/profile",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/account/register/page.tsx",
+    "routePattern": "/site/[tenant]/account/register",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/account/security/page.tsx",
+    "routePattern": "/site/[tenant]/account/security",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/account/wishlist/page.tsx",
+    "routePattern": "/site/[tenant]/account/wishlist",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/blog/page.tsx",
+    "routePattern": "/site/[tenant]/blog",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/blog/[slug]/page.tsx",
+    "routePattern": "/site/[tenant]/blog/[slug]",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/brand/[slug]/page.tsx",
+    "routePattern": "/site/[tenant]/brand/[slug]",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/cart/page.tsx",
+    "routePattern": "/site/[tenant]/cart",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/categories/page.tsx",
+    "routePattern": "/site/[tenant]/categories",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/category/[...slug]/page.tsx",
+    "routePattern": "/site/[tenant]/category/[...slug]",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/checkout/page.tsx",
+    "routePattern": "/site/[tenant]/checkout",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/checkout/cancelled/page.tsx",
+    "routePattern": "/site/[tenant]/checkout/cancelled",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/checkout/failed/page.tsx",
+    "routePattern": "/site/[tenant]/checkout/failed",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/checkout/payment/cancel/page.tsx",
+    "routePattern": "/site/[tenant]/checkout/payment/cancel",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/checkout/payment/fail/page.tsx",
+    "routePattern": "/site/[tenant]/checkout/payment/fail",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/checkout/payment/success/page.tsx",
+    "routePattern": "/site/[tenant]/checkout/payment/success",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/checkout/success/page.tsx",
+    "routePattern": "/site/[tenant]/checkout/success",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/contact/page.tsx",
+    "routePattern": "/site/[tenant]/contact",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/faq/page.tsx",
+    "routePattern": "/site/[tenant]/faq",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/order-tracking/page.tsx",
+    "routePattern": "/site/[tenant]/order-tracking",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/orders/page.tsx",
+    "routePattern": "/site/[tenant]/orders",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/orders/[id]/page.tsx",
+    "routePattern": "/site/[tenant]/orders/[id]",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/privacy/page.tsx",
+    "routePattern": "/site/[tenant]/privacy",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/products/page.tsx",
+    "routePattern": "/site/[tenant]/products",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/products/[slug]/page.tsx",
+    "routePattern": "/site/[tenant]/products/[slug]",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/returns/page.tsx",
+    "routePattern": "/site/[tenant]/returns",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/search/page.tsx",
+    "routePattern": "/site/[tenant]/search",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/shipping/page.tsx",
+    "routePattern": "/site/[tenant]/shipping",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/shop/page.tsx",
+    "routePattern": "/site/[tenant]/shop",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/size-guide/page.tsx",
+    "routePattern": "/site/[tenant]/size-guide",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/terms/page.tsx",
+    "routePattern": "/site/[tenant]/terms",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "site/[tenant]/wishlist/page.tsx",
+    "routePattern": "/site/[tenant]/wishlist",
+    "category": "storefront",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/solutions/page.tsx",
+    "routePattern": "/solutions",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/page.tsx",
+    "routePattern": "/store/[storeSlug]",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/[pageSlug]/page.tsx",
+    "routePattern": "/store/[storeSlug]/[pageSlug]",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/access-denied/page.tsx",
+    "routePattern": "/store/[storeSlug]/access-denied",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/activity/page.tsx",
+    "routePattern": "/store/[storeSlug]/activity",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/browsers/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics/browsers",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/campaigns/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics/campaigns",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/cities/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics/cities",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/conversion/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics/conversion",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/countries/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics/countries",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/devices/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics/devices",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/live/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics/live",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/pages/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics/pages",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/referrers/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics/referrers",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/reports/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics/reports",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/traffic-sources/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics/traffic-sources",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/analytics/visitors/page.tsx",
+    "routePattern": "/store/[storeSlug]/analytics/visitors",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/appearance/branding/page.tsx",
+    "routePattern": "/store/[storeSlug]/appearance/branding",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/appearance/domain/page.tsx",
+    "routePattern": "/store/[storeSlug]/appearance/domain",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/appearance/seo/page.tsx",
+    "routePattern": "/store/[storeSlug]/appearance/seo",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/appearance/theme/page.tsx",
+    "routePattern": "/store/[storeSlug]/appearance/theme",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/apps/page.tsx",
+    "routePattern": "/store/[storeSlug]/apps",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/billing/page.tsx",
+    "routePattern": "/store/[storeSlug]/billing",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/billing/payment-gateway-mock/page.tsx",
+    "routePattern": "/store/[storeSlug]/billing/payment-gateway-mock",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/builder/page.tsx",
+    "routePattern": "/store/[storeSlug]/builder",
+    "category": "store_builder",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/builder/[pageSlug]/page.tsx",
+    "routePattern": "/store/[storeSlug]/builder/[pageSlug]",
+    "category": "store_builder",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/categories/page.tsx",
+    "routePattern": "/store/[storeSlug]/categories",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/cms/page.tsx",
+    "routePattern": "/store/[storeSlug]/cms",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/cms/[slug]/page.tsx",
+    "routePattern": "/store/[storeSlug]/cms/[slug]",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/cms/contact/page.tsx",
+    "routePattern": "/store/[storeSlug]/cms/contact",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/cms/faqs/page.tsx",
+    "routePattern": "/store/[storeSlug]/cms/faqs",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/coupons/page.tsx",
+    "routePattern": "/store/[storeSlug]/coupons",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/crm/page.tsx",
+    "routePattern": "/store/[storeSlug]/crm",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/crm/deals/page.tsx",
+    "routePattern": "/store/[storeSlug]/crm/deals",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/customer-messages/page.tsx",
+    "routePattern": "/store/[storeSlug]/customer-messages",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/customers/page.tsx",
+    "routePattern": "/store/[storeSlug]/customers",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/dashboard/page.tsx",
+    "routePattern": "/store/[storeSlug]/dashboard",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/design/page.tsx",
+    "routePattern": "/store/[storeSlug]/design",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/finance/page.tsx",
+    "routePattern": "/store/[storeSlug]/finance",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/finance/accounting/page.tsx",
+    "routePattern": "/store/[storeSlug]/finance/accounting",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/finance/accounting/coa/page.tsx",
+    "routePattern": "/store/[storeSlug]/finance/accounting/coa",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/finance/accounting/journal/page.tsx",
+    "routePattern": "/store/[storeSlug]/finance/accounting/journal",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/finance/expenses/page.tsx",
+    "routePattern": "/store/[storeSlug]/finance/expenses",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/finance/reports/page.tsx",
+    "routePattern": "/store/[storeSlug]/finance/reports",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/hrm/page.tsx",
+    "routePattern": "/store/[storeSlug]/hrm",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/hrm/attendance/page.tsx",
+    "routePattern": "/store/[storeSlug]/hrm/attendance",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/hrm/employees/page.tsx",
+    "routePattern": "/store/[storeSlug]/hrm/employees",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/hrm/leaves/page.tsx",
+    "routePattern": "/store/[storeSlug]/hrm/leaves",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/hrm/organization/page.tsx",
+    "routePattern": "/store/[storeSlug]/hrm/organization",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/hrm/payroll/page.tsx",
+    "routePattern": "/store/[storeSlug]/hrm/payroll",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/hrm/self-service/page.tsx",
+    "routePattern": "/store/[storeSlug]/hrm/self-service",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/inventory/page.tsx",
+    "routePattern": "/store/[storeSlug]/inventory",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/inventory/ledger/page.tsx",
+    "routePattern": "/store/[storeSlug]/inventory/ledger",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/inventory/purchasing/page.tsx",
+    "routePattern": "/store/[storeSlug]/inventory/purchasing",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/inventory/suppliers/page.tsx",
+    "routePattern": "/store/[storeSlug]/inventory/suppliers",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/inventory/warehouses/page.tsx",
+    "routePattern": "/store/[storeSlug]/inventory/warehouses",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/inventory/waste/page.tsx",
+    "routePattern": "/store/[storeSlug]/inventory/waste",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/manage-shop/page.tsx",
+    "routePattern": "/store/[storeSlug]/manage-shop",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/marketing/page.tsx",
+    "routePattern": "/store/[storeSlug]/marketing",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/media/page.tsx",
+    "routePattern": "/store/[storeSlug]/media",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/members/page.tsx",
+    "routePattern": "/store/[storeSlug]/members",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/notifications/page.tsx",
+    "routePattern": "/store/[storeSlug]/notifications",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/operations/page.tsx",
+    "routePattern": "/store/[storeSlug]/operations",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/operations/approvals/page.tsx",
+    "routePattern": "/store/[storeSlug]/operations/approvals",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/operations/tasks/page.tsx",
+    "routePattern": "/store/[storeSlug]/operations/tasks",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/orders/page.tsx",
+    "routePattern": "/store/[storeSlug]/orders",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/orders/incomplete/page.tsx",
+    "routePattern": "/store/[storeSlug]/orders/incomplete",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/pages/page.tsx",
+    "routePattern": "/store/[storeSlug]/pages",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/pos/page.tsx",
+    "routePattern": "/store/[storeSlug]/pos",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/pos/shifts/page.tsx",
+    "routePattern": "/store/[storeSlug]/pos/shifts",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/products/page.tsx",
+    "routePattern": "/store/[storeSlug]/products",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/products/[productId]/duplicate/page.tsx",
+    "routePattern": "/store/[storeSlug]/products/[productId]/duplicate",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/products/[productId]/edit/page.tsx",
+    "routePattern": "/store/[storeSlug]/products/[productId]/edit",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/products/new/page.tsx",
+    "routePattern": "/store/[storeSlug]/products/new",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/reports/page.tsx",
+    "routePattern": "/store/[storeSlug]/reports",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/reviews/page.tsx",
+    "routePattern": "/store/[storeSlug]/reviews",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/checkout/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings/checkout",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/contact/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings/contact",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/content/[slug]/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings/content/[slug]",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/content/faq/items/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings/content/faq/items",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/courier/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings/courier",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/invoice/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings/invoice",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/localization/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings/localization",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/notifications/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings/notifications",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/payments/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings/payments",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/shipping/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings/shipping",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/taxes/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings/taxes",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/settings/tracking/page.tsx",
+    "routePattern": "/store/[storeSlug]/settings/tracking",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/support/page.tsx",
+    "routePattern": "/store/[storeSlug]/support",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/support/tickets/page.tsx",
+    "routePattern": "/store/[storeSlug]/support/tickets",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(store)/store/[storeSlug]/(shell)/theme/page.tsx",
+    "routePattern": "/store/[storeSlug]/theme",
+    "category": "store_erp",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "(marketing)/support/page.tsx",
+    "routePattern": "/support",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/terms/page.tsx",
+    "routePattern": "/terms",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(auth)/unauthorized/page.tsx",
+    "routePattern": "/unauthorized",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(marketing)/user-rules/page.tsx",
+    "routePattern": "/user-rules",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(auth)/verify-email/page.tsx",
+    "routePattern": "/verify-email",
+    "category": "auth",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "(auth)/verify-email/[token]/page.tsx",
+    "routePattern": "/verify-email/[token]",
+    "category": "public",
+    "authRequired": false
+  },
+  {
+    "sourceFile": "workshops/page.tsx",
+    "routePattern": "/workshops",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/account/page.tsx",
+    "routePattern": "/workshops/account",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/activity/page.tsx",
+    "routePattern": "/workshops/activity",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/analytics/live/page.tsx",
+    "routePattern": "/workshops/analytics/live",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/analytics/reports/page.tsx",
+    "routePattern": "/workshops/analytics/reports",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/analytics/sources/page.tsx",
+    "routePattern": "/workshops/analytics/sources",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/analytics/visitors/page.tsx",
+    "routePattern": "/workshops/analytics/visitors",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/billing/page.tsx",
+    "routePattern": "/workshops/billing",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/help/page.tsx",
+    "routePattern": "/workshops/help",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/notifications/page.tsx",
+    "routePattern": "/workshops/notifications",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/plans/page.tsx",
+    "routePattern": "/workshops/plans",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/security/page.tsx",
+    "routePattern": "/workshops/security",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/settings/page.tsx",
+    "routePattern": "/workshops/settings",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/stores/archived/page.tsx",
+    "routePattern": "/workshops/stores/archived",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/stores/create/page.tsx",
+    "routePattern": "/workshops/stores/create",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  },
+  {
+    "sourceFile": "workshops/team/page.tsx",
+    "routePattern": "/workshops/team",
+    "category": "workspace",
+    "authRequired": true,
+    "requiredRole": "merchant"
+  }
+]

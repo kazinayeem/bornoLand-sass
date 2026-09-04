@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { AlertTriangle, RefreshCw, Home, Sparkles } from "lucide-react";
+import { isChunkLoadError, attemptChunkReload, triggerHardReload } from "@/lib/chunk-error-recovery";
 
 export default function RootError({
   error,
@@ -11,13 +12,52 @@ export default function RootError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [isChunkError, setIsChunkError] = useState(false);
+
   useEffect(() => {
     console.error("[RootError]", error);
+    if (isChunkLoadError(error)) {
+      setIsChunkError(true);
+      attemptChunkReload();
+    }
   }, [error]);
+
+  if (isChunkError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4 py-16 text-center dark:bg-zinc-950">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-600 shadow-xs dark:bg-blue-950/40 dark:text-blue-400">
+          <Sparkles className="h-8 w-8" />
+        </div>
+        <h1 className="mt-5 text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">
+          Application Update Available
+        </h1>
+        <p className="mt-2 text-sm text-zinc-500 max-w-md dark:text-zinc-400">
+          A new version of BornoLand has been deployed. Please reload the page to load the latest components and features.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => triggerHardReload()}
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-blue-700 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Reload Application
+          </button>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-700 shadow-xs hover:bg-zinc-50 transition-colors dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            <Home className="h-4 w-4" />
+            Return Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4 py-16 text-center dark:bg-zinc-950">
-      <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-red-600 shadow-sm dark:bg-red-950/40 dark:text-red-400">
+      <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-red-50 text-red-600 shadow-xs dark:bg-red-950/40 dark:text-red-400">
         <AlertTriangle className="h-8 w-8" />
       </div>
       <h1 className="mt-5 text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">

@@ -11,6 +11,7 @@ import {
   RtkMutationProgressListener,
 } from "@/components/loading";
 import { SessionInit } from "@/components/auth/session-init";
+import { ChunkErrorListener } from "@/components/common/chunk-error-listener";
 
 function LoadingInstrumentation() {
   return (
@@ -27,6 +28,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <LanguageProvider>
         <LoadingProvider>
           <ApiErrorListener />
+          <ChunkErrorListener />
           <SessionInit />
           <NavigationProgressBar />
           <Suspense fallback={null}>

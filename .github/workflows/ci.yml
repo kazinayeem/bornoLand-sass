@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@v1.8.1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -29,13 +29,14 @@ jobs:
             cd ~/bornoLand-sass
 
             echo "=== Pull latest code ==="
-            git pull origin main
+            git fetch origin main
+            git checkout main
+            git reset --hard origin/main
 
             echo "=== Install dependencies ==="
-            corepack enable
             pnpm install --frozen-lockfile
 
-            echo "=== Remove production local env override ==="
+            echo "=== Remove production local env ==="
             rm -f apps/web/.env.local
 
             echo "=== Clean Next.js build ==="

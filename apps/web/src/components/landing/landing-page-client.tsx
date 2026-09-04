@@ -19,46 +19,27 @@ import {
   ShoppingBag,
   ShoppingCart,
   Users,
-  CreditCard,
   Building2,
   Wallet,
   HeartHandshake,
   Truck,
   LineChart,
-  BarChart3,
   QrCode,
   WifiOff,
   Fingerprint,
   Calculator,
   FileText,
-  BadgePercent,
   Layers,
   Menu,
   X,
   Sparkles,
 } from "lucide-react";
-
-// Brand Logo Component
-export function BornoLandBrandLogo({ className = "h-8 w-auto" }: { className?: string }) {
-  return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
-      <svg className="h-8 w-8 shrink-0" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="40" height="40" rx="10" fill="#1664D9" />
-        <path
-          d="M12 11H21C24.3137 11 27 13.6863 27 17C27 19.3484 25.4388 21.3323 23.2721 22.0298C25.7032 22.723 27.5 24.9575 27.5 27.6C27.5 30.748 24.948 33.3 21.8 33.3H12V11Z"
-          fill="white"
-          fillOpacity="0.18"
-        />
-        <path d="M13 12H20C22.2091 12 24 13.7909 24 16C24 18.2091 22.2091 20 20 20H13V12Z" fill="white" />
-        <path d="M13 20H21C23.2091 20 25 21.7909 25 24C25 26.2091 23.2091 28 21 28H13V20Z" fill="white" />
-        <circle cx="28" cy="11" r="3.5" fill="#34A853" />
-      </svg>
-      <span className="text-xl font-bold tracking-tight text-[#181c20]">
-        Borno<span className="text-[#1664D9]">Land</span>
-      </span>
-    </div>
-  );
-}
+import { BRAND_CONFIG } from "@/config/branding";
+import {
+  BornoLandBrandLogo,
+  CompanyAttributionLink,
+  ProductOwnershipBadge,
+} from "@/components/brand/brand-attribution";
 
 export function LandingPageClient() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -106,10 +87,8 @@ export function LandingPageClient() {
       {/* ── HEADER / TOPBAR ───────────────────────────────────────── */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#e5e8ee]">
         <div className="h-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Brand Logo */}
-          <Link href="/" className="flex items-center">
-            <BornoLandBrandLogo />
-          </Link>
+          {/* Brand Logo with subtle parent attribution */}
+          <BornoLandBrandLogo showParentAttribution attributionVariant="inline" />
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1.5">
@@ -232,11 +211,15 @@ export function LandingPageClient() {
           <div className="absolute top-12 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-[#1664d9]/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center">
-            {/* Eyebrow Badge */}
+            {/* Eyebrow Badge with subtle BornoSoft attribution */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-[#ebeef4] rounded-full mb-4 shadow-2xs border border-[#dfe3e8]/60">
               <span className="w-2 h-2 rounded-full bg-[#006e2a]" />
               <span className="text-[11px] uppercase tracking-wider text-[#424754] font-semibold">
                 The Business Operating System
+              </span>
+              <span className="text-[#c2c6d6] hidden sm:inline">•</span>
+              <span className="text-[11px] text-[#727785] font-medium hidden sm:inline">
+                {BRAND_CONFIG.parentCompany.attributionLabel}
               </span>
             </div>
 
@@ -2006,12 +1989,16 @@ export function LandingPageClient() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-10">
             <div className="col-span-2">
-              <Link href="/" className="inline-block mb-3">
+              <div className="mb-3">
                 <BornoLandBrandLogo />
-              </Link>
-              <p className="text-xs text-[#424754] max-w-sm leading-relaxed">
-                Everything Your Business Needs. One Powerful Platform.
+              </div>
+              <p className="text-xs text-[#424754] max-w-sm leading-relaxed mb-3">
+                {BRAND_CONFIG.tagline}
               </p>
+              {/* Product Attribution */}
+              <div className="text-xs">
+                <ProductOwnershipBadge variant="text" />
+              </div>
             </div>
 
             <div>
@@ -2123,15 +2110,17 @@ export function LandingPageClient() {
           </div>
 
           <div className="pt-6 border-t border-[#dfe3e8] flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-[#424754]">
-            <p>© 2026 BornoLand. All rights reserved.</p>
+            <p>{BRAND_CONFIG.copyright.text}</p>
             <div className="flex items-center gap-4">
-              <Link href="/privacy" className="hover:text-[#181c20] transition-colors">
+              <CompanyAttributionLink />
+              <span className="text-[#c2c6d6] hidden md:inline">•</span>
+              <Link href="/privacy" className="hover:text-[#181c20] transition-colors hidden md:inline">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="hover:text-[#181c20] transition-colors">
+              <Link href="/terms" className="hover:text-[#181c20] transition-colors hidden md:inline">
                 Terms of Service
               </Link>
-              <Link href="/support" className="hover:text-[#181c20] transition-colors">
+              <Link href="/support" className="hover:text-[#181c20] transition-colors hidden md:inline">
                 Trust &amp; Security
               </Link>
             </div>

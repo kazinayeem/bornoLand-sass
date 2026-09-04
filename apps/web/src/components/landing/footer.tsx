@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { landingContainer } from "./landing-ui";
 import { scrollToSection } from "@/lib/scroll-utils";
+import { BRAND_CONFIG } from "@/config/branding";
+import {
+  BornoLandBrandLogo,
+  CompanyAttributionLink,
+  ProductOwnershipBadge,
+} from "@/components/brand/brand-attribution";
 
 export function Footer() {
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -70,23 +75,16 @@ export function Footer() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 pb-12 border-b border-zinc-200/80">
           {/* Brand Identity Column */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1 space-y-4">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#003399] text-white shadow-xs">
-                <Image
-                  src="/logo.png"
-                  alt="BornoLand"
-                  width={20}
-                  height={20}
-                  className="h-4.5 w-4.5 object-contain brightness-0 invert"
-                />
-              </div>
-              <span className="text-base font-extrabold tracking-tight text-zinc-950">
-                BornoLand
-              </span>
-            </Link>
+            <BornoLandBrandLogo />
+
             <p className="text-xs text-zinc-500 leading-relaxed max-w-xs">
-              The modern Business Operating System for building, managing, and scaling commerce enterprises.
+              {BRAND_CONFIG.tagline}
             </p>
+
+            {/* Product Ownership Attribution */}
+            <div className="pt-1">
+              <ProductOwnershipBadge variant="text" />
+            </div>
 
             {/* Platform Status Indicator */}
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-bold text-[#0A8A00]">
@@ -118,10 +116,10 @@ export function Footer() {
           ))}
         </div>
 
-        {/* Bottom Bar: Copyright */}
+        {/* Bottom Bar: Copyright & Attribution */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
-          <p>© {new Date().getFullYear()} BornoLand Inc. All rights reserved.</p>
-          <p className="text-zinc-500 font-medium">Built for modern commerce & retail scale.</p>
+          <p>{BRAND_CONFIG.copyright.text}</p>
+          <CompanyAttributionLink />
         </div>
       </div>
     </footer>

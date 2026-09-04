@@ -9,6 +9,9 @@ import { landingContainer } from "./landing-ui";
 import { scrollToSection } from "@/lib/scroll-utils";
 import { useGetProfileQuery } from "@/redux/api/profile-api";
 import {
+  BornoLandBrandLogo,
+} from "@/components/brand/brand-attribution";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -72,26 +75,7 @@ export function Header({ onOpenDemo }: HeaderProps) {
       >
         <div className={cn(landingContainer, "flex items-center justify-between gap-4")}>
           {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#003399] group shrink-0"
-          >
-            <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-[#003399] shadow-xs transition-transform group-hover:scale-105">
-              <Image
-                src="/logo.png"
-                alt="BornoLand"
-                width={20}
-                height={20}
-                priority
-                className="h-4.5 w-4.5 object-contain brightness-0 invert"
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-base font-extrabold tracking-tight text-[#111111]">
-                BornoLand
-              </span>
-            </div>
-          </Link>
+          <BornoLandBrandLogo showParentAttribution attributionVariant="inline" />
 
           {/* Desktop Nav Items */}
           <div className="hidden md:flex items-center gap-1 rounded-full border border-zinc-200/80 bg-white/80 px-4 py-1.5 shadow-2xs backdrop-blur-md">
@@ -165,17 +149,10 @@ export function Header({ onOpenDemo }: HeaderProps) {
         <SheetContent side="right" className="w-[300px] sm:w-[360px] p-6 flex flex-col justify-between">
           <div className="space-y-6">
             <SheetHeader className="text-left border-b border-zinc-100 pb-4">
-              <SheetTitle className="flex items-center gap-2.5">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#003399] text-white">
-                  <Image
-                    src="/logo.png"
-                    alt="BornoLand"
-                    width={18}
-                    height={18}
-                    className="brightness-0 invert"
-                  />
+              <SheetTitle asChild>
+                <div>
+                  <BornoLandBrandLogo />
                 </div>
-                <span className="font-extrabold text-base text-zinc-950">BornoLand</span>
               </SheetTitle>
             </SheetHeader>
 

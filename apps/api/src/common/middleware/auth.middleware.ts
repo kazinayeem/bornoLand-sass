@@ -22,8 +22,8 @@ async function acceptActiveSession(
     return response.status(401).json({ message: "Invalid token" });
   }
 
-  const user = (await UserModel.findById(payload.userId).select("sessionVersion status").lean()) as
-    | { sessionVersion?: number; status?: string }
+  const user = (await UserModel.findById(payload.userId).select("sessionVersion status role tenantId").lean()) as
+    | { sessionVersion?: number; status?: string; role?: string; tenantId?: unknown }
     | null;
   if (!user || user.status !== "active" || (user.sessionVersion ?? 0) !== (payload.sessionVersion ?? 0)) {
     return response.status(401).json({ message: "Session expired" });
@@ -31,8 +31,8 @@ async function acceptActiveSession(
   request.user = {
     id: String(payload.userId),
     userId: String(payload.userId),
-    tenantId: String(payload.tenantId ?? ""),
-    role: payload.role,
+    tenantId: String(user.tenantId ?? payload.tenantId ?? ""),
+    role: user.role ?? payload.role,
     email: payload.email,
   };
   return next();

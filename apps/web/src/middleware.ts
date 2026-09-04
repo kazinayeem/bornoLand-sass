@@ -163,10 +163,15 @@ export default async function middleware(request: NextRequest) {
   const isProtectedRoute = pathname.startsWith("/dashboard") || pathname.startsWith("/store");
   const isAdminRoute = pathname.startsWith("/admin");
 
+  if (process.env.DEBUG_AUTH === "1" || process.env.NODE_ENV === "development") {
+    console.log(
+      `[AUTH DEBUG] userId=${session?.userId ?? "none"} role=${session?.role ?? "anonymous"} requestedPath=${pathname} defaultStoreSlug=${session?.defaultStoreSlug ?? "none"}`
+    );
+  }
+
   // Redirect authenticated users away from login/register
   if (isAuthPage && (session || hasRefreshToken)) {
-    const isSuperAdmin =
-      session?.role === "super_admin" || session?.role === "admin" || pathname.startsWith("/admin/login");
+    const isSuperAdmin = session?.role === "super_admin";
     const defaultDestination = isSuperAdmin
       ? "/dashboard"
       : session?.defaultStoreSlug
@@ -181,7 +186,7 @@ export default async function middleware(request: NextRequest) {
   if (isAdminRoute || isProtectedRoute) {
     // If we have a valid JWT session, proceed with authoritative checks
     if (session) {
-      const isSuperAdmin = session.role === "super_admin" || session.role === "admin";
+      const isSuperAdmin = session.role === "super_admin";
 
       // Super Admin rules:
       if (isSuperAdmin) {
@@ -192,7 +197,9 @@ export default async function middleware(request: NextRequest) {
           // Super admin should not automatically wander into a merchant store dashboard
           return NextResponse.redirect(new URL("/dashboard", request.url));
         }
-        return NextResponse.next();
+        const requestHeaders = new Headers(request.headers);
+        requestHeaders.set("x-pathname", pathname);
+        return NextResponse.next({ request: { headers: requestHeaders } });
       }
 
       // Non-Super Admin (Merchant / Member) rules:
@@ -207,18 +214,24 @@ export default async function middleware(request: NextRequest) {
             new URL(`/store/${session.defaultStoreSlug}/dashboard`, request.url)
           );
         }
-        // Let through to server layout which will query user's store or redirect to create
-        return NextResponse.next();
+        // Let through to server layout which will query user's store or redirect to /dashboard/stores/create
+        const requestHeaders = new Headers(request.headers);
+        requestHeaders.set("x-pathname", pathname);
+        return NextResponse.next({ request: { headers: requestHeaders } });
       }
 
-      return NextResponse.next();
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set("x-pathname", pathname);
+      return NextResponse.next({ request: { headers: requestHeaders } });
     }
 
     // If we have a refresh token but no JWT, we can't verify in middleware.
     // Let the request through — the client-side will verify and redirect if needed.
     // This avoids false redirects to login when the user has a valid refresh token.
     if (hasRefreshToken) {
-      return NextResponse.next();
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set("x-pathname", pathname);
+      return NextResponse.next({ request: { headers: requestHeaders } });
     }
 
     // No valid session at all — redirect to login
@@ -227,7 +240,9 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(buildLoginUrl(destination, loginPath), request.url));
   }
 
-  return NextResponse.next();
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {

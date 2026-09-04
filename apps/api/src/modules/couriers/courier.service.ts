@@ -82,8 +82,8 @@ function serializeCourier(
 async function ensureOwnedStore(storeId: string, userId?: string, role?: string) {
   await connectDatabase();
   const query: Record<string, unknown> = { _id: storeId };
-  // Platform admins can manage any store's courier config
-  const isPlatformAdmin = role === "super_admin" || role === "admin";
+  // Platform super admins can manage any store's courier config
+  const isPlatformAdmin = role === "super_admin";
   if (userId && !isPlatformAdmin) query.userId = userId;
   const store = await StoreModel.findOne(query).lean();
   return store as Record<string, unknown> | null;

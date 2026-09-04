@@ -426,7 +426,7 @@ export async function getUserStores(userId: string) {
       : await UserModel.findById(userId).select("tenantId role").lean()
   ) as { tenantId?: any; role?: string } | null;
 
-  const isSuper = user?.role === "super_admin" || user?.role === "admin";
+  const isSuper = user?.role === "super_admin";
 
   const tenantConditions: any[] = [];
   if (user?.tenantId) {

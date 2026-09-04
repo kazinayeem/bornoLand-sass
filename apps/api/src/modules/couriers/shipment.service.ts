@@ -104,7 +104,7 @@ function mapShipmentStatusToOrderStatus(shipmentStatus: string): string | null {
 async function ensureStoreAccess(storeId: string, userId?: string, role?: string) {
   await connectDatabase();
   const query: Record<string, unknown> = { _id: storeId };
-  const isPlatformAdmin = role === "super_admin" || role === "admin";
+  const isPlatformAdmin = role === "super_admin";
   if (userId && !isPlatformAdmin) query.userId = userId;
   return (await StoreModel.findOne(query).lean()) as Record<string, unknown> | null;
 }

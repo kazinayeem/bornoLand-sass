@@ -220,9 +220,13 @@ export async function verifyEmailController(request: Request, response: Response
 
 export async function meController(request: Request, response: Response) {
   // Prevent browser & proxy HTTP caching of authenticated session status
-  response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  response.setHeader("Cache-Control", "private, no-cache, no-store, must-revalidate");
   response.setHeader("Pragma", "no-cache");
   response.setHeader("Expires", "0");
+  response.setHeader("Surrogate-Control", "no-store");
+  response.removeHeader("ETag");
+  delete (request.headers as any)["if-none-match"];
+  delete (request.headers as any)["if-modified-since"];
 
   const buildUserFromDb = async (userId: string, defaultStoreSlug?: string | null) => {
     try {
@@ -249,7 +253,17 @@ export async function meController(request: Request, response: Response) {
       const payload = verifyAccessToken(authHeader.slice(7));
       if (await isSessionPayloadActive(payload)) {
         const user = await buildUserFromDb(payload.userId, payload.defaultStoreSlug);
-        return sendSuccess(response, { session: payload, user, accessToken: authHeader.slice(7) }, "Session loaded");
+        if (user && user.role) payload.role = user.role;
+        return sendSuccess(
+          response,
+          {
+            session: payload,
+            user,
+            defaultStoreSlug: user?.defaultStoreSlug || payload.defaultStoreSlug || null,
+            accessToken: authHeader.slice(7),
+          },
+          "Session loaded"
+        );
       }
     } catch {
       // Access token expired — fall through to try cookies
@@ -272,11 +286,15 @@ export async function meController(request: Request, response: Response) {
       sessionMaxAge: result.data.sessionMaxAge,
     });
 
+    const user =
+      (result.data as any).user ||
+      (await buildUserFromDb(result.data.session.userId, result.data.session.defaultStoreSlug));
+    if (user && user.role) result.data.session.role = user.role;
+
     return sendSuccess(response, {
       session: result.data.session,
-      user:
-        (result.data as any).user ||
-        (await buildUserFromDb(result.data.session.userId, result.data.session.defaultStoreSlug)),
+      user,
+      defaultStoreSlug: user?.defaultStoreSlug || result.data.session.defaultStoreSlug || null,
       accessToken: result.data.accessToken,
     }, "Session loaded");
   }
@@ -289,7 +307,12 @@ export async function meController(request: Request, response: Response) {
       const session = verifySessionToken(jwtCookie);
       if (await isSessionPayloadActive(session)) {
         const user = await buildUserFromDb(session.userId, session.defaultStoreSlug);
-        return sendSuccess(response, { session, user }, "Session loaded");
+        if (user && user.role) session.role = user.role;
+        return sendSuccess(response, {
+          session,
+          user,
+          defaultStoreSlug: user?.defaultStoreSlug || session.defaultStoreSlug || null,
+        }, "Session loaded");
       }
       clearSessionCookies(response);
       return sendSuccess(response, { session: null, user: null }, "Session expired");

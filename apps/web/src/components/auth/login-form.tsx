@@ -94,7 +94,7 @@ export function LoginForm({
     dispatch(setTenantContext({ tenantId: payload.user.tenantId }));
 
     const userRole = payload.user?.role;
-    const isSuperAdmin = userRole === "super_admin" || loginType === "admin";
+    const isSuperAdmin = userRole === "super_admin";
     const defaultSlug =
       (payload as any).defaultStoreSlug ||
       payload.user?.defaultStoreSlug ||

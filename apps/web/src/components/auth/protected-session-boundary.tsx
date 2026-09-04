@@ -42,7 +42,7 @@ export function ProtectedSessionBoundary({
   const session = data?.data?.session;
   const checking = isLoading || (!data && (isFetching || !isError));
 
-  const isSuperAdmin = session?.role === "super_admin" || session?.role === "admin";
+  const isSuperAdmin = session?.role === "super_admin";
   const roleMatches = !requiredRole || (requiredRole === "super_admin" ? isSuperAdmin : session?.role === requiredRole);
   const allowed = !authExpired && Boolean(session && roleMatches);
 

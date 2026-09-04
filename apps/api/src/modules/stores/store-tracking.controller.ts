@@ -109,7 +109,7 @@ export async function logStoreTrackingEventController(request: AuthRequest, resp
 
 export async function getAdminTrackingOverviewController(request: AuthRequest, response: Response) {
   const role = request.user?.role;
-  if (role !== "super_admin" && role !== "admin") {
+  if (role !== "super_admin") {
     return sendFailure(response, "Super Admin access required", 403);
   }
 

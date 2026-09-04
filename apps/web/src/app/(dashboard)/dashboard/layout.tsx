@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getServerSession, hasAuthCookie } from "@/lib/auth-session";
 import { AdminShell } from "@/components/admin/admin-shell";
@@ -16,10 +17,26 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const [session, hasPendingAuth] = await Promise.all([getServerSession(), hasAuthCookie()]);
+  const [session, hasPendingAuth, headerList] = await Promise.all([
+    getServerSession(),
+    hasAuthCookie(),
+    headers(),
+  ]);
   if (!session && !hasPendingAuth) redirect("/login");
 
-  const isSuperAdmin = session?.role === "super_admin" || session?.role === "admin";
+  const pathname = headerList.get("x-pathname") || "";
+  const isSuperAdmin = session?.role === "super_admin";
+
+  // If this is the store creation page, allow any authenticated user (e.g. merchant onboarding)
+  if (pathname.startsWith("/dashboard/stores/create") || pathname === "/dashboard/create-store") {
+    return (
+      <ProtectedSessionBoundary loginPath="/login">
+        <div className="min-h-screen bg-apple-canvas-parchment dark:bg-zinc-950 p-4 md:p-8">
+          {children}
+        </div>
+      </ProtectedSessionBoundary>
+    );
+  }
 
   // If authenticated user is NOT super admin, redirect to their own store dashboard
   if (session && !isSuperAdmin) {

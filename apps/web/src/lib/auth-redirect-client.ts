@@ -45,14 +45,19 @@ export type AuthPayload = {
     role?: string;
     defaultStoreSlug?: string | null;
     defaultLandingPath?: string | null;
+    memberRole?: string;
     stores?: Array<{ id: string; slug: string; name: string }>;
   };
   session?: {
     role?: string;
     defaultStoreSlug?: string | null;
+    mustChangePassword?: boolean;
+    memberRole?: string;
   };
   defaultLandingPath?: string | null;
   defaultStoreSlug?: string | null;
+  memberRole?: string;
+  mustChangePassword?: boolean;
   stores?: Array<{ id: string; slug: string; name: string }>;
 };
 
@@ -61,6 +66,9 @@ export function resolvePostLoginDestination(
   requestedRedirect?: string | null
 ): string {
   const userRole = payload.user?.role || payload.session?.role;
+  const memberRole = payload.memberRole
+    || payload.session?.memberRole
+    || payload.user?.memberRole;
   const isSuperAdmin = userRole === "super_admin";
   const isMerchant = userRole === "admin" || userRole === "owner";
   const storesList = payload.stores || payload.user?.stores || [];
@@ -79,7 +87,7 @@ export function resolvePostLoginDestination(
   } else if (isMerchant) {
     // Workspace-first architecture: All Merchant/Owner accounts default to /workshops
     baseDestination = "/workshops";
-  } else if (userRole === "employee") {
+  } else if (userRole === "employee" || memberRole === "employee") {
     // Employee self-service
     if (defaultSlug) {
       baseDestination = `/store/${defaultSlug}/hrm/self-service`;

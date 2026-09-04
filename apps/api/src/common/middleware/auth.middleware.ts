@@ -22,11 +22,29 @@ async function acceptActiveSession(
     return response.status(401).json({ message: "Invalid token" });
   }
 
-  const user = (await UserModel.findById(payload.userId).select("sessionVersion status role tenantId").lean()) as
-    | { sessionVersion?: number; status?: string; role?: string; tenantId?: unknown }
+  const user = (await UserModel.findById(payload.userId).select("sessionVersion status role tenantId mustChangePassword").lean()) as
+    | { sessionVersion?: number; status?: string; role?: string; tenantId?: unknown; mustChangePassword?: boolean }
     | null;
   if (!user || user.status !== "active" || (user.sessionVersion ?? 0) !== (payload.sessionVersion ?? 0)) {
     return response.status(401).json({ message: "Session expired" });
+  }
+
+  if (user.mustChangePassword) {
+    const path = (request.originalUrl || request.path || "").split("?")[0];
+    const allowedWhileMustChange = [
+      "/profile/change-password",
+      "/auth/logout",
+      "/auth/me",
+      "/auth/refresh",
+    ];
+    const allowed = allowedWhileMustChange.some((route) => path === route || path.endsWith(route));
+    if (!allowed) {
+      return response.status(403).json({
+        success: false,
+        message: "You must create a new password before continuing.",
+        code: "PASSWORD_CHANGE_REQUIRED",
+      });
+    }
   }
   request.user = {
     id: String(payload.userId),

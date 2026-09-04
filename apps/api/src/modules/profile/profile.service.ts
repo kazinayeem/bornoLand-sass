@@ -73,12 +73,15 @@ export async function changePassword(userId: string, payload: unknown) {
   const parsed = changePasswordSchema.safeParse(payload);
   if (!parsed.success) return { ok: false as const, message: parsed.error.issues[0]?.message ?? "Invalid password" };
   await connectDatabase();
-  const user = await UserModel.findById(userId).select("+passwordHash name email role tenantId sessionVersion");
+  const user = await UserModel.findById(userId).select("passwordHash name email role tenantId sessionVersion mustChangePassword");
   if (!user) return { ok: false as const, message: "Profile not found" };
-  const valid = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
+  const currentHash = (user as { passwordHash?: string }).passwordHash;
+  if (!currentHash) return { ok: false as const, message: "Profile not found" };
+  const valid = await bcrypt.compare(parsed.data.currentPassword, currentHash);
   if (!valid) return { ok: false as const, message: "Current password is incorrect" };
   user.passwordHash = await bcrypt.hash(parsed.data.newPassword, 12);
   user.passwordChangedAt = new Date();
+  user.mustChangePassword = false;
   user.sessionVersion = (user.sessionVersion ?? 0) + 1;
   await user.save();
   await RefreshTokenModel.updateMany({ userId, revokedAt: null }, { $set: { revokedAt: new Date() } });

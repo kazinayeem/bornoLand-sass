@@ -11,6 +11,7 @@ export type SessionPayload = {
   sessionVersion?: number;
   defaultStoreSlug?: string | null;
   mustChangePassword?: boolean;
+  memberRole?: string;
 };
 
 const sessionCookieName = process.env.SESSION_COOKIE_NAME ?? "bornoland.session";

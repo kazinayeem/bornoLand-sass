@@ -23,6 +23,7 @@ import {
   listPayrollsController,
   approvePayrollController,
   markPaidPayrollController,
+  provisionEmployeeLoginController,
 } from "./hrm.controller.js";
 import { hrmSelfServiceRouter } from "./hrm-self-service.route.js";
 
@@ -43,7 +44,8 @@ hrmRouter.use("/self-service", hrmSelfServiceRouter);
 hrmRouter.get("/employees", hrmGuard, hrmPermissionGuard, listEmployeesController);
 hrmRouter.post("/employees", hrmGuard, requireStorePermission("hrm:create"), createEmployeeController);
 hrmRouter.get("/employees/:employeeId", hrmGuard, hrmPermissionGuard, getEmployeeController);
-hrmRouter.put("/employees/:employeeId", hrmGuard, hrmPermissionGuard, updateEmployeeController);
+hrmRouter.put("/employees/:employeeId", hrmGuard, requireStorePermission("hrm:update"), updateEmployeeController);
+hrmRouter.post("/employees/:employeeId/provision-login", hrmGuard, requireStorePermission("hrm:create"), provisionEmployeeLoginController);
 
 // Organization (admin HRM - requires hrm:read permission)
 hrmRouter.get("/departments", hrmGuard, hrmPermissionGuard, listDepartmentsController);

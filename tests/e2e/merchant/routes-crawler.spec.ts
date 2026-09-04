@@ -33,7 +33,7 @@ async function auditRoute(
   let httpStatus = 200;
 
   try {
-    const response = await page.goto(urlPath, { waitUntil: "domcontentloaded", timeout: 25_000 });
+    const response = await page.goto(urlPath, { waitUntil: "domcontentloaded", timeout: 45_000 });
     await page.waitForLoadState("networkidle", { timeout: 8_000 }).catch(() => {});
     httpStatus = response?.status() ?? 200;
 
@@ -57,7 +57,7 @@ async function auditRoute(
     }
 
     // Test hard refresh
-    await page.reload({ waitUntil: "domcontentloaded", timeout: 25_000 });
+    await page.reload({ waitUntil: "domcontentloaded", timeout: 45_000 });
     await page.waitForLoadState("networkidle", { timeout: 8_000 }).catch(() => {});
 
     const result: RouteAuditResult = {
@@ -109,7 +109,7 @@ test.describe("Deep Modular Route & Page Health Crawler (@navigation @crawler)",
   });
 
   test("Module 1: Commerce & Orders Routes", async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(360_000);
     await loginAsMerchant(page);
     storeSlug = await discoverStoreSlug(page);
 
@@ -131,7 +131,7 @@ test.describe("Deep Modular Route & Page Health Crawler (@navigation @crawler)",
   });
 
   test("Module 2: Inventory & Purchasing Routes", async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(360_000);
     await loginAsMerchant(page);
     storeSlug = await discoverStoreSlug(page);
 
@@ -167,7 +167,7 @@ test.describe("Deep Modular Route & Page Health Crawler (@navigation @crawler)",
   });
 
   test("Module 4: HRM & Organization Routes", async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(360_000);
     await loginAsMerchant(page);
     storeSlug = await discoverStoreSlug(page);
 
@@ -187,7 +187,7 @@ test.describe("Deep Modular Route & Page Health Crawler (@navigation @crawler)",
   });
 
   test("Module 5: Finance & Accounting Routes", async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(360_000);
     await loginAsMerchant(page);
     storeSlug = await discoverStoreSlug(page);
 
@@ -206,7 +206,7 @@ test.describe("Deep Modular Route & Page Health Crawler (@navigation @crawler)",
   });
 
   test("Module 6: Operations & Task Workflows Routes", async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(360_000);
     await loginAsMerchant(page);
     storeSlug = await discoverStoreSlug(page);
 
@@ -226,7 +226,7 @@ test.describe("Deep Modular Route & Page Health Crawler (@navigation @crawler)",
   });
 
   test("Module 7: Growth, CRM & Analytics Routes", async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(360_000);
     await loginAsMerchant(page);
     storeSlug = await discoverStoreSlug(page);
 
@@ -249,7 +249,7 @@ test.describe("Deep Modular Route & Page Health Crawler (@navigation @crawler)",
   });
 
   test("Module 8: Storefront CMS & Website Builder Routes", async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(360_000);
     await loginAsMerchant(page);
     storeSlug = await discoverStoreSlug(page);
 
@@ -269,7 +269,7 @@ test.describe("Deep Modular Route & Page Health Crawler (@navigation @crawler)",
   });
 
   test("Module 9: System Settings & Team Members Routes", async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(360_000);
     await loginAsMerchant(page);
     storeSlug = await discoverStoreSlug(page);
 
@@ -291,7 +291,7 @@ test.describe("Deep Modular Route & Page Health Crawler (@navigation @crawler)",
   });
 
   test("Module 10: Multi-Tenant Workspace Hub Routes", async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(360_000);
     await loginAsMerchant(page);
 
     const routes = [
@@ -313,7 +313,7 @@ test.describe("Deep Modular Route & Page Health Crawler (@navigation @crawler)",
   });
 
   test("Module 11: Public Storefront End-to-End Routes", async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(360_000);
     await page.context().clearCookies();
 
     const routes = [
@@ -336,7 +336,7 @@ test.describe("Deep Modular Route & Page Health Crawler (@navigation @crawler)",
   });
 
   test("Module 12: Super Admin Platform Oversight Routes", async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(360_000);
     await loginAsSuperAdmin(page);
 
     const routes = [

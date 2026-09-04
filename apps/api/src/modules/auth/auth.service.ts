@@ -59,6 +59,30 @@ async function ensureTenantOwner(payload: RegisterInput) {
   return tenant;
 }
 
+export async function resolveUserMemberRole(
+  userId: unknown,
+  defaultStoreSlug: string | null,
+  userRole?: string,
+): Promise<string | undefined> {
+  if (userRole === "super_admin") return "super_admin";
+  if (userRole === "admin" || userRole === "owner") return "owner";
+  if (!defaultStoreSlug) return undefined;
+  try {
+    const store = (await StoreModel.findOne({ slug: defaultStoreSlug }).select("_id").lean()) as { _id?: unknown } | null;
+    if (!store?._id) return undefined;
+    const member = (await StoreMemberModel.findOne({
+      storeId: store._id,
+      userId,
+      status: "active",
+    })
+      .select("role")
+      .lean()) as { role?: string } | null;
+    return member?.role;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function resolveUserDefaultStoreSlug(userId: unknown, tenantId?: unknown, userRole?: string): Promise<string | null> {
   // Super admin does not have a store slug
   if (userRole === "super_admin") {
@@ -66,6 +90,20 @@ export async function resolveUserDefaultStoreSlug(userId: unknown, tenantId?: un
   }
 
   try {
+    const isMerchant = userRole === "admin" || userRole === "owner";
+    if (!isMerchant) {
+      const membershipStoreIds = await listActiveMembershipStoreIds(String(userId));
+      if (membershipStoreIds.length === 0) return null;
+      const store = (await StoreModel.findOne({
+        _id: { $in: membershipStoreIds },
+        status: { $ne: "archived" },
+      })
+        .sort({ createdAt: 1 })
+        .select("slug")
+        .lean()) as { slug?: string } | null;
+      return store?.slug ?? null;
+    }
+
     const [teamTenantIds, storeMemberStoreIds] = await Promise.all([
       TeamMemberModel.find({ userId }).distinct("tenantId"),
       StoreMemberModel.find({ userId, status: "active" }).distinct("storeId"),
@@ -102,7 +140,8 @@ function buildSessionPayload(
     mustChangePassword?: boolean;
   },
   loginType: SessionPayload["loginType"],
-  defaultStoreSlug?: string | null
+  defaultStoreSlug?: string | null,
+  memberRole?: string,
 ): SessionPayload {
   return {
     userId: String(user._id),
@@ -114,6 +153,7 @@ function buildSessionPayload(
     sessionVersion: user.sessionVersion ?? 0,
     defaultStoreSlug: user.role === "super_admin" ? null : (defaultStoreSlug ?? null),
     mustChangePassword: Boolean(user.mustChangePassword),
+    memberRole,
   };
 }
 
@@ -227,7 +267,7 @@ export async function loginUser(payload: unknown) {
   }
 
   try {
-    await assertEmployeeMayAuthenticate(String(user._id), user.email);
+    await assertEmployeeMayAuthenticate(String(user._id), user.email, user.role);
   } catch (error) {
     if (error instanceof EmployeeAccountError) {
       return { ok: false as const, message: error.message };
@@ -250,29 +290,47 @@ export async function loginUser(payload: unknown) {
     defaultLandingPath = "/dashboard";
     defaultStoreSlug = null;
   } else {
-    let teamTenantIds: unknown[] = [];
-    let storeMemberStoreIds: unknown[] = [];
+    const isMerchantRole = user.role === "admin" || user.role === "owner";
+    const ownedStore = await StoreModel.findOne({ userId: user._id, status: { $ne: "archived" } })
+      .select("_id")
+      .lean();
+    const ownerMember = await StoreMemberModel.findOne({
+      userId: user._id,
+      role: "owner",
+      status: "active",
+    })
+      .select("_id")
+      .lean();
+    const isMerchant = isMerchantRole || Boolean(ownedStore) || Boolean(ownerMember);
 
     try {
-      const [resolvedTeamTenantIds, resolvedStoreMemberStoreIds] = await Promise.all([
-        TeamMemberModel.find({ userId: user._id }).distinct("tenantId"),
-        StoreMemberModel.find({ userId: user._id, status: "active" }).distinct("storeId"),
-      ]);
-      teamTenantIds = resolvedTeamTenantIds;
-      storeMemberStoreIds = resolvedStoreMemberStoreIds;
-
-      const foundStores = (await StoreModel.find({
-        $or: [
-          { userId: user._id },
-          ...(user.tenantId ? [{ tenantId: user.tenantId }] : []),
-          ...(teamTenantIds.length ? [{ tenantId: { $in: teamTenantIds } }] : []),
-          ...(storeMemberStoreIds.length ? [{ _id: { $in: storeMemberStoreIds } }] : []),
-        ],
-        status: { $ne: "archived" },
-      })
-        .select("_id slug name userId")
-        .lean()) as Array<{ _id: unknown; slug?: string; name?: string; userId?: unknown }>;
-      userStores = foundStores || [];
+      if (isMerchant) {
+        const [teamTenantIds, storeMemberStoreIds] = await Promise.all([
+          TeamMemberModel.find({ userId: user._id }).distinct("tenantId"),
+          StoreMemberModel.find({ userId: user._id, status: "active" }).distinct("storeId"),
+        ]);
+        userStores = (await StoreModel.find({
+          $or: [
+            { userId: user._id },
+            ...(user.tenantId ? [{ tenantId: user.tenantId }] : []),
+            ...(teamTenantIds.length ? [{ tenantId: { $in: teamTenantIds } }] : []),
+            ...(storeMemberStoreIds.length ? [{ _id: { $in: storeMemberStoreIds } }] : []),
+          ],
+          status: { $ne: "archived" },
+        })
+          .select("_id slug name userId")
+          .lean()) as Array<{ _id: unknown; slug?: string; name?: string; userId?: unknown }>;
+      } else {
+        const membershipStoreIds = await listActiveMembershipStoreIds(String(user._id));
+        userStores = membershipStoreIds.length
+          ? ((await StoreModel.find({
+              _id: { $in: membershipStoreIds },
+              status: { $ne: "archived" },
+            })
+              .select("_id slug name userId")
+              .lean()) as Array<{ _id: unknown; slug?: string; name?: string; userId?: unknown }>)
+          : [];
+      }
     } catch {
       // Non-critical
     }
@@ -282,24 +340,6 @@ export async function loginUser(payload: unknown) {
       slug: s.slug || "",
       name: s.name || "",
     }));
-
-    // Determine if user is a merchant (owns stores) or employee (member only)
-    const isMerchantRole = user.role === "admin" || user.role === "owner";
-    const userOwnsAnyStore = userStores.some((s) => String(s.userId) === String(user._id));
-
-    // Also check if user has StoreMember role "owner" for any store
-    let userIsStoreMemberOwner = false;
-    if (!isMerchantRole && !userOwnsAnyStore && storeMemberStoreIds.length > 0) {
-      const ownerMember = await StoreMemberModel.findOne({
-        storeId: { $in: storeMemberStoreIds },
-        userId: user._id,
-        role: "owner",
-        status: "active",
-      }).select("_id").lean();
-      userIsStoreMemberOwner = Boolean(ownerMember);
-    }
-
-    const isMerchant = isMerchantRole || userOwnsAnyStore || userIsStoreMemberOwner;
 
     if (isMerchant) {
       defaultMemberRole = "owner";
@@ -313,42 +353,36 @@ export async function loginUser(payload: unknown) {
         defaultStoreSlug = null;
         defaultLandingPath = "/dashboard/stores/create";
       }
-    } else {
-      // Employee/staff → assigned store
-      if (storesPayload.length > 0) {
-        defaultStoreSlug = storesPayload[0]?.slug ?? null;
+    } else if (storesPayload.length > 0) {
+      defaultStoreSlug = storesPayload[0]?.slug ?? null;
+      if (defaultStoreSlug && storesPayload[0]?.id) {
+        const mem = (await StoreMemberModel.findOne({
+          storeId: storesPayload[0].id,
+          userId: user._id,
+          status: "active",
+        })
+          .select("role")
+          .lean()) as { role: string } | null;
 
-        if (defaultStoreSlug && storesPayload[0]?.id) {
-          const mem = (await StoreMemberModel.findOne({
-            storeId: storesPayload[0].id,
-            userId: user._id,
-            status: "active",
-          })
-            .select("role")
-            .lean()) as { role: string } | null;
-
-          if (mem?.role) {
-            defaultMemberRole = mem.role;
-            defaultLandingPath = getRoleDefaultLandingPath(mem.role, defaultStoreSlug);
-          } else if (user.role === "employee") {
-            defaultMemberRole = "employee";
-            defaultLandingPath = `/store/${defaultStoreSlug}/hrm/self-service`;
-          } else {
-            defaultLandingPath = `/store/${defaultStoreSlug}/dashboard`;
-          }
+        if (mem?.role) {
+          defaultMemberRole = mem.role;
+          defaultLandingPath = getRoleDefaultLandingPath(mem.role, defaultStoreSlug);
+        } else {
+          defaultMemberRole = "employee";
+          defaultLandingPath = `/store/${defaultStoreSlug}/hrm/self-service`;
         }
-      } else {
-        // No stores accessible
-        defaultLandingPath = user.role === "employee" ? "/unauthorized" : "/dashboard/stores/create";
-        defaultStoreSlug = null;
       }
+    } else {
+      defaultLandingPath = "/unauthorized";
+      defaultStoreSlug = null;
     }
   }
 
   const session = buildSessionPayload(
     user,
     isAdminLogin ? "admin" : "user",
-    user.role === "super_admin" ? null : defaultStoreSlug
+    user.role === "super_admin" ? null : defaultStoreSlug,
+    defaultMemberRole,
   );
 
   // Generate Access Token (15min) — returned in response body
@@ -409,6 +443,7 @@ export async function loginUser(payload: unknown) {
       defaultStoreSlug,
       defaultLandingPath,
       memberRole: defaultMemberRole,
+      mustChangePassword: Boolean(user.mustChangePassword),
       user: {
         id: String(user._id),
         name: user.name,
@@ -419,6 +454,7 @@ export async function loginUser(payload: unknown) {
         defaultStoreSlug,
         defaultLandingPath,
         memberRole: defaultMemberRole,
+        mustChangePassword: Boolean(user.mustChangePassword),
       },
     },
   };
@@ -467,6 +503,7 @@ async function loadRefreshTokenRecord(rawRefreshToken: string) {
     name: string;
     sessionVersion?: number;
     status?: string;
+    mustChangePassword?: boolean;
   } | null;
 
   if (!user) {
@@ -494,10 +531,12 @@ export async function sessionFromRefreshToken(
   if (user.role !== "super_admin") {
     defaultStoreSlug = await resolveUserDefaultStoreSlug(user._id, user.tenantId, user.role);
   }
+  const memberRole = await resolveUserMemberRole(user._id, defaultStoreSlug, user.role);
   const session = buildSessionPayload(
     user,
     user.role === "super_admin" ? "admin" : "user",
-    defaultStoreSlug
+    defaultStoreSlug,
+    memberRole,
   );
   const rememberMe = stored.rememberMe === true;
   const sessionMaxAge = getSessionCookieMaxAge(rememberMe);
@@ -511,6 +550,8 @@ export async function sessionFromRefreshToken(
     role: user.role,
     tenantId: String(user.tenantId ?? ""),
     defaultStoreSlug,
+    memberRole,
+    mustChangePassword: Boolean(user.mustChangePassword),
   };
 
   if (!options.rotate) {
@@ -625,7 +666,7 @@ export async function resetPassword(payload: unknown) {
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
   const user = await UserModel.findOneAndUpdate(
     { email: tokenRecord.identifier },
-    { $set: { passwordHash, passwordChangedAt: new Date() }, $inc: { sessionVersion: 1 } },
+    { $set: { passwordHash, passwordChangedAt: new Date(), mustChangePassword: false }, $inc: { sessionVersion: 1 } },
     { new: true },
   ).lean() as { _id: unknown } | null;
   if (user) await RefreshTokenModel.updateMany({ userId: user._id, revokedAt: null }, { $set: { revokedAt: new Date() } });

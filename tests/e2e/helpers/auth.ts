@@ -18,6 +18,11 @@ export async function loginAsMerchant(page: Page): Promise<string> {
   await page.goto("/login", { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle").catch(() => {});
 
+  const currentPath = new URL(page.url()).pathname;
+  if (currentPath.startsWith("/workshops") || currentPath.startsWith("/store/") || currentPath === "/dashboard") {
+    return page.url();
+  }
+
   // Check if Demo Merchant button is present
   const demoBtn = page.getByRole("button", { name: /Demo Merchant/i });
   if (await demoBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -48,6 +53,11 @@ export async function loginAsSuperAdmin(page: Page): Promise<string> {
   // Try /login first because it has the Quick Demo Super Admin button, or /admin/login
   await page.goto("/login", { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle").catch(() => {});
+
+  const currentPath = new URL(page.url()).pathname;
+  if (currentPath === "/dashboard" || currentPath.startsWith("/admin/dashboard")) {
+    return page.url();
+  }
 
   const demoAdminBtn = page.getByRole("button", { name: /Demo Super Admin/i });
   if (await demoAdminBtn.isVisible({ timeout: 2000 }).catch(() => false)) {

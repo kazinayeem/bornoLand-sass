@@ -5,6 +5,7 @@ import {
   createEmployee,
   updateEmployee,
   getEmployeeById,
+  provisionExistingEmployeeLogin,
   listDepartments,
   createDepartment,
   listDesignations,
@@ -62,6 +63,27 @@ export async function updateEmployeeController(request: Request, response: Respo
     response.json({ ok: true, data: employee });
   } catch (error: any) {
     response.status(400).json({ ok: false, message: error?.message || "Failed to update employee" });
+  }
+}
+
+export async function provisionEmployeeLoginController(request: Request, response: Response) {
+  try {
+    const storeId = storeIdOf(request);
+    const loginAccount = await provisionExistingEmployeeLogin(
+      storeId,
+      String(request.params.employeeId),
+      request.body?.memberRole,
+    );
+    response.json({
+      ok: true,
+      message: loginAccount.created
+        ? "Login account created. The employee can sign in with their email. The temporary password is their registered mobile number."
+        : "Existing login account linked.",
+      data: { loginAccount },
+    });
+  } catch (error: any) {
+    const status = typeof error?.statusCode === "number" ? error.statusCode : 400;
+    response.status(status).json({ ok: false, message: error?.message || "Failed to provision login account" });
   }
 }
 

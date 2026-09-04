@@ -16,7 +16,14 @@ type SessionToken = {
   userId?: string;
   tenantId?: string;
   defaultStoreSlug?: string | null;
+  mustChangePassword?: boolean;
+  memberRole?: string;
 };
+
+function isEmployeeSession(session: SessionToken | null | undefined) {
+  if (!session) return false;
+  return session.memberRole === "employee" || session.role === "employee";
+}
 
 async function verifySessionToken(token: string): Promise<SessionToken | null> {
   try {
@@ -147,13 +154,18 @@ export default async function middleware(request: NextRequest) {
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/store") ||
     pathname.startsWith("/workshops") ||
-    pathname === "/workshops";
+    pathname === "/workshops" ||
+    pathname === "/change-password";
   const isAdminRoute = pathname.startsWith("/admin");
 
   if (process.env.DEBUG_AUTH === "1" || process.env.NODE_ENV === "development") {
     console.log(
       `[AUTH DEBUG] userId=${session?.userId ?? "none"} role=${session?.role ?? "anonymous"} requestedPath=${pathname} defaultStoreSlug=${session?.defaultStoreSlug ?? "none"}`
     );
+  }
+
+  if (session?.mustChangePassword && pathname !== "/change-password") {
+    return NextResponse.redirect(new URL("/change-password", request.url));
   }
 
   // Redirect authenticated users away from login/register
@@ -164,7 +176,7 @@ export default async function middleware(request: NextRequest) {
       ? "/dashboard"
       : isMerchant
       ? "/workshops"
-      : session?.role === "employee"
+      : isEmployeeSession(session)
       ? session?.defaultStoreSlug
         ? `/store/${session.defaultStoreSlug}/hrm/self-service`
         : "/unauthorized"
@@ -199,7 +211,7 @@ export default async function middleware(request: NextRequest) {
       }
 
       // Employee rules: employees belong to HRM self-service
-      if (session.role === "employee") {
+      if (isEmployeeSession(session)) {
         if (pathname === "/workshops" || pathname.startsWith("/workshops/")) {
           if (session.defaultStoreSlug) {
             return NextResponse.redirect(
@@ -220,7 +232,7 @@ export default async function middleware(request: NextRequest) {
             new URL("/workshops", request.url)
           );
         }
-        if (session.role === "employee") {
+        if (isEmployeeSession(session)) {
           if (session.defaultStoreSlug) {
             return NextResponse.redirect(
               new URL(`/store/${session.defaultStoreSlug}/hrm/self-service`, request.url)

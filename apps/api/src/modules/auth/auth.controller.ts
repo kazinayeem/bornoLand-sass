@@ -24,6 +24,7 @@ import {
   registerUser,
   resetPassword,
   resolveUserDefaultStoreSlug,
+  resolveUserMemberRole,
   sessionFromRefreshToken,
 } from "./auth.service.js";
 import { RefreshTokenModel } from "./refresh-token.model.js";
@@ -137,6 +138,8 @@ export async function loginController(request: Request, response: Response) {
     stores: result.data.stores,
     defaultStoreSlug: result.data.defaultStoreSlug,
     defaultLandingPath: result.data.defaultLandingPath,
+    memberRole: result.data.memberRole,
+    mustChangePassword: Boolean(result.data.mustChangePassword),
   }, "Signed in");
 }
 
@@ -232,9 +235,10 @@ export async function meController(request: Request, response: Response) {
   const buildUserFromDb = async (userId: string, defaultStoreSlug?: string | null) => {
     try {
       await connectDatabase();
-      const u = (await UserModel.findById(userId).select("name email role tenantId").lean()) as any;
+      const u = (await UserModel.findById(userId).select("name email role tenantId mustChangePassword").lean()) as any;
       if (!u) return null;
       const slug = defaultStoreSlug ?? (u.role !== "super_admin" ? await resolveUserDefaultStoreSlug(u._id, u.tenantId, u.role) : null);
+      const memberRole = await resolveUserMemberRole(u._id, slug ?? null, u.role);
       return {
         id: String(u._id),
         name: u.name,
@@ -242,6 +246,8 @@ export async function meController(request: Request, response: Response) {
         role: u.role,
         tenantId: String(u.tenantId ?? ""),
         defaultStoreSlug: slug ?? null,
+        memberRole,
+        mustChangePassword: Boolean(u.mustChangePassword),
       };
     } catch {
       return null;

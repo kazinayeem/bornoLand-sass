@@ -11,6 +11,8 @@ export type AppSession = {
   name: string;
   loginType: "user" | "admin";
   defaultStoreSlug?: string | null;
+  mustChangePassword?: boolean;
+  memberRole?: string;
 };
 
 function getSessionCookieName() {

@@ -14,6 +14,9 @@ export type SessionUser = {
   avatarUrl?: string;
   stores?: Array<{ id: string; slug: string; name: string }>;
   defaultStoreSlug?: string | null;
+  defaultLandingPath?: string | null;
+  memberRole?: string;
+  mustChangePassword?: boolean;
 };
 
 export type SessionPayload = {
@@ -24,6 +27,8 @@ export type SessionPayload = {
   name: string;
   loginType: "user" | "admin";
   defaultStoreSlug?: string | null;
+  mustChangePassword?: boolean;
+  memberRole?: string;
 };
 
 type ApiEnvelope<T> = {
@@ -64,6 +69,11 @@ type LoginResponse = {
   user: SessionUser;
   session: SessionPayload;
   accessToken: string;
+  stores?: Array<{ id: string; slug: string; name: string }>;
+  defaultStoreSlug?: string | null;
+  defaultLandingPath?: string | null;
+  memberRole?: string;
+  mustChangePassword?: boolean;
 };
 
 type MeResponse = {

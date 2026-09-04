@@ -123,6 +123,15 @@ export async function createEmployee(storeId: string, payload: any): Promise<{
     throw new EmployeeAccountError("An employee with this email already exists in this store.");
   }
 
+  const {
+    memberRole: _memberRole,
+    role: _role,
+    mobile: _mobile,
+    userId: _clientUserId,
+    loginAccount: _loginAccount,
+    ...hrFields
+  } = payload;
+
   const basic = Number(payload.salaryStructure?.basic || 0);
   const houseRent = Number(payload.salaryStructure?.houseRent || 0);
   const medical = Number(payload.salaryStructure?.medical || 0);
@@ -133,13 +142,14 @@ export async function createEmployee(storeId: string, payload: any): Promise<{
   let employee;
   try {
     employee = await EmployeeModel.create({
-      ...payload,
+      ...hrFields,
       storeId: sid,
       employeeCode,
       firstName,
       lastName,
       email,
       phone,
+      userId: null,
       departmentId: payload.departmentId ? oid(payload.departmentId) : null,
       designationId: payload.designationId ? oid(payload.designationId) : null,
       shiftId: payload.shiftId ? oid(payload.shiftId) : null,
@@ -227,6 +237,34 @@ export async function getEmployeeById(storeId: string, employeeId: string) {
     .populate("shiftId")
     .populate("managerId", "firstName lastName employeeCode")
     .lean();
+}
+
+/** Safe migration path for HR records created before login provisioning. Never overwrites an existing password. */
+export async function provisionExistingEmployeeLogin(
+  storeId: string,
+  employeeId: string,
+  memberRole?: string,
+) {
+  await connectDatabase();
+  const employee = await EmployeeModel.findOne({ _id: employeeId, storeId: storeOid(storeId) }).lean() as {
+    _id: unknown;
+    firstName: string;
+    lastName?: string;
+    email: string;
+    phone?: string;
+    userId?: unknown;
+  } | null;
+  if (!employee) throw new EmployeeAccountError("Employee not found.", 404);
+  return provisionEmployeeLoginAccount({
+    storeId,
+    employeeId: String(employee._id),
+    firstName: employee.firstName,
+    lastName: employee.lastName,
+    email: employee.email,
+    phone: employee.phone || "",
+    memberRole,
+    existingUserId: employee.userId ? String(employee.userId) : null,
+  });
 }
 
 // ── 2. Organization: Departments & Designations ─────────────────────────────

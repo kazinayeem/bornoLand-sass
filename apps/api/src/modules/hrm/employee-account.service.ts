@@ -94,8 +94,8 @@ export async function findUserIdByEmployeeIdentifier(rawIdentifier: string): Pro
 
     const emails = [...new Set(codeMatches.map((row) => normalizeEmail(String(row.email || ""))).filter(Boolean))];
     if (emails.length === 1) {
-      const user = await UserModel.findOne({ email: emails[0] }).select("_id").lean();
-      if (user) {
+      const user = (await UserModel.findOne({ email: emails[0] }).select("_id").lean()) as { _id?: unknown } | null;
+      if (user?._id) {
         await EmployeeModel.updateMany(
           {
             _id: { $in: codeMatches.map((row) => row._id) },
@@ -133,7 +133,15 @@ export async function findUserIdByEmployeeIdentifier(rawIdentifier: string): Pro
   return null;
 }
 
-export async function assertEmployeeMayAuthenticate(userId: string, email?: string) {
+export async function assertEmployeeMayAuthenticate(
+  userId: string,
+  email?: string,
+  userRole?: string,
+) {
+  if (userRole === "super_admin" || userRole === "owner" || userRole === "admin") {
+    return { blocked: false as const, employees: [] as Array<{ status?: string; storeId?: unknown; userId?: unknown }> };
+  }
+
   const employees = await EmployeeModel.find({
     $or: [{ userId }, ...(email ? [{ email: normalizeEmail(email) }] : [])],
   })
@@ -143,10 +151,20 @@ export async function assertEmployeeMayAuthenticate(userId: string, email?: stri
   if (employees.length === 0) return { blocked: false as const, employees };
 
   const allowed = employees.filter((row) => isEmployeeStatusAllowedForLogin(row.status));
-  if (allowed.length === 0) {
+  if (allowed.length > 0) {
+    return { blocked: false as const, employees: allowed };
+  }
+
+  const blockedStoreIds = new Set(employees.map((row) => String(row.storeId)));
+  const memberStoreIds = (await StoreMemberModel.find({ userId, status: "active" }).distinct("storeId")).map((id) =>
+    String(id),
+  );
+  const otherMemberships = memberStoreIds.filter((storeId) => !blockedStoreIds.has(storeId));
+  const ownedStore = await StoreModel.exists({ userId, status: { $ne: "archived" } });
+  if (otherMemberships.length === 0 && !ownedStore) {
     throw new EmployeeAccountError("This employee account is no longer active.", 401);
   }
-  return { blocked: false as const, employees: allowed };
+  return { blocked: false as const, employees: [] };
 }
 
 export async function listActiveMembershipStoreIds(userId: string) {
@@ -169,12 +187,12 @@ export async function listActiveMembershipStoreIds(userId: string) {
 }
 
 export async function assertEmployeeCanAccessStore(storeId: string, userId: string, email?: string) {
-  const employee = await EmployeeModel.findOne({
+  const employee = (await EmployeeModel.findOne({
     storeId,
     $or: [{ userId }, ...(email ? [{ email: normalizeEmail(email) }] : [])],
   })
     .select("status userId")
-    .lean();
+    .lean()) as { status?: string; userId?: unknown } | null;
 
   if (!employee) return;
   if (!isEmployeeStatusAllowedForLogin(employee.status)) {
@@ -261,14 +279,37 @@ export async function provisionEmployeeLoginAccount(input: {
     }
   }
 
-  const existingUser = (await UserModel.findOne({ email }).select("_id role status email").lean()) as {
+  const existingUser = (await UserModel.findOne({ email }).select("_id role status email tenantId").lean()) as {
     _id: unknown;
     role?: string;
     status?: string;
+    tenantId?: unknown;
   } | null;
 
   if (existingUser?.role === "super_admin") {
     throw new EmployeeAccountError("This email belongs to a platform administrator and cannot be linked to an employee login.");
+  }
+
+  if (existingUser && input.existingUserId && String(input.existingUserId) !== String(existingUser._id)) {
+    throw new EmployeeAccountError("This employee is already linked to a different user account.");
+  }
+
+  if (existingUser) {
+    const sameTenant = Boolean(existingUser.tenantId) && String(existingUser.tenantId) === String(store.tenantId);
+    const isThisStoreOwner = String(store.userId) === String(existingUser._id);
+    const alreadyMember = await StoreMemberModel.exists({
+      storeId,
+      $or: [{ userId: existingUser._id }, { email }],
+    });
+    const explicitSameUser = Boolean(input.existingUserId) && String(input.existingUserId) === String(existingUser._id);
+    const isMerchantAccount = existingUser.role === "owner" || existingUser.role === "admin";
+
+    if (!sameTenant && !isThisStoreOwner && !alreadyMember && !explicitSameUser) {
+      throw new EmployeeAccountError("This email belongs to an existing account in another workspace and cannot be linked.");
+    }
+    if (isMerchantAccount && !isThisStoreOwner && !alreadyMember) {
+      throw new EmployeeAccountError("This email belongs to a merchant account and cannot be linked as an employee.");
+    }
   }
 
   let userId = existingUser ? String(existingUser._id) : input.existingUserId ? String(input.existingUserId) : null;
@@ -356,7 +397,10 @@ export async function provisionEmployeeLoginAccount(input: {
         email,
         name,
         storeName: store.name || "your store",
-        employeeCode: String((await EmployeeModel.findById(input.employeeId).select("employeeCode").lean())?.employeeCode || ""),
+        employeeCode: String(
+          ((await EmployeeModel.findById(input.employeeId).select("employeeCode").lean()) as { employeeCode?: string } | null)
+            ?.employeeCode || "",
+        ),
       }).catch(() => undefined);
     }
 

@@ -17,6 +17,7 @@ import { AUDIT_MODULES } from "../audit/audit.constants.js";
 import { sendEmail } from "../../common/integrations/email.js";
 import { changePassword, getProfile, listProfileActivity, listSessions, revokeAllSessions, revokeSession, setAvatar, updateProfile } from "./profile.service.js";
 import { createBillingNotification } from "../notifications/billing-notification.service.js";
+import { resolveUserDefaultStoreSlug, resolveUserMemberRole } from "../auth/auth.service.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -87,7 +88,22 @@ export async function changePasswordController(request: AuthRequest, response: R
   const result = await changePassword(request.user!.userId, request.body);
   if (!result.ok) return sendFailure(response, result.message, result.message.includes("Current") ? 401 : 400);
   const user = result.data.user;
-  const session = { userId: user.id, tenantId: user.tenantId, role: user.role, email: user.email, name: user.name, loginType: user.role === "super_admin" ? "admin" as const : "user" as const, sessionVersion: user.sessionVersion };
+  const defaultStoreSlug = user.role === "super_admin"
+    ? null
+    : await resolveUserDefaultStoreSlug(user.id, user.tenantId, user.role);
+  const memberRole = await resolveUserMemberRole(user.id, defaultStoreSlug, user.role);
+  const session = {
+    userId: user.id,
+    tenantId: user.tenantId,
+    role: user.role,
+    email: user.email,
+    name: user.name,
+    loginType: user.role === "super_admin" ? "admin" as const : "user" as const,
+    sessionVersion: user.sessionVersion,
+    mustChangePassword: false,
+    defaultStoreSlug,
+    memberRole,
+  };
   const refreshToken = generateRefreshToken();
   const maxAge = getSessionCookieMaxAge();
   await RefreshTokenModel.create({ userId: user.id, tokenHash: hashRefreshToken(refreshToken), family: generateRefreshTokenFamily(), rememberMe: false, expiresAt: new Date(Date.now() + maxAge * 1000), userAgent: request.header("user-agent") ?? "", ipAddress: request.ip ?? "" });

@@ -21,6 +21,7 @@ import {
   consumeRedirectAfterLogin,
   resolvePostLoginDestination,
 } from "@/lib/auth-redirect-client";
+import { FirstLoginPasswordForm } from "@/components/auth/first-login-password-form";
 
 export function LoginForm({
   className,
@@ -31,6 +32,10 @@ export function LoginForm({
 }) {
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [pendingFirstLogin, setPendingFirstLogin] = useState<{
+    currentPassword: string;
+    destination: string;
+  } | null>(null);
   const [login] = useLoginMutation();
   const dispatch = useAppDispatch();
 
@@ -46,6 +51,18 @@ export function LoginForm({
   });
 
   const rememberMe = watch("rememberMe");
+
+  if (pendingFirstLogin) {
+    return (
+      <FirstLoginPasswordForm
+        currentPassword={pendingFirstLogin.currentPassword}
+        onComplete={() => {
+          consumeRedirectAfterLogin(null, pendingFirstLogin.destination);
+          window.location.replace(pendingFirstLogin.destination);
+        }}
+      />
+    );
+  }
 
   const onSubmit = handleSubmit(async (values) => {
     if (loading) return;
@@ -105,9 +122,17 @@ export function LoginForm({
           : null;
 
       const finalDestination = resolvePostLoginDestination(payload, queryRedirect);
-      consumeRedirectAfterLogin(null, finalDestination);
 
-      // Perform navigation once authentication is fully confirmed
+      if (payload.mustChangePassword || payload.session?.mustChangePassword || payload.user?.mustChangePassword) {
+        setPendingFirstLogin({
+          currentPassword: values.password,
+          destination: finalDestination,
+        });
+        setLoading(false);
+        return;
+      }
+
+      consumeRedirectAfterLogin(null, finalDestination);
       window.location.replace(finalDestination);
     } catch {
       setLoading(false);

@@ -529,15 +529,16 @@ export async function getStoreById(storeIdOrSlug: string, userId: string, userRo
   const [teamTenantIds, storeMemberStoreIds, userDoc] = await Promise.all([
     TeamMemberModel.find({ userId: { $in: userMatches } }).distinct("tenantId"),
     StoreMemberModel.find({ userId: { $in: userMatches }, status: "active" }).distinct("storeId"),
-    UserModel.findById(userId).select("tenantId").lean() as Promise<{ tenantId?: unknown } | null>,
+    UserModel.findById(userId).select("tenantId role").lean() as Promise<{ tenantId?: unknown; role?: string } | null>,
   ]);
 
   const userTenantId = userDoc?.tenantId;
+  const isMerchantPlatformRole = userDoc?.role === "admin" || userDoc?.role === "owner";
 
   const authClauses: Record<string, unknown>[] = [
     { userId: { $in: userMatches } },
-    ...(userTenantId ? [{ tenantId: userTenantId }] : []),
-    ...(teamTenantIds.length > 0 ? [{ tenantId: { $in: teamTenantIds } }] : []),
+    ...(isMerchantPlatformRole && userTenantId ? [{ tenantId: userTenantId }] : []),
+    ...(isMerchantPlatformRole && teamTenantIds.length > 0 ? [{ tenantId: { $in: teamTenantIds } }] : []),
     ...(storeMemberStoreIds.length > 0 ? [{ _id: { $in: storeMemberStoreIds } }] : []),
   ];
 

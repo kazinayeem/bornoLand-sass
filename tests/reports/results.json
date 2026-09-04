@@ -4,7 +4,9 @@
       "/usr/local/bin/node",
       "/Users/mohammadalinayeem/Project & Code/bornoland/node_modules/@playwright/test/cli.js",
       "test",
-      "tests/e2e/crud/crud-persistence.spec.ts",
+      "tests/e2e/merchant/routes-crawler.spec.ts",
+      "-g",
+      "Module 8",
       "--project=Desktop Chromium"
     ],
     "configFile": "/Users/mohammadalinayeem/Project & Code/bornoland/playwright.config.ts",
@@ -18,18 +20,14 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {
-      "actualWorkers": 1
-    },
+    "metadata": {},
     "preserveOutput": "always",
     "projects": [
       {
         "outputDir": "/Users/mohammadalinayeem/Project & Code/bornoland/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "Desktop Chromium",
         "name": "Desktop Chromium",
         "testDir": "/Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e",
@@ -43,9 +41,7 @@
         "outputDir": "/Users/mohammadalinayeem/Project & Code/bornoland/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "Mobile Chromium",
         "name": "Mobile Chromium",
         "testDir": "/Users/mohammadalinayeem/Project & Code/bornoland/tests/e2e",
@@ -88,112 +84,17 @@
     "workers": 1,
     "webServer": null
   },
-  "suites": [
+  "suites": [],
+  "errors": [
     {
-      "title": "crud/crud-persistence.spec.ts",
-      "file": "crud/crud-persistence.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "CRUD Workflows & Database Persistence (@crud @critical)",
-          "file": "crud/crud-persistence.spec.ts",
-          "line": 6,
-          "column": 6,
-          "specs": [
-            {
-              "title": "Product Full CRUD Cycle: Create -> Verify -> Edit -> Refresh Persist -> Delete",
-              "ok": true,
-              "tags": [
-                "crud",
-                "critical)"
-              ],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Desktop Chromium",
-                  "projectName": "Desktop Chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 31676,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n📦 Testing Product CRUD with name: \"QA-AUTO-PROD-20260904133600-JR2U\"\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-04T13:35:50.296Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "90deead11408b92d37ef-f09e5b7e8c4cb5612a60",
-              "file": "crud/crud-persistence.spec.ts",
-              "line": 15,
-              "column": 7
-            },
-            {
-              "title": "Warehouse Creation and Persistence",
-              "ok": true,
-              "tags": [
-                "crud",
-                "critical)"
-              ],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Desktop Chromium",
-                  "projectName": "Desktop Chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 30423,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n🏢 Testing Warehouse CRUD with name: \"QA-AUTO-WH-20260904133630-6OUE\"\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-04T13:36:22.231Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "90deead11408b92d37ef-01987a3c907fa98464ee",
-              "file": "crud/crud-persistence.spec.ts",
-              "line": 83,
-              "column": 7
-            }
-          ]
-        }
-      ]
+      "message": "Error: Timed out waiting 120000ms from config.webServer.",
+      "stack": "Error: Timed out waiting 120000ms from config.webServer."
     }
   ],
-  "errors": [],
   "stats": {
-    "startTime": "2026-09-04T13:35:48.674Z",
-    "duration": 64095.369,
-    "expected": 2,
+    "startTime": "2026-09-04T14:09:16.165Z",
+    "duration": 256555.839,
+    "expected": 0,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

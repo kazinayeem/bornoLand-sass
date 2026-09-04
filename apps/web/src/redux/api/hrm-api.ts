@@ -12,8 +12,9 @@ export type Employee = {
   departmentId?: { _id: string; name: string; code?: string };
   designationId?: { _id: string; name: string; code?: string };
   shiftId?: { _id: string; name: string; startTime: string; endTime: string };
+  userId?: string | null;
   employmentType: string;
-  status: "active" | "on_leave" | "resigned" | "terminated";
+  status: "active" | "on_leave" | "inactive" | "resigned" | "terminated" | "suspended";
   joiningDate: string;
   salaryStructure?: {
     basic: number;
@@ -117,6 +118,16 @@ export type Payroll = {
   createdAt: string;
 };
 
+export type EmployeeLoginAccount = {
+  created: boolean;
+  linked: boolean;
+  email: string;
+  role: string;
+  storeId: string;
+  mustChangePassword: boolean;
+  userId: string;
+};
+
 export type ApiEnvelope<T> = {
   ok: boolean;
   data: T;
@@ -137,7 +148,10 @@ export const hrmApi = baseApi.injectEndpoints({
       providesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-employees` }],
     }),
 
-    createEmployee: builder.mutation<ApiEnvelope<Employee>, { storeId: string; body: any }>({
+    createEmployee: builder.mutation<
+      ApiEnvelope<{ employee: Employee; loginAccount: EmployeeLoginAccount }>,
+      { storeId: string; body: Record<string, unknown> }
+    >({
       query: ({ storeId, body }) => ({
         url: `/stores/${storeId}/hrm/employees`,
         method: "POST",
@@ -155,7 +169,17 @@ export const hrmApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-employees` }],
     }),
 
-    // ── Organization ──
+    provisionEmployeeLogin: builder.mutation<
+      ApiEnvelope<{ loginAccount: EmployeeLoginAccount }>,
+      { storeId: string; employeeId: string; memberRole?: string }
+    >({
+      query: ({ storeId, employeeId, memberRole }) => ({
+        url: `/stores/${storeId}/hrm/employees/${employeeId}/provision-login`,
+        method: "POST",
+        body: memberRole ? { memberRole } : {},
+      }),
+      invalidatesTags: (_r, _e, { storeId }) => [{ type: "HRM", id: `${storeId}-employees` }],
+    }),
     getDepartments: builder.query<ApiEnvelope<{ departments: Department[] }>, string>({
       query: (storeId) => ({ url: `/stores/${storeId}/hrm/departments` }),
       providesTags: (_r, _e, storeId) => [{ type: "HRM", id: `${storeId}-depts` }],
@@ -405,6 +429,7 @@ export const {
   useGetEmployeesQuery,
   useCreateEmployeeMutation,
   useUpdateEmployeeMutation,
+  useProvisionEmployeeLoginMutation,
   useGetDepartmentsQuery,
   useCreateDepartmentMutation,
   useGetDesignationsQuery,

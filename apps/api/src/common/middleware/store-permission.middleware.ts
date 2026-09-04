@@ -5,6 +5,7 @@ import { StoreModel } from "../../modules/stores/store.model.js";
 import { StoreMemberModel } from "../../modules/team/store-member.model.js";
 import { EmployeeModel } from "../../modules/hrm/employee.model.js";
 import { hasPermission, roleToPermissions } from "../types/permissions.js";
+import { isEmployeeStatusAllowedForLogin } from "../../modules/hrm/employee-account.service.js";
 import { checkStoreModuleEntitlement } from "../services/module-entitlement.service.js";
 
 export type PermissionRequest = AuthRequest & {
@@ -125,14 +126,23 @@ async function resolveStoreAccess(
         ...(req.user?.email ? [{ email: req.user.email.toLowerCase() }] : []),
       ],
     })
-      .select("_id employeeCode userId")
-      .lean()) as { _id: unknown; employeeCode: string; userId?: unknown } | null;
+      .select("_id employeeCode userId status")
+      .lean()) as { _id: unknown; employeeCode: string; userId?: unknown; status?: string } | null;
 
     if (emp) {
       employeeId = String(emp._id);
       employeeCode = emp.employeeCode;
       if (!emp.userId) {
         await EmployeeModel.updateOne({ _id: emp._id }, { $set: { userId } }).exec();
+      }
+      const empStatus = (emp as { status?: string }).status;
+      if (empStatus && !isEmployeeStatusAllowedForLogin(empStatus)) {
+        res.status(403).json({
+          success: false,
+          message: "This employee account is no longer active in this store",
+          code: "EMPLOYEE_INACTIVE",
+        });
+        return false;
       }
     }
   }

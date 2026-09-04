@@ -6,16 +6,10 @@ export const metadata = {
   description: "Confirm your email address to activate your BornoLand account.",
 };
 
-export default async function VerifyEmailTokenPage({
-  params,
-}: {
-  params: Promise<{ token: string }>;
-}) {
-  const { token } = await params;
-
+export default function VerifyEmailPage() {
   return (
     <AuthShell variant="verify">
-      <VerifyEmailForm token={token} />
+      <VerifyEmailForm />
     </AuthShell>
   );
 }

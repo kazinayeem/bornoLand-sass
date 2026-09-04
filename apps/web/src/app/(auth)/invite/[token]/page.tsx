@@ -2,10 +2,13 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, ShieldCheck, AlertCircle, ArrowRight, Store, Lock, User } from "lucide-react";
+import { Loader2, AlertCircle, Store, Lock, User, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useCurrentUser, useIsAuthenticated } from "@/features/session/hooks";
 import { getApiUrl } from "@/lib/urls";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { PasswordInput } from "@/components/auth/password-input";
+import { cn } from "@/lib/utils";
 
 type InviteData = {
   email: string;
@@ -46,7 +49,7 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
         } else {
           setError(data.message || "Invalid or expired invitation link.");
         }
-      } catch (err: any) {
+      } catch {
         setError("Failed to connect to server. Please try again.");
       } finally {
         setLoading(false);
@@ -92,7 +95,7 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
       } else {
         setError(data.message || "Failed to accept invitation.");
       }
-    } catch (err: any) {
+    } catch {
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setSubmitting(false);
@@ -101,127 +104,143 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
 
   if (loading) {
     return (
-      <div className="flex min-h-[70vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
-      </div>
+      <AuthShell variant="verify">
+        <div className="flex min-h-[160px] flex-col items-center justify-center space-y-3 py-6">
+          <Loader2 className="h-6 w-6 animate-spin text-[#1664d9]" />
+          <p className="text-xs text-[#727785]">Loading invitation details...</p>
+        </div>
+      </AuthShell>
     );
   }
 
   if (error && !invite) {
     return (
-      <div className="mx-auto max-w-md p-6 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400">
-          <AlertCircle className="h-7 w-7" />
+      <AuthShell variant="unauthorized">
+        <div className="w-full text-center space-y-6 py-2">
+          <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 border border-red-200 flex items-center justify-center mx-auto shadow-2xs">
+            <AlertCircle className="h-6 w-6" />
+          </div>
+          <div className="space-y-1.5">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#181c20] dark:text-white">
+              Invitation Invalid
+            </h2>
+            <p className="text-xs sm:text-sm text-[#424754] dark:text-zinc-400">{error}</p>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="/login"
+              className="flex h-11 w-full items-center justify-center rounded-xl bg-[#1664d9] text-white text-sm font-bold hover:bg-[#004caf] transition-all shadow-xs"
+            >
+              Go to Sign in
+            </Link>
+          </div>
         </div>
-        <h2 className="mt-4 text-lg font-bold text-zinc-900 dark:text-zinc-100">
-          Invitation Invalid
-        </h2>
-        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{error}</p>
-        <Link
-          href="/login"
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-xs font-semibold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900"
-        >
-          <span>Go to Login</span>
-        </Link>
-      </div>
+      </AuthShell>
     );
   }
 
   const storeName = invite?.storeId?.name || "BornoLand Store";
 
   return (
-    <div className="mx-auto max-w-md px-4 py-8">
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-900/90">
-        <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">
+    <AuthShell variant="register">
+      <div className="w-full space-y-6">
+        <div className="text-center space-y-1.5">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#1664d9] border border-blue-200 flex items-center justify-center mx-auto shadow-2xs">
             <Store className="h-6 w-6" />
           </div>
-          <h1 className="mt-4 text-lg font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#181c20] dark:text-white">
             Join {storeName}
           </h1>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            You&apos;ve been invited to join as <strong className="font-semibold text-zinc-800 dark:text-zinc-200 capitalize">{invite?.role}</strong>.
+          <p className="text-xs sm:text-sm text-[#727785] dark:text-zinc-400">
+            You&apos;ve been invited as a{" "}
+            <strong className="font-semibold text-[#181c20] dark:text-zinc-200 capitalize">
+              {invite?.role}
+            </strong>
+            .
           </p>
         </div>
 
         {error && (
-          <div className="mt-5 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400">
-            {error}
+          <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50/80 p-3 text-xs text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <span className="leading-relaxed">{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleAccept} className="mt-6 space-y-4">
-          <div>
-            <label className="block text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+        <form onSubmit={handleAccept} className="space-y-4" noValidate>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-[#181c20] dark:text-zinc-200">
               Email Address
             </label>
             <input
               type="email"
               disabled
               value={invite?.email || ""}
-              className="mt-1 w-full rounded-xl border border-zinc-200 bg-zinc-100/60 px-3 py-2 text-xs text-zinc-600 outline-none dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-400"
+              className="flex h-11 w-full rounded-xl border border-[#dfe3e8] bg-[#f8fafc] px-3.5 text-xs text-[#727785] cursor-not-allowed"
             />
           </div>
 
           {!isAuthenticated && (
             <>
-              <div>
-                <label className="block text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-[#181c20] dark:text-zinc-200">
                   Your Full Name
                 </label>
-                <div className="relative mt-1">
-                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Full Name"
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 py-2 pl-9 pr-3 text-xs outline-none focus:border-zinc-900 focus:bg-white dark:border-zinc-800 dark:bg-zinc-900"
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Tamim Rahman"
+                  className="flex h-11 w-full rounded-xl border border-[#dfe3e8] bg-white px-3.5 text-sm text-[#181c20] placeholder:text-[#727785] focus:border-[#1664d9] focus:outline-none focus:ring-2 focus:ring-[#1664d9]/15"
+                />
               </div>
 
-              <div>
-                <label className="block text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-[#181c20] dark:text-zinc-200">
                   Create Password (min. 8 characters)
                 </label>
-                <div className="relative mt-1">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 py-2 pl-9 pr-3 text-xs outline-none focus:border-zinc-900 focus:bg-white dark:border-zinc-800 dark:bg-zinc-900"
-                  />
-                </div>
+                <PasswordInput
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
               </div>
             </>
           )}
 
           {isAuthenticated && (
-            <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/70 p-3 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-800/40 dark:text-zinc-400">
-              Logged in as <strong className="font-semibold text-zinc-900 dark:text-white">{currentUser?.email}</strong>. Accepting this invite will attach this store to your account.
+            <div className="rounded-xl border border-[#dfe3e8] bg-[#f8fafc] p-3 text-xs text-[#424754]">
+              Signed in as <strong className="font-semibold text-[#181c20]">{currentUser?.email}</strong>.
+              Accepting will link this store to your account.
             </div>
           )}
 
           <button
             type="submit"
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 py-2.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1664d9] hover:bg-[#004caf] text-white text-sm font-bold shadow-xs transition-all disabled:opacity-60 cursor-pointer"
           >
             {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
               <>
-                <span>Accept Invitation & Join</span>
-                <ArrowRight className="h-3.5 w-3.5" />
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Accepting invite...</span>
               </>
+            ) : (
+              <span>Accept &amp; Join Store</span>
             )}
           </button>
         </form>
+
+        <div className="text-center pt-2 border-t border-[#f1f4fa] dark:border-zinc-800/70">
+          <Link
+            href="/login"
+            className="text-xs font-semibold text-[#727785] hover:text-[#181c20] transition-colors"
+          >
+            ← Back to Sign in
+          </Link>
+        </div>
       </div>
-    </div>
+    </AuthShell>
   );
 }

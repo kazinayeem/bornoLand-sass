@@ -56,7 +56,15 @@ import { errorHandler, notFoundHandler } from "./common/middleware/error.middlew
 
 
 
-const ROOT_DOMAIN = process.env.ROOT_DOMAIN ?? process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "";
+const rawRootDomain = (
+  process.env.ROOT_DOMAIN ??
+  process.env.NEXT_PUBLIC_ROOT_DOMAIN ??
+  (process.env.NODE_ENV === "production" ? "bornosoft.site" : "localhost:3000")
+)
+  .trim()
+  .replace(/^https?:\/\//, "")
+  .replace(/\/+$/, "");
+const ROOT_DOMAIN = rawRootDomain;
 const ROOT_HOSTNAME = ROOT_DOMAIN.includes(":") ? ROOT_DOMAIN.split(":")[0] : ROOT_DOMAIN;
 
 const configuredOrigins = [
@@ -203,7 +211,7 @@ app.use((req, res, next) => {
 
 app.use("/uploads", express.static(getUploadRoot()));
 
-app.get(["/health", "/api/health"], (_req, res) => {
+app.get(["/", "/health", "/api/health"], (_req, res) => {
   const dbState = mongoose.connection.readyState;
   const dbStatus = dbState === 1 ? "connected" : dbState === 2 ? "connecting" : "disconnected";
   const healthy = dbState === 1;

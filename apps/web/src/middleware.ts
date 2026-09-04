@@ -103,12 +103,19 @@ export default async function middleware(request: NextRequest) {
     } else {
       const rewriteUrl = request.nextUrl.clone();
       rewriteUrl.pathname = `/site/${tenant.storeSlug}${pathname === "/" ? "" : pathname}`;
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set("x-forwarded-host", host);
+      requestHeaders.set("x-store-slug", tenant.storeSlug);
       if (debugRouting) {
         console.log(
           `[mw] host="${host}" source="${tenant.source}" slug="${tenant.storeSlug}" path="${pathname}" → rewrite ${rewriteUrl.pathname}`,
         );
       }
-      return NextResponse.rewrite(rewriteUrl);
+      return NextResponse.rewrite(rewriteUrl, {
+        request: {
+          headers: requestHeaders,
+        },
+      });
     }
   }
 

@@ -115,13 +115,16 @@ export type HostResolutionConfig = {
 };
 
 export function readHostResolutionConfig(): HostResolutionConfig {
-  const rootDomain = (
+  const rawRootDomain = (
     process.env.NEXT_PUBLIC_ROOT_DOMAIN ??
     process.env.ROOT_DOMAIN ??
-    ""
+    (process.env.NODE_ENV === "production" ? "bornosoft.site" : "localhost:3000")
   )
     .trim()
     .toLowerCase();
+
+  // Strip leading protocol and trailing slashes if passed in env
+  const rootDomain = rawRootDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
   const colon = rootDomain.lastIndexOf(":");
   const hasPort = colon > 0 && /^\d+$/.test(rootDomain.slice(colon + 1));
   const rootHostname = hasPort ? rootDomain.slice(0, colon) : rootDomain;
@@ -135,7 +138,7 @@ export function readHostResolutionConfig(): HostResolutionConfig {
 
   const platformBases = basesRaw
     .split(",")
-    .map((part) => stripPort(part))
+    .map((part) => stripPort(part.trim().replace(/^https?:\/\//, "").replace(/\/+$/, "")))
     .filter(Boolean);
 
   return { rootDomain, rootHostname, platformBases };
@@ -213,10 +216,13 @@ export function classifyHost(
   }
 
   const { rootDomain, rootHostname, platformBases } = config;
+  const apexHostname = rootHostname.startsWith("www.")
+    ? rootHostname.slice(4)
+    : rootHostname;
 
   // Configured marketing / app apex (including www)
-  if (rootHostname) {
-    if (hostname === rootHostname || hostname === `www.${rootHostname}`) {
+  if (apexHostname) {
+    if (hostname === apexHostname || hostname === `www.${apexHostname}`) {
       return { ...base, kind: "platform", storeKey: null };
     }
     if (rootDomain && (normalizedHost === rootDomain || hostname === rootDomain)) {
@@ -225,15 +231,15 @@ export function classifyHost(
   }
 
   // Subdomain of configured ROOT_DOMAIN
-  if (rootDomain && normalizedHost.endsWith(`.${rootDomain}`)) {
-    const prefix = normalizedHost.slice(0, -(rootDomain.length + 1));
+  if (apexHostname && hostname.endsWith(`.${apexHostname}`)) {
+    const prefix = hostname.slice(0, -(apexHostname.length + 1));
     const label = firstLabel(prefix);
     if (!label) return { ...base, kind: "platform", storeKey: null };
     return { ...base, kind: "tenant-subdomain", storeKey: label };
   }
 
-  if (rootHostname && hostname.endsWith(`.${rootHostname}`)) {
-    const prefix = hostname.slice(0, -(rootHostname.length + 1));
+  if (rootDomain && normalizedHost.endsWith(`.${rootDomain}`)) {
+    const prefix = normalizedHost.slice(0, -(rootDomain.length + 1));
     const label = firstLabel(prefix);
     if (!label) return { ...base, kind: "platform", storeKey: null };
     return { ...base, kind: "tenant-subdomain", storeKey: label };
@@ -303,9 +309,12 @@ export function resolveStoreKeyForRequest(host: string): {
 
   // Marketing apex must never be forced onto a default storefront
   const { rootHostname } = config;
+  const apexHostname = rootHostname.startsWith("www.")
+    ? rootHostname.slice(4)
+    : rootHostname;
   const isMarketingApex =
-    Boolean(rootHostname) &&
-    (hostname === rootHostname || hostname === `www.${rootHostname}`);
+    Boolean(apexHostname) &&
+    (hostname === apexHostname || hostname === `www.${apexHostname}`);
 
   if (!isMarketingApex) {
     const fallback = getDefaultTenantSlug();

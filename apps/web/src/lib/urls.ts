@@ -51,11 +51,12 @@ function parseRootDomain(rootDomain: string): Pick<AppUrlConfig, "rootHostname" 
 }
 
 export function readAppUrlConfig(): AppUrlConfig {
-  const rootDomain = (
+  const rawRootDomain = (
     process.env.NEXT_PUBLIC_ROOT_DOMAIN ??
     process.env.ROOT_DOMAIN ??
-    ""
+    (process.env.NODE_ENV === "production" ? "bornosoft.site" : "localhost:3000")
   ).trim().toLowerCase();
+  const rootDomain = rawRootDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 
   const protocol = stripTrailingSlash(
     process.env.NEXT_PUBLIC_PROTOCOL ??

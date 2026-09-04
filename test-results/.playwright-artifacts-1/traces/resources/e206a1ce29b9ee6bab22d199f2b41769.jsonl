@@ -1,0 +1,3 @@
+{"type":"receive","time":1788528405768.4739,"opcode":1,"data":"{\"action\":\"sync\",\"hash\":\"8859dbf16cb71150\",\"errors\":[],\"warnings\":[],\"versionInfo\":{\"staleness\":\"stale-major\",\"expected\":\"16.3.4\",\"installed\":\"15.3.3\"},\"debug\":{},\"devIndicator\":{\"disabledUntil\":0}}"}
+{"type":"send","time":1788528405768.8179,"opcode":1,"data":"{\"event\":\"client-success\",\"clientId\":1788528405743}"}
+{"type":"receive","time":1788528405772.889,"opcode":1,"data":"{\"action\":\"isrManifest\",\"data\":{\"/\":true,\"/admin/login\":true,\"/workshops\":true,\"/login\":true}}"}

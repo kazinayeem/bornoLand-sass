@@ -6,10 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   X,
   LayoutDashboard,
-  ChevronRight,
-  ChevronDown,
   Lock,
-  Star,
   HardDrive,
   Store as StoreIcon,
 } from "lucide-react";
@@ -32,8 +29,8 @@ import {
 } from "@/redux/api/feature-api";
 import { useGetMediaStatsQuery } from "@/redux/api/media-api";
 import { useStoreContext } from "@/providers/store-context";
-import { useStoreNavState } from "./use-store-nav-state";
 import { ComingSoonBadge } from "@/components/ecommerce/coming-soon-badge";
+import { getStoreDisplayDomain, resolveStoreStatus } from "@/lib/store-status";
 
 interface MobileStoreDrawerProps {
   store: Store;
@@ -43,6 +40,8 @@ interface MobileStoreDrawerProps {
 export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
   const pathname = usePathname();
   const basePath = `/store/${store.slug}`;
+  const status = resolveStoreStatus(store);
+  const domain = getStoreDisplayDomain(store.slug);
 
   // Entitlements & Permissions
   const storeContext = useStoreContext();
@@ -60,13 +59,6 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
   const stats = contextStats ?? storageData?.data?.stats;
   const isOwner = useIsStoreOwner();
   const permissionSet = usePermissions();
-
-  const {
-    expandedModules,
-    toggleModule,
-    pinnedItemIds,
-    activeModule,
-  } = useStoreNavState(store._id, store.slug);
 
   const resolveItemAccess = useCallback(
     (item: NavItem) => {
@@ -87,7 +79,7 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
   // Filter permitted modules
   const permittedModules = useMemo(() => {
     return BUSINESS_MODULES.filter((m) => {
-      if (m.id === "home") return true;
+      if (m.id === "home") return false;
       return m.items.some((it) => !resolveItemAccess(it).noPermission);
     });
   }, [resolveItemAccess]);
@@ -104,205 +96,149 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
       : `${stats.usedMB.toFixed(1)} MB`
     : "0 B";
 
-  // All items for pinned quick access
-  const allItems: NavItem[] = useMemo(() => {
-    const list: NavItem[] = [];
-    for (const mod of BUSINESS_MODULES) {
-      for (const it of mod.items) {
-        list.push(it);
-      }
-    }
-    return list;
-  }, []);
-
-  const pinnedItems = useMemo(() => {
-    return pinnedItemIds
-      .map((id) => allItems.find((it) => it.id === id))
-      .filter(Boolean) as NavItem[];
-  }, [pinnedItemIds, allItems]);
+  const isDashboardActive = pathname === `${basePath}/dashboard` || pathname === basePath;
 
   return (
-    <div className="flex h-full flex-col bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-      {/* ── Drawer Header ── */}
-      <div className="flex items-center justify-between border-b border-zinc-200/80 px-4 py-3 dark:border-zinc-800 shrink-0">
-        <div className="flex items-center gap-2.5 truncate">
-          <StoreBrandMark store={store} size={30} roundedClassName="rounded-md shadow-2xs" />
+    <div className="flex h-full flex-col bg-white dark:bg-zinc-950 text-[#181c20] dark:text-zinc-100">
+      {/* ── 1. Drawer Header ── */}
+      <div className="flex items-center justify-between border-b border-[#e2e8f0] px-4 py-3.5 dark:border-zinc-800 shrink-0">
+        <div className="flex items-center gap-3 truncate">
+          <StoreBrandMark store={store} size={38} roundedClassName="rounded-xl shadow-2xs shrink-0" />
           <div className="min-w-0">
-            <p className="truncate text-xs font-bold text-zinc-900 dark:text-zinc-100">
-              {store.shortName || store.name}
-            </p>
-            <p className="truncate text-[10px] text-zinc-500 font-mono">
-              {store.slug}
+            <div className="flex items-center gap-1.5">
+              <p className="truncate text-[18px] font-semibold text-[#181c20] dark:text-zinc-100 leading-tight">
+                {store.shortName || store.name}
+              </p>
+              <span
+                className={cn(
+                  "h-2 w-2 shrink-0 rounded-full",
+                  status === "active"
+                    ? "bg-emerald-500"
+                    : status === "trial"
+                    ? "bg-[#1664d9]"
+                    : "bg-zinc-400"
+                )}
+                title={status}
+              />
+            </div>
+            <p className="truncate text-[13.5px] text-[#727785] dark:text-zinc-400 font-mono mt-0.5">
+              {domain}
             </p>
           </div>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-[#727785] hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           aria-label="Close drawer"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </button>
       </div>
 
-      {/* ── Scrollable Body ── */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
-        {/* Quick Access Pinned Buttons */}
-        {pinnedItems.length > 0 && (
-          <div>
-            <p className="px-1 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
-              <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
-              <span>Quick Access</span>
-            </p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {pinnedItems.map((item) => {
-                const href = `${basePath}${item.href}`;
-                const isActive = item.exact
-                  ? pathname === href
-                  : pathname.startsWith(href.split("?")[0]);
-                const Icon = item.icon;
-                const label = item.labelEn;
-
-                return (
-                  <Link
-                    key={item.id}
-                    href={href}
-                    onClick={onClose}
-                    className={cn(
-                      "flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium border transition-colors",
-                      isActive
-                        ? "bg-indigo-50/90 border-indigo-200 text-indigo-950 font-semibold dark:bg-indigo-950/40 dark:border-indigo-800 dark:text-indigo-200"
-                        : "bg-zinc-50/60 border-zinc-200/80 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-900/60 dark:border-zinc-800 dark:text-zinc-300"
-                    )}
-                  >
-                    <Icon className="h-3.5 w-3.5 text-zinc-500 shrink-0" strokeWidth={1.75} />
-                    <span className="truncate">{label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Home / Overview Link */}
+      {/* ── 2. Scrollable Body ── */}
+      <nav className="flex-1 overflow-y-auto p-4 space-y-4" aria-label="Mobile Navigation">
+        {/* Store Dashboard Link */}
         <div>
           <Link
             href={`${basePath}/dashboard`}
             onClick={onClose}
             className={cn(
-              "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-semibold border transition-colors",
-              pathname === `${basePath}/dashboard`
-                ? "bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-950 dark:border-white"
-                : "bg-zinc-50 border-zinc-200 text-zinc-800 hover:bg-zinc-100 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-200"
+              "relative flex items-center gap-3.5 rounded-xl px-3.5 min-h-[44px] text-[17px] font-semibold transition-all duration-150",
+              isDashboardActive
+                ? "bg-zinc-100/90 text-[#181c20] dark:bg-zinc-800/80 dark:text-white"
+                : "text-[#424754] hover:bg-zinc-100/70 hover:text-[#181c20] dark:text-zinc-400 dark:hover:bg-zinc-900/80 dark:hover:text-zinc-100"
             )}
           >
-            <LayoutDashboard className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-            <span className="truncate">Store Dashboard</span>
+            {isDashboardActive && (
+              <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-[#1664d9] dark:bg-[#60a5fa]" />
+            )}
+            <LayoutDashboard
+              strokeWidth={isDashboardActive ? 2 : 1.75}
+              className={cn(
+                "h-[21px] w-[21px] shrink-0",
+                isDashboardActive ? "text-[#1664d9] dark:text-[#60a5fa]" : "text-[#727785]"
+              )}
+            />
+            <span className="truncate leading-tight">Store Dashboard</span>
           </Link>
         </div>
 
-        {/* Collapsible Navigation Modules */}
-        <div className="space-y-1">
-          {permittedModules.map((mod) => {
-            if (mod.id === "home") return null;
+        {/* Permitted Business Sections */}
+        {permittedModules.map((mod) => {
+          const visibleItems = mod.items.filter((it) => !resolveItemAccess(it).noPermission);
+          if (visibleItems.length === 0) return null;
 
-            const visibleItems = mod.items.filter((it) => !resolveItemAccess(it).noPermission);
-            if (visibleItems.length === 0) return null;
-
-            const isExpanded = Boolean(expandedModules[mod.id]);
-            const isModuleActive = mod.id === activeModule.id;
-            const ModIcon = mod.icon;
-
-            return (
-              <div key={mod.id} className="rounded-lg">
-                <button
-                  type="button"
-                  onClick={() => toggleModule(mod.id)}
-                  className={cn(
-                    "flex w-full items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold tracking-wide uppercase transition-colors",
-                    isModuleActive
-                      ? "text-indigo-950 dark:text-indigo-200 font-bold"
-                      : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/60 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-900/60"
-                  )}
-                  aria-expanded={isExpanded}
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    <ModIcon className="h-3.5 w-3.5 shrink-0 text-zinc-500" strokeWidth={1.75} />
-                    <span className="truncate text-[11px]">
-                      {mod.titleEn}
-                    </span>
-                  </div>
-                  <span className="text-zinc-400">
-                    {isExpanded ? (
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    ) : (
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    )}
-                  </span>
-                </button>
-
-                {isExpanded && (
-                  <div className="space-y-0.5 mt-0.5 pl-2">
-                    {visibleItems.map((item) => {
-                      const access = resolveItemAccess(item);
-                      const href = `${basePath}${item.href}`;
-                      const isExact = item.exact;
-                      const isActive = isExact
-                        ? pathname === href
-                        : pathname.startsWith(href.split("?")[0]);
-                      const ItemIcon = item.icon;
-                      const label = item.labelEn;
-
-                      return (
-                        <Link
-                          key={item.id}
-                          href={access.locked ? `${basePath}/billing` : href}
-                          onClick={onClose}
-                          className={cn(
-                            "relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors",
-                            isActive
-                              ? "bg-zinc-100 font-semibold text-zinc-950 dark:bg-zinc-800 dark:text-white"
-                              : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100",
-                            access.locked && "opacity-60"
-                          )}
-                        >
-                          {isActive && (
-                            <span className="absolute left-0 top-1/2 h-4 w-[2.5px] -translate-y-1/2 rounded-r-full bg-indigo-600 dark:bg-indigo-400" />
-                          )}
-                          <ItemIcon className={cn("h-4 w-4 shrink-0", isActive ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-400")} strokeWidth={1.75} />
-                          <span className="flex-1 truncate">{label}</span>
-                          {access.locked && <Lock className="h-3 w-3 text-amber-500 shrink-0" />}
-                          {item.comingSoon && <ComingSoonBadge />}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
+          return (
+            <div key={mod.id} className="space-y-1">
+              <div className="px-3.5 pt-3 pb-1 text-[13px] font-semibold uppercase tracking-wider text-[#727785] dark:text-zinc-400">
+                {mod.titleEn}
               </div>
-            );
-          })}
-        </div>
-      </div>
 
-      {/* ── Drawer Footer ── */}
-      <div className="border-t border-zinc-200/80 p-3 dark:border-zinc-800 shrink-0 space-y-2">
+              <div className="space-y-0.5">
+                {visibleItems.map((item) => {
+                  const access = resolveItemAccess(item);
+                  const href = `${basePath}${item.href}`;
+                  const isExact = item.exact;
+                  const isActive = isExact
+                    ? pathname === href
+                    : pathname.startsWith(href.split("?")[0]);
+                  const ItemIcon = item.icon;
+                  const label = item.labelEn;
+
+                  return (
+                    <Link
+                      key={item.id}
+                      href={access.locked ? `${basePath}/billing` : href}
+                      onClick={onClose}
+                      className={cn(
+                        "relative flex items-center gap-3.5 rounded-xl px-3.5 min-h-[44px] text-[17px] font-medium transition-all duration-150",
+                        isActive
+                          ? "bg-zinc-100/90 text-[#181c20] font-semibold dark:bg-zinc-800/80 dark:text-white"
+                          : "text-[#424754] hover:bg-zinc-100/70 hover:text-[#181c20] dark:text-zinc-400 dark:hover:bg-zinc-900/80 dark:hover:text-zinc-100",
+                        access.locked && "opacity-60"
+                      )}
+                    >
+                      {isActive && (
+                        <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-[#1664d9] dark:bg-[#60a5fa]" />
+                      )}
+                      <ItemIcon
+                        strokeWidth={isActive ? 2 : 1.75}
+                        className={cn(
+                          "h-[21px] w-[21px] shrink-0",
+                          isActive ? "text-[#1664d9] dark:text-[#60a5fa]" : "text-[#727785]"
+                        )}
+                      />
+                      <span className="flex-1 truncate leading-tight">{label}</span>
+                      {access.locked && <Lock className="h-3.5 w-3.5 text-amber-500 shrink-0 ml-1.5" />}
+                      {item.comingSoon && <ComingSoonBadge />}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </nav>
+
+      {/* ── 3. Drawer Footer ── */}
+      <div className="border-t border-[#e2e8f0] p-4 dark:border-zinc-800 shrink-0 space-y-3">
         {/* Storage Bar */}
-        <div className="rounded-lg border border-zinc-200/60 bg-zinc-50/70 p-2 dark:border-zinc-800/80 dark:bg-zinc-900/50">
-          <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-            <span className="flex items-center gap-1.5">
-              <HardDrive className="h-3 w-3 text-zinc-400" strokeWidth={1.75} />
+        <div className="rounded-xl border border-[#dfe3e8] bg-[#f8fafc] p-3 dark:border-zinc-800 dark:bg-zinc-900/60">
+          <div className="flex items-center justify-between text-[13px] font-semibold text-[#181c20] dark:text-zinc-300">
+            <span className="flex items-center gap-2">
+              <HardDrive className="h-4 w-4 text-[#727785]" strokeWidth={1.75} />
               <span>Storage</span>
             </span>
-            <span className="tabular-nums font-semibold text-zinc-700 dark:text-zinc-300">
+            <span className="tabular-nums text-xs font-semibold text-[#727785] dark:text-zinc-400">
               {usedLabel} / {storageLabel}
             </span>
           </div>
-          <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
             <div
               className={cn(
                 "h-full rounded-full transition-all duration-300",
-                storagePercent >= 80 ? "bg-amber-500" : "bg-indigo-600 dark:bg-indigo-400"
+                storagePercent >= 80 ? "bg-amber-500" : "bg-[#1664d9] dark:bg-[#60a5fa]"
               )}
               style={{ width: `${storagePercent}%` }}
             />
@@ -312,10 +248,10 @@ export function MobileStoreDrawer({ store, onClose }: MobileStoreDrawerProps) {
         <Link
           href="/workshops"
           onClick={onClose}
-          className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg border border-zinc-200 bg-zinc-50 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 transition-colors"
+          className="flex items-center justify-center gap-2 w-full min-h-[44px] px-3.5 rounded-xl border border-[#dfe3e8] bg-white text-sm font-semibold text-[#181c20] hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 transition-colors"
         >
-          <StoreIcon className="h-3.5 w-3.5" />
-          <span>Back to Workspace</span>
+          <StoreIcon className="h-4 w-4 text-[#727785]" />
+          <span>Back to Merchant Workspace</span>
         </Link>
       </div>
     </div>

@@ -41,11 +41,11 @@ export function StoreShell({ children }: { children: ReactNode }) {
     return (
       <div className="flex h-screen overflow-hidden bg-apple-canvas-parchment">
         {/* Sidebar skeleton */}
-        <div className="hidden lg:flex w-64 flex-col border-r border-apple-hairline bg-apple-canvas p-4 space-y-4 animate-pulse">
+        <div className="hidden lg:flex w-[350px] flex-col border-r border-apple-hairline bg-apple-canvas p-4 space-y-4 animate-pulse">
           <div className="h-10 w-full rounded-xl bg-zinc-200 dark:bg-zinc-800" />
           <div className="space-y-2 pt-4">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-8 w-full rounded-lg bg-zinc-100 dark:bg-zinc-800/60" />
+              <div key={i} className="h-11 w-full rounded-xl bg-zinc-100 dark:bg-zinc-800/60" />
             ))}
           </div>
         </div>

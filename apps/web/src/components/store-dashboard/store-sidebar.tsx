@@ -10,13 +10,9 @@ import {
   useEffect,
   useMemo,
   useRef,
-  type ReactNode,
 } from "react";
 import {
   LayoutDashboard,
-  ChevronDown,
-  ChevronRight,
-  Star,
   HardDrive,
   ChevronsUpDown,
   Check,
@@ -56,11 +52,7 @@ import {
   BUSINESS_MODULES,
   type BusinessModule,
   type NavItem,
-  findModuleByPathname,
 } from "./navigation-registry";
-import { useStoreNavState } from "./use-store-nav-state";
-import { SidebarModuleSwitcher } from "./sidebar-module-switcher";
-import { SidebarFavorites } from "./sidebar-favorites";
 
 /* ── Sidebar Collapse Context ─────────────────────────────────── */
 
@@ -90,12 +82,10 @@ function SidebarStoreSwitcher({
   const [open, setOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { t, language } = useLanguage();
   const { data: storesData } = useGetMyStoresQuery();
   const stores = storesData?.data?.stores ?? [];
   const status = resolveStoreStatus(store);
   const domain = getStoreDisplayDomain(store.slug);
-  const isBn = false;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -115,59 +105,61 @@ function SidebarStoreSwitcher({
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
-          "group flex w-full items-center gap-2.5 rounded-xl p-1.5 transition-all duration-150 text-left outline-none hover:bg-zinc-100 dark:hover:bg-zinc-800/60 focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:focus-visible:ring-white/20",
-          collapsed ? "justify-center p-1" : ""
+          "group flex w-full items-center gap-3 rounded-xl p-2 transition-all duration-150 text-left outline-none hover:bg-zinc-100 dark:hover:bg-zinc-800/60 focus-visible:ring-2 focus-visible:ring-[#1664d9]/20 cursor-pointer",
+          collapsed ? "justify-center p-1.5" : ""
         )}
         aria-expanded={open}
         aria-haspopup="true"
-        aria-label={isBn ? "স্টোর পরিবর্তন করুন" : "Switch workspace store"}
+        aria-label="Switch workspace store"
       >
         <StoreBrandMark
           store={store}
-          size={collapsed ? 34 : 32}
-          roundedClassName="rounded-lg shadow-2xs shrink-0"
+          size={collapsed ? 38 : 40}
+          roundedClassName="rounded-xl shadow-2xs shrink-0"
         />
 
         {!collapsed && (
           <div className="flex min-w-0 flex-1 flex-col">
             <div className="flex items-center gap-1.5">
-              <span className="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+              <span className="truncate text-[18px] font-semibold text-[#181c20] dark:text-zinc-100 leading-tight">
                 {store.shortName || store.name}
               </span>
               <span
                 className={cn(
-                  "h-1.5 w-1.5 shrink-0 rounded-full",
+                  "h-2 w-2 shrink-0 rounded-full",
                   status === "active"
                     ? "bg-emerald-500"
                     : status === "trial"
-                    ? "bg-indigo-500"
+                    ? "bg-[#1664d9]"
                     : "bg-zinc-400"
                 )}
                 title={status}
               />
             </div>
-            <span className="truncate text-[10.5px] text-zinc-500 dark:text-zinc-400 font-mono">
+            <span className="truncate text-[14px] text-[#727785] dark:text-zinc-400 font-mono leading-snug mt-0.5">
               {domain}
             </span>
           </div>
         )}
 
         {!collapsed && (
-          <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors" />
+          <ChevronsUpDown className="h-4 w-4 shrink-0 text-[#727785] group-hover:text-[#181c20] dark:group-hover:text-zinc-200 transition-colors" />
         )}
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute left-0 top-full z-50 mt-1.5 w-64 rounded-xl border border-zinc-200/90 bg-white p-1.5 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 animate-in fade-in-50 zoom-in-95 duration-150"
+          className="absolute left-0 top-full z-50 mt-1.5 w-72 rounded-2xl border border-[#dfe3e8] bg-white p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-950 animate-in fade-in-50 zoom-in-95 duration-150"
         >
-          <div className="flex items-center justify-between px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+          <div className="flex items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#727785] dark:text-zinc-400">
             <span>Authorized Stores</span>
-            <span className="font-mono">{stores.length}</span>
+            <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-[10px]">
+              {stores.length}
+            </span>
           </div>
 
-          <div className="max-h-52 overflow-y-auto space-y-0.5">
+          <div className="max-h-60 overflow-y-auto space-y-1 py-1">
             {stores.map((s) => {
               const isCurrent = s._id === store._id;
               return (
@@ -184,37 +176,37 @@ function SidebarStoreSwitcher({
                     router.push(`/store/${s.slug}/dashboard`);
                   }}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition-colors text-left",
+                    "flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition-colors text-left cursor-pointer",
                     isCurrent
-                      ? "bg-zinc-100 font-semibold text-zinc-950 dark:bg-zinc-800 dark:text-white"
+                      ? "bg-zinc-100 font-semibold text-[#181c20] dark:bg-zinc-800 dark:text-white"
                       : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white"
                   )}
                 >
-                  <div className="flex items-center gap-2 truncate">
-                    <StoreBrandMark store={s} size={20} roundedClassName="rounded-sm" />
+                  <div className="flex items-center gap-2.5 truncate">
+                    <StoreBrandMark store={s} size={24} roundedClassName="rounded-md" />
                     <span className="truncate">{s.shortName || s.name}</span>
                   </div>
-                  {isCurrent && <Check className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                  {isCurrent && <Check className="h-4 w-4 text-[#1664d9] dark:text-[#60a5fa] shrink-0" />}
                 </button>
               );
             })}
           </div>
 
-          <div className="mt-1 border-t border-zinc-100 pt-1 dark:border-zinc-800 space-y-0.5">
+          <div className="mt-1.5 border-t border-[#f1f4fa] dark:border-zinc-800 pt-1.5 space-y-1">
             <Link
               href="/workshops"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors"
             >
-              <StoreIcon className="h-3.5 w-3.5 text-zinc-500" />
+              <StoreIcon className="h-4 w-4 text-zinc-500" />
               <span>Merchant Workspace</span>
             </Link>
             <Link
               href="/workshops/stores/create"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors"
             >
-              <Plus className="h-3.5 w-3.5 text-zinc-500" />
+              <Plus className="h-4 w-4 text-zinc-500" />
               <span>Create New Store</span>
             </Link>
           </div>
@@ -231,21 +223,15 @@ function SidebarNavItem({
   basePath,
   collapsed,
   isBn,
-  isPinned,
-  onTogglePin,
   onNavigate,
   locked,
-  requiredPlan,
 }: {
   item: NavItem;
   basePath: string;
   collapsed: boolean;
   isBn: boolean;
-  isPinned: boolean;
-  onTogglePin: (id: string) => void;
   onNavigate?: () => void;
   locked?: boolean;
-  requiredPlan?: string;
 }) {
   const pathname = usePathname();
   const href = `${basePath}${item.href}`;
@@ -263,63 +249,42 @@ function SidebarNavItem({
         href={locked ? `${basePath}/billing` : href}
         onClick={onNavigate}
         className={cn(
-          "relative flex flex-1 items-center gap-2.5 rounded-lg px-2.5 h-9 text-xs font-medium transition-all duration-150 outline-none",
+          "relative flex flex-1 items-center gap-3.5 rounded-xl px-3.5 min-h-[44px] text-[17px] font-medium transition-all duration-150 outline-none",
           isActive
-            ? "bg-zinc-100/90 text-zinc-950 font-semibold dark:bg-zinc-800/80 dark:text-white"
-            : "text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900/80 dark:hover:text-zinc-100",
-          collapsed ? "justify-center px-0 h-9 w-9 mx-auto rounded-lg" : "",
+            ? "bg-zinc-100/90 text-[#181c20] font-semibold dark:bg-zinc-800/80 dark:text-white"
+            : "text-[#424754] hover:bg-zinc-100/70 hover:text-[#181c20] dark:text-zinc-400 dark:hover:bg-zinc-900/80 dark:hover:text-zinc-100",
+          collapsed ? "justify-center px-0 h-11 w-11 mx-auto rounded-xl" : "",
           locked ? "opacity-60" : ""
         )}
         aria-label={label}
       >
         {/* Subtle active left indicator bar */}
         {isActive && !collapsed && (
-          <span className="absolute left-0 top-1/2 h-4 w-[2.5px] -translate-y-1/2 rounded-r-full bg-indigo-600 dark:bg-indigo-400" />
+          <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-[#1664d9] dark:bg-[#60a5fa]" />
         )}
 
         <Icon
           strokeWidth={isActive ? 2 : 1.75}
           className={cn(
-            "h-4 w-4 shrink-0 transition-colors",
+            "h-[21px] w-[21px] shrink-0 transition-colors",
             isActive
-              ? "text-indigo-600 dark:text-indigo-400"
-              : "text-zinc-500 group-hover/item:text-zinc-900 dark:text-zinc-400 dark:group-hover/item:text-white"
+              ? "text-[#1664d9] dark:text-[#60a5fa]"
+              : "text-[#727785] group-hover/item:text-[#181c20] dark:text-zinc-400 dark:group-hover/item:text-white"
           )}
         />
 
         {!collapsed && (
-          <span className="flex-1 truncate text-[12.5px] leading-none">{label}</span>
+          <span className="flex-1 truncate leading-tight">{label}</span>
         )}
 
         {!collapsed && locked && (
-          <Lock className="h-3 w-3 text-amber-500 shrink-0 ml-1" />
+          <Lock className="h-3.5 w-3.5 text-amber-500 shrink-0 ml-1.5" />
         )}
 
         {!collapsed && item.comingSoon && (
           <ComingSoonBadge />
         )}
       </Link>
-
-      {!collapsed && !locked && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onTogglePin(item.id);
-          }}
-          title={isPinned ? (isBn ? "পিন সরান" : "Remove pin") : (isBn ? "কুইক অ্যাক্সেসে পিন করুন" : "Pin to Quick Access")}
-          aria-label={isPinned ? "Remove pin" : "Pin to Quick Access"}
-          className={cn(
-            "absolute right-1.5 p-1 rounded transition-opacity outline-none",
-            isPinned
-              ? "opacity-100 text-amber-500"
-              : "opacity-0 group-hover/item:opacity-60 hover:opacity-100 text-zinc-400 hover:text-amber-500"
-          )}
-        >
-          <Star className={cn("h-3 w-3", isPinned ? "fill-amber-400 text-amber-500" : "")} strokeWidth={1.75} />
-        </button>
-      )}
     </div>
   );
 
@@ -327,10 +292,10 @@ function SidebarNavItem({
     return (
       <Tooltip>
         <TooltipTrigger asChild>{content}</TooltipTrigger>
-        <TooltipContent side="right" sideOffset={12} className="py-1 px-2.5 font-medium shadow-md text-xs">
+        <TooltipContent side="right" sideOffset={14} className="py-1.5 px-3 font-semibold shadow-md text-xs">
           <span>{label}</span>
           {item.descriptionEn && (
-            <span className="block text-[10px] text-zinc-400 font-normal">
+            <span className="block text-[11px] text-zinc-400 font-normal mt-0.5">
               {isBn ? item.descriptionBn : item.descriptionEn}
             </span>
           )}
@@ -351,9 +316,9 @@ export function StoreSidebar({
   store: Store;
   onNavigate?: () => void;
 }) {
-  const { language } = useLanguage();
   const isBn = false;
   const basePath = `/store/${store.slug}`;
+  const pathname = usePathname();
 
   // Persist collapsed state
   const [collapsed, setCollapsedState] = useState(false);
@@ -392,15 +357,6 @@ export function StoreSidebar({
   const isOwner = useIsStoreOwner();
   const permissionSet = usePermissions();
 
-  // Navigation state hook (Favorites, Expanded modules, Active module)
-  const {
-    expandedModules,
-    toggleModule,
-    pinnedItemIds,
-    togglePin,
-    activeModule,
-  } = useStoreNavState(store._id, store.slug);
-
   // Check item permission and entitlement
   const resolveItemAccess = useCallback(
     (item: NavItem) => {
@@ -419,17 +375,11 @@ export function StoreSidebar({
   );
 
   // Filter modules to only those with visible permitted items
-  const permittedModuleIds = useMemo(() => {
-    const set = new Set<string>();
-    for (const mod of BUSINESS_MODULES) {
-      if (mod.id === "home") {
-        set.add("home");
-        continue;
-      }
-      const hasVisible = mod.items.some((it) => !resolveItemAccess(it).noPermission);
-      if (hasVisible) set.add(mod.id);
-    }
-    return set;
+  const permittedModules = useMemo(() => {
+    return BUSINESS_MODULES.filter((mod) => {
+      if (mod.id === "home") return false; // Handled directly as top prominent dashboard item
+      return mod.items.some((it) => !resolveItemAccess(it).noPermission);
+    });
   }, [resolveItemAccess]);
 
   const storagePercent = Math.min(stats?.percentUsed ?? 0, 100);
@@ -444,166 +394,121 @@ export function StoreSidebar({
       : `${stats.usedMB.toFixed(1)} MB`
     : "0 B";
 
+  const isDashboardActive = pathname === `${basePath}/dashboard` || pathname === basePath;
+
   return (
     <TooltipProvider delayDuration={100}>
       <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
         <aside
           className={cn(
-            "sticky top-0 flex h-screen flex-col border-r border-zinc-200/80 bg-white transition-[width] duration-200 ease-in-out dark:border-zinc-800 dark:bg-zinc-950 select-none",
-            collapsed ? "w-[68px]" : "w-[268px]"
+            "sticky top-0 flex h-screen flex-col border-r border-[#e2e8f0] bg-white transition-[width] duration-200 ease-in-out dark:border-zinc-800 dark:bg-zinc-950 select-none",
+            collapsed ? "w-[76px]" : "w-[350px]"
           )}
           role="navigation"
           aria-label="Merchant Navigation"
         >
-          {/* ── Top: Store Header / Workspace Switcher ── */}
-          <div className={cn("shrink-0 border-b border-zinc-200/80 dark:border-zinc-800", collapsed ? "p-2" : "p-2.5")}>
+          {/* ── 1. Top: Store Header / Workspace Switcher ── */}
+          <div className={cn("shrink-0 border-b border-[#e2e8f0] dark:border-zinc-800", collapsed ? "p-2.5" : "p-3.5")}>
             <SidebarStoreSwitcher store={store} collapsed={collapsed} />
           </div>
 
-          {/* ── Business Module Switcher Grid ── */}
-          <div className={cn("shrink-0 border-b border-zinc-100 dark:border-zinc-800/60", collapsed ? "py-1.5" : "")}>
-            <SidebarModuleSwitcher
-              basePath={basePath}
-              activeModuleId={activeModule.id}
-              onSelectModule={(mod) => {
-                if (!expandedModules[mod.id]) toggleModule(mod.id);
-              }}
-              collapsed={collapsed}
-              isBn={isBn}
-              permittedModuleIds={permittedModuleIds}
-              onNavigate={onNavigate}
-            />
-          </div>
-
-          {/* ── Quick Access Favorites ── */}
-          <div className="shrink-0">
-            <SidebarFavorites
-              basePath={basePath}
-              pinnedItemIds={pinnedItemIds}
-              onTogglePin={togglePin}
-              collapsed={collapsed}
-              isBn={isBn}
-              onNavigate={onNavigate}
-            />
-          </div>
-
-          {/* ── Scrollable Modular Navigation Tree ── */}
+          {/* ── 2. Scrollable Section Navigation Tree ── */}
           <nav
-            className="sidebar-scroll flex-1 overflow-y-auto px-2 py-2 space-y-1"
+            className="sidebar-scroll flex-1 overflow-y-auto px-3.5 py-3 space-y-4"
             aria-label="Navigation Items"
           >
-            {/* Direct to Store Dashboard */}
-            <div className="mb-1.5">
+            {/* ── Store Dashboard Entry ── */}
+            <div>
               <Link
                 href={`${basePath}/dashboard`}
                 onClick={onNavigate}
                 className={cn(
-                  "group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 h-8.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100/80 hover:text-zinc-950 transition-colors border border-zinc-200/60 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white",
-                  collapsed ? "justify-center px-0 w-9 mx-auto" : ""
+                  "relative flex items-center gap-3.5 rounded-xl px-3.5 min-h-[44px] text-[17px] font-semibold transition-all duration-150 outline-none",
+                  isDashboardActive
+                    ? "bg-zinc-100/90 text-[#181c20] dark:bg-zinc-800/80 dark:text-white"
+                    : "text-[#424754] hover:bg-zinc-100/70 hover:text-[#181c20] dark:text-zinc-400 dark:hover:bg-zinc-900/80 dark:hover:text-zinc-100",
+                  collapsed ? "justify-center px-0 h-11 w-11 mx-auto rounded-xl" : ""
                 )}
+                aria-label="Store Dashboard"
               >
-                <LayoutDashboard className="h-3.5 w-3.5 shrink-0 text-zinc-500 group-hover:text-zinc-800 dark:text-zinc-400 dark:group-hover:text-zinc-200 transition-colors" strokeWidth={1.75} />
+                {/* Active left indicator bar */}
+                {isDashboardActive && !collapsed && (
+                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-[#1664d9] dark:bg-[#60a5fa]" />
+                )}
+
+                <LayoutDashboard
+                  strokeWidth={isDashboardActive ? 2 : 1.75}
+                  className={cn(
+                    "h-[21px] w-[21px] shrink-0 transition-colors",
+                    isDashboardActive
+                      ? "text-[#1664d9] dark:text-[#60a5fa]"
+                      : "text-[#727785] group-hover:text-[#181c20] dark:text-zinc-400 dark:group-hover:text-white"
+                  )}
+                />
                 {!collapsed && (
-                  <span className="truncate">
+                  <span className="truncate leading-tight">
                     Store Dashboard
                   </span>
                 )}
               </Link>
             </div>
 
-            {/* Render Each Permitted Business Module */}
-            {BUSINESS_MODULES.map((mod) => {
-              if (mod.id === "home") return null; // Home is represented by the direct link above
-
-              // Skip unauthorized modules
-              if (!permittedModuleIds.has(mod.id)) return null;
-
+            {/* ── All Permitted Business Sections ── */}
+            {permittedModules.map((mod) => {
               const visibleItems = mod.items.filter((it) => !resolveItemAccess(it).noPermission);
               if (visibleItems.length === 0) return null;
 
-              const isExpanded = Boolean(expandedModules[mod.id]);
-              const isModuleActive = mod.id === activeModule.id;
-              const ModIcon = mod.icon;
-
               return (
-                <div
-                  key={mod.id}
-                  className="rounded-lg transition-colors py-0.5"
-                >
-                  {/* Module Collapsible Header */}
+                <div key={mod.id} className="space-y-1">
+                  {/* Section Heading */}
                   {!collapsed ? (
-                    <button
-                      type="button"
-                      onClick={() => toggleModule(mod.id)}
-                      className={cn(
-                        "flex w-full items-center justify-between px-2 py-1.5 rounded-md text-[11px] font-semibold tracking-wide uppercase transition-colors outline-none",
-                        isModuleActive
-                          ? "text-indigo-950 dark:text-indigo-200 font-bold"
-                          : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100/60 dark:text-zinc-500 dark:hover:text-zinc-300 dark:hover:bg-zinc-900/60"
-                      )}
-                      aria-expanded={isExpanded}
-                    >
-                      <div className="flex items-center gap-1.5 truncate">
-                        <ModIcon className={cn("h-3 w-3 shrink-0", isModuleActive ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-400 dark:text-zinc-500")} strokeWidth={1.75} />
-                        <span className="truncate">
-                          {mod.titleEn}
-                        </span>
-                      </div>
-                      <span className="text-zinc-400 dark:text-zinc-500">
-                        {isExpanded ? (
-                          <ChevronDown className="h-3 w-3" strokeWidth={2} />
-                        ) : (
-                          <ChevronRight className="h-3 w-3" strokeWidth={2} />
-                        )}
-                      </span>
-                    </button>
-                  ) : null}
-
-                  {/* Module Children Items */}
-                  {(isExpanded || collapsed) && (
-                    <div className="space-y-0.5 mt-0.5 pl-0">
-                      {visibleItems.map((item) => {
-                        const access = resolveItemAccess(item);
-                        return (
-                          <SidebarNavItem
-                            key={item.id}
-                            item={item}
-                            basePath={basePath}
-                            collapsed={collapsed}
-                            isBn={isBn}
-                            isPinned={pinnedItemIds.includes(item.id)}
-                            onTogglePin={togglePin}
-                            onNavigate={onNavigate}
-                            locked={access.locked}
-                            requiredPlan={access.requiredPlan}
-                          />
-                        );
-                      })}
+                    <div className="px-3.5 pt-3 pb-1 text-[13px] font-semibold uppercase tracking-wider text-[#727785] dark:text-zinc-400">
+                      {mod.titleEn}
                     </div>
+                  ) : (
+                    <div className="border-t border-[#f1f4fa] dark:border-zinc-800/80 my-2" />
                   )}
+
+                  {/* Section Navigation Items */}
+                  <div className="space-y-0.5">
+                    {visibleItems.map((item) => {
+                      const access = resolveItemAccess(item);
+                      return (
+                        <SidebarNavItem
+                          key={item.id}
+                          item={item}
+                          basePath={basePath}
+                          collapsed={collapsed}
+                          isBn={isBn}
+                          onNavigate={onNavigate}
+                          locked={access.locked}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
               );
             })}
           </nav>
 
-          {/* ── Bottom Storage & Collapse Toggle Bar ── */}
-          <div className={cn("shrink-0 border-t border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-950", collapsed ? "p-1.5" : "p-2.5")}>
+          {/* ── 3. Bottom Area: Storage & Collapse Sidebar (Sticky) ── */}
+          <div className={cn("shrink-0 border-t border-[#e2e8f0] bg-white dark:border-zinc-800 dark:bg-zinc-950", collapsed ? "p-2" : "p-3.5")}>
             {!collapsed ? (
-              <div className="mb-2 rounded-lg border border-zinc-200/60 bg-zinc-50/70 p-2 dark:border-zinc-800/80 dark:bg-zinc-900/50">
-                <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-                  <span className="flex items-center gap-1.5">
-                    <HardDrive className="h-3 w-3 text-zinc-400" strokeWidth={1.75} />
+              <div className="mb-3 rounded-xl border border-[#dfe3e8] bg-[#f8fafc] p-3 dark:border-zinc-800 dark:bg-zinc-900/60">
+                <div className="flex items-center justify-between text-[13px] font-semibold text-[#181c20] dark:text-zinc-300">
+                  <span className="flex items-center gap-2">
+                    <HardDrive className="h-4 w-4 text-[#727785]" strokeWidth={1.75} />
                     <span>Storage</span>
                   </span>
-                  <span className="tabular-nums font-semibold text-zinc-700 dark:text-zinc-300">
+                  <span className="tabular-nums text-xs font-semibold text-[#727785] dark:text-zinc-400">
                     {usedLabel} / {storageLabel}
                   </span>
                 </div>
-                <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
                   <div
                     className={cn(
                       "h-full rounded-full transition-all duration-300",
-                      storagePercent >= 80 ? "bg-amber-500" : "bg-indigo-600 dark:bg-indigo-400"
+                      storagePercent >= 80 ? "bg-amber-500" : "bg-[#1664d9] dark:bg-[#60a5fa]"
                     )}
                     style={{ width: `${storagePercent}%` }}
                   />
@@ -616,18 +521,18 @@ export function StoreSidebar({
               type="button"
               onClick={() => setCollapsed(!collapsed)}
               className={cn(
-                "flex w-full items-center gap-2 rounded-lg py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white transition-colors outline-none",
-                collapsed ? "justify-center px-0" : "px-2"
+                "flex w-full items-center gap-3 rounded-xl min-h-[44px] text-[15px] font-semibold text-[#727785] hover:bg-zinc-100 hover:text-[#181c20] dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white transition-colors outline-none cursor-pointer",
+                collapsed ? "justify-center px-0 h-11 w-11 mx-auto" : "px-3.5"
               )}
               title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {collapsed ? (
-                <PanelLeft className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                <PanelLeft className="h-[21px] w-[21px] shrink-0" strokeWidth={1.75} />
               ) : (
                 <>
-                  <PanelLeftClose className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-                  <span className="text-[11.5px] font-medium">
+                  <PanelLeftClose className="h-[21px] w-[21px] shrink-0" strokeWidth={1.75} />
+                  <span className="leading-none">
                     Collapse sidebar
                   </span>
                 </>

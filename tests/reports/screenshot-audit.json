@@ -1,0 +1,641 @@
+[
+  {
+    "route": "/login",
+    "filename": "auth-login.png",
+    "module": "Getting Started",
+    "role": "Public",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 1797
+  },
+  {
+    "route": "/workshops",
+    "filename": "workspace-selection.png",
+    "module": "Getting Started",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 1703
+  },
+  {
+    "route": "/store/nayeem/dashboard",
+    "filename": "store-dashboard.png",
+    "module": "Dashboard",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 3131
+  },
+  {
+    "route": "/store/nayeem/orders",
+    "filename": "orders.png",
+    "module": "Commerce",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 3741
+  },
+  {
+    "route": "/store/nayeem/customers",
+    "filename": "customers.png",
+    "module": "Commerce",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 3638
+  },
+  {
+    "route": "/store/nayeem/products",
+    "filename": "products.png",
+    "module": "Commerce",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [
+      "Failed to load resource: net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin"
+    ],
+    "networkErrors": [],
+    "durationMs": 7413
+  },
+  {
+    "route": "/store/nayeem/categories",
+    "filename": "categories.png",
+    "module": "Commerce",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 4249
+  },
+  {
+    "route": "/store/nayeem/orders/incomplete",
+    "filename": "orders-incomplete.png",
+    "module": "Commerce",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    ],
+    "networkErrors": [],
+    "durationMs": 17768
+  },
+  {
+    "route": "/store/nayeem/reviews",
+    "filename": "reviews.png",
+    "module": "Commerce",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 26114
+  },
+  {
+    "route": "/store/nayeem/inventory",
+    "filename": "inventory-stock.png",
+    "module": "Inventory",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [
+      "%o\n\n%s Error: Rendered fewer hooks than expected. This may be caused by an accidental early return statement.\n    at finishRenderingHooks (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:6722:15)\n    at renderWithHooks (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:6689:7)\n    at updateFunctionComponent (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:8931:19)\n    at beginWork (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:10556:18)\n    at runWithFiberInDEV (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:845:30)\n    at performUnitOfWork (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15258:22)\n    at workLoopSync (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15078:41)\n    at renderRootSync (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15058:11)\n    at performWorkOnRoot (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14569:44)\n    at performSyncWorkOnRoot (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16365:7)\n    at flushSyncWorkAcrossRoots_impl (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16211:21)\n    at processRootScheduleInMicrotask (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16250:9)\n    at eval (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16384:13) The above error occurred in the <InventoryHeader> component. It was handled by the <ErrorBoundaryHandler> error boundary.",
+      "[StoreShellError] Error: Rendered fewer hooks than expected. This may be caused by an accidental early return statement.\n    at finishRenderingHooks (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:6722:15)\n    at renderWithHooks (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:6689:7)\n    at updateFunctionComponent (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:8931:19)\n    at beginWork (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:10556:18)\n    at runWithFiberInDEV (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:845:30)\n    at performUnitOfWork (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15258:22)\n    at workLoopSync (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15078:41)\n    at renderRootSync (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15058:11)\n    at performWorkOnRoot (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14569:44)\n    at performSyncWorkOnRoot (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16365:7)\n    at flushSyncWorkAcrossRoots_impl (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16211:21)\n    at processRootScheduleInMicrotask (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16250:9)\n    at eval (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16384:13)",
+      "[StoreShellError] Error: Rendered fewer hooks than expected. This may be caused by an accidental early return statement.\n    at finishRenderingHooks (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:6722:15)\n    at renderWithHooks (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:6689:7)\n    at updateFunctionComponent (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:8931:19)\n    at beginWork (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:10556:18)\n    at runWithFiberInDEV (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:845:30)\n    at performUnitOfWork (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15258:22)\n    at workLoopSync (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15078:41)\n    at renderRootSync (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15058:11)\n    at performWorkOnRoot (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:14569:44)\n    at performSyncWorkOnRoot (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16365:7)\n    at flushSyncWorkAcrossRoots_impl (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16211:21)\n    at processRootScheduleInMicrotask (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16250:9)\n    at eval (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.3.3_@playwright+test@1.62.1_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16384:13)"
+    ],
+    "networkErrors": [],
+    "durationMs": 38363
+  },
+  {
+    "route": "/store/nayeem/inventory/warehouses",
+    "filename": "warehouses.png",
+    "module": "Inventory",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5410
+  },
+  {
+    "route": "/store/nayeem/inventory/ledger",
+    "filename": "stock-ledger.png",
+    "module": "Inventory",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5741
+  },
+  {
+    "route": "/store/nayeem/inventory/waste",
+    "filename": "waste-loss.png",
+    "module": "Inventory",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5578
+  },
+  {
+    "route": "/store/nayeem/inventory/purchasing",
+    "filename": "purchase-orders.png",
+    "module": "Purchasing",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5253
+  },
+  {
+    "route": "/store/nayeem/inventory/suppliers",
+    "filename": "suppliers.png",
+    "module": "Purchasing",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 8329
+  },
+  {
+    "route": "/store/nayeem/pos",
+    "filename": "pos-terminal.png",
+    "module": "POS",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 7811
+  },
+  {
+    "route": "/store/nayeem/pos/shifts",
+    "filename": "pos-shifts.png",
+    "module": "POS",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 6299
+  },
+  {
+    "route": "/store/nayeem/hrm/employees",
+    "filename": "hrm-employees.png",
+    "module": "HRM",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 7461
+  },
+  {
+    "route": "/store/nayeem/hrm/organization",
+    "filename": "hrm-organization.png",
+    "module": "HRM",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5219
+  },
+  {
+    "route": "/store/nayeem/hrm/attendance",
+    "filename": "hrm-attendance.png",
+    "module": "HRM",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 7251
+  },
+  {
+    "route": "/store/nayeem/hrm/leaves",
+    "filename": "hrm-leaves.png",
+    "module": "HRM",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5019
+  },
+  {
+    "route": "/store/nayeem/hrm/payroll",
+    "filename": "hrm-payroll.png",
+    "module": "HRM",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 7208
+  },
+  {
+    "route": "/store/nayeem/hrm/self-service",
+    "filename": "employee-self-service.png",
+    "module": "Employee Self-Service",
+    "role": "Employee",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5454
+  },
+  {
+    "route": "/store/nayeem/finance/accounting",
+    "filename": "finance-accounting.png",
+    "module": "Finance",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 4622
+  },
+  {
+    "route": "/store/nayeem/finance/accounting/coa",
+    "filename": "finance-coa.png",
+    "module": "Finance",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5387
+  },
+  {
+    "route": "/store/nayeem/finance/accounting/journal",
+    "filename": "finance-journal.png",
+    "module": "Finance",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 8923
+  },
+  {
+    "route": "/store/nayeem/finance/expenses",
+    "filename": "finance-expenses.png",
+    "module": "Finance",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5730
+  },
+  {
+    "route": "/store/nayeem/finance/reports",
+    "filename": "finance-reports.png",
+    "module": "Finance",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 6815
+  },
+  {
+    "route": "/store/nayeem/crm/deals",
+    "filename": "crm-deals.png",
+    "module": "Growth",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 8846
+  },
+  {
+    "route": "/store/nayeem/support/tickets",
+    "filename": "support-tickets.png",
+    "module": "Growth",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 21756
+  },
+  {
+    "route": "/store/nayeem/marketing",
+    "filename": "marketing-campaigns.png",
+    "module": "Growth",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5631
+  },
+  {
+    "route": "/store/nayeem/coupons",
+    "filename": "coupons.png",
+    "module": "Growth",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [
+      "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <ScrollAndFocusHandler segmentPath={[...]}>\n      <InnerScrollAndFocusHandler segmentPath={[...]} focusAndScrollRef={{apply:false, ...}}>\n        <ErrorBoundary errorComponent={function RootError} errorStyles={[...]} errorScripts={[...]}>\n          <ErrorBoundaryHandler pathname=\"/store/nay...\" errorComponent={function RootError} errorStyles={[...]} ...>\n            <LoadingBoundary loading={null}>\n              <HTTPAccessFallbackBoundary notFound={[...]} forbidden={undefined} unauthorized={undefined}>\n                <HTTPAccessFallbackErrorBoundary pathname=\"/store/nay...\" notFound={[...]} forbidden={undefined} ...>\n                  <RedirectBoundary>\n                    <RedirectErrorBoundary router={{...}}>\n                      <InnerLayoutRouter url=\"/store/nay...\" tree={[...]} cacheNode={{lazyData:null, ...}} ...>\n                        <StoreGroupLayout>\n                          <ProtectedSessionBoundary>\n                            <SessionRestoreScreen>\n                              <BuilderLoadingScreen compact={true} message=\"Preparing ...\" className=\"min-h-[60vh]\">\n                                <div\n                                  role=\"status\"\n                                  aria-live=\"polite\"\n                                  aria-busy=\"true\"\n                                  aria-label=\"Preparing your workspace…\"\n                                  className=\"relative flex items-center justify-center overflow-hidden bg-apple-canvas...\"\n-                                 style={{opacity:\"0\"}}\n                                >\n"
+    ],
+    "networkErrors": [],
+    "durationMs": 9380
+  },
+  {
+    "route": "/store/nayeem/settings/tracking",
+    "filename": "tracking-pixels.png",
+    "module": "Growth",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 15282
+  },
+  {
+    "route": "/store/nayeem/analytics",
+    "filename": "analytics.png",
+    "module": "Growth",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 10370
+  },
+  {
+    "route": "/store/nayeem/reports",
+    "filename": "business-reports.png",
+    "module": "Growth",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 19354
+  },
+  {
+    "route": "/store/nayeem/operations/approvals",
+    "filename": "operations-approvals.png",
+    "module": "Operations",
+    "role": "Merchant",
+    "status": "FAILED",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 60044
+  },
+  {
+    "route": "/store/nayeem/operations/tasks",
+    "filename": "operations-tasks.png",
+    "module": "Operations",
+    "role": "Merchant",
+    "status": "FAILED",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 60041
+  },
+  {
+    "route": "/store/nayeem/settings/shipping",
+    "filename": "shipping-zones.png",
+    "module": "Operations",
+    "role": "Merchant",
+    "status": "FAILED",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 60024
+  },
+  {
+    "route": "/store/nayeem/settings/courier",
+    "filename": "courier-integrations.png",
+    "module": "Operations",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 26311
+  },
+  {
+    "route": "/store/nayeem/settings/payments",
+    "filename": "payment-gateways.png",
+    "module": "Operations",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 16414
+  },
+  {
+    "route": "/store/nayeem/settings/taxes",
+    "filename": "taxes-vat.png",
+    "module": "Operations",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 13091
+  },
+  {
+    "route": "/store/nayeem/design",
+    "filename": "theme-design.png",
+    "module": "Website",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 12096
+  },
+  {
+    "route": "/store/nayeem/pages",
+    "filename": "custom-pages.png",
+    "module": "Website",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5564
+  },
+  {
+    "route": "/store/nayeem/media",
+    "filename": "media-library.png",
+    "module": "Website",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 11713
+  },
+  {
+    "route": "/store/nayeem/customer-messages",
+    "filename": "customer-messages.png",
+    "module": "Website",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 6485
+  },
+  {
+    "route": "/store/nayeem/settings?section=general",
+    "filename": "store-settings.png",
+    "module": "Settings",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5416
+  },
+  {
+    "route": "/store/nayeem/members",
+    "filename": "team-permissions.png",
+    "module": "Settings",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 31094
+  },
+  {
+    "route": "/store/nayeem/billing",
+    "filename": "plan-billing.png",
+    "module": "Settings",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 6625
+  },
+  {
+    "route": "/store/nayeem/activity",
+    "filename": "activity-audit.png",
+    "module": "Settings",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 5275
+  },
+  {
+    "route": "/store/nayeem/dashboard",
+    "filename": "mobile-dashboard.png",
+    "module": "Dashboard",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 106411
+  },
+  {
+    "route": "/store/nayeem/pos",
+    "filename": "mobile-pos.png",
+    "module": "POS",
+    "role": "Merchant",
+    "status": "FAILED",
+    "httpStatus": 200,
+    "consoleErrors": [
+      "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <ScrollAndFocusHandler segmentPath={[...]}>\n      <InnerScrollAndFocusHandler segmentPath={[...]} focusAndScrollRef={{apply:false, ...}}>\n        <ErrorBoundary errorComponent={function RootError} errorStyles={[...]} errorScripts={[...]}>\n          <ErrorBoundaryHandler pathname=\"/store/nay...\" errorComponent={function RootError} errorStyles={[...]} ...>\n            <LoadingBoundary loading={null}>\n              <HTTPAccessFallbackBoundary notFound={[...]} forbidden={undefined} unauthorized={undefined}>\n                <HTTPAccessFallbackErrorBoundary pathname=\"/store/nay...\" notFound={[...]} forbidden={undefined} ...>\n                  <RedirectBoundary>\n                    <RedirectErrorBoundary router={{...}}>\n                      <InnerLayoutRouter url=\"/store/nay...\" tree={[...]} cacheNode={{lazyData:null, ...}} ...>\n                        <StoreGroupLayout>\n                          <ProtectedSessionBoundary>\n                            <SessionRestoreScreen>\n                              <BuilderLoadingScreen compact={true} message=\"Preparing ...\" className=\"min-h-[60vh]\">\n                                <div\n                                  role=\"status\"\n                                  aria-live=\"polite\"\n                                  aria-busy=\"true\"\n                                  aria-label=\"Preparing your workspace…\"\n                                  className=\"relative flex items-center justify-center overflow-hidden bg-apple-canvas...\"\n-                                 style={{opacity:\"0\"}}\n                                >\n"
+    ],
+    "networkErrors": [],
+    "durationMs": 60047
+  },
+  {
+    "route": "/store/nayeem/orders",
+    "filename": "mobile-orders.png",
+    "module": "Commerce",
+    "role": "Merchant",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 54287
+  },
+  {
+    "route": "/store/nayeem/hrm/self-service",
+    "filename": "mobile-self-service.png",
+    "module": "Employee Self-Service",
+    "role": "Employee",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 14952
+  },
+  {
+    "route": "/admin/dashboard",
+    "filename": "admin-dashboard.png",
+    "module": "Super Admin",
+    "role": "Super Admin",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 1741
+  },
+  {
+    "route": "/admin/dashboard/users",
+    "filename": "admin-users.png",
+    "module": "Super Admin",
+    "role": "Super Admin",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 6446
+  },
+  {
+    "route": "/admin/dashboard/stores",
+    "filename": "admin-stores.png",
+    "module": "Super Admin",
+    "role": "Super Admin",
+    "status": "HEALTHY",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 3000
+  },
+  {
+    "route": "/admin/dashboard/plans",
+    "filename": "admin-plans.png",
+    "module": "Super Admin",
+    "role": "Super Admin",
+    "status": "FAILED",
+    "httpStatus": 200,
+    "consoleErrors": [],
+    "networkErrors": [],
+    "durationMs": 1943
+  }
+]

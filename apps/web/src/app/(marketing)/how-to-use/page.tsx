@@ -2,17 +2,18 @@ import { createSiteMetadata } from "@/components/site/create-site-metadata";
 import { HowToUseClient } from "@/components/how-to-use/how-to-use-client";
 
 export const metadata = createSiteMetadata({
-  title: "How to Use BornoLand — 16-Step Beginner Guide",
+  title: "BornoLand কীভাবে ব্যবহার করবেন — ভিজ্যুয়াল ইউজার গাইড ও টিউটোরিয়াল",
   description:
-    "A step-by-step onboarding walkthrough for BornoLand. Learn how to create workspaces, configure stores, add products, set up multi-warehouse inventory, operate POS registers, and automate payroll.",
+    "BornoLand SaaS প্ল্যাটফর্মের প্রতিটি ফিচার বাস্তব অ্যাপ্লিকেশনের স্ক্রিনশট সহ সহজে ব্যবহার করার পূর্ণাঙ্গ নির্দেশিকা। কমার্স, ইনভেন্টরি, পিওএস, এইচআরএম, পেরোল ও সেটিংস।",
   path: "/how-to-use",
   keywords: [
-    "how to use BornoLand",
-    "BornoLand tutorial",
-    "ecommerce setup guide",
-    "POS tutorial",
-    "inventory guide",
-    "payroll onboarding",
+    "BornoLand user guide",
+    "BornoLand কীভাবে ব্যবহার করবেন",
+    "BornoLand tutorial Bangla",
+    "SaaS POS guide",
+    "inventory management guide",
+    "payroll onboarding Bangla",
+    "ecommerce ERP guide",
   ],
 });
 

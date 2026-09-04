@@ -165,7 +165,8 @@ export default async function middleware(request: NextRequest) {
 
   // Redirect authenticated users away from login/register
   if (isAuthPage && (session || hasRefreshToken)) {
-    const isSuperAdmin = session?.role === "super_admin" || pathname.startsWith("/admin/login");
+    const isSuperAdmin =
+      session?.role === "super_admin" || session?.role === "admin" || pathname.startsWith("/admin/login");
     const defaultDestination = isSuperAdmin
       ? "/dashboard"
       : session?.defaultStoreSlug
@@ -180,7 +181,7 @@ export default async function middleware(request: NextRequest) {
   if (isAdminRoute || isProtectedRoute) {
     // If we have a valid JWT session, proceed with authoritative checks
     if (session) {
-      const isSuperAdmin = session.role === "super_admin";
+      const isSuperAdmin = session.role === "super_admin" || session.role === "admin";
 
       // Super Admin rules:
       if (isSuperAdmin) {

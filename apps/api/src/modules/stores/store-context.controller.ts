@@ -11,7 +11,7 @@ import { sendFailure, sendSuccess } from "../../common/utils/api-response.js";
  * Returns store, permissions, entitlements, and storage stats in a single concurrent read.
  */
 export async function getStoreContextController(request: AuthRequest, response: Response) {
-  const userId = request.user?.userId;
+  const userId = request.user?.userId || request.user?.id;
   const identifier = String(request.params.storeIdOrSlug || request.params.id || request.params.slug || "");
   if (!userId) return sendFailure(response, "Unauthorized", 401);
   if (!identifier) return sendFailure(response, "Missing store identifier", 400);
@@ -19,7 +19,7 @@ export async function getStoreContextController(request: AuthRequest, response: 
   const userRole = request.user?.role;
   const storeRes = await getStoreById(identifier, userId, userRole);
   if (!storeRes.ok || !storeRes.data?.store) {
-    const status = storeRes.message?.includes("access denied") ? 403 : 404;
+    const status = storeRes.message?.includes("denied") ? 403 : 404;
     return sendFailure(response, storeRes.message || "Store not found", status);
   }
 

@@ -37,6 +37,16 @@ function extractCookieToken(request: Request) {
   return match?.[1] ?? null;
 }
 
+function extractSessionTokens(request: Request) {
+  const rawCookie = request.header("cookie") ?? "";
+  const refreshMatch = rawCookie.match(new RegExp(`${getSessionCookieName()}=([^;]+)`));
+  const legacyMatch = rawCookie.match(/bornoland\.session\.legacy=([^;]+)/);
+  return {
+    refreshToken: refreshMatch?.[1] ?? null,
+    legacyToken: legacyMatch?.[1] ?? null,
+  };
+}
+
 function writeSessionCookies(
   response: Response,
   data: {
@@ -123,6 +133,9 @@ export async function loginController(request: Request, response: Response) {
     accessToken: result.data.accessToken,
     session: result.data.session,
     user: result.data.user,
+    stores: result.data.stores,
+    defaultStoreSlug: result.data.defaultStoreSlug,
+    defaultLandingPath: result.data.defaultLandingPath,
   }, "Signed in");
 }
 
@@ -206,59 +219,87 @@ export async function verifyEmailController(request: Request, response: Response
 }
 
 export async function meController(request: Request, response: Response) {
+  // Prevent browser & proxy HTTP caching of authenticated session status
+  response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  response.setHeader("Pragma", "no-cache");
+  response.setHeader("Expires", "0");
+
+  const buildUserFromDb = async (userId: string, defaultStoreSlug?: string | null) => {
+    try {
+      await connectDatabase();
+      const u = (await UserModel.findById(userId).select("name email role tenantId").lean()) as any;
+      if (!u) return null;
+      return {
+        id: String(u._id),
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        tenantId: String(u.tenantId ?? ""),
+        defaultStoreSlug: defaultStoreSlug ?? null,
+      };
+    } catch {
+      return null;
+    }
+  };
+
   // Try to read access token from Authorization header first
   const authHeader = request.header("authorization");
   if (authHeader?.startsWith("Bearer ")) {
     try {
       const payload = verifyAccessToken(authHeader.slice(7));
       if (await isSessionPayloadActive(payload)) {
-        return sendSuccess(response, { session: payload, accessToken: authHeader.slice(7) }, "Session loaded");
+        const user = await buildUserFromDb(payload.userId, payload.defaultStoreSlug);
+        return sendSuccess(response, { session: payload, user, accessToken: authHeader.slice(7) }, "Session loaded");
       }
     } catch {
-      // Access token expired — fall through to try refresh token
+      // Access token expired — fall through to try cookies
     }
   }
 
-  // Fall back to refresh token from cookie
-  const token = extractCookieToken(request);
+  const { refreshToken, legacyToken } = extractSessionTokens(request);
 
-  if (!token) {
-    return sendSuccess(response, { session: null }, "Unauthenticated");
-  }
-
-  // Check if it's an opaque refresh token (starts with hex 64 chars)
-  if (/^[a-f0-9]{64}$/.test(token)) {
-    // Validate refresh token without rotation — rotation is reserved for POST /auth/refresh.
-    const result = await sessionFromRefreshToken(token, { rotate: false });
+  // Check if opaque refresh token exists
+  if (refreshToken && /^[a-f0-9]{64}$/.test(refreshToken)) {
+    const result = await sessionFromRefreshToken(refreshToken, { rotate: false });
     if (!result.ok) {
       clearSessionCookies(response);
-      return sendSuccess(response, { session: null }, "Session expired");
+      return sendSuccess(response, { session: null, user: null }, "Session expired");
     }
 
-    // Refresh the legacy JWT cookie when it is missing or near expiry.
     writeSessionCookies(response, {
-      refreshToken: token,
+      refreshToken,
       sessionToken: result.data.sessionToken,
       sessionMaxAge: result.data.sessionMaxAge,
     });
 
     return sendSuccess(response, {
       session: result.data.session,
+      user:
+        (result.data as any).user ||
+        (await buildUserFromDb(result.data.session.userId, result.data.session.defaultStoreSlug)),
       accessToken: result.data.accessToken,
     }, "Session loaded");
   }
 
-  // Legacy: try to verify as JWT session token (for backward compat)
-  try {
-    const { verifySessionToken } = await import("../../common/utils/jwt.js");
-    const session = verifySessionToken(token);
-    if (await isSessionPayloadActive(session)) return sendSuccess(response, { session }, "Session loaded");
-    clearSessionCookies(response);
-    return sendSuccess(response, { session: null }, "Session expired");
-  } catch {
-    clearSessionCookies(response);
-    return sendSuccess(response, { session: null }, "Session expired");
+  // Check legacy JWT token or non-opaque token
+  const jwtCookie = legacyToken || (refreshToken && !/^[a-f0-9]{64}$/.test(refreshToken) ? refreshToken : null);
+  if (jwtCookie) {
+    try {
+      const { verifySessionToken } = await import("../../common/utils/jwt.js");
+      const session = verifySessionToken(jwtCookie);
+      if (await isSessionPayloadActive(session)) {
+        const user = await buildUserFromDb(session.userId, session.defaultStoreSlug);
+        return sendSuccess(response, { session, user }, "Session loaded");
+      }
+      clearSessionCookies(response);
+      return sendSuccess(response, { session: null, user: null }, "Session expired");
+    } catch {
+      clearSessionCookies(response);
+      return sendSuccess(response, { session: null, user: null }, "Session expired");
+    }
   }
+
+  return sendSuccess(response, { session: null, user: null }, "Unauthenticated");
 }
 
 export async function logoutController(request: Request, response: Response) {

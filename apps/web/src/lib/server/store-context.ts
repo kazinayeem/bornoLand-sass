@@ -34,10 +34,7 @@ export const getStoreFullContext = cache(async (storeSlug: string): Promise<Stor
     const cookieHeader = (await cookies()).toString();
     const response = await fetch(`${API_BASE}/stores/by-slug/${storeSlug}/context`, {
       headers: cookieHeader ? { cookie: cookieHeader } : undefined,
-      next: {
-        revalidate: CACHE_REVALIDATE.storeContext,
-        tags: [cacheTags.storeBySlug(storeSlug), cacheTags.storeMetadata(storeSlug)],
-      },
+      cache: "no-store",
     });
     if (!response.ok) return null;
     const payload = (await response.json()) as ContextResponse;

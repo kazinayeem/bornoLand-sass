@@ -1,5 +1,7 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
+import { getApiUrl } from "@/lib/urls";
 
 export type AppSession = {
   userId: string;
@@ -27,7 +29,7 @@ function getSecret() {
 
 const REFRESH_TOKEN_RE = /^[a-f0-9]{64}$/;
 
-export async function getServerSession(): Promise<AppSession | null> {
+export const getServerSession = cache(async (): Promise<AppSession | null> => {
   const cookieStore = await cookies();
 
   // Try legacy JWT session cookie first
@@ -35,7 +37,8 @@ export async function getServerSession(): Promise<AppSession | null> {
   if (legacyToken) {
     try {
       const result = await jwtVerify(legacyToken, getSecret());
-      return result.payload as unknown as AppSession;
+      const payload = result.payload as unknown as AppSession;
+      if (payload?.userId) return payload;
     } catch {
       // expired or invalid — fall through
     }
@@ -43,15 +46,71 @@ export async function getServerSession(): Promise<AppSession | null> {
 
   // Then try the current session cookie (may be a legacy JWT stored directly)
   const token = cookieStore.get(getSessionCookieName())?.value;
-  if (!token) return null;
+  if (token) {
+    try {
+      const result = await jwtVerify(token, getSecret());
+      const payload = result.payload as unknown as AppSession;
+      if (payload?.userId) return payload;
+    } catch {
+      // Opaque refresh token or non-JWT — resolve authoritatively via API
+    }
+  }
+
+  // If there are cookies present, query /auth/me from the API server-side
+  // to resolve the session and defaultStoreSlug authoritatively.
+  const cookieHeader = cookieStore.toString();
+  if (!cookieHeader) return null;
 
   try {
-    const result = await jwtVerify(token, getSecret());
-    return result.payload as unknown as AppSession;
+    const apiUrl = getApiUrl();
+    const res = await fetch(`${apiUrl}/auth/me`, {
+      headers: { cookie: cookieHeader },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      success?: boolean;
+      data?: {
+        session?: AppSession;
+        user?: {
+          id?: string;
+          tenantId?: string;
+          role?: string;
+          email?: string;
+          name?: string;
+          loginType?: "user" | "admin";
+          defaultStoreSlug?: string | null;
+        };
+        defaultStoreSlug?: string | null;
+      };
+    };
+
+    if (json?.data?.session) {
+      const session = json.data.session;
+      if (!session.defaultStoreSlug) {
+        session.defaultStoreSlug = json.data.defaultStoreSlug || json.data.user?.defaultStoreSlug || null;
+      }
+      return session;
+    }
+
+    if (json?.data?.user) {
+      const u = json.data.user;
+      return {
+        userId: u.id || "",
+        tenantId: u.tenantId || "",
+        role: u.role || "viewer",
+        email: u.email || "",
+        name: u.name || "",
+        loginType: u.loginType || "user",
+        defaultStoreSlug: u.defaultStoreSlug || json.data.defaultStoreSlug || null,
+      };
+    }
+
+    return null;
   } catch {
     return null;
   }
-}
+});
 
 /**
  * Returns true if any auth-related cookie exists (legacy JWT or opaque refresh token).
@@ -71,7 +130,7 @@ export async function hasAuthCookie(): Promise<boolean> {
     }
   }
   const refreshToken = cookieStore.get(getSessionCookieName())?.value;
-  if (refreshToken && REFRESH_TOKEN_RE.test(refreshToken)) {
+  if (refreshToken) {
     return true;
   }
 

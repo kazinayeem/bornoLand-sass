@@ -23,6 +23,7 @@ export type SessionPayload = {
   email: string;
   name: string;
   loginType: "user" | "admin";
+  defaultStoreSlug?: string | null;
 };
 
 type ApiEnvelope<T> = {
@@ -68,6 +69,8 @@ type LoginResponse = {
 type MeResponse = {
   session: SessionPayload | null;
   accessToken?: string;
+  user?: SessionUser | null;
+  defaultStoreSlug?: string | null;
 };
 
 type RefreshResponse = {

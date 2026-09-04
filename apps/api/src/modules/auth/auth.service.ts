@@ -444,6 +444,15 @@ export async function sessionFromRefreshToken(
   const accessToken = signAccessToken(session);
   const sessionToken = signSessionToken(session, rememberMe ? "30d" : "7d");
 
+  const userSummary = {
+    id: String(user._id),
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    tenantId: String(user.tenantId ?? ""),
+    defaultStoreSlug,
+  };
+
   if (!options.rotate) {
     return {
       ok: true as const,
@@ -452,6 +461,7 @@ export async function sessionFromRefreshToken(
         sessionToken,
         session,
         sessionMaxAge,
+        user: userSummary,
       },
     };
   }
@@ -482,6 +492,7 @@ export async function sessionFromRefreshToken(
       refreshTokenExpiresAt: newExpiresAt.toISOString(),
       sessionMaxAge,
       session,
+      user: userSummary,
     },
   };
 }

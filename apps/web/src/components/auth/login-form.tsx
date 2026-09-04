@@ -95,17 +95,16 @@ export function LoginForm({
 
     const userRole = payload.user?.role;
     const isSuperAdmin = userRole === "super_admin" || loginType === "admin";
+    const defaultSlug =
+      (payload as any).defaultStoreSlug ||
+      payload.user?.defaultStoreSlug ||
+      (payload as any).stores?.[0]?.slug;
 
     let destination: string;
 
     if (isSuperAdmin) {
       destination = "/dashboard";
     } else {
-      const defaultSlug =
-        (payload as any).defaultStoreSlug ||
-        payload.user?.defaultStoreSlug ||
-        (payload as any).stores?.[0]?.slug;
-
       let lastSelectedSlug: string | null = null;
       try {
         lastSelectedSlug = localStorage.getItem("bornoland_last_store_slug");
@@ -132,14 +131,27 @@ export function LoginForm({
         : null;
 
     let finalDestination = destination;
-    if (queryRedirect && queryRedirect.startsWith("/")) {
+    if (queryRedirect && queryRedirect.startsWith("/") && !queryRedirect.startsWith("//")) {
       if (isSuperAdmin) {
         if (queryRedirect.startsWith("/dashboard") || queryRedirect.startsWith("/admin")) {
           finalDestination = queryRedirect === "/admin/dashboard" ? "/dashboard" : queryRedirect;
         }
       } else {
         const targetStoreSlug = (payload as any).defaultStoreSlug || payload.user?.defaultStoreSlug;
-        if (targetStoreSlug && queryRedirect.startsWith(`/store/${targetStoreSlug}`)) {
+        const storesList: Array<{ slug: string }> = (payload as any).stores || payload.user?.stores || [];
+        const match = queryRedirect.match(/^\/store\/([^/]+)/);
+        const requestedSlug = match ? match[1] : null;
+
+        if (requestedSlug) {
+          const isAuthorizedForRequested =
+            (targetStoreSlug && requestedSlug === targetStoreSlug) ||
+            storesList.some((s) => s.slug === requestedSlug) ||
+            (storesList.length === 0 && Boolean(defaultSlug && defaultSlug === requestedSlug));
+
+          if (isAuthorizedForRequested) {
+            finalDestination = queryRedirect;
+          }
+        } else if (!queryRedirect.startsWith("/admin") && !queryRedirect.startsWith("/dashboard")) {
           finalDestination = queryRedirect;
         }
       }

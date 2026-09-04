@@ -41,7 +41,10 @@ export function ProtectedSessionBoundary({
   const { data, isLoading, isFetching, isError } = useMeQuery();
   const session = data?.data?.session;
   const checking = isLoading || (!data && (isFetching || !isError));
-  const allowed = !authExpired && Boolean(session && (!requiredRole || session.role === requiredRole));
+
+  const isSuperAdmin = session?.role === "super_admin" || session?.role === "admin";
+  const roleMatches = !requiredRole || (requiredRole === "super_admin" ? isSuperAdmin : session?.role === requiredRole);
+  const allowed = !authExpired && Boolean(session && roleMatches);
 
   useEffect(() => {
     const handleExpired = () => {
@@ -58,19 +61,29 @@ export function ProtectedSessionBoundary({
       router.replace(getLoginUrlForCurrentPage(loginPath));
       return;
     }
-    if (requiredRole && session.role !== requiredRole) {
+    if (requiredRole && !roleMatches) {
+      if (requiredRole === "super_admin") {
+        const storeSlug =
+          session.defaultStoreSlug ||
+          (data?.data as any)?.defaultStoreSlug ||
+          (data?.data?.user as any)?.defaultStoreSlug;
+        if (storeSlug) {
+          router.replace(`/store/${storeSlug}/dashboard`);
+          return;
+        }
+      }
       router.replace("/unauthorized");
       return;
     }
     const pathname = window.location.pathname;
     if (
       !requiredRole &&
-      session.role === "super_admin" &&
-      (pathname.startsWith("/dashboard") || pathname.startsWith("/store"))
+      isSuperAdmin &&
+      pathname.startsWith("/store")
     ) {
-      router.replace("/admin/dashboard");
+      router.replace("/dashboard");
     }
-  }, [checking, loginPath, requiredRole, router, session]);
+  }, [checking, data, isSuperAdmin, loginPath, requiredRole, roleMatches, router, session]);
 
   if (checking || authExpired || !allowed) return <SessionRestoreScreen />;
   return <>{children}</>;

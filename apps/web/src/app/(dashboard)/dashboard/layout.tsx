@@ -19,8 +19,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const [session, hasPendingAuth] = await Promise.all([getServerSession(), hasAuthCookie()]);
   if (!session && !hasPendingAuth) redirect("/login");
 
+  const isSuperAdmin = session?.role === "super_admin" || session?.role === "admin";
+
   // If authenticated user is NOT super admin, redirect to their own store dashboard
-  if (session && session.role !== "super_admin") {
+  if (session && !isSuperAdmin) {
     const storeSlug = session.defaultStoreSlug || (await getUserDefaultStoreSlug());
     if (storeSlug) {
       redirect(`/store/${storeSlug}/dashboard`);

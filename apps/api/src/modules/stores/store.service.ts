@@ -5,6 +5,7 @@ import { PlanModel } from "../../models/plan.model.js";
 import { TenantModel } from "../../models/tenant.model.js";
 import { TeamMemberModel } from "../../models/team-member.model.js";
 import { StoreMemberModel } from "../team/store-member.model.js";
+import { UserModel } from "../../models/user.model.js";
 import { PageModel } from "../../models/page.model.js";
 import { ensureDefaultStoreSettings } from "./store-settings.service.js";
 import { ensureDefaultStoreContact } from "./store-contact.service.js";
@@ -418,15 +419,47 @@ export async function getUserStores(userId: string) {
   await connectDatabase();
   await ensurePlans();
 
-  const storeMemberStoreIds = await StoreMemberModel.find({ userId, status: "active" }).distinct("storeId");
+  const userObjectId = safeId(userId);
+  const user = (
+    userObjectId
+      ? await UserModel.findById(userObjectId).select("tenantId role").lean()
+      : await UserModel.findById(userId).select("tenantId role").lean()
+  ) as { tenantId?: any; role?: string } | null;
 
-  const stores = await StoreModel.find({
-    $or: [
-      { userId },
-      ...(storeMemberStoreIds.length ? [{ _id: { $in: storeMemberStoreIds } }] : []),
-    ],
+  const isSuper = user?.role === "super_admin" || user?.role === "admin";
+
+  const tenantConditions: any[] = [];
+  if (user?.tenantId) {
+    tenantConditions.push({ tenantId: user.tenantId });
+    const tenantObjectId = safeId(String(user.tenantId));
+    if (tenantObjectId) tenantConditions.push({ tenantId: tenantObjectId });
+  }
+
+  const teamTenantIds = await TeamMemberModel.find({
+    $or: [{ userId }, ...(userObjectId ? [{ userId: userObjectId }] : [])],
+    status: "active",
+  }).distinct("tenantId");
+
+  const storeMemberStoreIds = await StoreMemberModel.find({
+    $or: [{ userId }, ...(userObjectId ? [{ userId: userObjectId }] : [])],
+    status: "active",
+  }).distinct("storeId");
+
+  const storeFilter: Record<string, any> = {
     status: { $ne: "archived" },
-  })
+  };
+
+  if (!isSuper) {
+    storeFilter.$or = [
+      { userId },
+      ...(userObjectId ? [{ userId: userObjectId }] : []),
+      ...tenantConditions,
+      ...(teamTenantIds.length ? [{ tenantId: { $in: teamTenantIds } }] : []),
+      ...(storeMemberStoreIds.length ? [{ _id: { $in: storeMemberStoreIds } }] : []),
+    ];
+  }
+
+  const stores = await StoreModel.find(storeFilter)
     .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
     .sort({ createdAt: -1 })
@@ -449,6 +482,7 @@ export async function getStoreById(storeIdOrSlug: string, userId: string, userRo
   await ensurePlans();
 
   const id = safeId(storeIdOrSlug);
+  const userObjectId = safeId(userId);
   const identifierCondition = id
     ? { _id: id }
     : {
@@ -463,47 +497,64 @@ export async function getStoreById(storeIdOrSlug: string, userId: string, userRo
   const storeFields =
     "name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt tenantId userId";
 
-  // 1. Direct owner match
-  let store = await StoreModel.findOne({ ...identifierCondition, userId })
+  // Check if caller is super admin
+  let effectiveRole = userRole;
+  if (!effectiveRole && userId) {
+    const u = (await UserModel.findById(userId).select("role tenantId").lean()) as {
+      role?: string;
+      tenantId?: unknown;
+    } | null;
+    effectiveRole = u?.role;
+  }
+
+  // Super admin can access any store
+  if (effectiveRole === "super_admin") {
+    const store = await StoreModel.findOne(identifierCondition)
+      .select(storeFields)
+      .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
+      .lean();
+    if (store) {
+      applyTrialExpiryToStore(store as any).catch(() => {});
+      applySubscriptionExpiryToStore(store as any).catch(() => {});
+      const [hydrated] = await attachStoreMetrics([store as any]);
+      return { ok: true as const, data: { store: hydrated } };
+    }
+    return { ok: false as const, message: "Store not found" };
+  }
+
+  // Look up user's team tenants, store memberships, and direct user tenant
+  const userMatches: unknown[] = [userId];
+  if (userObjectId) userMatches.push(userObjectId);
+
+  const [teamTenantIds, storeMemberStoreIds, userDoc] = await Promise.all([
+    TeamMemberModel.find({ userId: { $in: userMatches } }).distinct("tenantId"),
+    StoreMemberModel.find({ userId: { $in: userMatches }, status: "active" }).distinct("storeId"),
+    UserModel.findById(userId).select("tenantId").lean() as Promise<{ tenantId?: unknown } | null>,
+  ]);
+
+  const userTenantId = userDoc?.tenantId;
+
+  const authClauses: Record<string, unknown>[] = [
+    { userId: { $in: userMatches } },
+    ...(userTenantId ? [{ tenantId: userTenantId }] : []),
+    ...(teamTenantIds.length > 0 ? [{ tenantId: { $in: teamTenantIds } }] : []),
+    ...(storeMemberStoreIds.length > 0 ? [{ _id: { $in: storeMemberStoreIds } }] : []),
+  ];
+
+  const store = await StoreModel.findOne({
+    $and: [identifierCondition, { $or: authClauses }],
+  })
     .select(storeFields)
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
     .lean();
 
-  // 2. Active StoreMember match
   if (!store) {
-    const memberStoreIds = await StoreMemberModel.find({ userId, status: "active" }).distinct("storeId");
-    if (memberStoreIds.length > 0) {
-      store = await StoreModel.findOne({
-        $and: [identifierCondition, { _id: { $in: memberStoreIds } }],
-      })
-        .select(storeFields)
-        .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
-        .lean();
+    const exists = await StoreModel.exists(identifierCondition);
+    if (exists) {
+      return { ok: false as const, message: "Store access denied" };
     }
+    return { ok: false as const, message: "Store not found" };
   }
-
-  // 3. Team member tenant match
-  if (!store) {
-    const userTenants = await TeamMemberModel.find({ userId }).distinct("tenantId");
-    if (userTenants.length > 0) {
-      store = await StoreModel.findOne({
-        $and: [identifierCondition, { tenantId: { $in: userTenants } }],
-      })
-        .select(storeFields)
-        .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
-        .lean();
-    }
-  }
-
-  // 4. Platform Super Admin match
-  if (!store && userRole === "super_admin") {
-    store = await StoreModel.findOne(identifierCondition)
-      .select(storeFields)
-      .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
-      .lean();
-  }
-
-  if (!store) return { ok: false as const, message: "Store not found or access denied" };
 
   // Fire-and-forget expiry
   applyTrialExpiryToStore(store as any).catch(() => {});

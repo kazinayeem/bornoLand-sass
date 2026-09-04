@@ -4,6 +4,7 @@ import { UserModel } from "../../modules/users/user.model.js";
 
 export type AuthRequest = Request & {
   user?: {
+    id: string;
     userId: string;
     tenantId: string;
     role: string;
@@ -15,7 +16,7 @@ async function acceptActiveSession(
   request: AuthRequest,
   response: Response,
   next: NextFunction,
-  payload: NonNullable<AuthRequest["user"]> & { sessionVersion?: number },
+  payload: { userId: string; tenantId: string; role: string; email?: string; sessionVersion?: number },
 ) {
   if (!payload?.userId) {
     return response.status(401).json({ message: "Invalid token" });
@@ -27,17 +28,26 @@ async function acceptActiveSession(
   if (!user || user.status !== "active" || (user.sessionVersion ?? 0) !== (payload.sessionVersion ?? 0)) {
     return response.status(401).json({ message: "Session expired" });
   }
-  request.user = payload;
+  request.user = {
+    id: String(payload.userId),
+    userId: String(payload.userId),
+    tenantId: String(payload.tenantId ?? ""),
+    role: payload.role,
+    email: payload.email,
+  };
   return next();
 }
 
 export async function requireAuth(request: AuthRequest, response: Response, next: NextFunction) {
   const header = request.header("authorization");
   const cookieHeader = request.header("cookie") ?? "";
+  const legacyMatch = cookieHeader.match(/bornoland\.session\.legacy=([^;]+)/);
+  const legacyToken = legacyMatch?.[1];
+
   const cookieMatch = cookieHeader.match(new RegExp(`${getSessionCookieName()}=([^;]+)`));
   const cookieToken = cookieMatch?.[1];
 
-  if (!header?.startsWith("Bearer ") && !cookieToken) {
+  if (!header?.startsWith("Bearer ") && !legacyToken && !cookieToken) {
     return response.status(401).json({ message: "Unauthorized" });
   }
 
@@ -49,16 +59,33 @@ export async function requireAuth(request: AuthRequest, response: Response, next
         const payload = verifyAccessToken(token);
         return await acceptActiveSession(request, response, next, payload);
       } catch {
-        // Expired/invalid access token — do NOT treat customer JWTs as merchant
-        // sessions. Fall through to cookie so the client can refresh.
+        // Expired/invalid access token — fall through to cookies
       }
     }
 
-    // 2. Session cookie: opaque refresh token or legacy JWT.
+    // 2. Legacy JWT session token (written alongside refresh token for SSR / middleware)
+    if (legacyToken) {
+      try {
+        const payload = verifySessionToken(legacyToken);
+        return await acceptActiveSession(request, response, next, payload);
+      } catch {
+        // Expired/invalid legacy token — fall through to main session cookie
+      }
+    }
+
+    // 3. Main session cookie: may be a JWT or an opaque refresh token
     if (cookieToken) {
       if (/^[a-f0-9]{64}$/.test(cookieToken)) {
-        // Opaque refresh tokens cannot authorize API calls directly.
-        return response.status(401).json({ message: "Refresh token cannot be used for API access" });
+        try {
+          const { sessionFromRefreshToken } = await import("../../modules/auth/auth.service.js");
+          const result = await sessionFromRefreshToken(cookieToken, { rotate: false });
+          if (result.ok && result.data?.session) {
+            return await acceptActiveSession(request, response, next, result.data.session);
+          }
+        } catch {
+          // Fall through to 401
+        }
+        return response.status(401).json({ message: "Session expired" });
       }
 
       try {

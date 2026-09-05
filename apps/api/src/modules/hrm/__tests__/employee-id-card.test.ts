@@ -63,11 +63,8 @@ describe("HRM Employee ID Card & Verification Suite", () => {
       billingStatus: "active",
       subscriptionStatus: "active",
       status: "active",
-      branding: {
-        brandColor: "#003399",
-        accentColor: "#10b981",
-        website: "https://acmestore.com",
-      },
+      brandColor: "#003399",
+      accentColor: "#10b981",
     });
 
     await DepartmentModel.create({

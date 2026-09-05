@@ -29,6 +29,11 @@ if [ -s "$NVM_DIR/nvm.sh" ]; then
   . "$NVM_DIR/nvm.sh"
   nvm use 22 || nvm install 22
 fi
+
+# Ensure pnpm 9.12.0 — match the version declared in root package.json
+corepack enable 2>/dev/null || true
+corepack prepare pnpm@9.12.0 --activate 2>/dev/null || true
+
 echo "Node: $(node --version)"
 echo "pnpm: $(pnpm --version)"
 

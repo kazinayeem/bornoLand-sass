@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, Palette, Package, ShoppingBag, LayoutDashboard, X } from "lucide-react";
 import { getContrastColor } from "@/lib/color-utils";
-import { getStoreUrl } from "@/lib/urls";
+import { getStoreUrl, getApiUrl } from "@/lib/urls";
 import { getAccessToken } from "@/lib/access-token";
 
 type FloatingAdminBarProps = {
@@ -23,7 +23,7 @@ export function FloatingAdminBar({ storeSlug, primaryColor }: FloatingAdminBarPr
         const headers: Record<string, string> = {};
         const token = getAccessToken();
         if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch("/api/auth/me", { credentials: "include", headers });
+        const res = await fetch(`${getApiUrl()}/auth/me`, { credentials: "include", headers });
         setIsAuthed(res.ok);
       } catch { setIsAuthed(false); }
     };

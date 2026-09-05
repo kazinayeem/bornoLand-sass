@@ -44,6 +44,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { getApiUrl } from "@/lib/urls";
 
 export default function MyDocumentsPage() {
   const params = useParams();
@@ -94,7 +95,7 @@ export default function MyDocumentsPage() {
       formData.append("title", docTitle || selectedFile.name);
       formData.append("documentType", docType);
 
-      const res = await fetch(`/api/v1/stores/${storeId}/hrm/self-service/documents`, {
+      const res = await fetch(`${getApiUrl()}/v1/stores/${storeId}/hrm/self-service/documents`, {
         method: "POST",
         body: formData,
       });

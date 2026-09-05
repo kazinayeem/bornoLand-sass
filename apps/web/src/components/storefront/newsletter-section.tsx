@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Send, Check, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { getContrastColor } from "@/lib/color-utils";
+import { getApiUrl } from "@/lib/urls";
 import { useTenant } from "@/providers/tenant-provider";
 import type { StorefrontSectionLike } from "./storefront-types";
 
@@ -31,7 +32,7 @@ export function NewsletterSection({ section }: { section?: StorefrontSectionLike
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/newsletter/subscribe", {
+      const res = await fetch(`${getApiUrl()}/newsletter/subscribe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })

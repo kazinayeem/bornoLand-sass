@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { getApiUrl } from "@/lib/urls";
 
 export default function MyRequestsPage() {
   const params = useParams();
@@ -95,7 +96,7 @@ export default function MyRequestsPage() {
     try {
       setIsSubmitting(true);
       // Submit general HR request
-      const res = await fetch(`/api/v1/stores/${storeId}/hrm/self-service/attendance/correction`, {
+      const res = await fetch(`${getApiUrl()}/v1/stores/${storeId}/hrm/self-service/attendance/correction`, {
         // Attendance correction or generic request endpoint
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { getApiUrl } from "@/lib/urls";
 
 export default function MyProfilePage() {
   const params = useParams();
@@ -102,7 +103,7 @@ export default function MyProfilePage() {
       const formData = new FormData();
       formData.append("photo", file);
 
-      const res = await fetch(`/api/v1/stores/${storeId}/hrm/self-service/profile/photo`, {
+      const res = await fetch(`${getApiUrl()}/v1/stores/${storeId}/hrm/self-service/profile/photo`, {
         method: "POST",
         body: formData,
       });

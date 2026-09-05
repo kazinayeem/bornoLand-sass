@@ -53,6 +53,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { EmployeeDetailDialog } from "@/components/hrm/employee-detail-dialog";
 
 const ASSIGNABLE_ROLES = [
   { value: "employee", label: "Employee" },
@@ -87,6 +88,7 @@ export default function EmployeesPage() {
 
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [successState, setSuccessState] = useState<{
     employee: Employee;
     loginAccount: EmployeeLoginAccount;

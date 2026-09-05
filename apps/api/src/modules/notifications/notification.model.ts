@@ -22,6 +22,15 @@ export const NOTIFICATION_TYPES = [
   "subscription_expiring",
   "subscription_expired",
   "contact_message",
+  "hrm_alert",
+  "hrm_leave_approved",
+  "hrm_leave_rejected",
+  "hrm_attendance_approved",
+  "hrm_attendance_rejected",
+  "hrm_bank_approved",
+  "hrm_bank_rejected",
+  "hrm_document_added",
+  "hrm_task_assigned",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

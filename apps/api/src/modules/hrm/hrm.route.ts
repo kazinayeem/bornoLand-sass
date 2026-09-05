@@ -70,3 +70,24 @@ hrmRouter.get("/payroll", payrollGuard, payrollPermissionGuard, listPayrollsCont
 hrmRouter.post("/payroll/generate", payrollGuard, payrollPermissionGuard, generatePayrollController);
 hrmRouter.post("/payroll/:payrollId/approve", payrollGuard, payrollPermissionGuard, approvePayrollController);
 hrmRouter.post("/payroll/:payrollId/pay", payrollGuard, payrollPermissionGuard, markPaidPayrollController);
+
+// HR Requests (Bank updates, Attendance corrections, etc. - requires hrm:read / hrm:manage)
+hrmRouter.get("/requests", hrmGuard, hrmPermissionGuard, async (req, res) => {
+  const { listHrmRequestsController } = await import("./hrm.controller.js");
+  return listHrmRequestsController(req, res);
+});
+hrmRouter.post("/requests/:requestId/review", hrmGuard, requireStorePermission("hrm:update"), async (req, res) => {
+  const { reviewHrmRequestController } = await import("./hrm.controller.js");
+  return reviewHrmRequestController(req, res);
+});
+
+// Employee Documents (Admin view and upload)
+hrmRouter.get("/employees/:employeeId/documents", hrmGuard, hrmPermissionGuard, async (req, res) => {
+  const { listEmployeeDocumentsController } = await import("./hrm.controller.js");
+  return listEmployeeDocumentsController(req, res);
+});
+hrmRouter.post("/employees/:employeeId/documents", hrmGuard, requireStorePermission("hrm:update"), async (req, res) => {
+  const { uploadEmployeeDocumentAdminController } = await import("./hrm.controller.js");
+  return uploadEmployeeDocumentAdminController(req, res);
+});
+

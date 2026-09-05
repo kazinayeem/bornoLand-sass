@@ -106,13 +106,14 @@ describe("BornoLand POS Terminal Flow & Sales Completion Test Suite", () => {
         await OrderModel.deleteMany({ storeId });
         await CustomerModel.deleteMany({ storeId });
       }
+      await mongoose.connection.close();
     } catch (e) {
       console.warn("Cleanup error:", e);
     }
   });
 
   it("1. Successfully completes Cash POS sale with Delivered status and Paid payment", async () => {
-    const p1Before = await ProductModel.findById(productId1).lean();
+    const p1Before = (await ProductModel.findById(productId1).lean()) as any;
     const stockBefore = p1Before?.stock ?? 0;
 
     const payload = {
@@ -153,11 +154,11 @@ describe("BornoLand POS Terminal Flow & Sales Completion Test Suite", () => {
     assert.equal(order.isPos, true, "isPos must be true");
 
     // Inventory check
-    const p1After = await ProductModel.findById(productId1).lean();
+    const p1After = (await ProductModel.findById(productId1).lean()) as any;
     assert.equal(p1After?.stock, stockBefore - 1, "Stock must be decremented by exactly 1");
 
     // DB Persistence check
-    const dbOrder = await OrderModel.findById(order._id).lean();
+    const dbOrder = (await OrderModel.findById(order._id).lean()) as any;
     assert.ok(dbOrder, "Order must persist in DB");
     assert.equal(dbOrder?.status, "delivered");
     assert.equal(dbOrder?.paymentStatus, "paid");
@@ -166,7 +167,7 @@ describe("BornoLand POS Terminal Flow & Sales Completion Test Suite", () => {
   });
 
   it("2. Successfully completes Card POS sale with Delivered and Paid status", async () => {
-    const p2Before = await ProductModel.findById(productId2).lean();
+    const p2Before = (await ProductModel.findById(productId2).lean()) as any;
     const stockBefore = p2Before?.stock ?? 0;
 
     const payload = {
@@ -198,7 +199,7 @@ describe("BornoLand POS Terminal Flow & Sales Completion Test Suite", () => {
     assert.equal(order.paymentStatus, "paid");
     assert.equal(order.paymentMethod, "card");
 
-    const p2After = await ProductModel.findById(productId2).lean();
+    const p2After = (await ProductModel.findById(productId2).lean()) as any;
     assert.equal(p2After?.stock, stockBefore - 2, "Stock must be decremented by 2");
   });
 
@@ -234,7 +235,7 @@ describe("BornoLand POS Terminal Flow & Sales Completion Test Suite", () => {
   });
 
   it("4. Idempotency prevents duplicate order and duplicate stock deduction", async () => {
-    const p1Before = await ProductModel.findById(productId1).lean();
+    const p1Before = (await ProductModel.findById(productId1).lean()) as any;
     const stockBefore = p1Before?.stock ?? 0;
 
     const idempotencyKey = `pos_test_idem_${Date.now()}`;
@@ -261,7 +262,7 @@ describe("BornoLand POS Terminal Flow & Sales Completion Test Suite", () => {
     const res1 = await createOrder(storeId, null, "pos-session-idem", payload);
     assert.equal(res1.ok, true);
 
-    const stockAfterFirst = (await ProductModel.findById(productId1).lean())?.stock ?? 0;
+    const stockAfterFirst = ((await ProductModel.findById(productId1).lean()) as any)?.stock ?? 0;
     assert.equal(stockAfterFirst, stockBefore - 2);
 
     // Second immediate submission with same idempotencyKey
@@ -270,12 +271,12 @@ describe("BornoLand POS Terminal Flow & Sales Completion Test Suite", () => {
     assert.equal(String(res1.data.order._id), String(res2.data.order._id), "Must return the same order");
 
     // Ensure stock was NOT decremented a second time
-    const stockAfterSecond = (await ProductModel.findById(productId1).lean())?.stock ?? 0;
+    const stockAfterSecond = ((await ProductModel.findById(productId1).lean()) as any)?.stock ?? 0;
     assert.equal(stockAfterSecond, stockAfterFirst, "Stock must NOT be decremented twice");
   });
 
   it("5. Insufficient stock prevents order creation and preserves stock", async () => {
-    const p2Before = await ProductModel.findById(productId2).lean();
+    const p2Before = (await ProductModel.findById(productId2).lean()) as any;
     const currentStock = p2Before?.stock ?? 0;
 
     const payload = {
@@ -301,7 +302,7 @@ describe("BornoLand POS Terminal Flow & Sales Completion Test Suite", () => {
     assert.equal(res.ok, false, "Should fail due to insufficient stock");
     assert.ok(res.message.includes("Insufficient stock"));
 
-    const p2After = await ProductModel.findById(productId2).lean();
+    const p2After = (await ProductModel.findById(productId2).lean()) as any;
     assert.equal(p2After?.stock, currentStock, "Stock must remain unchanged");
   });
 

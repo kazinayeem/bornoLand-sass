@@ -21,6 +21,15 @@ import {
   PanelLeft,
   Lock,
   Store as StoreIcon,
+  Clock,
+  CalendarDays,
+  CheckSquare,
+  Wallet,
+  CreditCard,
+  UserCheck,
+  FileText,
+  Send,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/redux/api/store-api";
@@ -46,6 +55,7 @@ import {
   useIsStoreOwner,
   usePermissions,
   checkPermission,
+  useMemberRole,
 } from "@/features/session/hooks";
 
 import {
@@ -354,8 +364,17 @@ export function StoreSidebar({
 
   const features = contextFeatures ?? accessData?.data?.features ?? [];
   const stats = contextStats ?? storageData?.data?.stats;
+  const memberRole = useMemberRole();
   const isOwner = useIsStoreOwner();
   const permissionSet = usePermissions();
+
+  const isEmployeeSelfService =
+    !isOwner &&
+    (memberRole === "employee" ||
+      (permissionSet.has("hrm:self:read") &&
+        !permissionSet.has("products:read") &&
+        !permissionSet.has("hrm:manage") &&
+        !permissionSet.has("orders:read")));
 
   // Check item permission and entitlement
   const resolveItemAccess = useCallback(
@@ -396,6 +415,99 @@ export function StoreSidebar({
 
   const isDashboardActive = pathname === `${basePath}/dashboard` || pathname === basePath;
 
+  const employeeNavSections = [
+    {
+      title: "MY WORK",
+      items: [
+        {
+          id: "workspace",
+          href: "/hrm/self-service",
+          exact: true,
+          label: "My Workspace",
+          icon: LayoutDashboard,
+        },
+        {
+          id: "attendance",
+          href: "/hrm/self-service/attendance",
+          exact: false,
+          label: "Attendance & Time",
+          icon: Clock,
+        },
+        {
+          id: "leaves",
+          href: "/hrm/self-service/leaves",
+          exact: false,
+          label: "Leave Requests",
+          icon: CalendarDays,
+        },
+        {
+          id: "tasks",
+          href: "/hrm/self-service/tasks",
+          exact: false,
+          label: "My Tasks",
+          icon: CheckSquare,
+        },
+      ],
+    },
+    {
+      title: "MY PAYROLL",
+      items: [
+        {
+          id: "payroll",
+          href: "/hrm/self-service/payroll",
+          exact: false,
+          label: "Payslips & Salary",
+          icon: Wallet,
+        },
+        {
+          id: "bank-account",
+          href: "/hrm/self-service/bank-account",
+          exact: false,
+          label: "Bank Account",
+          icon: CreditCard,
+        },
+      ],
+    },
+    {
+      title: "MY PROFILE",
+      items: [
+        {
+          id: "profile",
+          href: "/hrm/self-service/profile",
+          exact: false,
+          label: "My Profile",
+          icon: UserCheck,
+        },
+        {
+          id: "documents",
+          href: "/hrm/self-service/documents",
+          exact: false,
+          label: "My Documents",
+          icon: FileText,
+        },
+      ],
+    },
+    {
+      title: "MY REQUESTS",
+      items: [
+        {
+          id: "requests",
+          href: "/hrm/self-service/requests",
+          exact: false,
+          label: "Requests",
+          icon: Send,
+        },
+        {
+          id: "notifications",
+          href: "/hrm/self-service/notifications",
+          exact: false,
+          label: "Notifications",
+          icon: Bell,
+        },
+      ],
+    },
+  ];
+
   return (
     <TooltipProvider delayDuration={100}>
       <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
@@ -405,7 +517,7 @@ export function StoreSidebar({
             collapsed ? "w-[76px]" : "w-[350px]"
           )}
           role="navigation"
-          aria-label="Merchant Navigation"
+          aria-label={isEmployeeSelfService ? "Employee Navigation" : "Merchant Navigation"}
         >
           {/* ── 1. Top: Store Header / Workspace Switcher ── */}
           <div className={cn("shrink-0 border-b border-[#e2e8f0] dark:border-zinc-800", collapsed ? "p-2.5" : "p-3.5")}>
@@ -417,83 +529,154 @@ export function StoreSidebar({
             className="sidebar-scroll flex-1 overflow-y-auto px-3.5 py-3 space-y-4"
             aria-label="Navigation Items"
           >
-            {/* ── Store Dashboard Entry ── */}
-            <div>
-              <Link
-                href={`${basePath}/dashboard`}
-                onClick={onNavigate}
-                className={cn(
-                  "relative flex items-center gap-3.5 rounded-xl px-3.5 min-h-[44px] text-[17px] font-semibold transition-all duration-150 outline-none",
-                  isDashboardActive
-                    ? "bg-zinc-100/90 text-[#181c20] dark:bg-zinc-800/80 dark:text-white"
-                    : "text-[#424754] hover:bg-zinc-100/70 hover:text-[#181c20] dark:text-zinc-400 dark:hover:bg-zinc-900/80 dark:hover:text-zinc-100",
-                  collapsed ? "justify-center px-0 h-11 w-11 mx-auto rounded-xl" : ""
-                )}
-                aria-label="Store Dashboard"
-              >
-                {/* Active left indicator bar */}
-                {isDashboardActive && !collapsed && (
-                  <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-[#1664d9] dark:bg-[#60a5fa]" />
-                )}
+            {isEmployeeSelfService ? (
+              /* ── Dedicated Employee Self-Service Navigation ── */
+              <div className="space-y-4">
+                {employeeNavSections.map((section) => (
+                  <div key={section.title} className="space-y-1">
+                    {!collapsed ? (
+                      <div className="px-3.5 pt-2 pb-1 text-[11px] font-bold tracking-wider text-[#727785] uppercase dark:text-zinc-400">
+                        {section.title}
+                      </div>
+                    ) : (
+                      <div className="border-t border-[#f1f4fa] dark:border-zinc-800/80 my-2" />
+                    )}
+                    <div className="space-y-0.5">
+                      {section.items.map((item) => {
+                        const targetUrl = `${basePath}${item.href}`;
+                        const isActive = item.exact
+                          ? pathname === targetUrl
+                          : pathname === targetUrl || pathname.startsWith(`${targetUrl}/`);
+                        const Icon = item.icon;
 
-                <LayoutDashboard
-                  strokeWidth={isDashboardActive ? 2 : 1.75}
-                  className={cn(
-                    "h-[21px] w-[21px] shrink-0 transition-colors",
-                    isDashboardActive
-                      ? "text-[#1664d9] dark:text-[#60a5fa]"
-                      : "text-[#727785] group-hover:text-[#181c20] dark:text-zinc-400 dark:group-hover:text-white"
-                  )}
-                />
-                {!collapsed && (
-                  <span className="truncate leading-tight">
-                    Store Dashboard
-                  </span>
-                )}
-              </Link>
-            </div>
+                        const linkContent = (
+                          <Link
+                            href={targetUrl}
+                            onClick={onNavigate}
+                            className={cn(
+                              "relative flex items-center gap-3 rounded-xl px-3.5 min-h-[42px] text-[15px] font-medium transition-colors outline-none",
+                              isActive
+                                ? "bg-[#003399]/10 text-[#003399] font-semibold dark:bg-blue-950/40 dark:text-blue-400"
+                                : "text-[#424754] hover:bg-zinc-100 hover:text-[#181c20] dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100",
+                              collapsed ? "justify-center px-0 h-11 w-11 mx-auto rounded-xl" : ""
+                            )}
+                            aria-label={item.label}
+                          >
+                            {isActive && !collapsed && (
+                              <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-[#003399] dark:bg-blue-400" />
+                            )}
+                            <Icon
+                              strokeWidth={isActive ? 2 : 1.75}
+                              className={cn(
+                                "h-[20px] w-[20px] shrink-0 transition-colors",
+                                isActive
+                                  ? "text-[#003399] dark:text-blue-400"
+                                  : "text-[#727785] group-hover:text-[#181c20] dark:text-zinc-400 dark:group-hover:text-white"
+                              )}
+                            />
+                            {!collapsed && <span className="truncate">{item.label}</span>}
+                          </Link>
+                        );
 
-            {/* ── All Permitted Business Sections ── */}
-            {permittedModules.map((mod) => {
-              const visibleItems = mod.items.filter((it) => !resolveItemAccess(it).noPermission);
-              if (visibleItems.length === 0) return null;
+                        if (collapsed) {
+                          return (
+                            <Tooltip key={item.id}>
+                              <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                              <TooltipContent side="right" sideOffset={12} className="text-xs font-medium">
+                                {item.label}
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        }
 
-              return (
-                <div key={mod.id} className="space-y-1">
-                  {/* Section Heading */}
-                  {!collapsed ? (
-                    <div className="px-3.5 pt-3 pb-1 text-[13px] font-semibold uppercase tracking-wider text-[#727785] dark:text-zinc-400">
-                      {mod.titleEn}
+                        return <div key={item.id}>{linkContent}</div>;
+                      })}
                     </div>
-                  ) : (
-                    <div className="border-t border-[#f1f4fa] dark:border-zinc-800/80 my-2" />
-                  )}
-
-                  {/* Section Navigation Items */}
-                  <div className="space-y-0.5">
-                    {visibleItems.map((item) => {
-                      const access = resolveItemAccess(item);
-                      return (
-                        <SidebarNavItem
-                          key={item.id}
-                          item={item}
-                          basePath={basePath}
-                          collapsed={collapsed}
-                          isBn={isBn}
-                          onNavigate={onNavigate}
-                          locked={access.locked}
-                        />
-                      );
-                    })}
                   </div>
+                ))}
+              </div>
+            ) : (
+              /* ── Standard Merchant & Admin Navigation Tree ── */
+              <>
+                {/* ── Store Dashboard Entry ── */}
+                <div>
+                  <Link
+                    href={`${basePath}/dashboard`}
+                    onClick={onNavigate}
+                    className={cn(
+                      "relative flex items-center gap-3.5 rounded-xl px-3.5 min-h-[44px] text-[17px] font-semibold transition-all duration-150 outline-none",
+                      isDashboardActive
+                        ? "bg-zinc-100/90 text-[#181c20] dark:bg-zinc-800/80 dark:text-white"
+                        : "text-[#424754] hover:bg-zinc-100/70 hover:text-[#181c20] dark:text-zinc-400 dark:hover:bg-zinc-900/80 dark:hover:text-zinc-100",
+                      collapsed ? "justify-center px-0 h-11 w-11 mx-auto rounded-xl" : ""
+                    )}
+                    aria-label="Store Dashboard"
+                  >
+                    {/* Active left indicator bar */}
+                    {isDashboardActive && !collapsed && (
+                      <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-[#1664d9] dark:bg-[#60a5fa]" />
+                    )}
+
+                    <LayoutDashboard
+                      strokeWidth={isDashboardActive ? 2 : 1.75}
+                      className={cn(
+                        "h-[21px] w-[21px] shrink-0 transition-colors",
+                        isDashboardActive
+                          ? "text-[#1664d9] dark:text-[#60a5fa]"
+                          : "text-[#727785] group-hover:text-[#181c20] dark:text-zinc-400 dark:group-hover:text-white"
+                      )}
+                    />
+                    {!collapsed && (
+                      <span className="truncate leading-tight">
+                        Store Dashboard
+                      </span>
+                    )}
+                  </Link>
                 </div>
-              );
-            })}
+
+                {/* ── All Permitted Business Sections ── */}
+                {permittedModules.map((mod) => {
+                  const visibleItems = mod.items.filter((it) => !resolveItemAccess(it).noPermission);
+                  if (visibleItems.length === 0) return null;
+
+                  return (
+                    <div key={mod.id} className="space-y-1">
+                      {/* Section Heading */}
+                      {!collapsed ? (
+                        <div className="px-3.5 pt-3 pb-1 text-[13px] font-semibold uppercase tracking-wider text-[#727785] dark:text-zinc-400">
+                          {mod.titleEn}
+                        </div>
+                      ) : (
+                        <div className="border-t border-[#f1f4fa] dark:border-zinc-800/80 my-2" />
+                      )}
+
+                      {/* Section Navigation Items */}
+                      <div className="space-y-0.5">
+                        {visibleItems.map((item) => {
+                          const access = resolveItemAccess(item);
+                          return (
+                            <SidebarNavItem
+                              key={item.id}
+                              item={item}
+                              basePath={basePath}
+                              collapsed={collapsed}
+                              isBn={isBn}
+                              onNavigate={onNavigate}
+                              locked={access.locked}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </nav>
 
-          {/* ── 3. Bottom Area: Storage & Collapse Sidebar (Sticky) ── */}
+          {/* ── 3. Bottom Area: Storage (for merchants) & Collapse Sidebar (Sticky) ── */}
           <div className={cn("shrink-0 border-t border-[#e2e8f0] bg-white dark:border-zinc-800 dark:bg-zinc-950", collapsed ? "p-2" : "p-3.5")}>
-            {!collapsed ? (
+            {!isEmployeeSelfService && !collapsed ? (
               <div className="mb-3 rounded-xl border border-[#dfe3e8] bg-[#f8fafc] p-3 dark:border-zinc-800 dark:bg-zinc-900/60">
                 <div className="flex items-center justify-between text-[13px] font-semibold text-[#181c20] dark:text-zinc-300">
                   <span className="flex items-center gap-2">

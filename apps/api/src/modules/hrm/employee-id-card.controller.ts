@@ -131,6 +131,7 @@ export async function getEmployeeIdCardAdminController(req: Request, res: Respon
     const payload = await buildEmployeeIdCardPayload(employee, store);
     return res.json({ ok: true, data: payload });
   } catch (error: any) {
+    console.error("[getEmployeeIdCardAdminController Error]", error);
     return res.status(500).json({ ok: false, message: error?.message || "Failed to load ID card data" });
   }
 }
@@ -155,6 +156,7 @@ export async function getMyEmployeeIdCardController(req: PermissionRequest, res:
     const payload = await buildEmployeeIdCardPayload(employee, store);
     return res.json({ ok: true, data: payload });
   } catch (error: any) {
+    console.error("[getMyEmployeeIdCardController Error]", error);
     const status = error?.statusCode || 500;
     return res.status(status).json({ ok: false, message: error?.message || "Failed to load your ID card" });
   }
@@ -178,7 +180,7 @@ export async function verifyEmployeePublicController(req: Request, res: Response
       return res.status(404).json({
         ok: false,
         verified: false,
-        message: "No valid employee record matches this verification token",
+        message: "Invalid or expired employee verification token",
       });
     }
 

@@ -22,6 +22,26 @@ jobs:
           script: |
             set -e
 
+            BUILD_API_STATUS="PENDING"
+            BUILD_WEB_STATUS="PENDING"
+            NGINX_STATUS="PENDING"
+            PM2_STATUS="STOPPED"
+            HEALTH_STATUS="PENDING"
+
+            print_summary() {
+              echo ""
+              echo "========================================"
+              echo "          DEPLOYMENT SUMMARY"
+              echo "========================================"
+              echo "BUILD API:      $BUILD_API_STATUS"
+              echo "BUILD WEB:      $BUILD_WEB_STATUS"
+              echo "NGINX:          $NGINX_STATUS"
+              echo "PM2:            $PM2_STATUS"
+              echo "HEALTH CHECKS:  $HEALTH_STATUS"
+              echo "========================================"
+              echo ""
+            }
+
             # Trap errors to capture diagnostic information without exposing secrets
             handle_failure() {
               local exit_code=$?
@@ -56,6 +76,7 @@ jobs:
               if command -v dmesg >/dev/null 2>&1; then
                 sudo dmesg -T 2>/dev/null | grep -i -E "oom|killed process|out of memory|task_memcg" | tail -n 25 || true
               fi
+              print_summary
               exit $exit_code
             }
             trap handle_failure ERR
@@ -125,24 +146,18 @@ jobs:
             pnpm install --frozen-lockfile
 
             # ----------------------------------------------------
-            # 4. Remove production local env override
+            # 4. Clean local overrides and previous build artifacts
             # ----------------------------------------------------
             echo ""
-            echo "=== 4. Remove production .env.local ==="
+            echo "=== 4. Clean environment & previous build artifacts ==="
             rm -f apps/web/.env.local
+            rm -rf apps/api/dist apps/web/.next
 
             # ----------------------------------------------------
-            # 5. Clean Next.js build
+            # 5. Pre-build system diagnostics
             # ----------------------------------------------------
             echo ""
-            echo "=== 5. Clean Next.js build ==="
-            rm -rf apps/web/.next
-
-            # ----------------------------------------------------
-            # 5.1 Pre-build system diagnostics
-            # ----------------------------------------------------
-            echo ""
-            echo "=== 5.1 Pre-build system diagnostics ==="
+            echo "=== 5. Pre-build system diagnostics ==="
             echo "Architecture: $(uname -m)"
             echo "Node version: $(node -v)"
             echo "pnpm version: $(pnpm -v)"
@@ -157,24 +172,88 @@ jobs:
             echo "Disk status:"
             df -h
             echo ""
-            echo "PM2 process status & memory:"
+            echo "PM2 process status & memory before stopping:"
             pm2 status || true
             echo ""
             echo "Top memory-consuming processes:"
             ps aux --sort=-%mem 2>/dev/null | awk '{print $1, $2, $3, $4, $5, $6, $11}' | head -20 || true
 
             # ----------------------------------------------------
-            # 6. Build frontend + backend
+            # 6. Stop PM2 processes to free memory for compilation
             # ----------------------------------------------------
             echo ""
-            echo "=== 6. Build frontend + backend ==="
-            pnpm build
+            echo "=== 6. Stop PM2 processes to free memory for compilation ==="
+            pm2 stop bornoland-api bornoland-web || true
+            PM2_STATUS="STOPPED"
 
             # ----------------------------------------------------
-            # 7. Safely install Nginx configuration
+            # 7. Build API FIRST (Low-memory sequential build)
             # ----------------------------------------------------
             echo ""
-            echo "=== 7. Safely install Nginx configuration ==="
+            echo "=== 7. Build API (sequential step 1) ==="
+            echo "Memory before API build:"
+            free -h
+            swapon --show
+
+            if ! pnpm --filter @bornoland/api build; then
+              echo ""
+              echo "  ✗ API BUILD FAILED!"
+              BUILD_API_STATUS="FAILED"
+              BUILD_WEB_STATUS="SKIPPED"
+              NGINX_STATUS="SKIPPED"
+              PM2_STATUS="STOPPED"
+              HEALTH_STATUS="SKIPPED"
+              echo ""
+              echo "=== Memory diagnostics after failure ==="
+              free -h || true
+              swapon --show || true
+              echo ""
+              echo "=== Recent kernel OOM diagnostics ==="
+              if command -v dmesg >/dev/null 2>&1; then
+                sudo dmesg -T 2>/dev/null | grep -i -E "oom|killed process|out of memory|task_memcg" | tail -n 25 || true
+              fi
+              print_summary
+              exit 1
+            fi
+            BUILD_API_STATUS="SUCCESS"
+            echo "  ✓ API built successfully"
+
+            # ----------------------------------------------------
+            # 8. Build Web SECOND (Low-memory sequential build)
+            # ----------------------------------------------------
+            echo ""
+            echo "=== 8. Build Web (sequential step 2) ==="
+            echo "Memory before Web build:"
+            free -h
+            swapon --show
+
+            if ! pnpm --filter @bornoland/web build; then
+              echo ""
+              echo "  ✗ WEB BUILD FAILED!"
+              BUILD_WEB_STATUS="FAILED"
+              NGINX_STATUS="SKIPPED"
+              PM2_STATUS="STOPPED"
+              HEALTH_STATUS="SKIPPED"
+              echo ""
+              echo "=== Memory diagnostics after failure ==="
+              free -h || true
+              swapon --show || true
+              echo ""
+              echo "=== Recent kernel OOM diagnostics ==="
+              if command -v dmesg >/dev/null 2>&1; then
+                sudo dmesg -T 2>/dev/null | grep -i -E "oom|killed process|out of memory|task_memcg" | tail -n 25 || true
+              fi
+              print_summary
+              exit 1
+            fi
+            BUILD_WEB_STATUS="SUCCESS"
+            echo "  ✓ Web built successfully"
+
+            # ----------------------------------------------------
+            # 9. Safely install Nginx configuration
+            # ----------------------------------------------------
+            echo ""
+            echo "=== 9. Safely install Nginx configuration ==="
 
             SSL_CERT="/etc/letsencrypt/live/bornosoft.site/fullchain.pem"
             SSL_KEY="/etc/letsencrypt/live/bornosoft.site/privkey.pem"
@@ -183,6 +262,10 @@ jobs:
             if ! sudo test -f "$SSL_CERT" || ! sudo test -f "$SSL_KEY"; then
               echo "  ✗ ERROR: SSL certificate or key not found at $SSL_CERT / $SSL_KEY!"
               echo "  Cannot install production Nginx configuration without valid SSL certificate files."
+              NGINX_STATUS="FAILED"
+              PM2_STATUS="STOPPED"
+              HEALTH_STATUS="SKIPPED"
+              print_summary
               exit 1
             fi
             echo "  ✓ Confirmed SSL certificate and key exist at $SSL_CERT"
@@ -205,10 +288,10 @@ jobs:
             fi
 
             # ----------------------------------------------------
-            # 8. Validate Nginx configuration
+            # 10. Validate Nginx configuration
             # ----------------------------------------------------
             echo ""
-            echo "=== 8. Validate Nginx configuration ==="
+            echo "=== 10. Validate Nginx configuration ==="
             if ! sudo nginx -t; then
               echo ""
               echo "  ✗ NGINX CONFIGURATION VALIDATION FAILED!"
@@ -219,7 +302,11 @@ jobs:
                 echo "  Restored previous working Nginx configuration."
                 sudo nginx -t || true
               fi
-              echo "  Aborting deployment without reloading Nginx."
+              echo "  Aborting deployment without reloading Nginx or starting PM2."
+              NGINX_STATUS="FAILED"
+              PM2_STATUS="STOPPED"
+              HEALTH_STATUS="SKIPPED"
+              print_summary
               exit 1
             fi
             echo "  ✓ Nginx configuration syntax is valid"
@@ -228,40 +315,36 @@ jobs:
             sudo rm -f /etc/nginx/sites-available/bornosoft.site.bak
 
             # ----------------------------------------------------
-            # 9. Reload Nginx
+            # 11. Reload Nginx
             # ----------------------------------------------------
             echo ""
-            echo "=== 9. Reload Nginx ==="
+            echo "=== 11. Reload Nginx ==="
             sudo systemctl reload nginx
             echo "  ✓ Nginx reloaded successfully"
+            NGINX_STATUS="SUCCESS"
 
             # ----------------------------------------------------
-            # 10. Restart API
+            # 12. Restart PM2 processes
             # ----------------------------------------------------
             echo ""
-            echo "=== 10. Restart API ==="
+            echo "=== 12. Restart PM2 processes ==="
             pm2 restart bornoland-api --update-env
-
-            # ----------------------------------------------------
-            # 11. Restart Web
-            # ----------------------------------------------------
-            echo ""
-            echo "=== 11. Restart Web ==="
             pm2 restart bornoland-web --update-env
 
             # ----------------------------------------------------
-            # 12. Save PM2 configuration
+            # 13. Save PM2 configuration
             # ----------------------------------------------------
             echo ""
-            echo "=== 12. Save PM2 configuration ==="
+            echo "=== 13. Save PM2 configuration ==="
             pm2 save
             pm2 status
+            PM2_STATUS="SUCCESS"
 
             # ----------------------------------------------------
-            # 13. Health tests
+            # 14. Health tests
             # ----------------------------------------------------
             echo ""
-            echo "=== 13. Running health tests ==="
+            echo "=== 14. Running health tests ==="
 
             run_health_check() {
               local name="$1"
@@ -322,11 +405,15 @@ jobs:
               echo "=== RECENT PM2 API LOGS ==="
               pm2 logs bornoland-api --lines 50 --nostream || true
               echo ""
+              HEALTH_STATUS="FAILED"
+              print_summary
               echo "Deployment failed due to health check errors!"
               exit 1
             fi
 
-            echo ""
+            HEALTH_STATUS="SUCCESS"
+            print_summary
+
             echo "========================================"
             echo "       DEPLOYMENT SUCCESS"
             echo "========================================"

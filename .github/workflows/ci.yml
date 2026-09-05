@@ -39,6 +39,12 @@ jobs:
               echo "=== DISK USAGE ==="
               df -h || true
               echo ""
+              echo "=== PM2 STATUS ==="
+              pm2 status || true
+              echo ""
+              echo "=== TOP MEMORY PROCESSES ==="
+              ps aux --sort=-%mem 2>/dev/null | awk '{print $1, $2, $3, $4, $5, $6, $11}' | head -20 || true
+              echo ""
               echo "=== RECENT KERNEL / OOM DIAGNOSTICS ==="
               if command -v dmesg >/dev/null 2>&1; then
                 sudo dmesg -T 2>/dev/null | grep -i -E "oom|killed process|out of memory" | tail -n 20 || true
@@ -114,7 +120,7 @@ jobs:
             echo "=== 5.1 Pre-build system diagnostics ==="
             echo "Node version: $(node -v)"
             echo "pnpm version: $(pnpm -v)"
-            echo "esbuild version: $(pnpm exec esbuild --version 2>/dev/null || pnpm --filter @bornoland/api exec esbuild --version)"
+            echo "esbuild version: $(pnpm --filter @bornoland/api exec esbuild --version 2>/dev/null || true)"
             echo ""
             echo "Memory status:"
             free -h
@@ -124,6 +130,12 @@ jobs:
             echo ""
             echo "Disk status:"
             df -h
+            echo ""
+            echo "PM2 process status & memory:"
+            pm2 status || true
+            echo ""
+            echo "Top memory-consuming processes:"
+            ps aux --sort=-%mem 2>/dev/null | awk '{print $1, $2, $3, $4, $5, $6, $11}' | head -20 || true
 
             # ----------------------------------------------------
             # 6. Build frontend + backend

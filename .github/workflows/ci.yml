@@ -26,28 +26,44 @@ jobs:
             set -Eeuo pipefail
 
             REPO_DIR="$HOME/bornoLand-sass"
-            NVM_DIR="$HOME/.nvm"
 
             echo ""
             echo "========================================="
-            echo "  BornoLand Deploy"
-            echo "  $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            echo "       BornoLand Deployment"
             echo "========================================="
-
-            # =====================================================
-            # 0. BASIC SYSTEM INFO
-            # =====================================================
-
-            echo ""
-            echo "--- System ---"
-            free -h || true
+            echo "Time: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
             echo ""
 
             # =====================================================
-            # 1. GIT UPDATE
+            # 0. VERIFY EXISTING SERVER RUNTIME
             # =====================================================
 
+            echo "--- Runtime ---"
+
+            if ! command -v node >/dev/null 2>&1; then
+              echo "ERROR: Node.js is not installed on EC2."
+              exit 1
+            fi
+
+            if ! command -v pnpm >/dev/null 2>&1; then
+              echo "ERROR: pnpm is not installed on EC2."
+              exit 1
+            fi
+
+            if ! command -v pm2 >/dev/null 2>&1; then
+              echo "ERROR: PM2 is not installed on EC2."
+              exit 1
+            fi
+
+            echo "Node: $(node --version)"
+            echo "pnpm: $(pnpm --version)"
+            echo "PM2:  $(pm2 --version)"
             echo ""
+
+            # =====================================================
+            # 1. UPDATE CODE
+            # =====================================================
+
             echo "--- Step 1: Git update ---"
 
             cd "$REPO_DIR"
@@ -56,37 +72,46 @@ jobs:
             git checkout main
             git reset --hard origin/main
 
-            echo "✓ Code updated to $(git rev-parse --short HEAD)"
+            echo "Commit: $(git rev-parse --short HEAD)"
+            echo "✓ Code updated"
 
             # =====================================================
-            # 2. STOP PM2 BEFORE ANY NODE/NVM INSTALL
-            # IMPORTANT:
-            # This must happen BEFORE nvm/node installation.
+            # 2. INSTALL DEPENDENCIES
             # =====================================================
 
             echo ""
-            echo "--- Step 2: Stop PM2 ---"
+            echo "--- Step 2: Install dependencies ---"
+
+            pnpm install --frozen-lockfile
+
+            echo "✓ Dependencies installed"
+
+            # =====================================================
+            # 3. STOP PM2
+            # =====================================================
+
+            echo ""
+            echo "--- Step 3: Stop PM2 ---"
 
             pm2 stop bornoland-api bornoland-web 2>/dev/null || true
 
             echo "✓ PM2 stopped"
 
-            echo ""
-            pm2 status || true
-
             # =====================================================
-            # BUILD/DEPLOY FAILURE RECOVERY
+            # FAILURE RECOVERY
             # =====================================================
 
-            restore_pm2() {
-              local code=$?
+            deployment_failed() {
+              CODE=$?
 
               echo ""
               echo "========================================="
-              echo "  DEPLOYMENT FAILED"
-              echo "  Exit code: ${code}"
-              echo "  Restoring PM2..."
+              echo "       DEPLOYMENT FAILED"
+              echo "       Exit code: $CODE"
               echo "========================================="
+
+              echo ""
+              echo "--- Restoring PM2 ---"
 
               pm2 restart bornoland-api --update-env 2>/dev/null || true
               pm2 restart bornoland-web --update-env 2>/dev/null || true
@@ -95,233 +120,83 @@ jobs:
               echo ""
               pm2 status || true
 
-              exit "$code"
+              exit "$CODE"
             }
 
-            trap restore_pm2 ERR
+            trap deployment_failed ERR
 
             # =====================================================
-            # 3. BOOTSTRAP NVM
-            # ONLY IF MISSING
-            # =====================================================
-
-            echo ""
-            echo "--- Step 3: Ensure nvm ---"
-
-            export NVM_DIR="$HOME/.nvm"
-
-            if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-              echo "nvm not found."
-              echo "Installing nvm..."
-
-              mkdir -p "$NVM_DIR"
-
-              # Download installer first.
-              # Do NOT pipe curl directly into bash.
-              # This gives clearer failure handling.
-              curl \
-                --fail \
-                --silent \
-                --show-error \
-                --location \
-                --retry 3 \
-                --retry-delay 2 \
-                https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh \
-                -o /tmp/nvm-install.sh
-
-              bash /tmp/nvm-install.sh
-
-              rm -f /tmp/nvm-install.sh
-
-              if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-                echo "FATAL: nvm installation failed"
-                exit 1
-              fi
-
-              echo "✓ nvm installed"
-            else
-              echo "✓ nvm already installed"
-            fi
-
-            # Load nvm into THIS SSH shell
-            . "$NVM_DIR/nvm.sh"
-
-            if ! command -v nvm >/dev/null 2>&1; then
-              echo "FATAL: nvm command unavailable after loading"
-              exit 1
-            fi
-
-            echo "nvm: $(nvm --version)"
-
-            # =====================================================
-            # 4. ENSURE NODE 22
+            # 4. BUILD API
             # =====================================================
 
             echo ""
-            echo "--- Step 4: Ensure Node 22 ---"
-
-            if ! nvm ls 22 2>/dev/null | grep -q "v22"; then
-              echo "Node 22 not found."
-              echo "Installing Node 22..."
-
-              nvm install 22
-            else
-              echo "✓ Node 22 already installed"
-            fi
-
-            nvm use 22
-            nvm alias default 22
-
-            hash -r
-
-            NODE_VERSION="$(node --version)"
-            NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
-
-            echo "Node: $NODE_VERSION"
-            echo "Node path: $(command -v node)"
-
-            if [ "$NODE_MAJOR" != "22" ]; then
-              echo "FATAL: Node 22 required, found $NODE_VERSION"
-              exit 1
-            fi
-
-            echo "✓ Node 22 active"
-
-            # =====================================================
-            # 5. ENSURE PNPM 9.12.0
-            # =====================================================
-
-            echo ""
-            echo "--- Step 5: Ensure pnpm 9.12.0 ---"
-
-            REQUIRED_PNPM="9.12.0"
-
-            CURRENT_PNPM="$(pnpm --version 2>/dev/null || echo "")"
-
-            echo "Current pnpm: ${CURRENT_PNPM:-none}"
-
-            if [ "$CURRENT_PNPM" != "$REQUIRED_PNPM" ]; then
-              echo "Installing pnpm $REQUIRED_PNPM..."
-
-              npm install -g "pnpm@$REQUIRED_PNPM"
-
-              hash -r
-            fi
-
-            PNPM_VERSION="$(pnpm --version)"
-
-            echo "pnpm: $PNPM_VERSION"
-            echo "pnpm path: $(command -v pnpm)"
-
-            if [ "$PNPM_VERSION" != "$REQUIRED_PNPM" ]; then
-              echo "FATAL: pnpm $REQUIRED_PNPM required, found $PNPM_VERSION"
-              exit 1
-            fi
-
-            echo "✓ pnpm 9.12.0 active"
-
-            # =====================================================
-            # 6. FINAL RUNTIME CHECK
-            # =====================================================
-
-            echo ""
-            echo "========================================="
-            echo "  RUNTIME"
-            echo "========================================="
-
-            echo "Node:       $(node --version)"
-            echo "pnpm:       $(pnpm --version)"
-            echo "node path:  $(command -v node)"
-            echo "pnpm path:  $(command -v pnpm)"
-
-            echo "========================================="
-
-            # Limit Node heap during builds.
-            # This is NOT used for normal PM2 runtime.
-            export NODE_OPTIONS="--max-old-space-size=2048"
-
-            # =====================================================
-            # 7. INSTALL DEPENDENCIES
-            # =====================================================
-
-            echo ""
-            echo "--- Step 6: Install dependencies ---"
+            echo "--- Step 4: Build API ---"
 
             cd "$REPO_DIR"
 
-            pnpm install --frozen-lockfile
+            pnpm --filter @bornoland/api build
 
-            echo "✓ Dependencies installed"
+            echo "✓ API build completed"
 
-            # =====================================================
-            # 8. BUILD API
-            # =====================================================
-
-            echo ""
-            echo "--- Step 7: Build API ---"
-
-            cd "$REPO_DIR/apps/api"
-
-            rm -rf dist
-
-            pnpm build
-
-            if [ ! -f "$REPO_DIR/apps/api/dist/index.js" ]; then
-              echo "FATAL: API build output missing"
-              find "$REPO_DIR/apps/api/dist" -maxdepth 2 -type f 2>/dev/null || true
+            # Verify API output
+            if [ ! -d "$REPO_DIR/apps/api/dist" ]; then
+              echo "ERROR: API dist directory not found"
               exit 1
             fi
 
-            echo "✓ API built"
+            echo "✓ API dist verified"
 
             # =====================================================
-            # 9. BUILD WEB
+            # 5. BUILD WEB
             # =====================================================
 
             echo ""
-            echo "--- Step 8: Build Web ---"
+            echo "--- Step 5: Build Web ---"
 
-            cd "$REPO_DIR/apps/web"
+            pnpm --filter @bornoland/web build
 
-            rm -rf .next
-
-            pnpm build
+            echo "✓ Web build completed"
 
             if [ ! -d "$REPO_DIR/apps/web/.next" ]; then
-              echo "FATAL: Next.js build output missing"
+              echo "ERROR: Next.js .next directory not found"
               exit 1
             fi
 
-            echo "✓ Web built"
+            echo "✓ Web build verified"
 
             # =====================================================
-            # 10. NGINX
+            # 6. NGINX
             # =====================================================
 
             echo ""
-            echo "--- Step 9: Nginx ---"
+            echo "--- Step 6: Nginx ---"
 
             NGINX_CONF="/etc/nginx/sites-available/bornosoft.site"
-            NGINX_BACKUP="${NGINX_CONF}.bak"
+            NGINX_BACKUP="${NGINX_CONF}.backup"
 
-            for cert in \
-              "/etc/letsencrypt/live/bornosoft.site/fullchain.pem" \
+            # SSL must already exist
+            if ! sudo test -f \
+              "/etc/letsencrypt/live/bornosoft.site/fullchain.pem"
+            then
+              echo "ERROR: SSL fullchain missing"
+              exit 1
+            fi
+
+            if ! sudo test -f \
               "/etc/letsencrypt/live/bornosoft.site/privkey.pem"
-            do
-              if ! sudo test -f "$cert"; then
-                echo "FATAL: SSL file missing: $cert"
-                exit 1
-              fi
-            done
+            then
+              echo "ERROR: SSL private key missing"
+              exit 1
+            fi
 
-            echo "✓ SSL certificates present"
+            echo "✓ SSL certificates found"
 
             # Backup current config
             if sudo test -f "$NGINX_CONF"; then
               sudo cp "$NGINX_CONF" "$NGINX_BACKUP"
             fi
 
-            # Install repository config
+            # Install repository Nginx config
             sudo cp \
               "$REPO_DIR/nginx/bornosoft.site.conf" \
               "$NGINX_CONF"
@@ -330,141 +205,133 @@ jobs:
               "$NGINX_CONF" \
               /etc/nginx/sites-enabled/bornosoft.site
 
-            # Remove default site if enabled
-            if [ -L /etc/nginx/sites-enabled/default ]; then
-              sudo rm -f /etc/nginx/sites-enabled/default
-            fi
+            # Remove default site
+            sudo rm -f \
+              /etc/nginx/sites-enabled/default 2>/dev/null || true
 
-            # Test before reload
+            # ALWAYS validate before reload
             if sudo nginx -t; then
+
               echo "✓ Nginx config valid"
 
               sudo systemctl reload nginx
 
+              echo "✓ Nginx reloaded"
+
               sudo rm -f "$NGINX_BACKUP"
 
-              echo "✓ Nginx reloaded"
             else
-              echo "✗ Nginx config invalid"
+
+              echo "ERROR: Nginx config invalid"
 
               if sudo test -f "$NGINX_BACKUP"; then
                 sudo cp "$NGINX_BACKUP" "$NGINX_CONF"
 
-                if sudo nginx -t; then
-                  echo "✓ Previous Nginx config restored"
-                fi
+                echo "✓ Previous Nginx config restored"
               fi
 
               exit 1
             fi
 
             # =====================================================
-            # 11. PM2 RESTART
+            # 7. RESTART PM2
             # =====================================================
 
             echo ""
-            echo "--- Step 10: PM2 restart ---"
+            echo "--- Step 7: PM2 restart ---"
 
             pm2 restart bornoland-api --update-env
             pm2 restart bornoland-web --update-env
 
             pm2 save
 
-            sleep 3
-
+            echo ""
             pm2 status
 
+            echo ""
             echo "✓ PM2 restarted"
 
             # =====================================================
-            # SUCCESSFUL DEPLOYMENT
-            # Disable recovery trap
-            # =====================================================
-
-            trap - ERR
-
-            # =====================================================
-            # 12. HEALTH CHECKS
+            # 8. HEALTH CHECK
             # =====================================================
 
             echo ""
-            echo "--- Step 11: Health checks ---"
+            echo "--- Step 8: Health checks ---"
 
-            health_check() {
-              local name="$1"
-              local url="$2"
-              local max=30
-              local i=1
+            sleep 5
 
-              printf "  %-42s " "${name}..."
+            check_url() {
+              NAME="$1"
+              URL="$2"
 
-              while [ "$i" -le "$max" ]; do
-                if curl \
-                  --fail \
-                  --silent \
-                  --show-error \
-                  --max-time 5 \
-                  "$url" \
-                  >/dev/null 2>&1
-                then
-                  echo "✓ OK (${i}s)"
-                  return 0
-                fi
+              echo -n "$NAME: "
 
-                sleep 1
-                i=$((i + 1))
-              done
+              if curl \
+                --fail \
+                --silent \
+                --show-error \
+                --max-time 10 \
+                "$URL" \
+                >/dev/null
+              then
+                echo "✓ OK"
+                return 0
+              fi
 
-              echo "✗ FAILED after ${max}s"
+              echo "✗ FAILED"
               return 1
             }
 
             FAILED=0
 
-            health_check \
-              "API http://127.0.0.1:4000/" \
+            check_url \
+              "API" \
               "http://127.0.0.1:4000/" || FAILED=1
 
-            health_check \
-              "Web http://127.0.0.1:3000/" \
+            check_url \
+              "Web" \
               "http://127.0.0.1:3000/" || FAILED=1
 
-            health_check \
+            check_url \
               "HTTPS bornosoft.site" \
               "https://bornosoft.site/" || FAILED=1
 
-            health_check \
+            check_url \
               "HTTPS nayeem.bornosoft.site" \
               "https://nayeem.bornosoft.site/" || FAILED=1
+
+            # =====================================================
+            # 9. FAILURE DIAGNOSTICS
+            # =====================================================
 
             if [ "$FAILED" -ne 0 ]; then
 
               echo ""
               echo "========================================="
-              echo "  HEALTH CHECK FAILED"
+              echo "       HEALTH CHECK FAILED"
               echo "========================================="
 
               echo ""
-              echo "=== PM2 ==="
+              echo "--- PM2 ---"
               pm2 status || true
 
               echo ""
-              echo "=== API LOGS ==="
+              echo "--- API logs ---"
               pm2 logs bornoland-api \
-                --lines 40 \
+                --lines 50 \
                 --nostream \
                 2>/dev/null || true
 
               echo ""
-              echo "=== WEB LOGS ==="
+              echo "--- Web logs ---"
               pm2 logs bornoland-web \
-                --lines 40 \
+                --lines 50 \
                 --nostream \
                 2>/dev/null || true
 
               echo ""
-              echo "=== NGINX ERRORS ==="
-              sudo tail -n 40 \
+              echo "--- Nginx errors ---"
+              sudo tail -n 50 \
                 /var/log/nginx/error.log \
                 2>/dev/null || true
 
@@ -472,18 +339,20 @@ jobs:
             fi
 
             # =====================================================
-            # FINAL
+            # SUCCESS
             # =====================================================
 
             echo ""
             echo "========================================="
-            echo "  DEPLOYMENT SUCCESS"
+            echo "       DEPLOYMENT SUCCESS"
             echo "========================================="
 
             echo "Commit: $(git rev-parse --short HEAD)"
             echo "Node:   $(node --version)"
             echo "pnpm:   $(pnpm --version)"
+            echo ""
             echo "API:    http://127.0.0.1:4000/"
             echo "Web:    http://127.0.0.1:3000/"
             echo "HTTPS:  https://bornosoft.site/"
             echo ""
+            echo "========================================="

@@ -18,10 +18,34 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          script_stop: true
 
           script: |
             set -e
+
+            # Trap errors to capture diagnostic information without exposing secrets
+            handle_failure() {
+              local exit_code=$?
+              echo ""
+              echo "========================================"
+              echo "   DEPLOYMENT FAILED (EXIT CODE: $exit_code)"
+              echo "========================================"
+              echo ""
+              echo "=== SYSTEM MEMORY ==="
+              free -h || true
+              echo ""
+              echo "=== SWAP STATUS ==="
+              swapon --show || true
+              echo ""
+              echo "=== DISK USAGE ==="
+              df -h || true
+              echo ""
+              echo "=== RECENT KERNEL / OOM DIAGNOSTICS ==="
+              if command -v dmesg >/dev/null 2>&1; then
+                sudo dmesg -T 2>/dev/null | grep -i -E "oom|killed process|out of memory" | tail -n 20 || true
+              fi
+              exit $exit_code
+            }
+            trap handle_failure ERR
 
             echo "========================================"
             echo "       Starting BornoLand deployment"
@@ -42,11 +66,32 @@ jobs:
             git reset --hard origin/main
 
             # ----------------------------------------------------
+            # 2.1 Ensure swap space exists to prevent OOM kills
+            # ----------------------------------------------------
+            echo ""
+            echo "=== 2.1 Ensure server swap configuration ==="
+            if [ "$(swapon --show --noheadings 2>/dev/null | wc -l)" -eq 0 ]; then
+              echo "  No active swap detected on EC2. Creating 2GB swapfile..."
+              if [ ! -f /swapfile ]; then
+                sudo fallocate -l 2G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+                sudo chmod 600 /swapfile
+                sudo mkswap /swapfile
+              fi
+              sudo swapon /swapfile 2>/dev/null || true
+              if ! grep -q '/swapfile' /etc/fstab 2>/dev/null; then
+                echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+              fi
+              echo "  ✓ Swap configured successfully"
+            else
+              echo "  ✓ Active swap detected"
+            fi
+
+            # ----------------------------------------------------
             # 3. Install dependencies
             # ----------------------------------------------------
             echo ""
             echo "=== 3. Install dependencies ==="
-            pnpm install --no-frozen-lockfile
+            pnpm install --frozen-lockfile
 
             # ----------------------------------------------------
             # 4. Remove production local env override
@@ -61,6 +106,24 @@ jobs:
             echo ""
             echo "=== 5. Clean Next.js build ==="
             rm -rf apps/web/.next
+
+            # ----------------------------------------------------
+            # 5.1 Pre-build system diagnostics
+            # ----------------------------------------------------
+            echo ""
+            echo "=== 5.1 Pre-build system diagnostics ==="
+            echo "Node version: $(node -v)"
+            echo "pnpm version: $(pnpm -v)"
+            echo "esbuild version: $(pnpm exec esbuild --version 2>/dev/null || pnpm --filter @bornoland/api exec esbuild --version)"
+            echo ""
+            echo "Memory status:"
+            free -h
+            echo ""
+            echo "Swap status:"
+            swapon --show
+            echo ""
+            echo "Disk status:"
+            df -h
 
             # ----------------------------------------------------
             # 6. Build frontend + backend

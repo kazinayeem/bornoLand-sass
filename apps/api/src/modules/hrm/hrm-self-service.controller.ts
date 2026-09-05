@@ -92,7 +92,10 @@ export async function resolveCurrentEmployee(req: PermissionRequest) {
 
   // Security check: active status verification
   if (!isEmployeeStatusAllowedForLogin(emp.status)) {
-    return null;
+    const err: any = new Error("Access denied. Your employee account is currently suspended, terminated, or inactive.");
+    err.statusCode = 403;
+    err.code = "EMPLOYEE_INACTIVE";
+    throw err;
   }
 
   return emp;
@@ -127,7 +130,8 @@ export async function getMyEmployeeProfile(req: PermissionRequest, res: Response
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ ok: false, message: error?.message || "Failed to load employee profile" });
+    const status = error?.statusCode || 500;
+    return res.status(status).json({ ok: false, message: error?.message || "Failed to load employee profile" });
   }
 }
 
@@ -140,11 +144,12 @@ export async function updateMyEmployeeProfile(req: PermissionRequest, res: Respo
       return res.status(404).json({ ok: false, message: "Active employee profile not found" });
     }
 
-    const { phone, address, emergencyContact, photoUrl } = req.body;
+    const { phone, address, presentAddress, emergencyContact, photoUrl } = req.body;
 
     // Only allow editing non-sensitive fields
     if (phone !== undefined) employee.phone = String(phone).trim();
     if (address !== undefined) employee.address = String(address).trim();
+    else if (presentAddress !== undefined) employee.address = String(presentAddress).trim();
     if (photoUrl !== undefined) employee.photoUrl = String(photoUrl).trim();
 
     if (emergencyContact && typeof emergencyContact === "object") {
@@ -241,6 +246,8 @@ export async function getMyTodayAttendance(req: PermissionRequest, res: Response
         date: todayStr,
         attendance,
         status,
+        isClockedIn: Boolean(attendance?.checkIn),
+        isClockedOut: Boolean(attendance?.checkOut),
         serverTime: new Date().toISOString(),
       },
     });
@@ -423,22 +430,25 @@ export async function requestAttendanceCorrection(req: PermissionRequest, res: R
       return res.status(404).json({ ok: false, message: "Active employee profile not found" });
     }
 
-    const { date, requestedCheckIn, requestedCheckOut, reason } = req.body;
+    const { date, requestedCheckIn, requestedCheckOut, proposedCheckIn, proposedCheckOut, reason } = req.body;
     if (!date || !reason) {
       return res.status(400).json({ ok: false, message: "Date and reason are required for attendance correction" });
     }
 
+    const checkInVal = requestedCheckIn || proposedCheckIn;
+    const checkOutVal = requestedCheckOut || proposedCheckOut;
+
     const request = await EmployeeRequestModel.create({
       storeId: employee.storeId,
       employeeId: employee._id,
-      userId: req.user!.userId,
+      userId: req.user?.userId || employee.userId,
       type: "attendance_correction",
       title: `Attendance Correction for ${date}`,
       description: String(reason).trim(),
       data: {
         date: String(date).slice(0, 10),
-        requestedCheckIn,
-        requestedCheckOut,
+        requestedCheckIn: checkInVal,
+        requestedCheckOut: checkOutVal,
         reason: String(reason).trim(),
       },
       status: "pending",

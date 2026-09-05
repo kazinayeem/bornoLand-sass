@@ -25,7 +25,7 @@ import {
 } from "./hrm.service.js";
 
 function storeIdOf(request: Request) {
-  return String(request.params.storeId ?? "");
+  return String(request.params.storeId ?? (request as any).storeContext?.storeId ?? "");
 }
 
 // ── Employees ──
@@ -291,11 +291,13 @@ export async function reviewHrmRequestController(request: AuthRequest, response:
   try {
     const storeId = storeIdOf(request);
     const requestId = String(request.params.requestId);
-    const { status, reviewNote } = request.body;
+    const effectiveStatus = (request.body?.status || (request.body?.action === "approve" ? "approved" : request.body?.action === "reject" ? "rejected" : request.body?.action)) as string;
+    const reviewNote = request.body?.reviewNote;
 
-    if (!["approved", "rejected"].includes(status)) {
+    if (!["approved", "rejected"].includes(effectiveStatus)) {
       return response.status(400).json({ ok: false, message: "Status must be 'approved' or 'rejected'" });
     }
+    const status = effectiveStatus;
 
     const { EmployeeRequestModel } = await import("./employee-request.model.js");
     const { EmployeeModel } = await import("./employee.model.js");

@@ -203,7 +203,7 @@ export default function PayslipsPage() {
               employee: {
                 code: selectedPayslip.employeeId?.employeeCode || "EMP",
                 name: `${selectedPayslip.employeeId?.firstName || ""} ${selectedPayslip.employeeId?.lastName || ""}`.trim(),
-                designation: selectedPayslip.employeeId?.designationId?.title || "Staff",
+                designation: selectedPayslip.employeeId?.designationId?.name || "Staff",
                 department: selectedPayslip.employeeId?.departmentId?.name || "General",
                 joiningDate: selectedPayslip.employeeId?.joiningDate || selectedPayslip.employeeId?.createdAt || "",
                 bankAccount: bankInfo?.accountNumber || bankInfo?.mobileWalletNumber,

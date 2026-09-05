@@ -145,8 +145,8 @@ export function EmployeeDetailDialog({
   );
 
   const { data: idCardData, isLoading: isLoadingIdCard } = useGetEmployeeIdCardQuery(
-    { storeSlug, employeeId: empId },
-    { skip: !isIdCardOpen || !storeSlug || !empId }
+    { storeId, employeeId: empId },
+    { skip: !isIdCardOpen || !storeId || !empId }
   );
 
   // Mutations
@@ -829,6 +829,7 @@ export function EmployeeDetailDialog({
       onClose={() => setIsIdCardOpen(false)}
       cardData={idCardData?.data}
       isLoading={isLoadingIdCard}
+      storeId={storeId}
       storeSlug={storeSlug}
       employeeId={empId}
       canUploadPhoto={true}

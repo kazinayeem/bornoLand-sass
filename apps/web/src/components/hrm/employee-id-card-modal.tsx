@@ -24,6 +24,7 @@ interface EmployeeIdCardModalProps {
   onClose: () => void;
   cardData: EmployeeIdCardData | undefined;
   isLoading?: boolean;
+  storeId?: string;
   storeSlug?: string;
   employeeId?: string;
   canUploadPhoto?: boolean;
@@ -34,6 +35,7 @@ export function EmployeeIdCardModal({
   onClose,
   cardData,
   isLoading = false,
+  storeId,
   storeSlug,
   employeeId,
   canUploadPhoto = false,
@@ -50,16 +52,17 @@ export function EmployeeIdCardModal({
   }, []);
 
   const handleCopyLink = useCallback(async () => {
-    if (!cardData?.verificationUrl) return;
+    const url = cardData?.cardMeta?.verificationUrl;
+    if (!url) return;
     try {
-      await navigator.clipboard.writeText(cardData.verificationUrl);
+      await navigator.clipboard.writeText(url);
       setCopied(true);
       toast.success("Verification link copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Failed to copy link");
     }
-  }, [cardData?.verificationUrl]);
+  }, [cardData?.cardMeta?.verificationUrl]);
 
   const handlePrint = useCallback(() => {
     window.print();
@@ -67,7 +70,8 @@ export function EmployeeIdCardModal({
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !storeSlug || !employeeId) return;
+    const targetStoreId = storeId || cardData?.store?._id;
+    if (!file || !targetStoreId || !employeeId) return;
 
     if (!file.type.startsWith("image/")) {
       toast.error("Please select a valid image file (PNG, JPG, WebP)");
@@ -80,7 +84,9 @@ export function EmployeeIdCardModal({
     }
 
     try {
-      await uploadPhoto({ storeSlug, employeeId, file }).unwrap();
+      const formData = new FormData();
+      formData.append("photo", file);
+      await uploadPhoto({ storeId: targetStoreId, employeeId, formData }).unwrap();
       toast.success("Employee photo updated successfully");
     } catch (err: any) {
       toast.error(err?.data?.message || "Failed to update employee photo");
@@ -533,9 +539,9 @@ export function EmployeeIdCardModal({
                 </button>
 
                 {/* View Verification Page */}
-                {cardData.verificationUrl && (
+                {cardData.cardMeta?.verificationUrl && (
                   <a
-                    href={cardData.verificationUrl}
+                    href={cardData.cardMeta.verificationUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 px-2 py-1.5"

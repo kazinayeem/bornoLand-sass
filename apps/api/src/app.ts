@@ -239,12 +239,14 @@ app.get(["/", "/health", "/api/health"], (_req, res) => {
 });
 
 app.use("/auth", authRateLimit, authRouter);
+app.use("/api/auth", authRateLimit, authRouter);
 app.use("/profile", profileRouter);
 app.use("/tenants", tenantRouter);
 app.use("/pages", pageRouter);
 app.use("/admin", adminRouter);
 app.use("/billing", billingRouter);
 app.use("/stores", storeRouter);
+app.use("/api/stores", storeRouter);
 app.use("/plans", planRouter);
 app.use("/templates", templateRouter);
 app.use("/builder", builderRouter);

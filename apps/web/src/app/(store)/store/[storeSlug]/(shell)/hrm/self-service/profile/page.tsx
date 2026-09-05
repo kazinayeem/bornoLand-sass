@@ -103,7 +103,7 @@ export default function MyProfilePage() {
       const formData = new FormData();
       formData.append("photo", file);
 
-      const res = await fetch(`${getApiUrl()}/v1/stores/${storeId}/hrm/self-service/profile/photo`, {
+      const res = await fetch(`${getApiUrl()}/stores/${storeId}/hrm/self-service/profile/photo`, {
         method: "POST",
         body: formData,
       });

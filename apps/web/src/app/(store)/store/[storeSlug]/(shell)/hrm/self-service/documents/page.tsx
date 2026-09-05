@@ -95,7 +95,7 @@ export default function MyDocumentsPage() {
       formData.append("title", docTitle || selectedFile.name);
       formData.append("documentType", docType);
 
-      const res = await fetch(`${getApiUrl()}/v1/stores/${storeId}/hrm/self-service/documents`, {
+      const res = await fetch(`${getApiUrl()}/stores/${storeId}/hrm/self-service/documents`, {
         method: "POST",
         body: formData,
       });

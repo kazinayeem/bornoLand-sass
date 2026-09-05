@@ -1,346 +1,439 @@
 name: BornoLand CI/CD
 
+# ======================================================================
+# Architecture:
+#   Job 1 (build) — runs on GitHub runner (unlimited RAM, ephemeral)
+#     → checkout, pnpm install, tsup API build, next build (standalone)
+#     → package tarball: api/dist + api/node_modules(prod) + web/standalone
+#     → upload tarball to GitHub Actions artifacts
+#
+#   Job 2 (deploy) — runs on GitHub runner, connects to EC2 via SCP+SSH
+#     → SCP tarball to EC2 /tmp/
+#     → SSH: extract → validate → copy env → nginx → symlink → pm2 reload
+#     → health checks (30s retry)
+#     → automatic rollback on any failure
+#
+# EC2 NEVER runs: pnpm install / tsup / next build / tsc / esbuild
+# ======================================================================
+
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+
+env:
+  # Must match packageManager field in root package.json
+  PNPM_VERSION: '9.12.0'
+  # Must match .nvmrc
+  NODE_VERSION: '22'
 
 jobs:
-  build-and-deploy:
-    name: Build & Deploy Off-EC2
+  # ====================================================================
+  # JOB 1 — BUILD (GitHub runner, unlimited RAM)
+  # ====================================================================
+  build:
+    name: Build
     runs-on: ubuntu-latest
 
+    outputs:
+      release_sha: ${{ steps.sha.outputs.sha }}
+
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9.12.0
+      - name: Get short SHA
+        id: sha
+        run: echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Setup Node.js
+      # ── pnpm ──────────────────────────────────────────────────────────
+      - name: Setup pnpm ${{ env.PNPM_VERSION }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Express API (@bornoland/api)
+      # ── API Build ─────────────────────────────────────────────────────
+      - name: Build API (tsup)
         run: pnpm --filter @bornoland/api build
 
-      - name: Build Next.js Web (@bornoland/web)
+      - name: Validate API artifact
+        run: |
+          if [ ! -f apps/api/dist/index.js ]; then
+            echo "✗ API dist/index.js not found"
+            ls -la apps/api/dist/ || true
+            exit 1
+          fi
+          echo "✓ API artifact: $(ls -lh apps/api/dist/index.js)"
+
+      # ── Web Build ─────────────────────────────────────────────────────
+      # NEXT_PUBLIC_* are baked into the bundle at build time.
+      # Add these as GitHub Repository Secrets (Settings → Secrets → Actions).
+      - name: Build Web (Next.js standalone)
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_APP_ENV: ${{ secrets.NEXT_PUBLIC_APP_ENV }}
+          NEXT_PUBLIC_ROOT_DOMAIN: ${{ secrets.NEXT_PUBLIC_ROOT_DOMAIN }}
+          NEXT_PUBLIC_PROTOCOL: ${{ secrets.NEXT_PUBLIC_PROTOCOL }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_APP_NAME: ${{ secrets.NEXT_PUBLIC_APP_NAME }}
         run: pnpm --filter @bornoland/web build
 
-      - name: Package production deployment artifact
+      - name: Validate Web standalone artifact
         run: |
-          set -euo pipefail
-          echo "Packaging production artifacts..."
+          if [ ! -f apps/web/.next/standalone/server.js ]; then
+            echo "✗ apps/web/.next/standalone/server.js not found"
+            echo "Contents of apps/web/.next/:"
+            ls -la apps/web/.next/ || true
+            exit 1
+          fi
+          echo "✓ Web standalone: apps/web/.next/standalone/server.js"
 
-          ARTIFACT_DIR="build-artifact"
-          rm -rf "$ARTIFACT_DIR"
-          mkdir -p "$ARTIFACT_DIR/apps/api" "$ARTIFACT_DIR/apps/web" "$ARTIFACT_DIR/nginx"
+      # Next.js standalone needs static files + public dir alongside server.js
+      - name: Assemble Web standalone (copy static + public)
+        run: |
+          cp -r apps/web/.next/static  apps/web/.next/standalone/.next/static
+          cp -r apps/web/public        apps/web/.next/standalone/public
+          echo "✓ static and public copied into standalone"
 
-          # 1. Package API with production-only dependencies
-          pnpm --filter @bornoland/api deploy --prod "$ARTIFACT_DIR/apps/api"
-          cp -r apps/api/dist "$ARTIFACT_DIR/apps/api/"
-          mkdir -p "$ARTIFACT_DIR/apps/api/uploads"
+      # ── API production node_modules ───────────────────────────────────
+      # pnpm deploy creates a clean dir with ONLY production deps (no tsup, tsc, etc.)
+      # Both GitHub runner and EC2 are x86_64 Linux; native binaries are compatible.
+      - name: Create API production deploy directory
+        run: |
+          pnpm --filter @bornoland/api deploy --prod /tmp/api-prod
+          echo "✓ API prod node_modules: $(du -sh /tmp/api-prod/node_modules)"
 
-          # 2. Package Web standalone and required assets
-          cp -r apps/web/.next/standalone/* "$ARTIFACT_DIR/apps/web/"
-          cp -r apps/web/.next/static "$ARTIFACT_DIR/apps/web/apps/web/.next/static"
-          cp -r apps/web/public "$ARTIFACT_DIR/apps/web/apps/web/public"
-          echo "require('./apps/web/server.js');" > "$ARTIFACT_DIR/apps/web/server.js"
+      # ── Package release tarball ───────────────────────────────────────
+      - name: Package release tarball
+        run: |
+          SHA="${{ steps.sha.outputs.sha }}"
+          STAGE="$(mktemp -d)"
+          TARBALL="bornoland-release-${SHA}.tar.gz"
 
-          # 3. Ecosystem & Nginx
-          cp ecosystem.config.cjs "$ARTIFACT_DIR/"
-          cp nginx/bornosoft.site.conf "$ARTIFACT_DIR/nginx/"
+          echo "Staging release to ${STAGE}..."
 
-          # 4. Verify artifact contents before archiving
-          test -f "$ARTIFACT_DIR/apps/api/dist/index.js" || { echo "Missing API dist/index.js"; exit 1; }
-          test -f "$ARTIFACT_DIR/apps/web/apps/web/server.js" || { echo "Missing Web server.js"; exit 1; }
-          test -f "$ARTIFACT_DIR/ecosystem.config.cjs" || { echo "Missing ecosystem.config.cjs"; exit 1; }
-          test -f "$ARTIFACT_DIR/nginx/bornosoft.site.conf" || { echo "Missing nginx conf"; exit 1; }
+          # API: compiled output + production dependencies
+          mkdir -p "${STAGE}/apps/api"
+          cp -r apps/api/dist              "${STAGE}/apps/api/dist"
+          cp    apps/api/package.json      "${STAGE}/apps/api/package.json"
+          cp -r /tmp/api-prod/node_modules "${STAGE}/apps/api/node_modules"
 
-          # 5. Create compressed archive
-          tar -czf "release-${{ github.sha }}.tar.gz" -C "$ARTIFACT_DIR" .
-          echo "Artifact created: release-${{ github.sha }}.tar.gz ($(du -h "release-${{ github.sha }}.tar.gz" | cut -f1))"
+          # Web: self-contained standalone server (includes its own node_modules)
+          mkdir -p "${STAGE}/apps/web"
+          cp -r apps/web/.next/standalone  "${STAGE}/apps/web/standalone"
 
-      - name: Prepare EC2 release directories
-        uses: appleboy/ssh-action@v1.2.2
+          # Config: PM2 ecosystem + Nginx vhost
+          cp ecosystem.config.cjs "${STAGE}/"
+          mkdir -p "${STAGE}/nginx"
+          cp nginx/bornosoft.site.conf "${STAGE}/nginx/"
+
+          # Create tarball
+          tar -czf "${TARBALL}" -C "${STAGE}" .
+
+          echo ""
+          echo "✓ Release tarball: ${TARBALL} ($(du -sh "${TARBALL}" | cut -f1))"
+          echo ""
+          echo "Contents (first 50 entries):"
+          tar -tzf "${TARBALL}" | head -50
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          script: |
-            set -euo pipefail
-            mkdir -p ~/bornoLand-releases/archives ~/bornoLand-releases/releases ~/bornoLand-releases/shared/uploads
+          name: bornoland-release-${{ steps.sha.outputs.sha }}
+          path: bornoland-release-${{ steps.sha.outputs.sha }}.tar.gz
+          retention-days: 7
 
-      - name: Upload artifact to EC2
+  # ====================================================================
+  # JOB 2 — DEPLOY TO EC2 (no compilation, no pnpm install)
+  # ====================================================================
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: build
+
+    env:
+      RELEASE_SHA: ${{ needs.build.outputs.release_sha }}
+
+    steps:
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: bornoland-release-${{ needs.build.outputs.release_sha }}
+
+      - name: Upload tarball to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          source: "release-${{ github.sha }}.tar.gz"
-          target: "bornoLand-releases/archives"
+          source: bornoland-release-${{ needs.build.outputs.release_sha }}.tar.gz
+          target: /tmp/bornoland-artifacts/
 
-      - name: Deploy release on EC2
+      # ── Atomic deploy via SSH ─────────────────────────────────────────
+      # EC2 only: extract → validate → env → nginx → symlink → pm2 reload → health
+      # On any failure: automatic rollback to previous release
+      - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.2.2
+        env:
+          RELEASE_SHA: ${{ needs.build.outputs.release_sha }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
+          envs: RELEASE_SHA
+          # IMPORTANT: This script must NOT run any compilation.
+          # It receives a pre-built tarball and deploys it atomically.
           script: |
             set -Eeuo pipefail
 
-            BASE_DIR="$HOME/bornoLand-releases"
-            ARCHIVE_FILE="$BASE_DIR/archives/release-${{ github.sha }}.tar.gz"
-            TARGET_RELEASE="$BASE_DIR/releases/release-${{ github.sha }}"
-            CURRENT_LINK="$BASE_DIR/current"
-            SHARED_DIR="$BASE_DIR/shared"
+            ARTIFACT="/tmp/bornoland-artifacts/bornoland-release-${RELEASE_SHA}.tar.gz"
+            RELEASES_BASE="$HOME/bornoLand-releases"
+            NEW_RELEASE="${RELEASES_BASE}/release-${RELEASE_SHA}"
+            CURRENT_LINK="${RELEASES_BASE}/current"
+            # Secrets: managed manually on EC2, never committed to git
+            # First-time setup: mkdir -p ~/bornoland-secrets
+            #   cp ~/bornoLand-sass/apps/api/.env.production ~/bornoland-secrets/api.env
+            #   cp ~/bornoLand-sass/apps/web/.env.production ~/bornoland-secrets/web.env
+            SECRETS_DIR="$HOME/bornoland-secrets"
+            LEGACY_DIR="$HOME/bornoLand-sass"
 
-            # Determine previous release for rollback (if current exists)
-            PREV_RELEASE=""
+            # ── Track previous release for rollback ───────────────────
+            PREVIOUS_RELEASE=""
             if [ -L "$CURRENT_LINK" ]; then
-              PREV_RELEASE=$(readlink -f "$CURRENT_LINK" || echo "")
+              PREVIOUS_RELEASE="$(readlink "$CURRENT_LINK")"
             fi
 
-            echo "=================================================="
-            echo "🚀 STARTING ATOMIC DEPLOYMENT ON EC2"
-            echo "Release: release-${{ github.sha }}"
-            echo "Previous release: ${PREV_RELEASE:-None}"
-            echo "=================================================="
-
-            # 1. Migrate shared environment files if not already present
-            if [ ! -f "$SHARED_DIR/api.env" ]; then
-              if [ -f "$HOME/bornoLand-sass/apps/api/.env.production" ]; then
-                echo "Migrating API production env to $SHARED_DIR/api.env"
-                cp "$HOME/bornoLand-sass/apps/api/.env.production" "$SHARED_DIR/api.env"
-              elif [ -f "$HOME/bornoLand-sass/apps/api/.env" ]; then
-                cp "$HOME/bornoLand-sass/apps/api/.env" "$SHARED_DIR/api.env"
-              fi
-            fi
-
-            if [ ! -f "$SHARED_DIR/web.env" ]; then
-              if [ -f "$HOME/bornoLand-sass/apps/web/.env.production" ]; then
-                echo "Migrating Web production env to $SHARED_DIR/web.env"
-                cp "$HOME/bornoLand-sass/apps/web/.env.production" "$SHARED_DIR/web.env"
-              elif [ -f "$HOME/bornoLand-sass/apps/web/.env" ]; then
-                cp "$HOME/bornoLand-sass/apps/web/.env" "$SHARED_DIR/web.env"
-              fi
-            fi
-
-            if [ -d "$HOME/bornoLand-sass/apps/api/uploads" ] && [ -z "$(ls -A "$SHARED_DIR/uploads" 2>/dev/null)" ]; then
-              echo "Migrating existing uploads to $SHARED_DIR/uploads"
-              cp -rn "$HOME/bornoLand-sass/apps/api/uploads/." "$SHARED_DIR/uploads/" 2>/dev/null || true
-            fi
-
-            # 2. Extract artifact into new release directory
-            echo "📦 Extracting release artifact..."
-            if [ ! -f "$ARCHIVE_FILE" ]; then
-              ARCHIVE_FILE=$(find "$BASE_DIR" -name "release-${{ github.sha }}.tar.gz" 2>/dev/null | head -n 1)
-            fi
-
-            if [ -z "$ARCHIVE_FILE" ] || [ ! -f "$ARCHIVE_FILE" ]; then
-              echo "ERROR: Archive not found for release-${{ github.sha }}"
-              exit 1
-            fi
-
-            rm -rf "$TARGET_RELEASE"
-            mkdir -p "$TARGET_RELEASE"
-            tar -xzf "$ARCHIVE_FILE" -C "$TARGET_RELEASE"
-
-            # 3. Validate extracted artifacts
-            echo "🔍 Validating extracted release..."
-            test -f "$TARGET_RELEASE/apps/api/dist/index.js" || { echo "API dist/index.js missing"; exit 1; }
-            test -f "$TARGET_RELEASE/apps/web/apps/web/server.js" || { echo "Web server.js missing"; exit 1; }
-            test -f "$TARGET_RELEASE/ecosystem.config.cjs" || { echo "ecosystem.config.cjs missing"; exit 1; }
-            test -f "$TARGET_RELEASE/nginx/bornosoft.site.conf" || { echo "Nginx config missing"; exit 1; }
-
-            # 4. Symlink shared environment variables & persistent uploads
-            echo "🔗 Linking shared environment files and uploads..."
-            if [ -f "$SHARED_DIR/api.env" ]; then
-              ln -sf "$SHARED_DIR/api.env" "$TARGET_RELEASE/apps/api/.env.production"
-              ln -sf "$SHARED_DIR/api.env" "$TARGET_RELEASE/apps/api/.env"
-            fi
-
-            if [ -f "$SHARED_DIR/web.env" ]; then
-              ln -sf "$SHARED_DIR/web.env" "$TARGET_RELEASE/apps/web/apps/web/.env.production"
-              ln -sf "$SHARED_DIR/web.env" "$TARGET_RELEASE/apps/web/.env.production"
-            fi
-
-            rm -rf "$TARGET_RELEASE/apps/api/uploads"
-            ln -sf "$SHARED_DIR/uploads" "$TARGET_RELEASE/apps/api/uploads"
-
-            # 5. Validate Nginx configuration
-            echo "🌐 Validating Nginx configuration..."
-            SSL_CERT="/etc/letsencrypt/live/bornosoft.site/fullchain.pem"
-            SSL_KEY="/etc/letsencrypt/live/bornosoft.site/privkey.pem"
-
-            if ! sudo test -f "$SSL_CERT" || ! sudo test -f "$SSL_KEY"; then
-              echo "ERROR: SSL certificates missing at $SSL_CERT / $SSL_KEY"
-              exit 1
-            fi
-
-            NGINX_TARGET="/etc/nginx/sites-available/bornosoft.site"
-            NGINX_BACKUP="/etc/nginx/sites-available/bornosoft.site.bak"
-
-            if [ -f "$NGINX_TARGET" ]; then
-              sudo cp "$NGINX_TARGET" "$NGINX_BACKUP"
-            fi
-
-            sudo cp "$TARGET_RELEASE/nginx/bornosoft.site.conf" "$NGINX_TARGET"
-            sudo ln -sf "$NGINX_TARGET" /etc/nginx/sites-enabled/bornosoft.site
-            sudo rm -f /etc/nginx/sites-enabled/default
-
-            if ! sudo nginx -t; then
-              echo "ERROR: Nginx syntax check failed. Reverting Nginx config..."
-              if [ -f "$NGINX_BACKUP" ]; then
-                sudo cp "$NGINX_BACKUP" "$NGINX_TARGET"
-                sudo nginx -t || true
-              fi
-              exit 1
-            fi
-
-            # Rollback function in case PM2 or health checks fail
             rollback() {
-              local exit_code=$?
+              local code=$?
               echo ""
-              echo "=================================================="
-              echo "⚠️ DEPLOYMENT FAILED (exit code: $exit_code)"
-              echo "⚠️ INITIATING AUTOMATIC ROLLBACK..."
-              echo "=================================================="
+              echo "========================================="
+              echo "  ROLLBACK TRIGGERED (exit ${code})"
+              echo "========================================="
 
-              if [ -n "$PREV_RELEASE" ] && [ -d "$PREV_RELEASE" ]; then
-                echo "Restoring previous release symlink: $PREV_RELEASE"
-                ln -sfn "$PREV_RELEASE" "$CURRENT_LINK"
-
-                if [ -f "$PREV_RELEASE/nginx/bornosoft.site.conf" ]; then
-                  sudo cp "$PREV_RELEASE/nginx/bornosoft.site.conf" "$NGINX_TARGET"
-                  sudo nginx -t && sudo systemctl reload nginx || true
-                fi
-
-                echo "Restoring PM2 processes with previous release..."
-                if [ -f "$PREV_RELEASE/ecosystem.config.cjs" ]; then
-                  pm2 restart "$PREV_RELEASE/ecosystem.config.cjs" --update-env || true
-                  pm2 save || true
-                fi
-
-                echo "✓ Rollback complete. Previous release active."
+              if [ -n "$PREVIOUS_RELEASE" ] && [ -d "$PREVIOUS_RELEASE" ]; then
+                echo "  Restoring: $PREVIOUS_RELEASE"
+                ln -sfn "$PREVIOUS_RELEASE" "$CURRENT_LINK"
+                pm2 reload bornoland-api --update-env 2>/dev/null \
+                  || pm2 restart bornoland-api 2>/dev/null || true
+                pm2 reload bornoland-web --update-env 2>/dev/null \
+                  || pm2 restart bornoland-web 2>/dev/null || true
+                pm2 save || true
+                echo "  ✓ Rolled back to: $PREVIOUS_RELEASE"
               else
-                echo "⚠️ No previous release directory found to rollback to."
+                echo "  ⚠ No previous release to roll back to"
               fi
 
-              echo ""
-              echo "=== PM2 STATUS ==="
-              pm2 status || true
-              echo ""
-              echo "=== API LOGS ==="
-              pm2 logs bornoland-api --lines 40 --nostream || true
-              echo ""
-              echo "=== WEB LOGS ==="
-              pm2 logs bornoland-web --lines 40 --nostream || true
-              echo ""
-              echo "=== NGINX ERROR LOGS ==="
-              sudo tail -n 40 /var/log/nginx/error.log || true
+              rm -rf "$NEW_RELEASE" || true
 
-              exit "$exit_code"
+              echo ""
+              echo "  Production remains on previous release."
+              echo "========================================="
+              exit "$code"
             }
 
             trap rollback ERR
 
-            # 6. Switch current symlink atomically
-            echo "🔄 Switching release symlink atomically..."
-            ln -sfn "$TARGET_RELEASE" "$CURRENT_LINK"
+            echo ""
+            echo "========================================="
+            echo "  BornoLand Deploy: ${RELEASE_SHA}"
+            echo "  $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            echo "========================================="
 
-            # 7. Reload Nginx
-            echo "🔄 Reloading Nginx..."
-            sudo systemctl reload nginx
-            sudo rm -f "$NGINX_BACKUP"
+            # ── Lightweight system check ───────────────────────────────
+            echo ""
+            free -h || true
+            df -h / || true
 
-            # 8. Start / Reload PM2 processes
-            echo "🚀 Starting / reloading PM2 processes..."
-            if pm2 describe bornoland-api >/dev/null 2>&1; then
-              pm2 restart "$CURRENT_LINK/ecosystem.config.cjs" --update-env
-            else
-              pm2 start "$CURRENT_LINK/ecosystem.config.cjs"
+            # ── 1. Validate artifact ─────────────────────────────────
+            echo ""
+            echo "--- Step 1: Validate artifact ---"
+            if [ ! -f "$ARTIFACT" ]; then
+              echo "✗ Artifact not found: $ARTIFACT"
+              exit 1
             fi
-            pm2 save
+            echo "✓ Artifact: $(du -sh "$ARTIFACT" | cut -f1)"
 
-            # 9. Health checks with retries
-            echo "=================================================="
-            echo "🩺 RUNNING POST-DEPLOYMENT HEALTH CHECKS"
-            echo "=================================================="
+            # ── 2. Extract to new release directory ──────────────────
+            echo ""
+            echo "--- Step 2: Extract ---"
+            mkdir -p "$RELEASES_BASE"
+            rm -rf "$NEW_RELEASE"
+            mkdir -p "$NEW_RELEASE"
+            tar -xzf "$ARTIFACT" -C "$NEW_RELEASE"
+            echo "✓ Extracted to: $NEW_RELEASE"
 
-            run_health_check() {
+            # ── 3. Validate critical files ────────────────────────────
+            echo ""
+            echo "--- Step 3: Validate files ---"
+
+            for f in \
+              "apps/api/dist/index.js" \
+              "apps/web/standalone/server.js" \
+              "ecosystem.config.cjs" \
+              "nginx/bornosoft.site.conf"
+            do
+              if [ ! -f "$NEW_RELEASE/$f" ]; then
+                echo "✗ Missing: $f"
+                exit 1
+              fi
+              echo "✓ $f"
+            done
+
+            # ── 4. Install runtime environment files ──────────────────
+            echo ""
+            echo "--- Step 4: Environment files ---"
+
+            install_env() {
               local name="$1"
-              local cmd="$2"
-              local retries=30
-              local count=1
+              local primary="$2"
+              local fallback="$3"
+              local dest="$4"
 
-              echo -n "Checking $name... "
-              while [ "$count" -le "$retries" ]; do
-                if eval "$cmd" >/dev/null 2>&1; then
-                  echo "✓ OK (${count}s)"
+              if [ -f "$primary" ]; then
+                cp "$primary" "$NEW_RELEASE/$dest"
+                echo "✓ $name → $dest"
+              elif [ -f "$fallback" ]; then
+                cp "$fallback" "$NEW_RELEASE/$dest"
+                echo "✓ $name → $dest  (from legacy path — consider migrating to ~/bornoland-secrets/)"
+              else
+                echo "⚠ $name: no env file found at $primary or $fallback"
+              fi
+            }
+
+            install_env "API" \
+              "$SECRETS_DIR/api.env" \
+              "$LEGACY_DIR/apps/api/.env.production" \
+              "apps/api/.env.production"
+
+            install_env "Web" \
+              "$SECRETS_DIR/web.env" \
+              "$LEGACY_DIR/apps/web/.env.production" \
+              "apps/web/.env.production"
+
+            # ── 5. Nginx ──────────────────────────────────────────────
+            echo ""
+            echo "--- Step 5: Nginx ---"
+
+            for cert in \
+              "/etc/letsencrypt/live/bornosoft.site/fullchain.pem" \
+              "/etc/letsencrypt/live/bornosoft.site/privkey.pem"
+            do
+              if ! sudo test -f "$cert"; then
+                echo "✗ SSL file missing: $cert"
+                exit 1
+              fi
+            done
+            echo "✓ SSL certificates present"
+
+            NGINX_CONF="/etc/nginx/sites-available/bornosoft.site"
+            NGINX_BACKUP="${NGINX_CONF}.bak"
+
+            [ -f "$NGINX_CONF" ] && sudo cp "$NGINX_CONF" "$NGINX_BACKUP"
+
+            sudo cp "$NEW_RELEASE/nginx/bornosoft.site.conf" "$NGINX_CONF"
+            sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/bornosoft.site
+            [ -L /etc/nginx/sites-enabled/default ] && sudo rm -f /etc/nginx/sites-enabled/default
+
+            if sudo nginx -t 2>&1; then
+              echo "✓ Nginx config valid"
+              sudo systemctl reload nginx
+              sudo rm -f "$NGINX_BACKUP"
+            else
+              echo "✗ Nginx config invalid — restoring backup"
+              [ -f "$NGINX_BACKUP" ] && sudo cp "$NGINX_BACKUP" "$NGINX_CONF" && sudo nginx -t || true
+              exit 1
+            fi
+
+            # ── 6. Atomic symlink switch ──────────────────────────────
+            echo ""
+            echo "--- Step 6: Switch symlink ---"
+            ln -sfn "$NEW_RELEASE" "$CURRENT_LINK"
+            echo "✓ current → $NEW_RELEASE"
+
+            # ── 7. PM2 graceful reload ────────────────────────────────
+            echo ""
+            echo "--- Step 7: PM2 reload ---"
+
+            ECOSYSTEM="$NEW_RELEASE/ecosystem.config.cjs"
+
+            if pm2 describe bornoland-api > /dev/null 2>&1 \
+              && pm2 describe bornoland-web > /dev/null 2>&1; then
+              # Graceful reload: new worker starts before old worker stops
+              pm2 reload "$ECOSYSTEM" --update-env
+            else
+              echo "  ⚠ Processes not found — starting from ecosystem config"
+              pm2 start "$ECOSYSTEM" --update-env
+            fi
+
+            pm2 save
+            echo ""
+            pm2 status
+
+            # ── 8. Health checks (30s retry) ──────────────────────────
+            echo ""
+            echo "--- Step 8: Health checks ---"
+
+            health_check() {
+              local name="$1"
+              local url="$2"
+              local max=30
+              local i=1
+
+              printf "  %-40s " "${name}..."
+              while [ $i -le $max ]; do
+                if curl -fsS --max-time 5 "$url" > /dev/null 2>&1; then
+                  echo "✓ OK (${i}s)"
                   return 0
                 fi
                 sleep 1
-                count=$((count + 1))
+                i=$((i + 1))
               done
-
-              echo "✗ FAILED"
+              echo "✗ FAILED after ${max}s"
               return 1
             }
 
-            run_health_check \
-              "Next.js Web Direct (:3000)" \
-              "curl -fsS http://127.0.0.1:3000/"
+            FAILED=0
+            health_check "API  http://127.0.0.1:4000/"  "http://127.0.0.1:4000/" || FAILED=1
+            health_check "Web  http://127.0.0.1:3000/"  "http://127.0.0.1:3000/" || FAILED=1
 
-            run_health_check \
-              "Express API Direct (:4000)" \
-              "curl -fsS http://127.0.0.1:4000/"
+            if [ "$FAILED" -ne 0 ]; then
+              echo ""
+              echo "=== API logs ==="
+              pm2 logs bornoland-api --lines 40 --nostream 2>/dev/null || true
+              echo ""
+              echo "=== Web logs ==="
+              pm2 logs bornoland-web --lines 40 --nostream 2>/dev/null || true
+              echo ""
+              echo "=== Nginx errors ==="
+              sudo tail -n 30 /var/log/nginx/error.log 2>/dev/null || true
+              exit 1
+            fi
 
-            run_health_check \
-              "HTTPS Root (bornosoft.site)" \
-              "curl -k -fsS --resolve bornosoft.site:443:127.0.0.1 https://bornosoft.site/"
+            # ── 9. Cleanup old releases (keep current + 1 rollback) ───
+            echo ""
+            echo "--- Step 9: Cleanup ---"
+            ls -dt "${RELEASES_BASE}"/release-* 2>/dev/null \
+              | tail -n +3 \
+              | xargs rm -rf 2>/dev/null || true
+            rm -f "$ARTIFACT" 2>/dev/null || true
+            echo "✓ Cleanup done"
 
-            run_health_check \
-              "HTTPS Tenant (nayeem.bornosoft.site)" \
-              "curl -k -fsS --resolve nayeem.bornosoft.site:443:127.0.0.1 https://nayeem.bornosoft.site/"
-
-            run_health_check \
-              "HTTP to HTTPS 301 Redirect" \
-              'test "$(curl -s -o /dev/null -w "%{http_code}" -H "Host: bornosoft.site" http://127.0.0.1/)" = "301"'
-
-            # Trap is no longer needed after successful health checks
-            trap - ERR
-
-            # 10. Prune old releases (keep current + last 2)
-            echo "=================================================="
-            echo "🧹 PRUNING OLD RELEASES"
-            echo "=================================================="
-            cd "$BASE_DIR/releases"
-            ls -1td release-* 2>/dev/null | tail -n +4 | while read -r old_release; do
-              if [ -d "$old_release" ] && [ "$(readlink -f "$old_release")" != "$(readlink -f "$CURRENT_LINK")" ]; then
-                echo "Removing old release: $old_release"
-                rm -rf "$old_release"
-              fi
-            done
-
-            cd "$BASE_DIR/archives"
-            ls -1td release-*.tar.gz 2>/dev/null | tail -n +4 | while read -r old_archive; do
-              echo "Removing old archive: $old_archive"
-              rm -f "$old_archive"
-            done
-
-            echo "=================================================="
-            echo "🎉 DEPLOYMENT SUCCEEDED"
-            echo "Active release: $(readlink -f "$CURRENT_LINK")"
-            echo "=================================================="
-            pm2 status
+            echo ""
+            echo "========================================="
+            echo "  DEPLOYMENT SUCCESS: ${RELEASE_SHA}"
+            echo "  $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            echo "========================================="
+            echo "  Release: $NEW_RELEASE"
+            echo "  API:     http://127.0.0.1:4000/"
+            echo "  Web:     http://127.0.0.1:3000/"
+            echo ""

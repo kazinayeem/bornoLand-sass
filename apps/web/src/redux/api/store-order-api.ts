@@ -137,18 +137,17 @@ export const storeOrderApi = baseApi.injectEndpoints({
         body: { status }
       }),
       async onQueryStarted({ storeId, orderId, status }, { dispatch, queryFulfilled }) {
-        const patchResult = dispatch(
-          storeOrderApi.util.updateQueryData("getStoreOrders" as any, { storeId } as any, (draft: any) => {
-            const order = draft?.data?.orders?.find((o: any) => o._id === orderId);
-            if (order) {
-              order.status = status;
+        const patchResultSingle = dispatch(
+          storeOrderApi.util.updateQueryData("getStoreOrder", { storeId, orderId }, (draft) => {
+            if (draft?.data?.order) {
+              draft.data.order.status = status;
             }
           })
         );
         try {
           await queryFulfilled;
         } catch {
-          patchResult.undo();
+          patchResultSingle.undo();
         }
       },
       invalidatesTags: (_result, _error, { storeId, orderId }) => [
@@ -163,18 +162,17 @@ export const storeOrderApi = baseApi.injectEndpoints({
         body: { paymentStatus }
       }),
       async onQueryStarted({ storeId, orderId, paymentStatus }, { dispatch, queryFulfilled }) {
-        const patchResult = dispatch(
-          storeOrderApi.util.updateQueryData("getStoreOrders" as any, { storeId } as any, (draft: any) => {
-            const order = draft?.data?.orders?.find((o: any) => o._id === orderId);
-            if (order) {
-              order.paymentStatus = paymentStatus;
+        const patchResultSingle = dispatch(
+          storeOrderApi.util.updateQueryData("getStoreOrder", { storeId, orderId }, (draft) => {
+            if (draft?.data?.order) {
+              draft.data.order.paymentStatus = paymentStatus;
             }
           })
         );
         try {
           await queryFulfilled;
         } catch {
-          patchResult.undo();
+          patchResultSingle.undo();
         }
       },
       invalidatesTags: (_result, _error, { storeId, orderId }) => [

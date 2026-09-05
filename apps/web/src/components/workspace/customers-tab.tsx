@@ -1,21 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback, memo } from "react";
 import {
   useGetStoreCustomersQuery,
+  useLazyGetStoreCustomersQuery,
   useGetStoreCustomerQuery,
   type CustomerOrder,
   type StoreCustomer,
 } from "@/redux/api/store-customers-api";
 import { useGetStoreSettingsQuery } from "@/redux/api/store-settings-api";
-import { Users, Mail, Phone, Calendar, ShoppingBag, FileText } from "lucide-react";
+import { useGetStoreQuery } from "@/redux/api/store-api";
+import { getStoreLogoUrl } from "@/lib/store-branding";
+import { printCustomerPdfReport } from "@/lib/customers/customer-report-pdf";
+import { Users, Mail, Phone, Calendar, ShoppingBag, FileText, RotateCcw } from "lucide-react";
 import { Drawer } from "@/components/ui/drawer";
-import { DataTable, type Column } from "@/components/ui/data-table";
+import { DataTable, type Column, type SortConfig, openReportWindow } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import { EmptyState, ErrorState } from "@/components/ui/empty-state";
 import { formatCurrency } from "@/lib/format-currency";
 import { downloadStoreOrderInvoice } from "@/lib/order-invoice";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useLanguage } from "@/providers/language-provider";
 
 type CustomersTabProps = { storeId: string };
 
@@ -23,32 +28,146 @@ type ProfileTab = "overview" | "orders" | "invoices" | "addresses" | "wishlist" 
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
-  return new Date(value).toLocaleString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  try {
+    return new Date(value).toLocaleString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return value || "—";
+  }
+}
+
+const AVATAR_PALETTES = [
+  "bg-blue-600 text-white",
+  "bg-emerald-600 text-white",
+  "bg-indigo-600 text-white",
+  "bg-purple-600 text-white",
+  "bg-teal-600 text-white",
+  "bg-rose-600 text-white",
+  "bg-amber-600 text-white",
+  "bg-slate-700 text-white",
+];
+
+function getDeterministicInitials(name?: string, email?: string): string {
+  const cleanName = (name || "").trim();
+  if (cleanName) {
+    const parts = cleanName.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0]![0]}${parts[1]![0]}`.toUpperCase();
+    }
+    return cleanName.slice(0, 2).toUpperCase();
+  }
+  const cleanEmail = (email || "").trim();
+  if (cleanEmail) {
+    return cleanEmail.slice(0, 2).toUpperCase();
+  }
+  return "CU";
+}
+
+function getDeterministicColor(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
+    hash |= 0;
+  }
+  const index = Math.abs(hash) % AVATAR_PALETTES.length;
+  return AVATAR_PALETTES[index]!;
+}
+
+type CustomerAvatarProps = {
+  avatar?: string | null;
+  name?: string;
+  email?: string;
+  id: string;
+  size?: "md" | "lg";
+};
+
+const CustomerAvatar = memo(function CustomerAvatar({
+  avatar,
+  name,
+  email,
+  id,
+  size = "md",
+}: CustomerAvatarProps) {
+  const [hasError, setHasError] = useState(false);
+  const initials = useMemo(() => getDeterministicInitials(name, email), [name, email]);
+  const colorClass = useMemo(() => getDeterministicColor(id || name || email || "seed"), [id, name, email]);
+
+  const sizeClasses = size === "lg" ? "h-12 w-12 rounded-2xl text-sm" : "h-9 w-9 rounded-xl text-xs";
+
+  if (avatar && !hasError) {
+    return (
+      <div className={cn("relative shrink-0 overflow-hidden bg-zinc-100 dark:bg-zinc-800", sizeClasses)}>
+        <img
+          src={avatar}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={() => setHasError(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex shrink-0 items-center justify-center font-bold select-none",
+        sizeClasses,
+        colorClass
+      )}
+      aria-hidden="true"
+    >
+      {initials}
+    </div>
+  );
+});
+
+function downloadCsv(filename: string, headers: string[], rows: string[][]) {
+  const escape = (value: string) => {
+    if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+      return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
+  };
+  const lines = [headers.join(","), ...rows.map((row) => row.map(escape).join(","))];
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export function CustomersTab({ storeId }: CustomersTabProps) {
-  const { language } = useLanguage();
   const isBn = false;
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [profileTab, setProfileTab] = useState<ProfileTab>("overview");
+  const [sortConfig, setSortConfig] = useState<SortConfig | undefined>(undefined);
+  const [exportBusy, setExportBusy] = useState(false);
 
   const { data: settingsData } = useGetStoreSettingsQuery(storeId);
   const settings = settingsData?.data?.settings;
 
-  const { data, isLoading } = useGetStoreCustomersQuery({
+  const { data: storeData } = useGetStoreQuery(storeId);
+  const store = storeData?.data?.store;
+  const storeName = store?.name || "Bornoland Store";
+  const storeLogoUrl = getStoreLogoUrl(store);
+
+  const { data, isLoading, isFetching, isError, refetch } = useGetStoreCustomersQuery({
     storeId,
     page: String(page),
     limit: "20",
     search: search || undefined,
   });
+
+  const [fetchCustomersForExport] = useLazyGetStoreCustomersQuery();
 
   const { data: detailData, isFetching: detailLoading } = useGetStoreCustomerQuery(
     { storeId, customerId: selectedId ?? "" },
@@ -64,26 +183,57 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
   const activity = detailData?.data?.activity ?? [];
   const analytics = detailData?.data?.analytics;
 
-  const money = (v: number) => formatCurrency(v || 0, settings);
+  const money = useCallback((v: number) => formatCurrency(v || 0, settings), [settings]);
+
+  // Client-side sorting for active page
+  const sortedCustomers = useMemo(() => {
+    if (!sortConfig) return customers;
+    const { key, order } = sortConfig;
+    const factor = order === "asc" ? 1 : -1;
+
+    return [...customers].sort((a, b) => {
+      if (key === "customer") {
+        return (a.name || "").localeCompare(b.name || "") * factor;
+      }
+      if (key === "orders") {
+        return ((a.totalOrders || 0) - (b.totalOrders || 0)) * factor;
+      }
+      if (key === "spent") {
+        return ((a.totalSpent || 0) - (b.totalSpent || 0)) * factor;
+      }
+      if (key === "aov") {
+        return ((a.averageOrderValue || 0) - (b.averageOrderValue || 0)) * factor;
+      }
+      if (key === "lastOrderDate") {
+        const timeA = a.lastOrderDate ? new Date(a.lastOrderDate).getTime() : 0;
+        const timeB = b.lastOrderDate ? new Date(b.lastOrderDate).getTime() : 0;
+        return (timeA - timeB) * factor;
+      }
+      if (key === "createdAt") {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return (timeA - timeB) * factor;
+      }
+      return 0;
+    });
+  }, [customers, sortConfig]);
 
   const columns: Column<StoreCustomer>[] = useMemo(
     () => [
       {
         key: "customer",
         label: isBn ? "গ্রাহক" : "Customer",
+        sortable: true,
         render: (c) => (
-          <div className="flex items-center gap-3">
-            {c.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={c.avatar} alt="" className="h-9 w-9 rounded-xl object-cover" />
-            ) : (
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-apple-primary text-xs font-bold text-white">
-                {(c.name || "?").slice(0, 2).toUpperCase()}
-              </div>
-            )}
-            <div>
-              <p className="text-sm font-semibold text-apple-ink">{c.name}</p>
-              <p className="text-xs text-apple-ink-muted-48">{c.email}</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <CustomerAvatar id={c._id} avatar={c.avatar} name={c.name} email={c.email} />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate max-w-[180px]">
+                {c.name || "Guest Customer"}
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-[200px]">
+                {c.email || "—"}
+              </p>
             </div>
           </div>
         ),
@@ -92,16 +242,21 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
         key: "status",
         label: isBn ? "স্ট্যাটাস" : "Status",
         hideOnTablet: true,
-        render: (c) => (
-          <span
-            className={cn(
-              "rounded-full px-2 py-0.5 text-xs font-medium",
-              c.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-500",
-            )}
-          >
-            {c.status === "active" ? (isBn ? "সক্রিয়" : "Active") : (isBn ? "অসক্রিয়" : "Inactive")}
-          </span>
-        ),
+        render: (c) => {
+          const isActive = (c.status || "active").toLowerCase() === "active";
+          return (
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
+                isActive
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                  : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+              )}
+            >
+              {isActive ? (isBn ? "সক্রিয়" : "Active") : (isBn ? "অসক্রিয়" : "Inactive")}
+            </span>
+          );
+        },
       },
       {
         key: "orders",
@@ -109,9 +264,11 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
         sortable: true,
         render: (c) => (
           <div className="text-sm">
-            <p className="font-medium text-apple-ink">{c.totalOrders}</p>
-            <p className="text-[10px] text-apple-ink-muted-48">
-              {isBn ? `${c.completedOrders ?? 0}টি সম্পন্ন · ${c.cancelledOrders ?? 0}টি বাতিল` : `${c.completedOrders ?? 0} done · ${c.cancelledOrders ?? 0} cancelled`}
+            <p className="font-semibold text-zinc-900 dark:text-zinc-100">{c.totalOrders ?? 0}</p>
+            <p className="text-[11px] text-zinc-400">
+              {isBn
+                ? `${c.completedOrders ?? 0}টি সম্পন্ন · ${c.cancelledOrders ?? 0}টি বাতিল`
+                : `${c.completedOrders ?? 0} done · ${c.cancelledOrders ?? 0} cancelled`}
             </p>
           </div>
         ),
@@ -120,31 +277,42 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
         key: "spent",
         label: isBn ? "মোট খরচ" : "Total Spent",
         sortable: true,
-        render: (c) => <span className="text-sm font-bold text-apple-ink">{money(c.totalSpent)}</span>,
+        render: (c) => (
+          <span className="text-sm font-bold text-zinc-950 dark:text-white">
+            {money(c.totalSpent || 0)}
+          </span>
+        ),
       },
       {
         key: "aov",
         label: isBn ? "গড় অর্ডার মূল্য" : "AOV",
+        sortable: true,
         hideOnMobile: true,
-        render: (c) => <span className="text-sm text-apple-ink-muted-80">{money(c.averageOrderValue)}</span>,
+        render: (c) => (
+          <span className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">
+            {money(c.averageOrderValue || 0)}
+          </span>
+        ),
       },
       {
         key: "lastOrderDate",
         label: isBn ? "সর্বশেষ অর্ডার" : "Last Order",
+        sortable: true,
         hideOnMobile: true,
         render: (c) => (
-          <span className="text-sm text-apple-ink-muted-48">
-            {c.lastOrderDate ? new Date(c.lastOrderDate).toLocaleDateString() : "—"}
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            {formatDate(c.lastOrderDate)}
           </span>
         ),
       },
       {
         key: "createdAt",
         label: isBn ? "যোগদানের তারিখ" : "Joined",
+        sortable: true,
         hideOnTablet: true,
         render: (c) => (
-          <span className="text-sm text-apple-ink-muted-48">
-            {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "—"}
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            {formatDate(c.createdAt)}
           </span>
         ),
       },
@@ -152,10 +320,14 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
         key: "phone",
         label: isBn ? "ফোন" : "Phone",
         hideOnMobile: true,
-        render: (c) => <span className="text-sm text-apple-ink-muted-48">{c.phone || "—"}</span>,
+        render: (c) => (
+          <span className="text-xs font-mono text-zinc-600 dark:text-zinc-400">
+            {c.phone || "—"}
+          </span>
+        ),
       },
     ],
-    [settings],
+    [isBn, money]
   );
 
   const profileTabs: Array<{ id: ProfileTab; label: string }> = [
@@ -169,38 +341,165 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
     { id: "analytics", label: "Analytics" },
   ];
 
+  const loadAllCustomersForExport = useCallback(async (): Promise<StoreCustomer[]> => {
+    const limit = Math.min(Math.max(total ?? 0, 100), 1000);
+    const res = await fetchCustomersForExport({
+      storeId,
+      search: search || undefined,
+      page: "1",
+      limit: String(limit),
+    }).unwrap();
+    return res?.data?.customers ?? [];
+  }, [total, fetchCustomersForExport, storeId, search]);
+
+  const handleExportPdf = useCallback(async () => {
+    if (exportBusy) return;
+    const targetWin = openReportWindow("Generating Customers PDF Report...");
+    setExportBusy(true);
+    try {
+      const allCustomers = await loadAllCustomersForExport();
+      printCustomerPdfReport({
+        storeName,
+        storeLogoUrl,
+        title: "Customer Directory Report",
+        subtitle: search ? `Filtered by search "${search}"` : `Complete customer directory`,
+        customers: allCustomers,
+        currencySettings: settings,
+        targetWindow: targetWin,
+      });
+      toast.success(`Generated PDF for ${allCustomers.length} customers`);
+    } catch (err) {
+      if (targetWin && !targetWin.closed) targetWin.close();
+      toast.error(err instanceof Error ? err.message : "Failed to generate PDF report");
+    } finally {
+      setExportBusy(false);
+    }
+  }, [exportBusy, loadAllCustomersForExport, storeName, storeLogoUrl, search, settings]);
+
+  const handleExportCsv = useCallback(async () => {
+    if (exportBusy) return;
+    setExportBusy(true);
+    try {
+      const allCustomers = await loadAllCustomersForExport();
+      const headers = [
+        "Customer",
+        "Email",
+        "Phone",
+        "Status",
+        "Total Orders",
+        "Completed Orders",
+        "Cancelled Orders",
+        "Total Spent",
+        "AOV",
+        "Last Order Date",
+        "Joined Date",
+      ];
+      const rows = allCustomers.map((c) => [
+        c.name || "Guest Customer",
+        c.email || "",
+        c.phone || "",
+        c.status || "active",
+        String(c.totalOrders || 0),
+        String(c.completedOrders || 0),
+        String(c.cancelledOrders || 0),
+        money(c.totalSpent || 0),
+        money(c.averageOrderValue || 0),
+        c.lastOrderDate ? new Date(c.lastOrderDate).toLocaleDateString() : "",
+        c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "",
+      ]);
+      downloadCsv(`customers-report-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+      toast.success(`Exported ${allCustomers.length} customers to CSV`);
+    } catch {
+      toast.error("Failed to export customers CSV");
+    } finally {
+      setExportBusy(false);
+    }
+  }, [exportBusy, loadAllCustomersForExport, money]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-apple-ink-muted-48">
-          {total} customer{total !== 1 ? "s" : ""}
-        </p>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+            {total} customer{total !== 1 ? "s" : ""}
+          </span>
+          {search && (
+            <span className="text-xs text-zinc-400">
+              (matching &quot;{search}&quot;)
+            </span>
+          )}
+        </div>
       </div>
 
-      <DataTable
-        data={customers}
-        columns={columns}
-        keyExtractor={(c) => c._id}
-        isLoading={isLoading}
-        searchValue={search}
-        onSearchChange={(v) => {
-          setSearch(v);
-          setPage(1);
-        }}
-        searchPlaceholder="Search customers..."
-        emptyIcon={Users}
-        emptyTitle="No customers yet"
-        emptyDescription="Customers will appear here when they register or place an order."
-        onRowClick={(c) => {
-          setSelectedId(c._id);
-          setProfileTab("overview");
-        }}
-        page={page}
-        totalPages={totalPages}
-        total={total}
-        pageSize={20}
-        onPageChange={setPage}
-      />
+      {isError ? (
+        <ErrorState
+          title="Unable to load customers"
+          message="Check your network connection and try again."
+          onRetry={refetch}
+        />
+      ) : customers.length === 0 && !isLoading ? (
+        <EmptyState
+          icon={Users}
+          title={search ? "No customers found" : "No customers yet"}
+          description={
+            search
+              ? `No customers match your search for "${search}".`
+              : "Customers will appear here when they register or place an order."
+          }
+          action={
+            search ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
+                className="cursor-pointer text-xs"
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                Clear Search
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <DataTable
+          data={sortedCustomers}
+          columns={columns}
+          keyExtractor={(c) => c._id}
+          isLoading={isLoading}
+          isFetching={isFetching}
+          searchValue={search}
+          onSearchChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          searchPlaceholder="Search customers by name, email, phone..."
+          sort={sortConfig}
+          onSort={(sort) => setSortConfig(sort)}
+          emptyIcon={Users}
+          emptyTitle={search ? "No customers found" : "No customers yet"}
+          emptyDescription={
+            search
+              ? `No customers match "${search}".`
+              : "Customers will appear here when they register or place an order."
+          }
+          onRowClick={(c) => {
+            setSelectedId(c._id);
+            setProfileTab("overview");
+          }}
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={20}
+          onPageChange={setPage}
+          onExportOverride={{
+            csv: handleExportCsv,
+            pdf: handleExportPdf,
+          }}
+        />
+      )}
 
       <Drawer
         open={!!selectedId}
@@ -214,14 +513,13 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
         ) : selectedCust ? (
           <div className="space-y-5">
             <div className="flex items-center gap-3">
-              {selectedCust.avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={selectedCust.avatar} alt="" className="h-12 w-12 rounded-2xl object-cover" />
-              ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-apple-primary text-sm font-bold text-white">
-                  {(selectedCust.name || "?").slice(0, 2).toUpperCase()}
-                </div>
-              )}
+              <CustomerAvatar
+                id={selectedCust._id}
+                avatar={selectedCust.avatar}
+                name={selectedCust.name}
+                email={selectedCust.email}
+                size="lg"
+              />
               <div>
                 <p className="text-[15px] font-semibold text-apple-ink">{selectedCust.name}</p>
                 <p className="text-[12px] text-apple-ink-muted-48">{selectedCust.email}</p>
@@ -235,9 +533,9 @@ export function CustomersTab({ storeId }: CustomersTabProps) {
                   type="button"
                   onClick={() => setProfileTab(tab.id)}
                   className={cn(
-                    "rounded-full px-3 py-1.5 text-[12px] font-medium whitespace-nowrap",
+                    "rounded-full px-3 py-1.5 text-[12px] font-medium whitespace-nowrap cursor-pointer",
                     profileTab === tab.id
-                      ? "bg-apple-primary text-white"
+                      ? "bg-apple-primary text-white font-bold"
                       : "bg-apple-canvas-parchment text-apple-ink-muted-80",
                   )}
                 >

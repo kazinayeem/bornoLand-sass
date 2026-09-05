@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, lazy, Suspense } from "react";
+import { useCallback, useEffect, useMemo, useState, lazy, Suspense, memo } from "react";
 import {
   useGetStoreOrdersQuery,
   useLazyGetStoreOrdersQuery,
@@ -8,6 +8,9 @@ import {
   useUpdatePaymentStatusMutation,
 } from "@/redux/api/store-order-api";
 import type { StoreOrder } from "@/redux/api/store-order-api";
+import { useGetStoreQuery } from "@/redux/api/store-api";
+import { getStoreLogoUrl } from "@/lib/store-branding";
+import { printOrderPdfReport } from "@/lib/orders/order-report-pdf";
 import {
   ShoppingCart,
   ShoppingBag,
@@ -32,10 +35,15 @@ import {
   FileText,
   CreditCard,
   Phone,
+  BarChart3,
+  ChevronDown,
+  Loader2,
+  RotateCcw,
 } from "lucide-react";
 import { PosOrderModal } from "@/components/pos/pos-order-modal";
 import { toast } from "sonner";
-import { DataTable, type Column, printDataGridReport, openReportWindow } from "@/components/ui/data-table";
+import { DataTable, type Column, openReportWindow } from "@/components/ui/data-table";
+import { DropdownMenu, type DropdownItem } from "@/components/ui/dropdown-menu";
 import { Pagination } from "@/components/ui/pagination";
 import { Modal } from "@/components/ui/modal";
 import { Badge, statusBadge } from "@/components/ui/badge";
@@ -73,19 +81,6 @@ type OrderTabKey = "all" | "pending" | "confirmed" | "processing" | "shipped" | 
 
 const statusOptions = [...ORDER_STATUS_OPTIONS];
 const paymentOptions = ["pending", "paid", "partial", "failed", "refunded"];
-
-const SHIP_STATUS_TONE: Record<string, string> = {
-  created: "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
-  pending: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
-  picked: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300",
-  in_transit: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
-  hub_received: "bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
-  out_for_delivery: "bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300",
-  delivered: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
-  returned: "bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300",
-  cancelled: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
-  failed: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300",
-};
 
 const REPORT_HEADERS = [
   "Order #",
@@ -221,6 +216,97 @@ const DATE_PRESETS: Array<{ id: DatePreset; label: string }> = [
   { id: "custom", label: "Custom" },
 ];
 
+/**
+ * Isolated, memoized search input component.
+ * Internal keystrokes do NOT trigger re-renders in OrdersTab until the 300ms debounce fires.
+ */
+type OrderSearchInputProps = {
+  initialValue: string;
+  onSearch: (value: string) => void;
+  placeholder?: string;
+};
+
+const OrderSearchInput = memo(function OrderSearchInput({
+  initialValue,
+  onSearch,
+  placeholder = "Search customer, phone, order #...",
+}: OrderSearchInputProps) {
+  const [internalValue, setInternalValue] = useState(initialValue);
+
+  useEffect(() => {
+    setInternalValue(initialValue);
+  }, [initialValue]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      onSearch(internalValue.trim());
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [internalValue, onSearch]);
+
+  return (
+    <div className="relative min-w-[200px] flex-1 max-w-sm">
+      <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+      <Input
+        type="search"
+        value={internalValue}
+        onChange={(e) => setInternalValue(e.target.value)}
+        placeholder={placeholder}
+        className="h-9 pl-9 pr-8 text-xs"
+      />
+      {internalValue && (
+        <button
+          type="button"
+          onClick={() => {
+            setInternalValue("");
+            onSearch("");
+          }}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5"
+          aria-label="Clear search"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+});
+
+/**
+ * Isolated, memoized status dropdown.
+ * Shows row-level spinner and disables dropdown during mutation without flashing the entire table.
+ */
+type OrderStatusSelectProps = {
+  orderId: string;
+  currentStatus: string;
+  isUpdating: boolean;
+  onChange: (orderId: string, status: string) => void;
+};
+
+const OrderStatusSelect = memo(function OrderStatusSelect({
+  orderId,
+  currentStatus,
+  isUpdating,
+  onChange,
+}: OrderStatusSelectProps) {
+  return (
+    <div className="inline-flex items-center gap-1.5">
+      <select
+        value={currentStatus}
+        disabled={isUpdating}
+        onChange={(e) => onChange(orderId, e.target.value)}
+        className="h-7 rounded-md border border-zinc-200 bg-white px-2 text-xs font-semibold text-zinc-800 outline-none hover:border-zinc-300 disabled:opacity-60 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 transition-colors"
+      >
+        {statusOptions.map((s) => (
+          <option key={s} value={s}>
+            {ORDER_STATUS_LABELS[s] ?? s}
+          </option>
+        ))}
+      </select>
+      {isUpdating && <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-500 shrink-0" />}
+    </div>
+  );
+});
+
 export function OrdersTab({ storeId }: OrdersTabProps) {
   const [activeView, setActiveView] = useState<"completed" | "incomplete">("completed");
   const [activeTab, setActiveTab] = useState<OrderTabKey>("all");
@@ -228,31 +314,28 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [paymentFilter, setPaymentFilter] = useState("");
-  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [datePreset, setDatePreset] = useState<DatePreset>("today");
   const [fromDate, setFromDate] = useState(today);
   const [toDate, setToDate] = useState(today);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [customFrom, setCustomFrom] = useState(today);
+  const [customTo, setCustomTo] = useState(today);
   const [selectedOrder, setSelectedOrder] = useState<StoreOrder | null>(null);
   const [shipmentOrder, setShipmentOrder] = useState<StoreOrder | null>(null);
   const [invoiceBusy, setInvoiceBusy] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
-  const [exportBusy, setExportBusy] = useState(false);
+  const [exportBusyLabel, setExportBusyLabel] = useState<string | null>(null);
   const [posOpen, setPosOpen] = useState(false);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setSearch(searchInput.trim());
-      setPage(1);
-    }, 300);
-    return () => window.clearTimeout(timer);
-  }, [searchInput]);
+  // Store information for branding and PDF exports
+  const { data: storeData } = useGetStoreQuery(storeId);
+  const store = storeData?.data?.store;
+  const storeName = store?.name || "Bornoland Store";
+  const storeLogoUrl = getStoreLogoUrl(store);
 
   const applyPreset = useCallback((preset: DatePreset) => {
     setDatePreset(preset);
     if (preset === "custom") {
-      setShowAdvanced(true);
       return;
     }
     const range = rangeForPreset(preset);
@@ -260,6 +343,26 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
     setToDate(range.to);
     setPage(1);
   }, []);
+
+  const handleApplyCustomDate = useCallback(() => {
+    if (customFrom && customTo && customFrom > customTo) {
+      toast.error("From date cannot be after To date");
+      return;
+    }
+    setFromDate(customFrom);
+    setToDate(customTo);
+    setPage(1);
+    toast.success("Applied custom date range");
+  }, [customFrom, customTo]);
+
+  const handleResetCustomDate = useCallback(() => {
+    setCustomFrom(today);
+    setCustomTo(today);
+    setFromDate(today);
+    setToDate(today);
+    setDatePreset("today");
+    setPage(1);
+  }, [today]);
 
   const { data: settingsData } = useGetStoreSettingsQuery(storeId);
   const settings = settingsData?.data?.settings;
@@ -317,66 +420,208 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
     return `Until ${toDate}`;
   }, [fromDate, toDate]);
 
-  const loadExportOrders = useCallback(async (): Promise<{
-    orders: StoreOrder[];
-    title: string;
-    subtitle: string;
-  }> => {
-    const limit = Math.min(Math.max(total ?? 0, 100), 500);
-    const res = await fetchOrdersForExport({
-      ...queryFilters,
-      page: "1",
-      limit: String(limit),
-    }).unwrap();
-    const fetched = res?.data?.orders ?? [];
-    return {
-      orders: fetched,
-      title: "Orders Report",
-      subtitle: `Exported ${dateLabel}`,
-    };
-  }, [total, fetchOrdersForExport, queryFilters, dateLabel]);
+  // Load orders for complete dataset export (PDF/CSV)
+  const loadExportOrders = useCallback(
+    async (overrideFilters?: Partial<typeof queryFilters>): Promise<StoreOrder[]> => {
+      const active = { ...queryFilters, ...overrideFilters };
+      const limit = Math.min(Math.max(total ?? 0, 100), 1000);
+      const res = await fetchOrdersForExport({
+        ...active,
+        page: "1",
+        limit: String(limit),
+      }).unwrap();
+      return res?.data?.orders ?? [];
+    },
+    [queryFilters, total, fetchOrdersForExport]
+  );
 
-  const handleExportCsv = useCallback(async () => {
-    setExportBusy(true);
+  // PDF & CSV Export Handlers
+  const handleExportViewPdf = useCallback(async () => {
+    if (exportBusyLabel) return;
+    const targetWin = openReportWindow("Generating Orders PDF...");
+    setExportBusyLabel("Generating PDF...");
     try {
-      const exported = await loadExportOrders();
-      const rows = buildOrderReportRows(exported.orders, money);
+      const exportOrders = await loadExportOrders();
+      printOrderPdfReport({
+        storeName,
+        storeLogoUrl,
+        reportType: "filtered",
+        title: "Orders Report",
+        subtitle: `Orders list matching active filters`,
+        dateLabel,
+        orders: exportOrders,
+        currencySettings: settings,
+        targetWindow: targetWin,
+      });
+      toast.success(`Generated PDF for ${exportOrders.length} orders`);
+    } catch (err) {
+      if (targetWin && !targetWin.closed) targetWin.close();
+      toast.error(err instanceof Error ? err.message : "Failed to generate PDF report");
+    } finally {
+      setExportBusyLabel(null);
+    }
+  }, [exportBusyLabel, loadExportOrders, storeName, storeLogoUrl, dateLabel, settings]);
+
+  const handleExportViewCsv = useCallback(async () => {
+    if (exportBusyLabel) return;
+    setExportBusyLabel("Exporting CSV...");
+    try {
+      const exportOrders = await loadExportOrders();
+      const rows = buildOrderReportRows(exportOrders, money);
       downloadCsv(
         `orders-report-${fromDate || "all"}-${toDate || "all"}.csv`,
         [...REPORT_HEADERS],
         rows
       );
-      toast.success(`Exported ${exported.orders.length} orders`);
+      toast.success(`Exported ${exportOrders.length} orders to CSV`);
     } catch {
       toast.error("Failed to export orders CSV");
     } finally {
-      setExportBusy(false);
+      setExportBusyLabel(null);
     }
-  }, [loadExportOrders, money, fromDate, toDate]);
+  }, [exportBusyLabel, loadExportOrders, money, fromDate, toDate]);
 
-  const handleStatusChange = async (orderId: string, status: string) => {
+  const handleExportDailyReport = useCallback(async () => {
+    if (exportBusyLabel) return;
+    const targetWin = openReportWindow("Generating Daily Sales Report...");
+    setExportBusyLabel("Generating Daily PDF...");
     try {
-      const result = await updateStatus({ storeId, orderId, status }).unwrap();
-      toast.success(`Order status updated to ${ORDER_STATUS_LABELS[status] ?? status}`);
-      if (selectedOrder?._id === orderId && result.data?.order) {
-        setSelectedOrder(result.data.order);
-      }
-    } catch {
-      toast.error("Failed to update status");
+      const targetDate = fromDate || today;
+      const exportOrders = await loadExportOrders({
+        from: targetDate,
+        to: targetDate,
+        status: undefined,
+        paymentStatus: undefined,
+        search: undefined,
+      });
+      printOrderPdfReport({
+        storeName,
+        storeLogoUrl,
+        reportType: "daily",
+        title: "Daily Sales & Order Report",
+        subtitle: `Performance summary for ${targetDate}`,
+        dateLabel: targetDate,
+        orders: exportOrders,
+        currencySettings: settings,
+        targetWindow: targetWin,
+      });
+      toast.success(`Generated daily report for ${targetDate}`);
+    } catch (err) {
+      if (targetWin && !targetWin.closed) targetWin.close();
+      toast.error(err instanceof Error ? err.message : "Failed to generate daily report");
+    } finally {
+      setExportBusyLabel(null);
     }
-  };
+  }, [exportBusyLabel, fromDate, today, loadExportOrders, storeName, storeLogoUrl, settings]);
 
-  const handlePaymentChange = async (orderId: string, paymentStatus: string) => {
+  const handleExportMonthlyReport = useCallback(async () => {
+    if (exportBusyLabel) return;
+    const targetWin = openReportWindow("Generating Monthly Sales Report...");
+    setExportBusyLabel("Generating Monthly PDF...");
     try {
-      const result = await updatePayment({ storeId, orderId, paymentStatus }).unwrap();
-      toast.success(`Payment marked as ${paymentStatus}`);
-      if (selectedOrder?._id === orderId && result.data?.order) {
-        setSelectedOrder(result.data.order);
-      }
-    } catch {
-      toast.error("Failed to update payment status");
+      const startOfMonth = monthStartInput();
+      const endOfMonth = today;
+      const exportOrders = await loadExportOrders({
+        from: startOfMonth,
+        to: endOfMonth,
+        status: undefined,
+        paymentStatus: undefined,
+        search: undefined,
+      });
+      printOrderPdfReport({
+        storeName,
+        storeLogoUrl,
+        reportType: "monthly",
+        title: "Monthly Sales Report",
+        subtitle: `Monthly performance & daily sales breakdown (${startOfMonth} to ${endOfMonth})`,
+        dateLabel: `${startOfMonth} → ${endOfMonth}`,
+        orders: exportOrders,
+        currencySettings: settings,
+        targetWindow: targetWin,
+      });
+      toast.success(`Generated monthly report for current month`);
+    } catch (err) {
+      if (targetWin && !targetWin.closed) targetWin.close();
+      toast.error(err instanceof Error ? err.message : "Failed to generate monthly report");
+    } finally {
+      setExportBusyLabel(null);
     }
-  };
+  }, [exportBusyLabel, today, loadExportOrders, storeName, storeLogoUrl, settings]);
+
+  const exportMenuItems: DropdownItem[] = useMemo(
+    () => [
+      {
+        label: "Export View (PDF)",
+        icon: FileText,
+        description: "Printable PDF with KPIs & branding",
+        onClick: handleExportViewPdf,
+        disabled: Boolean(exportBusyLabel),
+      },
+      {
+        label: "Export View (CSV)",
+        icon: Download,
+        description: "Raw tabular dataset for spreadsheet",
+        onClick: handleExportViewCsv,
+        disabled: Boolean(exportBusyLabel),
+      },
+      { divider: true },
+      {
+        label: "Daily Sales Report (PDF)",
+        icon: Calendar,
+        description: "Daily summary metrics & orders",
+        onClick: handleExportDailyReport,
+        disabled: Boolean(exportBusyLabel),
+      },
+      {
+        label: "Monthly Sales Report (PDF)",
+        icon: BarChart3,
+        description: "Monthly breakdown by day & orders",
+        onClick: handleExportMonthlyReport,
+        disabled: Boolean(exportBusyLabel),
+      },
+    ],
+    [
+      exportBusyLabel,
+      handleExportViewPdf,
+      handleExportViewCsv,
+      handleExportDailyReport,
+      handleExportMonthlyReport,
+    ]
+  );
+
+  const handleStatusChange = useCallback(
+    async (orderId: string, status: string) => {
+      if (updatingOrderId) return;
+      setUpdatingOrderId(orderId);
+      try {
+        const result = await updateStatus({ storeId, orderId, status }).unwrap();
+        toast.success(`Order status updated to ${ORDER_STATUS_LABELS[status] ?? status}`);
+        if (selectedOrder?._id === orderId && result.data?.order) {
+          setSelectedOrder(result.data.order);
+        }
+      } catch {
+        toast.error("Failed to update status");
+      } finally {
+        setUpdatingOrderId(null);
+      }
+    },
+    [updatingOrderId, updateStatus, storeId, selectedOrder]
+  );
+
+  const handlePaymentChange = useCallback(
+    async (orderId: string, paymentStatus: string) => {
+      try {
+        const result = await updatePayment({ storeId, orderId, paymentStatus }).unwrap();
+        toast.success(`Payment marked as ${paymentStatus}`);
+        if (selectedOrder?._id === orderId && result.data?.order) {
+          setSelectedOrder(result.data.order);
+        }
+      } catch {
+        toast.error("Failed to update payment status");
+      }
+    },
+    [updatePayment, storeId, selectedOrder]
+  );
 
   const openCreateShipment = (order: StoreOrder, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -384,140 +629,125 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
     setShipmentOrder(order);
   };
 
-  const runInvoice = async (action: () => Promise<unknown>, success?: string) => {
-    setInvoiceBusy(true);
-    try {
-      await action();
-      if (success) toast.success(success);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Invoice action failed");
-    } finally {
-      setInvoiceBusy(false);
-    }
-  };
-
-  const columns: Column<StoreOrder>[] = [
-    {
-      key: "order",
-      label: "Order",
-      render: (order) => (
-        <div className="min-w-0">
-          <button
-            type="button"
-            onClick={() => setSelectedOrder(order)}
-            className="font-bold text-xs text-zinc-950 dark:text-zinc-100 hover:text-[#003399] dark:hover:text-[#FFDA1A] text-left block"
-          >
-            #{order.orderNumber}
-          </button>
-          <p className="text-[11px] text-zinc-400">{formatDate(order.createdAt)}</p>
-        </div>
-      ),
-    },
-    {
-      key: "customer",
-      label: "Customer",
-      render: (order) => {
-        const customerName =
-          order.customerId?.name || order.shippingAddress?.fullName || "Guest Customer";
-        const phone = order.customerId?.phone || order.shippingAddress?.phone || "";
-        const city = order.shippingAddress?.city || "";
-        return (
+  const columns: Column<StoreOrder>[] = useMemo(
+    () => [
+      {
+        key: "order",
+        label: "Order",
+        render: (order) => (
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate max-w-[180px]">
-              {customerName}
-            </p>
-            <p className="text-[11px] text-zinc-400 truncate">
-              {phone} {city ? `• ${city}` : ""}
-            </p>
+            <button
+              type="button"
+              onClick={() => setSelectedOrder(order)}
+              className="font-bold text-xs text-zinc-950 dark:text-zinc-100 hover:text-[#003399] dark:hover:text-[#FFDA1A] text-left block cursor-pointer transition-colors"
+            >
+              #{order.orderNumber}
+            </button>
+            <p className="text-[11px] text-zinc-400">{formatDate(order.createdAt)}</p>
           </div>
-        );
+        ),
       },
-    },
-    {
-      key: "items",
-      label: "Items",
-      hideOnMobile: true,
-      render: (order) => (
-        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-          {order.items?.length || 0} items
-        </span>
-      ),
-    },
-    {
-      key: "total",
-      label: "Total",
-      sortable: true,
-      render: (order) => (
-        <div>
-          <span className="text-xs font-bold text-zinc-950 dark:text-white">
-            {money(order.total)}
+      {
+        key: "customer",
+        label: "Customer",
+        render: (order) => {
+          const customerName =
+            order.customerId?.name || order.shippingAddress?.fullName || "Guest Customer";
+          const phone = order.customerId?.phone || order.shippingAddress?.phone || "";
+          const city = order.shippingAddress?.city || "";
+          return (
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate max-w-[180px]">
+                {customerName}
+              </p>
+              <p className="text-[11px] text-zinc-400 truncate">
+                {phone} {city ? `• ${city}` : ""}
+              </p>
+            </div>
+          );
+        },
+      },
+      {
+        key: "items",
+        label: "Items",
+        hideOnMobile: true,
+        render: (order) => (
+          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            {order.items?.length || 0} items
           </span>
-          <p className="text-[10px] text-zinc-400 capitalize">{order.paymentMethod || "COD"}</p>
-        </div>
-      ),
-    },
-    {
-      key: "payment",
-      label: "Payment",
-      hideOnMobile: true,
-      render: (order) => {
-        const isPaid = order.paymentStatus === "paid";
-        return (
-          <Badge variant={isPaid ? "success" : "warning"}>
-            {order.paymentStatus || "unpaid"}
-          </Badge>
-        );
+        ),
       },
-    },
-    {
-      key: "status",
-      label: "Status",
-      render: (order) => {
-        const badge = statusBadge(order.status);
-        return (
-          <select
-            value={order.status}
-            onChange={(e) => handleStatusChange(order._id, e.target.value)}
-            className="h-7 rounded-md border border-zinc-200 bg-white px-2 text-xs font-semibold text-zinc-800 outline-none hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
-          >
-            {statusOptions.map((s) => (
-              <option key={s} value={s}>
-                {ORDER_STATUS_LABELS[s] ?? s}
-              </option>
-            ))}
-          </select>
-        );
+      {
+        key: "total",
+        label: "Total",
+        sortable: true,
+        render: (order) => (
+          <div>
+            <span className="text-xs font-bold text-zinc-950 dark:text-white">
+              {money(order.total)}
+            </span>
+            <p className="text-[10px] text-zinc-400 capitalize">{order.paymentMethod || "COD"}</p>
+          </div>
+        ),
       },
-    },
-    {
-      key: "_actions",
-      label: "",
-      className: "w-28 text-right",
-      render: (order) => (
-        <div className="flex items-center justify-end gap-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setSelectedOrder(order)}
-            className="h-8 w-8 p-0 text-zinc-500 hover:text-zinc-900 cursor-pointer"
-            title="View order details"
-          >
-            <Eye className="h-3.5 w-3.5" />
-          </Button>
+      {
+        key: "payment",
+        label: "Payment",
+        hideOnMobile: true,
+        render: (order) => {
+          const isPaid = order.paymentStatus === "paid";
+          return (
+            <Badge variant={isPaid ? "success" : "warning"}>
+              {order.paymentStatus || "unpaid"}
+            </Badge>
+          );
+        },
+      },
+      {
+        key: "status",
+        label: "Status",
+        render: (order) => (
+          <OrderStatusSelect
+            orderId={order._id}
+            currentStatus={order.status}
+            isUpdating={updatingOrderId === order._id}
+            onChange={handleStatusChange}
+          />
+        ),
+      },
+      {
+        key: "_actions",
+        label: "",
+        className: "w-28 text-right",
+        render: (order) => (
+          <div className="flex items-center justify-end gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setSelectedOrder(order)}
+              className="h-8 w-8 p-0 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer"
+              title="View order details"
+              aria-label="View order details"
+            >
+              <Eye className="h-3.5 w-3.5" />
+            </Button>
 
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => printStoreOrderInvoice(storeId, order._id)}
-            className="h-8 w-8 p-0 text-zinc-500 hover:text-zinc-900 cursor-pointer"
-            title="Print invoice"
-          >
-            <Printer className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => printStoreOrderInvoice(storeId, order._id)}
+              className="h-8 w-8 p-0 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer"
+              title="Print invoice"
+              aria-label="Print invoice"
+            >
+              <Printer className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [money, updatingOrderId, handleStatusChange, storeId]
+  );
 
   const orderTabs: Array<{ id: OrderTabKey; label: string }> = [
     { id: "all", label: "All Orders" },
@@ -529,6 +759,20 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
     { id: "cancelled", label: "Cancelled" },
     { id: "returned", label: "Returned" },
   ];
+
+  const hasActiveFilters = Boolean(
+    search || activeTab !== "all" || paymentFilter || datePreset !== "all"
+  );
+
+  const resetFilters = useCallback(() => {
+    setSearch("");
+    setActiveTab("all");
+    setPaymentFilter("");
+    setDatePreset("all");
+    setFromDate("");
+    setToDate("");
+    setPage(1);
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -571,16 +815,31 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCsv}
-            disabled={exportBusy}
-            className="gap-1.5 text-xs font-semibold cursor-pointer"
-          >
-            <Download className="h-3.5 w-3.5" />
-            <span>{exportBusy ? "Exporting..." : "Export CSV"}</span>
-          </Button>
+          {/* Enhanced Export Menu (PDF & CSV with instant feedback) */}
+          <DropdownMenu
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={Boolean(exportBusyLabel)}
+                className="gap-1.5 text-xs font-semibold cursor-pointer"
+              >
+                {exportBusyLabel ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>{exportBusyLabel}</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Export</span>
+                    <ChevronDown className="h-3 w-3 opacity-60 ml-0.5" />
+                  </>
+                )}
+              </Button>
+            }
+            items={exportMenuItems}
+          />
 
           <Button
             onClick={() => setPosOpen(true)}
@@ -597,8 +856,17 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
         <IncompleteOrdersTab storeId={storeId} />
       ) : (
         <div className="space-y-4">
-          {/* ── KPI Summary Cards Strip ──────────────────────── */}
-          {analytics && (
+          {/* ── KPI Summary Cards Strip (with skeleton when loading) ── */}
+          {isLoading && !analytics ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 animate-pulse">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-16 rounded-xl border border-zinc-200/80 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800/50"
+                />
+              ))}
+            </div>
+          ) : analytics ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
               <div className="rounded-xl border border-zinc-200/90 bg-white p-3 shadow-2xs dark:border-zinc-800 dark:bg-zinc-900">
                 <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
@@ -645,7 +913,7 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
                 </p>
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* ── Status Tabs ──────────────────────────────────── */}
           <div className="flex border-b border-zinc-200 dark:border-zinc-800 overflow-x-auto">
@@ -679,18 +947,16 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
           </div>
 
           {/* ── Filter & Search Toolbar ──────────────────────── */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-zinc-200/90 bg-white p-3 shadow-2xs dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-col gap-3 rounded-xl border border-zinc-200/90 bg-white p-3 shadow-2xs dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex flex-1 flex-wrap items-center gap-2.5">
-              <div className="relative min-w-[200px] flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
-                <Input
-                  type="search"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search customer, phone, order #..."
-                  className="h-9 pl-9 text-xs"
-                />
-              </div>
+              {/* Isolated search input (keystrokes don't re-render entire page) */}
+              <OrderSearchInput
+                initialValue={search}
+                onSearch={(val) => {
+                  setSearch(val);
+                  setPage(1);
+                }}
+              />
 
               {/* Date presets */}
               <div className="flex items-center gap-1 overflow-x-auto">
@@ -726,7 +992,60 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
                   </option>
                 ))}
               </select>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetFilters}
+                  className="h-9 gap-1 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer"
+                  title="Reset all filters"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  <span>Reset</span>
+                </Button>
+              )}
             </div>
+
+            {/* Custom Date Range Picker bar (when custom preset is selected) */}
+            {datePreset === "custom" && (
+              <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-zinc-500 font-medium">From:</span>
+                  <Input
+                    type="date"
+                    value={customFrom}
+                    onChange={(e) => setCustomFrom(e.target.value)}
+                    className="h-8 w-36 text-xs"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-zinc-500 font-medium">To:</span>
+                  <Input
+                    type="date"
+                    value={customTo}
+                    onChange={(e) => setCustomTo(e.target.value)}
+                    className="h-8 w-36 text-xs"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleApplyCustomDate}
+                  className="h-8 text-xs font-semibold cursor-pointer"
+                >
+                  Apply Range
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleResetCustomDate}
+                  className="h-8 text-xs text-zinc-500 hover:text-zinc-900 cursor-pointer"
+                >
+                  Clear
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* ── Orders Table Area ────────────────────────────── */}
@@ -741,17 +1060,33 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
           ) : orders.length === 0 ? (
             <EmptyState
               icon={ShoppingCart}
-              title="No orders found"
-              description="No customer orders match your active filter criteria."
+              title={hasActiveFilters ? "No matching orders found" : "No orders yet"}
+              description={
+                hasActiveFilters
+                  ? "No customer orders match your active filter criteria."
+                  : "Customer orders will appear here once customers place orders."
+              }
               action={
-                <Button
-                  onClick={() => setPosOpen(true)}
-                  size="sm"
-                  className="bg-[#003399] text-white hover:bg-[#002B80] cursor-pointer text-xs"
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1" />
-                  Create POS Order
-                </Button>
+                hasActiveFilters ? (
+                  <Button
+                    onClick={resetFilters}
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer text-xs"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                    Reset Filters
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => setPosOpen(true)}
+                    size="sm"
+                    className="bg-[#003399] text-white hover:bg-[#002B80] cursor-pointer text-xs"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    Create POS Order
+                  </Button>
+                )
               }
             />
           ) : (
@@ -765,6 +1100,8 @@ export function OrdersTab({ storeId }: OrdersTabProps) {
               pageSize={pageSize}
               onPageChange={(p: number) => setPage(p)}
               onPageSizeChange={(s: number) => setPageSize(s)}
+              hideSearch={true}
+              isFetching={isFetching}
             />
           )}
         </div>

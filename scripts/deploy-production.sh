@@ -2,8 +2,11 @@
 # ==============================================================================
 # BornoLand EC2 Deployment Script
 #
+# Self-bootstrapping: automatically installs nvm, Node 22, pnpm 9.12.0
+# if missing. Then runs the standard deployment.
+#
 # Simple git-based deployment:
-#   git pull → install → build → nginx → pm2 restart → health checks
+#   bootstrap → git pull → install → build → nginx → pm2 restart → health checks
 #
 # Usage:
 #   ./scripts/deploy-production.sh
@@ -22,58 +25,79 @@ echo "  BornoLand Deploy"
 echo "  $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 echo "========================================="
 
-# ── Activate Node 22 (HARD requirement) ─────────────────────────────────
-# esbuild 0.27.7 native binary requires Node 22. Node 24 breaks it.
+# ── BOOTSTRAP: nvm, Node 22, pnpm 9.12.0 ───────────────────────────────
+# Self-healing: install automatically if missing. Never fail because tools are absent.
+
 export NVM_DIR="$HOME/.nvm"
 
+# 1. Bootstrap nvm
 if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-  echo "ERROR: nvm is not installed at $NVM_DIR"
-  exit 1
+  echo ""
+  echo "--- Bootstrapping nvm ---"
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  export NVM_DIR="$HOME/.nvm"
+  if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+    echo "FATAL: nvm installation failed — $NVM_DIR/nvm.sh still missing"
+    exit 1
+  fi
+  echo "✓ nvm installed"
 fi
 
 . "$NVM_DIR/nvm.sh"
 
-# Print version BEFORE activation for diagnostics
-NODE_BEFORE=$(node --version 2>/dev/null || echo "unknown")
+if ! command -v nvm &>/dev/null; then
+  echo "FATAL: nvm loaded but 'nvm' command not found"
+  exit 1
+fi
+
+# 2. Bootstrap Node 22
+NODE_BEFORE=$(node --version 2>/dev/null || echo "none")
 echo "Node before activation: $NODE_BEFORE"
 
-nvm install 22
+if ! nvm ls 22 &>/dev/null; then
+  echo "--- Installing Node 22 ---"
+  nvm install 22
+fi
+
 nvm use 22
+nvm alias default 22
 hash -r
 
 NODE_AFTER=$(node --version)
 echo "Node after activation:  $NODE_AFTER"
 
-if [[ ! "$NODE_AFTER" =~ ^v22\. ]]; then
+NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
+if [ "$NODE_MAJOR" != "22" ]; then
   echo ""
-  echo "FATAL: Node 22 activation failed."
-  echo "  Expected: v22.x.x"
-  echo "  Got:      $NODE_AFTER"
-  echo ""
-  echo "Check: nvm ls"
-  nvm ls || true
+  echo "FATAL: Node 22 is required, found $(node --version)"
   exit 1
 fi
 
-# ── Activate pnpm 9.12.0 (HARD requirement) ────────────────────────────
-# Repository requires pnpm@9.12.0 (packageManager field).
-# Do NOT use system pnpm 11.25.0. Use corepack explicitly.
-
-PNPM_BEFORE=$(pnpm --version 2>/dev/null || echo "unknown")
+# 3. Bootstrap pnpm 9.12.0
+PNPM_BEFORE=$(pnpm --version 2>/dev/null || echo "none")
 echo "pnpm before activation: $PNPM_BEFORE"
 
-corepack enable
-corepack prepare pnpm@9.12.0 --activate
-hash -r
+# Try corepack first
+if command -v corepack &>/dev/null; then
+  corepack enable
+  corepack prepare pnpm@9.12.0 --activate
+  hash -r
+fi
 
-PNPM_AFTER=$(corepack pnpm --version)
+# Verify via corepack, fall back to npm global install
+PNPM_CHECK=$(corepack pnpm --version 2>/dev/null || echo "")
+if [ "$PNPM_CHECK" != "9.12.0" ]; then
+  echo "--- Installing pnpm 9.12.0 via npm ---"
+  npm install -g pnpm@9.12.0
+  hash -r
+fi
+
+PNPM_AFTER=$(pnpm --version)
 echo "pnpm after activation:  $PNPM_AFTER"
 
 if [ "$PNPM_AFTER" != "9.12.0" ]; then
   echo ""
-  echo "FATAL: pnpm 9.12.0 activation failed."
-  echo "  Expected: 9.12.0"
-  echo "  Got:      $PNPM_AFTER"
+  echo "FATAL: pnpm 9.12.0 is required, found $PNPM_AFTER"
   exit 1
 fi
 
@@ -82,19 +106,21 @@ echo ""
 echo "========================================="
 echo "  RUNTIME VERSIONS"
 echo "========================================="
-echo "node --version:         $(node --version)"
-echo "corepack pnpm --version: $(corepack pnpm --version)"
-echo "which node:             $(which node)"
-echo "which pnpm:             $(which pnpm 2>/dev/null || echo 'not found')"
-echo "node execPath:          $(node -p 'process.execPath')"
+echo "node --version: $(node --version)"
+echo "pnpm --version: $(pnpm --version)"
+echo "node path:      $(command -v node)"
+echo "pnpm path:      $(command -v pnpm)"
+echo "node execPath:  $(node -p 'process.execPath')"
 echo "========================================="
 
 # Hard gate — do NOT proceed if versions are wrong
-if [[ ! "$(node --version)" =~ ^v22\. ]]; then
+NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
+if [ "$NODE_MAJOR" != "22" ]; then
   echo "FATAL: node version is not 22.x — aborting"
   exit 1
 fi
-if [ "$(corepack pnpm --version)" != "9.12.0" ]; then
+PNPM_VERSION="$(pnpm --version)"
+if [ "$PNPM_VERSION" != "9.12.0" ]; then
   echo "FATAL: pnpm version is not 9.12.0 — aborting"
   exit 1
 fi
@@ -111,7 +137,7 @@ echo "✓ Code updated to $(git rev-parse --short HEAD)"
 # ── 2. Install dependencies ──────────────────────────────────────────────
 echo ""
 echo "--- Step 2: Install dependencies ---"
-corepack pnpm install --frozen-lockfile
+pnpm install --frozen-lockfile
 echo "✓ Dependencies installed"
 
 # ── 3. Stop PM2 processes (free memory for build) ────────────────────────
@@ -144,7 +170,7 @@ echo "--- Step 4: Verify esbuild ---"
 cd "$REPO_DIR/apps/api"
 
 echo "esbuild package version: $(node -p "require('esbuild/package.json').version")"
-echo "esbuild --version:       $(corepack pnpm exec esbuild --version)"
+echo "esbuild --version:       $(pnpm exec esbuild --version)"
 echo "esbuild binary:          $(readlink -f ./node_modules/.bin/esbuild 2>/dev/null || echo 'not found')"
 echo "esbuild binary type:     $(file "$(readlink -f ./node_modules/.bin/esbuild 2>/dev/null || echo /dev/null)" 2>/dev/null || echo 'not found')"
 
@@ -153,7 +179,7 @@ cat > /tmp/esbuild-test.ts <<'EOF'
 export const test = 1
 EOF
 
-corepack pnpm exec esbuild /tmp/esbuild-test.ts \
+pnpm exec esbuild /tmp/esbuild-test.ts \
   --bundle \
   --platform=node \
   --format=esm \
@@ -171,7 +197,7 @@ echo "OOM check before build:"
 dmesg -T 2>/dev/null | tail -50 | grep -i -E "oom|out of memory|killed process" || echo "  (none found)"
 
 cd "$REPO_DIR"
-/usr/bin/time -v corepack pnpm --filter @bornoland/api build 2>&1 || {
+/usr/bin/time -v pnpm --filter @bornoland/api build 2>&1 || {
   echo ""
   echo "=== OOM check after build failure ==="
   dmesg -T 2>/dev/null | tail -50 | grep -i -E "oom|out of memory|killed process" || echo "  (none found)"
@@ -189,7 +215,7 @@ echo "✓ API built"
 # ── 6. Build Web ─────────────────────────────────────────────────────────
 echo ""
 echo "--- Step 6: Build Web ---"
-corepack pnpm --filter @bornoland/web build
+pnpm --filter @bornoland/web build
 echo "✓ Web built"
 
 # Remove build failure trap — builds succeeded
@@ -294,7 +320,7 @@ echo "  $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 echo "========================================="
 echo "  Commit: $(git rev-parse --short HEAD)"
 echo "  Node:   $(node --version)"
-echo "  pnpm:   $(corepack pnpm --version)"
+echo "  pnpm:   $(pnpm --version)"
 echo "  API:    http://127.0.0.1:4000/"
 echo "  Web:    http://127.0.0.1:3000/"
 echo ""

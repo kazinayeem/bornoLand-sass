@@ -17,6 +17,9 @@ importers:
       docx:
         specifier: ^9.7.1
         version: 9.7.1
+      esbuild:
+        specifier: 0.27.7
+        version: 0.27.7
       prettier:
         specifier: ^3.4.2
         version: 3.8.3

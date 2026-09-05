@@ -4,10 +4,7 @@ export default defineConfig({
   entry: ["src/index.ts"],
   format: ["esm"],
   outDir: "dist",
+  target: "es2022",
   clean: true,
   splitting: false,
-  sourcemap: false,
-  treeshake: false,
-  target: "es2022",
-  skipNodeModulesBundle: true,
 });

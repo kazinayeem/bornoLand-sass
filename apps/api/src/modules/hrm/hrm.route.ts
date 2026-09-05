@@ -47,6 +47,22 @@ hrmRouter.get("/employees/:employeeId", hrmGuard, hrmPermissionGuard, getEmploye
 hrmRouter.put("/employees/:employeeId", hrmGuard, requireStorePermission("hrm:update"), updateEmployeeController);
 hrmRouter.post("/employees/:employeeId/provision-login", hrmGuard, requireStorePermission("hrm:create"), provisionEmployeeLoginController);
 
+// Employee ID Card (Admin view)
+hrmRouter.get("/employees/:employeeId/id-card", hrmGuard, hrmPermissionGuard, async (req, res) => {
+  const { getEmployeeIdCardAdminController } = await import("./employee-id-card.controller.js");
+  return getEmployeeIdCardAdminController(req, res);
+});
+
+// Admin Upload Employee Photo
+hrmRouter.post("/employees/:employeeId/photo", hrmGuard, requireStorePermission("hrm:update"), async (req, res) => {
+  const { uploadEmployeePhotoAdminController } = await import("./employee-id-card.controller.js");
+  const { photoUploadMiddleware } = await import("./hrm-self-service.controller.js");
+  photoUploadMiddleware(req, res, (err) => {
+    if (err) return res.status(400).json({ ok: false, message: err.message });
+    return uploadEmployeePhotoAdminController(req, res);
+  });
+});
+
 // Organization (admin HRM - requires hrm:read permission)
 hrmRouter.get("/departments", hrmGuard, hrmPermissionGuard, listDepartmentsController);
 hrmRouter.post("/departments", hrmGuard, hrmPermissionGuard, createDepartmentController);

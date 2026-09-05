@@ -105,6 +105,74 @@ export type EmployeeNotificationItem = {
   createdAt: string;
 };
 
+export type EmployeeIdCardData = {
+  employee: {
+    _id: string;
+    employeeCode: string;
+    firstName: string;
+    lastName: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+    photoUrl?: string;
+    bloodGroup?: string;
+    gender: string;
+    employmentType: string;
+    status: "active" | "on_leave" | "inactive" | "resigned" | "terminated" | "suspended";
+    joiningDate: string;
+    address?: string;
+    emergencyContact?: {
+      name?: string;
+      relation?: string;
+      phone?: string;
+    } | null;
+    department: string;
+    departmentCode?: string;
+    designation: string;
+    verificationToken: string;
+  };
+  store: {
+    _id: string;
+    name: string;
+    slug: string;
+    logoUrl?: string;
+    brandColor?: string;
+    accentColor?: string;
+    website?: string;
+    tagline?: string;
+    contactEmail?: string;
+    timezone?: string;
+  };
+  cardMeta: {
+    standard: string;
+    dimensions: string;
+    aspectRatio: string;
+    issuedAt: string;
+    verificationUrl: string;
+    qrCodeDataUrl: string;
+  };
+};
+
+export type PublicEmployeeVerification = {
+  employee: {
+    employeeCode: string;
+    fullName: string;
+    photoUrl?: string;
+    designation: string;
+    department: string;
+    bloodGroup?: string;
+    status: string;
+    joiningDate: string;
+  };
+  store: {
+    name: string;
+    slug: string;
+    logoUrl?: string;
+    brandColor?: string;
+  };
+  verifiedAt: string;
+};
+
 export type Department = {
   _id: string;
   name: string;
@@ -698,6 +766,36 @@ export const hrmApi = baseApi.injectEndpoints({
         { type: "HRM", id: `${storeId}-self-documents` },
       ],
     }),
+
+    // ── Employee ID Card Endpoints ──
+    getEmployeeIdCard: builder.query<ApiEnvelope<EmployeeIdCardData>, { storeId: string; employeeId: string }>({
+      query: ({ storeId, employeeId }) => `/stores/${storeId}/hrm/employees/${employeeId}/id-card`,
+      providesTags: (_r, _e, { storeId, employeeId }) => [{ type: "HRM", id: `${storeId}-idcard-${employeeId}` }],
+    }),
+
+    getMyIdCard: builder.query<ApiEnvelope<EmployeeIdCardData>, string>({
+      query: (storeId) => `/stores/${storeId}/hrm/self-service/id-card`,
+      providesTags: (_r, _e, storeId) => [{ type: "HRM", id: `${storeId}-my-idcard` }],
+    }),
+
+    uploadEmployeePhotoAdmin: builder.mutation<
+      ApiEnvelope<{ photoUrl: string; employee: Employee }>,
+      { storeId: string; employeeId: string; formData: FormData }
+    >({
+      query: ({ storeId, employeeId, formData }) => ({
+        url: `/stores/${storeId}/hrm/employees/${employeeId}/photo`,
+        method: "POST",
+        body: formData,
+      }),
+      invalidatesTags: (_r, _e, { storeId, employeeId }) => [
+        { type: "HRM", id: `${storeId}-employees` },
+        { type: "HRM", id: `${storeId}-idcard-${employeeId}` },
+      ],
+    }),
+
+    verifyEmployeePublic: builder.query<ApiEnvelope<PublicEmployeeVerification>, string>({
+      query: (token) => `/public/employee/verify/${token}`,
+    }),
   }),
 });
 
@@ -749,5 +847,10 @@ export const {
   useReviewHrmRequestMutation,
   useGetEmployeeDocumentsAdminQuery,
   useUploadEmployeeDocumentAdminMutation,
+  // ID Card hooks
+  useGetEmployeeIdCardQuery,
+  useGetMyIdCardQuery,
+  useUploadEmployeePhotoAdminMutation,
+  useVerifyEmployeePublicQuery,
 } = hrmApi;
 

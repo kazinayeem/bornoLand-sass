@@ -35,6 +35,12 @@ export const publicRouter: Router = Router();
 publicRouter.get("/stores/:storeId/tracking", getPublicStoreTrackingController);
 publicRouter.post("/stores/:storeId/tracking/events", publicLogStoreTrackingEventController);
 
+// ─── Public: Verify employee by secure token ─────────────────────────────────
+publicRouter.get("/employee/verify/:token", async (request, response: Response) => {
+  const { verifyEmployeePublicController } = await import("../hrm/employee-id-card.controller.js");
+  return verifyEmployeePublicController(request, response);
+});
+
 // ─── Public: Verify invoice by token (subscription or order) ────────────────
 publicRouter.get("/invoice/verify/:token", async (request, response: Response) => {
   try {

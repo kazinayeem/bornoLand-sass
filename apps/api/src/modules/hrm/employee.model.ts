@@ -52,6 +52,8 @@ const employeeSchema = new Schema(
     photoUrl: { type: String, default: "" },
     dateOfBirth: { type: Date, default: null },
     gender: { type: String, enum: ["male", "female", "other"], default: "male" },
+    bloodGroup: { type: String, default: "", trim: true },
+    verificationToken: { type: String, default: "", trim: true, index: true },
     address: { type: String, default: "" },
 
     departmentId: { type: Schema.Types.ObjectId, ref: "Department", default: null, index: true },

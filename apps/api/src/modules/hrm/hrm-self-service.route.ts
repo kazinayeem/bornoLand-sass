@@ -38,6 +38,10 @@ hrmSelfServiceRouter.use(requireAuth, requireStoreAccess);
 hrmSelfServiceRouter.get("/profile", getMyEmployeeProfile);
 hrmSelfServiceRouter.patch("/profile", updateMyEmployeeProfile);
 hrmSelfServiceRouter.post("/profile/photo", photoUploadMiddleware, uploadMyProfilePhoto);
+hrmSelfServiceRouter.get("/id-card", async (req, res) => {
+  const { getMyEmployeeIdCardController } = await import("./employee-id-card.controller.js");
+  return getMyEmployeeIdCardController(req, res);
+});
 
 // 2. Attendance & Live Clocking
 hrmSelfServiceRouter.get("/attendance/today", getMyTodayAttendance);

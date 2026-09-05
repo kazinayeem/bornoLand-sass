@@ -112,7 +112,7 @@ echo "--- Step 3: Validate files ---"
 
 for f in \
   "apps/api/dist/index.js" \
-  "apps/web/standalone/server.js" \
+  "apps/api/package.json" \
   "ecosystem.config.cjs" \
   "nginx/bornosoft.site.conf"
 do
@@ -122,6 +122,72 @@ do
   fi
   echo "✓ $f"
 done
+
+# Validate Next.js standalone server structure
+# With outputFileTracingRoot, the real server is nested at apps/web/apps/web/server.js
+# There should also be a proxy at apps/web/server.js
+if [ -f "$NEW_RELEASE/apps/web/server.js" ]; then
+  echo "✓ apps/web/server.js (proxy)"
+else
+  echo "✗ apps/web/server.js not found"
+  exit 1
+fi
+
+# Find the real Next.js server (has sibling .next/ directory)
+REAL_SERVER=""
+while IFS= read -r candidate; do
+  dir=$(dirname "$candidate")
+  if [ -d "$dir/.next" ]; then
+    REAL_SERVER="$candidate"
+    break
+  fi
+done < <(find "$NEW_RELEASE/apps/web" -type f -name 'server.js' \
+  -not -path '*/node_modules/*')
+
+if [ -n "$REAL_SERVER" ]; then
+  echo "✓ Real Next.js server: $REAL_SERVER"
+  REAL_DIR=$(dirname "$REAL_SERVER")
+  if [ -d "$REAL_DIR/.next/server" ]; then
+    echo "✓ .next/server present"
+  else
+    echo "✗ .next/server missing at $REAL_DIR/.next/server"
+    exit 1
+  fi
+else
+  echo "✗ No real server.js found (expected one with sibling .next/ dir)"
+  find "$NEW_RELEASE/apps/web" -type f -name 'server.js' | head -10 || true
+  exit 1
+fi
+
+# ── Step 3b: Validate symlinks ──────────────────────────────────────────
+echo ""
+echo "--- Step 3b: Validate symlinks ---"
+BROKEN_SYMLINKS=$(find "$NEW_RELEASE" -xtype l -print 2>/dev/null || true)
+if [ -n "$BROKEN_SYMLINKS" ]; then
+  echo "✗ Broken symlinks found in release:"
+  echo "$BROKEN_SYMLINKS"
+  exit 1
+fi
+echo "✓ No broken symlinks in release"
+
+# Verify that valid symlinks point to targets inside the release
+echo "Validating symlink targets..."
+INVALID_SYMLINKS=0
+while IFS= read -r slink; do
+  target=$(readlink "$slink")
+  # Skip absolute symlinks pointing outside the release (e.g., /usr/lib)
+  if [[ "$target" == /* ]]; then
+    if [ ! -e "$slink" ]; then
+      echo "  ⚠ Broken absolute symlink: $slink -> $target"
+      INVALID_SYMLINKS=$((INVALID_SYMLINKS + 1))
+    fi
+  fi
+done < <(find "$NEW_RELEASE" -type l 2>/dev/null)
+if [ "$INVALID_SYMLINKS" -gt 0 ]; then
+  echo "✗ Found $INVALID_SYMLINKS invalid symlinks"
+  exit 1
+fi
+echo "✓ All symlinks valid"
 
 # ── Step 4: Install runtime environment files ─────────────────────────────
 echo ""

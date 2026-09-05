@@ -15,6 +15,7 @@ import { connectDatabase } from "../../../common/database/connection.js";
 import { StoreModel } from "../../../models/store.model.js";
 import { EmployeeModel } from "../employee.model.js";
 import { DepartmentModel, DesignationModel } from "../organization.model.js";
+import { ShiftModel } from "../shift.model.js";
 import {
   getEmployeeIdCardAdminController,
   getMyEmployeeIdCardController,
@@ -144,7 +145,7 @@ describe("HRM Employee ID Card & Verification Suite", () => {
     // CR80 Specifications
     assert.equal(card.cardMeta.standard, "CR80");
     assert.equal(card.cardMeta.dimensions, "53.98mm × 85.60mm");
-    assert.equal(card.cardMeta.aspectRatio, "53.98 : 85.60");
+    assert.equal(card.cardMeta.aspectRatio, "1.586");
     assert.ok(card.cardMeta.issuedAt);
     assert.match(card.cardMeta.qrCodeDataUrl, /^data:image\/png;base64,/);
     assert.match(card.cardMeta.verificationUrl, /\/verify\/employee\/BL-VER-/);

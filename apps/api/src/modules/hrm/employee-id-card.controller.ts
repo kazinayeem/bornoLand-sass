@@ -8,6 +8,8 @@ import { connectDatabase } from "../../common/database/connection.js";
 import { EmployeeModel } from "./employee.model.js";
 import { StoreModel } from "../stores/store.model.js";
 import { StoreSettingsModel } from "../stores/store-settings.model.js";
+import "./shift.model.js";
+import "./organization.model.js";
 import { getStorageProvider } from "../media/providers/index.js";
 import { resolveCurrentEmployee } from "./hrm-self-service.controller.js";
 
@@ -88,9 +90,9 @@ export async function buildEmployeeIdCardPayload(employeeDoc: any, storeDoc: any
       _id: String(storeDoc._id),
       name: storeDoc.name || "BornoLand Merchant",
       slug: storeDoc.slug || "",
-      logoUrl: storeDoc.logoUrl || "",
-      brandColor: storeDoc.brandColor || "#003399",
-      accentColor: storeDoc.accentColor || "#0f172a",
+      logoUrl: storeDoc.logoUrl || storeDoc.branding?.logo || "",
+      brandColor: storeDoc.branding?.brandColor || storeDoc.brandColor || "#003399",
+      accentColor: storeDoc.branding?.accentColor || storeDoc.accentColor || "#0f172a",
       website: storeDoc.customDomains?.[0] ? `https://${storeDoc.customDomains[0]}` : `${storeDoc.slug}.bornoland.com`,
       tagline: storeDoc.tagline || "Official Workspace",
       contactEmail: (storeSettings as any)?.lowStockAlertEmail || "",
@@ -98,7 +100,7 @@ export async function buildEmployeeIdCardPayload(employeeDoc: any, storeDoc: any
     },
     cardMeta: {
       standard: "CR80",
-      dimensions: "85.60mm × 53.98mm",
+      dimensions: "53.98mm × 85.60mm",
       aspectRatio: "1.586",
       issuedAt: employeeDoc.joiningDate || employeeDoc.createdAt,
       verificationUrl,
@@ -185,7 +187,7 @@ export async function verifyEmployeePublicController(req: Request, res: Response
     }
 
     const store = await StoreModel.findById(employee.storeId)
-      .select("name slug logoUrl brandColor published status")
+      .select("name slug logoUrl branding published status")
       .lean();
 
     // Return STRICTLY safe public verification data — zero private HR info
@@ -206,8 +208,8 @@ export async function verifyEmployeePublicController(req: Request, res: Response
         store: {
           name: (store as any)?.name || "BornoLand Store",
           slug: (store as any)?.slug || "",
-          logoUrl: (store as any)?.logoUrl || "",
-          brandColor: (store as any)?.brandColor || "#003399",
+          logoUrl: (store as any)?.logoUrl || (store as any)?.branding?.logo || "",
+          brandColor: (store as any)?.branding?.brandColor || (store as any)?.brandColor || "#003399",
         },
         verifiedAt: new Date().toISOString(),
       },

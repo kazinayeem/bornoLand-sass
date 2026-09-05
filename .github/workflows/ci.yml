@@ -230,6 +230,99 @@ jobs:
 
           echo "✓ API prod deploy directory ready"
 
+      # ── Runtime validation (before packaging) ─────────────────────────
+      - name: Validate API runtime from production deploy
+        run: |
+          set -euo pipefail
+          echo "--- API Runtime Test ---"
+
+          # Copy dist into the deploy directory so we can test from it
+          cp -r apps/api/dist /tmp/api-prod/dist
+
+          # Start API from the production deploy directory on a test port
+          PORT=14000 \
+            NODE_ENV=production \
+            node /tmp/api-prod/dist/index.js &
+          API_PID=$!
+
+          # Wait for startup (max 15 seconds)
+          READY=0
+          for i in $(seq 1 15); do
+            if curl -fsS --max-time 2 http://127.0.0.1:${PORT}/ > /dev/null 2>&1; then
+              READY=1
+              break
+            fi
+            sleep 1
+          done
+
+          if [ "$READY" -eq 0 ]; then
+            echo "✗ API failed to start from production deploy"
+            kill $API_PID 2>/dev/null || true
+            wait $API_PID 2>/dev/null || true
+            exit 1
+          fi
+
+          echo "✓ API started successfully from production deploy"
+
+          # Stop the test server
+          kill $API_PID 2>/dev/null || true
+          wait $API_PID 2>/dev/null || true
+          echo "✓ API runtime test passed"
+
+      - name: Validate Web standalone runtime
+        run: |
+          set -euo pipefail
+          echo "--- Web Standalone Runtime Test ---"
+
+          # Find the real server in standalone
+          REAL_SERVER=""
+          while IFS= read -r candidate; do
+            dir=$(dirname "$candidate")
+            if [ -d "$dir/.next" ]; then
+              REAL_SERVER="$candidate"
+              break
+            fi
+          done < <(find apps/web/.next/standalone -type f -name 'server.js' \
+            -not -path '*/node_modules/*')
+
+          if [ -z "$REAL_SERVER" ]; then
+            echo "✗ No real server.js found for standalone test"
+            exit 1
+          fi
+
+          REAL_DIR=$(dirname "$REAL_SERVER")
+          echo "  Testing from: $REAL_DIR"
+
+          # Start standalone server on a test port
+          PORT=14001 \
+            HOSTNAME=127.0.0.1 \
+            node "$REAL_SERVER" &
+          WEB_PID=$!
+
+          # Wait for startup (max 20 seconds)
+          READY=0
+          for i in $(seq 1 20); do
+            if curl -fsS --max-time 2 http://127.0.0.1:${PORT}/ > /dev/null 2>&1; then
+              READY=1
+              break
+            fi
+            sleep 1
+          done
+
+          if [ "$READY" -eq 0 ]; then
+            echo "✗ Web standalone failed to start"
+            kill $WEB_PID 2>/dev/null || true
+            wait $WEB_PID 2>/dev/null || true
+            exit 1
+          fi
+
+          echo "✓ Web standalone started successfully"
+
+          # Stop the test server
+          kill $WEB_PID 2>/dev/null || true
+          wait $WEB_PID 2>/dev/null || true
+          echo "✓ Web standalone runtime test passed"
+
       # ── Package release tarball ───────────────────────────────────────
       - name: Package release tarball
         run: |

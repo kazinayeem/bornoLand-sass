@@ -32,23 +32,82 @@ jobs:
             echo "  $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
             echo "========================================="
 
-            # ── Ensure correct Node version ─────────────────────────
-            # esbuild 0.27.7 requires Node 22 LTS. Node 24 breaks the native binary.
+            # ── Activate Node 22 (HARD requirement) ─────────────────
+            # esbuild 0.27.7 native binary requires Node 22. Node 24 breaks it.
             export NVM_DIR="$HOME/.nvm"
-            if [ -s "$NVM_DIR/nvm.sh" ]; then
-              . "$NVM_DIR/nvm.sh"
-              nvm use 22 || nvm install 22
+
+            if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+              echo "ERROR: nvm is not installed at $NVM_DIR"
+              exit 1
             fi
 
-            # Ensure pnpm 9.12.0 — match the version declared in root package.json
-            corepack enable 2>/dev/null || true
-            corepack prepare pnpm@9.12.0 --activate 2>/dev/null || true
+            . "$NVM_DIR/nvm.sh"
 
-            echo "Node: $(node --version)"
-            echo "pnpm: $(pnpm --version)"
+            # Print version BEFORE activation for diagnostics
+            NODE_BEFORE=$(node --version 2>/dev/null || echo "unknown")
+            echo "Node before activation: $NODE_BEFORE"
 
-            # Limit Node heap to prevent OOM during builds on small EC2
-            export NODE_OPTIONS="--max-old-space-size=2048"
+            nvm install 22
+            nvm use 22
+            hash -r
+
+            NODE_AFTER=$(node --version)
+            echo "Node after activation:  $NODE_AFTER"
+
+            if [[ ! "$NODE_AFTER" =~ ^v22\. ]]; then
+              echo ""
+              echo "FATAL: Node 22 activation failed."
+              echo "  Expected: v22.x.x"
+              echo "  Got:      $NODE_AFTER"
+              echo ""
+              echo "Check: nvm ls"
+              nvm ls || true
+              exit 1
+            fi
+
+            # ── Activate pnpm 9.12.0 (HARD requirement) ─────────────
+            # Repository requires pnpm@9.12.0 (packageManager field).
+            # Do NOT use system pnpm 11.25.0. Use corepack explicitly.
+
+            PNPM_BEFORE=$(pnpm --version 2>/dev/null || echo "unknown")
+            echo "pnpm before activation: $PNPM_BEFORE"
+
+            corepack enable
+            corepack prepare pnpm@9.12.0 --activate
+            hash -r
+
+            PNPM_AFTER=$(corepack pnpm --version)
+            echo "pnpm after activation:  $PNPM_AFTER"
+
+            if [ "$PNPM_AFTER" != "9.12.0" ]; then
+              echo ""
+              echo "FATAL: pnpm 9.12.0 activation failed."
+              echo "  Expected: 9.12.0"
+              echo "  Got:      $PNPM_AFTER"
+              exit 1
+            fi
+
+            # ── Runtime version verification ────────────────────────
+            echo ""
+            echo "========================================="
+            echo "  RUNTIME VERSIONS"
+            echo "========================================="
+            echo "node --version:          $(node --version)"
+            echo "corepack pnpm --version: $(corepack pnpm --version)"
+            echo "which node:              $(which node)"
+            echo "which pnpm:              $(which pnpm 2>/dev/null || echo 'not found')"
+            echo "node execPath:           $(node -p 'process.execPath')"
+            echo "========================================="
+
+            # Hard gate — do NOT proceed if versions are wrong
+            if [[ ! "$(node --version)" =~ ^v22\. ]]; then
+              echo "FATAL: node version is not 22.x — aborting"
+              exit 1
+            fi
+            if [ "$(corepack pnpm --version)" != "9.12.0" ]; then
+              echo "FATAL: pnpm version is not 9.12.0 — aborting"
+              exit 1
+            fi
 
             # ── 1. Git pull ────────────────────────────────────────
             echo ""
@@ -62,7 +121,7 @@ jobs:
             # ── 2. Install dependencies ────────────────────────────
             echo ""
             echo "--- Step 2: Install dependencies ---"
-            pnpm install --frozen-lockfile
+            corepack pnpm install --frozen-lockfile
             echo "✓ Dependencies installed"
 
             # ── 3. Stop PM2 (free memory for build) ────────────────
@@ -89,24 +148,66 @@ jobs:
 
             trap build_failed ERR
 
-            # ── 4. Build API ───────────────────────────────────────
+            # ── 4. Test esbuild binary (before real build) ─────────
             echo ""
-            echo "--- Step 4: Build API ---"
-            pnpm --filter @bornoland/api build
+            echo "--- Step 4: Verify esbuild ---"
+            cd "$REPO_DIR/apps/api"
+
+            echo "esbuild package version: $(node -p "require('esbuild/package.json').version")"
+            echo "esbuild --version:       $(corepack pnpm exec esbuild --version)"
+            echo "esbuild binary:          $(readlink -f ./node_modules/.bin/esbuild 2>/dev/null || echo 'not found')"
+            echo "esbuild binary type:     $(file "$(readlink -f ./node_modules/.bin/esbuild 2>/dev/null || echo /dev/null)" 2>/dev/null || echo 'not found')"
+
+            # Tiny esbuild build test
+            cat > /tmp/esbuild-test.ts <<'EOF'
+            export const test = 1
+            EOF
+
+            corepack pnpm exec esbuild /tmp/esbuild-test.ts \
+              --bundle \
+              --platform=node \
+              --format=esm \
+              --outfile=/tmp/esbuild-test.js
+
+            node /tmp/esbuild-test.js
+            echo "✓ Tiny esbuild test passed"
+
+            # ── 5. Build API ───────────────────────────────────────
+            echo ""
+            echo "--- Step 5: Build API ---"
+
+            # Capture OOM events around the build
+            echo "OOM check before build:"
+            dmesg -T 2>/dev/null | tail -50 | grep -i -E "oom|out of memory|killed process" || echo "  (none found)"
+
+            cd "$REPO_DIR"
+            /usr/bin/time -v corepack pnpm --filter @bornoland/api build 2>&1 || {
+              echo ""
+              echo "=== OOM check after build failure ==="
+              dmesg -T 2>/dev/null | tail -50 | grep -i -E "oom|out of memory|killed process" || echo "  (none found)"
+              echo ""
+              echo "=== Memory state ==="
+              free -h 2>/dev/null || true
+              swapon --show 2>/dev/null || true
+              exit 1
+            }
+
+            echo "OOM check after build:"
+            dmesg -T 2>/dev/null | tail -50 | grep -i -E "oom|out of memory|killed process" || echo "  (none found)"
             echo "✓ API built"
 
-            # ── 5. Build Web ───────────────────────────────────────
+            # ── 6. Build Web ───────────────────────────────────────
             echo ""
-            echo "--- Step 5: Build Web ---"
-            pnpm --filter @bornoland/web build
+            echo "--- Step 6: Build Web ---"
+            corepack pnpm --filter @bornoland/web build
             echo "✓ Web built"
 
             # Builds succeeded — remove failure trap
             trap - ERR
 
-            # ── 6. Nginx ───────────────────────────────────────────
+            # ── 7. Nginx ───────────────────────────────────────────
             echo ""
-            echo "--- Step 6: Nginx ---"
+            echo "--- Step 7: Nginx ---"
 
             NGINX_CONF="/etc/nginx/sites-available/bornosoft.site"
             NGINX_BACKUP="${NGINX_CONF}.bak"
@@ -138,18 +239,18 @@ jobs:
               exit 1
             fi
 
-            # ── 7. PM2 restart ─────────────────────────────────────
+            # ── 8. PM2 restart ─────────────────────────────────────
             echo ""
-            echo "--- Step 7: PM2 restart ---"
+            echo "--- Step 8: PM2 restart ---"
             pm2 restart bornoland-api --update-env
             pm2 restart bornoland-web --update-env
             pm2 save
             echo ""
             pm2 status
 
-            # ── 8. Health checks ───────────────────────────────────
+            # ── 9. Health checks ───────────────────────────────────
             echo ""
-            echo "--- Step 8: Health checks ---"
+            echo "--- Step 9: Health checks ---"
             sleep 3
 
             health_check() {
@@ -200,6 +301,7 @@ jobs:
             echo "========================================="
             echo "  Commit: $(git rev-parse --short HEAD)"
             echo "  Node:   $(node --version)"
+            echo "  pnpm:   $(corepack pnpm --version)"
             echo "  API:    http://127.0.0.1:4000/"
             echo "  Web:    http://127.0.0.1:3000/"
             echo ""

@@ -20,12 +20,12 @@ jobs:
           port: 22
 
           script: |
-            set -e
+            set -Eeuo pipefail
 
             BUILD_API_STATUS="PENDING"
             BUILD_WEB_STATUS="PENDING"
             NGINX_STATUS="PENDING"
-            PM2_STATUS="STOPPED"
+            PM2_STATUS="RUNNING"
             HEALTH_STATUS="PENDING"
 
             print_summary() {
@@ -42,378 +42,515 @@ jobs:
               echo ""
             }
 
-            # Trap errors to capture diagnostic information without exposing secrets
-            handle_failure() {
-              local exit_code=$?
+            diagnostic() {
               echo ""
               echo "========================================"
-              echo "   DEPLOYMENT FAILED (EXIT CODE: $exit_code)"
+              echo "          DEPLOYMENT DIAGNOSTICS"
               echo "========================================"
+
               echo ""
               echo "=== SYSTEM MEMORY ==="
               free -h || true
+
               echo ""
-              echo "=== SWAP STATUS ==="
+              echo "=== SWAP ==="
               swapon --show || true
+
               echo ""
-              echo "=== CGROUP MEMORY STATUS ==="
-              systemctl show "user-$(id -u).slice" -p MemoryMax -p MemoryHigh -p MemoryCurrent 2>/dev/null || true
-              if [ -f "/sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.max" ]; then
-                echo "cgroup memory.max: $(cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.max 2>/dev/null)"
-                echo "cgroup memory.current: $(cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.current 2>/dev/null)"
-              fi
-              echo ""
-              echo "=== DISK USAGE ==="
+              echo "=== DISK ==="
               df -h || true
+
               echo ""
-              echo "=== PM2 STATUS ==="
+              echo "=== NODE ==="
+              node -v || true
+
+              echo ""
+              echo "=== PNPM ==="
+              pnpm -v || true
+
+              echo ""
+              echo "=== PM2 ==="
               pm2 status || true
+
               echo ""
               echo "=== TOP MEMORY PROCESSES ==="
-              ps aux --sort=-%mem 2>/dev/null | awk '{print $1, $2, $3, $4, $5, $6, $11}' | head -20 || true
+              ps aux --sort=-%mem 2>/dev/null \
+                | awk '{print $1, $2, $3, $4, $5, $6, $11}' \
+                | head -20 || true
+
               echo ""
-              echo "=== RECENT KERNEL / OOM DIAGNOSTICS ==="
-              if command -v dmesg >/dev/null 2>&1; then
-                sudo dmesg -T 2>/dev/null | grep -i -E "oom|killed process|out of memory|task_memcg" | tail -n 25 || true
+              echo "=== CGROUP MEMORY ==="
+
+              if [ -f "/sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.max" ]; then
+                echo "memory.max:"
+                cat "/sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.max" || true
+
+                echo "memory.current:"
+                cat "/sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.current" || true
               fi
-              print_summary
-              exit $exit_code
+
+              echo ""
+              echo "=== RECENT OOM EVENTS ==="
+
+              sudo dmesg -T 2>/dev/null \
+                | grep -i -E \
+                  "oom|out of memory|killed process|task_memcg" \
+                | tail -25 || true
+
+              echo ""
+              echo "========================================"
             }
-            trap handle_failure ERR
+
+            failure_handler() {
+              local exit_code=$?
+
+              echo ""
+              echo "========================================"
+              echo "       DEPLOYMENT FAILED"
+              echo "       EXIT CODE: $exit_code"
+              echo "========================================"
+
+              diagnostic
+
+              echo ""
+              echo "IMPORTANT: Production processes were NOT intentionally stopped."
+
+              print_summary
+
+              exit "$exit_code"
+            }
+
+            trap failure_handler ERR
 
             echo "========================================"
             echo "       Starting BornoLand deployment"
             echo "========================================"
 
-            # ----------------------------------------------------
-            # 1. SSH to EC2 & navigate to repo
-            # ----------------------------------------------------
+            # ====================================================
+            # 1. Repository
+            # ====================================================
+
             cd ~/bornoLand-sass
 
-            # ----------------------------------------------------
-            # 2. Fetch latest code
-            # ----------------------------------------------------
             echo ""
-            echo "=== 2. Fetch latest code ==="
+            echo "=== 1. Fetch latest code ==="
+
             git fetch origin main
             git checkout main
             git reset --hard origin/main
 
-            # ----------------------------------------------------
-            # 2.1 Ensure swap space exists to prevent OOM kills
-            # ----------------------------------------------------
+            # ====================================================
+            # 2. Swap
+            # ====================================================
+
             echo ""
-            echo "=== 2.1 Ensure server swap configuration ==="
+            echo "=== 2. Verify swap ==="
+
             if [ "$(swapon --show --noheadings 2>/dev/null | wc -l)" -eq 0 ]; then
-              echo "  No active swap detected on EC2. Creating 2GB swapfile..."
+
+              echo "No active swap detected."
+
               if [ ! -f /swapfile ]; then
-                sudo fallocate -l 2G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+                sudo fallocate -l 2G /swapfile \
+                  || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+
                 sudo chmod 600 /swapfile
                 sudo mkswap /swapfile
               fi
-              sudo swapon /swapfile 2>/dev/null || true
+
+              sudo swapon /swapfile || true
+
               if ! grep -q '/swapfile' /etc/fstab 2>/dev/null; then
-                echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-              fi
-              echo "  ✓ Swap configured successfully"
-            else
-              echo "  ✓ Active swap detected"
-            fi
-
-            # ----------------------------------------------------
-            # 2.2 Inspect and lift systemd cgroup user slice limits
-            # ----------------------------------------------------
-            echo ""
-            echo "=== 2.2 Inspect systemd cgroup limits ==="
-            systemctl show "user-$(id -u).slice" -p MemoryMax -p MemoryHigh -p MemoryCurrent 2>/dev/null || true
-            if [ -f "/sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.max" ]; then
-              cgroup_max=$(cat "/sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.max" 2>/dev/null || echo "max")
-              cgroup_cur=$(cat "/sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.current" 2>/dev/null || echo "0")
-              echo "  cgroup memory.max: $cgroup_max"
-              echo "  cgroup memory.current: $cgroup_cur"
-              if [ "$cgroup_max" != "max" ] && [ -n "$cgroup_max" ]; then
-                echo "  Restricted cgroup limit detected on user slice ($cgroup_max bytes). Lifting to infinity..."
-                sudo systemctl set-property "user-$(id -u).slice" MemoryMax=infinity MemoryHigh=infinity 2>/dev/null || true
-                echo "  Updated memory.max: $(cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.max 2>/dev/null)"
+                echo '/swapfile none swap sw 0 0' \
+                  | sudo tee -a /etc/fstab >/dev/null
               fi
             fi
 
-            # ----------------------------------------------------
-            # 3. Install dependencies
-            # ----------------------------------------------------
+            swapon --show
+
+            # ====================================================
+            # 3. Dependencies
+            # ====================================================
+
             echo ""
             echo "=== 3. Install dependencies ==="
+
             pnpm install --frozen-lockfile
 
-            # ----------------------------------------------------
-            # 4. Clean local overrides and previous build artifacts
-            # ----------------------------------------------------
+            # ====================================================
+            # 4. Environment cleanup
+            # ====================================================
+
             echo ""
-            echo "=== 4. Clean environment & previous build artifacts ==="
+            echo "=== 4. Clean production overrides ==="
+
             rm -f apps/web/.env.local
-            rm -rf apps/api/dist apps/web/.next
 
-            # ----------------------------------------------------
-            # 5. Pre-build system diagnostics
-            # ----------------------------------------------------
+            # IMPORTANT:
+            # Do NOT delete existing production artifacts before
+            # the new build succeeds.
+            #
+            # This keeps the currently running application safe
+            # if compilation fails.
+
+            # ====================================================
+            # 5. Diagnostics
+            # ====================================================
+
             echo ""
-            echo "=== 5. Pre-build system diagnostics ==="
+            echo "=== 5. Build environment ==="
+
             echo "Architecture: $(uname -m)"
-            echo "Node version: $(node -v)"
-            echo "pnpm version: $(pnpm -v)"
-            echo "esbuild version: $(cd apps/api && pnpm exec esbuild --version 2>/dev/null || true)"
+            echo "Node: $(node -v)"
+            echo "PNPM: $(pnpm -v)"
+
             echo ""
-            echo "Memory status:"
+            echo "=== Memory ==="
             free -h
-            echo ""
-            echo "Swap status:"
-            swapon --show
-            echo ""
-            echo "Disk status:"
-            df -h
-            echo ""
-            echo "PM2 process status & memory before stopping:"
-            pm2 status || true
-            echo ""
-            echo "Top memory-consuming processes:"
-            ps aux --sort=-%mem 2>/dev/null | awk '{print $1, $2, $3, $4, $5, $6, $11}' | head -20 || true
 
-            # ----------------------------------------------------
-            # 6. Stop PM2 processes to free memory for compilation
-            # ----------------------------------------------------
             echo ""
-            echo "=== 6. Stop PM2 processes to free memory for compilation ==="
-            pm2 stop bornoland-api bornoland-web || true
-            PM2_STATUS="STOPPED"
+            echo "=== esbuild preflight ==="
 
-            # ----------------------------------------------------
-            # 7. Build API FIRST (Low-memory sequential build)
-            # ----------------------------------------------------
+            cd apps/api
+
+            ESBUILD_BIN="./node_modules/.bin/esbuild"
+
+            if [ ! -x "$ESBUILD_BIN" ]; then
+              echo "ERROR: esbuild binary not found:"
+              echo "$ESBUILD_BIN"
+              exit 1
+            fi
+
+            echo "esbuild path:"
+            readlink -f "$ESBUILD_BIN"
+
             echo ""
-            echo "=== 7. Build API (sequential step 1) ==="
-            echo "Memory before API build:"
-            free -h
-            swapon --show
+            echo "esbuild version:"
 
-            if ! pnpm --filter @bornoland/api build; then
+            "$ESBUILD_BIN" --version
+
+            echo ""
+            echo "esbuild package version:"
+
+            node -p "require('esbuild/package.json').version"
+
+            echo ""
+            echo "tsup version:"
+
+            pnpm exec tsup --version
+
+            cd ../..
+
+            # ====================================================
+            # 6. API build
+            # ====================================================
+
+            echo ""
+            echo "========================================"
+            echo "       BUILDING API"
+            echo "========================================"
+
+            cd apps/api
+
+            # Use the previously known-working explicit command.
+            # Do NOT depend on a potentially broken tsup config.
+
+            if pnpm exec tsup \
+              src/index.ts \
+              --format esm \
+              --out-dir dist \
+              --clean \
+              --no-splitting
+            then
+              BUILD_API_STATUS="SUCCESS"
               echo ""
-              echo "  ✗ API BUILD FAILED!"
+              echo "✓ API build successful"
+            else
               BUILD_API_STATUS="FAILED"
-              BUILD_WEB_STATUS="SKIPPED"
-              NGINX_STATUS="SKIPPED"
-              PM2_STATUS="STOPPED"
-              HEALTH_STATUS="SKIPPED"
+
               echo ""
-              echo "=== Memory diagnostics after failure ==="
-              free -h || true
-              swapon --show || true
+              echo "✗ API BUILD FAILED"
               echo ""
-              echo "=== Recent kernel OOM diagnostics ==="
-              if command -v dmesg >/dev/null 2>&1; then
-                sudo dmesg -T 2>/dev/null | grep -i -E "oom|killed process|out of memory|task_memcg" | tail -n 25 || true
-              fi
-              print_summary
+              echo "Production PM2 processes were never stopped."
+              echo "Existing production artifacts remain untouched."
+
               exit 1
             fi
-            BUILD_API_STATUS="SUCCESS"
-            echo "  ✓ API built successfully"
 
-            # ----------------------------------------------------
-            # 8. Build Web SECOND (Low-memory sequential build)
-            # ----------------------------------------------------
-            echo ""
-            echo "=== 8. Build Web (sequential step 2) ==="
-            echo "Memory before Web build:"
-            free -h
-            swapon --show
+            # Verify API artifact
 
-            if ! pnpm --filter @bornoland/web build; then
+            if [ ! -f dist/index.js ]; then
               echo ""
-              echo "  ✗ WEB BUILD FAILED!"
+              echo "✗ API build completed but dist/index.js was not generated."
+              exit 1
+            fi
+
+            echo ""
+            echo "API artifact:"
+            ls -lah dist | head -30
+
+            cd ../..
+
+            # ====================================================
+            # 7. Web build
+            # ====================================================
+
+            echo ""
+            echo "========================================"
+            echo "       BUILDING WEB"
+            echo "========================================"
+
+            cd apps/web
+
+            if pnpm build; then
+              BUILD_WEB_STATUS="SUCCESS"
+              echo ""
+              echo "✓ Web build successful"
+            else
               BUILD_WEB_STATUS="FAILED"
-              NGINX_STATUS="SKIPPED"
-              PM2_STATUS="STOPPED"
-              HEALTH_STATUS="SKIPPED"
+
               echo ""
-              echo "=== Memory diagnostics after failure ==="
-              free -h || true
-              swapon --show || true
+              echo "✗ WEB BUILD FAILED"
               echo ""
-              echo "=== Recent kernel OOM diagnostics ==="
-              if command -v dmesg >/dev/null 2>&1; then
-                sudo dmesg -T 2>/dev/null | grep -i -E "oom|killed process|out of memory|task_memcg" | tail -n 25 || true
-              fi
-              print_summary
+              echo "Production PM2 processes were never stopped."
+
               exit 1
             fi
-            BUILD_WEB_STATUS="SUCCESS"
-            echo "  ✓ Web built successfully"
 
-            # ----------------------------------------------------
-            # 9. Safely install Nginx configuration
-            # ----------------------------------------------------
+            cd ../..
+
+            # ====================================================
+            # 8. Validate build artifacts
+            # ====================================================
+
             echo ""
-            echo "=== 9. Safely install Nginx configuration ==="
+            echo "=== 8. Validate production artifacts ==="
+
+            if [ ! -f apps/api/dist/index.js ]; then
+              echo "✗ Missing API production artifact."
+              exit 1
+            fi
+
+            if [ ! -d apps/web/.next ]; then
+              echo "✗ Missing Next.js production artifact."
+              exit 1
+            fi
+
+            echo "✓ API artifact exists"
+            echo "✓ Next.js artifact exists"
+
+            # ====================================================
+            # 9. Nginx configuration validation
+            # ====================================================
+
+            echo ""
+            echo "========================================"
+            echo "       VALIDATING NGINX"
+            echo "========================================"
 
             SSL_CERT="/etc/letsencrypt/live/bornosoft.site/fullchain.pem"
             SSL_KEY="/etc/letsencrypt/live/bornosoft.site/privkey.pem"
 
-            # Verify that SSL certificates exist (using sudo to access root-owned letsencrypt directory)
-            if ! sudo test -f "$SSL_CERT" || ! sudo test -f "$SSL_KEY"; then
-              echo "  ✗ ERROR: SSL certificate or key not found at $SSL_CERT / $SSL_KEY!"
-              echo "  Cannot install production Nginx configuration without valid SSL certificate files."
-              NGINX_STATUS="FAILED"
-              PM2_STATUS="STOPPED"
-              HEALTH_STATUS="SKIPPED"
-              print_summary
+            if ! sudo test -f "$SSL_CERT"; then
+              echo "✗ SSL certificate missing:"
+              echo "$SSL_CERT"
               exit 1
             fi
-            echo "  ✓ Confirmed SSL certificate and key exist at $SSL_CERT"
 
-            # Atomic backup: preserve existing working configuration before replacing
-            if [ -f /etc/nginx/sites-available/bornosoft.site ]; then
-              sudo cp /etc/nginx/sites-available/bornosoft.site /etc/nginx/sites-available/bornosoft.site.bak
+            if ! sudo test -f "$SSL_KEY"; then
+              echo "✗ SSL private key missing:"
+              echo "$SSL_KEY"
+              exit 1
             fi
 
-            # Copy clean repository Nginx configuration
-            sudo cp nginx/bornosoft.site.conf /etc/nginx/sites-available/bornosoft.site
+            NGINX_CONFIG="/etc/nginx/sites-available/bornosoft.site"
+            NGINX_BACKUP="/etc/nginx/sites-available/bornosoft.site.bak"
 
-            # Create / update symlink to sites-enabled
-            sudo ln -sf /etc/nginx/sites-available/bornosoft.site /etc/nginx/sites-enabled/bornosoft.site
+            # Backup current working configuration
 
-            # Remove default Nginx site symlink if present
+            if [ -f "$NGINX_CONFIG" ]; then
+              sudo cp "$NGINX_CONFIG" "$NGINX_BACKUP"
+            fi
+
+            # Install repository configuration
+
+            sudo cp \
+              nginx/bornosoft.site.conf \
+              "$NGINX_CONFIG"
+
+            sudo ln -sf \
+              "$NGINX_CONFIG" \
+              /etc/nginx/sites-enabled/bornosoft.site
+
             if [ -L /etc/nginx/sites-enabled/default ]; then
-              echo "  Removing default Nginx installation symlink"
               sudo rm -f /etc/nginx/sites-enabled/default
             fi
 
-            # ----------------------------------------------------
-            # 10. Validate Nginx configuration
-            # ----------------------------------------------------
-            echo ""
-            echo "=== 10. Validate Nginx configuration ==="
-            if ! sudo nginx -t; then
-              echo ""
-              echo "  ✗ NGINX CONFIGURATION VALIDATION FAILED!"
-              echo "  Rolling back to previous Nginx configuration..."
-              if [ -f /etc/nginx/sites-available/bornosoft.site.bak ]; then
-                sudo cp /etc/nginx/sites-available/bornosoft.site.bak /etc/nginx/sites-available/bornosoft.site
-                sudo ln -sf /etc/nginx/sites-available/bornosoft.site /etc/nginx/sites-enabled/bornosoft.site
-                echo "  Restored previous working Nginx configuration."
+            # Validate BEFORE reload
+
+            if sudo nginx -t; then
+
+              echo "✓ Nginx configuration valid"
+
+              sudo systemctl reload nginx
+
+              NGINX_STATUS="SUCCESS"
+
+              sudo rm -f "$NGINX_BACKUP"
+
+            else
+
+              echo "✗ Nginx validation failed"
+
+              if [ -f "$NGINX_BACKUP" ]; then
+
+                sudo cp \
+                  "$NGINX_BACKUP" \
+                  "$NGINX_CONFIG"
+
+                sudo ln -sf \
+                  "$NGINX_CONFIG" \
+                  /etc/nginx/sites-enabled/bornosoft.site
+
                 sudo nginx -t || true
+
+                echo "✓ Previous Nginx configuration restored"
               fi
-              echo "  Aborting deployment without reloading Nginx or starting PM2."
+
               NGINX_STATUS="FAILED"
-              PM2_STATUS="STOPPED"
-              HEALTH_STATUS="SKIPPED"
-              print_summary
+
               exit 1
             fi
-            echo "  ✓ Nginx configuration syntax is valid"
 
-            # Clean up backup file now that validation succeeded
-            sudo rm -f /etc/nginx/sites-available/bornosoft.site.bak
+            # ====================================================
+            # 10. Restart application
+            # ====================================================
 
-            # ----------------------------------------------------
-            # 11. Reload Nginx
-            # ----------------------------------------------------
             echo ""
-            echo "=== 11. Reload Nginx ==="
-            sudo systemctl reload nginx
-            echo "  ✓ Nginx reloaded successfully"
-            NGINX_STATUS="SUCCESS"
+            echo "========================================"
+            echo "       STARTING APPLICATION"
+            echo "========================================"
 
-            # ----------------------------------------------------
-            # 12. Restart PM2 processes
-            # ----------------------------------------------------
-            echo ""
-            echo "=== 12. Restart PM2 processes ==="
+            # PM2 was never stopped during compilation.
+            # Restart only after BOTH builds succeeded.
+
             pm2 restart bornoland-api --update-env
             pm2 restart bornoland-web --update-env
 
-            # ----------------------------------------------------
-            # 13. Save PM2 configuration
-            # ----------------------------------------------------
-            echo ""
-            echo "=== 13. Save PM2 configuration ==="
             pm2 save
-            pm2 status
+
             PM2_STATUS="SUCCESS"
 
-            # ----------------------------------------------------
-            # 14. Health tests
-            # ----------------------------------------------------
             echo ""
-            echo "=== 14. Running health tests ==="
+            echo "✓ PM2 restarted"
+
+            pm2 status
+
+            # ====================================================
+            # 11. Health checks
+            # ====================================================
+
+            echo ""
+            echo "========================================"
+            echo "       HEALTH CHECKS"
+            echo "========================================"
 
             run_health_check() {
+
               local name="$1"
-              local cmd="$2"
-              local max_retries=20
+              local command="$2"
+
+              local max_retries=30
               local count=1
 
+              echo ""
               echo "Checking $name..."
 
-              while [ $count -le $max_retries ]; do
-                if eval "$cmd" >/dev/null 2>&1; then
-                  echo "  ✓ $name is healthy (attempt $count)"
+              while [ "$count" -le "$max_retries" ]; do
+
+                if eval "$command" >/dev/null 2>&1; then
+
+                  echo "✓ $name healthy"
                   return 0
+
                 fi
+
                 sleep 1
                 count=$((count + 1))
+
               done
 
-              echo "  ✗ $name failed health check after $max_retries attempts!"
+              echo "✗ $name failed"
+
               return 1
             }
 
             failed=0
 
-            # 1. Direct Next.js check (port 3000)
-            run_health_check "Next.js Direct (127.0.0.1:3000)" "curl -fsS http://127.0.0.1:3000/" || failed=1
+            run_health_check \
+              "Next.js Direct" \
+              "curl -fsS http://127.0.0.1:3000/" \
+              || failed=1
 
-            # 2. Direct Express API check (port 4000)
-            run_health_check "Express API Direct (127.0.0.1:4000)" "curl -fsS http://127.0.0.1:4000/" || failed=1
+            run_health_check \
+              "Express API Direct" \
+              "curl -fsS http://127.0.0.1:4000/" \
+              || failed=1
 
-            # 3. Nginx HTTPS Root check (443 with SNI bornosoft.site)
-            run_health_check "Nginx HTTPS Root (bornosoft.site)" "curl -k -fsS --resolve bornosoft.site:443:127.0.0.1 https://bornosoft.site/" || failed=1
+            run_health_check \
+              "HTTPS Root" \
+              "curl -k -fsS --resolve bornosoft.site:443:127.0.0.1 https://bornosoft.site/" \
+              || failed=1
 
-            # 4. Nginx HTTPS Tenant check (443 with SNI nayeem.bornosoft.site)
-            run_health_check "Nginx HTTPS Tenant (nayeem.bornosoft.site)" "curl -k -fsS --resolve nayeem.bornosoft.site:443:127.0.0.1 https://nayeem.bornosoft.site/" || failed=1
+            run_health_check \
+              "HTTPS Tenant" \
+              "curl -k -fsS --resolve nayeem.bornosoft.site:443:127.0.0.1 https://nayeem.bornosoft.site/" \
+              || failed=1
 
-            # 5. Nginx HTTP -> HTTPS 301 redirect check (port 80)
-            run_health_check "Nginx HTTP to HTTPS 301 Redirect" 'test "$(curl -s -o /dev/null -w "%{http_code}" -H "Host: bornosoft.site" http://127.0.0.1/)" = "301"' || failed=1
+            run_health_check \
+              "HTTP HTTPS Redirect" \
+              'test "$(curl -s -o /dev/null -w "%{http_code}" -H "Host: bornosoft.site" http://127.0.0.1/)" = "301"' \
+              || failed=1
 
-            if [ $failed -ne 0 ]; then
-              echo ""
-              echo "========================================"
-              echo "        HEALTH CHECK FAILURE DIAGNOSTICS"
-              echo "========================================"
-              echo ""
-              echo "=== NGINX STATUS ==="
-              sudo systemctl status nginx --no-pager || true
-              echo ""
-              echo "=== PM2 STATUS ==="
-              pm2 status || true
-              echo ""
-              echo "=== RECENT NGINX ERROR LOG ==="
-              sudo tail -n 50 /var/log/nginx/error.log || true
-              echo ""
-              echo "=== RECENT PM2 WEB LOGS ==="
-              pm2 logs bornoland-web --lines 50 --nostream || true
-              echo ""
-              echo "=== RECENT PM2 API LOGS ==="
-              pm2 logs bornoland-api --lines 50 --nostream || true
-              echo ""
+            if [ "$failed" -ne 0 ]; then
+
               HEALTH_STATUS="FAILED"
-              print_summary
-              echo "Deployment failed due to health check errors!"
+
+              echo ""
+              echo "========================================"
+              echo "       HEALTH CHECK FAILED"
+              echo "========================================"
+
+              sudo systemctl status nginx --no-pager || true
+
+              echo ""
+              echo "=== PM2 ==="
+              pm2 status || true
+
+              echo ""
+              echo "=== API LOGS ==="
+              pm2 logs bornoland-api --lines 50 --nostream || true
+
+              echo ""
+              echo "=== WEB LOGS ==="
+              pm2 logs bornoland-web --lines 50 --nostream || true
+
+              echo ""
+              echo "=== NGINX ERROR LOG ==="
+              sudo tail -n 50 /var/log/nginx/error.log || true
+
               exit 1
             fi
 
             HEALTH_STATUS="SUCCESS"
+
+            # ====================================================
+            # 12. Final status
+            # ====================================================
+
             print_summary
 
+            echo ""
             echo "========================================"
             echo "       DEPLOYMENT SUCCESS"
             echo "========================================"

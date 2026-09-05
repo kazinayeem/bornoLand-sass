@@ -7,7 +7,9 @@ import { useGetStoreBySlugQuery } from "@/redux/api/store-api";
 import {
   useGetMySelfServiceProfileQuery,
   useUpdateMySelfServiceProfileMutation,
+  useGetMyIdCardQuery,
 } from "@/redux/api/hrm-api";
+import { EmployeeIdCardModal } from "@/components/hrm/employee-id-card-modal";
 import { useLanguage } from "@/providers/language-provider";
 import {
   UserCheck,
@@ -22,6 +24,7 @@ import {
   Loader2,
   Save,
   CheckCircle2,
+  IdCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,9 +42,13 @@ export default function MyProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isIdCardOpen, setIsIdCardOpen] = useState(false);
 
   const { data: profileData, isLoading, refetch } = useGetMySelfServiceProfileQuery(storeId, {
     skip: !storeId,
+  });
+  const { data: idCardData, isLoading: isLoadingIdCard } = useGetMyIdCardQuery(storeId, {
+    skip: !isIdCardOpen || !storeId,
   });
   const [updateProfile, { isLoading: isUpdating }] = useUpdateMySelfServiceProfileMutation();
 
@@ -152,6 +159,15 @@ export default function MyProfilePage() {
             Manage your personal contact details, emergency contacts, and profile photo.
           </p>
         </div>
+
+        <Button
+          type="button"
+          onClick={() => setIsIdCardOpen(true)}
+          className="gap-2 bg-[#003399] hover:bg-[#002B80] text-white font-semibold text-xs shadow-xs"
+        >
+          <IdCard className="h-4 w-4" />
+          <span>View My ID Card</span>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -208,9 +224,20 @@ export default function MyProfilePage() {
                 {employee?.designationId?.name || "Team Member"} • {employee?.departmentId?.name || "General"}
               </p>
               <span className="inline-block mt-2 font-mono text-xs font-bold bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md text-zinc-700 dark:text-zinc-300">
-                ID: {employee?.employeeCode}
+                {employee?.employeeCode}
               </span>
             </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsIdCardOpen(true)}
+              className="w-full gap-2 border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 font-semibold text-xs mt-2"
+            >
+              <IdCard className="h-4 w-4" />
+              <span>Digital Staff ID Card</span>
+            </Button>
 
             <div className="w-full pt-4 border-t border-zinc-100 dark:border-zinc-800 text-xs space-y-2">
               <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
@@ -381,6 +408,14 @@ export default function MyProfilePage() {
           </Card>
         </div>
       </div>
+
+      <EmployeeIdCardModal
+        open={isIdCardOpen}
+        onClose={() => setIsIdCardOpen(false)}
+        cardData={idCardData?.data}
+        isLoading={isLoadingIdCard}
+        storeSlug={storeSlug}
+      />
     </div>
   );
 }

@@ -4,7 +4,11 @@ import { useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useGetStoreBySlugQuery } from "@/redux/api/store-api";
-import { useGetMyDocumentsQuery } from "@/redux/api/hrm-api";
+import {
+  useGetMyDocumentsQuery,
+  useGetMyIdCardQuery,
+} from "@/redux/api/hrm-api";
+import { EmployeeIdCardModal } from "@/components/hrm/employee-id-card-modal";
 import { useLanguage } from "@/providers/language-provider";
 import {
   FileText,
@@ -16,6 +20,8 @@ import {
   Loader2,
   FileCheck,
   Calendar,
+  IdCard,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,9 +57,13 @@ export default function MyDocumentsPage() {
   const [docType, setDocType] = useState("certificate");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isIdCardOpen, setIsIdCardOpen] = useState(false);
 
   const { data: docsData, isLoading, refetch } = useGetMyDocumentsQuery(storeId, {
     skip: !storeId,
+  });
+  const { data: idCardData, isLoading: isLoadingIdCard } = useGetMyIdCardQuery(storeId, {
+    skip: !isIdCardOpen || !storeId,
   });
 
   const documents = docsData?.data?.documents ?? [];
@@ -132,6 +142,35 @@ export default function MyDocumentsPage() {
         >
           <Upload className="h-4 w-4" />
           <span>Upload Document</span>
+        </Button>
+      </div>
+
+      {/* Featured Official Staff ID Card */}
+      <div className="rounded-2xl bg-gradient-to-r from-blue-900 to-indigo-950 text-white p-5 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-blue-800/60">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-white border border-white/20 backdrop-blur-xs shrink-0">
+            <IdCard className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-white">Staff Identity Card (CR80)</h2>
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-400/30">
+                Official
+              </span>
+            </div>
+            <p className="text-xs text-blue-200 mt-0.5">
+              Digital identification card with QR verification seal, physical CR80 dimensions, and print layout.
+            </p>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          onClick={() => setIsIdCardOpen(true)}
+          className="bg-white hover:bg-blue-50 text-blue-950 font-bold text-xs gap-2 shrink-0 shadow-sm"
+        >
+          <IdCard className="h-4 w-4 text-blue-900" />
+          <span>View ID Card</span>
         </Button>
       </div>
 
@@ -290,6 +329,14 @@ export default function MyDocumentsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <EmployeeIdCardModal
+        open={isIdCardOpen}
+        onClose={() => setIsIdCardOpen(false)}
+        cardData={idCardData?.data}
+        isLoading={isLoadingIdCard}
+        storeSlug={storeSlug}
+      />
     </div>
   );
 }

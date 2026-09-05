@@ -21,7 +21,7 @@ interface EmployeeVerifyClientProps {
 }
 
 export function EmployeeVerifyClient({ data, token }: EmployeeVerifyClientProps) {
-  if (!data || !data.verified) {
+  if (!data || !data.verifiedAt) {
     return (
       <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center p-4">
         <div className="max-w-md w-full rounded-2xl bg-white dark:bg-zinc-900 shadow-xl border border-red-200 dark:border-red-950 p-6 sm:p-8 text-center animate-in fade-in zoom-in-95">
@@ -57,7 +57,7 @@ export function EmployeeVerifyClient({ data, token }: EmployeeVerifyClientProps)
 
   const { employee, store, verifiedAt } = data;
   const brandColor = store.brandColor || "#003399";
-  const initials = `${employee.firstName[0] || ""}${employee.lastName[0] || ""}`.toUpperCase() || "EM";
+  const initials = employee.fullName ? employee.fullName.slice(0, 2).toUpperCase() : "EM";
 
   return (
     <main className="min-h-screen bg-zinc-100/70 dark:bg-zinc-950 flex flex-col items-center justify-center p-4 sm:p-6">

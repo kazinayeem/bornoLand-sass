@@ -15,7 +15,9 @@ import {
   useGetEmployeeDocumentsAdminQuery,
   useUploadEmployeeDocumentAdminMutation,
   useGetDailyAttendanceQuery,
+  useGetEmployeeIdCardQuery,
 } from "@/redux/api/hrm-api";
+import { EmployeeIdCardModal } from "./employee-id-card-modal";
 import {
   Dialog,
   DialogContent,
@@ -57,6 +59,7 @@ import {
   Lock,
   History,
   ShieldCheck,
+  IdCard,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -77,12 +80,14 @@ export function EmployeeDetailDialog({
   onOpenChange,
   employee,
   storeId,
+  storeSlug,
   departments = [],
   designations = [],
   shifts = [],
   onEmployeeUpdated,
 }: EmployeeDetailDialogProps) {
   const [activeTab, setActiveTab] = useState("overview");
+  const [isIdCardOpen, setIsIdCardOpen] = useState(false);
 
   // Profile Edit states
   const [editFirstName, setEditFirstName] = useState("");
@@ -137,6 +142,11 @@ export function EmployeeDetailDialog({
   const { data: attData } = useGetDailyAttendanceQuery(
     { storeId },
     { skip: !open || !storeId }
+  );
+
+  const { data: idCardData, isLoading: isLoadingIdCard } = useGetEmployeeIdCardQuery(
+    { storeSlug, employeeId: empId },
+    { skip: !isIdCardOpen || !storeSlug || !empId }
   );
 
   // Mutations
@@ -256,7 +266,8 @@ export function EmployeeDetailDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
         {/* Top Header Identity Banner */}
         <div className="p-6 bg-zinc-50 border-b border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800">
@@ -298,11 +309,24 @@ export function EmployeeDetailDialog({
               </div>
             </div>
 
-            <div className="text-right text-xs">
-              <span className="text-zinc-400 block font-medium">Monthly Gross</span>
-              <span className="text-lg font-bold font-mono text-[#003399] dark:text-blue-400">
-                ৳{(employee.salaryStructure?.grossSalary || employee.salaryStructure?.basic || 0).toLocaleString()}
-              </span>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setIsIdCardOpen(true)}
+                className="gap-1.5 border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 hover:text-blue-800"
+              >
+                <IdCard className="h-4 w-4" />
+                <span>ID Card</span>
+              </Button>
+
+              <div className="text-right text-xs">
+                <span className="text-zinc-400 block font-medium">Monthly Gross</span>
+                <span className="text-lg font-bold font-mono text-[#003399] dark:text-blue-400">
+                  ৳{(employee.salaryStructure?.grossSalary || employee.salaryStructure?.basic || 0).toLocaleString()}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -799,5 +823,16 @@ export function EmployeeDetailDialog({
         </Tabs>
       </DialogContent>
     </Dialog>
+
+    <EmployeeIdCardModal
+      open={isIdCardOpen}
+      onClose={() => setIsIdCardOpen(false)}
+      cardData={idCardData?.data}
+      isLoading={isLoadingIdCard}
+      storeSlug={storeSlug}
+      employeeId={empId}
+      canUploadPhoto={true}
+    />
+  </>
   );
 }

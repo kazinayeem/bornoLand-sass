@@ -22,6 +22,19 @@ echo "  BornoLand Deploy"
 echo "  $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 echo "========================================="
 
+# ── Ensure correct Node version ──────────────────────────────────────────
+# esbuild 0.27.7 requires Node 22 LTS. Node 24 breaks the native binary.
+export NVM_DIR="$HOME/.nvm"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  . "$NVM_DIR/nvm.sh"
+  nvm use 22 || nvm install 22
+fi
+echo "Node: $(node --version)"
+echo "pnpm: $(pnpm --version)"
+
+# Limit Node heap to prevent OOM during builds on small EC2
+export NODE_OPTIONS="--max-old-space-size=2048"
+
 # ── 1. Git pull ──────────────────────────────────────────────────────────
 echo ""
 echo "--- Step 1: Git pull ---"

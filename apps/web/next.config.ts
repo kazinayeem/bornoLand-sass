@@ -85,6 +85,10 @@ const nextConfig: NextConfig = {
         // Browser clients should use NEXT_PUBLIC_API_URL=/api (same-origin).
         destination: `${backendUrl}/:path*`,
       },
+      {
+        source: "/uploads/:path*",
+        destination: `${backendUrl}/uploads/:path*`,
+      },
     ];
   },
 };

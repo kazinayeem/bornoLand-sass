@@ -13,8 +13,22 @@ export function getStoreDisplayName(store?: Pick<Store, "name" | "shortName"> | 
   return store?.shortName?.trim() || store?.name || "Store";
 }
 
-export function getStoreLogoUrl(store?: Pick<Store, "logoUrl"> | null) {
-  return resolveMediaUrl(store?.logoUrl);
+export function getStoreLogoUrl(
+  store?: (Partial<Store> & {
+    logo?: string;
+    branding?: { logoUrl?: string; logo?: string };
+  }) | null
+) {
+  if (!store) return "";
+  const raw =
+    store.logoUrl ||
+    store.logo ||
+    store.branding?.logoUrl ||
+    store.branding?.logo ||
+    (typeof store.logoMediaId === "object" && store.logoMediaId !== null
+      ? (store.logoMediaId as any).publicUrl || (store.logoMediaId as any).thumbnailUrl
+      : "");
+  return resolveMediaUrl(raw);
 }
 
 export function getStoreFaviconUrl(store?: Pick<Store, "faviconUrl" | "logoUrl"> | null) {

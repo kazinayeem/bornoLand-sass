@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -15,6 +16,7 @@ import {
   Globe,
   HardDrive,
   LayoutGrid,
+  Loader2,
   MoreHorizontal,
   Pencil,
   RefreshCcw,
@@ -39,9 +41,51 @@ import {
   type StoreStatus,
 } from "@/lib/store-status";
 import { STORE_TYPES } from "@/lib/store-types";
+import { getStoreLogoUrl } from "@/lib/store-branding";
 import { useUpdateStoreMutation } from "@/redux/api/store-api";
 import { DropdownMenu, type DropdownItem } from "@/components/ui/dropdown-menu";
 import { useLanguage } from "@/providers/language-provider";
+
+function StoreCardLogo({ store }: { store: StoreType }) {
+  const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  const logoUrl = getStoreLogoUrl(store);
+
+  useEffect(() => {
+    setHasError(false);
+    setIsLoaded(false);
+  }, [logoUrl]);
+
+  const initials = (store.name || "S").slice(0, 2).toUpperCase();
+
+  const fallback = (
+    <span className="flex h-full w-full items-center justify-center text-base font-black text-white select-none">
+      {initials}
+    </span>
+  );
+
+  if (!logoUrl || hasError) {
+    return fallback;
+  }
+
+  return (
+    <>
+      {!isLoaded && fallback}
+      <img
+        src={logoUrl}
+        alt={store.name || "Store"}
+        className={`h-full w-full object-cover transition-opacity duration-200 ${
+          isLoaded ? "opacity-100" : "opacity-0 absolute inset-0"
+        }`}
+        onLoad={() => setIsLoaded(true)}
+        onError={() => setHasError(true)}
+        loading="lazy"
+        decoding="async"
+      />
+    </>
+  );
+}
 
 type StoreCardProps = {
   store: StoreType;
@@ -200,6 +244,24 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
   const planName = getPlanName(store.planId, store.plan);
   const storeUrl = getStoreUrl(store);
   const status = resolveStoreStatus(store);
+  const [isOpeningDashboard, setIsOpeningDashboard] = useState(false);
+
+  useEffect(() => {
+    if (store.slug) {
+      router.prefetch(`/store/${store.slug}/dashboard`);
+    }
+  }, [router, store.slug]);
+
+  const handleOpenDashboard = useCallback(() => {
+    if (isOpeningDashboard) return;
+    setIsOpeningDashboard(true);
+    try {
+      router.push(`/store/${store.slug}/dashboard`);
+    } catch {
+      setIsOpeningDashboard(false);
+      toast.error(isBn ? "ড্যাশবোর্ড খুলতে ব্যর্থ হয়েছে" : "Failed to open dashboard");
+    }
+  }, [isOpeningDashboard, router, store.slug, isBn]);
   const statusConfig = storeStatusConfig[status];
   const selectedPlan = plans.find(
     (p) => p._id === (store.planId && typeof store.planId === "object" ? store.planId._id : "")
@@ -253,13 +315,7 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
         <div className="relative flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white/10 ring-2 ring-white/20 shadow-lg">
-              {store.logoUrl ? (
-                <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
-              ) : (
-                <span className="flex h-full w-full items-center justify-center text-base font-black text-white">
-                  {(store.name || "S").slice(0, 2).toUpperCase()}
-                </span>
-              )}
+              <StoreCardLogo store={store} />
             </div>
             <div className="min-w-0">
               <h3 className="truncate text-base font-bold leading-tight text-white">
@@ -376,10 +432,21 @@ export function StoreCard({ store, plans, index, onManage, onDelete }: StoreCard
             </button>
             <button
               type="button"
-              onClick={() => router.push(`/store/${store.slug}/dashboard`)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-apple-pill border border-apple-hairline bg-white px-4 py-2 text-xs font-semibold text-apple-ink transition-all hover:bg-apple-canvas-parchment active:scale-[0.98]"
+              disabled={isOpeningDashboard}
+              onClick={handleOpenDashboard}
+              className="inline-flex items-center justify-center gap-1.5 rounded-apple-pill border border-apple-hairline bg-white px-4 py-2 text-xs font-semibold text-apple-ink transition-all hover:bg-apple-canvas-parchment active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-80"
             >
-              <LayoutGrid className="h-3.5 w-3.5" /> {isBn ? "ড্যাশবোর্ড" : "Dashboard"}
+              {isOpeningDashboard ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-apple-ink" />
+                  <span>{isBn ? "খুলছে..." : "Opening..."}</span>
+                </>
+              ) : (
+                <>
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  <span>{isBn ? "ড্যাশবোর্ড" : "Dashboard"}</span>
+                </>
+              )}
             </button>
           </div>
 

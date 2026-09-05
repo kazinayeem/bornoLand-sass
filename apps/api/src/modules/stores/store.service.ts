@@ -462,8 +462,19 @@ export async function getUserStores(userId: string) {
   const stores = await StoreModel.find(storeFilter)
     .select("name slug subdomain description category storeType plan planId billingStatus subscriptionStatus renewalDate trialStartedAt trialEndsAt published allowNewOrders status logoUrl logoMediaId faviconUrl faviconMediaId brandColor accentColor theme storageUsedBytes storageLimitBytes storageUpdatedAt createdAt updatedAt")
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
+    .populate("logoMediaId", "publicUrl thumbnailUrl")
+    .populate("faviconMediaId", "publicUrl thumbnailUrl")
     .sort({ createdAt: -1 })
     .lean();
+
+  for (const s of stores as any[]) {
+    if (!s.logoUrl && s.logoMediaId && typeof s.logoMediaId === "object") {
+      s.logoUrl = s.logoMediaId.publicUrl || s.logoMediaId.thumbnailUrl || "";
+    }
+    if (!s.faviconUrl && s.faviconMediaId && typeof s.faviconMediaId === "object") {
+      s.faviconUrl = s.faviconMediaId.publicUrl || s.faviconMediaId.thumbnailUrl || "";
+    }
+  }
 
   // Fire-and-forget expiry checks (non-blocking)
   Promise.all(stores.map((store) =>
@@ -512,8 +523,16 @@ export async function getStoreById(storeIdOrSlug: string, userId: string, userRo
     const store = await StoreModel.findOne(identifierCondition)
       .select(storeFields)
       .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
+      .populate("logoMediaId", "publicUrl thumbnailUrl")
+      .populate("faviconMediaId", "publicUrl thumbnailUrl")
       .lean();
     if (store) {
+      if (!(store as any).logoUrl && (store as any).logoMediaId && typeof (store as any).logoMediaId === "object") {
+        (store as any).logoUrl = (store as any).logoMediaId.publicUrl || (store as any).logoMediaId.thumbnailUrl || "";
+      }
+      if (!(store as any).faviconUrl && (store as any).faviconMediaId && typeof (store as any).faviconMediaId === "object") {
+        (store as any).faviconUrl = (store as any).faviconMediaId.publicUrl || (store as any).faviconMediaId.thumbnailUrl || "";
+      }
       applyTrialExpiryToStore(store as any).catch(() => {});
       applySubscriptionExpiryToStore(store as any).catch(() => {});
       const [hydrated] = await attachStoreMetrics([store as any]);
@@ -547,6 +566,8 @@ export async function getStoreById(storeIdOrSlug: string, userId: string, userRo
   })
     .select(storeFields)
     .populate("planId", "name slug priceBDT features limits trialDays isRecommended isActive")
+    .populate("logoMediaId", "publicUrl thumbnailUrl")
+    .populate("faviconMediaId", "publicUrl thumbnailUrl")
     .lean();
 
   if (!store) {
@@ -555,6 +576,13 @@ export async function getStoreById(storeIdOrSlug: string, userId: string, userRo
       return { ok: false as const, message: "Store access denied" };
     }
     return { ok: false as const, message: "Store not found" };
+  }
+
+  if (!(store as any).logoUrl && (store as any).logoMediaId && typeof (store as any).logoMediaId === "object") {
+    (store as any).logoUrl = (store as any).logoMediaId.publicUrl || (store as any).logoMediaId.thumbnailUrl || "";
+  }
+  if (!(store as any).faviconUrl && (store as any).faviconMediaId && typeof (store as any).faviconMediaId === "object") {
+    (store as any).faviconUrl = (store as any).faviconMediaId.publicUrl || (store as any).faviconMediaId.thumbnailUrl || "";
   }
 
   // Fire-and-forget expiry

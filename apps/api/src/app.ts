@@ -179,12 +179,13 @@ export const app: Express = express();
 
 app.set("trust proxy", 1);
 app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://picsum.photos", "https://placehold.co"],
+      imgSrc: ["'self'", "data:", "blob:", "*", "https://res.cloudinary.com", "https://picsum.photos", "https://placehold.co"],
       connectSrc: ["'self'"],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
@@ -209,7 +210,15 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/uploads", express.static(getUploadRoot()));
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    next();
+  },
+  express.static(getUploadRoot())
+);
 
 app.get(["/", "/health", "/api/health"], (_req, res) => {
   const dbState = mongoose.connection.readyState;

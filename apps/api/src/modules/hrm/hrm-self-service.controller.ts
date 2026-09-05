@@ -1,4 +1,4 @@
-import type { Response } from "express";
+import type { RequestHandler, Response } from "express";
 import mongoose from "mongoose";
 import multer from "multer";
 import path from "path";
@@ -25,7 +25,7 @@ function oid(id: string) {
 }
 
 // Multer in-memory upload configurations for profile photo and documents
-export const photoUploadMiddleware = multer({
+export const photoUploadMiddleware: RequestHandler = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (_req, file, cb) => {
@@ -36,9 +36,9 @@ export const photoUploadMiddleware = multer({
       cb(new Error("Only JPEG, PNG, and WebP images are allowed for profile photo"));
     }
   },
-}).single("photo");
+}).single("photo") as RequestHandler;
 
-export const documentUploadMiddleware = multer({
+export const documentUploadMiddleware: RequestHandler = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
   fileFilter: (_req, file, cb) => {
@@ -58,7 +58,7 @@ export const documentUploadMiddleware = multer({
       cb(new Error("Supported formats: PDF, DOCX, XLSX, JPEG, PNG, WebP"));
     }
   },
-}).single("file");
+}).single("file") as RequestHandler;
 
 /**
  * Helper to resolve the authenticated user's active Employee record within the store.

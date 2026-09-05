@@ -128,7 +128,7 @@ export default function MyTasksPage() {
                         <Badge
                           variant={
                             t.priority === "urgent"
-                              ? "destructive"
+                              ? "danger"
                               : t.priority === "high"
                               ? "warning"
                               : "default"

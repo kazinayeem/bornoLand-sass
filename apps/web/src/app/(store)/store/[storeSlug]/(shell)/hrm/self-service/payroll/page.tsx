@@ -186,53 +186,54 @@ export default function PayslipsPage() {
       </Card>
 
       {/* Payslip Document Preview Dialog */}
-      {selectedPayslip && (
+      {selectedPayslip && store && (
         <DocumentPreviewDialog
           open={Boolean(selectedPayslip)}
-          onOpenChange={(open) => !open && setSelectedPayslip(null)}
+          onClose={() => setSelectedPayslip(null)}
           title={`Payslip - ${new Date(selectedPayslip.year, selectedPayslip.month - 1).toLocaleString("default", { month: "long" })} ${selectedPayslip.year}`}
-          documentComponent={
-            <PayslipDocument
-              data={{
-                slipNumber: `PAY-${selectedPayslip.year}-${String(selectedPayslip.month).padStart(2, "0")}`,
-                period: `${new Date(selectedPayslip.year, selectedPayslip.month - 1).toLocaleString("default", { month: "long" })} ${selectedPayslip.year}`,
-                payDate: selectedPayslip.paymentDate
-                  ? new Date(selectedPayslip.paymentDate).toLocaleDateString()
-                  : new Date().toLocaleDateString(),
-                status: selectedPayslip.status as any,
-                store: {
-                  name: store?.name || "BornoLand Merchant",
-                  phone: store?.contactPhone || "",
-                  email: store?.contactEmail || "",
-                },
-                employee: {
-                  code: selectedPayslip.employeeId?.employeeCode || "EMP",
-                  name: `${selectedPayslip.employeeId?.firstName || ""} ${selectedPayslip.employeeId?.lastName || ""}`,
-                  department: "Department",
-                  designation: "Designation",
-                  joiningDate: selectedPayslip.employeeId?.joiningDate || "",
-                  bankName: bankInfo?.bankName || "Bank Transfer",
-                  accountNumber: bankInfo?.accountNumber || bankInfo?.mobileWalletNumber || "N/A",
-                },
-                earnings: [
-                  { label: "Basic Salary", amount: selectedPayslip.basicSalary || 0 },
-                  { label: "House Rent Allowance", amount: selectedPayslip.allowances?.houseRent || 0 },
-                  { label: "Medical Allowance", amount: selectedPayslip.allowances?.medical || 0 },
-                  { label: "Conveyance Allowance", amount: selectedPayslip.allowances?.conveyance || 0 },
-                  { label: "Other Allowances", amount: selectedPayslip.allowances?.other || 0 },
-                  { label: "Overtime Pay", amount: selectedPayslip.overtimePay || 0 },
-                ].filter((item) => item.amount > 0),
-                deductions: [
-                  { label: "Tax Deduction", amount: selectedPayslip.deductions?.tax || 0 },
-                  { label: "Provident Fund", amount: selectedPayslip.deductions?.providentFund || 0 },
-                  { label: "Late/Absence Penalty", amount: selectedPayslip.deductions?.penalty || 0 },
-                  { label: "Other Deductions", amount: selectedPayslip.deductions?.other || 0 },
-                ].filter((item) => item.amount > 0),
-                netSalary: selectedPayslip.netSalary,
-              }}
-            />
-          }
-        />
+          defaultPageSize="a4-portrait"
+        >
+          {(() => {
+            const payslipData: PayslipData = {
+              payslipNumber: selectedPayslip.payslipNumber || `PAY-${selectedPayslip._id.slice(-6).toUpperCase()}`,
+              period: `${new Date(selectedPayslip.year, selectedPayslip.month - 1).toLocaleString("default", { month: "long" })} ${selectedPayslip.year}`,
+              paymentDate: selectedPayslip.paidAt || selectedPayslip.createdAt,
+              status: (selectedPayslip.status === "paid" || selectedPayslip.status === "approved" ? selectedPayslip.status : "pending") as "paid" | "approved" | "pending",
+              paymentMethod: selectedPayslip.paymentMethod || "bank_transfer",
+              employee: {
+                code: selectedPayslip.employeeId?.employeeCode || "EMP",
+                name: `${selectedPayslip.employeeId?.firstName || ""} ${selectedPayslip.employeeId?.lastName || ""}`.trim(),
+                designation: selectedPayslip.employeeId?.designationId?.title || "Staff",
+                department: selectedPayslip.employeeId?.departmentId?.name || "General",
+                joiningDate: selectedPayslip.employeeId?.joiningDate || selectedPayslip.employeeId?.createdAt || "",
+                bankAccount: bankInfo?.accountNumber || bankInfo?.mobileWalletNumber,
+                phone: selectedPayslip.employeeId?.phone,
+              },
+              earnings: {
+                basicSalary: selectedPayslip.basicSalary || 0,
+                houseRent: selectedPayslip.houseRent || 0,
+                medical: selectedPayslip.medical || 0,
+                conveyance: selectedPayslip.conveyance || 0,
+                overtimeHours: selectedPayslip.overtimeHours || 0,
+                overtimePay: selectedPayslip.overtimePay || 0,
+                otherAllowances: selectedPayslip.otherAllowances || 0,
+              },
+              deductions: {
+                taxDeduction: selectedPayslip.totalDeductions || 0,
+              },
+              grossSalary: selectedPayslip.grossSalary || 0,
+              totalDeductions: selectedPayslip.totalDeductions || 0,
+              netSalary: selectedPayslip.netSalary || 0,
+            };
+
+            return (
+              <PayslipDocument
+                payslip={payslipData}
+                store={store}
+              />
+            );
+          })()}
+        </DocumentPreviewDialog>
       )}
     </div>
   );

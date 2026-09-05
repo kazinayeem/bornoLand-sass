@@ -306,7 +306,7 @@ export default function MyRequestsPage() {
                               ? "warning"
                               : req.status === "cancelled"
                               ? "default"
-                              : "destructive"
+                              : "danger"
                           }
                         >
                           {req.status}

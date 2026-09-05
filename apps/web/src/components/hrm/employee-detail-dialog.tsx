@@ -123,7 +123,7 @@ export function EmployeeDetailDialog({
     { skip: !open || !storeId }
   );
   const { data: payrollData } = useGetPayrollsQuery(
-    { storeId, employeeId: empId },
+    { storeId },
     { skip: !open || !storeId || !empId }
   );
   const { data: requestsData, refetch: refetchRequests } = useGetHrmRequestsQuery(
@@ -135,7 +135,7 @@ export function EmployeeDetailDialog({
     { skip: !open || !storeId || !empId }
   );
   const { data: attData } = useGetDailyAttendanceQuery(
-    { storeId, limit: 30 },
+    { storeId },
     { skip: !open || !storeId }
   );
 
@@ -148,15 +148,17 @@ export function EmployeeDetailDialog({
   if (!employee) return null;
 
   // Filter leaves and attendance for this employee
-  const employeeLeaves = (leavesData?.data?.leaves || []).filter(
+  const employeeLeaves = (leavesData?.data?.records || []).filter(
     (l: any) => l.employeeId?._id === empId || l.employeeId === empId
   );
-  const employeeAttendance = (attData?.data?.attendance || []).filter(
+  const employeeAttendance = (attData?.data?.records || []).filter(
     (a: any) => a.employeeId?._id === empId || a.employeeId === empId
   );
   const employeeRequests = requestsData?.data?.requests || [];
   const employeeDocs = docsData?.data || [];
-  const employeePayrolls = payrollData?.data?.payrolls || [];
+  const employeePayrolls = (payrollData?.data?.payrolls || []).filter(
+    (p: any) => p.employeeId?._id === empId || p.employeeId === empId
+  );
 
   const pendingBankRequest = employeeRequests.find(
     (r: any) => r.type === "bank_account_change" && r.status === "pending"
@@ -168,20 +170,22 @@ export function EmployeeDetailDialog({
       await updateEmployee({
         storeId,
         employeeId: empId,
-        firstName: editFirstName,
-        lastName: editLastName,
-        phone: editPhone,
-        departmentId: editDeptId || undefined,
-        designationId: editDesigId || undefined,
-        shiftId: editShiftId || undefined,
-        status: editStatus,
-        salaryStructure: {
-          basic: editBasic,
-          houseRent: Math.round(editBasic * 0.4),
-          medical: Math.round(editBasic * 0.1),
-          conveyance: Math.round(editBasic * 0.05),
-          allowances: 0,
-          grossSalary: editBasic + Math.round(editBasic * 0.55),
+        body: {
+          firstName: editFirstName,
+          lastName: editLastName,
+          phone: editPhone,
+          departmentId: editDeptId || undefined,
+          designationId: editDesigId || undefined,
+          shiftId: editShiftId || undefined,
+          status: editStatus,
+          salaryStructure: {
+            basic: editBasic,
+            houseRent: Math.round(editBasic * 0.4),
+            medical: Math.round(editBasic * 0.1),
+            conveyance: Math.round(editBasic * 0.05),
+            allowances: 0,
+            grossSalary: editBasic + Math.round(editBasic * 0.55),
+          },
         },
       }).unwrap();
 
@@ -440,7 +444,7 @@ export function EmployeeDetailDialog({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold capitalize text-zinc-900">{l.leaveType} Leave ({l.daysCount} days)</span>
-                          <Badge variant={l.status === "approved" ? "success" : l.status === "pending" ? "warning" : "destructive"}>
+                          <Badge variant={l.status === "approved" ? "success" : l.status === "pending" ? "warning" : "danger"}>
                             {l.status}
                           </Badge>
                         </div>
@@ -663,7 +667,7 @@ export function EmployeeDetailDialog({
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-zinc-900">{r.title}</span>
-                          <Badge variant={r.status === "approved" ? "success" : r.status === "pending" ? "warning" : "destructive"}>
+                          <Badge variant={r.status === "approved" ? "success" : r.status === "pending" ? "warning" : "danger"}>
                             {r.status}
                           </Badge>
                         </div>

@@ -1,43 +1,30 @@
 const path = require('path');
 
 // ============================================================================
-// Atomic release deployment config
+// PM2 Ecosystem — git-based deployment
 //
-// Deployment layout on EC2:
-//   ~/bornoLand-releases/
-//     current -> release-<SHA>    ← symlink, updated atomically on deploy
-//     release-abc123/
-//       apps/api/
-//         dist/index.js           ← tsup output (built on GitHub runner)
-//         node_modules/           ← production deps only (pnpm deploy --prod)
-//       apps/web/
-//         .next/                  ← Next.js build output (built on GitHub runner)
-//         public/                 ← static assets
-//         package.json
-//         node_modules/           ← production deps only (pnpm deploy --prod)
+// Deployment directory on EC2:
+//   ~/bornoLand-sass/          ← git repository (git reset --hard on deploy)
+//     apps/api/dist/index.js   ← built by tsup
+//     apps/web/.next/          ← built by next build
+//     apps/web/node_modules/   ← installed by pnpm install
 //
-// On each deploy, the symlink is updated BEFORE pm2 reload.
-// pm2 reload then starts a new worker with the new cwd (via symlink).
+// PM2 reads this file and starts processes from the repo working tree.
 // ============================================================================
 
-// Stable symlink — updated atomically during each deploy.
-// Override with BORNOLAND_RELEASE_DIR env var if needed.
-const RELEASE_BASE = process.env.BORNOLAND_RELEASE_DIR
-  || path.join(process.env.HOME || '/home/ubuntu', 'bornoLand-releases/current');
+const REPO_DIR = process.env.BORNOLAND_REPO_DIR
+  || path.join(process.env.HOME || '/home/ubuntu', 'bornoLand-sass');
 
 module.exports = {
   apps: [
     {
       name: 'bornoland-api',
-      // Entry: compiled by tsup on GitHub runner
       script: 'dist/index.js',
-      cwd: path.join(RELEASE_BASE, 'apps/api'),
+      cwd: path.join(REPO_DIR, 'apps/api'),
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
       watch: false,
-      // Conservative limit — prevents single process from starving the host.
-      // EC2 has 7.6 GiB; MongoDB + Web + OS need headroom too.
       max_memory_restart: '512M',
       env: {
         NODE_ENV: 'production',
@@ -46,11 +33,9 @@ module.exports = {
     },
     {
       name: 'bornoland-web',
-      // Entry: Next.js production server (next start)
-      // Uses the locally installed next binary from node_modules
       script: 'node_modules/.bin/next',
       args: 'start',
-      cwd: path.join(RELEASE_BASE, 'apps/web'),
+      cwd: path.join(REPO_DIR, 'apps/web'),
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,

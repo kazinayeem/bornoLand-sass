@@ -3,7 +3,7 @@
 ############################################
 # Frontend (Next.js) — pnpm monorepo package
 # Build context MUST be the repository root
-# Requires next.config.ts → output: "standalone"
+# Uses normal Next.js production build (next start)
 ############################################
 
 ARG NODE_VERSION=22
@@ -76,9 +76,11 @@ RUN apk add --no-cache libc6-compat wget \
   && addgroup -S bornoland \
   && adduser -S bornoland -G bornoland
 
-COPY --from=builder --chown=bornoland:bornoland /app/apps/web/public ./apps/web/public
-COPY --from=builder --chown=bornoland:bornoland /app/apps/web/.next/standalone ./
-COPY --from=builder --chown=bornoland:bornoland /app/apps/web/.next/static ./apps/web/.next/static
+# Copy the built app and install only production dependencies
+COPY --from=builder --chown=bornoland:bornoland /app/apps/web ./apps/web
+
+WORKDIR /app/apps/web
+RUN npx pnpm install --prod --frozen-lockfile 2>/dev/null || npm install --omit=dev 2>/dev/null || true
 
 USER bornoland
 EXPOSE 3000
@@ -86,4 +88,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD wget -qO- http://127.0.0.1:3000/ >/dev/null || exit 1
 
-CMD ["node", "apps/web/server.js"]
+CMD ["npx", "next", "start"]

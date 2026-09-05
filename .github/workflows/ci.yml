@@ -3,8 +3,8 @@ name: BornoLand CI/CD
 # ======================================================================
 # Architecture:
 #   Job 1 (build) — runs on GitHub runner (unlimited RAM, ephemeral)
-#     → checkout, pnpm install, tsup API build, next build (standalone)
-#     → package tarball: api/dist + api/node_modules(prod) + web/standalone
+#     → checkout, pnpm install, tsup API build, next build (normal)
+#     → package tarball: api/dist + api/node_modules(prod) + web/.next + web/node_modules(prod)
 #     → upload tarball to GitHub Actions artifacts
 #
 #   Job 2 (deploy) — runs on GitHub runner, connects to EC2 via SCP+SSH
@@ -73,10 +73,10 @@ jobs:
           fi
           echo "✓ API artifact: $(ls -lh apps/api/dist/index.js)"
 
-      # ── Web Build ─────────────────────────────────────────────────────
+      # ── Web Build (normal Next.js production) ─────────────────────────
       # NEXT_PUBLIC_* are baked into the bundle at build time.
       # Add these as GitHub Repository Secrets (Settings → Secrets → Actions).
-      - name: Build Web (Next.js standalone)
+      - name: Build Web (Next.js production)
         env:
           NODE_ENV: production
           NEXT_PUBLIC_APP_ENV: ${{ secrets.NEXT_PUBLIC_APP_ENV }}
@@ -86,102 +86,52 @@ jobs:
           NEXT_PUBLIC_APP_NAME: ${{ secrets.NEXT_PUBLIC_APP_NAME }}
         run: pnpm --filter @bornoland/web build
 
-      - name: Validate Web standalone artifact
+      - name: Validate Web build artifact
         run: |
           set -euo pipefail
 
-          # Dynamic discovery: with outputFileTracingRoot set to monorepo root,
-          # Next.js nests the real server at standalone/apps/web/server.js.
-          # The standalone root also has a thin 33-byte proxy (server.js) that just
-          # requires('./apps/web/server.js'). We want the REAL server: the one whose
-          # parent directory contains a .next/ subdirectory.
-          REAL_SERVER=""
-          while IFS= read -r candidate; do
-            dir=$(dirname "$candidate")
-            if [ -d "$dir/.next" ]; then
-              REAL_SERVER="$candidate"
-              break
+          # Verify standard Next.js build output
+          if [ ! -d apps/web/.next ]; then
+            echo "✗ apps/web/.next not found"
+            exit 1
+          fi
+          echo "✓ apps/web/.next directory present"
+
+          if [ ! -f apps/web/package.json ]; then
+            echo "✗ apps/web/package.json not found"
+            exit 1
+          fi
+          echo "✓ apps/web/package.json present"
+
+          # Verify critical build outputs
+          for d in \
+            ".next/server" \
+            ".next/static"
+          do
+            if [ ! -d "apps/web/$d" ]; then
+              echo "✗ apps/web/$d missing"
+              exit 1
             fi
-          done < <(find apps/web/.next/standalone -type f -name 'server.js' \
-            -not -path '*/node_modules/*')
+            echo "✓ apps/web/$d present"
+          done
 
-          if [ -z "$REAL_SERVER" ]; then
-            echo "✗ No real server.js found (no server.js with sibling .next/ dir)"
-            echo "Full standalone tree:"
-            find apps/web/.next/standalone -maxdepth 6 -type f | head -200 || true
-            exit 1
-          fi
-
-          REAL_SERVER_DIR=$(dirname "$REAL_SERVER")
-          echo "✓ Standalone real server: $REAL_SERVER"
-          echo "  size: $(wc -c < "$REAL_SERVER" | tr -d ' ') bytes"
-
-          # Confirm standalone root proxy exists (expected with outputFileTracingRoot)
-          if [ -f apps/web/.next/standalone/server.js ]; then
-            echo "✓ Standalone proxy: apps/web/.next/standalone/server.js"
+          # Verify public directory
+          if [ -d apps/web/public ]; then
+            echo "✓ apps/web/public present"
           else
-            echo "⚠ No proxy at standalone root — real server IS the root"
+            echo "⚠ apps/web/public not found (may be empty)"
           fi
 
-          # Confirm .next/server dir exists (contains route handlers, etc.)
-          if [ ! -d "$REAL_SERVER_DIR/.next/server" ]; then
-            echo "✗ .next/server missing at $REAL_SERVER_DIR/.next/server"
-            ls -la "$REAL_SERVER_DIR/.next/" || true
-            exit 1
-          fi
-          echo "✓ .next/server present at $REAL_SERVER_DIR/.next/server"
-
-          # Confirm static assets exist
-          if [ -d "$REAL_SERVER_DIR/.next/static" ]; then
-            echo "✓ .next/static already in standalone at $REAL_SERVER_DIR/.next/static"
-          elif [ -d apps/web/.next/static ]; then
-            echo "✓ .next/static found at apps/web/.next/static (will copy in next step)"
-          else
-            echo "✗ .next/static not found anywhere"
-            exit 1
-          fi
-
-          # Confirm no broken symlinks in standalone
-          BROKEN=$(find apps/web/.next/standalone -xtype l -print 2>/dev/null || true)
+          # Verify no broken symlinks in build output
+          BROKEN=$(find apps/web/.next -xtype l -print 2>/dev/null || true)
           if [ -n "$BROKEN" ]; then
-            echo "✗ Broken symlinks in standalone:"
+            echo "✗ Broken symlinks in .next:"
             echo "$BROKEN"
             exit 1
           fi
-          echo "✓ No broken symlinks in standalone"
+          echo "✓ No broken symlinks in .next"
 
-          # Export for use in the assembly step
-          echo "STANDALONE_REAL_SERVER=$REAL_SERVER" >> "$GITHUB_ENV"
-          echo "STANDALONE_REAL_SERVER_DIR=$REAL_SERVER_DIR" >> "$GITHUB_ENV"
-
-      # Ensure .next/static and public are present in the real server's directory.
-      # With outputFileTracingRoot, Next.js already includes public/ and .next/static/
-      # inside standalone/apps/web/. This step is a safety net.
-      - name: Assemble Web standalone (ensure static + public are in place)
-        run: |
-          set -euo pipefail
-          REAL_DIR="$STANDALONE_REAL_SERVER_DIR"
-
-          # .next/static — copy from main build output if not already in standalone
-          if [ ! -d "$REAL_DIR/.next/static" ]; then
-            echo "Copying apps/web/.next/static → $REAL_DIR/.next/static"
-            cp -r apps/web/.next/static "$REAL_DIR/.next/static"
-          else
-            echo "✓ .next/static already present in standalone"
-          fi
-
-          # public — copy from source if not already in standalone
-          if [ ! -d "$REAL_DIR/public" ]; then
-            echo "Copying apps/web/public → $REAL_DIR/public"
-            cp -r apps/web/public "$REAL_DIR/public"
-          else
-            echo "✓ public already present in standalone"
-          fi
-
-          echo "✓ Standalone is fully assembled"
-          echo "  Real server dir: $REAL_DIR"
-          echo "  Contents:"
-          ls -la "$REAL_DIR"
+          echo "✓ Web build artifact validated"
 
       # ── API production node_modules ───────────────────────────────────
       # pnpm deploy creates a clean dir with ONLY production deps (no tsup, tsc, etc.)
@@ -193,14 +143,11 @@ jobs:
           echo "✓ API prod deploy dir: $(du -sh /tmp/api-prod)"
 
           # Remove broken workspace self-reference symlinks that pnpm deploy creates.
-          # @bornoland/api points to an absolute CI runner path that won't exist on EC2.
-          # The API doesn't import itself, so removing it is safe.
           if [ -d /tmp/api-prod/node_modules/@bornoland ]; then
             find /tmp/api-prod/node_modules/@bornoland -xtype l -print | while read -r broken; do
               echo "  Removing broken symlink: $broken"
               rm -f "$broken"
             done
-            # Remove the directory if it's now empty
             rmdir /tmp/api-prod/node_modules/@bornoland 2>/dev/null || true
           fi
 
@@ -210,7 +157,7 @@ jobs:
             rm -f "$broken"
           done
 
-          # Verify production deps size is reasonable (should be < 200MB for this project)
+          # Verify production deps size
           PROD_SIZE=$(du -sb /tmp/api-prod/node_modules | cut -f1)
           PROD_SIZE_MB=$((PROD_SIZE / 1024 / 1024))
           echo "  Production node_modules: ${PROD_SIZE_MB}MB"
@@ -220,15 +167,55 @@ jobs:
             du -sh /tmp/api-prod/node_modules/* 2>/dev/null | sort -rh | head -10
           fi
 
-          # Verify .pnpm store is not bloating the output
+          # Report .pnpm store size
           if [ -d /tmp/api-prod/node_modules/.pnpm ]; then
             PNPM_SIZE=$(du -sb /tmp/api-prod/node_modules/.pnpm | cut -f1)
             PNPM_SIZE_MB=$((PNPM_SIZE / 1024 / 1024))
             echo "  .pnpm virtual store: ${PNPM_SIZE_MB}MB"
-            echo "  .pnpm entries: $(find /tmp/api-prod/node_modules/.pnpm -maxdepth 1 -mindepth 1 -type d | wc -l)"
           fi
 
           echo "✓ API prod deploy directory ready"
+
+      # ── Web production node_modules ───────────────────────────────────
+      - name: Create Web production deploy directory
+        run: |
+          set -euo pipefail
+          pnpm --filter @bornoland/web deploy --prod /tmp/web-prod
+          echo "✓ Web prod deploy dir: $(du -sh /tmp/web-prod)"
+
+          # Remove broken workspace self-reference symlinks
+          if [ -d /tmp/web-prod/node_modules/@bornoland ]; then
+            find /tmp/web-prod/node_modules/@bornoland -xtype l -print | while read -r broken; do
+              echo "  Removing broken symlink: $broken"
+              rm -f "$broken"
+            done
+            rmdir /tmp/web-prod/node_modules/@bornoland 2>/dev/null || true
+          fi
+
+          # Remove any other broken symlinks
+          find /tmp/web-prod/node_modules -xtype l -print | while read -r broken; do
+            echo "  Removing broken symlink: $broken"
+            rm -f "$broken"
+          done
+
+          # Verify production deps size
+          PROD_SIZE=$(du -sb /tmp/web-prod/node_modules | cut -f1)
+          PROD_SIZE_MB=$((PROD_SIZE / 1024 / 1024))
+          echo "  Production node_modules: ${PROD_SIZE_MB}MB"
+          if [ "$PROD_SIZE_MB" -gt 200 ]; then
+            echo "⚠ WARNING: Production node_modules is ${PROD_SIZE_MB}MB (> 200MB)"
+            echo "  Top 10 largest packages:"
+            du -sh /tmp/web-prod/node_modules/* 2>/dev/null | sort -rh | head -10
+          fi
+
+          # Report .pnpm store size
+          if [ -d /tmp/web-prod/node_modules/.pnpm ]; then
+            PNPM_SIZE=$(du -sb /tmp/web-prod/node_modules/.pnpm | cut -f1)
+            PNPM_SIZE_MB=$((PNPM_SIZE / 1024 / 1024))
+            echo "  .pnpm virtual store: ${PNPM_SIZE_MB}MB"
+          fi
+
+          echo "✓ Web prod deploy directory ready"
 
       # ── Runtime validation (before packaging) ─────────────────────────
       - name: Validate API runtime from production deploy
@@ -269,34 +256,24 @@ jobs:
           wait $API_PID 2>/dev/null || true
           echo "✓ API runtime test passed"
 
-      - name: Validate Web standalone runtime
+      - name: Validate Web normal production runtime
         run: |
           set -euo pipefail
-          echo "--- Web Standalone Runtime Test ---"
+          echo "--- Web Normal Production Runtime Test ---"
 
-          # Find the real server in standalone
-          REAL_SERVER=""
-          while IFS= read -r candidate; do
-            dir=$(dirname "$candidate")
-            if [ -d "$dir/.next" ]; then
-              REAL_SERVER="$candidate"
-              break
-            fi
-          done < <(find apps/web/.next/standalone -type f -name 'server.js' \
-            -not -path '*/node_modules/*')
+          # Create a temporary test directory with the web build + production deps
+          TEST_DIR=$(mktemp -d)
+          mkdir -p "${TEST_DIR}/apps/web"
+          cp -r apps/web/.next "${TEST_DIR}/apps/web/.next"
+          cp -r apps/web/public "${TEST_DIR}/apps/web/public" 2>/dev/null || true
+          cp    apps/web/package.json "${TEST_DIR}/apps/web/package.json"
+          cp -r /tmp/web-prod/node_modules "${TEST_DIR}/apps/web/node_modules"
 
-          if [ -z "$REAL_SERVER" ]; then
-            echo "✗ No real server.js found for standalone test"
-            exit 1
-          fi
-
-          REAL_DIR=$(dirname "$REAL_SERVER")
-          echo "  Testing from: $REAL_DIR"
-
-          # Start standalone server on a test port
+          # Start next start on a test port
+          cd "${TEST_DIR}/apps/web"
           PORT=14001 \
             HOSTNAME=127.0.0.1 \
-            node "$REAL_SERVER" &
+            npx next start &
           WEB_PID=$!
 
           # Wait for startup (max 20 seconds)
@@ -309,19 +286,17 @@ jobs:
             sleep 1
           done
 
-          if [ "$READY" -eq 0 ]; then
-            echo "✗ Web standalone failed to start"
-            kill $WEB_PID 2>/dev/null || true
-            wait $WEB_PID 2>/dev/null || true
-            exit 1
-          fi
-
-          echo "✓ Web standalone started successfully"
-
           # Stop the test server
           kill $WEB_PID 2>/dev/null || true
           wait $WEB_PID 2>/dev/null || true
-          echo "✓ Web standalone runtime test passed"
+          rm -rf "$TEST_DIR"
+
+          if [ "$READY" -eq 0 ]; then
+            echo "✗ Web normal production server failed to start"
+            exit 1
+          fi
+
+          echo "✓ Web normal production runtime works"
 
       # ── Package release tarball ───────────────────────────────────────
       - name: Package release tarball
@@ -345,42 +320,33 @@ jobs:
             rm -f "$broken"
           done
 
-          # Confirm API is valid
           test -f "${STAGE}/apps/api/dist/index.js" \
             || { echo "✗ API dist/index.js missing from stage"; exit 1; }
           echo "✓ API staged"
 
-          # ── Web: standalone server packaged at apps/web/ ───────────────
-          # ecosystem.config.cjs: cwd=apps/web, script=server.js
-          # The standalone root server.js (proxy) re-requires ./apps/web/server.js
-          # which is the real Next.js server. We package standalone/* as apps/web/
-          # so that: release/apps/web/server.js = the proxy
-          #          release/apps/web/apps/web/server.js = real server
-          #          release/apps/web/apps/web/.next/ = build output
-          #          release/apps/web/apps/web/public/ = static assets
+          # ── Web: .next + public + package.json + production node_modules ─
           mkdir -p "${STAGE}/apps/web"
-          cp -r apps/web/.next/standalone/. "${STAGE}/apps/web/"
+          cp -r apps/web/.next         "${STAGE}/apps/web/.next"
+          cp    apps/web/package.json  "${STAGE}/apps/web/package.json"
+          cp -r /tmp/web-prod/node_modules "${STAGE}/apps/web/node_modules"
 
-          # Confirm real server (nested: has a sibling .next/ dir) exists in stage
-          REAL_SERVER_IN_STAGE=""
-          while IFS= read -r candidate; do
-            dir=$(dirname "$candidate")
-            if [ -d "$dir/.next" ]; then
-              REAL_SERVER_IN_STAGE="$candidate"
-              break
-            fi
-          done < <(find "${STAGE}/apps/web" -type f -name 'server.js' \
-            -not -path '*/node_modules/*')
-          echo "✓ Web server in stage: $REAL_SERVER_IN_STAGE"
-
-          # Confirm no broken symlinks in web staging area
-          WEB_BROKEN=$(find "${STAGE}/apps/web" -xtype l -print 2>/dev/null)
-          if [ -n "$WEB_BROKEN" ]; then
-            echo "✗ Broken symlinks in web staging:"
-            echo "$WEB_BROKEN"
-            exit 1
+          # Copy public if it exists
+          if [ -d apps/web/public ]; then
+            cp -r apps/web/public "${STAGE}/apps/web/public"
           fi
-          echo "✓ No broken symlinks in web stage"
+
+          # Remove any remaining broken symlinks in Web node_modules
+          find "${STAGE}/apps/web/node_modules" -xtype l -print | while read -r broken; do
+            echo "  Removing broken symlink: $broken"
+            rm -f "$broken"
+          done
+
+          # Confirm Web is valid
+          test -d "${STAGE}/apps/web/.next" \
+            || { echo "✗ apps/web/.next missing from stage"; exit 1; }
+          test -f "${STAGE}/apps/web/package.json" \
+            || { echo "✗ apps/web/package.json missing from stage"; exit 1; }
+          echo "✓ Web staged"
 
           # ── Config: PM2 ecosystem + Nginx vhost ───────────────────────
           cp ecosystem.config.cjs "${STAGE}/"
@@ -408,11 +374,10 @@ jobs:
             exit 1
           fi
 
-          # Check for deeply nested .pnpm directories (should NOT be present)
+          # Check for deeply nested .pnpm directories
           PNPM_DEPTH=$(find "${STAGE}" -path '*/node_modules/.pnpm/*' -type d -mindepth 4 2>/dev/null | wc -l)
           if [ "$PNPM_DEPTH" -gt 100 ]; then
             echo "⚠ WARNING: Found ${PNPM_DEPTH} deeply nested .pnpm directories"
-            echo "  This may indicate the pnpm virtual store was not properly pruned"
           fi
 
           # Verify no broken symlinks anywhere in staging
@@ -428,10 +393,12 @@ jobs:
           for f in \
             "apps/api/dist/index.js" \
             "apps/api/package.json" \
+            "apps/web/.next/server" \
+            "apps/web/package.json" \
             "ecosystem.config.cjs" \
             "nginx/bornosoft.site.conf"
           do
-            if [ ! -f "${STAGE}/$f" ]; then
+            if [ ! -e "${STAGE}/$f" ]; then
               echo "✗ Missing from staging: $f"
               exit 1
             fi
@@ -458,25 +425,14 @@ jobs:
           ENTRY_COUNT=$(tar -tzf "${TARBALL}" | wc -l)
           echo "✓ Tarball entries: ${ENTRY_COUNT}"
 
-          # List all entries and check for problematic content
           tar -tzf "${TARBALL}" | head -60
 
-          # Check tarball doesn't contain .pnpm-store or excessive .pnpm content
+          # Check tarball for excessive .pnpm content
           PNPM_ENTRIES=$(tar -tzf "${TARBALL}" | grep -c '\.pnpm/' || true)
           echo ""
           echo ".pnpm entries in tarball: ${PNPM_ENTRIES}"
           if [ "$PNPM_ENTRIES" -gt 500 ]; then
             echo "⚠ WARNING: ${PNPM_ENTRIES} .pnpm entries (may be bloated)"
-            echo "  Sample entries:"
-            tar -tzf "${TARBALL}" | grep '\.pnpm/' | head -5
-          fi
-
-          # Check for no deeply nested .pnpm packages (e.g., .pnpm/foo/node_modules/bar/node_modules)
-          DEEP_NESTED=$(tar -tzf "${TARBALL}" | grep -c '\.pnpm/.*/node_modules/.*/node_modules' || true)
-          if [ "$DEEP_NESTED" -gt 0 ]; then
-            echo "⚠ WARNING: Found ${DEEP_NESTED} deeply nested .pnpm node_modules"
-            echo "  Sample:"
-            tar -tzf "${TARBALL}" | grep '\.pnpm/.*/node_modules/.*/node_modules' | head -3
           fi
 
           echo ""
@@ -617,47 +573,37 @@ jobs:
             for f in \
               "apps/api/dist/index.js" \
               "apps/api/package.json" \
+              "apps/web/.next/server" \
+              "apps/web/package.json" \
               "ecosystem.config.cjs" \
               "nginx/bornosoft.site.conf"
             do
-              if [ ! -f "$NEW_RELEASE/$f" ]; then
+              if [ ! -e "$NEW_RELEASE/$f" ]; then
                 echo "✗ Missing: $f"
                 exit 1
               fi
               echo "✓ $f"
             done
 
-            # Validate Next.js standalone server structure
-            if [ -f "$NEW_RELEASE/apps/web/server.js" ]; then
-              echo "✓ apps/web/server.js (proxy)"
+            # Verify Next.js build output
+            if [ -d "$NEW_RELEASE/apps/web/.next/server" ]; then
+              echo "✓ apps/web/.next/server present"
             else
-              echo "✗ apps/web/server.js not found"
+              echo "✗ apps/web/.next/server missing"
               exit 1
             fi
 
-            # Find the real Next.js server (has sibling .next/ directory)
-            REAL_SERVER=""
-            while IFS= read -r candidate; do
-              dir=$(dirname "$candidate")
-              if [ -d "$dir/.next" ]; then
-                REAL_SERVER="$candidate"
-                break
-              fi
-            done < <(find "$NEW_RELEASE/apps/web" -type f -name 'server.js' \
-              -not -path '*/node_modules/*')
-
-            if [ -n "$REAL_SERVER" ]; then
-              echo "✓ Real Next.js server: $REAL_SERVER"
-              REAL_DIR=$(dirname "$REAL_SERVER")
-              if [ -d "$REAL_DIR/.next/server" ]; then
-                echo "✓ .next/server present"
+            # Verify node_modules exist
+            if [ -d "$NEW_RELEASE/apps/web/node_modules" ]; then
+              echo "✓ apps/web/node_modules present"
+              # Verify next binary exists
+              if [ -f "$NEW_RELEASE/apps/web/node_modules/.bin/next" ] || [ -f "$NEW_RELEASE/apps/web/node_modules/next/dist/bin/next" ]; then
+                echo "✓ next binary found in node_modules"
               else
-                echo "✗ .next/server missing at $REAL_DIR/.next/server"
-                exit 1
+                echo "⚠ next binary not found in node_modules (may still work via npx)"
               fi
             else
-              echo "✗ No real server.js found (expected one with sibling .next/ dir)"
-              find "$NEW_RELEASE/apps/web" -type f -name 'server.js' | head -10 || true
+              echo "✗ apps/web/node_modules missing"
               exit 1
             fi
 

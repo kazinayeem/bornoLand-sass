@@ -1,13 +1,6 @@
 import type { NextConfig } from "next";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
-  // Required for optimized multi-stage Docker images (copies only the standalone server).
-  output: "standalone",
-  outputFileTracingRoot: path.resolve(__dirname, "../../"),
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,

@@ -10,13 +10,11 @@ const path = require('path');
 //       apps/api/
 //         dist/index.js           ← tsup output (built on GitHub runner)
 //         node_modules/           ← production deps only (pnpm deploy --prod)
-//       apps/web/                 ← Next.js standalone output (standalone/* copied here)
-//         server.js               ← proxy entry: require('./apps/web/server.js')
-//         apps/web/
-//           server.js             ← real Next.js server (7 KB, __dirname-relative)
-//           .next/                ← server chunks + static/ already included
-//           public/               ← static assets already included
-//         node_modules/           ← bundled by Next.js (next, react)
+//       apps/web/
+//         .next/                  ← Next.js build output (built on GitHub runner)
+//         public/                 ← static assets
+//         package.json
+//         node_modules/           ← production deps only (pnpm deploy --prod)
 //
 // On each deploy, the symlink is updated BEFORE pm2 reload.
 // pm2 reload then starts a new worker with the new cwd (via symlink).
@@ -48,11 +46,10 @@ module.exports = {
     },
     {
       name: 'bornoland-web',
-      // Entry: Next.js standalone server (self-contained, no separate install needed)
-      // next.config.ts has output:'standalone' + outputFileTracingRoot set to monorepo root.
-      // Packaging: standalone/* is copied directly into apps/web/ so the proxy lives at:
-      //   apps/web/server.js → require('./apps/web/server.js') → real Next.js server
-      script: 'server.js',
+      // Entry: Next.js production server (next start)
+      // Uses the locally installed next binary from node_modules
+      script: 'node_modules/.bin/next',
+      args: 'start',
       cwd: path.join(RELEASE_BASE, 'apps/web'),
       instances: 1,
       exec_mode: 'fork',
@@ -67,4 +64,3 @@ module.exports = {
     },
   ],
 };
-

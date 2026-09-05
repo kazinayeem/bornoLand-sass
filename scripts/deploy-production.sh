@@ -113,49 +113,31 @@ echo "--- Step 3: Validate files ---"
 for f in \
   "apps/api/dist/index.js" \
   "apps/api/package.json" \
+  "apps/web/.next/server" \
+  "apps/web/package.json" \
   "ecosystem.config.cjs" \
   "nginx/bornosoft.site.conf"
 do
-  if [ ! -f "$NEW_RELEASE/$f" ]; then
+  if [ ! -e "$NEW_RELEASE/$f" ]; then
     echo "✗ Missing: $f"
     exit 1
   fi
   echo "✓ $f"
 done
 
-# Validate Next.js standalone server structure
-# With outputFileTracingRoot, the real server is nested at apps/web/apps/web/server.js
-# There should also be a proxy at apps/web/server.js
-if [ -f "$NEW_RELEASE/apps/web/server.js" ]; then
-  echo "✓ apps/web/server.js (proxy)"
+# Verify Next.js build output
+if [ -d "$NEW_RELEASE/apps/web/.next/server" ]; then
+  echo "✓ apps/web/.next/server present"
 else
-  echo "✗ apps/web/server.js not found"
+  echo "✗ apps/web/.next/server missing"
   exit 1
 fi
 
-# Find the real Next.js server (has sibling .next/ directory)
-REAL_SERVER=""
-while IFS= read -r candidate; do
-  dir=$(dirname "$candidate")
-  if [ -d "$dir/.next" ]; then
-    REAL_SERVER="$candidate"
-    break
-  fi
-done < <(find "$NEW_RELEASE/apps/web" -type f -name 'server.js' \
-  -not -path '*/node_modules/*')
-
-if [ -n "$REAL_SERVER" ]; then
-  echo "✓ Real Next.js server: $REAL_SERVER"
-  REAL_DIR=$(dirname "$REAL_SERVER")
-  if [ -d "$REAL_DIR/.next/server" ]; then
-    echo "✓ .next/server present"
-  else
-    echo "✗ .next/server missing at $REAL_DIR/.next/server"
-    exit 1
-  fi
+# Verify node_modules exist
+if [ -d "$NEW_RELEASE/apps/web/node_modules" ]; then
+  echo "✓ apps/web/node_modules present"
 else
-  echo "✗ No real server.js found (expected one with sibling .next/ dir)"
-  find "$NEW_RELEASE/apps/web" -type f -name 'server.js' | head -10 || true
+  echo "✗ apps/web/node_modules missing"
   exit 1
 fi
 

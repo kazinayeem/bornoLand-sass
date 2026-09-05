@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch src/index.ts",
-    "build": "tsup src/index.ts --format esm --out-dir dist",
+    "build": "tsup src/index.ts --format esm --out-dir dist --clean --no-splitting",
     "start": "NODE_ENV=production node dist/index.js",
     "seed": "tsx src/seed/cli.ts",
     "seed:products": "tsx src/seed/nayeem-products.cli.ts",

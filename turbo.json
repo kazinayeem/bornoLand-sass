@@ -5,6 +5,10 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "dist/**", "build/**"]
     },
+    "@bornoland/web#build": {
+      "dependsOn": ["@bornoland/api#build"],
+      "outputs": [".next/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

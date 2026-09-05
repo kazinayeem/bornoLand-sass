@@ -158,6 +158,8 @@ const orderSchema = new Schema(
       sessionKey: { type: String, default: "" },
       environment: { type: String, default: "" },
       verifiedAt: { type: String, default: "" },
+      tenderedAmount: { type: Number, default: 0 },
+      changeAmount: { type: Number, default: 0 },
     },
     courier: { type: String, default: "" },
     trackingNumber: { type: String, default: "" },
@@ -207,6 +209,8 @@ const orderSchema = new Schema(
     invoiceNumber: { type: String, default: "" },
     verificationToken: { type: String, unique: true, sparse: true },
     idempotencyKey: { type: String, sparse: true, index: true },
+    channel: { type: String, enum: ["online", "pos"], default: "online", index: true },
+    isPos: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

@@ -18,6 +18,7 @@ import {
   DollarSign,
   TrendingUp,
   ShieldAlert,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StorePageHeader } from "@/components/store-dashboard/store-page-header";
@@ -28,6 +29,8 @@ import { useHasPermission } from "@/features/session/hooks";
 import { useGetRecentStoreOrdersQuery, type RecentStoreOrder } from "@/redux/api/store-order-api";
 import { DocumentPreviewDialog } from "@/components/documents/document-preview-dialog";
 import { PosReceiptDocument } from "@/components/documents/templates/pos-receipt-document";
+import { InvoiceDocument } from "@/components/documents/templates/invoice-document";
+import type { PosReceiptData, InvoiceData } from "@/components/documents/document-types";
 import { EmptyState, ErrorState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +44,7 @@ export default function PosTerminalPage() {
 
   const [posOpen, setPosOpen] = useState(false);
   const [selectedReceiptOrder, setSelectedReceiptOrder] = useState<RecentStoreOrder | null>(null);
+  const [selectedReceiptFormat, setSelectedReceiptFormat] = useState<"thermal" | "a4">("thermal");
   const hasPosAccess = useHasPermission("pos:read");
 
   const {
@@ -222,10 +226,24 @@ export default function PosTerminalPage() {
                         ৳{order.total.toLocaleString()}
                       </td>
                       <td className="py-3 px-4">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-600 dark:text-zinc-300 uppercase">
-                          <CreditCard className="h-3 w-3" />
-                          {order.paymentMethod}
-                        </span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide",
+                              order.paymentStatus === "paid" || order.status === "delivered"
+                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300"
+                                : "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300"
+                            )}
+                          >
+                            {order.paymentStatus === "paid" || order.status === "delivered"
+                              ? "PAID"
+                              : order.paymentStatus || "PENDING"}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-md bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 text-[9px] font-bold text-zinc-600 dark:text-zinc-300 uppercase">
+                            <CreditCard className="h-2.5 w-2.5" />
+                            {order.paymentMethod}
+                          </span>
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         <Badge
@@ -259,16 +277,34 @@ export default function PosTerminalPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedReceiptOrder(order)}
-                          className="h-7 text-xs gap-1.5 text-zinc-600 hover:text-[#003399] dark:text-zinc-300 dark:hover:text-[#FFDA1A] cursor-pointer"
-                          title="Print / Re-print Receipt"
-                        >
-                          <Receipt className="h-3.5 w-3.5" />
-                          <span>Print Slip</span>
-                        </Button>
+                        <div className="inline-flex items-center gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedReceiptOrder(order);
+                              setSelectedReceiptFormat("thermal");
+                            }}
+                            className="h-7 px-2 text-xs gap-1 text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white cursor-pointer"
+                            title="Print Thermal POS Receipt (80mm)"
+                          >
+                            <Receipt className="h-3.5 w-3.5 text-zinc-500" />
+                            <span>Slip</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedReceiptOrder(order);
+                              setSelectedReceiptFormat("a4");
+                            }}
+                            className="h-7 px-2 text-xs gap-1 text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white cursor-pointer"
+                            title="Print Full A4 Invoice"
+                          >
+                            <FileText className="h-3.5 w-3.5 text-zinc-500" />
+                            <span>A4</span>
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -292,48 +328,135 @@ export default function PosTerminalPage() {
         />
       )}
 
-      {/* POS Receipt Re-print Preview Dialog */}
+      {/* POS Receipt / A4 Invoice Re-print Preview Dialog */}
       {selectedReceiptOrder && store && (
         <DocumentPreviewDialog
           open={Boolean(selectedReceiptOrder)}
           onClose={() => setSelectedReceiptOrder(null)}
-          title={`Receipt #${(selectedReceiptOrder as any).orderNumber || ""}`}
-          defaultPageSize="thermal-80"
+          title={
+            selectedReceiptFormat === "thermal"
+              ? `Receipt #${selectedReceiptOrder.orderNumber || ""}`
+              : `Invoice #${selectedReceiptOrder.orderNumber || ""}`
+          }
+          defaultPageSize={selectedReceiptFormat === "thermal" ? "thermal-80" : "a4-portrait"}
+          allowPageSizeSwitch={true}
         >
-          <PosReceiptDocument
-            store={{
-              name: store.name || "Store",
-              address: typeof (store as any)?.address === "string" ? (store as any).address : (store as any)?.address?.street || "",
-              phone: (store as any)?.contactPhone || (store as any)?.phone || "",
-              email: (store as any)?.contactEmail || (store as any)?.email || "",
-              logoUrl: (store as any)?.logo,
-            }}
-            receipt={{
-              receiptNumber: `REC-${(selectedReceiptOrder as any).orderNumber || String((selectedReceiptOrder as any)._id || "").slice(-6)}`,
-              orderNumber: (selectedReceiptOrder as any).orderNumber || "",
-              dateTime: (selectedReceiptOrder as any).createdAt ? new Date((selectedReceiptOrder as any).createdAt) : new Date(),
-              customer: {
-                name: (selectedReceiptOrder as any).customerName || (selectedReceiptOrder as any).customerId?.name || "Walk-in Customer",
-                phone: (selectedReceiptOrder as any).customerPhone || (selectedReceiptOrder as any).customerId?.phone || "",
-              },
-              items: Array.isArray((selectedReceiptOrder as any).items)
-                ? (selectedReceiptOrder as any).items.map((it: any) => ({
-                    title: it.name || it.title || "Item",
-                    quantity: Number(it.quantity) || 1,
-                    unitPrice: Number(it.price ?? it.unitPrice ?? 0),
-                    discount: Number(it.discount ?? 0),
-                    total: Number(it.total ?? ((it.price ?? 0) * (it.quantity ?? 1))),
-                  }))
-                : [],
-              subtotal: Number((selectedReceiptOrder as any).subtotal || (selectedReceiptOrder as any).totalAmount || 0),
-              discount: Number((selectedReceiptOrder as any).discount || 0),
-              tax: Number((selectedReceiptOrder as any).tax || 0),
-              grandTotal: Number((selectedReceiptOrder as any).total || (selectedReceiptOrder as any).totalAmount || 0),
-              tenderedAmount: Number((selectedReceiptOrder as any).paidAmount || (selectedReceiptOrder as any).total || 0),
-              changeAmount: Number((selectedReceiptOrder as any).changeAmount || 0),
-              paymentMethod: String((selectedReceiptOrder as any).paymentMethod || "cash").toUpperCase(),
-            }}
-          />
+          {selectedReceiptFormat === "thermal" ? (
+            <PosReceiptDocument
+              store={{
+                name: store.name || "Store",
+                address:
+                  typeof (store as any)?.address === "string"
+                    ? (store as any).address
+                    : (store as any)?.address?.street || "",
+                phone: (store as any)?.contactPhone || (store as any)?.phone || "",
+                email: (store as any)?.contactEmail || (store as any)?.email || "",
+                logoUrl: (store as any)?.logo,
+              }}
+              receipt={{
+                receiptNumber: `REC-${selectedReceiptOrder.orderNumber || String(selectedReceiptOrder.id || "").slice(-6)}`,
+                orderNumber: selectedReceiptOrder.orderNumber || "",
+                dateTime: selectedReceiptOrder.createdAt ? new Date(selectedReceiptOrder.createdAt) : new Date(),
+                cashierName: "Register 1",
+                customer: {
+                  name: selectedReceiptOrder.customerName || "Walk-in Customer",
+                  phone: selectedReceiptOrder.customerPhone || "",
+                },
+                items:
+                  Array.isArray(selectedReceiptOrder.items) && selectedReceiptOrder.items.length > 0
+                    ? selectedReceiptOrder.items.map((it: any) => ({
+                        title: it.name || it.title || "Item",
+                        quantity: Number(it.quantity) || 1,
+                        unitPrice: Number(it.price ?? it.unitPrice ?? 0),
+                        discount: Number(it.discount ?? 0),
+                        total: Number(it.total ?? ((it.price ?? 0) * (it.quantity ?? 1))),
+                      }))
+                    : [
+                        {
+                          title: `In-Store Purchase (${selectedReceiptOrder.itemCount || 1} items)`,
+                          quantity: selectedReceiptOrder.itemCount || 1,
+                          unitPrice: Number(selectedReceiptOrder.total || 0),
+                          total: Number(selectedReceiptOrder.total || 0),
+                        },
+                      ],
+                subtotal: Number(selectedReceiptOrder.subtotal ?? selectedReceiptOrder.total ?? 0),
+                discount: Number(selectedReceiptOrder.discount ?? 0),
+                tax: Number(selectedReceiptOrder.tax ?? 0),
+                grandTotal: Number(selectedReceiptOrder.total ?? 0),
+                tenderedAmount: Number(
+                  selectedReceiptOrder.tenderedAmount || selectedReceiptOrder.total || 0
+                ),
+                changeAmount: Number(selectedReceiptOrder.changeAmount || 0),
+                paymentMethod: String(selectedReceiptOrder.paymentMethod || "cash").toUpperCase(),
+              }}
+            />
+          ) : (
+            <InvoiceDocument
+              store={{
+                name: store.name || "Store",
+                address:
+                  typeof (store as any)?.address === "string"
+                    ? (store as any).address
+                    : (store as any)?.address?.street || "",
+                phone: (store as any)?.contactPhone || (store as any)?.phone || "",
+                email: (store as any)?.contactEmail || (store as any)?.email || "",
+                logoUrl: (store as any)?.logo,
+              }}
+              invoice={{
+                invoiceNumber:
+                  selectedReceiptOrder.invoiceNumber || `INV-${selectedReceiptOrder.orderNumber || ""}`,
+                orderNumber: selectedReceiptOrder.orderNumber,
+                issueDate: selectedReceiptOrder.createdAt
+                  ? new Date(selectedReceiptOrder.createdAt)
+                  : new Date(),
+                status:
+                  selectedReceiptOrder.paymentStatus === "paid" || selectedReceiptOrder.status === "delivered"
+                    ? "paid"
+                    : "unpaid",
+                paymentMethod: String(selectedReceiptOrder.paymentMethod || "cash").toUpperCase(),
+                customer: {
+                  name: selectedReceiptOrder.customerName || "Walk-in Customer",
+                  phone: selectedReceiptOrder.customerPhone || "",
+                  billingAddress: "Counter Sale Register",
+                },
+                items:
+                  Array.isArray(selectedReceiptOrder.items) && selectedReceiptOrder.items.length > 0
+                    ? selectedReceiptOrder.items.map((it: any, idx: number) => ({
+                        id: String(it.productId || it._id || idx),
+                        sku: it.sku || "",
+                        title: it.name || it.title || "Item",
+                        variantTitle: it.variantTitle || "",
+                        quantity: Number(it.quantity) || 1,
+                        unitPrice: Number(it.price ?? it.unitPrice ?? 0),
+                        discount: Number(it.discount ?? 0),
+                        tax: 0,
+                        total: Number(it.total ?? ((it.price ?? 0) * (it.quantity ?? 1))),
+                      }))
+                    : [
+                        {
+                          id: "1",
+                          title: `In-Store Sale (${selectedReceiptOrder.itemCount || 1} items)`,
+                          quantity: selectedReceiptOrder.itemCount || 1,
+                          unitPrice: Number(selectedReceiptOrder.total || 0),
+                          total: Number(selectedReceiptOrder.total || 0),
+                        },
+                      ],
+                subtotal: Number(selectedReceiptOrder.subtotal ?? selectedReceiptOrder.total ?? 0),
+                discountTotal: Number(selectedReceiptOrder.discount ?? 0),
+                taxTotal: Number(selectedReceiptOrder.tax ?? 0),
+                shippingCharge: 0,
+                grandTotal: Number(selectedReceiptOrder.total ?? 0),
+                paidAmount:
+                  selectedReceiptOrder.paymentStatus === "paid" || selectedReceiptOrder.status === "delivered"
+                    ? Number(selectedReceiptOrder.total ?? 0)
+                    : 0,
+                dueAmount:
+                  selectedReceiptOrder.paymentStatus === "paid" || selectedReceiptOrder.status === "delivered"
+                    ? 0
+                    : Number(selectedReceiptOrder.total ?? 0),
+              }}
+            />
+          )}
         </DocumentPreviewDialog>
       )}
     </div>

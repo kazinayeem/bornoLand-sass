@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   X,
   Search,
@@ -22,7 +23,9 @@ import {
   Receipt,
   RotateCw,
   Eye,
+  FileText,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useGetProductsQuery, type Product, type ProductVariant } from "@/redux/api/product-api";
 import { useGetCategoriesQuery } from "@/redux/api/category-api";
 import { useGetStoreCustomersQuery } from "@/redux/api/store-customers-api";
@@ -35,7 +38,8 @@ import {
 import { PosVariantModal } from "./pos-variant-modal";
 import { DocumentPreviewDialog } from "@/components/documents/document-preview-dialog";
 import { PosReceiptDocument } from "@/components/documents/templates/pos-receipt-document";
-import type { PosReceiptData, StoreIdentity } from "@/components/documents/document-types";
+import { InvoiceDocument } from "@/components/documents/templates/invoice-document";
+import type { PosReceiptData, InvoiceData, StoreIdentity } from "@/components/documents/document-types";
 
 import { formatCurrency } from "@/lib/format-currency";
 import { useTenant } from "@/providers/tenant-provider";
@@ -69,6 +73,7 @@ export function PosOrderModal({
   onClose,
   onSuccess,
 }: PosOrderModalProps) {
+  const router = useRouter();
   const { store, settings } = useTenant();
 
   // Search & Catalog state
@@ -95,8 +100,10 @@ export function PosOrderModal({
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<ValidateCouponResponse | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "mobile_banking" | "cod">("cash");
+  const [cashTendered, setCashTendered] = useState<number | "">("");
   const [shippingFee, setShippingFee] = useState(0);
   const [completedOrder, setCompletedOrder] = useState<any | null>(null);
+  const [printDocumentState, setPrintDocumentState] = useState<{ order: any; format: "thermal" | "a4" } | null>(null);
 
   // Double-click / In-flight submission protection ref
   const isSubmittingRef = useRef(false);
@@ -324,9 +331,14 @@ export function PosOrderModal({
       // Unique Idempotency Key to prevent duplicate order creations
       const idempotencyKey = `pos_${storeId}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
+      const numericalTendered = typeof cashTendered === "number" && cashTendered > 0 ? cashTendered : grandTotal;
+      const calculatedChange = Math.max(0, numericalTendered - grandTotal);
+
       const payload = {
         storeId,
         idempotencyKey,
+        isPos: true,
+        channel: "pos",
         customerId: selectedCustomer?.id,
         items: lineItems.map((item) => ({
           productId: item.productId,
@@ -338,13 +350,19 @@ export function PosOrderModal({
           sku: item.sku,
         })),
         paymentMethod,
+        tenderedAmount: numericalTendered,
+        changeAmount: calculatedChange,
+        paymentDetails: {
+          tenderedAmount: numericalTendered,
+          changeAmount: calculatedChange,
+        },
         shippingAddress: {
           fullName: customerName,
           phone: customerPhone || "01700000000",
           email: customerEmail,
-          city: "POS Store Walk-in",
-          street: "Counter Sales",
-          orderNotes: `POS Counter Sale • Payment: ${paymentMethod.toUpperCase()}`,
+          city: "In-Store POS",
+          street: "Counter Sales Register",
+          orderNotes: `POS Sale • Payment: ${paymentMethod.toUpperCase()}`,
         },
       };
 
@@ -352,11 +370,20 @@ export function PosOrderModal({
 
       if (res.data?.order) {
         toast.success(`POS Order #${res.data.order.orderNumber} completed!`);
-        setCompletedOrder(res.data.order);
+        const completedWithCust = {
+          ...res.data.order,
+          customerName,
+          customerPhone,
+          tenderedAmount: numericalTendered,
+          changeAmount: calculatedChange,
+          items: res.data.order.items || payload.items,
+        };
+        setCompletedOrder(completedWithCust);
         // Clear cart only on successful completion
         setLineItems([]);
         setAppliedCoupon(null);
         setProductSearch("");
+        refetchRecentOrders();
         onSuccess?.();
       } else {
         toast.error((res as any).message || "Failed to create POS order");
@@ -515,57 +542,82 @@ export function PosOrderModal({
                         <p className="text-xs font-medium">No sales recorded yet</p>
                       </div>
                     ) : (
-                      recentOrders.map((order) => (
-                        <div
-                          key={order.id}
-                          className="flex items-center justify-between p-3 rounded-xl border border-zinc-200/90 bg-white shadow-xs hover:border-[#003399]/40 transition-all"
-                        >
-                          <div className="space-y-0.5">
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-xs font-black text-zinc-900">
-                                #{order.orderNumber}
-                              </span>
-                              <span
-                                className={cn(
-                                  "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase",
-                                  order.status === "delivered" || order.status === "processing"
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                    : "bg-blue-50 text-[#003399] border border-blue-200"
-                                )}
-                              >
-                                {order.status}
-                              </span>
-                            </div>
-                            <p className="text-xs text-zinc-600 font-medium">
-                              {order.customerName} {order.customerPhone ? `• ${order.customerPhone}` : ""}
-                            </p>
-                            <p className="text-[10px] text-zinc-400">
-                              {new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{" "}
-                              • {new Date(order.createdAt).toLocaleDateString([], { month: "short", day: "numeric" })}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center gap-3 text-right">
-                            <div>
-                              <p className="text-sm font-black text-zinc-900">
-                                {formatCurrency(order.total, settings)}
+                      recentOrders.map((order) => {
+                        const isPaid = order.paymentStatus === "paid" || order.status === "delivered";
+                        return (
+                          <div
+                            key={order.id}
+                            className="flex items-center justify-between p-3.5 rounded-xl border border-zinc-200/90 bg-white shadow-xs hover:border-[#003399]/40 transition-all"
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-mono text-xs font-black text-zinc-900">
+                                  #{order.orderNumber}
+                                </span>
+                                <span
+                                  className={cn(
+                                    "rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide",
+                                    order.status === "delivered" || order.status === "processing"
+                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                      : "bg-blue-50 text-[#003399] border border-blue-200"
+                                  )}
+                                >
+                                  {order.status}
+                                </span>
+                                <span
+                                  className={cn(
+                                    "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide",
+                                    isPaid
+                                      ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                      : "bg-amber-50 text-amber-700 border border-amber-200"
+                                  )}
+                                >
+                                  Payment: {isPaid ? "PAID" : order.paymentStatus || "PENDING"}
+                                </span>
+                              </div>
+                              <p className="text-xs text-zinc-600 font-medium">
+                                {order.customerName} {order.customerPhone ? `• ${order.customerPhone}` : ""}
                               </p>
-                              <span className="inline-block rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-bold text-zinc-600 uppercase">
-                                {order.paymentMethod}
-                              </span>
+                              <p className="text-[10px] text-zinc-400">
+                                {new Date(order.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{" "}
+                                • {new Date(order.createdAt).toLocaleDateString([], { month: "short", day: "numeric" })}
+                              </p>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => setCompletedOrder(order)}
-                              className="rounded-lg p-2 border border-zinc-200 bg-zinc-50 hover:bg-white text-zinc-700 hover:text-[#003399] transition-colors"
-                              title="View & Print Receipt"
-                            >
-                              <Receipt className="h-4 w-4" />
-                            </button>
+                            <div className="flex items-center gap-3 text-right">
+                              <div>
+                                <p className="text-sm font-black text-zinc-900 font-mono">
+                                  {formatCurrency(order.total, settings)}
+                                </p>
+                                <span className="inline-block rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-bold text-zinc-600 uppercase">
+                                  {order.paymentMethod}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setPrintDocumentState({ order, format: "thermal" })}
+                                  className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 text-xs font-semibold transition-colors cursor-pointer"
+                                  title="Print POS Thermal Receipt (80mm)"
+                                >
+                                  <Receipt className="h-3.5 w-3.5 text-zinc-500" />
+                                  <span className="hidden sm:inline">Slip</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setPrintDocumentState({ order, format: "a4" })}
+                                  className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 text-xs font-semibold transition-colors cursor-pointer"
+                                  title="Print Full A4 Invoice"
+                                >
+                                  <FileText className="h-3.5 w-3.5 text-zinc-500" />
+                                  <span className="hidden sm:inline">A4</span>
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>
@@ -919,6 +971,56 @@ export function PosOrderModal({
                       );
                     })}
                   </div>
+
+                  {/* Cash Tendered & Change Helper for Cash Payments */}
+                  {paymentMethod === "cash" && (
+                    <div className="rounded-xl border border-zinc-200 bg-white p-2.5 space-y-2 mt-2 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                          Cash Tendered (৳)
+                        </label>
+                        {typeof cashTendered === "number" && cashTendered >= grandTotal && (
+                          <span className="text-[11px] font-black text-emerald-600 font-mono">
+                            Change: {formatCurrency(cashTendered - grandTotal, settings)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          min={0}
+                          value={cashTendered}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setCashTendered(v === "" ? "" : Math.max(0, Number(v)));
+                          }}
+                          placeholder={`Exact (${grandTotal})`}
+                          className="flex-1 rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-[#003399]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setCashTendered(grandTotal)}
+                          className="rounded-md border border-zinc-200 px-2 py-1 text-[10px] font-bold hover:bg-zinc-100 text-zinc-700 cursor-pointer"
+                        >
+                          Exact
+                        </button>
+                        {[100, 500, 1000].map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() =>
+                              setCashTendered((prev) =>
+                                typeof prev === "number" ? prev + preset : grandTotal + preset
+                              )
+                            }
+                            className="rounded-md border border-zinc-200 px-1.5 py-1 text-[10px] font-bold hover:bg-zinc-100 text-zinc-700 font-mono cursor-pointer"
+                          >
+                            +{preset}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Submit Register Sale Button */}
@@ -931,12 +1033,12 @@ export function PosOrderModal({
                   {isSubmittingOrder ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Creating POS Order…
+                      Finalizing POS Sale…
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="h-4 w-4" />
-                      Complete POS Order ({formatCurrency(grandTotal, settings)})
+                      Complete Sale ({formatCurrency(grandTotal, settings)})
                     </>
                   )}
                 </button>
@@ -956,55 +1058,308 @@ export function PosOrderModal({
         />
       )}
 
-      {/* POS Receipt Preview Document Modal */}
-      {completedOrder && (
-        <DocumentPreviewDialog
-          open={Boolean(completedOrder)}
-          onClose={() => setCompletedOrder(null)}
-          title={`POS Receipt #${completedOrder.orderNumber || ""}`}
-          defaultPageSize="thermal-80"
+      {/* ── POS SALE COMPLETED SUCCESS SCREEN MODAL (#6) ─────── */}
+      {completedOrder && !printDocumentState && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setCompletedOrder(null);
+            }
+          }}
         >
-          <PosReceiptDocument
-            store={{
-              name: store?.name || "Store",
-              address: typeof (store as any)?.address === "string" ? (store as any).address : (store as any)?.address?.street || "",
-              phone: (store as any)?.contactPhone || (store as any)?.phone || "",
-              email: (store as any)?.contactEmail || (store as any)?.email || "",
-              logoUrl: (store as any)?.logo,
-            }}
-            receipt={{
-              receiptNumber: `REC-${completedOrder.orderNumber || String(completedOrder.id || completedOrder._id || "").slice(-6)}`,
-              orderNumber: completedOrder.orderNumber,
-              dateTime: completedOrder.createdAt ? new Date(completedOrder.createdAt) : new Date(),
-              customer: {
-                name: completedOrder.customerName || completedOrder.customerId?.name || completedOrder.customerSnapshot?.name || "Walk-in Customer",
-                phone: completedOrder.customerPhone || completedOrder.customerId?.phone || completedOrder.customerSnapshot?.phone || "",
-              },
-              items: Array.isArray(completedOrder.items) && completedOrder.items.length > 0
-                ? completedOrder.items.map((it: any) => ({
-                    title: it.name || it.title || "Item",
-                    quantity: Number(it.quantity) || 1,
-                    unitPrice: Number(it.price ?? it.unitPrice ?? 0),
-                    discount: Number(it.discount ?? 0),
-                    total: Number(it.total ?? ((it.price ?? 0) * (it.quantity ?? 1))),
-                  }))
-                : [
-                    {
-                      title: `In-Store Purchase (${completedOrder.itemCount || 1} items)`,
-                      quantity: completedOrder.itemCount || 1,
-                      unitPrice: Number(completedOrder.total || 0),
-                      total: Number(completedOrder.total || 0),
-                    },
-                  ],
-              subtotal: Number(completedOrder.subtotal ?? completedOrder.total ?? 0),
-              discount: Number(completedOrder.discount ?? 0),
-              tax: Number(completedOrder.tax ?? 0),
-              grandTotal: Number(completedOrder.total ?? 0),
-              paymentMethod: String(completedOrder.paymentMethod || "CASH").toUpperCase(),
-            }}
-          />
+          <div className="flex flex-col w-full max-w-md bg-white rounded-3xl border border-zinc-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Celebration Header */}
+            <div className="bg-gradient-to-b from-emerald-50 to-emerald-100/60 px-6 pt-7 pb-5 text-center border-b border-emerald-100">
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/30 mb-2.5">
+                <CheckCircle2 className="h-8 w-8" />
+              </div>
+              <h2 className="text-xl font-black text-zinc-900 tracking-tight">
+                Sale Completed!
+              </h2>
+              <p className="text-xs text-zinc-600 mt-0.5 font-medium">
+                POS in-store transaction recorded & stock deducted
+              </p>
+            </div>
+
+            {/* Order Details Summary */}
+            <div className="p-5 space-y-3.5 text-xs">
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-zinc-200">
+                  <span className="text-zinc-500 font-medium">Order Number</span>
+                  <span className="font-mono font-black text-sm text-zinc-900">
+                    #{completedOrder.orderNumber}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500 font-medium">Order Status</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-800 uppercase tracking-wide">
+                    <CheckCircle2 className="h-3 w-3" />
+                    {completedOrder.status || "delivered"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500 font-medium">Payment Status</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-800 uppercase tracking-wide">
+                    <CheckCircle2 className="h-3 w-3" />
+                    {completedOrder.paymentStatus || "paid"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500 font-medium">Payment Method</span>
+                  <span className="font-bold text-zinc-800 uppercase font-mono">
+                    {completedOrder.paymentMethod || "CASH"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500 font-medium">Customer</span>
+                  <span className="font-semibold text-zinc-800">
+                    {completedOrder.customerName ||
+                      completedOrder.customerId?.name ||
+                      completedOrder.customerSnapshot?.name ||
+                      "Walk-in Customer"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-zinc-200">
+                  <span className="text-xs font-bold text-zinc-900">Total Paid</span>
+                  <span className="font-mono text-base font-black text-[#003399]">
+                    {formatCurrency(completedOrder.total || 0, settings)}
+                  </span>
+                </div>
+
+                {completedOrder.changeAmount > 0 && (
+                  <div className="flex items-center justify-between text-emerald-700 font-semibold text-[11px] pt-1">
+                    <span>Change Returned</span>
+                    <span className="font-mono font-bold">
+                      {formatCurrency(completedOrder.changeAmount, settings)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions Button Grid */}
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => setPrintDocumentState({ order: completedOrder, format: "thermal" })}
+                    className="h-10 gap-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold cursor-pointer text-xs"
+                  >
+                    <Receipt className="h-4 w-4" />
+                    <span>Print Receipt</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setPrintDocumentState({ order: completedOrder, format: "a4" })}
+                    className="h-10 gap-1.5 rounded-xl border-zinc-300 hover:bg-zinc-100 font-bold cursor-pointer text-zinc-800 text-xs"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>A4 Invoice</span>
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setCompletedOrder(null);
+                      setCashTendered("");
+                    }}
+                    className="h-9.5 rounded-xl bg-[#003399] hover:bg-[#002B80] text-white font-black cursor-pointer text-xs"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    New Sale
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      onClose();
+                      router.push(`/store/${store?.slug || storeId}/orders`);
+                    }}
+                    className="h-9.5 rounded-xl font-bold cursor-pointer text-xs"
+                  >
+                    <Eye className="h-3.5 w-3.5 mr-1" />
+                    View Orders
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── DUAL FORMAT PRINT PREVIEW MODAL ───────────────────── */}
+      {printDocumentState && store && (
+        <DocumentPreviewDialog
+          open={Boolean(printDocumentState)}
+          onClose={() => setPrintDocumentState(null)}
+          title={
+            printDocumentState.format === "thermal"
+              ? `POS Receipt #${printDocumentState.order?.orderNumber || ""}`
+              : `Invoice #${printDocumentState.order?.orderNumber || ""}`
+          }
+          defaultPageSize={printDocumentState.format === "thermal" ? "thermal-80" : "a4-portrait"}
+          allowPageSizeSwitch={true}
+        >
+          {printDocumentState.format === "thermal" ? (
+            <PosReceiptDocument
+              store={{
+                name: store?.name || "Store",
+                address:
+                  typeof (store as any)?.address === "string"
+                    ? (store as any).address
+                    : (store as any)?.address?.street || "",
+                phone: (store as any)?.contactPhone || (store as any)?.phone || "",
+                email: (store as any)?.contactEmail || (store as any)?.email || "",
+                logoUrl: (store as any)?.logo,
+              }}
+              receipt={buildReceiptData(printDocumentState.order)}
+            />
+          ) : (
+            <InvoiceDocument
+              store={{
+                name: store?.name || "Store",
+                address:
+                  typeof (store as any)?.address === "string"
+                    ? (store as any).address
+                    : (store as any)?.address?.street || "",
+                phone: (store as any)?.contactPhone || (store as any)?.phone || "",
+                email: (store as any)?.contactEmail || (store as any)?.email || "",
+                logoUrl: (store as any)?.logo,
+              }}
+              invoice={buildInvoiceData(printDocumentState.order)}
+            />
+          )}
         </DocumentPreviewDialog>
       )}
     </>
   );
+}
+
+// ── FORMAT BUILDER HELPERS ──────────────────────────────────────
+function buildReceiptData(order: any): PosReceiptData {
+  const items =
+    Array.isArray(order.items) && order.items.length > 0
+      ? order.items.map((it: any) => ({
+          title: it.name || it.title || "Item",
+          quantity: Number(it.quantity) || 1,
+          unitPrice: Number(it.price ?? it.unitPrice ?? 0),
+          discount: Number(it.discount ?? 0),
+          total: Number(it.total ?? (Number(it.price ?? it.unitPrice ?? 0) * (Number(it.quantity) || 1))),
+        }))
+      : [
+          {
+            title: `In-Store Purchase (${order.itemCount || 1} items)`,
+            quantity: order.itemCount || 1,
+            unitPrice: Number(order.total || 0),
+            total: Number(order.total || 0),
+          },
+        ];
+
+  const subtotal = Number(order.subtotal ?? order.total ?? 0);
+  const discount = Number(order.discount ?? 0);
+  const tax = Number(order.tax ?? 0);
+  const grandTotal = Number(order.total ?? 0);
+  const tendered = Number(order.tenderedAmount || order.paymentDetails?.tenderedAmount || grandTotal);
+  const change = Number(order.changeAmount || order.paymentDetails?.changeAmount || 0);
+
+  return {
+    receiptNumber: `REC-${order.orderNumber || String(order.id || order._id || "").slice(-6)}`,
+    orderNumber: order.orderNumber,
+    dateTime: order.createdAt ? new Date(order.createdAt) : new Date(),
+    cashierName: "Register 1",
+    customer: {
+      name:
+        order.customerName ||
+        order.customerId?.name ||
+        order.customerSnapshot?.name ||
+        "Walk-in Customer",
+      phone:
+        order.customerPhone ||
+        order.customerId?.phone ||
+        order.customerSnapshot?.phone ||
+        "",
+    },
+    items,
+    subtotal,
+    discount,
+    tax,
+    grandTotal,
+    tenderedAmount: tendered,
+    changeAmount: change,
+    paymentMethod: String(order.paymentMethod || "CASH").toUpperCase(),
+  };
+}
+
+function buildInvoiceData(order: any): InvoiceData {
+  const items =
+    Array.isArray(order.items) && order.items.length > 0
+      ? order.items.map((it: any, idx: number) => ({
+          id: String(it.productId || it._id || idx),
+          sku: it.sku || "",
+          title: it.name || it.title || "Item",
+          variantTitle: it.variantTitle || "",
+          quantity: Number(it.quantity) || 1,
+          unitPrice: Number(it.price ?? it.unitPrice ?? 0),
+          discount: Number(it.discount ?? 0),
+          tax: 0,
+          total: Number(it.total ?? (Number(it.price ?? it.unitPrice ?? 0) * (Number(it.quantity) || 1))),
+        }))
+      : [
+          {
+            id: "1",
+            title: `In-Store Sale (${order.itemCount || 1} items)`,
+            quantity: order.itemCount || 1,
+            unitPrice: Number(order.total || 0),
+            total: Number(order.total || 0),
+          },
+        ];
+
+  const subtotal = Number(order.subtotal ?? order.total ?? 0);
+  const discountTotal = Number(order.discount ?? 0);
+  const taxTotal = Number(order.tax ?? 0);
+  const shippingCharge = Number(order.deliveryCharge ?? order.shipping ?? 0);
+  const grandTotal = Number(order.total ?? 0);
+  const isPaid = order.paymentStatus === "paid" || order.status === "delivered";
+
+  return {
+    invoiceNumber: order.invoiceNumber || `INV-${order.orderNumber || ""}`,
+    orderNumber: order.orderNumber,
+    issueDate: order.createdAt ? new Date(order.createdAt) : new Date(),
+    status: isPaid ? "paid" : "unpaid",
+    paymentMethod: String(order.paymentMethod || "CASH").toUpperCase(),
+    customer: {
+      name:
+        order.customerName ||
+        order.customerId?.name ||
+        order.customerSnapshot?.name ||
+        "Walk-in Customer",
+      phone:
+        order.customerPhone ||
+        order.customerId?.phone ||
+        order.customerSnapshot?.phone ||
+        "",
+      email:
+        order.customerEmail ||
+        order.customerId?.email ||
+        order.customerSnapshot?.email ||
+        "",
+      billingAddress: order.customerSnapshot?.address || "Counter Sale Register",
+    },
+    items,
+    subtotal,
+    discountTotal,
+    taxTotal,
+    shippingCharge,
+    grandTotal,
+    paidAmount: isPaid ? grandTotal : 0,
+    dueAmount: isPaid ? 0 : grandTotal,
+  };
 }

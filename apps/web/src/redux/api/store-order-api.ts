@@ -313,16 +313,38 @@ export const storeOrderApi = baseApi.injectEndpoints({
   }),
 });
 
+export type RecentStoreOrderItem = {
+  productId?: string;
+  variantId?: string;
+  name?: string;
+  title?: string;
+  quantity: number;
+  price?: number;
+  unitPrice?: number;
+  discount?: number;
+  total?: number;
+  sku?: string;
+  image?: string;
+};
+
 export type RecentStoreOrder = {
   id: string;
   orderNumber: string;
+  invoiceNumber?: string;
   customerName: string;
   customerPhone?: string;
   total: number;
+  subtotal?: number;
+  discount?: number;
+  tax?: number;
   currencyCode?: string;
   paymentMethod: string;
+  paymentStatus?: string;
   status: string;
   itemCount: number;
+  items?: RecentStoreOrderItem[];
+  tenderedAmount?: number;
+  changeAmount?: number;
   createdAt: string;
 };
 

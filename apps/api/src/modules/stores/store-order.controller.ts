@@ -582,17 +582,52 @@ export async function createStoreOrderController(request: AuthRequest, response:
           ? request.body.shippingAddress.fullName.trim()
           : "Walk-in Customer";
 
-      const { createGuestCustomer } = await import("../customers/customer.service.js");
-      const guestRes = await createGuestCustomer(storeId, email, name, phone);
-      if (guestRes.ok && guestRes.data?.customer?._id) {
-        customerId = String(guestRes.data.customer._id);
+      // If email or specific phone is provided, create/find guest customer
+      if (email || (phone && phone !== "01700000000")) {
+        const { createGuestCustomer } = await import("../customers/customer.service.js");
+        const guestRes = await createGuestCustomer(storeId, email, name, phone);
+        if (guestRes.ok && guestRes.data?.customer?._id) {
+          customerId = String(guestRes.data.customer._id);
+        }
+      } else {
+        // Pure Walk-in POS Customer: find or create canonical Walk-in customer for this store
+        // to avoid creating duplicate customer records for each sale
+        const canonicalEmail = `walkin@${(store as any)?.slug || storeId}.local`;
+        let walkinCust = await CustomerModel.findOne({ storeId, email: canonicalEmail });
+        if (!walkinCust) {
+          walkinCust = await CustomerModel.findOne({ storeId, isGuest: true, name: "Walk-in Customer" });
+        }
+        if (!walkinCust) {
+          try {
+            walkinCust = await CustomerModel.create({
+              storeId,
+              name: "Walk-in Customer",
+              email: canonicalEmail,
+              phone: "",
+              passwordHash: "",
+              isGuest: true,
+            });
+          } catch {
+            walkinCust = await CustomerModel.findOne({ storeId, isGuest: true, name: "Walk-in Customer" });
+          }
+        }
+        if (walkinCust?._id) {
+          customerId = String(walkinCust._id);
+        }
       }
     }
 
     const { createOrder } = await import("../orders/order.service.js");
     const sessionId = (request.headers["x-session-id"] as string) || crypto.randomUUID();
 
-    const result = await createOrder(storeId, customerId, sessionId, request.body);
+    const isPos = Boolean(request.body?.isPos || request.body?.channel === "pos");
+    const orderPayload = {
+      ...request.body,
+      isPos,
+      channel: isPos ? ("pos" as const) : ("online" as const),
+    };
+
+    const result = await createOrder(storeId, customerId, sessionId, orderPayload);
 
     if (!result.ok) {
       return response.status(400).json({ success: false, message: result.message });
@@ -627,7 +662,7 @@ export async function getRecentStoreOrdersController(request: AuthRequest, respo
     const limit = Math.min(20, Math.max(1, parseInt(String(request.query.limit ?? "10"), 10) || 10));
 
     const orders = await OrderModel.find({ storeId })
-      .select("_id orderNumber total paymentMethod status createdAt customerId customerSnapshot items currencyCode")
+      .select("_id orderNumber invoiceNumber total subtotal discount tax paymentMethod paymentStatus status createdAt customerId customerSnapshot items currencyCode paymentDetails")
       .populate("customerId", "name email phone")
       .sort({ createdAt: -1 })
       .limit(limit)
@@ -636,13 +671,21 @@ export async function getRecentStoreOrdersController(request: AuthRequest, respo
     const formatted = orders.map((o: any) => ({
       id: String(o._id),
       orderNumber: o.orderNumber,
+      invoiceNumber: o.invoiceNumber || "",
       customerName: o.customerId?.name || o.customerSnapshot?.name || "Walk-in Customer",
       customerPhone: o.customerId?.phone || o.customerSnapshot?.phone || "",
       total: o.total,
+      subtotal: o.subtotal,
+      discount: o.discount,
+      tax: o.tax,
       currencyCode: o.currencyCode || "BDT",
       paymentMethod: o.paymentMethod,
+      paymentStatus: o.paymentStatus || (o.status === "delivered" ? "paid" : "pending"),
       status: o.status,
       itemCount: o.items?.length ?? 0,
+      items: o.items ?? [],
+      tenderedAmount: o.paymentDetails?.tenderedAmount ?? 0,
+      changeAmount: o.paymentDetails?.changeAmount ?? 0,
       createdAt: o.createdAt,
     }));
 

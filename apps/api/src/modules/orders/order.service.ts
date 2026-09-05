@@ -98,7 +98,13 @@ export async function createOrder(
       senderNumber?: string;
       receiverNumber?: string;
       transactionId?: string;
+      tenderedAmount?: number;
+      changeAmount?: number;
     };
+    isPos?: boolean;
+    channel?: "online" | "pos";
+    tenderedAmount?: number;
+    changeAmount?: number;
     items?: Array<{
       productId: string;
       variantId?: string;
@@ -406,51 +412,73 @@ export async function createOrder(
   };
 
   // ── 6. Payment Validation ──
-  const paymentMethod = (payload.paymentMethod ?? "cod").toLowerCase();
+  const isPos = Boolean(payload.isPos || payload.channel === "pos");
+  const paymentMethod = (payload.paymentMethod ?? (isPos ? "cash" : "cod")).toLowerCase();
   let paymentStatus = "pending";
+  let orderStatus = "pending";
   let paymentVerification = {};
-  let paymentDetails = {};
+  let paymentDetails: Record<string, unknown> = {
+    tenderedAmount: Number(payload.tenderedAmount || (payload.paymentDetails as any)?.tenderedAmount || 0),
+    changeAmount: Number(payload.changeAmount || (payload.paymentDetails as any)?.changeAmount || 0),
+  };
 
-  if (paymentMethod === "bkash" || paymentMethod === "nagad") {
-    paymentStatus = "pending_verification";
-    const senderNumber = payload.paymentDetails?.senderNumber || payload.senderNumber || "";
-    const transactionId = payload.paymentDetails?.transactionId || payload.transactionId || "";
-    const receiverNumber =
-      payload.paymentDetails?.receiverNumber ||
-      storeSettings?.paymentSettings?.[paymentMethod as "bkash" | "nagad"]?.number ||
-      "";
-
-    if (!transactionId.trim()) {
-      return { ok: false as const, message: `Transaction ID (TrxID) is required for ${paymentMethod.toUpperCase()} payments.` };
+  if (isPos) {
+    if (paymentMethod === "cash" || paymentMethod === "card" || paymentMethod === "mobile_banking") {
+      paymentStatus = "paid";
+      orderStatus = "delivered";
+    } else if (paymentMethod === "cod") {
+      paymentStatus = "pending";
+      orderStatus = "pending";
+    } else if (paymentMethod === "sslcommerz") {
+      paymentStatus = "pending";
+      orderStatus = "pending";
+    } else {
+      paymentStatus = "paid";
+      orderStatus = "delivered";
     }
-    if (!senderNumber.trim()) {
-      return { ok: false as const, message: `Sender phone number is required for ${paymentMethod.toUpperCase()} payments.` };
-    }
+  } else {
+    if (paymentMethod === "bkash" || paymentMethod === "nagad") {
+      paymentStatus = "pending_verification";
+      const senderNumber = payload.paymentDetails?.senderNumber || payload.senderNumber || "";
+      const transactionId = payload.paymentDetails?.transactionId || payload.transactionId || "";
+      const receiverNumber =
+        payload.paymentDetails?.receiverNumber ||
+        storeSettings?.paymentSettings?.[paymentMethod as "bkash" | "nagad"]?.number ||
+        "";
 
-    paymentVerification = {
-      transactionId: transactionId.trim(),
-      senderNumber: senderNumber.trim(),
-      receiverNumber,
-      status: "pending",
-    };
-    paymentDetails = {
-      transactionId: transactionId.trim(),
-      senderNumber: senderNumber.trim(),
-      receiverNumber,
-    };
-  } else if (paymentMethod === "sslcommerz") {
-    const { StorePaymentGatewayModel } = await import("../payments/store-payment-gateway.model.js");
-    const { checkFeature } = await import("../features/feature-access.service.js");
-    const [entitlement, gateway] = await Promise.all([
-      checkFeature(storeId, "sslcommerz_payment"),
-      StorePaymentGatewayModel.findOne({ storeId, provider: "sslcommerz" }).select("isEnabled storeIdValue encryptedStorePassword environment").lean() as any,
-    ]);
+      if (!transactionId.trim()) {
+        return { ok: false as const, message: `Transaction ID (TrxID) is required for ${paymentMethod.toUpperCase()} payments.` };
+      }
+      if (!senderNumber.trim()) {
+        return { ok: false as const, message: `Sender phone number is required for ${paymentMethod.toUpperCase()} payments.` };
+      }
 
-    if (!entitlement.allowed) {
-      return { ok: false as const, message: entitlement.message || "SSLCommerz payment is not available on this store's plan." };
-    }
-    if (!gateway || !gateway.isEnabled || !gateway.storeIdValue || !gateway.encryptedStorePassword) {
-      return { ok: false as const, message: "SSLCommerz is not configured or enabled for this store." };
+      paymentVerification = {
+        transactionId: transactionId.trim(),
+        senderNumber: senderNumber.trim(),
+        receiverNumber,
+        status: "pending",
+      };
+      paymentDetails = {
+        ...paymentDetails,
+        transactionId: transactionId.trim(),
+        senderNumber: senderNumber.trim(),
+        receiverNumber,
+      };
+    } else if (paymentMethod === "sslcommerz") {
+      const { StorePaymentGatewayModel } = await import("../payments/store-payment-gateway.model.js");
+      const { checkFeature } = await import("../features/feature-access.service.js");
+      const [entitlement, gateway] = await Promise.all([
+        checkFeature(storeId, "sslcommerz_payment"),
+        StorePaymentGatewayModel.findOne({ storeId, provider: "sslcommerz" }).select("isEnabled storeIdValue encryptedStorePassword environment").lean() as any,
+      ]);
+
+      if (!entitlement.allowed) {
+        return { ok: false as const, message: entitlement.message || "SSLCommerz payment is not available on this store's plan." };
+      }
+      if (!gateway || !gateway.isEnabled || !gateway.storeIdValue || !gateway.encryptedStorePassword) {
+        return { ok: false as const, message: "SSLCommerz is not configured or enabled for this store." };
+      }
     }
   }
 
@@ -462,6 +490,9 @@ export async function createOrder(
     storeId,
     customerId,
     customerType: customerIdInput ? "registered" : "guest",
+    channel: isPos ? "pos" : "online",
+    isPos,
+    status: orderStatus,
     customerSnapshot: {
       name: normalizedShippingAddress.fullName,
       email: normalizedShippingAddress.email,
@@ -503,18 +534,23 @@ export async function createOrder(
     paymentDetails,
     notes: payload.notes ?? "",
     currencyCode,
-    timeline: [
-      { status: "pending", note: "Order placed", createdBy: "system", updatedBy: "system" },
-      {
-        status: paymentStatus === "pending_verification" ? "pending_verification" : "payment_pending",
-        note:
-          paymentMethod === "cod"
-            ? "Cash on delivery — pay when received"
-            : `${paymentMethod.toUpperCase()} payment verification pending (TrxID: ${(paymentDetails as any).transactionId || ""})`,
-        createdBy: "system",
-        updatedBy: "system",
-      },
-    ],
+    timeline: isPos && orderStatus === "delivered" && paymentStatus === "paid"
+      ? [
+          { status: "delivered", note: "POS in-store order completed and delivered", createdBy: "cashier", updatedBy: "cashier" },
+          { status: "paid", note: `POS payment collected via ${paymentMethod.toUpperCase()}`, createdBy: "cashier", updatedBy: "cashier" },
+        ]
+      : [
+          { status: "pending", note: "Order placed", createdBy: "system", updatedBy: "system" },
+          {
+            status: paymentStatus === "pending_verification" ? "pending_verification" : "payment_pending",
+            note:
+              paymentMethod === "cod"
+                ? "Cash on delivery — pay when received"
+                : `${paymentMethod.toUpperCase()} payment verification pending (TrxID: ${(paymentDetails as any).transactionId || ""})`,
+            createdBy: "system",
+            updatedBy: "system",
+          },
+        ],
     estimatedDelivery: deliveryZoneEta,
     courier: "",
     trackingNumber: "",
@@ -550,9 +586,11 @@ export async function createOrder(
     };
   });
   if (bulkOps.length > 0) {
-    ProductModel.bulkWrite(bulkOps as any).catch((err) => {
+    try {
+      await ProductModel.bulkWrite(bulkOps as any);
+    } catch (err) {
       console.error("[orders] Product stock bulkWrite error:", err);
-    });
+    }
   }
 
   // ── 9. Non-Blocking Background Tasks (Asynchronous Microtasks) ──

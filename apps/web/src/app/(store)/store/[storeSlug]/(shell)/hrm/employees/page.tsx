@@ -354,7 +354,8 @@ export default function EmployeesPage() {
                   {employees.map((emp) => (
                     <tr
                       key={emp._id}
-                      className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors"
+                      onClick={() => setSelectedEmployee(emp)}
+                      className="hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors cursor-pointer"
                     >
                       <td className="py-3 px-4 font-mono font-bold text-zinc-900 dark:text-zinc-100">
                         {emp.employeeCode}
@@ -406,7 +407,7 @@ export default function EmployeesPage() {
                           {emp.status}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                         {emp.userId ? (
                           <Badge variant="success">Linked</Badge>
                         ) : canCreate ? (
@@ -432,6 +433,21 @@ export default function EmployeesPage() {
           )}
         </div>
       </StorePageCard>
+
+      {/* Admin 9-Tab Employee Inspection & Management Dialog */}
+      <EmployeeDetailDialog
+        open={Boolean(selectedEmployee)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedEmployee(null);
+        }}
+        employee={selectedEmployee}
+        storeId={storeId}
+        storeSlug={storeSlug}
+        departments={departments}
+        designations={designations}
+        shifts={shifts}
+        onEmployeeUpdated={refetch}
+      />
 
       <Dialog
         open={isModalOpen}

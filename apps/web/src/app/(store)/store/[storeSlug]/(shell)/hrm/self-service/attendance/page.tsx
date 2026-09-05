@@ -48,7 +48,7 @@ export default function AttendancePage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = (language as string) === "bn";
 
   const [correctionModalOpen, setCorrectionModalOpen] = useState(false);
   const [corrDate, setCorrDate] = useState("");

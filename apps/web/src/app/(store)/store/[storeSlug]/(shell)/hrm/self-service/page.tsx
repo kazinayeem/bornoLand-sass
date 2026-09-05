@@ -49,7 +49,7 @@ export default function MyWorkspacePage() {
   const storeId = store?._id ?? "";
 
   const { language } = useLanguage();
-  const isBn = language === "bn";
+  const isBn = (language as string) === "bn";
 
   // Real Backend Data Queries
   const {

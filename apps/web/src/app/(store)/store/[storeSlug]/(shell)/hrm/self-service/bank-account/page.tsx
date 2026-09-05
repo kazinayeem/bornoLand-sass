@@ -296,7 +296,7 @@ export default function BankAccountPage() {
                               ? "success"
                               : req.status === "pending"
                               ? "warning"
-                              : "destructive"
+                              : "danger"
                           }
                         >
                           {req.status}

@@ -248,7 +248,7 @@ export default function LeavesPage() {
                               ? "warning"
                               : l.status === "cancelled"
                               ? "default"
-                              : "destructive"
+                              : "danger"
                           }
                         >
                           {l.status}

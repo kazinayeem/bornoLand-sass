@@ -90,51 +90,59 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Dynamic discovery: outputFileTracingRoot means the real server.js
-          # lives at standalone/apps/web/server.js (the proxy at standalone/server.js
-          # is only 33 bytes and just re-requires the nested one).
-          # We look for the real server — the largest server.js.
-          REAL_SERVER=$(find apps/web/.next/standalone -type f -name 'server.js' \
-            -not -path '*/node_modules/*' | sort | tail -n 1)
+          # Dynamic discovery: with outputFileTracingRoot set to monorepo root,
+          # Next.js nests the real server at standalone/apps/web/server.js.
+          # The standalone root also has a thin 33-byte proxy (server.js) that just
+          # requires('./apps/web/server.js'). We want the REAL server: the one whose
+          # parent directory contains a .next/ subdirectory.
+          REAL_SERVER=""
+          while IFS= read -r candidate; do
+            dir=$(dirname "$candidate")
+            if [ -d "$dir/.next" ]; then
+              REAL_SERVER="$candidate"
+              break
+            fi
+          done < <(find apps/web/.next/standalone -type f -name 'server.js' \
+            -not -path '*/node_modules/*')
 
           if [ -z "$REAL_SERVER" ]; then
-            echo "✗ No server.js found anywhere under apps/web/.next/standalone"
+            echo "✗ No real server.js found (no server.js with sibling .next/ dir)"
             echo "Full standalone tree:"
             find apps/web/.next/standalone -maxdepth 6 -type f | head -200 || true
             exit 1
           fi
 
+          REAL_SERVER_DIR=$(dirname "$REAL_SERVER")
           echo "✓ Standalone real server: $REAL_SERVER"
-          echo "  size: $(wc -c < "$REAL_SERVER") bytes"
+          echo "  size: $(wc -c < "$REAL_SERVER" | tr -d ' ') bytes"
 
-          # Confirm standalone root server.js exists (the proxy wrapper)
+          # Confirm standalone root proxy exists (expected with outputFileTracingRoot)
           if [ -f apps/web/.next/standalone/server.js ]; then
             echo "✓ Standalone proxy: apps/web/.next/standalone/server.js"
           else
-            echo "⚠ No proxy at standalone root — real server IS the root server.js"
+            echo "⚠ No proxy at standalone root — real server IS the root"
           fi
 
-          # Confirm .next/server dir exists inside the real server's directory
-          REAL_SERVER_DIR=$(dirname "$REAL_SERVER")
+          # Confirm .next/server dir exists (contains route handlers, etc.)
           if [ ! -d "$REAL_SERVER_DIR/.next/server" ]; then
             echo "✗ .next/server missing at $REAL_SERVER_DIR/.next/server"
-            ls -la "$REAL_SERVER_DIR/" || true
+            ls -la "$REAL_SERVER_DIR/.next/" || true
             exit 1
           fi
           echo "✓ .next/server present at $REAL_SERVER_DIR/.next/server"
 
-          # Confirm static assets exist (in .next/static or apps/web/.next/static)
+          # Confirm static assets exist
           if [ -d "$REAL_SERVER_DIR/.next/static" ]; then
             echo "✓ .next/static already in standalone at $REAL_SERVER_DIR/.next/static"
           elif [ -d apps/web/.next/static ]; then
-            echo "✓ .next/static found at apps/web/.next/static (will be copied in packaging)"
+            echo "✓ .next/static found at apps/web/.next/static (will copy in next step)"
           else
-            echo "✗ .next/static not found"
+            echo "✗ .next/static not found anywhere"
             exit 1
           fi
 
           # Confirm no broken symlinks in standalone
-          BROKEN=$(find apps/web/.next/standalone -xtype l -print 2>/dev/null)
+          BROKEN=$(find apps/web/.next/standalone -xtype l -print 2>/dev/null || true)
           if [ -n "$BROKEN" ]; then
             echo "✗ Broken symlinks in standalone:"
             echo "$BROKEN"
@@ -142,13 +150,13 @@ jobs:
           fi
           echo "✓ No broken symlinks in standalone"
 
-          # Export for use in next steps via GITHUB_ENV
+          # Export for use in the assembly step
           echo "STANDALONE_REAL_SERVER=$REAL_SERVER" >> "$GITHUB_ENV"
           echo "STANDALONE_REAL_SERVER_DIR=$REAL_SERVER_DIR" >> "$GITHUB_ENV"
 
       # Ensure .next/static and public are present in the real server's directory.
       # With outputFileTracingRoot, Next.js already includes public/ and .next/static/
-      # inside standalone/apps/web/. This step is a safety net to guarantee they exist.
+      # inside standalone/apps/web/. This step is a safety net.
       - name: Assemble Web standalone (ensure static + public are in place)
         run: |
           set -euo pipefail
@@ -223,9 +231,16 @@ jobs:
           mkdir -p "${STAGE}/apps/web"
           cp -r apps/web/.next/standalone/. "${STAGE}/apps/web/"
 
-          # Confirm real server (nested) exists
-          REAL_SERVER_IN_STAGE=$(find "${STAGE}/apps/web" -type f -name 'server.js' \
-            -not -path '*/node_modules/*' | sort | tail -n 1)
+          # Confirm real server (nested: has a sibling .next/ dir) exists in stage
+          REAL_SERVER_IN_STAGE=""
+          while IFS= read -r candidate; do
+            dir=$(dirname "$candidate")
+            if [ -d "$dir/.next" ]; then
+              REAL_SERVER_IN_STAGE="$candidate"
+              break
+            fi
+          done < <(find "${STAGE}/apps/web" -type f -name 'server.js' \
+            -not -path '*/node_modules/*')
           echo "✓ Web server in stage: $REAL_SERVER_IN_STAGE"
 
           # Confirm no broken symlinks in web staging area

@@ -36,6 +36,13 @@ jobs:
               echo "=== SWAP STATUS ==="
               swapon --show || true
               echo ""
+              echo "=== CGROUP MEMORY STATUS ==="
+              systemctl show "user-$(id -u).slice" -p MemoryMax -p MemoryHigh -p MemoryCurrent 2>/dev/null || true
+              if [ -f "/sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.max" ]; then
+                echo "cgroup memory.max: $(cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.max 2>/dev/null)"
+                echo "cgroup memory.current: $(cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.current 2>/dev/null)"
+              fi
+              echo ""
               echo "=== DISK USAGE ==="
               df -h || true
               echo ""
@@ -47,7 +54,7 @@ jobs:
               echo ""
               echo "=== RECENT KERNEL / OOM DIAGNOSTICS ==="
               if command -v dmesg >/dev/null 2>&1; then
-                sudo dmesg -T 2>/dev/null | grep -i -E "oom|killed process|out of memory" | tail -n 20 || true
+                sudo dmesg -T 2>/dev/null | grep -i -E "oom|killed process|out of memory|task_memcg" | tail -n 25 || true
               fi
               exit $exit_code
             }
@@ -93,6 +100,24 @@ jobs:
             fi
 
             # ----------------------------------------------------
+            # 2.2 Inspect and lift systemd cgroup user slice limits
+            # ----------------------------------------------------
+            echo ""
+            echo "=== 2.2 Inspect systemd cgroup limits ==="
+            systemctl show "user-$(id -u).slice" -p MemoryMax -p MemoryHigh -p MemoryCurrent 2>/dev/null || true
+            if [ -f "/sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.max" ]; then
+              cgroup_max=$(cat "/sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.max" 2>/dev/null || echo "max")
+              cgroup_cur=$(cat "/sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.current" 2>/dev/null || echo "0")
+              echo "  cgroup memory.max: $cgroup_max"
+              echo "  cgroup memory.current: $cgroup_cur"
+              if [ "$cgroup_max" != "max" ] && [ -n "$cgroup_max" ]; then
+                echo "  Restricted cgroup limit detected on user slice ($cgroup_max bytes). Lifting to infinity..."
+                sudo systemctl set-property "user-$(id -u).slice" MemoryMax=infinity MemoryHigh=infinity 2>/dev/null || true
+                echo "  Updated memory.max: $(cat /sys/fs/cgroup/user.slice/user-$(id -u).slice/memory.max 2>/dev/null)"
+              fi
+            fi
+
+            # ----------------------------------------------------
             # 3. Install dependencies
             # ----------------------------------------------------
             echo ""
@@ -118,9 +143,10 @@ jobs:
             # ----------------------------------------------------
             echo ""
             echo "=== 5.1 Pre-build system diagnostics ==="
+            echo "Architecture: $(uname -m)"
             echo "Node version: $(node -v)"
             echo "pnpm version: $(pnpm -v)"
-            echo "esbuild version: $(pnpm --filter @bornoland/api exec esbuild --version 2>/dev/null || true)"
+            echo "esbuild version: $(cd apps/api && pnpm exec esbuild --version 2>/dev/null || true)"
             echo ""
             echo "Memory status:"
             free -h
